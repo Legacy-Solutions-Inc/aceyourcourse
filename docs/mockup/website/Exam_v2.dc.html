@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><script src="motion.js?v=3"></script><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap"><style>@keyframes aycMqL{from{transform:translateX(0)}to{transform:translateX(-50%)}}@keyframes aycMqR{from{transform:translateX(-50%)}to{transform:translateX(0)}}@media (prefers-reduced-motion:reduce){[style*="aycMq"]{animation:none!important}}body{margin:0}a{color:#005AA5}a:hover{color:#003F73}</style></helmet>
+<div style="container-type:inline-size;width:100%;background:#F6F1E7;color:#0E1A2E;font-family:'Schibsted Grotesk',sans-serif;overflow-x:clip">
+  <dc-import name="SiteNav" style="position:sticky;top:0;z-index:50" mobile="{{ m }}" active="exams" hint-size="100%,100px"></dc-import>
+
+  <section data-screen-label="Exam hero" style="position:relative;background:#0E1A2E;color:#F6F1E7;overflow:hidden">
+    <div style="max-width:1296px;margin:0 auto;box-sizing:border-box;padding:20px clamp(20px,5cqi,72px) 0;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px">
+      <div style="display:flex;gap:8px;font:500 12px 'JetBrains Mono',monospace;letter-spacing:.04em;color:#9FB3CF"><a href="Home v2.dc.html#exams" style="color:#9FB3CF;text-decoration:none">EXAMS</a><span>/</span><span style="color:#F6F1E7">{{ x.board }}</span></div>
+      <div role="tablist" style="display:flex;flex-wrap:wrap;gap:6px">
+        <sc-for list="{{ switcher }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.go }}" style="all:unset;cursor:pointer;min-width:44px;height:34px;padding:0 10px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font:700 12px 'JetBrains Mono',monospace;border:1.5px solid #F6F1E7;background:{{ t.bg }};color:{{ t.fg }};transition:background .2s">{{ t.code }}</button></sc-for>
+      </div>
+    </div>
+    <div ref="{{ heroRef }}" style="max-width:1296px;margin:0 auto;box-sizing:border-box;padding:clamp(36px,5cqi,72px) clamp(20px,5cqi,72px) clamp(56px,6cqi,96px);display:flex;flex-wrap:wrap;align-items:center;gap:clamp(40px,6cqi,88px)">
+      <div style="flex:1.2 1 400px;min-width:0;display:flex;flex-direction:column;gap:24px">
+        <div data-m="drop" style="display:flex;align-items:flex-end;gap:16px">
+          <span style="background:#FF881F;color:#0E1A2E;font:700 clamp(52px,7cqi,96px)/.82 'JetBrains Mono',monospace;letter-spacing:-.02em;padding:16px 18px 12px;border:1.5px solid #F6F1E7;box-shadow:6px 6px 0 #005AA5">{{ x.code }}</span>
+          <span style="font:700 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.06em;padding-bottom:6px;text-transform:uppercase;color:#C9D3E1">{{ x.board }}<br><span style="font-weight:400">{{ x.long }}</span></span>
+        </div>
+        <h1 data-m="reveal" style="margin:0;font-weight:800;font-size:clamp(44px,6.4cqi,92px);line-height:.94;letter-spacing:-.045em;text-wrap:balance">{{ x.name }}</h1>
+        <p data-m="up" data-m-delay="150" style="margin:0;font-size:clamp(17px,1.5cqi,20px);line-height:1.5;max-width:32em;color:#DCE3EC;text-wrap:pretty">{{ x.blurb }}</p>
+        <div data-m="up" data-m-delay="260" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+          <a href="#reviewers" style="display:flex;align-items:center;min-height:56px;padding:0 24px;background:#FF881F;color:#0E1A2E;font-weight:800;font-size:17px;text-decoration:none;border:1.5px solid #F6F1E7;box-shadow:5px 5px 0 #F6F1E7;transition:transform .18s,box-shadow .18s" style-hover="transform:translate(-2px,-2px);box-shadow:7px 7px 0 #F6F1E7;color:#0E1A2E"><span>See {{ x.countLabel }} ↓</span></a>
+          <sc-if value="{{ x.anyDigital }}"><a href="MemberApp.dc.html" style="display:flex;align-items:center;min-height:56px;padding:0 22px;color:#F6F1E7;font-weight:700;font-size:16px;text-decoration:none;border:1.5px solid #F6F1E7" style-hover="background:rgba(246,241,231,.12);color:#F6F1E7"><span>Review {{ x.code }} in the app</span></a></sc-if>
+        </div>
+        <dl data-m="fade" data-m-delay="400" style="margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));border-top:1.5px solid rgba(246,241,231,.3)">
+          <sc-for list="{{ x.stats }}" as="s" hint-placeholder-count="4"><div style="padding:14px 12px 0 0"><dt style="font:500 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#9FB3CF">{{ s.k }}</dt><dd data-m="count" style="margin:6px 0 0;font-weight:800;font-size:clamp(22px,2.4cqi,30px);letter-spacing:-.02em">{{ s.v }}</dd></div></sc-for>
+        </dl>
+      </div>
+      <div data-m="pop" data-m-delay="200" style="flex:1 1 300px;min-width:0;max-width:440px;margin:0 auto;position:relative;aspect-ratio:1/1">
+        <span style="position:absolute;inset:8% 4% 4% 8%;background:#005AA5;border:1.5px solid #F6F1E7;transform:rotate(6deg)"></span>
+        <span style="position:absolute;inset:6% 8% 6% 4%;background:#FF881F;border:1.5px solid #0E1A2E;transform:rotate(-4deg)"></span>
+        <sc-for list="{{ x.stack }}" as="p" hint-placeholder-count="1">
+          <a href="{{ p.href }}" style="position:absolute;inset:{{ p.inset }};border:1.5px solid #F6F1E7;overflow:hidden;background:#EDE6D6;transform:rotate({{ p.rot }});box-shadow:0 24px 40px -18px rgba(0,0,0,.6);transition:transform .3s" style-hover="transform:rotate(0deg) scale(1.02)"><img data-src="{{ p.img }}" alt="{{ p.short }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></a>
+        </sc-for>
+      </div>
+    </div>
+    <div style="background:#FF881F;color:#0E1A2E;border-top:1.5px solid #0E1A2E;overflow:hidden">
+      <div style="animation:aycMqL 40s linear infinite;display:flex;width:max-content;padding:13px 0;font:700 13px/1 'JetBrains Mono',monospace;letter-spacing:.05em;white-space:nowrap;text-transform:uppercase">
+        <sc-for list="{{ x.ticker }}" as="t" hint-placeholder-count="8"><span style="display:flex;align-items:center;gap:26px;padding-right:26px"><span>{{ t }}</span><span>✦</span></span></sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section data-screen-label="Subjects" style="max-width:1296px;margin:0 auto;padding:clamp(64px,8cqi,112px) clamp(20px,5cqi,72px) clamp(40px,5cqi,64px);display:flex;flex-direction:column;gap:clamp(28px,3.5cqi,44px)">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px 40px">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#005AA5">{{ x.subjCount }} SUBJECTS ON THE {{ x.board }}</span>
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(36px,4.6cqi,64px);line-height:1;letter-spacing:-.035em">What’s covered</h2>
+      </div>
+      <p style="margin:0;max-width:28em;font-size:17px;line-height:1.5;color:#2B3649">Every {{ x.code }} reviewer follows the board’s own subject list, so you study what actually shows up.</p>
+    </div>
+    <ol data-m-stagger="" style="list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px">
+      <sc-for list="{{ x.subjects }}" as="s" hint-placeholder-count="3">
+        <li style="display:flex;gap:16px;align-items:flex-start;padding:20px;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:4px 4px 0 #0E1A2E;transition:transform .2s,box-shadow .2s" style-hover="transform:translate(-3px,-3px);box-shadow:7px 7px 0 #005AA5">
+          <span style="font:700 13px 'JetBrains Mono',monospace;color:#8E97A6;padding-top:3px">{{ s.n }}</span>
+          <span style="display:flex;flex-direction:column;gap:8px;min-width:0">
+            <span style="align-self:flex-start;font:700 13px/1 'JetBrains Mono',monospace;background:#0E1A2E;color:#F6F1E7;padding:6px 8px">{{ s.code }}</span>
+            <span style="font-weight:700;font-size:19px;line-height:1.25;letter-spacing:-.01em;text-wrap:balance">{{ s.name }}</span>
+          </span>
+        </li>
+      </sc-for>
+    </ol>
+  </section>
+
+  <section id="reviewers" data-screen-label="Reviewers" style="max-width:1296px;margin:0 auto;padding:clamp(40px,5cqi,64px) clamp(20px,5cqi,72px) clamp(64px,8cqi,112px);display:flex;flex-direction:column;gap:22px">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px 40px">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#005AA5">BEST SELLING FIRST</span>
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(36px,4.6cqi,64px);line-height:1;letter-spacing:-.035em"><span>Every {{ x.code }} reviewer</span></h2>
+      </div>
+      <sc-if value="{{ x.hasFilters }}">
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <sc-for list="{{ x.filters }}" as="f" hint-placeholder-count="3"><button onClick="{{ f.go }}" style="all:unset;cursor:pointer;min-height:40px;padding:0 14px;display:flex;align-items:center;gap:8px;font:600 14px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E;border-radius:999px;background:{{ f.bg }};color:{{ f.fg }};transition:background .15s">{{ f.t }}<span style="font:700 11px 'JetBrains Mono',monospace;opacity:.7">{{ f.n }}</span></button></sc-for>
+        </div>
+      </sc-if>
+    </div>
+    <div ref="{{ gridRef }}" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:26px">
+      <sc-for list="{{ x.shown }}" as="p" hint-placeholder-count="3">
+        <a href="{{ p.href }}" style="display:flex;flex-direction:column;background:#FBF8F1;color:#0E1A2E;border:1.5px solid #0E1A2E;text-decoration:none;box-shadow:4px 4px 0 #0E1A2E;transition:transform .2s,box-shadow .2s" style-hover="transform:translate(-4px,-4px);box-shadow:8px 8px 0 #FF881F;color:#0E1A2E">
+          <span style="position:relative;aspect-ratio:1/1;overflow:hidden;border-bottom:1.5px solid #0E1A2E;background:repeating-linear-gradient(135deg,#EDE6D6 0 8px,#E6DECB 8px 16px)">
+            <img data-src="{{ p.img }}" alt="{{ p.short }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+            <span style="position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap"><span style="font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.04em;background:#0E1A2E;color:#F6F1E7;padding:5px 7px;text-transform:uppercase">{{ p.format }}</span><sc-if value="{{ p.digital }}"><span style="font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.04em;background:#005AA5;color:#F6F1E7;padding:5px 7px">ALSO IN APP</span></sc-if></span>
+            <sc-if value="{{ p.isTop }}"><span style="position:absolute;right:0;bottom:0;background:#FF881F;font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.04em;padding:8px 10px;white-space:nowrap;border-left:1.5px solid #0E1A2E;border-top:1.5px solid #0E1A2E">#1 IN {{ x.code }}</span></sc-if>
+          </span>
+          <span style="padding:18px;display:flex;flex-direction:column;gap:10px;flex:1">
+            <span style="font-weight:800;font-size:20px;line-height:1.15;letter-spacing:-.01em">{{ p.short }}</span>
+            <span style="font:500 12px 'JetBrains Mono',monospace;color:#4A5568">{{ p.size }}</span>
+            <span style="margin-top:auto;padding-top:12px;border-top:1px dashed #C9BFA8;display:flex;justify-content:space-between;align-items:flex-end;gap:8px">
+              <span style="display:flex;flex-direction:column;gap:3px;font:500 12px 'JetBrains Mono',monospace;color:#4A5568"><span><span style="color:#E07400">★</span> {{ p.ratingLabel }} · {{ p.ratingCount }} ratings</span><span>{{ p.soldLabel }}</span></span>
+              <span style="font-weight:800;font-size:21px;white-space:nowrap">{{ p.priceLabel }}</span>
+            </span>
+          </span>
+        </a>
+      </sc-for>
+    </div>
+  </section>
+
+  <sc-if value="{{ x.compare }}">
+  <section data-screen-label="Compare" style="background:#EDE6D6;border-top:1.5px solid #0E1A2E;border-bottom:1.5px solid #0E1A2E">
+    <div style="max-width:1296px;margin:0 auto;padding:clamp(56px,7cqi,96px) clamp(20px,5cqi,72px);display:flex;flex-direction:column;gap:24px">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#005AA5">SIDE BY SIDE</span>
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(32px,4cqi,52px);line-height:1;letter-spacing:-.035em">Which one should I get?</h2>
+      </div>
+      <div style="overflow-x:auto;overflow-y:hidden;border:1.5px solid #0E1A2E;background:#FBF8F1">
+        <table style="width:100%;min-width:640px;border-collapse:collapse;font-size:15px">
+          <thead><tr style="background:#0E1A2E;color:#F6F1E7;font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em;text-align:left"><th style="padding:12px 16px">REVIEWER</th><th style="padding:12px 16px">FORMAT</th><th style="padding:12px 16px">BEST FOR</th><th style="padding:12px 16px">IN THE APP</th><th style="padding:12px 16px;text-align:right">PRICE</th></tr></thead>
+          <tbody>
+            <sc-for list="{{ x.products }}" as="p" hint-placeholder-count="3">
+              <tr style="border-top:1px solid #D6CDB9"><td style="padding:14px 16px"><a href="{{ p.href }}" style="font-weight:700;color:#0E1A2E;text-decoration:none;border-bottom:2px solid #FF881F">{{ p.short }}</a></td><td style="padding:14px 16px;font:500 13px 'JetBrains Mono',monospace">{{ p.format }} · {{ p.size }}</td><td style="padding:14px 16px;color:#2B3649">{{ p.bestFor }}</td><td style="padding:14px 16px;font:700 13px 'JetBrains Mono',monospace;color:{{ p.appC }}">{{ p.appLabel }}</td><td style="padding:14px 16px;text-align:right;font-weight:800;white-space:nowrap">{{ p.priceLabel }}</td></tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+  </sc-if>
+
+  <section data-screen-label="Try a card" style="background:#005AA5;color:#F6F1E7;border-bottom:1.5px solid #0E1A2E">
+    <div style="max-width:1296px;margin:0 auto;padding:clamp(56px,7cqi,104px) clamp(20px,5cqi,72px);display:flex;flex-wrap:wrap;gap:clamp(40px,6cqi,88px);align-items:center">
+      <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:18px">
+        <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#FF881F">TRY A {{ x.code }} CARD</span>
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(34px,4.2cqi,56px);line-height:1;letter-spacing:-.035em;text-wrap:balance">One formula a card. Flip, recall, repeat.</h2>
+        <p style="margin:0;font-size:17px;line-height:1.55;color:#DCE7F4;max-width:30em">Tap the card to flip it. The app works the same way, and remembers which cards you need to see again.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">
+          <sc-if value="{{ x.anyDigital }}"><a href="MemberApp.dc.html" style="display:flex;align-items:center;min-height:52px;padding:0 20px;background:#F6F1E7;color:#0E1A2E;font-weight:700;font-size:15px;text-decoration:none;border:1.5px solid #0E1A2E;box-shadow:4px 4px 0 #0E1A2E"><span>See {{ x.code }} app plans →</span></a></sc-if>
+          <a href="{{ x.topHref }}" style="display:flex;align-items:center;min-height:52px;padding:0 18px;color:#F6F1E7;font-weight:700;font-size:15px;text-decoration:none;border:1.5px solid #F6F1E7" style-hover="background:rgba(246,241,231,.12);color:#F6F1E7">Get the printed set</a>
+        </div>
+      </div>
+      <div style="flex:1 1 320px;min-width:0;max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+        <div style="position:relative;aspect-ratio:3/2;perspective:1400px">
+          <span style="position:absolute;inset:0;background:#0E1A2E;border:1.5px solid #F6F1E7;transform:rotate(4deg) translate(14px,10px)"></span>
+          <button onClick="{{ fc.flip }}" aria-label="Flip card" style="all:unset;cursor:pointer;position:absolute;inset:0;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.7,.2,1);transform:{{ fc.rot }}">
+            <span style="position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:#FBF8F1;color:#0E1A2E;border:1.5px solid #0E1A2E;padding:clamp(18px,2cqi,26px);box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between">
+              <span style="display:flex;justify-content:space-between;gap:10px;font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em"><span style="background:#0E1A2E;color:#F6F1E7;padding:5px 7px">{{ x.code }} · {{ fc.subj }}</span><span style="color:#8E97A6">{{ fc.pos }}</span></span>
+              <span style="font-weight:800;font-size:clamp(24px,2.6cqi,32px);line-height:1.1;letter-spacing:-.02em;text-wrap:balance">{{ fc.front }}</span>
+              <span style="font:500 12px 'JetBrains Mono',monospace;color:#4A5568">Tap to flip ↻</span>
+            </span>
+            <span style="position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:rotateY(180deg);background:#FF881F;color:#0E1A2E;border:1.5px solid #0E1A2E;padding:clamp(18px,2cqi,26px);box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between">
+              <span style="display:flex;justify-content:space-between;gap:10px;font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em"><span style="background:#0E1A2E;color:#F6F1E7;padding:5px 7px">{{ x.code }} · {{ fc.subj }}</span><span>BACK</span></span>
+              <span style="font:700 clamp(20px,2.4cqi,30px)/1.25 'JetBrains Mono',monospace;text-align:center">{{ fc.back }}</span>
+              <span style="font-size:13px;line-height:1.4">{{ fc.note }}</span>
+            </span>
+          </button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px">
+          <button onClick="{{ fc.prev }}" style="all:unset;cursor:pointer;font:700 14px 'Schibsted Grotesk',sans-serif;color:#F6F1E7">← Previous</button>
+          <div style="display:flex;gap:6px"><sc-for list="{{ fc.dots }}" as="d" hint-placeholder-count="3"><span style="width:{{ d.w }};height:6px;background:{{ d.c }};transition:width .25s"></span></sc-for></div>
+          <button onClick="{{ fc.next }}" style="all:unset;cursor:pointer;font:700 14px 'Schibsted Grotesk',sans-serif;color:#F6F1E7;border-bottom:2px solid #FF881F;padding-bottom:2px">Next card →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <sc-if value="{{ x.isCE }}">
+  <section data-screen-label="Bundle offer" style="max-width:1296px;margin:0 auto;padding:clamp(56px,7cqi,96px) clamp(20px,5cqi,72px) 0">
+    <a href="Product.dc.html?id=55314794259" data-m="up" style="display:flex;flex-wrap:wrap;align-items:center;gap:24px 48px;padding:clamp(22px,3cqi,40px);background:#0E1A2E;color:#F6F1E7;border:1.5px solid #0E1A2E;box-shadow:8px 8px 0 #FF881F;text-decoration:none;transition:transform .2s" style-hover="transform:translate(-3px,-3px);color:#F6F1E7">
+      <span style="flex:1 1 320px;display:flex;flex-direction:column;gap:12px"><span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#FF881F">CE REVIEW BUNDLE 3-IN-1 · SAVE ₱200</span><span style="font-weight:800;font-size:clamp(26px,3.2cqi,42px);line-height:1.05;letter-spacing:-.03em;text-wrap:balance">Cards, notebook, and posters for MSTC, HPGE, and PSAD in one order.</span></span>
+      <span style="display:flex;flex-direction:column;align-items:flex-start;gap:8px"><span style="font-weight:900;font-size:clamp(36px,4cqi,52px);letter-spacing:-.03em;line-height:1">₱3,499</span><span style="font-weight:700;font-size:16px;border-bottom:2px solid #FF881F">See the bundle →</span></span>
+    </a>
+  </section>
+  </sc-if>
+
+  <section data-screen-label="Exam reviews" style="padding:clamp(64px,8cqi,112px) 0;display:flex;flex-direction:column;gap:clamp(28px,3.5cqi,44px)">
+    <div style="max-width:1296px;width:100%;margin:0 auto;padding:0 clamp(20px,5cqi,72px);box-sizing:border-box;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px 40px">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#005AA5">COPIED WORD FOR WORD FROM SHOPEE</span>
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(36px,4.6cqi,64px);line-height:1;letter-spacing:-.035em"><span>From {{ x.code }} reviewees</span></h2>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:4px 4px 0 #0E1A2E;padding:12px 18px"><span style="font-weight:900;font-size:44px;line-height:1;letter-spacing:-.03em">{{ x.avg }}</span><span style="display:flex;flex-direction:column;gap:3px"><span style="color:#E07400;letter-spacing:2px">★★★★★</span><span style="font:500 12px 'JetBrains Mono',monospace">{{ x.ratingsLabel }}</span></span></div>
+    </div>
+    <sc-if value="{{ x.marquee }}">
+      <div style="overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)">
+        <div style="animation:aycMqL 60s linear infinite;display:flex;gap:24px;width:max-content;align-items:flex-start;padding:10px 0" style-hover="animation-play-state:paused">
+          <sc-for list="{{ x.loop }}" as="w" hint-placeholder-count="5"><div style="width:330px;flex:none;max-height:300px;overflow:hidden;-webkit-mask-image:linear-gradient(180deg,#000 80%,transparent);mask-image:linear-gradient(180deg,#000 80%,transparent)"><dc-import name="ReviewCard" r="{{ w.r }}" tilt="{{ w.tilt }}" hint-size="330px,230px"></dc-import></div></sc-for>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ x.staticReviews }}">
+      <div style="max-width:1296px;width:100%;margin:0 auto;padding:0 clamp(20px,5cqi,72px);box-sizing:border-box;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:24px">
+        <sc-for list="{{ x.reviews }}" as="w" hint-placeholder-count="2"><div style="padding:10px 4px"><dc-import name="ReviewCard" r="{{ w.r }}" tilt="{{ w.tilt }}" hint-size="100%,230px"></dc-import></div></sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ x.noReviews }}">
+      <div style="max-width:1296px;width:100%;margin:0 auto;padding:0 clamp(20px,5cqi,72px);box-sizing:border-box"><div style="border:1.5px dashed #8E97A6;padding:24px;font-size:16px;line-height:1.5;color:#2B3649;max-width:560px">No written reviews yet. Buyers have left star ratings on Shopee but no comments so far.</div></div>
+    </sc-if>
+  </section>
+
+  <section data-screen-label="Store band" style="background:#FF881F;border-top:1.5px solid #0E1A2E;border-bottom:1.5px solid #0E1A2E">
+    <div style="max-width:1296px;margin:0 auto;padding:clamp(40px,5cqi,64px) clamp(20px,5cqi,72px);display:flex;flex-wrap:wrap;gap:24px 40px;align-items:center;justify-content:space-between">
+      <p data-m="up" style="margin:0;font-weight:800;font-size:clamp(28px,3.4cqi,44px);line-height:1.05;letter-spacing:-.03em;max-width:20ch"><span>Get your {{ x.code }} reviewer from our official stores.</span></p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        <a href="https://shopee.ph/aceyourcourse" target="_blank" style="display:flex;align-items:center;min-height:52px;padding:0 18px;background:#0E1A2E;color:#F6F1E7;font-weight:700;font-size:15px;text-decoration:none;border:1.5px solid #0E1A2E;box-shadow:3px 3px 0 #F6F1E7;transition:transform .15s" style-hover="transform:translate(-2px,-2px);color:#F6F1E7">Shopee ↗</a>
+        <a href="https://www.lazada.com.ph/shop/aceyourcourse" target="_blank" style="display:flex;align-items:center;min-height:52px;padding:0 18px;background:#F6F1E7;color:#0E1A2E;font-weight:700;font-size:15px;text-decoration:none;border:1.5px solid #0E1A2E;box-shadow:3px 3px 0 #0E1A2E;transition:transform .15s" style-hover="transform:translate(-2px,-2px);color:#0E1A2E">Lazada ↗</a>
+        <a href="https://vt.tiktok.com/ZS49ve6cu/?page=TikTokShop" target="_blank" style="display:flex;align-items:center;min-height:52px;padding:0 18px;background:#F6F1E7;color:#0E1A2E;font-weight:700;font-size:15px;text-decoration:none;border:1.5px solid #0E1A2E;box-shadow:3px 3px 0 #0E1A2E;transition:transform .15s" style-hover="transform:translate(-2px,-2px);color:#0E1A2E">TikTok Shop ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <dc-import name="SiteFooter" hint-size="100%,420px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;mobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;exam&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;CE&quot;,&quot;ME&quot;,&quot;EE&quot;,&quot;MT&quot;,&quot;CPA&quot;],&quot;default&quot;:&quot;CE&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  static CARDS = {
+    CE: [['MSTC', 'Tangent distance of a simple curve', 'T = R tan(I/2)', 'R = radius, I = central angle'], ['HPGE', 'Pressure at a depth in a liquid', 'p = γh', 'γ = unit weight; 9.81 kN/m³ for water'], ['PSAD', 'Balanced steel ratio', 'ρb = 0.85β₁f′c(600) / [fy(600 + fy)]', 'f′c and fy in MPa']],
+    ME: [['PIP', 'Ideal gas equation', 'PV = mRT', 'R = 0.287 kJ/kg·K for air'], ['PIP', 'Carnot efficiency', 'η = 1 − T_L / T_H', 'Temperatures in kelvin'], ['MD', 'Power transmitted by a shaft', 'P = 2πTN', 'T = torque, N in rev/s']],
+    EE: [['ESAS', 'Ohm’s law', 'V = IR', 'Voltage, current, resistance'], ['EE PROF', 'Real power, balanced three-phase', 'P = √3 · V_L · I_L · cos θ', 'θ = power factor angle'], ['MATH', 'Quadratic formula', 'x = [−b ± √(b² − 4ac)] / 2a', 'For ax² + bx + c = 0']],
+    MT: [['CLIN CHEM', 'Friedewald LDL equation', 'LDL = TC − HDL − TG/5', 'In mg/dL; not valid when TG is above 400 mg/dL'], ['HEMA', 'Mean corpuscular volume', 'MCV = Hct × 10 / RBC', 'Hct in %, RBC × 10¹²/L, result in fL'], ['HEMA', 'Mean corpuscular Hgb concentration', 'MCHC = Hgb × 100 / Hct', 'Hgb in g/dL, Hct in %, result in g/dL']],
+    CPA: [['FAR', 'The accounting equation', 'Assets = Liabilities + Equity', 'Every transaction keeps both sides equal'], ['FAR', 'Current ratio', 'Current assets ÷ Current liabilities', 'A liquidity measure'], ['MS', 'Break-even point in units', 'Fixed costs ÷ Contribution margin per unit', 'CM per unit = price − variable cost']]
+  };
+  static BEST = { 'Flash cards': 'Quick recall on the go', 'Posters': 'Your study wall, active recall', 'Notebook': 'Practice solving and notes', 'Bundle': 'Everything in one order' };
+  state = { exam: null, fmt: 'All', ci: 0, flipped: false };
+  heroRef = el => { this.heroEl = el; };
+  gridRef = el => { this.gridEl = el; };
+  reduce = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  componentDidMount() {
+    (window.__ayc ||= import(new URL('ayc-data.js', document.baseURI).href)).then(d => { this.d = d; this.forceUpdate(); });
+  }
+  componentWillUnmount() { clearTimeout(this._t); }
+  componentDidUpdate() { const prev = this._prevState || this.state; this._prevState = this.state;
+    const fade = el => el && !this.reduce && el.animate([{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.2,.7,.2,1)' });
+    if (prev.exam !== this.state.exam) fade(this.heroEl);
+    if (prev.fmt !== this.state.fmt) fade(this.gridEl);
+  }
+  card(i) {
+    clearTimeout(this._t);
+    if (this.state.flipped) { this.setState({ flipped: false }); this._t = setTimeout(() => this.setState({ ci: i }), 320); } else this.setState({ ci: i });
+  }
+  renderVals() {
+    const m = !!this.props.mobile, D = this.d, st = this.state;
+    const code = st.exam || this.props.exam || new URLSearchParams(location.search).get('exam') || 'CE';
+    const C = Component.CARDS[code] || Component.CARDS.CE, c = C[Math.min(st.ci, C.length - 1)];
+    const fc = { subj: c[0], front: c[1], back: c[2], note: c[3], pos: (st.ci + 1) + ' / ' + C.length, rot: st.flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+      flip: () => this.setState({ flipped: !st.flipped }), next: () => this.card((st.ci + 1) % C.length), prev: () => this.card((st.ci + C.length - 1) % C.length),
+      dots: C.map((_, i) => ({ w: i === st.ci ? '28px' : '10px', c: i === st.ci ? '#FF881F' : 'rgba(246,241,231,.45)' })) };
+    const switcher = ['CE', 'ME', 'EE', 'MT', 'CPA'].map(k => ({ code: k, go: () => this.setState({ exam: k, fmt: 'All', ci: 0, flipped: false }), bg: k === code ? '#F6F1E7' : 'transparent', fg: k === code ? '#0E1A2E' : '#F6F1E7' }));
+    if (!D) return { m, fc, switcher, x: { code, board: '', name: '', subjCount: '', avg: '', ratingsLabel: '', topHref: '#', long: '', blurb: '', countLabel: '', stats: [], stack: [], ticker: [], subjects: [], filters: [], shown: [], products: [], loop: [], reviews: [] } };
+    const e = D.EXAMS.find(z => z.code === code) || D.EXAMS[0], info = D.EXAM_INFO[e.code];
+    const products = D.bySold().filter(p => p.exam === e.code).map((p, i) => ({ ...p, isTop: i === 0, bestFor: Component.BEST[p.format] || '', appLabel: p.digital ? 'YES' : 'PHYSICAL ONLY', appC: p.digital ? '#005AA5' : '#8E97A6' }));
+    const fmts = [...new Set(products.map(p => p.format))];
+    const fmt = fmts.includes(st.fmt) ? st.fmt : 'All';
+    const filters = ['All', ...fmts].map(t => ({ t, n: t === 'All' ? products.length : products.filter(p => p.format === t).length, go: () => this.setState({ fmt: t }), bg: t === fmt ? '#0E1A2E' : 'transparent', fg: t === fmt ? '#F6F1E7' : '#0E1A2E' }));
+    const sold = products.reduce((a, p) => a + p.sold, 0), ratings = products.reduce((a, p) => a + p.ratingCount, 0);
+    const avg = ratings ? (products.reduce((a, p) => a + p.rating * p.ratingCount, 0) / ratings).toFixed(1) : '—';
+    const minP = Math.min(...products.filter(p => !p.pending).map(p => p.price));
+    const insets = ['10% 14% 14% 10%', '18% 6% 6% 22%', '4% 24% 24% 4%'], rots = ['-2deg', '4deg', '-6deg'];
+    const stack = products.filter(p => !p.pending).slice(0, 3).map((p, i) => ({ ...p, inset: insets[i], rot: rots[i] })).reverse();
+    const subs = info.subjects;
+    const tilts = [-1, 1.1, -0.5, 0.8, -1.2, 0.6, -0.8];
+    const reviews = products.flatMap(p => p.reviews).slice(0, 7).map((r, i) => ({ r, tilt: tilts[i] }));
+    const marquee = reviews.length >= 4;
+    const x = { code: e.code, board: e.board, name: info.name, long: info.long, blurb: info.blurb, isCE: e.code === 'CE',
+      anyDigital: products.some(p => p.digital), countLabel: products.length + (products.length === 1 ? ' reviewer' : ' reviewers'),
+      stats: [{ k: 'REVIEWERS', v: String(products.length) }, { k: 'UNITS SOLD', v: sold.toLocaleString('en-PH') }, { k: 'AVG RATING', v: avg }, { k: 'FROM', v: D.peso(minP) }],
+      stack, ticker: [...subs.map(([a, b]) => a + ' · ' + b), ...subs.map(([a, b]) => a + ' · ' + b), ...subs.map(([a, b]) => a + ' · ' + b)].slice(0, Math.max(8, subs.length * 2)),
+      subjCount: subs.length, subjects: subs.map(([c2, n], i) => ({ code: c2, name: n, n: String(i + 1).padStart(2, '0') })),
+      hasFilters: fmts.length > 1, filters, shown: products.filter(p => fmt === 'All' || p.format === fmt), products, compare: products.length > 1, topHref: products[0].href,
+      avg, ratingsLabel: ratings + ' ratings on Shopee', reviews, loop: [...reviews, ...reviews], marquee, staticReviews: !marquee && reviews.length > 0, noReviews: reviews.length === 0 };
+    return { m, fc, switcher, x };
+  }
+}
+</script>
+</body>
+</html>

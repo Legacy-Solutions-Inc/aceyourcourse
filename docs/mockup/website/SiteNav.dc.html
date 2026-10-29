@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap"></helmet>
+<header style="position:relative;font-family:'Schibsted Grotesk',sans-serif;color:#0E1A2E;background:#F6F1E7;border-bottom:1.5px solid #0E1A2E;box-shadow:{{ shadow }};transition:box-shadow .25s">
+  <sc-if value="{{ bar }}" hint-placeholder-val="{{ true }}">
+    <div style="background:#005AA5;color:#F6F1E7;display:flex;align-items:center;justify-content:center;gap:12px;padding:0 44px;min-height:34px;position:relative;font:500 11px/1.3 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;text-align:center">
+      <span style="color:#FF881F">✦</span><a ref="{{ annRef }}" href="{{ ann.href }}" style="color:#F6F1E7;text-decoration:none;padding:9px 0" style-hover="color:#FFD2A8">{{ ann.t }}</a>
+      <button onClick="{{ hideBar }}" aria-label="Dismiss" style="all:unset;cursor:pointer;position:absolute;right:8px;top:50%;transform:translateY(-50%);width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#F6F1E7;opacity:.8" style-hover="opacity:1">✕</button>
+    </div>
+  </sc-if>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:0 clamp(20px,5cqi,72px);min-height:{{ rowH }};max-width:1440px;margin:0 auto;box-sizing:border-box;transition:min-height .25s">
+    <a href="Home v2.dc.html" aria-label="AceYourCourse home" style="display:flex;align-items:center;text-decoration:none;color:#0E1A2E;transition:transform .2s" style-hover="transform:translateY(-1px)">
+      <img src="assets/brand-horizontal.svg" alt="AceYourCourse" style="height:29px;width:auto;display:block">
+    </a>
+    <sc-if value="{{ d }}" hint-placeholder-val="{{ true }}">
+      <nav style="display:flex;align-items:center;gap:4px;font-weight:600;font-size:15px">
+        <div onMouseEnter="{{ openExams }}" onMouseLeave="{{ closeExams }}" style="position:relative">
+          <button onClick="{{ toggleExams }}" aria-expanded="{{ examsOpen }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;font:600 15px 'Schibsted Grotesk',sans-serif;background:{{ examBg }};border-radius:999px;transition:background .15s" style-hover="background:#EDE6D6">Exams <span style="display:inline-block;font-size:10px;transform:rotate({{ caret }});transition:transform .2s">▾</span></button>
+        </div>
+        <sc-for list="{{ links }}" as="l" hint-placeholder-count="4">
+          <a href="{{ l.href }}" aria-current="{{ l.cur }}" style="position:relative;display:flex;align-items:center;min-height:44px;padding:0 14px;color:#0E1A2E;text-decoration:none;border-radius:999px;background:{{ l.bg }};transition:background .15s" style-hover="background:#EDE6D6;color:#0E1A2E">{{ l.t }}<span style="position:absolute;left:14px;right:14px;bottom:6px;height:2px;background:#FF881F;transform:scaleX({{ l.line }});transform-origin:left;transition:transform .25s"></span></a>
+        </sc-for>
+      </nav>
+      <div style="display:flex;gap:10px;align-items:center">
+        <a href="MemberApp.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 16px;color:#0E1A2E;font-weight:700;font-size:14px;text-decoration:none;border:1.5px solid #0E1A2E;transition:background .15s" style-hover="background:#EDE6D6;color:#0E1A2E">Sign in</a>
+        <a href="MemberApp.dc.html" style="display:flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;background:#FF881F;color:#0E1A2E;font-weight:800;font-size:14px;text-decoration:none;border:1.5px solid #0E1A2E;box-shadow:3px 3px 0 #0E1A2E;transition:transform .15s,box-shadow .15s" style-hover="transform:translate(-2px,-2px);box-shadow:5px 5px 0 #0E1A2E;color:#0E1A2E">Start reviewing <span aria-hidden="true">→</span></a>
+      </div>
+    </sc-if>
+    <sc-if value="{{ m }}">
+      <div style="display:flex;gap:8px;align-items:center">
+        <a href="MemberApp.dc.html" style="background:#FF881F;color:#0E1A2E;font-weight:700;font-size:13px;text-decoration:none;padding:0 12px;height:44px;display:flex;align-items:center;border:1.5px solid #0E1A2E;white-space:nowrap;flex:none">Sign in</a>
+        <button aria-label="{{ menuLabel }}" aria-expanded="{{ open }}" onClick="{{ toggle }}" style="all:unset;cursor:pointer;box-sizing:border-box;height:44px;width:44px;border:1.5px solid #0E1A2E;background:{{ burgerBg }};position:relative;transition:background .2s">
+          <span style="position:absolute;left:12px;width:18px;height:2px;background:{{ burgerFg }};top:{{ b1 }};transform:rotate({{ r1 }});transition:transform .25s,top .25s"></span>
+          <span style="position:absolute;left:12px;width:18px;height:2px;background:{{ burgerFg }};top:20px;opacity:{{ midO }};transition:opacity .15s"></span>
+          <span style="position:absolute;left:12px;width:18px;height:2px;background:{{ burgerFg }};top:{{ b3 }};transform:rotate({{ r3 }});transition:transform .25s,top .25s"></span>
+        </button>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ examsOpen }}">
+    <div onMouseEnter="{{ openExams }}" onMouseLeave="{{ closeExams }}" ref="{{ megaRef }}" style="position:absolute;left:0;right:0;top:100%;z-index:60;background:#FBF8F1;border-top:1.5px solid #0E1A2E;border-bottom:1.5px solid #0E1A2E;box-shadow:0 18px 30px -18px rgba(14,26,46,.45)">
+      <div style="max-width:1440px;margin:0 auto;box-sizing:border-box;padding:24px clamp(20px,5cqi,72px) 28px;display:flex;flex-wrap:wrap;gap:24px 40px">
+        <div style="flex:3 1 560px;display:flex;flex-direction:column;gap:12px">
+          <span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#005AA5">PICK YOUR BOARD EXAM</span>
+          <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px">
+            <sc-for list="{{ exams }}" as="e" hint-placeholder-count="5">
+              <a href="{{ e.href }}" style="display:flex;flex-direction:column;gap:8px;padding:16px;background:#F6F1E7;color:#0E1A2E;text-decoration:none;border:1.5px solid #0E1A2E;transition:transform .15s,box-shadow .15s,background .15s" style-hover="transform:translate(-2px,-2px);box-shadow:4px 4px 0 #FF881F;background:#FFFDF8;color:#0E1A2E">
+                <span style="font:700 24px/1 'JetBrains Mono',monospace;letter-spacing:-.02em">{{ e.code }}</span>
+                <span style="font-size:14px;line-height:1.3;font-weight:600">{{ e.name }}</span>
+                <span style="margin-top:auto;font:500 11px 'JetBrains Mono',monospace;color:#4A5568">{{ e.board }}</span>
+              </a>
+            </sc-for>
+          </div>
+        </div>
+        <div style="flex:1 1 220px;display:flex;flex-direction:column;gap:12px">
+          <span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#4A5568">ON SHOPEE · PAGES COMING SOON</span>
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ soon }}" as="s" hint-placeholder-count="6"><span style="font:600 13px 'Schibsted Grotesk',sans-serif;padding:7px 10px;border:1px dashed #8E97A6">{{ s }}</span></sc-for></div>
+          <a href="Products v2.dc.html" style="margin-top:auto;font-weight:800;font-size:15px;color:#005AA5;text-decoration:none" style-hover="color:#003F73">Browse all reviewers →</a>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ open }}">
+    <div data-m="drop" style="border-top:1.5px solid #0E1A2E;background:#F6F1E7;padding:16px 20px 24px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#005AA5">EXAMS</span>
+        <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px"><sc-for list="{{ exams }}" as="e" hint-placeholder-count="5"><a href="{{ e.href }}" style="min-height:52px;display:flex;align-items:center;justify-content:center;border:1.5px solid #0E1A2E;background:#FBF8F1;color:#0E1A2E;font:700 14px 'JetBrains Mono',monospace;text-decoration:none">{{ e.code }}</a></sc-for></div>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ links }}" as="l" hint-placeholder-count="4">
+          <a href="{{ l.href }}" style="display:flex;justify-content:space-between;align-items:center;min-height:56px;border-bottom:1.5px solid #0E1A2E;color:#0E1A2E;text-decoration:none;font-weight:800;font-size:24px;letter-spacing:-.02em"><span style="display:flex;align-items:center;gap:10px"><span style="width:8px;height:8px;border-radius:50%;background:#FF881F;opacity:{{ l.line }}"></span>{{ l.t }}</span><span style="font-size:18px">→</span></a>
+        </sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <a href="MemberApp.dc.html" style="min-height:52px;display:flex;align-items:center;justify-content:center;border:1.5px solid #0E1A2E;color:#0E1A2E;font-weight:700;font-size:15px;text-decoration:none">Sign in</a>
+        <a href="MemberApp.dc.html" style="min-height:52px;display:flex;align-items:center;justify-content:center;background:#FF881F;border:1.5px solid #0E1A2E;box-shadow:3px 3px 0 #0E1A2E;color:#0E1A2E;font-weight:800;font-size:15px;text-decoration:none">Start reviewing</a>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font:500 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#4A5568">PRINTED COPIES</span>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+          <a href="https://shopee.ph/aceyourcourse" target="_blank" style="min-height:44px;display:flex;align-items:center;justify-content:center;border:1.5px solid #0E1A2E;color:#0E1A2E;font-weight:700;font-size:14px;text-decoration:none">Shopee ↗</a>
+          <a href="https://www.lazada.com.ph/shop/aceyourcourse" target="_blank" style="min-height:44px;display:flex;align-items:center;justify-content:center;border:1.5px solid #0E1A2E;color:#0E1A2E;font-weight:700;font-size:14px;text-decoration:none">Lazada ↗</a>
+          <a href="https://vt.tiktok.com/ZS49ve6cu/?page=TikTokShop" target="_blank" style="min-height:44px;display:flex;align-items:center;justify-content:center;border:1.5px solid #0E1A2E;color:#0E1A2E;font-weight:700;font-size:14px;text-decoration:none">TikTok ↗</a>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;mobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;active&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;exams&quot;,&quot;products&quot;,&quot;reviews&quot;,&quot;about&quot;,&quot;faq&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  static ANN = [
+    { t: 'Physical copies on Shopee, Lazada & TikTok Shop', href: 'Products v2.dc.html' },
+    { t: 'Digital reviewers in the app · no auto-renew', href: 'MemberApp.dc.html' },
+    { t: 'Ships from Iloilo City · SPayLater 0% on Shopee', href: 'FAQ v2.dc.html' }];
+  state = { open: false, exams: false, scrolled: false, bar: true, ai: 0 };
+  annRef = el => { this.annEl = el; };
+  megaRef = el => { el && !this.reduce && el.animate([{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'ease-out' }); };
+  componentDidMount() {
+    this.reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.onScroll = () => { const s = window.scrollY > 8; if (s !== this.state.scrolled) this.setState({ scrolled: s }); };
+    this.onKey = e => { if (e.key === 'Escape' && (this.state.exams || this.state.open)) this.setState({ exams: false, open: false }); };
+    window.addEventListener('scroll', this.onScroll, { passive: true }); window.addEventListener('keydown', this.onKey);
+    if (!this.reduce) this.tick = setInterval(() => this.setState(s => ({ ai: (s.ai + 1) % Component.ANN.length })), 4500);
+  }
+  componentDidUpdate() { const p = this._prevState || this.state; this._prevState = this.state; if (p.ai !== this.state.ai && this.annEl) this.annEl.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'ease-out' }); }
+  componentWillUnmount() { window.removeEventListener('scroll', this.onScroll); window.removeEventListener('keydown', this.onKey); clearInterval(this.tick); clearTimeout(this.t); }
+  renderVals() {
+    const m = !!this.props.mobile, a = this.props.active, s = this.state;
+    const open = m && (s.open || !!this.props.menuOpen), ex = !m && s.exams;
+    const links = [['Products', 'Products v2.dc.html', 'products'], ['Reviews', 'Reviews v2.dc.html', 'reviews'], ['About', 'About v2.dc.html', 'about'], ['FAQ', 'FAQ v2.dc.html', 'faq']]
+      .map(([t, href, k]) => ({ t, href, cur: k === a ? 'page' : undefined, line: k === a ? 1 : 0, bg: 'transparent' }));
+    const exams = [['CE', 'Civil Engineering', 'CELE'], ['ME', 'Mechanical Engineering', 'MELE'], ['EE', 'Electrical Engineering', 'REE'], ['MT', 'Medical Technology', 'MTLE'], ['CPA', 'Accountancy', 'CPALE']]
+      .map(([code, name, board]) => ({ code, name, board, href: 'Exam v2.dc.html?exam=' + code }));
+    return { m, d: !m, open, examsOpen: ex, bar: s.bar, ann: Component.ANN[s.ai], links, exams,
+      soon: ['Pharmacy', 'Teachers', 'Fisheries', 'Master Plumber', 'Physical Therapy', 'Psychometrician'],
+      shadow: s.scrolled || ex ? '0 8px 20px -12px rgba(14,26,46,.5)' : 'none', rowH: s.scrolled ? '60px' : '72px',
+      examBg: ex || a === 'exams' ? '#EDE6D6' : 'transparent', caret: ex ? '180deg' : '0deg',
+      openExams: () => { clearTimeout(this.t); this.setState({ exams: true }); },
+      closeExams: () => { clearTimeout(this.t); this.t = setTimeout(() => this.setState({ exams: false }), 160); },
+      toggleExams: () => this.setState({ exams: !s.exams }),
+      hideBar: () => this.setState({ bar: false }),
+      toggle: () => this.setState({ open: !s.open }), menuLabel: open ? 'Close menu' : 'Open menu',
+      burgerBg: open ? '#0E1A2E' : 'transparent', burgerFg: open ? '#F6F1E7' : '#0E1A2E',
+      b1: open ? '20px' : '14px', b3: open ? '20px' : '26px', r1: open ? '45deg' : '0deg', r3: open ? '-45deg' : '0deg', midO: open ? 0 : 1 };
+  }
+}
+</script>
+</body>
+</html>

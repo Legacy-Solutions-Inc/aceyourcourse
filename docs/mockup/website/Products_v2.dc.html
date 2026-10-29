@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><script src="motion.js?v=3"></script><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap"><style>@keyframes aycMqL{from{transform:translateX(0)}to{transform:translateX(-50%)}}@media (prefers-reduced-motion:reduce){[style*="aycMq"]{animation:none!important}}body{margin:0}a{color:#005AA5}a:hover{color:#003F73}input[type=range]{accent-color:#005AA5}</style></helmet>
+<div style="container-type:inline-size;width:100%;background:#F6F1E7;color:#0E1A2E;font-family:'Schibsted Grotesk',sans-serif;overflow-x:clip">
+  <dc-import name="SiteNav" style="position:sticky;top:0;z-index:50" mobile="{{ m }}" active="products" hint-size="100%,100px"></dc-import>
+
+  <section data-screen-label="Products hero" style="background:#0E1A2E;color:#F6F1E7">
+    <div style="max-width:1296px;margin:0 auto;box-sizing:border-box;padding:clamp(48px,6cqi,88px) clamp(20px,5cqi,72px) clamp(40px,5cqi,64px);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:28px 48px">
+      <div style="flex:1 1 480px;min-width:0;display:flex;flex-direction:column;gap:20px">
+        <span data-m="drop" style="align-self:flex-start;display:flex;align-items:center;gap:10px;font:700 12px/1 'JetBrains Mono',monospace;letter-spacing:.08em;border:1.5px solid rgba(246,241,231,.5);padding:9px 12px;border-radius:999px"><span data-m="pulse" style="width:8px;height:8px;border-radius:50%;background:#FF881F"></span>ALL REVIEWERS · 5 BOARD EXAMS</span>
+        <h1 data-m="reveal" style="margin:0;font-weight:800;font-size:clamp(44px,6.4cqi,92px);line-height:.94;letter-spacing:-.045em;max-width:12ch;text-wrap:balance">Find the reviewer that fits how you study.</h1>
+        <p data-m="up" data-m-delay="150" style="margin:0;font-size:clamp(17px,1.5cqi,20px);line-height:1.5;max-width:32em;color:#DCE3EC">Flash cards, posters, notebooks, and bundles for CE, ME, EE, MT, and CPA. Shipped nationwide. Most are also in the app.</p>
+      </div>
+      <div data-m="up" data-m-delay="250" style="display:flex;flex-wrap:wrap;gap:10px">
+        <a href="#picker" style="display:flex;align-items:center;min-height:54px;padding:0 22px;background:#FF881F;color:#0E1A2E;font-weight:800;font-size:16px;text-decoration:none;border:1.5px solid #F6F1E7;box-shadow:5px 5px 0 #F6F1E7;transition:transform .18s,box-shadow .18s" style-hover="transform:translate(-2px,-2px);box-shadow:7px 7px 0 #F6F1E7;color:#0E1A2E">Help me choose</a>
+        <a href="#all" style="display:flex;align-items:center;min-height:54px;padding:0 20px;color:#F6F1E7;font-weight:700;font-size:16px;text-decoration:none;border:1.5px solid #F6F1E7" style-hover="background:rgba(246,241,231,.12);color:#F6F1E7">Browse all ↓</a>
+      </div>
+    </div>
+    <div style="background:#FF881F;color:#0E1A2E;border-top:1.5px solid #0E1A2E;overflow:hidden">
+      <div style="animation:aycMqL 38s linear infinite;display:flex;width:max-content;padding:13px 0;font:700 13px/1 'JetBrains Mono',monospace;letter-spacing:.06em;white-space:nowrap">
+        <sc-for list="{{ ticker }}" as="t" hint-placeholder-count="12"><span style="display:flex;align-items:center;gap:28px;padding-right:28px"><span>{{ t }}</span><span>✦</span></span></sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section id="picker" data-screen-label="Help me choose" style="max-width:1296px;margin:0 auto;padding:clamp(56px,7cqi,96px) clamp(20px,5cqi,72px) clamp(32px,4cqi,48px)">
+    <div style="display:flex;flex-wrap:wrap;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:8px 8px 0 #0E1A2E">
+      <div style="flex:1.3 1 420px;min-width:0;padding:clamp(22px,3cqi,40px);display:flex;flex-direction:column;gap:22px;border-right:1.5px solid #0E1A2E;margin-right:-1.5px">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#005AA5">HELP ME CHOOSE · 2 QUESTIONS</span>
+          <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(30px,3.6cqi,48px);line-height:1;letter-spacing:-.035em">Not sure where to start?</h2>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span style="font-weight:700;font-size:16px">1. Which board are you taking?</span>
+          <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ pk.exams }}" as="o" hint-placeholder-count="5"><button onClick="{{ o.go }}" style="all:unset;cursor:pointer;min-width:56px;min-height:44px;padding:0 14px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font:700 14px 'JetBrains Mono',monospace;border:1.5px solid #0E1A2E;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};transition:background .15s,box-shadow .15s">{{ o.t }}</button></sc-for></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span style="font-weight:700;font-size:16px">2. How do you like to study?</span>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:8px"><sc-for list="{{ pk.ways }}" as="o" hint-placeholder-count="4"><button onClick="{{ o.go }}" style="all:unset;cursor:pointer;box-sizing:border-box;min-height:64px;padding:12px 14px;display:flex;flex-direction:column;gap:3px;border:1.5px solid #0E1A2E;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};transition:background .15s,box-shadow .15s"><span style="font-weight:700;font-size:15px">{{ o.t }}</span><span style="font-size:13px;opacity:.8">{{ o.d }}</span></button></sc-for></div>
+        </div>
+      </div>
+      <div ref="{{ pickRef }}" style="flex:1 1 340px;min-width:0;padding:clamp(22px,3cqi,40px);display:flex;flex-direction:column;gap:16px;background:#EDE6D6">
+        <span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#4A5568">{{ pk.label }}</span>
+        <sc-if value="{{ pk.has }}">
+          <a href="{{ pk.p.href }}" style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:16px;align-items:center;text-decoration:none;color:#0E1A2E">
+            <span style="position:relative;width:110px;height:110px;border:1.5px solid #0E1A2E;overflow:hidden;background:#F6F1E7"><img data-src="{{ pk.p.img }}" alt="{{ pk.p.short }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></span>
+            <span style="display:flex;flex-direction:column;gap:6px;min-width:0"><span style="font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;color:#005AA5">{{ pk.p.exam }} · {{ pk.p.format }}</span><span style="font-weight:800;font-size:22px;line-height:1.1;letter-spacing:-.02em">{{ pk.p.short }}</span><span style="font-weight:800;font-size:18px">{{ pk.p.priceLabel }}</span></span>
+          </a>
+          <p style="margin:0;font-size:15px;line-height:1.5;color:#2B3649;text-wrap:pretty">{{ pk.why }}</p>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:auto">
+            <a href="{{ pk.p.href }}" style="display:flex;align-items:center;min-height:48px;padding:0 18px;background:#0E1A2E;color:#F6F1E7;font-weight:700;font-size:15px;text-decoration:none;border:1.5px solid #0E1A2E" style-hover="background:#005AA5;color:#F6F1E7">View reviewer →</a>
+            <button onClick="{{ pk.showAll }}" style="all:unset;cursor:pointer;min-height:48px;padding:0 16px;display:flex;align-items:center;font-weight:700;font-size:15px;border:1.5px solid #0E1A2E"><span>See all {{ pk.exam }} reviewers</span></button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ pk.empty }}"><p style="margin:0;font-size:17px;line-height:1.5;color:#2B3649">Answer both questions and we’ll suggest one reviewer to start with.</p></sc-if>
+      </div>
+    </div>
+  </section>
+
+  <section id="all" data-screen-label="All products" style="max-width:1296px;margin:0 auto;padding:clamp(32px,4cqi,48px) clamp(20px,5cqi,72px) clamp(64px,8cqi,112px);display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px 32px">
+      <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(36px,4.6cqi,64px);line-height:1;letter-spacing:-.035em">All reviewers</h2>
+      <span style="font:700 13px 'JetBrains Mono',monospace;letter-spacing:.04em">{{ countLabel }}</span>
+    </div>
+    <div style="position:sticky;top:12px;z-index:5;display:flex;flex-direction:column;gap:12px;padding:16px;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:4px 4px 0 #0E1A2E">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+        <label style="flex:1 1 240px;display:flex;align-items:center;gap:10px;min-height:46px;padding:0 14px;border:1.5px solid #0E1A2E;background:#F6F1E7"><span aria-hidden="true" style="font-size:16px">⌕</span><input value="{{ q }}" onInput="{{ onQ }}" placeholder="Search by exam, subject, or format" style="all:unset;flex:1;min-width:0;font:500 15px 'Schibsted Grotesk',sans-serif"></label>
+        <label style="display:flex;align-items:center;gap:8px;min-height:46px;padding:0 12px;border:1.5px solid #0E1A2E;background:#F6F1E7;font:600 14px 'Schibsted Grotesk',sans-serif"><span style="font:500 11px 'JetBrains Mono',monospace;color:#4A5568">SORT</span><select value="{{ sort }}" onChange="{{ onSort }}" style="all:unset;cursor:pointer;font:700 14px 'Schibsted Grotesk',sans-serif;padding-right:4px"><option value="sold">Best selling</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option><option value="rating">Top rated</option></select><span aria-hidden="true">▾</span></label>
+        <button onClick="{{ toggleApp }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;min-height:46px;padding:0 14px;box-sizing:border-box;border:1.5px solid #0E1A2E;background:{{ appBg }};color:{{ appFg }};font:700 14px 'Schibsted Grotesk',sans-serif;transition:background .15s"><span style="width:34px;height:20px;border-radius:999px;border:1.5px solid currentColor;position:relative;box-sizing:border-box"><span style="position:absolute;top:2px;left:{{ knobX }};width:13px;height:13px;border-radius:50%;background:currentColor;transition:left .2s"></span></span>Also in app</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span style="font:500 11px 'JetBrains Mono',monospace;color:#4A5568;margin-right:4px">EXAM</span><sc-for list="{{ examChips }}" as="c" hint-placeholder-count="6"><button onClick="{{ c.go }}" style="all:unset;cursor:pointer;min-height:36px;padding:0 12px;display:flex;align-items:center;gap:6px;font:700 13px 'JetBrains Mono',monospace;border:1.5px solid #0E1A2E;border-radius:999px;background:{{ c.bg }};color:{{ c.fg }};transition:background .15s">{{ c.t }}<span style="font-weight:500;opacity:.65">{{ c.n }}</span></button></sc-for></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span style="font:500 11px 'JetBrains Mono',monospace;color:#4A5568;margin-right:4px">FORMAT</span><sc-for list="{{ fmtChips }}" as="c" hint-placeholder-count="5"><button onClick="{{ c.go }}" style="all:unset;cursor:pointer;min-height:36px;padding:0 12px;display:flex;align-items:center;gap:6px;font:600 13px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E;border-radius:999px;background:{{ c.bg }};color:{{ c.fg }};transition:background .15s">{{ c.t }}<span style="font:500 11px 'JetBrains Mono',monospace;opacity:.65">{{ c.n }}</span></button></sc-for></div>
+        <label style="flex:1 1 220px;display:flex;align-items:center;gap:10px;font:500 11px 'JetBrains Mono',monospace;color:#4A5568">MAX PRICE<input type="range" min="400" max="3500" step="50" value="{{ maxP }}" onInput="{{ onMax }}" style="flex:1;min-width:80px"><span style="font:800 15px 'Schibsted Grotesk',sans-serif;color:#0E1A2E;min-width:62px;text-align:right">{{ maxLabel }}</span></label>
+        <sc-if value="{{ filtered }}"><button onClick="{{ reset }}" style="all:unset;cursor:pointer;font:700 13px 'Schibsted Grotesk',sans-serif;color:#005AA5;border-bottom:2px solid #005AA5">Clear filters</button></sc-if>
+      </div>
+    </div>
+
+    <div ref="{{ gridRef }}" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:26px;padding-top:8px">
+      <sc-for list="{{ list }}" as="p" hint-placeholder-count="6">
+        <article style="display:flex;flex-direction:column;background:#FBF8F1;color:#0E1A2E;border:1.5px solid #0E1A2E;box-shadow:4px 4px 0 #0E1A2E;transition:transform .2s,box-shadow .2s" style-hover="transform:translate(-4px,-4px);box-shadow:8px 8px 0 #FF881F">
+          <a href="{{ p.href }}" style="position:relative;display:block;aspect-ratio:1/1;overflow:hidden;border-bottom:1.5px solid #0E1A2E;background:repeating-linear-gradient(135deg,#EDE6D6 0 8px,#E6DECB 8px 16px)">
+            <img data-src="{{ p.img }}" alt="{{ p.short }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+            <img data-src="{{ p.img2 }}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.04);transition:opacity .35s,transform .5s" style-hover="opacity:1;transform:scale(1)">
+            <span style="position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none"><span style="font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.04em;background:#FF881F;color:#0E1A2E;padding:5px 7px;border:1.5px solid #0E1A2E">{{ p.exam }}</span><span style="font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.04em;background:#0E1A2E;color:#F6F1E7;padding:6.5px 7px;text-transform:uppercase">{{ p.format }}</span></span>
+            <sc-if value="{{ p.digital }}"><span style="position:absolute;right:10px;bottom:10px;font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.04em;background:#005AA5;color:#F6F1E7;padding:6px 8px;pointer-events:none">ALSO IN APP</span></sc-if>
+          </a>
+          <div style="padding:16px 18px 18px;display:flex;flex-direction:column;gap:10px;flex:1">
+            <a href="{{ p.href }}" style="font-weight:800;font-size:20px;line-height:1.15;letter-spacing:-.01em;color:#0E1A2E;text-decoration:none" style-hover="color:#005AA5">{{ p.short }}</a>
+            <div style="display:flex;flex-wrap:wrap;gap:5px"><sc-for list="{{ p.subs }}" as="s" hint-placeholder-count="3"><span style="font:700 10px/1 'JetBrains Mono',monospace;padding:5px 6px;border:1px solid #8E97A6;color:#2B3649">{{ s }}</span></sc-for></div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;margin-top:auto;padding-top:10px;border-top:1px dashed #C9BFA8">
+              <span style="min-width:0;display:flex;flex-direction:column;gap:4px;font:500 12px/1.35 'JetBrains Mono',monospace;color:#4A5568"><span style="white-space:nowrap"><span style="color:#E07400">★</span> {{ p.ratingLabel }} ({{ p.ratingCount }})</span><span style="white-space:nowrap">{{ p.soldLabel }}</span></span>
+              <span style="font-weight:800;font-size:21px;white-space:nowrap">{{ p.priceLabel }}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:6px">
+              <a href="{{ p.url }}" target="_blank" style="display:flex;align-items:center;justify-content:center;min-height:44px;background:#0E1A2E;color:#F6F1E7;font:700 13px 'Schibsted Grotesk',sans-serif;text-decoration:none;border:1.5px solid #0E1A2E" style-hover="background:#FF881F;color:#0E1A2E">Shopee ↗</a>
+              <a href="https://www.lazada.com.ph/shop/aceyourcourse" target="_blank" style="display:flex;align-items:center;justify-content:center;min-height:44px;color:#0E1A2E;font:700 13px 'Schibsted Grotesk',sans-serif;text-decoration:none;border:1.5px solid #0E1A2E" style-hover="background:#EDE6D6;color:#0E1A2E">Lazada ↗</a>
+              <a href="https://vt.tiktok.com/ZS49ve6cu/?page=TikTokShop" target="_blank" style="display:flex;align-items:center;justify-content:center;min-height:44px;color:#0E1A2E;font:700 13px 'Schibsted Grotesk',sans-serif;text-decoration:none;border:1.5px solid #0E1A2E" style-hover="background:#EDE6D6;color:#0E1A2E">TikTok ↗</a>
+            </div>
+          </div>
+        </article>
+      </sc-for>
+    </div>
+    <sc-if value="{{ none }}">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:32px;border:1.5px dashed #0E1A2E;background:#FBF8F1">
+        <span style="font-weight:800;font-size:24px;letter-spacing:-.02em">No reviewers match those filters.</span>
+        <span style="font-size:16px;color:#2B3649">Try a higher max price or a different exam. Reviewers for PhLE, LET and other boards are on Shopee already.</span>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><button onClick="{{ reset }}" style="all:unset;cursor:pointer;min-height:46px;padding:0 18px;display:flex;align-items:center;background:#0E1A2E;color:#F6F1E7;font-weight:700;font-size:15px">Clear filters</button><a href="https://shopee.ph/aceyourcourse" target="_blank" style="display:flex;align-items:center;min-height:46px;padding:0 16px;border:1.5px solid #0E1A2E;color:#0E1A2E;font-weight:700;font-size:15px;text-decoration:none">Browse Shopee ↗</a></div>
+      </div>
+    </sc-if>
+  </section>
+
+  <section data-screen-label="Printed vs app" style="background:#005AA5;color:#F6F1E7;border-top:1.5px solid #0E1A2E;border-bottom:1.5px solid #0E1A2E">
+    <div style="max-width:1296px;margin:0 auto;padding:clamp(56px,7cqi,104px) clamp(20px,5cqi,72px);display:flex;flex-direction:column;gap:clamp(28px,3.5cqi,44px)">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px 40px">
+        <div style="display:flex;flex-direction:column;gap:12px"><span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#FF881F">PHYSICAL OR APP?</span><h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(34px,4.4cqi,60px);line-height:1;letter-spacing:-.035em;max-width:16ch;text-wrap:balance">Same content. Two ways to study it.</h2></div>
+        <p style="margin:0;max-width:26em;font-size:17px;line-height:1.5;color:#DCE7F4">Many reviewees get both: physical cards for the desk, the app for the commute.</p>
+      </div>
+      <div data-m-stagger="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:22px">
+        <div style="display:flex;flex-direction:column;gap:16px;padding:clamp(22px,3cqi,32px);background:#F6F1E7;color:#0E1A2E;border:1.5px solid #0E1A2E;box-shadow:6px 6px 0 #0E1A2E">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-weight:800;font-size:clamp(24px,2.6cqi,32px);letter-spacing:-.02em">Physical</span><span style="font:700 11px 'JetBrains Mono',monospace;color:#005AA5">SHOPEE · LAZADA · TIKTOK SHOP</span></div>
+          <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;font-size:16px;line-height:1.45">
+            <li style="display:flex;gap:10px"><span style="color:#005AA5;font-weight:800">+</span>Cards, posters, and notebooks you can hold, mark up, and pin to a wall</li>
+            <li style="display:flex;gap:10px"><span style="color:#005AA5;font-weight:800">+</span>Every format, including posters, notebooks, and bundles</li>
+            <li style="display:flex;gap:10px"><span style="color:#005AA5;font-weight:800">+</span>Pay once, keep it. Ships nationwide</li>
+          </ul>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;padding:clamp(22px,3cqi,32px);background:#0E1A2E;color:#F6F1E7;border:1.5px solid #F6F1E7;box-shadow:6px 6px 0 #FF881F">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-weight:800;font-size:clamp(24px,2.6cqi,32px);letter-spacing:-.02em">In the app</span><span style="font:700 11px 'JetBrains Mono',monospace;color:#FF881F">PAID PLAN · NO AUTO-RENEW</span></div>
+          <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;font-size:16px;line-height:1.45">
+            <li style="display:flex;gap:10px"><span style="color:#FF881F;font-weight:800">+</span>Flash cards that track which ones you still need to review</li>
+            <li style="display:flex;gap:10px"><span style="color:#FF881F;font-weight:800">+</span>Scored quizzes, PDF reviewers, and video lessons</li>
+            <li style="display:flex;gap:10px"><span style="color:#FF881F;font-weight:800">+</span>A countdown to your exam date, on your phone</li>
+          </ul>
+          <a href="MemberApp.dc.html" style="align-self:flex-start;margin-top:auto;display:flex;align-items:center;min-height:48px;padding:0 18px;background:#FF881F;color:#0E1A2E;font-weight:800;font-size:15px;text-decoration:none;border:1.5px solid #F6F1E7" style-hover="background:#F6F1E7;color:#0E1A2E">See app plans →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <dc-import name="SiteFooter" hint-size="100%,420px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;mobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  static WAYS = [
+    { k: 'go', t: 'On the go', d: 'Quick recall, anywhere', fmt: ['Flash cards'], why: 'Flash cards fit in a bag or pocket, so you can drill formulas between classes or on the commute.' },
+    { k: 'wall', t: 'On my wall', d: 'See it while solving', fmt: ['Posters', 'Flash cards'], why: 'Posters keep every formula in view while you solve. Where there are no posters for your board, flash cards are the closest fit.' },
+    { k: 'solve', t: 'Solving problems', d: 'Write and practice', fmt: ['Notebook', 'Flash cards'], why: 'The notebook gives you space to solve board problems and keep your own notes next to the concepts.' },
+    { k: 'all', t: 'Everything', d: 'One complete set', fmt: ['Bundle', 'Flash cards'], why: 'The bundle covers every format in one order and costs less than buying each separately.' },
+    { k: 'app', t: 'App', d: 'Digital lessons and reviewers', fmt: [], app: true, why: 'The app has digital flash cards, quizzes, reviewer PDFs, and video lessons for this exam, with a countdown to your exam date.' }];
+  state = { exam: 'All', fmt: 'All', app: false, q: '', sort: 'sold', maxP: 3500, pe: null, pw: null };
+  gridRef = el => { this.gridEl = el; };
+  pickRef = el => { this.pickEl = el; };
+  reduce = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  componentDidMount() { (window.__ayc ||= import(new URL('ayc-data.js', document.baseURI).href)).then(d => { this.d = d; this.forceUpdate(); }); }
+  componentDidUpdate() { const p = this._prevState || this.state; this._prevState = this.state;
+    const s = this.state, fade = el => el && !this.reduce && el.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 340, easing: 'cubic-bezier(.2,.7,.2,1)' });
+    if (p.exam !== s.exam || p.fmt !== s.fmt || p.app !== s.app || p.sort !== s.sort) fade(this.gridEl);
+    if (p.pe !== s.pe || p.pw !== s.pw) fade(this.pickEl);
+  }
+  renderVals() {
+    const m = !!this.props.mobile, D = this.d, s = this.state;
+    const ticker = ['★ 4.8 shop rating', '874 ratings', 'IPOPHIL registered', 'Ships from Iloilo City', 'CE · ME · EE · MT · CPA', 'Made by board passers'];
+    const peso = n => '₱' + Number(n).toLocaleString('en-PH');
+    const base = { m, ticker: [...ticker, ...ticker], q: s.q, sort: s.sort, maxP: s.maxP, maxLabel: s.maxP >= 3500 ? 'Any' : peso(s.maxP),
+      onQ: e => this.setState({ q: e.target.value }), onSort: e => this.setState({ sort: e.target.value }), onMax: e => this.setState({ maxP: +e.target.value }),
+      toggleApp: () => this.setState({ app: !s.app }), appBg: s.app ? '#005AA5' : '#F6F1E7', appFg: s.app ? '#F6F1E7' : '#0E1A2E', knobX: s.app ? '16px' : '2px',
+      reset: () => this.setState({ exam: 'All', fmt: 'All', app: false, q: '', maxP: 3500 }),
+      filtered: s.exam !== 'All' || s.fmt !== 'All' || s.app || !!s.q || s.maxP < 3500 };
+    const on = (a, b) => a === b;
+    const pkBase = { exams: ['CE', 'ME', 'EE', 'MT', 'CPA'].map(t => ({ t, go: () => this.setState({ pe: t }), bg: on(t, s.pe) ? '#0E1A2E' : '#F6F1E7', fg: on(t, s.pe) ? '#F6F1E7' : '#0E1A2E', sh: on(t, s.pe) ? '3px 3px 0 #FF881F' : 'none' })),
+      ways: Component.WAYS.map(w => ({ t: w.t, d: w.d, go: () => this.setState({ pw: w.k }), bg: on(w.k, s.pw) ? '#0E1A2E' : '#F6F1E7', fg: on(w.k, s.pw) ? '#F6F1E7' : '#0E1A2E', sh: on(w.k, s.pw) ? '3px 3px 0 #FF881F' : 'none' })) };
+    if (!D) return { ...base, pk: { ...pkBase, label: 'YOUR MATCH', has: false, empty: true, p: {} }, examChips: [], fmtChips: [], list: [], countLabel: '', none: false };
+    const P = D.PRODUCTS;
+    let pk = { ...pkBase, label: 'YOUR MATCH', has: false, empty: true, p: {}, why: '', exam: '' };
+    if (s.pe && s.pw) {
+      const w = Component.WAYS.find(x => x.k === s.pw), mine = D.bySold().filter(p => p.exam === s.pe);
+      let hit = null; if (w.app) hit = mine.find(p => p.digital); for (const f of w.fmt) { if (hit) break; hit = mine.find(p => p.format === f && !p.pending); }
+      hit = hit || mine[0];
+      pk = { ...pkBase, label: w.app ? 'START IN THE APP' : 'START WITH THIS', has: true, empty: false, p: hit, exam: s.pe, why: (w.app || hit.format === w.fmt[0]) ? w.why : 'For ' + s.pe + ', the ' + hit.short + ' is the closest fit. ' + (hit.digital ? 'It’s also in the app.' : ''),
+        showAll: () => { this.setState({ exam: s.pe, fmt: 'All', q: '', maxP: 3500, app: false }); const el = document.getElementById('all'); el && window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 10, behavior: 'smooth' }); } };
+    }
+    const q = s.q.trim().toLowerCase();
+    const match = (p, skip) => (skip === 'exam' || s.exam === 'All' || p.exam === s.exam) && (skip === 'fmt' || s.fmt === 'All' || p.format === s.fmt) && (!s.app || p.digital) && p.price <= s.maxP &&
+      (!q || [p.short, p.title, p.exam, p.board, p.format, ...p.subjects].join(' ').toLowerCase().includes(q));
+    const chip = (t, n, cur, key) => ({ t, n, go: () => this.setState({ [key]: t }), bg: t === cur ? '#0E1A2E' : 'transparent', fg: t === cur ? '#F6F1E7' : '#0E1A2E' });
+    const examChips = ['All', 'CE', 'ME', 'EE', 'MT', 'CPA'].map(t => chip(t, P.filter(p => match(p, 'exam') && (t === 'All' || p.exam === t)).length, s.exam, 'exam'));
+    const fmtChips = ['All', 'Flash cards', 'Posters', 'Notebook', 'Bundle'].map(t => chip(t, P.filter(p => match(p, 'fmt') && (t === 'All' || p.format === t)).length, s.fmt, 'fmt'));
+    const sorts = { sold: (a, b) => b.sold - a.sold, low: (a, b) => a.price - b.price, high: (a, b) => b.price - a.price, rating: (a, b) => b.rating - a.rating || b.ratingCount - a.ratingCount };
+    const list = P.filter(p => match(p)).sort(sorts[s.sort]).map(p => ({ ...p, img2: p.images[1] || p.images[0], subs: p.subjects.slice(0, 4).concat(p.subjects.length > 4 ? ['+' + (p.subjects.length - 4)] : []) }));
+    return { ...base, pk, examChips, fmtChips, list, none: list.length === 0, countLabel: list.length + ' OF ' + P.length + ' REVIEWERS' };
+  }
+}
+</script>
+</body>
+</html>

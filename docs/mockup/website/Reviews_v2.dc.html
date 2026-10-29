@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><script src="motion.js?v=3"></script><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap"><style>body{margin:0}a{color:#005AA5}a:hover{color:#003F73}</style></helmet>
+<div style="container-type:inline-size;width:100%;background:#F6F1E7;color:#0E1A2E;font-family:'Schibsted Grotesk',sans-serif;overflow-x:clip">
+  <dc-import name="SiteNav" style="position:sticky;top:0;z-index:50" mobile="{{ m }}" active="reviews" hint-size="100%,100px"></dc-import>
+
+  <section data-screen-label="Reviews hero" style="background:#0E1A2E;color:#F6F1E7">
+    <div style="max-width:1296px;margin:0 auto;box-sizing:border-box;padding:clamp(48px,6cqi,96px) clamp(20px,5cqi,72px);display:flex;flex-wrap:wrap;gap:clamp(32px,5cqi,72px);align-items:flex-end">
+      <div style="flex:1.3 1 420px;min-width:0;display:flex;flex-direction:column;gap:22px">
+        <span data-m="drop" style="align-self:flex-start;display:flex;align-items:center;gap:10px;font:700 12px/1 'JetBrains Mono',monospace;letter-spacing:.08em;border:1.5px solid rgba(246,241,231,.5);padding:9px 12px;border-radius:999px"><span data-m="pulse" style="width:8px;height:8px;border-radius:50%;background:#FF881F"></span>REVIEWS · FROM SHOPEE BUYERS</span>
+        <h1 data-m="reveal" style="margin:0;font-weight:800;font-size:clamp(46px,6.8cqi,96px);line-height:.94;letter-spacing:-.045em;max-width:12ch;text-wrap:balance">What reviewees <span style="color:#FF881F">say after</span> using them.</h1>
+        <p data-m="up" data-m-delay="150" style="margin:0;font-size:clamp(17px,1.5cqi,20px);line-height:1.5;max-width:32em;color:#DCE3EC">Every review here was written by a verified buyer on our Shopee shop, copied word for word, including the critical ones.</p>
+      </div>
+      <div data-m="up" data-m-delay="200" style="flex:1 1 320px;min-width:0;display:grid;grid-template-columns:1fr 1fr;border:1.5px solid #F6F1E7;box-shadow:8px 8px 0 #FF881F">
+        <div style="grid-column:1 / -1;display:flex;align-items:center;gap:18px;padding:22px 24px;border-bottom:1.5px solid #F6F1E7">
+          <span data-m="count" style="font-weight:900;font-size:clamp(64px,7cqi,96px);line-height:.85;letter-spacing:-.05em;color:#FF881F">4.8</span>
+          <span style="display:flex;flex-direction:column;gap:6px"><span style="font-size:22px;letter-spacing:3px;color:#FF881F">★★★★★</span><span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#9FB3CF">SHOP RATING ON SHOPEE</span></span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:18px 24px;border-right:1.5px solid #F6F1E7"><span data-m="count" style="font-weight:900;font-size:clamp(32px,3.4cqi,44px);line-height:1;letter-spacing:-.04em">874</span><span style="font:500 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#9FB3CF">RATINGS</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:18px 24px"><span data-m="count" style="font-weight:900;font-size:clamp(32px,3.4cqi,44px);line-height:1;letter-spacing:-.04em">3.7K</span><span style="font:500 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#9FB3CF">FOLLOWERS</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section data-screen-label="By product" style="border-bottom:1.5px solid #0E1A2E">
+    <div style="max-width:1296px;margin:0 auto;padding:clamp(48px,6cqi,80px) clamp(20px,5cqi,72px);display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:10px 32px">
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(30px,3.6cqi,48px);line-height:1;letter-spacing:-.035em">Ratings by reviewer</h2>
+        <span style="font:500 12px 'JetBrains Mono',monospace;color:#4A5568">CLICK A ROW TO READ ITS REVIEWS</span>
+      </div>
+      <div style="display:flex;flex-direction:column;border:1.5px solid #0E1A2E;background:#FBF8F1">
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+          <button onClick="{{ r.go }}" style="all:unset;cursor:pointer;box-sizing:border-box;display:grid;grid-template-columns:44px minmax(0,1.6fr) minmax(120px,1fr) 96px;gap:10px 20px;align-items:center;min-height:60px;padding:12px clamp(14px,2cqi,22px);border-bottom:1px solid #D5CCB8;background:{{ r.bg }};transition:background .15s" style-hover="background:#EDE6D6">
+            <span style="justify-self:start;font:700 10px/1 'JetBrains Mono',monospace;background:#FF881F;color:#0E1A2E;padding:5px 7px;border:1.5px solid #0E1A2E">{{ r.exam }}</span><span style="min-width:0;font-weight:700;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.short }}</span>
+            <span style="display:flex;align-items:center;gap:10px"><span style="flex:1;height:8px;background:#E6DECB;border:1px solid #0E1A2E;position:relative;overflow:hidden"><span style="position:absolute;inset:0 auto 0 0;width:{{ r.pct }};background:#005AA5"></span></span><span style="font:700 14px 'JetBrains Mono',monospace;min-width:30px">{{ r.rating }}</span></span>
+            <span style="font:500 12px 'JetBrains Mono',monospace;color:#4A5568;text-align:right;white-space:nowrap">{{ r.ratingCount }} ratings</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section id="wall" data-screen-label="Review wall" style="max-width:1296px;margin:0 auto;padding:clamp(48px,6cqi,80px) clamp(20px,5cqi,72px) clamp(64px,8cqi,112px);display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px 32px">
+      <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(36px,4.6cqi,64px);line-height:1;letter-spacing:-.035em">The review wall</h2>
+      <span style="font:700 13px 'JetBrains Mono',monospace;letter-spacing:.04em">{{ countLabel }}</span>
+    </div>
+    <div style="position:sticky;top:76px;z-index:5;display:flex;flex-direction:column;gap:12px;padding:16px;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:4px 4px 0 #0E1A2E">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+        <label style="flex:1 1 240px;display:flex;align-items:center;gap:10px;min-height:46px;padding:0 14px;border:1.5px solid #0E1A2E;background:#F6F1E7"><span aria-hidden="true" style="font-size:16px">⌕</span><input value="{{ q }}" onInput="{{ onQ }}" placeholder="Search reviews: font size, delivery, paper…" style="all:unset;flex:1;min-width:0;font:500 15px 'Schibsted Grotesk',sans-serif"></label>
+        <label style="display:flex;align-items:center;gap:8px;min-height:46px;padding:0 12px;border:1.5px solid #0E1A2E;background:#F6F1E7"><span style="font:500 11px 'JetBrains Mono',monospace;color:#4A5568">SORT</span><select value="{{ sort }}" onChange="{{ onSort }}" style="all:unset;cursor:pointer;font:700 14px 'Schibsted Grotesk',sans-serif"><option value="helpful">Most helpful</option><option value="high">Highest rated</option><option value="low">Most critical</option><option value="long">Most detailed</option></select><span aria-hidden="true">▾</span></label>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span style="font:500 11px 'JetBrains Mono',monospace;color:#4A5568;margin-right:4px">EXAM</span><sc-for list="{{ examChips }}" as="c" hint-placeholder-count="6"><button onClick="{{ c.go }}" style="all:unset;cursor:pointer;min-height:36px;padding:0 12px;display:flex;align-items:center;gap:6px;font:700 13px 'JetBrains Mono',monospace;border:1.5px solid #0E1A2E;border-radius:999px;background:{{ c.bg }};color:{{ c.fg }};transition:background .15s">{{ c.t }}<span style="font-weight:500;opacity:.65">{{ c.n }}</span></button></sc-for></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span style="font:500 11px 'JetBrains Mono',monospace;color:#4A5568;margin-right:4px">STARS</span><sc-for list="{{ starChips }}" as="c" hint-placeholder-count="4"><button onClick="{{ c.go }}" style="all:unset;cursor:pointer;min-height:36px;padding:0 12px;display:flex;align-items:center;gap:6px;font:700 13px 'JetBrains Mono',monospace;border:1.5px solid #0E1A2E;border-radius:999px;background:{{ c.bg }};color:{{ c.fg }};transition:background .15s">{{ c.t }}<span style="font-weight:500;opacity:.65">{{ c.n }}</span></button></sc-for></div>
+        <sc-if value="{{ productName }}"><button onClick="{{ clearProduct }}" style="all:unset;cursor:pointer;min-height:36px;padding:0 12px;display:flex;align-items:center;gap:8px;font:700 13px 'Schibsted Grotesk',sans-serif;background:#005AA5;color:#F6F1E7;border:1.5px solid #0E1A2E;border-radius:999px">{{ productName }} <span aria-hidden="true">✕</span></button></sc-if>
+        <sc-if value="{{ filtered }}"><button onClick="{{ reset }}" style="all:unset;cursor:pointer;font:700 13px 'Schibsted Grotesk',sans-serif;color:#005AA5;border-bottom:2px solid #005AA5">Clear filters</button></sc-if>
+      </div>
+    </div>
+    <div ref="{{ wallRef }}" style="columns:3 300px;column-gap:28px;padding-top:20px">
+      <sc-for list="{{ list }}" as="r" hint-placeholder-count="6">
+        <div style="break-inside:avoid;padding:10px 0 22px;display:flex;flex-direction:column;gap:8px">
+          <dc-import name="ReviewCard" r="{{ r }}" tilt="{{ r.tilt }}" hint-size="100%,240px"></dc-import>
+          <a href="{{ r.href }}" style="align-self:flex-end;font:700 12px 'JetBrains Mono',monospace;color:#005AA5;text-decoration:none" style-hover="color:#003F73">VIEW PRODUCT →</a>
+        </div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ none }}">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:32px;border:1.5px dashed #0E1A2E;background:#FBF8F1">
+        <span style="font-weight:800;font-size:24px;letter-spacing:-.02em">No reviews match those filters.</span>
+        <span style="font-size:16px;color:#2B3649">Newer reviewers like the MedTech flash cards have ratings on Shopee but no written reviews yet.</span>
+        <button onClick="{{ reset }}" style="all:unset;cursor:pointer;min-height:46px;padding:0 18px;display:flex;align-items:center;background:#0E1A2E;color:#F6F1E7;font-weight:700;font-size:15px">Clear filters</button>
+      </div>
+    </sc-if>
+  </section>
+
+  <section data-screen-label="Leave a review" style="background:#FF881F;border-top:1.5px solid #0E1A2E;border-bottom:1.5px solid #0E1A2E">
+    <div style="max-width:1296px;margin:0 auto;padding:clamp(40px,5cqi,72px) clamp(20px,5cqi,72px);display:flex;flex-wrap:wrap;gap:20px 40px;align-items:center;justify-content:space-between">
+      <div style="display:flex;flex-direction:column;gap:10px;max-width:560px">
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(30px,3.8cqi,52px);line-height:1;letter-spacing:-.035em">Passed with our cards?</h2>
+        <p style="margin:0;font-size:17px;line-height:1.5;color:#0E1A2E">Send us a message! We would like to feature you and your story.</p>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        <a href="mailto:aceyourcourseinc@gmail.com" style="display:flex;flex-direction:column;justify-content:center;gap:3px;min-height:56px;padding:6px 22px;background:#0E1A2E;color:#F6F1E7;text-decoration:none;border:1.5px solid #0E1A2E;box-shadow:5px 5px 0 #F6F1E7;transition:transform .18s,box-shadow .18s" style-hover="transform:translate(-2px,-2px);box-shadow:7px 7px 0 #F6F1E7;color:#F6F1E7"><span style="font-weight:800;font-size:16px">Email us</span><span style="font:500 12px 'JetBrains Mono',monospace;color:#C9D3E1">aceyourcourseinc@gmail.com</span></a>
+        <a href="Products v2.dc.html" style="display:flex;align-items:center;min-height:56px;padding:0 20px;color:#0E1A2E;font-weight:700;font-size:16px;text-decoration:none;border:1.5px solid #0E1A2E" style-hover="background:rgba(14,26,46,.08);color:#0E1A2E">Browse reviewers</a>
+      </div>
+    </div>
+  </section>
+
+  <dc-import name="SiteFooter" hint-size="100%,420px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;mobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { exam: 'All', star: 'All', pid: null, q: '', sort: 'helpful' };
+  wallRef = el => { this.wall = el; };
+  componentDidMount() { (window.__ayc ||= import(new URL('ayc-data.js', document.baseURI).href)).then(d => { this.d = d; this.forceUpdate(); }); }
+  componentDidUpdate() { const p = this._prevState || this.state; this._prevState = this.state;
+    const s = this.state;
+    if (this.wall && (p.exam !== s.exam || p.star !== s.star || p.pid !== s.pid || p.sort !== s.sort) && !matchMedia('(prefers-reduced-motion: reduce)').matches)
+      this.wall.animate([{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], { duration: 360, easing: 'cubic-bezier(.2,.7,.2,1)' });
+  }
+  toWall() { const el = document.getElementById('wall'); el && window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 10, behavior: 'smooth' }); }
+  renderVals() {
+    const s = this.state, D = this.d;
+    const base = { m: !!this.props.mobile, q: s.q, sort: s.sort, onQ: e => this.setState({ q: e.target.value }), onSort: e => this.setState({ sort: e.target.value }),
+      reset: () => this.setState({ exam: 'All', star: 'All', pid: null, q: '' }), clearProduct: () => this.setState({ pid: null }),
+      filtered: s.exam !== 'All' || s.star !== 'All' || !!s.pid || !!s.q };
+    if (!D) return { ...base, rows: [], list: [], examChips: [], starChips: [], countLabel: '', none: false, productName: '' };
+    const all = D.PRODUCTS.flatMap(p => p.reviews.map((r, i) => ({ ...r, exam: p.exam, product: p.short, pid: p.id, href: p.href, tilt: [-1.2, .8, -.4, 1.1, -.9, .5][(i + p.reviews.length) % 6] })));
+    const term = s.q.trim().toLowerCase();
+    const starOk = (r, v) => v === 'All' || (v === '5★' ? r.stars === 5 : v === '4★' ? r.stars === 4 : r.stars <= 3);
+    const match = (r, skip) => (skip === 'exam' || s.exam === 'All' || r.exam === s.exam) && (skip === 'star' || starOk(r, s.star)) && (!s.pid || r.pid === s.pid) &&
+      (!term || (r.text + ' ' + r.product + ' ' + (r.variation || '')).toLowerCase().includes(term));
+    const chip = (t, n, cur, key) => ({ t, n, bg: t === cur ? '#0E1A2E' : 'transparent', fg: t === cur ? '#F6F1E7' : '#0E1A2E', go: () => this.setState({ [key]: t, pid: null }) });
+    const examChips = ['All', 'CE', 'ME', 'EE', 'MT', 'CPA'].map(t => chip(t, all.filter(r => match(r, 'exam') && (t === 'All' || r.exam === t)).length, s.exam, 'exam'));
+    const starChips = ['All', '5★', '4★', '≤3★'].map(t => chip(t, all.filter(r => match(r, 'star') && starOk(r, t)).length, s.star, 'star'));
+    const sorts = { helpful: (a, b) => b.helpful - a.helpful || b.stars - a.stars, high: (a, b) => b.stars - a.stars || b.helpful - a.helpful, low: (a, b) => a.stars - b.stars, long: (a, b) => b.text.length - a.text.length };
+    const list = all.filter(r => match(r)).sort(sorts[s.sort]);
+    const rows = D.bySold().map(p => ({ exam: p.exam, short: p.short, rating: p.rating.toFixed(1), ratingCount: p.ratingCount, pct: (p.rating / 5 * 100) + '%', bg: s.pid === p.id ? '#EDE6D6' : 'transparent',
+      go: () => { this.setState({ pid: p.id, exam: 'All', star: 'All', q: '' }); this.toWall(); } }));
+    const sel = s.pid && D.byId(s.pid);
+    return { ...base, rows, list, examChips, starChips, none: list.length === 0, productName: sel ? sel.short : '', countLabel: list.length + ' OF ' + all.length + ' WRITTEN REVIEWS' };
+  }
+}
+</script>
+</body>
+</html>
