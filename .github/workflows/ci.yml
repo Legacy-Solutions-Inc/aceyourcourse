@@ -17,7 +17,7 @@ jobs:
 
       # pnpm version comes from the `packageManager` field in package.json — do
       # NOT also set `version:` here (pnpm/action-setup errors on a duplicate).
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
       - uses: actions/setup-node@v4
         with:
