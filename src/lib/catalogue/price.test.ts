@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { testComingSoonProduct, testLiveProduct } from "../../../test/fixtures/catalogue";
-import { productOptionsNote, productPriceLabel, productPriceRange, variationLabel } from "./price";
+import {
+  productFullPrice,
+  productOptionsNote,
+  productPriceLabel,
+  productPriceRange,
+  variationLabel,
+} from "./price";
 
 describe("productPriceLabel", () => {
   it("shows a single price", () => {
@@ -16,6 +22,23 @@ describe("productPriceLabel", () => {
 
   it("is null for a Coming Soon Product, so no ₱0 can render", () => {
     expect(productPriceLabel(testComingSoonProduct())).toBeNull();
+  });
+});
+
+describe("productFullPrice", () => {
+  it("is the top of a range: a bundle's whole set", () => {
+    // The CE bundle sells each part from ₱1,200, or the 3-in-1 at ₱3,499.
+    expect(productFullPrice(testLiveProduct({ priceFrom: 120000, priceTo: 349900 }))).toBe(
+      "₱3,499",
+    );
+  });
+
+  it("is the single price when there is no range", () => {
+    expect(productFullPrice(testLiveProduct({ priceFrom: 120000, priceTo: null }))).toBe("₱1,200");
+  });
+
+  it("is null for a Coming Soon Product, so no ₱0 can render", () => {
+    expect(productFullPrice(testComingSoonProduct({ priceFrom: 0 }))).toBeNull();
   });
 });
 

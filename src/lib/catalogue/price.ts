@@ -22,6 +22,15 @@ export function productPriceRange(product: Product): string | null {
 }
 
 /**
+ * "₱3,499": the top of the Product's price, its whole set (the CE bundle's
+ * 3-in-1, where each part alone is from ₱1,200). Null for Coming Soon.
+ */
+export function productFullPrice(product: Product): string | null {
+  if (product.state !== "live" || product.priceFrom === null) return null;
+  return formatPeso(product.priceTo ?? product.priceFrom);
+}
+
+/**
  * The note shown in place of variations: a range-priced Product is picked on
  * the store page, otherwise there is one option. Null for Coming Soon.
  */

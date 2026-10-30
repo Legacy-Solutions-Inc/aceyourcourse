@@ -17,6 +17,8 @@ interface ProductCardProps {
   memberAppLive: boolean;
   /** When given, a row of store buttons shows under the card. */
   shopLinks?: WebsiteSettings["shopLinks"];
+  /** A label in the photo's corner, e.g. "#1 in CE" on an Exam's top seller. */
+  highlight?: string;
   className?: string;
 }
 
@@ -27,7 +29,13 @@ const badge = "font-mono text-[10px] leading-none font-bold tracking-[0.04em] up
  * Product shows its badge and the placeholder, with no price, figures or buy
  * buttons.
  */
-export function ProductCard({ product, memberAppLive, shopLinks, className }: ProductCardProps) {
+export function ProductCard({
+  product,
+  memberAppLive,
+  shopLinks,
+  highlight,
+  className,
+}: ProductCardProps) {
   const live = product.state === "live";
   const price = productPriceLabel(product);
   const storeButtons = shopLinks ? storeLinksFor(product, shopLinks) : [];
@@ -73,6 +81,16 @@ export function ProductCard({ product, memberAppLive, shopLinks, className }: Pr
             {websiteCopy.product.comingSoon}
           </span>
         )}
+        {highlight ? (
+          <span
+            className={cn(
+              badge,
+              "absolute right-0 bottom-0 border-t-[1.5px] border-l-[1.5px] border-ayc-navy bg-ayc-orange px-2.5 py-2 text-[11px] whitespace-nowrap text-ayc-navy",
+            )}
+          >
+            {highlight}
+          </span>
+        ) : null}
       </div>
       <div className="flex flex-1 flex-col gap-2 px-4 pt-3.5 pb-4">
         <p className="font-mono text-[11px] leading-snug font-medium tracking-[0.06em] text-ayc-slate uppercase">

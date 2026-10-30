@@ -69,6 +69,16 @@ describe("ProductCard", () => {
     expect(within(card()).queryByText("In app")).not.toBeInTheDocument();
   });
 
+  it('shows a highlight such as "#1 in CE" when given one, and none by default', () => {
+    const { rerender } = render(<ProductCard product={testLiveProduct()} memberAppLive={false} />);
+    expect(card()).not.toHaveTextContent("#1 in CE");
+
+    rerender(
+      <ProductCard product={testLiveProduct()} memberAppLive={false} highlight="#1 in CE" />,
+    );
+    expect(within(card()).getByText("#1 in CE")).toBeInTheDocument();
+  });
+
   it("adds store buttons when given the shop links, hiding any with nowhere to go", () => {
     render(
       <ProductCard product={testLiveProduct()} memberAppLive={false} shopLinks={SHOP_LINKS} />,

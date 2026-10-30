@@ -1,6 +1,7 @@
 import { config } from "@/config";
 import { websiteCopy } from "@/content/website";
 import { productFormatLabel } from "@/lib/catalogue/format";
+import { truncate } from "@/lib/text";
 import type { Exam, Product } from "@/services/catalogue.types";
 
 // Product page text and SEO text. Each one is the Product's own when it is
@@ -64,12 +65,4 @@ export function productSeoDescription(product: Product, exam: Exam): string {
 /** "{subject} for the {board}, covering {Subject codes}." */
 function lead(subject: string, product: Product, exam: Exam): string {
   return `${subject} for the ${exam.board}, covering ${product.subjectCodes.join(", ")}.`;
-}
-
-/** Cut at a word boundary so the result, with its "…", is at most `max` long. */
-function truncate(text: string, max: number): string {
-  if (text.length <= max) return text;
-  const cut = text.slice(0, max - 1);
-  const atWord = cut.slice(0, Math.max(cut.lastIndexOf(" "), 1));
-  return `${atWord.trimEnd()}…`;
 }

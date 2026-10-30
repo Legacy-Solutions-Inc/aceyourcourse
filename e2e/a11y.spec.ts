@@ -12,6 +12,8 @@ for (const path of [
   "/products/ce-formula-flash-cards",
   "/products/ultimate-ce-posters-2-0",
   "/products/ce-solving-notebook",
+  "/exams/ce",
+  "/exams/me",
   "/legal/privacy",
   "/legal/terms",
 ]) {
