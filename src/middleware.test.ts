@@ -5,16 +5,25 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // The middleware sets the CSP on every route but creates a Supabase client
 // (one auth round trip) only for the signed-in and auth areas. Supabase's
 // middleware client is the external boundary, so it is replaced. Supabase env
-// is stubbed so the middleware runs its real, auth-enforcing path.
+// is stubbed so the middleware runs its real session-refresh path.
 const { createClient, getUser } = vi.hoisted(() => ({
   createClient: vi.fn(),
   getUser: vi.fn(),
 }));
 vi.mock("@/lib/supabase/middleware", () => ({ createClient }));
 
-async function runMiddleware(pathname: string, { signedIn = false } = {}) {
-  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://test.supabase.co");
-  vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "test-anon-key");
+async function runMiddleware(
+  pathname: string,
+  { signedIn = false, supabaseConfigured = true, nodeEnv = "test" } = {},
+) {
+  if (supabaseConfigured) {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://test.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "test-anon-key");
+  } else {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "");
+  }
+  vi.stubEnv("NODE_ENV", nodeEnv);
   vi.resetModules();
 
   getUser.mockResolvedValue({ data: { user: signedIn ? { id: "u1", app_metadata: {} } : null } });
@@ -36,16 +45,24 @@ describe("middleware", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
-  it.each(["/", "/products/x", "/exams/ce", "/application", "/apple-icon"])(
-    "makes no Supabase call for the public route %s",
-    async (pathname) => {
-      await runMiddleware(pathname);
-      expect(createClient).not.toHaveBeenCalled();
-      expect(getUser).not.toHaveBeenCalled();
-    },
-  );
+  it.each([
+    "/",
+    "/products",
+    "/products/x",
+    "/exams/ce",
+    "/application",
+    "/apple-icon",
+    // The template dashboard is gone: it is a plain (404) Website path now.
+    "/dashboard",
+    "/dashboard/customers",
+  ])("makes no Supabase call for the public route %s", async (pathname) => {
+    await runMiddleware(pathname);
+    expect(createClient).not.toHaveBeenCalled();
+    expect(getUser).not.toHaveBeenCalled();
+  });
 
   it("still sets a nonce CSP on a public route", async () => {
     const response = await runMiddleware("/");
@@ -59,7 +76,12 @@ describe("middleware", () => {
     expect(response.headers.get("x-middleware-request-x-nonce")).toBe(nonce);
   });
 
-  it.each(["/app", "/app/library", "/admin", "/auth/callback"])(
+  it("sets the CSP on a session route too", async () => {
+    const response = await runMiddleware("/app");
+    expect(cspOf(response)).toMatch(/script-src 'self' 'nonce-[^']+' 'strict-dynamic'/);
+  });
+
+  it.each(["/app", "/app/library", "/admin", "/admin/x", "/auth/callback"])(
     "refreshes the session for %s",
     async (pathname) => {
       const response = await runMiddleware(pathname);
@@ -69,15 +91,31 @@ describe("middleware", () => {
     },
   );
 
-  it("still sends a signed-out visitor from /dashboard to sign in, with the CSP", async () => {
-    const response = await runMiddleware("/dashboard/customers");
-    expect(response.status).toBe(307);
-    expect(new URL(response.headers.get("location") ?? "").pathname).toBe("/auth/sign-in");
-    expect(cspOf(response)).toContain("'strict-dynamic'");
-  });
+  // Phase 2 adds the Member App and Admin gates; until then a session route only
+  // refreshes the session and passes through, whoever is signed in.
+  it.each([
+    ["/app", false],
+    ["/admin/x", true],
+    ["/auth/callback", true],
+    ["/auth/sign-in", true],
+  ] as const)(
+    "passes %s through without a redirect (signed in: %s)",
+    async (pathname, signedIn) => {
+      const response = await runMiddleware(pathname, { signedIn });
+      expect(response.headers.get("location")).toBeNull();
+      expect(response.status).toBe(200);
+    },
+  );
 
-  it("still sends a signed-in user from the auth screens to the dashboard", async () => {
-    const response = await runMiddleware("/auth/sign-in", { signedIn: true });
-    expect(new URL(response.headers.get("location") ?? "").pathname).toBe("/dashboard");
+  it("passes a session route through in production without Supabase, with the CSP", async () => {
+    // config.ts logs a loud fail-closed warning here; keep the test output clean.
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const response = await runMiddleware("/app", {
+      supabaseConfigured: false,
+      nodeEnv: "production",
+    });
+    expect(createClient).not.toHaveBeenCalled();
+    expect(response.headers.get("location")).toBeNull();
+    expect(cspOf(response)).toContain("'strict-dynamic'");
   });
 });

@@ -11,7 +11,7 @@ import type {
 // ─────────────────────────────────────────────────────────────────────────────
 // Catalogue Service Seam. Every Website page and component reads Exams,
 // Products, Reviews and Website settings from here, and never imports the
-// seed. This module is a thin SELECTOR, built like src/services/customers.ts.
+// seed. This module is a thin SELECTOR, the pattern every seam copies.
 // Phase 1 has only the in-memory mock arm. Phase 2 adds the Drizzle arm
 // (catalogue.db.ts, chosen when a DATABASE_URL is configured) with no page
 // changes. See docs/adr/0003 and docs/adr/0006.

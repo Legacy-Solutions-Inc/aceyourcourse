@@ -49,10 +49,9 @@ require a live `DATABASE_URL`. Keep a **pure** row→domain mapper so it's unit
 -testable without a DB.
 
 **Two migration sources, aligned.** Drizzle owns `./drizzle/` (app data);
-Supabase owns `supabase/migrations/` (tenancy + RLS). Where objects overlap, keep
-names identical (the `customer_status` enum, the `created_at` column). The Drizzle
-schema is **single-tenant** (no `organization_id`) — tenancy is a separate,
-blocked track.
+Supabase owns `supabase/migrations/` (RLS policies, from Phase 2). Where objects
+overlap, keep names identical (enums, snake_case columns such as `created_at`).
+There is no tenancy (ADR 0008): RLS is scoped by User and Staff Role.
 
 > **KNOWN GAP:** the live query path (`db:migrate`, real reads/writes, RLS) is
 > **unverified** — no Postgres/Supabase database has been available. Only the
@@ -60,20 +59,22 @@ blocked track.
 
 ## 4. In this template
 
-- `src/lib/db/schema.ts` — `pgEnum("customer_status", …)` + single-tenant
-  `pgTable("customers", …)` (`status` default `pending`, `created_at` timestamptz);
-  exports `CustomerRow` / `NewCustomerRow`.
+- `src/lib/db/schema.ts` — empty in Phase 1 (the Website reads the Catalogue's
+  in-memory seed). Phase 2 adds the catalogue tables and generates the first
+  migration; `drizzle/meta/_journal.json` starts with no entries.
 - `src/lib/db/client.ts` — `import "server-only"`; lazy `getDb()` singleton;
   `postgres(url, { prepare: false })` → `drizzle(client, { schema })`; throws if
   `DATABASE_URL` unset.
 - `src/env.server.ts` — `import "server-only"`; zod-validated optional
   `DATABASE_URL`; exports `serverEnv` and `isDatabaseConfigured`.
-- `src/services/customers.ts` — thin selector: `isDatabaseConfigured ? dbImpl :
-mockImpl`, typed against a `CustomersService` contract so both impls stay in
-  signature.
-- `src/services/customers.mock.ts` — the default in-memory implementation.
-- `src/services/customers.db.ts` — `import "server-only"`; Drizzle impl + the
-  pure exported `rowToCustomer(row)` mapper (Date → ISO, enum → `CustomerStatus`).
+- `src/services/catalogue.ts` — thin selector typed against a `CatalogueService`
+  contract so every impl stays in signature. Phase 1 has only the mock arm;
+  Phase 2 adds `catalogue.db.ts`, chosen with `isDatabaseConfigured ? dbImpl :
+mockImpl`.
+- `src/services/catalogue.mock.ts` — the default in-memory implementation.
+- The template's Drizzle impl (`customers.db.ts`, `import "server-only"`, with a
+  pure exported `rowToCustomer(row)` mapper) lives in git history at commit
+  `aea34ea`; copy its shape for `catalogue.db.ts`.
 - `drizzle.config.ts` — `import "dotenv/config"`; `schema`, `out: ./drizzle`,
   `dialect: postgresql`, `schemaFilter: ["public"]`, and a placeholder
   `dbCredentials.url` fallback so `db:generate` runs offline.
@@ -81,8 +82,9 @@ mockImpl`, typed against a `CustomersService` contract so both impls stay in
   `db:reset` / `db:types` are separate).
 - `docs/adr/0006-drizzle-data-layer.md` — the decision and posture (read-only).
 
-Future tenancy authz postures: see [`references/drizzle-rls.md`](references/drizzle-rls.md)
-(reference-only — not active in this single-tenant round).
+RLS postures: see [`references/drizzle-rls.md`](references/drizzle-rls.md)
+(reference-only; written for the retired tenancy track, so scope by User and
+Staff Role instead of Organization).
 
 ## 5. Red flags
 
@@ -94,8 +96,8 @@ Future tenancy authz postures: see [`references/drizzle-rls.md`](references/driz
 - Calling Drizzle / `getDb()` from a component or Server Action instead of the
   seam.
 - Treating the live query path as verified — it is the stated KNOWN GAP.
-- Adding `organization_id` / tenancy to the Drizzle schema (single-tenant now;
-  tenancy is a blocked, separate track).
+- Adding `organization_id` / tenancy to the Drizzle schema (there is no tenancy,
+  ADR 0008).
 - Letting the Drizzle and Supabase migrations drift on shared object names.
 
 ## 6. Sources

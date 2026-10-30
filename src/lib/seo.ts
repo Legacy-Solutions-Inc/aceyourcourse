@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
 
 /**
- * Public, indexable routes listed in the sitemap. The dashboard and other
- * authenticated areas are intentionally excluded (and disallowed in robots).
+ * Public, indexable routes listed in the sitemap. The signed-in areas are
+ * intentionally excluded.
  */
-export const SITEMAP_ROUTES = ["/", "/auth/sign-in", "/auth/sign-up"] as const;
+export const SITEMAP_ROUTES = ["/"] as const;
 
 /**
  * Pure: build sitemap entries as absolute URLs against `baseUrl`. `lastModified`
@@ -20,13 +20,12 @@ export function buildSitemap(baseUrl: string, lastModified: Date): MetadataRoute
   }));
 }
 
-/** Pure: allow crawling everything except the private dashboard; link the sitemap. */
+/** Pure: allow crawling the Website; link the sitemap. */
 export function buildRobots(baseUrl: string): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: "/dashboard/",
     },
     sitemap: new URL("sitemap.xml", baseUrl).toString(),
     host: new URL(baseUrl).origin,

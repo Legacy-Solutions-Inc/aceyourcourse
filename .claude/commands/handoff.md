@@ -23,7 +23,7 @@ labels, or usage notes.
      instead of restating them.
    - **Scope** — the exact files to create or modify, and what to leave
      untouched.
-   - **Approach** — the pattern to follow (e.g. copy the Customers reference) and
+   - **Approach** — the pattern to follow (e.g. copy the Catalogue reference) and
      which global skills to use (`test-driven-development` for features,
      `systematic-debugging` for bugs, `verification-before-completion` before
      done, `requesting-code-review` for review).

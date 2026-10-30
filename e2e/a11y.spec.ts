@@ -9,7 +9,6 @@ const BLOCKING_IMPACTS = new Set(["serious", "critical"]);
 
 for (const path of [
   "/",
-  "/auth/sign-in",
   "/products/ce-formula-flash-cards",
   "/products/ultimate-ce-posters-2-0",
   "/products/ce-solving-notebook",

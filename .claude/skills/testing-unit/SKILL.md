@@ -38,9 +38,9 @@ including **per-glob** thresholds) sit just BELOW the measured baseline so a
 regression fails CI — raise tests, don't lower thresholds. Some code is
 deliberately **excluded**: vendored `src/components/ui/**`, generated
 `database.types.ts`, and the **offline-unverifiable Drizzle DB layer**
-(`src/services/customers.db.ts`, `src/lib/db/client.ts`) — its query bodies need
-a live Postgres (see **drizzle-data** KNOWN GAP); its pure mapper is tested
-separately.
+(`src/lib/db/client.ts`, and Phase 2's `*.db.ts` seam arms) — its query bodies
+need a live Postgres (see **drizzle-data** KNOWN GAP); pure row mappers are
+tested separately.
 
 ## 4. In this template
 
@@ -52,12 +52,14 @@ separately.
 - `test/stubs/server-only.ts` — empty stub the config aliases `server-only` to, so
   server modules (e.g. `src/env.server.ts`) can be imported under Vitest.
 - Example tests to copy:
-  - Pure units — `src/lib/authz.test.ts`, `src/lib/csp.test.ts`,
-    `src/lib/seo.test.ts`.
-  - Seam (mock path) — `src/services/customers.test.ts`.
-  - Pure mapper — `src/services/customers.db.test.ts` (`rowToCustomer`).
-  - Env-driven selection — `src/services/customers.selector.test.ts`.
-  - Component (RTL) — `src/components/dashboard/customer/customers-table.test.tsx`.
+  - Pure units — `src/lib/csp.test.ts`, `src/lib/seo.test.ts`,
+    `src/lib/session-routes.test.ts`.
+  - Seam (mock path) — `src/services/catalogue.test.ts`.
+  - Seed validation — `src/services/catalogue.schema.test.ts`.
+  - Component (RTL) — `src/components/website/product-card.test.tsx`.
+  - Pure row mapper and env-driven seam selection — the template's Customers
+    tests in git history at commit `aea34ea` (list them with
+    `git ls-tree -r --name-only aea34ea | grep -i customer`).
 - Scripts: `test` (`vitest run`), `test:coverage`, `test:watch`.
 
 ## 5. Red flags

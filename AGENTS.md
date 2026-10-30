@@ -16,10 +16,12 @@ shadcn/ui · Supabase auth · Vitest + Playwright · pnpm.
   one-file change per service.
 - **Reads = RSC, writes = Server Actions.** Server Components fetch through the
   seam. Mutations live in `'use server'` actions and validate input with `zod`
-  before calling the seam. See `src/app/dashboard/customers/` as the reference.
+  before calling the seam. See `src/services/catalogue.ts` and a Website page
+  such as `src/app/(website)/products/[slug]/` as the reference.
 - **Auth is Supabase-only.** Use the clients in `src/lib/supabase/*` and
-  `getSession()` from `src/lib/auth/session.ts`. Roles come from the user's
-  `app_metadata.role` via `src/lib/authz.ts` — never trust client-set metadata.
+  `getSession()` from `src/lib/auth/session.ts`. Authorization (from Phase 2)
+  comes from the staff list on the server, never client-settable metadata
+  (ADR 0008).
 - **UI is shadcn/ui + Tailwind.** Add primitives with
   `pnpm dlx shadcn@latest add <name>`. Compose with `cn()`. No other UI kit.
 - **Keep it typed and green.** Every change must pass `pnpm type:check`,
@@ -27,8 +29,12 @@ shadcn/ui · Supabase auth · Vitest + Playwright · pnpm.
 
 ## Where things live
 
-- New feature → copy `customers`: `services/<name>.ts`, `app/dashboard/<name>/`,
-  `actions.ts`, `components/dashboard/<name>/`.
+- New feature → copy the Catalogue: `services/<name>.ts` with `.mock.ts`,
+  `.types.ts` and `.schema.ts`; pages under `app/(website)/` (or, later,
+  `app/admin/`); components in `components/website/<feature>/`.
+- The template's Server Action, data-table and RLS-integration-test examples
+  (Customers) live in git history at commit `aea34ea`; reuse them when the
+  Admin needs those patterns.
 - Routes and links → `src/paths.ts` (never hard-code paths).
 - App config → `src/config.ts`; env vars → `src/env.d.ts` + `.env.example`.
 

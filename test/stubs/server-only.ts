@@ -5,7 +5,7 @@
 // server bundle). Vitest does not apply that condition, so importing any module
 // marked `import "server-only"` would throw at collection time. Vitest aliases
 // `server-only` to this empty module (see vitest.config.ts) so server modules —
-// e.g. src/env.server.ts, src/lib/db/client.ts, src/services/customers.db.ts —
-// can be imported and unit-tested. The server/client boundary is still enforced
-// by the real package in `next build`.
+// e.g. src/env.server.ts and src/lib/db/client.ts — can be imported and
+// unit-tested. The server/client boundary is still enforced by the real package
+// in `next build`.
 export {};

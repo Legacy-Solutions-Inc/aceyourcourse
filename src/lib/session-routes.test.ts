@@ -5,19 +5,12 @@ import { needsSession } from "./session-routes";
 // Only the signed-in and auth areas need a Supabase session. Website pages must
 // never trigger a Supabase round trip, so the match is on whole path segments.
 describe("needsSession", () => {
-  it.each([
-    "/app",
-    "/app/",
-    "/app/library",
-    "/admin",
-    "/admin/x",
-    "/auth/callback",
-    "/auth/sign-in",
-    "/dashboard",
-    "/dashboard/x",
-  ])("is true for %s", (pathname) => {
-    expect(needsSession(pathname)).toBe(true);
-  });
+  it.each(["/app", "/app/", "/app/library", "/admin", "/admin/x", "/auth/callback"])(
+    "is true for %s",
+    (pathname) => {
+      expect(needsSession(pathname)).toBe(true);
+    },
+  );
 
   it.each([
     "/",
@@ -28,6 +21,9 @@ describe("needsSession", () => {
     "/administrator",
     "/apple-icon",
     "/authors",
+    // The template dashboard is gone, so it is just another (404) Website path.
+    "/dashboard",
+    "/dashboard/x",
     "/dashboards",
     "",
   ])("is false for %s", (pathname) => {

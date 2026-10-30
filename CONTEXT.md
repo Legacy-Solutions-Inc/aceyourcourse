@@ -158,10 +158,11 @@ Ace Your Course is one application with three Surfaces.
   Anything still named or branded "Web App Template" / "Acme" is a leftover
   placeholder meant to be renamed.
 
-- **Reference Feature** — the one fully-worked example feature (**Customers**)
-  that demonstrates every canonical pattern end to end: routing, the Service
-  Seam, Server Actions, validation, a data table, and tests. New features are
-  built by copying it.
+- **Reference Feature** — the one fully-worked example feature that new
+  features are built by copying: the **Catalogue** Service Seam and the Website
+  pages that read it. It demonstrates the Service Seam, typed seed validation,
+  reads in Server Components, and tests. The template's example, Customers, is
+  retired.
 
 - **Service Seam** — the boundary between the UI and its data source. Screens
   read and write through it and never touch a data source directly. It returns

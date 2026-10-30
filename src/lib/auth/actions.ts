@@ -9,7 +9,7 @@ import { paths } from "@/paths";
 
 export async function signOut() {
   // Only touch Supabase when it's actually configured; swallow an unreachable
-  // backend so signing out always lands the user on the sign-in screen.
+  // backend so signing out always lands the user on Home.
   if (isSupabaseConfigured) {
     try {
       const supabase = createClient(cookies());
@@ -19,5 +19,5 @@ export async function signOut() {
     }
   }
   // Outside the try: redirect() throws NEXT_REDIRECT by design.
-  redirect(paths.auth.signIn);
+  redirect(paths.home);
 }

@@ -67,7 +67,8 @@ heavy edits so a future `add`/update stays clean.
   `asChild` via `@radix-ui/react-slot`, composed with `cn()`.
 - `src/lib/utils.ts` — `cn()` (`twMerge(clsx(...))`).
 - `src/app/layout.tsx` — mounts the `sonner` `<Toaster />`; toast via `sonner`.
-- Icons: `lucide-react` (e.g. `Plus`, `ArrowLeft` in the Customers pages).
+- Icons: `lucide-react` (e.g. `ArrowRight`, `Menu`, `X` in the Website's mobile
+  nav).
 
 ## 5. Red flags
 

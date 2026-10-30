@@ -1,18 +1,24 @@
 # Ace Your Course
 
-Ace Your Course, built on
-[web-app-template](https://github.com/RafaelIIIPrudente/web-app-template):
+Formula flash cards, notebooks and posters for Philippine board exams, made by
+board passers. This repo is one Next.js app with three **Surfaces**:
 
-- **Next.js 15** (App Router, React 19, TypeScript)
-- **Tailwind CSS v4 + shadcn/ui** — components you own, light/dark theming
-- **Supabase auth** — sign-in/up, password reset, session-aware middleware
-- **Typed service seam** — screens read mock data through `src/services/*`; make it real in one file
-- **RBAC** — role guards enforced in middleware and components
-- **Tests + CI** — Vitest, Testing Library, Playwright, and a GitHub Actions pipeline
+- **The Website** (`/`) — the public catalogue and brand home. Every Product,
+  organised by Exam, with Reviews, an FAQ and legal pages. It sells nothing
+  itself: every buy button opens the Product's Marketplace Listing.
+- **The Member App** (`/app`, from Phase 3) — a signed-in study app.
+  Reviewees sign in with Google and study flashcards, quizzes and Reviewer PDFs.
+- **The Admin** (`/admin`, from Phase 2) — the staff-only Surface where Owners
+  and Editors manage content without a developer.
 
-Decisions behind the stack are recorded in [`docs/adr/`](docs/adr). Shared
-vocabulary is in [`CONTEXT.md`](CONTEXT.md). The rebuild plan is in
-[`docs/superpowers/plans/`](docs/superpowers/plans).
+The product spec is [`docs/specs/2026-10-29-ayc-v1.md`](docs/specs/2026-10-29-ayc-v1.md).
+Shared vocabulary is in [`CONTEXT.md`](CONTEXT.md), and the decisions behind
+the stack are in [`docs/adr/`](docs/adr). Contributor and agent conventions are
+in [`AGENTS.md`](AGENTS.md).
+
+Stack: **Next.js 15** (App Router, React 19, TypeScript) · **Tailwind CSS v4 +
+shadcn/ui** · **Supabase** (Google sign-in from Phase 2) · **Drizzle** · Vitest,
+Testing Library and Playwright · GitHub Actions CI.
 
 ---
 
@@ -20,17 +26,26 @@ vocabulary is in [`CONTEXT.md`](CONTEXT.md). The rebuild plan is in
 
 ```bash
 pnpm install
-cp .env.example .env      # then fill in your Supabase values (below)
+cp .env.example .env      # the defaults run the Website with no backend
 pnpm dev                  # http://localhost:3000
 ```
 
 Requirements: **Node 22**, **pnpm 10** (both pinned via Volta and
 `packageManager`).
 
-### Connect Supabase
+### Mock-first
 
-Auth is the one thing wired to a real backend. Point it at a Supabase project —
-hosted or local.
+Every screen reads through a typed **Service Seam** in `src/services/*`. Today
+the seams return in-memory seed data, so the Website runs with no database. In
+Phase 2 a seam gains a Drizzle arm, chosen when `DATABASE_URL` is set, and the
+pages don't change. See [ADR 0003](docs/adr/0003-mock-first-service-seam.md)
+and [ADR 0006](docs/adr/0006-drizzle-data-layer.md).
+
+### Connect Supabase (optional in Phase 1)
+
+The Website needs no Supabase. The session plumbing and the OAuth callback
+(`/auth/callback`) are kept for Phase 2's Google sign-in. To point them at a
+project — hosted or local:
 
 **Hosted**
 
@@ -50,32 +65,21 @@ supabase start           # prints the API URL and anon key
 Copy the printed values into `.env`. A minimal `supabase/config.toml` is
 included; run `supabase init` to regenerate a full one for your CLI version.
 
-### Make a superadmin
-
-Roles are read from the Supabase user's `app_metadata.role`. After signing up
-once, set it with the service-role key or in the dashboard SQL editor:
-
-```sql
-update auth.users
-set raw_app_meta_data = raw_app_meta_data || '{"role":"superadmin"}'
-where email = 'you@example.com';
-```
-
-Sign out and back in to pick up the new role.
-
 ---
 
 ## Scripts
 
-| Command                         | What it does                     |
-| ------------------------------- | -------------------------------- |
-| `pnpm dev`                      | Start the dev server (Turbopack) |
-| `pnpm build` / `pnpm start`     | Production build / serve         |
-| `pnpm lint`                     | ESLint                           |
-| `pnpm type:check`               | TypeScript, no emit              |
-| `pnpm test` / `pnpm test:watch` | Vitest unit + component tests    |
-| `pnpm test:e2e`                 | Playwright end-to-end tests      |
-| `pnpm format`                   | Prettier                         |
+| Command                         | What it does                                |
+| ------------------------------- | ------------------------------------------- |
+| `pnpm dev`                      | Start the dev server (Turbopack)            |
+| `pnpm build` / `pnpm start`     | Production build / serve                    |
+| `pnpm lint`                     | ESLint                                      |
+| `pnpm type:check`               | TypeScript, no emit                         |
+| `pnpm test` / `pnpm test:watch` | Vitest unit + component tests               |
+| `pnpm test:coverage`            | Vitest with the coverage thresholds CI runs |
+| `pnpm test:e2e`                 | Playwright end-to-end tests                 |
+| `pnpm db:generate`              | Generate a Drizzle migration (no DB needed) |
+| `pnpm format`                   | Prettier                                    |
 
 ---
 
@@ -84,37 +88,39 @@ Sign out and back in to pick up the new role.
 ```
 src/
   app/
-    (marketing)/         Public landing (route group)
-    auth/                Supabase auth screens + PKCE callback
-    dashboard/           Authenticated app (guarded by middleware + layout)
-      customers/         Reference feature — copy this to build your own
+    (website)/           The public Website (route group)
+    auth/callback/       OAuth PKCE callback, kept for Phase 2's Google sign-in
   components/
     ui/                  shadcn components (owned, edit freely)
-    dashboard/  marketing/  auth/  theme/
-  services/              Service seam: typed, mock-by-default data access
+    website/             Website components
+  content/               Website copy
+  services/              Service seams: typed, mock-by-default data access
+    catalogue.ts         The Reference Feature — copy it to build your own
   lib/
     supabase/            Browser / server / middleware clients
     auth/                getSession, sign-out action
-    authz.ts             Role, hasRole (pure); authz.server.ts (requireRole)
+    db/                  Drizzle client and schema (empty until Phase 2)
   config.ts  paths.ts  middleware.ts
 ```
 
-**Data flow.** Server Components read through `src/services/*`. Mutations run in
-zod-validated Server Actions (see `src/app/dashboard/customers/actions.ts`). To
-go live, swap a service's body for real Supabase/REST calls — the signatures
-stay the same. See [ADR 0003](docs/adr/0003-mock-first-service-seam.md) and
+**Data flow.** Server Components read through `src/services/*`. Mutations run
+in zod-validated Server Actions. To go live, a seam gains a database arm — the
+signatures stay the same. See
 [ADR 0004](docs/adr/0004-rsc-server-actions-first.md).
 
-**Adding a feature.** Copy the Customers feature: a `services/<name>.ts` seam, a
-route under `app/dashboard/<name>/`, an `actions.ts` for writes, and components
-under `components/dashboard/<name>/`.
+**Adding a feature.** Copy the Catalogue: a `services/<name>.ts` seam with
+`.mock.ts`, `.types.ts` and `.schema.ts`, pages under `app/(website)/` (or,
+later, `app/admin/`), and components under `components/website/<feature>/`.
+The template's Server Action, data-table and RLS-integration-test examples
+(Customers) live in git history at commit `aea34ea`.
 
 ---
 
 ## Deploy
 
-**Vercel** — import the repo, set `NEXT_PUBLIC_SUPABASE_URL` and
-`NEXT_PUBLIC_SUPABASE_ANON_KEY`, deploy. Zero config.
+**Vercel** — import the repo and deploy. Set `NEXT_PUBLIC_SITE_URL`, and the
+Supabase variables once Phase 2 needs them. See
+[ADR 0012](docs/adr/0012-vercel-and-supabase-singapore.md).
 
 **Self-host (Docker)** — the app builds to a standalone server:
 

@@ -1,8 +1,10 @@
 # Server Actions — the repo pattern (reference)
 
 Load-on-demand companion to **nextjs-app-router**. This documents the exact
-read/write shape this repo uses, so new features copy it verbatim. The reference
-feature is Customers (`src/app/dashboard/customers/`).
+read/write shape this repo uses, so new features copy it verbatim. The reads
+follow the Catalogue (`src/app/(website)/products/[slug]/`). The writes follow the
+template's retired Customers feature, which lives in git history at commit
+`aea34ea`; the Admin (Phase 2) brings the first live Server Actions.
 
 ## The pattern
 
@@ -25,7 +27,7 @@ feature is Customers (`src/app/dashboard/customers/`).
    client form can wire them with React 19 `useActionState`. `updateCustomerAction`
    is bound with the id via `action.bind(null, id)` in the detail page.
 
-## Skeleton (mirrors actions.ts)
+## Skeleton (mirrors the Customers actions.ts at commit `aea34ea`)
 
 ```ts
 "use server";
@@ -56,9 +58,10 @@ export async function createCustomerAction(
 
 ## Anchor files
 
-- `src/app/dashboard/customers/page.tsx` — RSC list read.
-- `src/app/dashboard/customers/[customerId]/page.tsx` — RSC detail read + `notFound()`.
-- `src/app/dashboard/customers/actions.ts` — create/update/delete actions.
+- `src/app/(website)/products/[slug]/page.tsx` — RSC detail read + `notFound()`.
+- `src/services/catalogue.ts` — the seam the reads go through.
+- At commit `aea34ea`: the Customers `actions.ts` — create/update/delete actions
+  (list the files with `git ls-tree -r --name-only aea34ea | grep -i customer`).
 - `src/paths.ts` — routes used by `revalidatePath`/`redirect`.
 
 ## Source

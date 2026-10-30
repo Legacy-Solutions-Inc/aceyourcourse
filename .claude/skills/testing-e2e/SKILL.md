@@ -40,15 +40,14 @@ blanket-disable.
   project, `retries: 2` on CI, `trace: "on-first-retry"`, `baseURL` from
   `PLAYWRIGHT_PORT`. The **`webServer`** runs `pnpm dev` and injects **placeholder
   Supabase env** (`NEXT_PUBLIC_SUPABASE_URL`/`_ANON_KEY` fallbacks) so the app
-  boots — and, because Supabase then reads as "configured", auth is ENFORCED
-  (this is what makes the dashboard-redirect smoke test meaningful; see
-  **supabase-auth**).
-- `e2e/auth-smoke.spec.ts` — role-based assertions: the landing heading renders,
-  and `/dashboard` redirects unauthenticated users to `/auth/sign-in`
-  (`toHaveURL(/\/auth\/sign-in/)`).
-- `e2e/a11y.spec.ts` — `AxeBuilder` over `/` and `/auth/sign-in`, failing on
-  serious/critical; it disables `color-contrast` ONLY on `/` for a documented,
-  `TODO`-flagged debt, and prints offending rule ids on failure.
+  boots — and, because Supabase then reads as "configured", the session routes
+  really run the session refresh (see **supabase-auth**).
+- `e2e/smoke.spec.ts` — Home's heading renders; the removed template screens
+  (`/dashboard`, the email/password `/auth/*` pages) return 404; and the OAuth
+  callback lands on Home without a code or with an off-site `next`.
+- `e2e/a11y.spec.ts` — `AxeBuilder` over `/` and the Product pages with every
+  rule on (including `color-contrast`), failing on serious/critical and printing
+  offending rule ids on failure.
 - Script: `test:e2e` (`playwright test`).
 
 ## 5. Red flags

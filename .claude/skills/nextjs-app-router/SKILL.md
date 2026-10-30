@@ -62,15 +62,17 @@ template, and OpenGraph/Twitter defaults.
 - `src/middleware.ts` + `src/lib/csp.ts` — Edge middleware mints a per-request
   nonce with Web Crypto (`btoa(crypto.randomUUID())`, no Node `Buffer`), builds a
   strict nonce CSP via the pure `buildCsp()`, threads it onto forwarded request
-  headers AND the response, and does auth gating. The `matcher` excludes static
+  headers AND the response, and refreshes the Supabase session on the session
+  routes only (`src/lib/session-routes.ts`). The `matcher` excludes static
   assets. Middleware runs on the Edge runtime — Web APIs only.
-- `src/app/dashboard/customers/page.tsx` — reference RSC read: `await
-searchParams`, then `listCustomers({ q, pageSize })` through the seam.
-- `src/app/dashboard/customers/actions.ts` — reference writes: `"use server"`,
-  `zod` schema parse → seam call → `revalidatePath(...)` → `redirect(...)`,
-  returning a `CustomerFormState` for `useActionState`.
-- `src/app/dashboard/customers/[customerId]/page.tsx` — `await params`, seam
-  `getCustomer`, `notFound()` when missing.
+- `src/app/(website)/products/[slug]/page.tsx` — reference RSC read: `await
+params`, seam `getProductBySlug`, `notFound()` when missing.
+- Reference writes (`"use server"`, `zod` schema parse → seam call →
+  `revalidatePath(...)` → `redirect(...)`, returning a form state for
+  `useActionState`) live in git history: the template's Customers actions at
+  commit `aea34ea` (list the files with
+  `git ls-tree -r --name-only aea34ea | grep -i customer`). The Admin (Phase 2)
+  brings the first live Server Actions.
 - `src/paths.ts` — the single typed route registry; link and redirect through it.
 
 See [`references/react-19.md`](references/react-19.md) for the React 19 features

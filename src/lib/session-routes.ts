@@ -1,10 +1,9 @@
 /**
  * The areas that need a Supabase session: the Member App (`/app`), the Admin
- * (`/admin`), the auth screens and callback (`/auth`), and the template's
- * `/dashboard` until ticket 13 removes it. Every other route is the public
+ * (`/admin`) and the OAuth callback (`/auth`). Every other route is the public
  * Website, which never makes a Supabase round trip.
  */
-const SESSION_PREFIXES = ["/app", "/admin", "/auth", "/dashboard"] as const;
+const SESSION_PREFIXES = ["/app", "/admin", "/auth"] as const;
 
 /**
  * Pure: does this pathname need a session? Matches whole path segments only,

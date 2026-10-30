@@ -61,6 +61,7 @@ export const serverEnv = parseServerEnv({
 
 /**
  * Fact: is a database connection string configured? When false, the service
- * seam resolves to the in-memory mock (see `src/services/customers.ts`).
+ * seams resolve to their in-memory mocks. Phase 2's database arms select on it
+ * (see `src/services/catalogue.ts`).
  */
 export const isDatabaseConfigured = Boolean(serverEnv.DATABASE_URL);

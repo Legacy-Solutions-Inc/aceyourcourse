@@ -37,16 +37,19 @@ re-renders or update loops.
 
 ## 4. In this template
 
-- `src/components/dashboard/customer/customers-table.tsx` — `"use client"`
-  reference table: `useReactTable` with core + filtered + pagination row models, a
+- No live data table yet: the Admin (Phase 2) brings the first. The reference
+  table was retired with the template and lives in git history at commit
+  `aea34ea` (list the files with
+  `git ls-tree -r --name-only aea34ea | grep -i customer`):
+- `customers-table.tsx` — `"use client"` reference table: `useReactTable` with core + filtered + pagination row models, a
   **controlled `globalFilter`** bound to a shadcn `Input`, `flexRender` for
   headers/cells, shadcn `Table` markup, an empty state ("No customers found."),
   and Previous/Next buttons gated by `getCanPreviousPage`/`getCanNextPage`.
-- `src/components/dashboard/customer/columns.tsx` — `ColumnDef<Customer>[]`
+- `columns.tsx` — `ColumnDef<Customer>[]`
   defined at module scope: `accessorKey` columns plus custom `cell` renderers
   (`StatusBadge`, a `dayjs`-formatted date, and an actions `DropdownMenu` linking
   to the detail route via `paths`).
-- Data flows in from the RSC page through the seam (`listCustomers`), passed as
+- Data flowed in from the RSC page through the seam (`listCustomers`), passed as
   the `data` prop — the table never fetches.
 
 ## 5. Red flags
@@ -58,7 +61,8 @@ re-renders or update loops.
 - Forgetting `getCoreRowModel()` or the row model for a feature you use
   (filter/paginate/sort).
 - Fetching inside the table instead of receiving seam data via props.
-- Building a bespoke `<table>` instead of reusing the CustomersTable pattern.
+- Building a bespoke `<table>` instead of reusing the CustomersTable pattern
+  (commit `aea34ea`).
 
 ## 6. Sources
 
