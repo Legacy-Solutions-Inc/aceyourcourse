@@ -35,7 +35,6 @@ export const websiteCopy = {
     headlineHighlight: "board day.",
     subheadline:
       "Flash cards, notebooks, and posters for board exam review in various courses. Shipped nationwide.",
-    browseCta: "Browse all reviewers",
   },
   nav: {
     examsMenuLabel: "Pick your board exam",

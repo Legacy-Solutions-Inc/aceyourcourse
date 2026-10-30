@@ -9,7 +9,7 @@ const securityHeaders = [
   // Deny-by-default for unused powerful features.
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), autoplay=()",
+    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), autoplay=(self)",
   },
   // Cross-origin isolation hardening. COOP severs opener ties to cross-origin
   // popups; CORP limits who may embed our resources. COEP/require-corp is
