@@ -1,20 +1,18 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
-import { Inter } from "next/font/google";
 
-import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { config } from "@/config";
 
+import { BRAND_COLORS } from "./brand";
+import { fontVariables } from "./fonts";
 import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL(config.site.url),
   title: {
     default: config.site.name,
-    template: `%s | ${config.site.name}`,
+    template: `%s · ${config.site.name}`,
   },
   description: config.site.description,
   applicationName: config.site.name,
@@ -24,12 +22,20 @@ export const metadata: Metadata = {
     title: config.site.name,
     description: config.site.description,
     url: "/",
+    locale: "en_PH",
   },
   twitter: {
     card: "summary_large_image",
     title: config.site.name,
     description: config.site.description,
   },
+};
+
+// Light-only (no dark mode): tell the browser not to darken form controls or
+// scrollbars, and colour the mobile browser bar navy.
+export const viewport: Viewport = {
+  colorScheme: "light",
+  themeColor: BRAND_COLORS.navy,
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -40,17 +46,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   await headers();
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <Toaster />
-        </ThemeProvider>
+    <html lang="en" className={fontVariables}>
+      <body className="antialiased">
+        {children}
+        <Toaster />
       </body>
     </html>
   );

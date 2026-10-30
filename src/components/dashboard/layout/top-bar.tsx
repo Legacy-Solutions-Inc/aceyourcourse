@@ -1,4 +1,3 @@
-import { ModeToggle } from "@/components/theme/mode-toggle";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
@@ -10,7 +9,6 @@ export function TopBar({ email }: { email?: string }) {
       <SidebarTrigger />
       <Separator orientation="vertical" className="mr-2 h-4" />
       <div className="ml-auto flex items-center gap-2">
-        <ModeToggle />
         <UserMenu email={email} />
       </div>
     </header>

@@ -35,10 +35,10 @@ const envSchema = z.object({
   NEXT_PUBLIC_VERCEL_URL: optionalEnv(z.string().optional()),
   // PostHog analytics (optional; unset ⇒ the integration is inert). The project
   // token is PUBLISHABLE, not a secret — `NEXT_PUBLIC_*` is correct; do NOT move
-  // it to src/env.server.ts. See docs/adr/0007-analytics-posthog.md.
+  // it to src/env.server.ts. Cookieless with no consent gating, so there is no
+  // consent setting. See docs/adr/0007 and docs/adr/0009.
   NEXT_PUBLIC_POSTHOG_KEY: optionalEnv(z.string().min(1).optional()),
   NEXT_PUBLIC_POSTHOG_HOST: optionalEnv(z.string().url().optional()),
-  NEXT_PUBLIC_POSTHOG_REQUIRE_CONSENT: optionalEnv(z.enum(["true", "false"]).optional()),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
 
@@ -74,6 +74,5 @@ export const env = parseEnv({
   NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
   NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
   NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-  NEXT_PUBLIC_POSTHOG_REQUIRE_CONSENT: process.env.NEXT_PUBLIC_POSTHOG_REQUIRE_CONSENT,
   NODE_ENV: process.env.NODE_ENV,
 });

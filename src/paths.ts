@@ -1,5 +1,23 @@
 export const paths = {
   home: "/",
+  products: {
+    list: "/products",
+    details: (slug: string) => `/products/${slug}`,
+  },
+  exams: {
+    details: (code: string) => `/exams/${code.toLowerCase()}`,
+  },
+  reviews: "/reviews",
+  faq: "/faq",
+  about: "/about",
+  legal: {
+    privacy: "/legal/privacy",
+    terms: "/legal/terms",
+  },
+  memberApp: {
+    home: "/app",
+    plans: "/app/plans",
+  },
   auth: {
     signIn: "/auth/sign-in",
     signUp: "/auth/sign-up",

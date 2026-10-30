@@ -18,7 +18,8 @@ export interface Config {
 export const config = {
   site: {
     name: "Ace Your Course",
-    description: "Ace Your Course — study smarter and ace your courses.",
+    description:
+      "Formula flash cards, notebooks and posters for Philippine board exams, made by board passers.",
     url: getSiteURL(),
     version: env.NEXT_PUBLIC_SITE_VERSION,
   },

@@ -1,82 +1,103 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/*
+ * Light-only. No element ever gets the `.dark` class: there is no theme toggle
+ * and no dark token block. KEEP this line anyway. Without it, Tailwind v4's
+ * default `dark:` variant follows `prefers-color-scheme`, which would switch on
+ * the `dark:` styles inside the vendored shadcn components whenever the OS is
+ * in dark mode.
+ */
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Ace Your Course brand tokens (docs/specs/2026-10-29-ayc-v1.md → Design
+ * system). Values come from the mockup CSS in docs/mockup/website/. Orange is a
+ * fill colour: navy text on orange is about 7:1, but orange text on cream fails
+ * contrast, so never use it for copy on cream.
+ */
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
+  color-scheme: light;
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --ayc-cream: #f6f1e7;
+  --ayc-paper: #fbf8f1;
+  --ayc-sand: #ede6d6;
+  --ayc-navy: #0e1a2e;
+  --ayc-orange: #ff881f;
+  --ayc-blue: #005aa5;
+  --ayc-blue-dark: #003f73;
+  --ayc-slate: #4a5568;
+  /* Text and rules on a navy surface (the footer). */
+  --ayc-on-navy-muted: #9fb3cf;
+  --ayc-on-navy-soft: #d9dee6;
+  --ayc-navy-rule: #2a3a55;
+
+  /* Square corners everywhere; pills use rounded-full. */
+  --radius: 0rem;
+
+  /* shadcn semantic tokens, mapped onto the brand. */
+  --background: var(--ayc-cream);
+  --foreground: var(--ayc-navy);
+  --card: var(--ayc-paper);
+  --card-foreground: var(--ayc-navy);
+  --popover: var(--ayc-paper);
+  --popover-foreground: var(--ayc-navy);
+  --primary: var(--ayc-navy);
+  --primary-foreground: var(--ayc-cream);
+  --secondary: var(--ayc-sand);
+  --secondary-foreground: var(--ayc-navy);
+  --muted: var(--ayc-sand);
+  --muted-foreground: var(--ayc-slate);
+  --accent: var(--ayc-orange);
+  --accent-foreground: var(--ayc-navy);
+  --destructive: #b42318;
+  --border: var(--ayc-navy);
+  --input: var(--ayc-navy);
+  --ring: var(--ayc-blue);
+  --chart-1: var(--ayc-orange);
+  --chart-2: var(--ayc-blue);
+  --chart-3: var(--ayc-navy);
+  --chart-4: #e07400;
+  --chart-5: var(--ayc-on-navy-muted);
+  --sidebar: var(--ayc-paper);
+  --sidebar-foreground: var(--ayc-navy);
+  --sidebar-primary: var(--ayc-navy);
+  --sidebar-primary-foreground: var(--ayc-cream);
+  --sidebar-accent: var(--ayc-sand);
+  --sidebar-accent-foreground: var(--ayc-navy);
+  --sidebar-border: var(--ayc-navy);
+  --sidebar-ring: var(--ayc-blue);
 }
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --font-sans: var(--font-schibsted-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  --radius-sm: max(0px, calc(var(--radius) - 4px));
+  --radius-md: max(0px, calc(var(--radius) - 2px));
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Hard offset shadows. Recolour with e.g. `shadow-hard shadow-ayc-orange`. */
+  --shadow-hard-sm: 3px 3px 0 var(--ayc-navy);
+  --shadow-hard: 4px 4px 0 var(--ayc-navy);
+  --shadow-hard-md: 5px 5px 0 var(--ayc-navy);
+  --shadow-hard-lg: 8px 8px 0 var(--ayc-navy);
+  /* The soft drop under panels that open over the page, like the Exams menu. */
+  --shadow-panel: 0 18px 30px -18px rgb(14 26 46 / 0.45);
+
+  --color-ayc-cream: var(--ayc-cream);
+  --color-ayc-paper: var(--ayc-paper);
+  --color-ayc-sand: var(--ayc-sand);
+  --color-ayc-navy: var(--ayc-navy);
+  --color-ayc-orange: var(--ayc-orange);
+  --color-ayc-blue: var(--ayc-blue);
+  --color-ayc-blue-dark: var(--ayc-blue-dark);
+  --color-ayc-slate: var(--ayc-slate);
+  --color-ayc-on-navy-muted: var(--ayc-on-navy-muted);
+  --color-ayc-on-navy-soft: var(--ayc-on-navy-soft);
+  --color-ayc-navy-rule: var(--ayc-navy-rule);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -110,11 +131,30 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+@theme {
+  /* The mockup's main layout switch: below 760 px is the mobile layout. */
+  --breakpoint-wide: 47.5rem;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background font-sans text-foreground;
+  }
+  /* Links inside running text are underlined. No brand colour is 3:1 against
+     the body text colours (navy, slate), so colour alone can't mark a link
+     (WCAG 1.4.1, axe link-in-text-block). It sits in the base layer, so any
+     utility such as `no-underline` wins. */
+  :where(p) a {
+    text-decoration-line: underline;
+    text-underline-offset: 0.15em;
+  }
+  /* A visible brand focus ring. On a blue or navy surface, recolour it with
+     e.g. `focus-visible:outline-ayc-cream`. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 }

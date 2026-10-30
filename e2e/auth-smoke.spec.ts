@@ -1,8 +1,10 @@
 import { expect, test } from "@playwright/test";
 
-test("marketing landing renders", async ({ page }) => {
+test("Website Home renders", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /ship your next app/i })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Remember every formula on board day." }),
+  ).toBeVisible();
 });
 
 test("dashboard redirects unauthenticated users to sign in", async ({ page }) => {

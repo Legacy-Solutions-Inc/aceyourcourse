@@ -27,6 +27,11 @@ const serverEnvSchema = z.object({
   // Optional so the template still runs with no database configured (the
   // in-memory mock is the default). When set, it must be a valid URL.
   DATABASE_URL: optionalEnv(z.string().url().optional()),
+  // The Member App switch. Unset or "false" (the launch default) hides every
+  // Member App button, link and message on the Website; "true" shows them. A
+  // deploy-time setting, so it flips with no code change. Read through the
+  // Catalogue seam's `getWebsiteSettings().memberAppLive`, never directly.
+  MEMBER_APP_LIVE: optionalEnv(z.enum(["true", "false"]).optional()),
 });
 
 /** The validated, typed server environment. */
@@ -51,6 +56,7 @@ export function parseServerEnv(raw: Record<string, unknown>): ServerEnv {
 // validate at import — a misconfiguration then fails loudly, not later.
 export const serverEnv = parseServerEnv({
   DATABASE_URL: process.env.DATABASE_URL,
+  MEMBER_APP_LIVE: process.env.MEMBER_APP_LIVE,
 });
 
 /**

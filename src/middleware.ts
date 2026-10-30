@@ -6,6 +6,7 @@ import { analyticsSessionReplay, authDisabled, isSupabaseConfigured } from "@/co
 import { env } from "@/env";
 import { hasRole } from "@/lib/authz";
 import { buildCsp } from "@/lib/csp";
+import { needsSession } from "@/lib/session-routes";
 import { createClient } from "@/lib/supabase/middleware";
 import { paths } from "@/paths";
 
@@ -47,6 +48,13 @@ export async function middleware(req: NextRequest) {
     return redirect;
   };
 
+  // The public Website needs no session: set the CSP and return before any
+  // Supabase client exists, so public pages make no Supabase round trip. Only
+  // the Member App, the Admin and the auth screens go on (see needsSession).
+  if (!needsSession(pathname)) {
+    return passThrough();
+  }
+
   // Dev-only: no Supabase configured → auth disabled, let every request through.
   if (authDisabled) {
     return passThrough();
@@ -64,7 +72,7 @@ export async function middleware(req: NextRequest) {
 
   const { supabaseClient, res } = createClient(req, nonce, csp);
 
-  // Refreshes the session cookie on every matched request. If Supabase is
+  // Refreshes the session cookie on every session route. If Supabase is
   // unreachable, treat the request as unauthenticated rather than erroring.
   let user: User | null = null;
   try {

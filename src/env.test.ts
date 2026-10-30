@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { parseEnv } from "./env";
+import { parseServerEnv } from "./env.server";
 
 describe("parseEnv", () => {
   it("accepts an empty env (all optional; NODE_ENV defaults to development)", () => {
@@ -43,5 +44,23 @@ describe("parseEnv", () => {
   it("treats a set-but-empty optional var as unset (log level)", () => {
     const env = parseEnv({ NEXT_PUBLIC_LOG_LEVEL: "" });
     expect(env.NEXT_PUBLIC_LOG_LEVEL).toBeUndefined();
+  });
+});
+
+describe("parseServerEnv", () => {
+  it("leaves the Member App switch unset (off) by default", () => {
+    expect(parseServerEnv({}).MEMBER_APP_LIVE).toBeUndefined();
+  });
+
+  it.each(["true", "false"])("accepts MEMBER_APP_LIVE=%s", (value) => {
+    expect(parseServerEnv({ MEMBER_APP_LIVE: value }).MEMBER_APP_LIVE).toBe(value);
+  });
+
+  it("treats a set-but-empty MEMBER_APP_LIVE as unset", () => {
+    expect(parseServerEnv({ MEMBER_APP_LIVE: "" }).MEMBER_APP_LIVE).toBeUndefined();
+  });
+
+  it("throws on any other MEMBER_APP_LIVE value, naming the key", () => {
+    expect(() => parseServerEnv({ MEMBER_APP_LIVE: "yes" })).toThrow(/MEMBER_APP_LIVE/);
   });
 });
