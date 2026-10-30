@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import type {
   Exam,
+  Faq,
+  FaqGroup,
   Marketplace,
   Product,
   Review,
@@ -13,7 +15,8 @@ import type {
 // seed today, the client's catalogue spreadsheet later). The mock validates its
 // seed when it loads, so a bad edit fails loudly instead of rendering a broken
 // Website. Rules that span records (an Exam a Product names, the Product a
-// Review belongs to) are checked once the whole seed has been read.
+// Review belongs to, the Review an FAQ quotes) are checked once the whole seed
+// has been read.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -25,6 +28,7 @@ export interface CatalogueSeed {
   settings: Omit<WebsiteSettings, "memberAppLive">;
   products: Product[];
   reviews: Review[];
+  faqs: Faq[];
 }
 
 const nonBlank = (label: string) => z.string().trim().min(1, `${label} must not be blank`);
@@ -118,15 +122,18 @@ const listingUrl = (marketplace: Marketplace) => {
   );
 };
 
+/** A URL part: a Product's /products/{slug}, an FAQ's #faq-{slug}. */
+const kebabSlug = z
+  .string()
+  .regex(
+    /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+    "must be kebab-case: lowercase letters and digits joined by single hyphens",
+  );
+
 const productSchema = z
   .object({
     id: nonBlank("Product id"),
-    slug: z
-      .string()
-      .regex(
-        /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-        "must be kebab-case: lowercase letters and digits joined by single hyphens",
-      ),
+    slug: kebabSlug,
     examCode: nonBlank("Exam code"),
     title: nonBlank("Title"),
     shortName: nonBlank("Short name"),
@@ -202,6 +209,32 @@ const reviewSchema = z.object({
   homePin: z.number().int().positive("must be a positive whole number").nullable(),
 });
 
+/** The FAQ page's fixed groups, in page order. */
+export const FAQ_GROUPS = [
+  "shipping",
+  "paper",
+  "coverage",
+  "buying",
+  "authenticity",
+] as const satisfies readonly FaqGroup[];
+
+/** The Admin's limit, so every answer stays short. */
+const FAQ_ANSWER_MAX = 400;
+
+const faqSchema = z.object({
+  id: nonBlank("FAQ id"),
+  slug: kebabSlug,
+  group: z.enum(FAQ_GROUPS),
+  order: z.number().int().nonnegative(),
+  question: nonBlank("Question"),
+  answer: nonBlank("Answer").max(FAQ_ANSWER_MAX, `must be at most ${FAQ_ANSWER_MAX} characters`),
+  reviewQuote: z.object({ reviewId: nonBlank("Review id"), text: nonBlank("Quote") }).nullable(),
+  popularLabel: nonBlank("Popular label").nullable(),
+  requiresMemberApp: z.boolean(),
+  showOnFaqPage: z.boolean(),
+  showCoverageTable: z.boolean(),
+});
+
 const promoBannerSchema = z
   .object({
     visible: z.boolean(),
@@ -253,8 +286,9 @@ export const catalogueSeedSchema: z.ZodType<CatalogueSeed> = z
     settings: settingsSchema,
     products: z.array(productSchema),
     reviews: z.array(reviewSchema),
+    faqs: z.array(faqSchema),
   })
-  .superRefine(({ exams, products, reviews }, ctx) => {
+  .superRefine(({ exams, products, reviews, faqs }, ctx) => {
     const issue = (path: (string | number)[], message: string) =>
       ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
 
@@ -316,6 +350,54 @@ export const catalogueSeedSchema: z.ZodType<CatalogueSeed> = z
         issue(["reviews", index, "productId"], `unknown Product "${review.productId}"`);
       } else if (product.state !== "live") {
         issue(["reviews", index, "productId"], "a Coming Soon Product has no Reviews");
+      }
+    });
+
+    flagDuplicates(
+      ctx,
+      faqs,
+      (faq) => faq.id,
+      (faq, index) => ({ path: ["faqs", index, "id"], message: `duplicate FAQ id "${faq.id}"` }),
+    );
+    flagDuplicates(
+      ctx,
+      faqs,
+      (faq) => faq.slug,
+      (faq, index) => ({
+        path: ["faqs", index, "slug"],
+        message: `duplicate slug "${faq.slug}"`,
+      }),
+    );
+    flagDuplicates(
+      ctx,
+      faqs,
+      (faq) => `${faq.group}:${faq.order}`,
+      (faq, index) => ({
+        path: ["faqs", index, "order"],
+        message: `order ${faq.order} is already used in ${faq.group}`,
+      }),
+    );
+    flagDuplicates(
+      ctx,
+      faqs,
+      (faq) => (faq.showCoverageTable ? "coverage table" : null),
+      (_faq, index) => ({
+        path: ["faqs", index, "showCoverageTable"],
+        message: "only one FAQ can show the coverage table",
+      }),
+    );
+    // A quote is shown as "From a review", so it must be a real one.
+    faqs.forEach((faq, index) => {
+      if (!faq.reviewQuote) return;
+      const { reviewId, text } = faq.reviewQuote;
+      const review = reviews.find((r) => r.id === reviewId);
+      if (!review) {
+        issue(["faqs", index, "reviewQuote", "reviewId"], `unknown Review "${reviewId}"`);
+      } else if (!review.text.includes(text)) {
+        issue(
+          ["faqs", index, "reviewQuote", "text"],
+          `must be word for word from Review "${reviewId}"`,
+        );
       }
     });
   });

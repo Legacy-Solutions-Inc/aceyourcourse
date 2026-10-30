@@ -1,6 +1,7 @@
 import * as mockImpl from "@/services/catalogue.mock";
 import type {
   Exam,
+  FaqGroupWithItems,
   Product,
   ProductFilters,
   ReviewFilters,
@@ -10,8 +11,8 @@ import type {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Catalogue Service Seam. Every Website page and component reads Exams,
-// Products, Reviews and Website settings from here, and never imports the
-// seed. This module is a thin SELECTOR, the pattern every seam copies.
+// Products, Reviews, FAQs and Website settings from here, and never imports
+// the seed. This module is a thin SELECTOR, the pattern every seam copies.
 // Phase 1 has only the in-memory mock arm. Phase 2 adds the Drizzle arm
 // (catalogue.db.ts, chosen when a DATABASE_URL is configured) with no page
 // changes. See docs/adr/0003 and docs/adr/0006.
@@ -57,6 +58,14 @@ interface CatalogueService {
   /** The pinned Home selection in pin order, at most 9. */
   listHomeReviews(): Promise<ReviewWithProduct[]>;
 
+  /**
+   * The FAQ page: its groups in their fixed order, each with its FAQs in
+   * order. Only FAQs with "Show on FAQ page" on are listed, and those that
+   * need the Member App only while the switch is on. Empty groups are
+   * dropped. A quote whose Review isn't shown on the Website is dropped.
+   */
+  listFaqs(): Promise<FaqGroupWithItems[]>;
+
   getWebsiteSettings(): Promise<WebsiteSettings>;
 }
 
@@ -70,4 +79,5 @@ export const listRelatedProducts = impl.listRelatedProducts;
 export const listBestSellers = impl.listBestSellers;
 export const listReviews = impl.listReviews;
 export const listHomeReviews = impl.listHomeReviews;
+export const listFaqs = impl.listFaqs;
 export const getWebsiteSettings = impl.getWebsiteSettings;

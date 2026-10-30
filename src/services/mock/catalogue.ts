@@ -1,12 +1,13 @@
 import { paths } from "@/paths";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
-import type { ProductPhoto } from "@/services/catalogue.types";
+import type { Faq, ProductPhoto } from "@/services/catalogue.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Catalogue seed, ported from docs/mockup/aycData.js (EXAMS, EXAM_INFO, STORES,
 // CONTACT, SHOP, PRODUCTS with their Reviews) and the announcement in
 // docs/mockup/website/SiteNav.dc.html. The Home Review pins follow the hand-
-// picked selection at Home_v2.dc.html L349–351. Photos are self-hosted under
+// picked selection at Home_v2.dc.html L349–351. The FAQs are from
+// FAQ_v2.dc.html L111–133, rewritten for the Website (see the FAQ note below). Photos are self-hosted under
 // public/products/. Only the five Exams that have Products are seeded. The client's full
 // catalogue spreadsheet replaces this before launch and adds the rest of the
 // Exams together with their Products. Pages never import this file: they read
@@ -59,6 +60,35 @@ const SUBJECT_ALIASES: Record<string, Record<string, string>> = {
 
 function subjectCodes(examCode: string, names: string[]): string[] {
   return names.map((name) => SUBJECT_ALIASES[examCode]?.[name] ?? name);
+}
+
+/**
+ * An FAQ, shown on the FAQ page, with no quote, chip or coverage table unless
+ * given. The mockup's answers were written for inside the Member App ("here in
+ * the app"), so they are rewritten for the Website with the CONTEXT.md terms
+ * (a Plan, never a subscription). Answers about the Member App need it live,
+ * so they stay hidden while the switch is off. The mockup's two quotes that no
+ * seeded Review contains are dropped, pending the client's confirmation.
+ */
+function faq(
+  id: string,
+  slug: string,
+  group: Faq["group"],
+  order: number,
+  fields: Pick<Faq, "question" | "answer"> & Partial<Faq>,
+): Faq {
+  return {
+    id,
+    slug,
+    group,
+    order,
+    reviewQuote: null,
+    popularLabel: null,
+    requiresMemberApp: false,
+    showOnFaqPage: true,
+    showCoverageTable: false,
+    ...fields,
+  };
 }
 
 export const CATALOGUE_SEED: CatalogueSeed = {
@@ -754,5 +784,104 @@ export const CATALOGUE_SEED: CatalogueSeed = {
       marketplace: "shopee",
       homePin: 5,
     },
+  ],
+  faqs: [
+    faq("faq-001", "ship", "shipping", 1, {
+      question: "Where do orders ship from?",
+      answer:
+        "Every order ships from Iloilo City through Shopee, TikTok Shop, and Lazada. We ship daily so your reviewers reach you faster.",
+      popularLabel: "Where do orders ship from?",
+    }),
+    faq("faq-002", "nationwide", "shipping", 2, {
+      question: "Do you deliver nationwide?",
+      answer: "Yes, we ship nationwide! Order through Shopee, TikTok Shop, or Lazada.",
+    }),
+    faq("faq-003", "tracking", "shipping", 3, {
+      question: "How do I track my order?",
+      answer:
+        "In the Shopee, TikTok Shop, or Lazada app, under My Purchases. Tracking updates come from the courier.",
+    }),
+    faq("faq-004", "flash-cards", "paper", 1, {
+      question: "How thick are the flash cards?",
+      answer:
+        "Flash cards are 4 × 6 in, printed on 160 gsm board paper. Sturdy enough to shuffle through all review season, light enough to carry a full deck.",
+    }),
+    faq("faq-005", "posters", "paper", 2, {
+      question: "What are the posters like?",
+      answer: "A3 size, printed big enough to read from your desk while you solve.",
+      reviewQuote: {
+        reviewId: "rev-014",
+        text: "Glossy type yung paper, makapal sya. Malalaki printing ng formulas kaya mababasa mo mga 6ft away hahaha.",
+      },
+    }),
+    faq("faq-006", "notebook", "paper", 3, {
+      question: "What size is the notebook?",
+      answer: "Our notebooks are A5 size.",
+    }),
+    faq("faq-007", "coverage", "coverage", 1, {
+      question: "What subjects does each exam’s reviewer cover?",
+      answer:
+        "Each reviewer follows that exam’s board subjects. Topics are updated and based on recent exam trends.",
+      showCoverageTable: true,
+    }),
+    faq("faq-008", "one-subject", "coverage", 2, {
+      question: "Can I buy just one subject?",
+      answer:
+        "For some reviewers, yes:\nCE posters per subject: MSTC ₱400 · HPGE ₱470 · PSAD ₱700\nEE flash cards per subject: ₱600 each, or ₱1,550 for all three\nMedTech flash cards per module: ₱550 each, or ₱2,750 for all six",
+    }),
+    faq("faq-009", "on-its-own", "coverage", 3, {
+      question: "Is it enough on its own?",
+      answer:
+        "Think of it as your recall and practice kit. It works alongside a review center or self-review, so you spend less time copying formulas and more time solving.",
+    }),
+    faq("faq-010", "my-exam", "coverage", 4, {
+      question: "My exam isn’t on the site yet.",
+      answer: "More exams are coming soon.",
+    }),
+    faq("faq-011", "where-to-buy", "buying", 1, {
+      question: "Where can I buy?",
+      answer:
+        "Physical copies are sold through our official stores on Shopee, Lazada, and TikTok Shop. Every store link on this site goes there.",
+    }),
+    faq("faq-012", "digital", "buying", 2, {
+      question: "Is there a digital version?",
+      answer:
+        "Yes. Digital flashcards, quizzes, Reviewer PDFs, and video courses are in the Member App. Buy a Plan there and pay through PayMongo, including QR payments.",
+      requiresMemberApp: true,
+    }),
+    faq("faq-013", "auto-renew", "buying", 3, {
+      question: "Does my Plan renew automatically?",
+      answer:
+        "No. A Plan gives you access for a fixed period, like one month, and never renews by itself. When it ends, buy another Plan from the Billing page to keep going. We never charge you automatically.",
+      popularLabel: "Does my Plan renew automatically?",
+      requiresMemberApp: true,
+    }),
+    faq("faq-014", "two-devices", "buying", 4, {
+      question: "Can I use my account on two devices?",
+      answer:
+        "You can sign in with Google on any device, but only one at a time. Signing in on a new device signs out the old one.",
+      popularLabel: "Can I use my account on two devices?",
+      requiresMemberApp: true,
+    }),
+    faq("faq-015", "discounts", "buying", 5, {
+      question: "Are there discounts?",
+      answer:
+        "On Shopee, most listings have “Any 2 enjoy 4% off” when you add two items to the same order. The CE Review Bundle 3-in-1 is ₱3,499, which is ₱200 less than buying the cards, notebook, and posters separately.",
+    }),
+    faq("faq-016", "installments", "buying", 6, {
+      question: "Can I pay in installments?",
+      answer: "For physical copies on Shopee, every listing supports SPayLater at 0% interest.",
+    }),
+    faq("faq-017", "original", "authenticity", 1, {
+      question: "How do I know I’m buying the original?",
+      answer:
+        "1. Buy from the official AceYourCourse stores on Shopee, Lazada, or TikTok Shop. Every store link on this site goes there.\n2. Check that the listing says “Ships from Iloilo City, Iloilo.”\n3. Look for the established reviews by our dear future board passers. A new shop with our photos is a red flag.",
+      popularLabel: "How do I know I’m buying the original?",
+    }),
+    faq("faq-018", "copies", "authenticity", 2, {
+      question: "Someone is selling PDFs or photocopies. Are those yours?",
+      answer:
+        "No. AceYourCourse products are registered with IPOPHIL and protected by copyright law. Unauthorized reproduction, distribution, or use is prohibited. Copies may be outdated or incomplete. If you see one, send us the link through Shopee chat.",
+    }),
   ],
 };

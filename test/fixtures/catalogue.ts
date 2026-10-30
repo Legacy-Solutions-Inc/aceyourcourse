@@ -1,4 +1,10 @@
-import type { Exam, Product, ReviewWithProduct } from "@/services/catalogue.types";
+import type {
+  Exam,
+  FaqGroupWithItems,
+  FaqWithQuote,
+  Product,
+  ReviewWithProduct,
+} from "@/services/catalogue.types";
 
 // Small, hand-built catalogue records for unit and component tests. Each test
 // overrides only the fields its rule is about.
@@ -91,4 +97,79 @@ export function testReview(overrides: Partial<ReviewWithProduct> = {}): ReviewWi
     },
     ...overrides,
   };
+}
+
+export function testFaq(overrides: Partial<FaqWithQuote> = {}): FaqWithQuote {
+  return {
+    id: "faq-test-1",
+    slug: "ship",
+    group: "shipping",
+    order: 1,
+    question: "Where do orders ship from?",
+    answer: "Every order ships from Iloilo City.",
+    reviewQuote: null,
+    popularLabel: null,
+    requiresMemberApp: false,
+    showOnFaqPage: true,
+    showCoverageTable: false,
+    ...overrides,
+  };
+}
+
+/** Three FAQ groups: shipping (2), paper (1) and authenticity (1). */
+export function testFaqGroups(): FaqGroupWithItems[] {
+  return [
+    {
+      group: "shipping",
+      title: "Shipping",
+      items: [
+        testFaq({ popularLabel: "Where do orders ship from?" }),
+        testFaq({
+          id: "faq-test-2",
+          slug: "tracking",
+          order: 2,
+          question: "How do I track my order?",
+          answer: "In the Shopee app, under My Purchases.",
+        }),
+      ],
+    },
+    {
+      group: "paper",
+      title: "Paper and print",
+      items: [
+        testFaq({
+          id: "faq-test-3",
+          slug: "posters",
+          group: "paper",
+          question: "What are the posters like?",
+          answer: "A3 size, printed big enough to read from your desk.",
+          reviewQuote: {
+            reviewId: "rev-test-1",
+            text: "Readable fonts.",
+            stars: 5,
+            variation: "MSTC, HPGE, PSAD",
+            product: {
+              slug: "ultimate-ce-posters-2-0",
+              shortName: "Ultimate CE Posters 2.0",
+              examCode: "CE",
+            },
+          },
+        }),
+      ],
+    },
+    {
+      group: "authenticity",
+      title: "Authenticity",
+      items: [
+        testFaq({
+          id: "faq-test-4",
+          slug: "original",
+          group: "authenticity",
+          question: "How do I know I’m buying the original?",
+          answer: "Check that the listing says “Ships from Iloilo City, Iloilo.”",
+          popularLabel: "How do I know I’m buying the original?",
+        }),
+      ],
+    },
+  ];
 }

@@ -1,8 +1,12 @@
 import { serverEnv } from "@/env.server";
 import { productFormatLabel } from "@/lib/catalogue/format";
-import { validateCatalogueSeed } from "@/services/catalogue.schema";
+import { FAQ_GROUPS, validateCatalogueSeed } from "@/services/catalogue.schema";
 import type {
   Exam,
+  Faq,
+  FaqGroup,
+  FaqGroupWithItems,
+  FaqWithQuote,
   Product,
   ProductFilters,
   ProductSort,
@@ -30,6 +34,9 @@ const seed = validation.data;
 // Callers get copies, so nothing a page does can change the seed for the next
 // request (a database read returns fresh rows the same way).
 const copy = <T>(value: T): T => structuredClone(value);
+
+/** The Member App switch (MEMBER_APP_LIVE). */
+const memberAppLive = () => serverEnv.MEMBER_APP_LIVE === "true";
 
 // ── Ordering ────────────────────────────────────────────────────────────────
 
@@ -230,8 +237,53 @@ export async function listHomeReviews(): Promise<ReviewWithProduct[]> {
   return copy(pinned.slice(0, HOME_REVIEW_COUNT));
 }
 
+// ── FAQs ────────────────────────────────────────────────────────────────────
+
+/**
+ * Each group's title. While the Member App switch is off, the buying group's
+ * title doesn't mention the app.
+ */
+const FAQ_GROUP_TITLES: Record<FaqGroup, { title: string; appTitle?: string }> = {
+  shipping: { title: "Shipping" },
+  paper: { title: "Paper and print" },
+  coverage: { title: "What’s covered" },
+  buying: { title: "Buying", appTitle: "Buying and the app" },
+  authenticity: { title: "Authenticity" },
+};
+
+/** Credits the FAQ's quote to its Review, or drops it if that Review isn't shown. */
+function withQuoteCredit(faq: Faq, reviews: Map<string, ReviewWithProduct>): FaqWithQuote {
+  const review = faq.reviewQuote ? reviews.get(faq.reviewQuote.reviewId) : undefined;
+  if (!faq.reviewQuote || !review) return { ...faq, reviewQuote: null };
+  return {
+    ...faq,
+    reviewQuote: {
+      ...faq.reviewQuote,
+      stars: review.stars,
+      variation: review.variation,
+      product: review.product,
+    },
+  };
+}
+
+export async function listFaqs(): Promise<FaqGroupWithItems[]> {
+  const appLive = memberAppLive();
+  const reviews = new Map(visibleReviews().map((review) => [review.id, review]));
+  const shown = seed.faqs.filter((faq) => faq.showOnFaqPage && (appLive || !faq.requiresMemberApp));
+  const groups = FAQ_GROUPS.flatMap((group) => {
+    const { title, appTitle } = FAQ_GROUP_TITLES[group];
+    const items = shown
+      .filter((faq) => faq.group === group)
+      .sort(ascending((faq) => faq.order))
+      .map((faq) => withQuoteCredit(faq, reviews));
+    if (items.length === 0) return [];
+    return [{ group, title: (appLive && appTitle) || title, items }];
+  });
+  return copy(groups);
+}
+
 // ── Settings ────────────────────────────────────────────────────────────────
 
 export async function getWebsiteSettings(): Promise<WebsiteSettings> {
-  return { ...copy(seed.settings), memberAppLive: serverEnv.MEMBER_APP_LIVE === "true" };
+  return { ...copy(seed.settings), memberAppLive: memberAppLive() };
 }

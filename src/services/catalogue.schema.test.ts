@@ -148,6 +148,60 @@ function validSeed(): CatalogueSeed {
         homePin: null,
       },
     ],
+    faqs: [
+      {
+        id: "faq-1",
+        slug: "ship",
+        group: "shipping",
+        order: 1,
+        question: "Where do orders ship from?",
+        answer: "Every order ships from Iloilo City.",
+        reviewQuote: null,
+        popularLabel: "Where do orders ship from?",
+        requiresMemberApp: false,
+        showOnFaqPage: true,
+        showCoverageTable: false,
+      },
+      {
+        id: "faq-2",
+        slug: "posters",
+        group: "paper",
+        order: 1,
+        question: "What are the posters like?",
+        answer: "A3 size.",
+        reviewQuote: { reviewId: "rev-1", text: "Readable from 6 ft away." },
+        popularLabel: null,
+        requiresMemberApp: false,
+        showOnFaqPage: true,
+        showCoverageTable: false,
+      },
+      {
+        id: "faq-3",
+        slug: "coverage",
+        group: "coverage",
+        order: 1,
+        question: "What subjects does each exam’s reviewer cover?",
+        answer: "Each reviewer follows that exam’s board subjects.",
+        reviewQuote: null,
+        popularLabel: null,
+        requiresMemberApp: false,
+        showOnFaqPage: true,
+        showCoverageTable: true,
+      },
+      {
+        id: "faq-4",
+        slug: "auto-renew",
+        group: "buying",
+        order: 1,
+        question: "Does my Plan renew automatically?",
+        answer: "No. A Plan never renews by itself.",
+        reviewQuote: null,
+        popularLabel: "Does my Plan renew automatically?",
+        requiresMemberApp: true,
+        showOnFaqPage: false,
+        showCoverageTable: false,
+      },
+    ],
   };
 }
 
@@ -286,6 +340,7 @@ describe("validateCatalogueSeed: Products", () => {
     const seed = validSeed();
     Object.assign(live(seed), { priceTo: null, variations: [], listings: {}, shopee: null });
     seed.reviews = [];
+    seed.faqs = []; // one quotes a Review
     expect(validateCatalogueSeed(seed).success).toBe(true);
   });
 
@@ -513,5 +568,97 @@ describe("validateCatalogueSeed: Reviews", () => {
     const seed = validSeed();
     at(seed.reviews, 0).homePin = pin;
     expect(errorsFor(seed)).toEqual([expect.stringMatching(/^reviews\.0\.homePin: /)]);
+  });
+});
+
+describe("validateCatalogueSeed: FAQs", () => {
+  const faq = (seed: CatalogueSeed, index: number) => at(seed.faqs, index);
+
+  it("accepts FAQs with a Review quote, a popular chip, the app flag and the coverage table", () => {
+    // The fixture also reuses order 1 in every group: orders are per group.
+    const result = validateCatalogueSeed(validSeed());
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts an answer of exactly 400 characters", () => {
+    const seed = validSeed();
+    faq(seed, 0).answer = "a".repeat(400);
+    expect(validateCatalogueSeed(seed).success).toBe(true);
+  });
+
+  it("rejects an answer of 401 characters", () => {
+    const seed = validSeed();
+    faq(seed, 0).answer = "a".repeat(401);
+    expect(errorsFor(seed)).toEqual([expect.stringMatching(/^faqs\.0\.answer: .*400/)]);
+  });
+
+  it("rejects a blank question", () => {
+    const seed = validSeed();
+    faq(seed, 1).question = " ";
+    expect(errorsFor(seed)).toEqual([expect.stringMatching(/^faqs\.1\.question: /)]);
+  });
+
+  it("rejects a duplicate FAQ id", () => {
+    const seed = validSeed();
+    faq(seed, 1).id = "faq-1";
+    expect(errorsFor(seed)).toEqual([expect.stringMatching(/^faqs\.1\.id: .*duplicate/i)]);
+  });
+
+  it("rejects a duplicate slug, which would give two FAQs one deep link", () => {
+    const seed = validSeed();
+    faq(seed, 2).slug = "ship";
+    expect(errorsFor(seed)).toEqual([
+      expect.stringMatching(/^faqs\.2\.slug: .*duplicate slug "ship"/i),
+    ]);
+  });
+
+  it("rejects a slug that is not kebab-case", () => {
+    const seed = validSeed();
+    faq(seed, 0).slug = "Ship from";
+    expect(errorsFor(seed)).toEqual([expect.stringMatching(/^faqs\.0\.slug: .*kebab-case/)]);
+  });
+
+  it("rejects an unknown group", () => {
+    const seed = validSeed();
+    Object.assign(faq(seed, 0), { group: "returns" });
+    expect(errorsFor(seed)).toEqual([expect.stringMatching(/^faqs\.0\.group: /)]);
+  });
+
+  it("rejects two FAQs with the same order in one group", () => {
+    const seed = validSeed();
+    faq(seed, 1).group = "shipping";
+    expect(errorsFor(seed)).toEqual([
+      expect.stringMatching(/^faqs\.1\.order: .*order 1 is already used in shipping/i),
+    ]);
+  });
+
+  it("rejects a second FAQ with the coverage table", () => {
+    const seed = validSeed();
+    faq(seed, 0).showCoverageTable = true;
+    expect(errorsFor(seed)).toEqual([
+      expect.stringMatching(/^faqs\.2\.showCoverageTable: .*only one FAQ/i),
+    ]);
+  });
+
+  it("rejects a quote that is not word for word in its Review", () => {
+    const seed = validSeed();
+    present(faq(seed, 1).reviewQuote).text = "Readable from 6 feet away.";
+    expect(errorsFor(seed)).toEqual([
+      expect.stringMatching(/^faqs\.1\.reviewQuote\.text: .*word for word.*"rev-1"/i),
+    ]);
+  });
+
+  it("rejects a quote of an unknown Review", () => {
+    const seed = validSeed();
+    present(faq(seed, 1).reviewQuote).reviewId = "rev-404";
+    expect(errorsFor(seed)).toEqual([
+      expect.stringMatching(/^faqs\.1\.reviewQuote\.reviewId: .*unknown Review "rev-404"/i),
+    ]);
+  });
+
+  it("rejects a blank popular label", () => {
+    const seed = validSeed();
+    faq(seed, 0).popularLabel = "";
+    expect(errorsFor(seed)).toEqual([expect.stringMatching(/^faqs\.0\.popularLabel: /)]);
   });
 });

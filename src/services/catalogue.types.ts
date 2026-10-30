@@ -184,3 +184,54 @@ export interface ReviewFilters {
   /** Applied after sorting. */
   limit?: number;
 }
+
+// ── FAQs ────────────────────────────────────────────────────────────────────
+
+/** The FAQ page's fixed topic groups. The page shows them in this order. */
+export type FaqGroup = "shipping" | "paper" | "coverage" | "buying" | "authenticity";
+
+/** A supporting quote, copied word for word from a seeded Review. */
+export interface FaqReviewQuote {
+  reviewId: string;
+  text: string;
+}
+
+/** One question and its answer on the FAQ page. */
+export interface Faq {
+  id: string;
+  /** The deep-link id: "ship" links as /faq#faq-ship. */
+  slug: string;
+  group: FaqGroup;
+  /** Its place within its group. */
+  order: number;
+  question: string;
+  /** At most 400 characters. Line breaks are kept. */
+  answer: string;
+  reviewQuote: FaqReviewQuote | null;
+  /** Its label among the popular question chips, or null when it isn't one. */
+  popularLabel: string | null;
+  /** Shown only while the Member App switch is on. */
+  requiresMemberApp: boolean;
+  showOnFaqPage: boolean;
+  /** Shows the coverage table (each Exam with its Subjects) under the answer. */
+  showCoverageTable: boolean;
+}
+
+/** A Review quote as the FAQ page shows it, credited to its Review. */
+export interface CreditedReviewQuote extends FaqReviewQuote {
+  stars: Review["stars"];
+  variation: string | null;
+  product: ReviewWithProduct["product"];
+}
+
+/** An FAQ as the FAQ page shows it, with its quote credited. */
+export interface FaqWithQuote extends Faq {
+  reviewQuote: CreditedReviewQuote | null;
+}
+
+/** One topic group of the FAQ page, with its visible FAQs in order. */
+export interface FaqGroupWithItems {
+  group: FaqGroup;
+  title: string;
+  items: FaqWithQuote[];
+}

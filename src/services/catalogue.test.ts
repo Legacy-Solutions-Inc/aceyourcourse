@@ -10,6 +10,7 @@ import {
   getWebsiteSettings,
   listBestSellers,
   listExams,
+  listFaqs,
   listHomeReviews,
   listProducts,
   listRelatedProducts,
@@ -719,5 +720,165 @@ describe("catalogue seam: Reviews", () => {
     const home = await seam.listHomeReviews();
     expect(home).toHaveLength(9);
     expect(home[0]?.id).toBe("rev-001");
+  });
+});
+
+describe("catalogue seam: FAQs", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  /** The seam with the Member App switch on or off. */
+  async function seamWithSwitch(memberAppLive: boolean) {
+    vi.stubEnv("MEMBER_APP_LIVE", memberAppLive ? "true" : "false");
+    vi.resetModules();
+    return import("./catalogue");
+  }
+
+  const faqSlugs = (groups: { items: { slug: string }[] }[]) =>
+    groups.flatMap((group) => group.items.map((faq) => faq.slug));
+
+  it("lists the five groups in their fixed order, each with its FAQs in order", async () => {
+    const seam = await seamWithSwitch(false);
+    const groups = await seam.listFaqs();
+    expect(groups.map((g) => [g.group, g.title, g.items.map((faq) => faq.slug)])).toEqual([
+      ["shipping", "Shipping", ["ship", "nationwide", "tracking"]],
+      ["paper", "Paper and print", ["flash-cards", "posters", "notebook"]],
+      ["coverage", "What’s covered", ["coverage", "one-subject", "on-its-own", "my-exam"]],
+      ["buying", "Buying", ["where-to-buy", "discounts", "installments"]],
+      ["authenticity", "Authenticity", ["original", "copies"]],
+    ]);
+  });
+
+  it("hides every FAQ that needs the Member App while the switch is off", async () => {
+    const seam = await seamWithSwitch(false);
+    const items = (await seam.listFaqs()).flatMap((group) => group.items);
+    expect(items).toHaveLength(15);
+    expect(items.filter((faq) => faq.requiresMemberApp)).toEqual([]);
+  });
+
+  it('shows the Member App FAQs under "Buying and the app" while the switch is on', async () => {
+    const seam = await seamWithSwitch(true);
+    const groups = await seam.listFaqs();
+    expect(groups.find((g) => g.group === "buying")).toMatchObject({
+      title: "Buying and the app",
+      items: [
+        { slug: "where-to-buy" },
+        { slug: "digital" },
+        { slug: "auto-renew", popularLabel: "Does my Plan renew automatically?" },
+        { slug: "two-devices", popularLabel: "Can I use my account on two devices?" },
+        { slug: "discounts" },
+        { slug: "installments" },
+      ],
+    });
+    expect(faqSlugs(groups)).toHaveLength(18);
+  });
+
+  it("says nothing about the Member App's Plans or payments while the switch is off", async () => {
+    const seam = await seamWithSwitch(false);
+    const text = (await seam.listFaqs())
+      .flatMap((group) => [
+        group.title,
+        ...group.items.flatMap((faq) => [
+          faq.question,
+          faq.answer,
+          faq.popularLabel ?? "",
+          faq.reviewQuote?.text ?? "",
+        ]),
+      ])
+      .join("\n");
+    expect(text).not.toMatch(/subscription|PayMongo|Billing page|here in the app|Member App/i);
+  });
+
+  it("never calls a Plan a subscription, even with the switch on", async () => {
+    const seam = await seamWithSwitch(true);
+    const text = (await seam.listFaqs())
+      .flatMap((group) => group.items.flatMap((faq) => [faq.question, faq.answer]))
+      .join("\n");
+    expect(text).not.toMatch(/subscription|here in the app/i);
+    expect(text).toMatch(/Plan/);
+  });
+
+  it("offers popular chips for the visible FAQs only", async () => {
+    const seam = await seamWithSwitch(false);
+    const chips = (await seam.listFaqs())
+      .flatMap((group) => group.items)
+      .filter((faq) => faq.popularLabel)
+      .map((faq) => [faq.slug, faq.popularLabel]);
+    expect(chips).toEqual([
+      ["ship", "Where do orders ship from?"],
+      ["original", "How do I know I’m buying the original?"],
+    ]);
+  });
+
+  it("credits a quote to its Review's stars, variation and Product", async () => {
+    const posters = (await listFaqs())
+      .flatMap((group) => group.items)
+      .find((faq) => faq.slug === "posters");
+    expect(posters?.reviewQuote).toEqual({
+      reviewId: "rev-014",
+      text: "Glossy type yung paper, makapal sya. Malalaki printing ng formulas kaya mababasa mo mga 6ft away hahaha.",
+      stars: 5,
+      variation: "MSTC, HPGE, PSAD",
+      product: {
+        slug: "ultimate-ce-posters-2-0",
+        shortName: "Ultimate CE Posters 2.0",
+        examCode: "CE",
+      },
+    });
+  });
+
+  it("keeps only the one quote a seeded Review contains word for word", async () => {
+    const quoted = (await listFaqs())
+      .flatMap((group) => group.items)
+      .filter((faq) => faq.reviewQuote)
+      .map((faq) => faq.slug);
+    expect(quoted).toEqual(["posters"]);
+  });
+
+  it("puts the coverage table on exactly one FAQ", async () => {
+    const withTable = (await listFaqs())
+      .flatMap((group) => group.items)
+      .filter((faq) => faq.showCoverageTable);
+    expect(withTable.map((faq) => faq.slug)).toEqual(["coverage"]);
+  });
+
+  it("leaves out an FAQ with Show on FAQ page off", async () => {
+    const seam = await seamWith((seed) => {
+      const nationwide = seed.faqs.find((faq) => faq.slug === "nationwide");
+      if (!nationwide) throw new Error("the seed has no nationwide FAQ");
+      nationwide.showOnFaqPage = false;
+    });
+    expect(faqSlugs(await seam.listFaqs())).not.toContain("nationwide");
+  });
+
+  it("drops a group with no visible FAQs", async () => {
+    const seam = await seamWith((seed) => {
+      seed.faqs
+        .filter((faq) => faq.group === "authenticity")
+        .forEach((faq) => {
+          faq.showOnFaqPage = false;
+        });
+    });
+    const groups = await seam.listFaqs();
+    expect(groups.map((g) => g.group)).toEqual(["shipping", "paper", "coverage", "buying"]);
+  });
+
+  it("drops a quote whose Review's Product isn't shown on the Website", async () => {
+    const seam = await seamWith((seed) => {
+      product(seed, "ultimate-ce-posters-2-0").showOnWebsite = false;
+    });
+    const posters = (await seam.listFaqs())
+      .flatMap((group) => group.items)
+      .find((faq) => faq.slug === "posters");
+    expect(posters).toMatchObject({ slug: "posters", reviewQuote: null });
+  });
+
+  it("returns copies, so a page can't change the seed", async () => {
+    const [first] = await listFaqs();
+    if (!first) throw new Error("expected an FAQ group");
+    first.items.length = 0;
+    expect((await listFaqs())[0]?.items.length).toBeGreaterThan(0);
   });
 });
