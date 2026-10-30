@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import type { Product } from "@/services/catalogue.types";
+
 import { testComingSoonProduct, testLiveProduct } from "../../../test/fixtures/catalogue";
 import {
+  bundleSaving,
   productFullPrice,
   productOptionsNote,
   productPriceLabel,
@@ -22,6 +25,65 @@ describe("productPriceLabel", () => {
 
   it("is null for a Coming Soon Product, so no ₱0 can render", () => {
     expect(productPriceLabel(testComingSoonProduct())).toBeNull();
+  });
+});
+
+describe("bundleSaving", () => {
+  // The seed's CE bundle: each part on its own, or all three as the 3-in-1.
+  const ceBundle = (overrides: Partial<Product> = {}) =>
+    testLiveProduct({
+      format: "bundle",
+      priceFrom: 120000,
+      priceTo: 349900,
+      variations: [
+        { name: "REVIEW BUNDLE: CE FLASH CARDS 2.0", price: 120000 },
+        { name: "REVIEW BUNDLE: CE NOTEBOOK 2.0", price: 124900 },
+        { name: "REVIEW BUNDLE: CE POSTERS 2.0", price: 125000 },
+        { name: "REVIEW BUNDLE: 3-IN-1 FC|NB|POS 2.0", price: 349900 },
+      ],
+      ...overrides,
+    });
+
+  it("is what the whole set saves over buying its parts one by one, in centavos", () => {
+    // ₱1,200 + ₱1,249 + ₱1,250 = ₱3,699, against ₱3,499.
+    expect(bundleSaving(ceBundle())).toBe(20000);
+  });
+
+  it("reads the whole set as the dearest option, in any order", () => {
+    const { variations } = ceBundle();
+    expect(bundleSaving(ceBundle({ variations: [...variations].reverse() }))).toBe(20000);
+  });
+
+  it("is null when the whole set costs as much as its parts, or more", () => {
+    const at = (whole: number) =>
+      ceBundle({
+        variations: [
+          { name: "A", price: 100000 },
+          { name: "B", price: 100000 },
+          { name: "A + B", price: whole },
+        ],
+      });
+    expect(bundleSaving(at(199900))).toBe(100);
+    expect(bundleSaving(at(200000))).toBeNull();
+    expect(bundleSaving(at(210000))).toBeNull();
+  });
+
+  it("is null with fewer than two parts, which can't be a set", () => {
+    expect(bundleSaving(ceBundle({ variations: [] }))).toBeNull();
+    const twoOptions = [
+      { name: "A", price: 100000 },
+      { name: "A + B", price: 300000 },
+    ];
+    expect(bundleSaving(ceBundle({ variations: twoOptions }))).toBeNull();
+  });
+
+  it("is null for a Product that isn't a bundle, whose options aren't parts", () => {
+    // Poster sets are cheaper than single posters, but only a bundle claims a saving.
+    expect(bundleSaving(ceBundle({ format: "posters" }))).toBeNull();
+  });
+
+  it("is null for a Coming Soon bundle, which has no price", () => {
+    expect(bundleSaving(ceBundle({ state: "coming-soon", priceFrom: null }))).toBeNull();
   });
 });
 

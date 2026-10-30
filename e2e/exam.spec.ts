@@ -132,6 +132,22 @@ test.describe("the CE page", () => {
     await expect(track).toHaveCSS("animation-play-state", "paused");
   });
 
+  test("keeps every marquee card short, cutting a long Review to five lines", async ({ page }) => {
+    const cards = page
+      .getByRole("region", { name: "Reviews from CE reviewees" })
+      .getByRole("figure");
+    await expect(cards).toHaveCount(7);
+    // Uncut, the 852-character Review makes an 863 px card; the mockup caps them near 300 px.
+    for (const card of await cards.all()) {
+      expect((await card.boundingBox())?.height).toBeLessThanOrEqual(340);
+      await expect(card.getByRole("link", { name: "View product" })).toBeVisible();
+    }
+    // The cut is visual: the whole Review is still read out.
+    await expect(
+      cards.getByRole("blockquote").filter({ hasText: "#BoardExamPreparation" }),
+    ).toHaveCount(1);
+  });
+
   test("ends with the store band's shop buttons", async ({ page }) => {
     const band = page.getByRole("region", {
       name: "Get your CE reviewer from our official stores.",

@@ -60,6 +60,7 @@ export function ExamReviews({ examCode, reviews }: ExamReviewsProps) {
               review={review}
               showProductLink
               tilt={tilt(index)}
+              clampQuote
               className="w-82.5 flex-none"
             />
           ))}

@@ -50,6 +50,20 @@ describe("Marquee", () => {
     expect(screen.getByText("Second")).toBeInTheDocument();
   });
 
+  it("scrolls left by default and can scroll right instead", () => {
+    preferReducedMotion(false);
+    const { rerender } = render(<Marquee label="Reviews">{items}</Marquee>);
+    const track = () =>
+      screen.getByRole("region", { name: "Reviews" }).querySelector(".animate-marquee");
+    expect(track()).not.toHaveClass("direction-[reverse]");
+    rerender(
+      <Marquee label="Reviews" reverse>
+        {items}
+      </Marquee>,
+    );
+    expect(track()).toHaveClass("direction-[reverse]");
+  });
+
   it("sets its scroll speed in pixels per second", () => {
     preferReducedMotion(false);
     render(

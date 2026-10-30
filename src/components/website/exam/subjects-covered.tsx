@@ -1,6 +1,7 @@
 import { useId } from "react";
 
 import { examPageCopy } from "@/content/exam-pages";
+import { listNumber } from "@/lib/text";
 import type { Exam } from "@/services/catalogue.types";
 
 const copy = examPageCopy.subjects;
@@ -39,7 +40,7 @@ export function SubjectsCovered({ exam }: { exam: Pick<Exam, "code" | "board" | 
               aria-hidden="true"
               className="pt-0.75 font-mono text-[13px] font-bold text-ayc-slate"
             >
-              {String(index + 1).padStart(2, "0")}
+              {listNumber(index)}
             </span>
             <span className="flex min-w-0 flex-col gap-2">
               <span className="self-start bg-ayc-navy px-2 py-1.5 font-mono text-[13px] leading-none font-bold text-ayc-cream">

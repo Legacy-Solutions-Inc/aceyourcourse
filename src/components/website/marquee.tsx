@@ -24,6 +24,8 @@ interface MarqueeProps {
   label: string;
   /** Pixels per second. */
   speed?: number;
+  /** Scrolls right instead of left. */
+  reverse?: boolean;
   className?: string;
   /** Classes for each row of items, e.g. the gap between them. */
   rowClassName?: string;
@@ -35,7 +37,14 @@ interface MarqueeProps {
  * focused. Hovering or focusing inside pauses it. With reduced motion it is a
  * single static row that scrolls by hand.
  */
-export function Marquee({ children, label, speed = 40, className, rowClassName }: MarqueeProps) {
+export function Marquee({
+  children,
+  label,
+  speed = 40,
+  reverse = false,
+  className,
+  rowClassName,
+}: MarqueeProps) {
   const reducedMotion = useSyncExternalStore(
     subscribeToMotionPreference,
     prefersReducedMotion,
@@ -68,7 +77,10 @@ export function Marquee({ children, label, speed = 40, className, rowClassName }
         <div
           ref={track}
           data-speed={speed}
-          className="flex w-max animate-marquee focus-within:paused hover:paused motion-reduce:animate-none"
+          className={cn(
+            "flex w-max animate-marquee focus-within:paused hover:paused motion-reduce:animate-none",
+            reverse && "direction-[reverse]",
+          )}
         >
           <div data-marquee-copy className={row}>
             {children}

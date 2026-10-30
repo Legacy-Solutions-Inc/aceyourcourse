@@ -1,6 +1,21 @@
 import { MARKETPLACES } from "@/content/website";
 import type { Marketplace, Product, WebsiteSettings } from "@/services/catalogue.types";
 
+/** The hosts each Marketplace's Listings and shop pages live on; subdomains count. */
+export const MARKETPLACE_HOSTS: Record<Marketplace, string[]> = {
+  shopee: ["shopee.ph"],
+  lazada: ["lazada.com.ph"],
+  tiktok: ["tiktok.com"],
+};
+
+/** Pure: whether a link is on one of this Marketplace's hosts, or a subdomain of one. */
+export function isMarketplaceUrl(value: string, marketplace: Marketplace): boolean {
+  const host = URL.canParse(value) ? new URL(value).hostname : "";
+  return MARKETPLACE_HOSTS[marketplace].some(
+    (allowed) => host === allowed || host.endsWith(`.${allowed}`),
+  );
+}
+
 export interface StoreLink {
   href: string;
   /** The Product's own Listing, or the Marketplace's shop page. */
@@ -27,9 +42,12 @@ export function resolveStoreLink(
   return shop ? { href: shop, link: "shop" } : null;
 }
 
-/** Pure: a store link per Marketplace that has somewhere to go, in display order. */
+/**
+ * Pure: a store link per Marketplace that has somewhere to go, in display
+ * order. Pass null for shop-wide buttons, which go to the shop pages.
+ */
 export function storeLinksFor(
-  product: Pick<Product, "state" | "listings">,
+  product: Pick<Product, "state" | "listings"> | null,
   shopLinks: ShopLinks,
 ): { marketplace: Marketplace; storeLink: StoreLink }[] {
   return MARKETPLACES.flatMap(({ id }) => {

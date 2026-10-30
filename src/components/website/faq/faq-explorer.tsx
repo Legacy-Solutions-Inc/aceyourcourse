@@ -11,6 +11,7 @@ import {
 import { MarketplaceLink } from "@/components/website/marketplace-link";
 import { faqPageCopy } from "@/content/faq-page";
 import { filterFaqs } from "@/lib/faq/faq-search";
+import { listNumber } from "@/lib/text";
 import { cn } from "@/lib/utils";
 import type { FaqGroupWithItems, FaqWithQuote } from "@/services/catalogue.types";
 
@@ -25,8 +26,6 @@ const FAQ_HASH_PREFIX = `#${faqElementId("")}`;
 /** The FAQ named by a /faq#faq-{slug} link, or null. */
 const slugFromHash = (hash: string) =>
   hash.startsWith(FAQ_HASH_PREFIX) ? hash.slice(FAQ_HASH_PREFIX.length) : null;
-
-const groupNumber = (index: number) => String(index + 1).padStart(2, "0");
 
 const prefersReducedMotion = () =>
   typeof window.matchMedia === "function" &&
@@ -123,7 +122,7 @@ export function FaqExplorer({
     ),
   );
   const numberOf = (group: FaqGroupWithItems["group"]) =>
-    groupNumber(groups.findIndex((g) => g.group === group));
+    listNumber(groups.findIndex((g) => g.group === group));
 
   return (
     <>

@@ -1,10 +1,13 @@
 import { websiteCopy } from "@/content/website";
 import { paths } from "@/paths";
+import type { ProductFormat } from "@/services/catalogue.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fixed Home copy (docs/mockup/website/Home_v2.dc.html), typed so a missing
-// string is a type error: the hero, the "Try a card" sample cards, the ticker
-// and the four steps. Exams, Subjects, Products and the Shopee figures are
+// string is a type error: the hero, the "Try a card" sample cards, the ticker,
+// the four steps, the format cards, the video, the Reviews wall, the
+// authenticity guide and the store band. Exams, Subjects, Products, prices,
+// the promo banner and the Shopee figures are
 // catalogue data, read through the Catalogue seam. Copy that mentions the
 // Member App is kept separate, so it renders only while the switch is on.
 // Arrows are added by the components.
@@ -127,6 +130,55 @@ export const homeSteps: ReadonlyArray<{ appOn: HomeStep; appOff: HomeStep }> = [
   },
 ];
 
+/**
+ * A format card's fixed copy. Its "For" Exams, "From" price and any saving
+ * come from the catalogue.
+ */
+export interface FormatCardCopy {
+  format: ProductFormat;
+  title: string;
+  size: string;
+  body: string;
+  /** Shown instead of `body` while the catalogue gives a saving, e.g. "₱200". */
+  bodyWithSaving?: (saving: string) => string;
+}
+
+/** "Which format fits how you study?", in the mockup's order (L344–348). */
+export const formatCards: ReadonlyArray<FormatCardCopy> = [
+  {
+    format: "flash-cards",
+    title: "Flash cards",
+    size: "4 × 6 in · 160 gsm",
+    body: "Formulas and high-yield concepts grouped by subject, small enough for your bag or pocket.",
+  },
+  {
+    format: "notebook",
+    title: "Notebook",
+    size: "A5",
+    body: "Practice solving board problems, with a study schedule and blank pages for concepts.",
+  },
+  {
+    format: "posters",
+    title: "Posters",
+    size: "A3",
+    body: "For your study wall. One reviewer says you can read them from 6 ft away.",
+  },
+  {
+    format: "bundle",
+    title: "Bundle",
+    size: "Cards + notebook + posters",
+    body: "All three CE formats in one order.",
+    bodyWithSaving: (saving) =>
+      `All three CE formats in one order, ${saving} less than buying each separately.`,
+  },
+];
+
+/** One of the authenticity steps. `highlight` is the listing text to look for. */
+export interface AuthenticityStep {
+  text: string;
+  highlight?: string;
+}
+
 export const homeCopy = {
   metaTitle: "Board exam reviewers made by passers",
   metaDescription:
@@ -209,5 +261,59 @@ export const homeCopy = {
     next: "Next best sellers",
     rank: (rank: number) => `#${rank}`,
     sold: (count: string) => `${count} sold`,
+  },
+  promo: {
+    label: "Sale",
+  },
+  formats: {
+    eyebrow: "Step 2 · Choose your format",
+    heading: "Which format fits how you study?",
+    intro:
+      "Most passers mix two: cards for recall on the go, posters for the wall you stare at while solving.",
+    forExams: (examCodes: string[]) => `For ${examCodes.join(" · ")}`,
+    from: "From",
+    /** The app band. Shown only while the Member App switch is on. */
+    app: {
+      eyebrow: "Prefer your phone?",
+      text: "Flashcards, scored quizzes, reviewers, and video lessons in the app, with a countdown to your exam.",
+      cta: "See app plans",
+    },
+  },
+  video: {
+    eyebrow: "Watch · 1 min",
+    heading: "See what’s inside before you order.",
+    intro: "A minute with the cards, notebooks, and posters, from the people who made them.",
+    playerLabel: "One-minute promo video",
+  },
+  reviews: {
+    eyebrow: "Copied word for word from Shopee",
+    heading: "Pinned by reviewees",
+    intro: "Most are five stars. Not all of them, and we leave those up too.",
+    /** The badge's stars, read out after the shop's rating: "4.8, out of 5 stars". */
+    outOfFive: "out of 5 stars",
+    shopRatings: (count: string) => `${count} shop ratings`,
+    row: (row: number, rows: number) => `Pinned reviews, row ${row} of ${rows}`,
+    readAll: "Read every review on Shopee",
+  },
+  authenticity: {
+    stamp: { top: "Registered with", name: "IPOPHIL", bottom: "Original · AceYourCourse" },
+    heading: "Copies are going around. Make sure yours is the real one.",
+    body: "Our reviewers are registered with IPOPHIL and protected by copyright law. Photocopies and PDFs sold elsewhere aren’t ours, and you can’t tell if what’s inside is updated or correct.",
+    steps: [
+      {
+        text: "Buy only from the official AceYourCourse stores on Shopee, Lazada, or TikTok Shop.",
+      },
+      { text: "Check the listing says", highlight: "Ships from Iloilo City" },
+      {
+        text: "Look for the established reviews by our dear future board passers. A new shop with our photos is a red flag.",
+      },
+    ] satisfies AuthenticityStep[],
+  },
+  storeBand: {
+    heading: "Physical copies from our official stores.",
+    /** Shown in place of `heading` only while the Member App switch is on. */
+    headingApp: "Physical copies from our official stores. Digital in the app.",
+    /** Shown only while the Member App switch is on. */
+    openApp: "Open the app",
   },
 } as const;

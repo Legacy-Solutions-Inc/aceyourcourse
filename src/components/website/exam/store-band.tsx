@@ -1,9 +1,8 @@
 import { useId } from "react";
 
 import { StoreButton } from "@/components/website/store-button";
-import { MARKETPLACES } from "@/content/website";
 import { examPageCopy } from "@/content/exam-pages";
-import { resolveStoreLink } from "@/lib/catalogue/store-links";
+import { storeLinksFor } from "@/lib/catalogue/store-links";
 import type { WebsiteSettings } from "@/services/catalogue.types";
 
 interface StoreBandProps {
@@ -17,10 +16,7 @@ interface StoreBandProps {
  */
 export function StoreBand({ examCode, shopLinks }: StoreBandProps) {
   const headingId = useId();
-  const shops = MARKETPLACES.flatMap(({ id }) => {
-    const storeLink = resolveStoreLink(null, id, shopLinks);
-    return storeLink ? [{ marketplace: id, storeLink }] : [];
-  });
+  const shops = storeLinksFor(null, shopLinks);
 
   return (
     <section aria-labelledby={headingId} className="border-y-[1.5px] border-ayc-navy bg-ayc-orange">

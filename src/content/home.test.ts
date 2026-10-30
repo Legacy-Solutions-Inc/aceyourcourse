@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { listExams } from "@/services/catalogue";
 
-import { homeCopy, homeSteps, promoVideo, tryCards } from "./home";
+import { formatCards, homeCopy, homeSteps, promoVideo, tryCards } from "./home";
 
 // Home's fixed copy (docs/mockup/website/Home_v2.dc.html), checked against the
 // catalogue and the files it points at.
@@ -59,5 +59,55 @@ describe("the hero sub-headline", () => {
     expect(homeCopy.hero.subheadlineApp).toBe(
       "Flash cards, notebooks, and posters for board exam review in various courses. Shipped nationwide, and also available in the app.",
     );
+  });
+});
+
+describe("the format cards", () => {
+  it("has one card per format, in the mockup's order", () => {
+    expect(formatCards.map((card) => card.format)).toEqual([
+      "flash-cards",
+      "notebook",
+      "posters",
+      "bundle",
+    ]);
+  });
+
+  it("leaves every price to the catalogue, the bundle's saving too", () => {
+    for (const card of formatCards) {
+      expect(`${card.title} ${card.size} ${card.body}`, card.title).not.toMatch(/₱/);
+    }
+  });
+
+  it("names the bundle's saving only when the catalogue gives one", () => {
+    const bundle = formatCards.find((card) => card.format === "bundle");
+    expect(bundle?.body).toBe("All three CE formats in one order.");
+    expect(bundle?.bodyWithSaving?.("₱200")).toBe(
+      "All three CE formats in one order, ₱200 less than buying each separately.",
+    );
+  });
+});
+
+describe("the bottom half's switch-off copy", () => {
+  it("never mentions the app", () => {
+    const { formats, video, reviews, authenticity, storeBand } = homeCopy;
+    const appFree = [
+      formats.eyebrow,
+      formats.heading,
+      formats.intro,
+      ...formatCards.map((card) => `${card.title} ${card.size} ${card.body}`),
+      video.eyebrow,
+      video.heading,
+      video.intro,
+      reviews.eyebrow,
+      reviews.heading,
+      reviews.intro,
+      reviews.readAll,
+      authenticity.heading,
+      authenticity.body,
+      ...authenticity.steps.map((step) => step.text),
+      storeBand.heading,
+    ];
+    for (const text of appFree) expect(text).not.toMatch(/\bapp\b/i);
+    expect(storeBand.headingApp).toBe(`${storeBand.heading} Digital in the app.`);
   });
 });

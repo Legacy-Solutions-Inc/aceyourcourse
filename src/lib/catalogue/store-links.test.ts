@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { testComingSoonProduct, testLiveProduct } from "../../../test/fixtures/catalogue";
-import { followLink, resolveStoreLink, storeLinksFor } from "./store-links";
+import { followLink, isMarketplaceUrl, resolveStoreLink, storeLinksFor } from "./store-links";
 
 const SHOP_LINKS = {
   shopee: "https://shopee.ph/aceyourcourse",
@@ -82,5 +82,29 @@ describe("followLink", () => {
 
   it("is null when there is no Shopee shop page", () => {
     expect(followLink({ ...SHOP_LINKS, shopee: null })).toBeNull();
+  });
+});
+
+describe("storeLinksFor with no Product", () => {
+  it("gives the shop pages of the Marketplaces that have one, in display order", () => {
+    expect(storeLinksFor(null, SHOP_LINKS)).toEqual([
+      { marketplace: "shopee", storeLink: { href: SHOP_LINKS.shopee, link: "shop" } },
+      { marketplace: "lazada", storeLink: { href: SHOP_LINKS.lazada, link: "shop" } },
+    ]);
+  });
+});
+
+describe("isMarketplaceUrl", () => {
+  it("accepts the Marketplace's host and its subdomains", () => {
+    expect(isMarketplaceUrl("https://shopee.ph/aceyourcourse", "shopee")).toBe(true);
+    expect(isMarketplaceUrl("https://www.lazada.com.ph/shop/aceyourcourse", "lazada")).toBe(true);
+    expect(isMarketplaceUrl("https://vt.tiktok.com/ZS49ve6cu/", "tiktok")).toBe(true);
+  });
+
+  it("rejects another Marketplace, a look-alike host and a non-URL", () => {
+    expect(isMarketplaceUrl("https://shopee.ph/aceyourcourse", "lazada")).toBe(false);
+    expect(isMarketplaceUrl("https://shopee.ph.example.com/sale", "shopee")).toBe(false);
+    expect(isMarketplaceUrl("https://notshopee.ph/sale", "shopee")).toBe(false);
+    expect(isMarketplaceUrl("shopee.ph/aceyourcourse", "shopee")).toBe(false);
   });
 });

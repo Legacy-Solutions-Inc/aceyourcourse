@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ExternalLink } from "@/components/website/external-link";
+import { HOME_SECTION_IDS } from "@/components/website/home/section-ids";
 import { MarketplaceLink } from "@/components/website/marketplace-link";
 import { marketplaceShops, websiteCopy } from "@/content/website";
 import { formatCount, formatRating } from "@/lib/catalogue/figures";
@@ -118,7 +119,7 @@ export async function SiteFooter() {
               </Link>
             </li>
             <li>
-              <Link href={`${paths.home}#authenticity`} className={columnLink}>
+              <Link href={`${paths.home}#${HOME_SECTION_IDS.authenticity}`} className={columnLink}>
                 {copy.spotAFake}
               </Link>
             </li>

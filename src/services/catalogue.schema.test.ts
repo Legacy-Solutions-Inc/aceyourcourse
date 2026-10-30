@@ -303,6 +303,29 @@ describe("validateCatalogueSeed", () => {
     expect(errorsFor(seed)).toEqual([expect.stringMatching(/^settings\.promoBanner\.endDate: /)]);
   });
 
+  it("accepts a one-day promo banner, which ends the day it starts", () => {
+    const seed = validSeed();
+    present(seed.settings.promoBanner).endDate = "2026-11-09";
+    expect(validateCatalogueSeed(seed).success).toBe(true);
+  });
+
+  it("rejects a promo date that is not an ISO date", () => {
+    const seed = validSeed();
+    present(seed.settings.promoBanner).startDate = "9 Nov 2026";
+    expect(errorsFor(seed)).toEqual([
+      expect.stringMatching(/^settings\.promoBanner\.startDate: .*ISO date/),
+    ]);
+  });
+
+  it("rejects a promo date that isn't on the calendar, instead of rolling it over", () => {
+    // new Date("2026-11-31") is 1 Dec, which would quietly run the sale a day long.
+    const seed = validSeed();
+    present(seed.settings.promoBanner).endDate = "2026-11-31";
+    expect(errorsFor(seed)).toEqual([
+      expect.stringMatching(/^settings\.promoBanner\.endDate: .*real ISO date/),
+    ]);
+  });
+
   it("rejects an announcement message with a relative or non-https link", () => {
     const seed = validSeed();
     at(seed.settings.announcement.messages, 0).href = "products";

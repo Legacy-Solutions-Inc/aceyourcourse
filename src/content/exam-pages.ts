@@ -132,6 +132,7 @@ export interface ExamPromo {
   examCode: string;
   /** The Product the banner offers and links to. Its price is read from the catalogue. */
   productSlug: string;
+  /** Followed by "· save ₱…" while the catalogue gives the Product a saving. */
   eyebrow: string;
   body: string;
 }
@@ -144,7 +145,7 @@ export const examPromos: ExamPromo[] = [
   {
     examCode: "CE",
     productSlug: "ce-review-bundle-3-in-1",
-    eyebrow: "CE Review Bundle 3-in-1 · save ₱200",
+    eyebrow: "CE Review Bundle 3-in-1",
     body: "Cards, notebook, and posters for MSTC, HPGE, and PSAD in one order.",
   },
 ];
@@ -217,6 +218,9 @@ export const examPageCopy = {
   },
   promo: {
     seeBundle: "See the bundle",
+    /** The eyebrow with the bundle's saving, e.g. "₱200", when it has one. */
+    withSaving: (eyebrow: string, saving: string | null) =>
+      saving ? `${eyebrow} · save ${saving}` : eyebrow,
   },
   reviews: {
     eyebrow: "Copied word for word from Shopee",

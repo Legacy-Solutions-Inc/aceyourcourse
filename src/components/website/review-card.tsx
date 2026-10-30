@@ -10,6 +10,11 @@ interface ReviewCardProps {
   showProductLink?: boolean;
   /** A slight tilt in degrees, so a wall of cards looks pinned up by hand. */
   tilt?: number;
+  /**
+   * Cuts the quote to five lines, for a marquee row whose cards should stay
+   * about one height. Screen readers still read the whole Review.
+   */
+  clampQuote?: boolean;
   className?: string;
 }
 
@@ -18,6 +23,7 @@ export function ReviewCard({
   review,
   showProductLink = false,
   tilt = 0,
+  clampQuote = false,
   className,
 }: ReviewCardProps) {
   return (
@@ -45,7 +51,12 @@ export function ReviewCard({
           {review.product.examCode}
         </span>
       </div>
-      <blockquote className="bg-[repeating-linear-gradient(transparent_0_25px,var(--ayc-ruled)_25px_26px)] text-base leading-6.5 text-pretty whitespace-pre-line">
+      <blockquote
+        className={cn(
+          "bg-[repeating-linear-gradient(transparent_0_25px,var(--ayc-ruled)_25px_26px)] text-base leading-6.5 text-pretty whitespace-pre-line",
+          clampQuote && "line-clamp-5",
+        )}
+      >
         {review.text}
       </blockquote>
       <figcaption className="mt-auto flex flex-col gap-1 pt-1.5 font-mono text-[11px] leading-[1.45] text-ayc-slate">

@@ -290,6 +290,33 @@ describe("Exam page", () => {
       );
     });
 
+    it("works the banner's saving out from the bundle's options", async () => {
+      await renderPage("ce", {
+        editSeed: (seed) => {
+          const bundle = product(seed, "ce-review-bundle-3-in-1");
+          bundle.priceTo = 339900;
+          for (const variation of bundle.variations) {
+            if (variation.price === 349900) variation.price = 339900;
+          }
+        },
+      });
+      expect(bundleBanner()).toHaveAccessibleName("CE Review Bundle 3-in-1 · save ₱300");
+      expect(within(bundleBanner() ?? document.body).getByText("₱3,399")).toBeInTheDocument();
+    });
+
+    it("names no saving when the bundle's options give none", async () => {
+      await renderPage("ce", {
+        editSeed: (seed) => {
+          const bundle = product(seed, "ce-review-bundle-3-in-1");
+          bundle.variations = bundle.variations.filter((v) => v.price === 349900);
+          bundle.priceFrom = 349900;
+          bundle.priceTo = null;
+        },
+      });
+      expect(bundleBanner()).toHaveAccessibleName("CE Review Bundle 3-in-1");
+      expect(within(bundleBanner() ?? document.body).queryByText(/save/)).not.toBeInTheDocument();
+    });
+
     it("scrolls the first 7 CE Reviews in a marquee, in best-seller order", async () => {
       await renderPage("ce");
       const marquee = within(screen.getByRole("region", { name: "Reviews from CE reviewees" }));

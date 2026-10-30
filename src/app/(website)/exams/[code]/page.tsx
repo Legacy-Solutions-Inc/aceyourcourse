@@ -17,7 +17,8 @@ import { examPageCopy, examPromos, sampleCards } from "@/content/exam-pages";
 import { examSeoDescription, examSeoTitle } from "@/lib/catalogue/exam-copy";
 import { examStats } from "@/lib/catalogue/exam-stats";
 import { breadcrumbJsonLd } from "@/lib/catalogue/json-ld";
-import { productFullPrice } from "@/lib/catalogue/price";
+import { bundleSaving, productFullPrice } from "@/lib/catalogue/price";
+import { formatPeso } from "@/lib/money";
 import { paths } from "@/paths";
 import {
   getExamByCode,
@@ -101,7 +102,9 @@ export default async function ExamPage({ params }: ExamPageProps) {
   const offers = promos.flatMap((promo, index) => {
     const product = promoProducts[index];
     const price = product ? productFullPrice(product) : null;
-    return product && price ? [{ promo, product, price }] : [];
+    if (!product || !price) return [];
+    const saving = bundleSaving(product);
+    return [{ promo, product, price, saving: saving === null ? null : formatPeso(saving) }];
   });
   const breadcrumb = [
     { name: "Home", path: paths.home },
@@ -146,12 +149,13 @@ export default async function ExamPage({ params }: ExamPageProps) {
         printedSetSlug={topSeller?.slug ?? null}
         showAppPlans={showAppLinks}
       />
-      {offers.map(({ promo, product, price }) => (
+      {offers.map(({ promo, product, price, saving }) => (
         <ExamPromoBanner
           key={promo.productSlug}
           promo={promo}
           productSlug={product.slug}
           price={price}
+          saving={saving}
         />
       ))}
       <ExamReviews examCode={exam.code} reviews={reviews} />

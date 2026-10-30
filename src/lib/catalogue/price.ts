@@ -31,6 +31,21 @@ export function productFullPrice(product: Product): string | null {
 }
 
 /**
+ * Centavos a bundle's whole set (its dearest variation) saves over its parts
+ * (its other variations) bought one by one: the CE bundle's 3-in-1 at ₱3,499
+ * against ₱1,200 + ₱1,249 + ₱1,250, so 20000. Null unless the Product is a
+ * Live bundle whose parts cost more together than the set, which takes at
+ * least two of them.
+ */
+export function bundleSaving(product: Product): number | null {
+  if (product.format !== "bundle" || product.state !== "live") return null;
+  const [whole, ...parts] = product.variations.map((v) => v.price).sort((a, b) => b - a);
+  if (whole === undefined) return null;
+  const saving = parts.reduce((sum, price) => sum + price, 0) - whole;
+  return saving > 0 ? saving : null;
+}
+
+/**
  * The note shown in place of variations: a range-priced Product is picked on
  * the store page, otherwise there is one option. Null for Coming Soon.
  */

@@ -32,6 +32,15 @@ describe("ExamReviews", () => {
     expect(screen.queryByText(EMPTY)).not.toBeInTheDocument();
   });
 
+  it("cuts the marquee's Reviews to a five-line quote, but not the grid's", () => {
+    const quotes = () => screen.getAllByRole("blockquote");
+    const { rerender } = render(<ExamReviews examCode="CE" reviews={reviews(4)} />);
+    for (const quote of quotes()) expect(quote).toHaveClass("line-clamp-5");
+
+    rerender(<ExamReviews examCode="CE" reviews={reviews(3)} />);
+    for (const quote of quotes()) expect(quote).not.toHaveClass("line-clamp-5");
+  });
+
   it("lays 3 Reviews out in a grid, not a marquee", () => {
     render(<ExamReviews examCode="CE" reviews={reviews(3)} />);
     expect(marquee()).toBeNull();

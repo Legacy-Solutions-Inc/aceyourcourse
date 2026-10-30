@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatAsOf, formatDate, manilaYear } from "./manila-time";
+import { formatAsOf, formatDate, isCalendarDate, manilaDayStart, manilaYear } from "./manila-time";
 
 // All day boundaries use Asia/Manila (UTC+8, no DST).
 describe("formatAsOf", () => {
@@ -53,5 +53,40 @@ describe("manilaYear", () => {
 
   it("is still the old year one minute before Manila midnight", () => {
     expect(manilaYear(new Date("2026-12-31T15:59:00Z"))).toBe(2026);
+  });
+});
+
+describe("manilaDayStart", () => {
+  it("is midnight in Manila, 16:00 UTC the day before", () => {
+    expect(manilaDayStart("2026-11-09").toISOString()).toBe("2026-11-08T16:00:00.000Z");
+  });
+
+  it("rejects anything but a YYYY-MM-DD date", () => {
+    expect(() => manilaDayStart("9 Nov 2026")).toThrow(RangeError);
+    expect(() => manilaDayStart("2026-11-09T00:00:00Z")).toThrow(RangeError);
+    expect(() => manilaDayStart("2026-13-01")).toThrow(RangeError);
+  });
+
+  it("rejects a date that isn't on the calendar, instead of rolling it over", () => {
+    expect(() => manilaDayStart("2026-02-30")).toThrow(RangeError);
+  });
+});
+
+describe("isCalendarDate", () => {
+  it("accepts a YYYY-MM-DD date on the calendar, leap days included", () => {
+    expect(isCalendarDate("2026-11-09")).toBe(true);
+    expect(isCalendarDate("2028-02-29")).toBe(true);
+  });
+
+  it("rejects a date that isn't on the calendar", () => {
+    for (const date of ["2026-02-29", "2026-02-30", "2026-04-31", "2026-13-01", "2026-11-00"]) {
+      expect(isCalendarDate(date), date).toBe(false);
+    }
+  });
+
+  it("rejects anything but YYYY-MM-DD", () => {
+    for (const date of ["9 Nov 2026", "2026-11-09T00:00:00Z", "2026-1-9", ""]) {
+      expect(isCalendarDate(date), date).toBe(false);
+    }
   });
 });

@@ -3,6 +3,7 @@ import { useId } from "react";
 
 import { HOME_SECTION_IDS } from "@/components/website/home/section-ids";
 import { homeCopy, homeSteps, type HomeStepTarget } from "@/content/home";
+import { listNumber } from "@/lib/text";
 import { cn } from "@/lib/utils";
 
 const copy = homeCopy.steps;
@@ -55,7 +56,7 @@ export function FourSteps({ memberAppLive }: { memberAppLive: boolean }) {
                   BADGES[index % BADGES.length],
                 )}
               >
-                {String(index + 1).padStart(2, "0")}
+                {listNumber(index)}
               </span>
               <h3 className="text-[clamp(22px,2.2vw,28px)] leading-[1.1] font-extrabold tracking-[-0.02em]">
                 {step.title}

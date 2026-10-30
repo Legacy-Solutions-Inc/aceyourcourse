@@ -5,6 +5,9 @@
  */
 
 const MANILA = "Asia/Manila";
+/** Manila is UTC+8 all year: the Philippines has no daylight saving time. */
+const MANILA_OFFSET = "+08:00";
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 const monthYear = new Intl.DateTimeFormat("en-PH", {
   month: "short",
@@ -49,6 +52,28 @@ export function formatAsOf(isoDate: string): string {
  */
 export function formatDate(isoDate: string, month: "short" | "long" = "short"): string {
   return dayMonthYear[month].format(parseDate(isoDate));
+}
+
+/**
+ * Pure: whether a string is a YYYY-MM-DD date on the calendar. new Date() rolls
+ * "2026-02-30" over to 2 March; this rejects it.
+ */
+export function isCalendarDate(value: string): boolean {
+  if (!ISO_DATE.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
+}
+
+/**
+ * Pure: the instant a Manila calendar day begins, "2026-11-09" →
+ * 2026-11-08T16:00:00Z. Throws a RangeError for anything but a YYYY-MM-DD date
+ * on the calendar.
+ */
+export function manilaDayStart(isoDate: string): Date {
+  if (!isCalendarDate(isoDate)) {
+    throw new RangeError(`Expected a YYYY-MM-DD date, got "${isoDate}"`);
+  }
+  return parseDate(`${isoDate}T00:00:00${MANILA_OFFSET}`);
 }
 
 /** Pure: the calendar year in Manila at the given instant. */

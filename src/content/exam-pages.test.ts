@@ -57,10 +57,18 @@ describe("the Exam page's promo banners", () => {
       {
         examCode: "CE",
         productSlug: "ce-review-bundle-3-in-1",
-        eyebrow: "CE Review Bundle 3-in-1 · save ₱200",
+        eyebrow: "CE Review Bundle 3-in-1",
         body: "Cards, notebook, and posters for MSTC, HPGE, and PSAD in one order.",
       },
     ]);
+  });
+
+  it("adds the saving to a banner's eyebrow only when the catalogue gives one", () => {
+    const { withSaving } = examPageCopy.promo;
+    expect(withSaving("CE Review Bundle 3-in-1", "₱200")).toBe(
+      "CE Review Bundle 3-in-1 · save ₱200",
+    );
+    expect(withSaving("CE Review Bundle 3-in-1", null)).toBe("CE Review Bundle 3-in-1");
   });
 
   it("points each banner at a Product of its own Exam", async () => {

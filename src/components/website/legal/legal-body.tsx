@@ -4,6 +4,7 @@ import { legalContainer } from "@/components/website/legal/legal-container";
 import { LegalContents } from "@/components/website/legal/legal-contents";
 import { legalPageCopy } from "@/content/legal/copy";
 import type { LegalDocument } from "@/content/legal/types";
+import { listNumber } from "@/lib/text";
 import { cn } from "@/lib/utils";
 
 /**
@@ -55,7 +56,7 @@ export function LegalBody({ document, contactEmail }: LegalBodyProps) {
                 className="grid grid-cols-[32px_minmax(0,1fr)] gap-2.5 text-[17px] leading-normal"
               >
                 <span aria-hidden="true" className="font-mono text-sm font-bold text-ayc-blue">
-                  {String(index + 1).padStart(2, "0")}
+                  {listNumber(index)}
                 </span>
                 <span>{withEmailLinks(point, contactEmail)}</span>
               </li>

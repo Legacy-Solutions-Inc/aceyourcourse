@@ -33,4 +33,14 @@ describe("ReviewCard", () => {
       "/products/ce-formula-flash-cards",
     );
   });
+
+  it("cuts the quote to five lines only when asked, keeping the whole text", () => {
+    const quote = () => screen.getByRole("blockquote");
+    const { rerender } = render(<ReviewCard review={testReview()} />);
+    expect(quote()).not.toHaveClass("line-clamp-5");
+
+    rerender(<ReviewCard review={testReview()} clampQuote />);
+    expect(quote()).toHaveClass("line-clamp-5");
+    expect(quote().textContent).toBe("Readable fonts.\nHandy for review.");
+  });
 });

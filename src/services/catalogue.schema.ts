@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { isMarketplaceUrl, MARKETPLACE_HOSTS } from "@/lib/catalogue/store-links";
+import { isCalendarDate } from "@/lib/manila-time";
 import type {
   Exam,
   Faq,
@@ -33,10 +35,8 @@ export interface CatalogueSeed {
 
 const nonBlank = (label: string) => z.string().trim().min(1, `${label} must not be blank`);
 
-const isoDate = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "must be an ISO date (YYYY-MM-DD)")
-  .refine((value) => !Number.isNaN(new Date(value).getTime()), "must be a real date");
+/** A YYYY-MM-DD date on the calendar: "2026-02-30" is rejected, not rolled over to 2 March. */
+const isoDate = z.string().refine(isCalendarDate, "must be a real ISO date (YYYY-MM-DD)");
 
 const httpsUrl = z
   .string()
@@ -104,23 +104,11 @@ const selfHostedPath = z
     "must be a self-hosted path starting with /",
   );
 
-/** The hosts each Marketplace's Listings live on; subdomains count. */
-const LISTING_HOSTS: Record<Marketplace, string[]> = {
-  shopee: ["shopee.ph"],
-  lazada: ["lazada.com.ph"],
-  tiktok: ["tiktok.com"],
-};
-
-const listingUrl = (marketplace: Marketplace) => {
-  const hosts = LISTING_HOSTS[marketplace];
-  return httpsUrl.refine(
-    (value) => {
-      const host = URL.canParse(value) ? new URL(value).hostname : "";
-      return hosts.some((allowed) => host === allowed || host.endsWith(`.${allowed}`));
-    },
-    `must be a ${hosts.join(" or ")} link`,
+const listingUrl = (marketplace: Marketplace) =>
+  httpsUrl.refine(
+    (value) => isMarketplaceUrl(value, marketplace),
+    `must be a ${MARKETPLACE_HOSTS[marketplace].join(" or ")} link`,
   );
-};
 
 /** A URL part: a Product's /products/{slug}, an FAQ's #faq-{slug}. */
 const kebabSlug = z
@@ -244,10 +232,14 @@ const promoBannerSchema = z
     startDate: isoDate,
     endDate: isoDate,
   })
-  .refine((banner) => banner.endDate >= banner.startDate, {
-    path: ["endDate"],
-    message: "must not be before startDate",
-  });
+  // A date that isn't real has its own error, so only two real dates are compared.
+  .refine(
+    (banner) =>
+      !isCalendarDate(banner.startDate) ||
+      !isCalendarDate(banner.endDate) ||
+      banner.endDate >= banner.startDate,
+    { path: ["endDate"], message: "must not be before startDate" },
+  );
 
 const settingsSchema = z.object({
   shopLinks: z.object({
