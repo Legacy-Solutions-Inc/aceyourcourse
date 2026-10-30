@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatAsOf, manilaYear } from "./manila-time";
+import { formatAsOf, formatDate, manilaYear } from "./manila-time";
 
 // All day boundaries use Asia/Manila (UTC+8, no DST).
 describe("formatAsOf", () => {
@@ -19,6 +19,25 @@ describe("formatAsOf", () => {
 
   it("rejects an empty string", () => {
     expect(() => formatAsOf("")).toThrow(RangeError);
+  });
+});
+
+describe("formatDate", () => {
+  it("formats an ISO date day first, with a short month by default", () => {
+    expect(formatDate("2026-12-01")).toBe("1 Dec 2026");
+  });
+
+  it("can spell the month out", () => {
+    expect(formatDate("2026-12-01", "long")).toBe("1 December 2026");
+  });
+
+  it("uses the Manila day for a timestamp that is already the next day in Manila", () => {
+    // 17:00 UTC on Nov 30 is 01:00 on Dec 1 in Manila.
+    expect(formatDate("2026-11-30T17:00:00Z")).toBe("1 Dec 2026");
+  });
+
+  it("rejects a string that is not a date", () => {
+    expect(() => formatDate("2026-13-40")).toThrow(RangeError);
   });
 });
 

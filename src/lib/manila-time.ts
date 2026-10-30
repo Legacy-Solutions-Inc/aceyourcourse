@@ -14,6 +14,22 @@ const monthYear = new Intl.DateTimeFormat("en-PH", {
 
 const yearOnly = new Intl.DateTimeFormat("en-PH", { year: "numeric", timeZone: MANILA });
 
+// en-GB for the day-first order ("1 Dec 2026"); en-PH puts the month first.
+const dayMonthYear = {
+  short: new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: MANILA,
+  }),
+  long: new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: MANILA,
+  }),
+};
+
 function parseDate(iso: string): Date {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
@@ -25,6 +41,14 @@ function parseDate(iso: string): Date {
 /** Pure: "2026-10-29" → "as of Oct 2026". Throws a RangeError for a non-date. */
 export function formatAsOf(isoDate: string): string {
   return `as of ${monthYear.format(parseDate(isoDate))}`;
+}
+
+/**
+ * Pure: "2026-12-01" → "1 Dec 2026", or "1 December 2026" with `month: "long"`.
+ * Throws a RangeError for a non-date.
+ */
+export function formatDate(isoDate: string, month: "short" | "long" = "short"): string {
+  return dayMonthYear[month].format(parseDate(isoDate));
 }
 
 /** Pure: the calendar year in Manila at the given instant. */

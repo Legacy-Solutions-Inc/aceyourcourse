@@ -12,6 +12,8 @@ for (const path of [
   "/products/ce-formula-flash-cards",
   "/products/ultimate-ce-posters-2-0",
   "/products/ce-solving-notebook",
+  "/legal/privacy",
+  "/legal/terms",
 ]) {
   test(`no serious or critical accessibility violations on ${path}`, async ({ page }) => {
     await page.goto(path);
