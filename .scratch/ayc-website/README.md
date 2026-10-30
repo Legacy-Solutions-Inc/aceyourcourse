@@ -12,11 +12,11 @@ Source: [`docs/specs/2026-10-29-ayc-v1.md`](../../docs/specs/2026-10-29-ayc-v1.m
 
   Paste the fenced block into a fresh executer session.
 
-Every prompt has concrete **happy and sad paths** in its acceptance criteria, and requires a test for each sad path. Every executer works on a feature branch off `main` and **never commits or pushes**. It reports back with the evidence from `pnpm lint && pnpm type:check && pnpm test && pnpm build`, `pnpm test:coverage` and `pnpm test:e2e`.
+Every prompt has concrete **happy and sad paths** in its acceptance criteria, and requires a test for each sad path. Every executer works on the one shared branch, `docs/ayc-v1-planning`, creates no branch of its own, and **never commits or pushes**. You review and commit each ticket on that branch before starting the next. The executer reports back with the evidence from `pnpm lint && pnpm type:check && pnpm test && pnpm build`, `pnpm test:coverage` and `pnpm test:e2e`.
 
 ## Before ticket 01
 
-The executers branch off `main` and read the planning docs, so those docs must be **on `main` first**. Commit these on a branch (for example `docs/planning-ayc-v1`) and merge it:
+The executers read the planning docs, so these must be committed on `docs/ayc-v1-planning` first (done):
 
 - `CONTEXT.md`
 - `docs/adr/0005-multi-tenancy.md`, `0007-analytics-posthog.md`, `0008`–`0012`
@@ -28,7 +28,9 @@ The executers branch off `main` and read the planning docs, so those docs must b
 
 ## Order
 
-Each ticket starts only when its blockers are **merged to `main`**. Each prompt's pre-flight checks this and stops if they aren't.
+Each ticket starts only when its blockers are **committed on `docs/ayc-v1-planning`**. Each prompt's pre-flight checks this and stops if they aren't, or if the previous ticket's changes are still uncommitted.
+
+Run them one at a time in this order: 01 → 02 → 13 → 08 → 10 → 03 → 04 → 05 → 06 → 07 → 09 → 12 → 11.
 
 | #   | Ticket                                                       | Blocked by                     |
 | --- | ------------------------------------------------------------ | ------------------------------ |

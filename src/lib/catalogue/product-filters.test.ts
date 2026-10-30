@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { productsHref } from "./product-filters";
+import { testComingSoonProduct, testLiveProduct } from "../../../test/fixtures/catalogue";
+import { facetCounts, priceBoundsOf, productsHref } from "./product-filters";
 
 describe("productsHref", () => {
   it("is the plain Products page with no filters", () => {
@@ -40,5 +41,82 @@ describe("productsHref", () => {
 
   it("drops the app filter when it is off", () => {
     expect(productsHref({ app: false })).toBe("/products");
+  });
+});
+
+describe("priceBoundsOf", () => {
+  it("rounds the lowest price down and the highest up to the nearest ₱50", () => {
+    expect(
+      priceBoundsOf([
+        testLiveProduct({ priceFrom: 69900 }),
+        testLiveProduct({ priceFrom: 42000 }),
+        testLiveProduct({ priceFrom: 120100 }),
+      ]),
+    ).toEqual({ min: 400, max: 1250 });
+  });
+
+  it("keeps prices already on a ₱50 step", () => {
+    expect(
+      priceBoundsOf([
+        testLiveProduct({ priceFrom: 40000 }),
+        testLiveProduct({ priceFrom: 120000 }),
+      ]),
+    ).toEqual({ min: 400, max: 1200 });
+  });
+
+  it("never counts a Coming Soon Product", () => {
+    expect(
+      priceBoundsOf([
+        testLiveProduct({ priceFrom: 60000 }),
+        testComingSoonProduct(),
+        testComingSoonProduct({ priceFrom: 0 }),
+      ]),
+    ).toEqual({ min: 600, max: 600 });
+  });
+
+  it("is zero to zero with no Live Products", () => {
+    expect(priceBoundsOf([testComingSoonProduct()])).toEqual({ min: 0, max: 0 });
+  });
+});
+
+describe("facetCounts", () => {
+  const products = [
+    testLiveProduct({ examCode: "CE", format: "flash-cards" }),
+    testLiveProduct({ examCode: "CE", format: "posters" }),
+    testLiveProduct({ examCode: "CE", format: "bundle" }),
+    testLiveProduct({ examCode: "ME", format: "flash-cards" }),
+    testLiveProduct({ examCode: "MT", format: "notebook" }),
+  ];
+
+  it("counts every Live Product per Exam and per format", () => {
+    expect(facetCounts(products)).toEqual({
+      all: 5,
+      exams: { CE: 3, ME: 1, MT: 1 },
+      formats: { "flash-cards": 2, posters: 1, notebook: 1, bundle: 1 },
+    });
+  });
+
+  it("counts formats within the selected Exam, and Exams over every Exam", () => {
+    expect(facetCounts(products, "ce")).toEqual({
+      all: 5,
+      exams: { CE: 3, ME: 1, MT: 1 },
+      formats: { "flash-cards": 1, posters: 1, notebook: 0, bundle: 1 },
+    });
+  });
+
+  it("gives a format with no Products a count of 0", () => {
+    expect(facetCounts(products, "ME").formats).toEqual({
+      "flash-cards": 1,
+      posters: 0,
+      notebook: 0,
+      bundle: 0,
+    });
+  });
+
+  it("never counts a Coming Soon Product", () => {
+    expect(facetCounts([...products, testComingSoonProduct({ examCode: "EE" })])).toMatchObject({
+      all: 5,
+      exams: { CE: 3, ME: 1, MT: 1 },
+    });
   });
 });
