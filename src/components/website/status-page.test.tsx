@@ -36,4 +36,16 @@ describe("StatusPage", () => {
     rerender(<StatusPage code="Error" title="t" description="d" digest="abc123" />);
     expect(screen.getByText("Reference: abc123")).toBeInTheDocument();
   });
+
+  it("renders as a section, without its own main landmark or logo, inside the Website shell", () => {
+    render(<StatusPage code="404" title="Page not found" description="Gone." withinShell />);
+    expect(screen.queryByRole("main")).not.toBeInTheDocument();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Page not found" })).toBeInTheDocument();
+  });
+
+  it("is a full page with its own main landmark otherwise", () => {
+    render(<StatusPage code="404" title="Page not found" description="Gone." />);
+    expect(screen.getByRole("main")).toBeInTheDocument();
+  });
 });

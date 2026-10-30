@@ -31,6 +31,13 @@
   --ayc-on-navy-muted: #9fb3cf;
   --ayc-on-navy-soft: #d9dee6;
   --ayc-navy-rule: #2a3a55;
+  /* Star ratings and ticks. Decorative only: never the sole carrier of meaning. */
+  --ayc-star: #e07400;
+  --ayc-star-off: #d6cdb9;
+  /* Hairlines between rows on cream and paper. */
+  --ayc-rule: #c9bfa8;
+  /* The ruled-paper lines on Review cards. */
+  --ayc-ruled: #d5e2f0;
 
   /* Square corners everywhere; pills use rounded-full. */
   --radius: 0rem;
@@ -85,6 +92,8 @@
   --shadow-hard-lg: 8px 8px 0 var(--ayc-navy);
   /* The soft drop under panels that open over the page, like the Exams menu. */
   --shadow-panel: 0 18px 30px -18px rgb(14 26 46 / 0.45);
+  /* A Review card pinned to the page. */
+  --shadow-note: 0 1px 0 var(--ayc-rule), 0 10px 18px -12px rgb(14 26 46 / 0.35);
 
   --color-ayc-cream: var(--ayc-cream);
   --color-ayc-paper: var(--ayc-paper);
@@ -97,6 +106,10 @@
   --color-ayc-on-navy-muted: var(--ayc-on-navy-muted);
   --color-ayc-on-navy-soft: var(--ayc-on-navy-soft);
   --color-ayc-navy-rule: var(--ayc-navy-rule);
+  --color-ayc-star: var(--ayc-star);
+  --color-ayc-star-off: var(--ayc-star-off);
+  --color-ayc-rule: var(--ayc-rule);
+  --color-ayc-ruled: var(--ayc-ruled);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -134,6 +147,20 @@
 @theme {
   /* The mockup's main layout switch: below 760 px is the mobile layout. */
   --breakpoint-wide: 47.5rem;
+
+  /*
+   * The Marquee track holds two copies of its items, so moving it by half its
+   * width loops seamlessly. The Marquee sets the duration from its speed.
+   */
+  --animate-marquee: marquee var(--marquee-duration, 40s) linear infinite;
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
 }
 
 @layer base {

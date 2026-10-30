@@ -7,7 +7,13 @@ import { expect, test } from "@playwright/test";
 // a11y pass), but serious/critical regressions break CI.
 const BLOCKING_IMPACTS = new Set(["serious", "critical"]);
 
-for (const path of ["/", "/auth/sign-in"]) {
+for (const path of [
+  "/",
+  "/auth/sign-in",
+  "/products/ce-formula-flash-cards",
+  "/products/ultimate-ce-posters-2-0",
+  "/products/ce-solving-notebook",
+]) {
   test(`no serious or critical accessibility violations on ${path}`, async ({ page }) => {
     await page.goto(path);
 

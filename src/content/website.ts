@@ -55,4 +55,31 @@ export const websiteCopy = {
     ipophil: "Registered with IPOPHIL. Unauthorized reproduction is prohibited.",
     shipping: "Ships all over the Philippines",
   },
+  // The Product page (docs/mockup/website/Product.dc.html).
+  product: {
+    shipsFrom: "Iloilo City",
+    deal: "Shopee: any 2 enjoy 4% off",
+    cardDeal: "Any 2 · 4% off",
+    comingSoon: "Coming soon",
+    reviewUse: "For the board exam, school, and professional review.",
+    boardExamReviewees: "Board exam reviewees",
+    authentic:
+      "AceYourCourse reviewers are registered with IPOPHIL and protected by copyright law. Unauthorized reproduction, distribution, or use is prohibited.",
+    oneOption: "One option: the complete set.",
+    pickOnStore: "Sold per subject or as a full set. Pick your option on the store page:",
+    noReviewsTitle: "No written reviews yet",
+    noReviews:
+      "This one is new. Buyers have left star ratings but no comments so far. Bought it? Leave a review on the store you ordered from.",
+    storeLinksSoon: "Store links coming soon. Questions?",
+    followOnShopee: "Follow on Shopee",
+    comingSoonNote: "Not out yet. Follow our Shopee shop to hear when it launches.",
+    // Shown only while the Member App switch is on.
+    app: {
+      bandTitle: "Also available in the app",
+      band: "The same content one card at a time, plus scored quizzes and reviewers.",
+      seePlans: "See plans →",
+      printedOnly: "Printed only · not available in the app",
+      cardBadge: "In app",
+    },
+  },
 } as const;

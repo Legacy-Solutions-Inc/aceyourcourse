@@ -14,6 +14,11 @@ interface StatusPageProps {
   onReset?: () => void;
   /** Opaque support reference (e.g. a Next.js error digest). Never the raw error. */
   digest?: string;
+  /**
+   * Inside the Website shell, which already has the logo and the main
+   * landmark, render as a section without either.
+   */
+  withinShell?: boolean;
 }
 
 const button =
@@ -24,12 +29,27 @@ const button =
  * only, never a raw error, so internal details can't leak to Visitors. No
  * hooks, so both Server (not-found) and Client (error) boundaries can use it.
  */
-export function StatusPage({ code, title, description, onReset, digest }: StatusPageProps) {
+export function StatusPage({
+  code,
+  title,
+  description,
+  onReset,
+  digest,
+  withinShell = false,
+}: StatusPageProps) {
+  const Root = withinShell ? "section" : "main";
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background px-5 py-16 text-center">
-      <Link href={paths.home}>
-        <BrandLogo alt={config.site.name} />
-      </Link>
+    <Root
+      className={cn(
+        "flex flex-col items-center justify-center gap-6 bg-background px-5 py-16 text-center",
+        withinShell ? "min-h-[60svh]" : "min-h-svh",
+      )}
+    >
+      {withinShell ? null : (
+        <Link href={paths.home}>
+          <BrandLogo alt={config.site.name} />
+        </Link>
+      )}
       <p className="font-mono text-sm font-bold tracking-[0.08em] text-ayc-blue uppercase">
         {code}
       </p>
@@ -63,6 +83,6 @@ export function StatusPage({ code, title, description, onReset, digest }: Status
       {digest ? (
         <p className="font-mono text-xs text-muted-foreground">Reference: {digest}</p>
       ) : null}
-    </main>
+    </Root>
   );
 }

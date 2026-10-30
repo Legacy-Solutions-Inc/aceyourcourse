@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ExternalLink } from "@/components/website/external-link";
 import { MarketplaceLink } from "@/components/website/marketplace-link";
 import { marketplaceShops, websiteCopy } from "@/content/website";
+import { formatCount, formatRating } from "@/lib/catalogue/figures";
 import { manilaYear, formatAsOf } from "@/lib/manila-time";
 import { socialHandle } from "@/lib/social-handle";
 import { cn } from "@/lib/utils";
@@ -11,7 +12,6 @@ import { getWebsiteSettings, listExams } from "@/services/catalogue";
 
 const columnLink =
   "flex min-h-7 items-center text-ayc-cream hover:text-ayc-orange focus-visible:outline-ayc-orange";
-const ratingCountFormat = new Intl.NumberFormat("en-PH");
 
 function FooterColumn({
   id,
@@ -189,9 +189,9 @@ export async function SiteFooter() {
             © {manilaYear(new Date())} {websiteCopy.wordmark} · {copy.ipophil}
           </p>
           <p>
-            <span aria-hidden="true">★</span> {shopStats.rating.toFixed(1)} ·{" "}
-            {ratingCountFormat.format(shopStats.ratingCount)} ratings · {formatAsOf(shopStats.asOf)}{" "}
-            · {copy.shipping}
+            <span aria-hidden="true">★</span> {formatRating(shopStats.rating)} ·{" "}
+            {formatCount(shopStats.ratingCount)} ratings · {formatAsOf(shopStats.asOf)} ·{" "}
+            {copy.shipping}
           </p>
         </div>
       </div>

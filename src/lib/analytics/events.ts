@@ -8,7 +8,7 @@ import type { Marketplace } from "@/services/catalogue.types";
 // PostHog has loaded, so it is safe to call when analytics is unconfigured.
 
 export interface MarketplaceClick {
-  /** The Product's slug, for a Product's own Listing. Omitted for a shop link. */
+  /** The Product's slug, when the click is from a Product. Omitted for a shop-wide link. */
   product?: string;
   marketplace: Marketplace;
   /** The pathname the click came from. */

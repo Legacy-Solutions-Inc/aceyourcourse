@@ -1,10 +1,59 @@
+import { statSync } from "node:fs";
+import { join } from "node:path";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getExamByCode, getWebsiteSettings, listExams } from "./catalogue";
+import type { CatalogueSeed } from "./catalogue.schema";
+import {
+  getExamByCode,
+  getProductBySlug,
+  getWebsiteSettings,
+  listBestSellers,
+  listExams,
+  listHomeReviews,
+  listProducts,
+  listRelatedProducts,
+  listReviews,
+} from "./catalogue";
 
 // Behaviour tests against the Catalogue seam's public contract. Expected values
 // are copied by hand from docs/mockup/aycData.js (EXAMS, EXAM_INFO, STORES,
-// CONTACT, SHOP) and docs/mockup/website/SiteNav.dc.html.
+// CONTACT, SHOP, PRODUCTS), docs/mockup/website/SiteNav.dc.html and the Home
+// Review selection at Home_v2.dc.html L349–351.
+
+/** The seam loaded over an edited copy of the seed, for states the seed lacks. */
+async function seamWith(edit: (seed: CatalogueSeed) => void) {
+  vi.resetModules();
+  vi.doMock("@/services/mock/catalogue", async (importOriginal) => {
+    const real = await importOriginal<typeof import("@/services/mock/catalogue")>();
+    const seed = structuredClone(real.CATALOGUE_SEED);
+    edit(seed);
+    return { CATALOGUE_SEED: seed };
+  });
+  const seam = await import("./catalogue");
+  vi.doUnmock("@/services/mock/catalogue");
+  return seam;
+}
+
+function product(seed: CatalogueSeed, slug: string) {
+  const found = seed.products.find((p) => p.slug === slug);
+  if (!found) throw new Error(`the seed has no Product "${slug}"`);
+  return found;
+}
+
+const slugs = (result: { items: { slug: string }[] }) => result.items.map((p) => p.slug);
+const ids = (items: { id: string }[]) => items.map((r) => r.id);
+
+const LIVE_BY_UNITS_SOLD = [
+  "ce-formula-flash-cards",
+  "me-formula-flash-cards",
+  "cpa-flash-cards",
+  "ee-flash-cards",
+  "ultimate-ce-posters-2-0",
+  "medtech-essential-notebook",
+  "medtech-comprehensive-flash-cards",
+  "ce-review-bundle-3-in-1",
+];
 
 describe("catalogue seam: Exams", () => {
   it("lists the five Exams with Products, in seed order", async () => {
@@ -36,6 +85,24 @@ describe("catalogue seam: Exams", () => {
       ],
     });
     expect(exams.map((e) => e.subjects.length)).toEqual([3, 3, 3, 6, 6]);
+  });
+
+  it("does not list an Exam once none of its Products is shown on the Website", async () => {
+    const seam = await seamWith((seed) => {
+      for (const p of seed.products) if (p.examCode === "CPA") p.showOnWebsite = false;
+    });
+    expect((await seam.listExams()).map((e) => e.code)).toEqual(["CE", "ME", "EE", "MT"]);
+    expect((await seam.getExamByCode("CPA"))?.name).toBe("Accountancy");
+    vi.resetModules();
+  });
+
+  it("still lists an Exam whose only Products are Coming Soon", async () => {
+    const seam = await seamWith((seed) => {
+      seed.products = seed.products.filter((p) => p.examCode !== "ME" || p.state === "coming-soon");
+      seed.reviews = seed.reviews.filter((r) => seed.products.some((p) => p.id === r.productId));
+    });
+    expect((await seam.listExams()).map((e) => e.code)).toContain("ME");
+    vi.resetModules();
   });
 
   it("does not list the Exams that have no Products yet", async () => {
@@ -169,5 +236,488 @@ describe("catalogue seam: Website settings", () => {
     });
     await expect(import("./catalogue.mock")).rejects.toThrow(/exams\.1\.code: duplicate/);
     vi.doUnmock("@/services/mock/catalogue");
+  });
+});
+
+describe("catalogue seam: Products", () => {
+  afterEach(() => {
+    vi.resetModules();
+  });
+
+  it("lists the 8 Live Products by units sold by default, leaving Coming Soon out", async () => {
+    const result = await listProducts();
+    expect(slugs(result)).toEqual(LIVE_BY_UNITS_SOLD);
+    expect(result.total).toBe(8);
+  });
+
+  it("gets a Product by slug with its price in centavos, Listing and Shopee figures", async () => {
+    const p = await getProductBySlug("ce-formula-flash-cards");
+    expect(p).toMatchObject({
+      examCode: "CE",
+      title: "Civil Engineering Formula Flash Cards",
+      shortName: "CE Formula Flash Cards",
+      format: "flash-cards",
+      size: "4 × 6 in · 160 gsm",
+      edition: "Second Edition",
+      subjectCodes: ["MSTC", "HPGE", "PSAD"],
+      state: "live",
+      priceFrom: 120000,
+      priceTo: null,
+      variations: [{ name: "FLASH CARDS: BUNDLE SECOND ED.", price: 120000 }],
+      listings: {
+        shopee:
+          "https://shopee.ph/Civil-Engineering-Formula-Flash-Cards-(CELE-Board-Exam-School-Reviewer)-i.1276620555.24292303887",
+      },
+      shopee: { rating: 4.8, ratingCount: 197, unitsSold: 764, asOf: "2026-10-29" },
+      deal: true,
+      availableInApp: true,
+    });
+    expect(p?.photos).toHaveLength(8);
+    expect(p?.photos[0]).toEqual({
+      src: "/products/ce-formula-flash-cards/1.webp",
+      alt: "Civil Engineering Formula Flash Cards, photo 1 of 8",
+    });
+    expect(p?.id).not.toContain("24292303887");
+  });
+
+  it("gets a Coming Soon Product by slug, with no price, Listing or figures", async () => {
+    expect(await getProductBySlug("ce-solving-notebook")).toMatchObject({
+      state: "coming-soon",
+      priceFrom: null,
+      priceTo: null,
+      variations: [],
+      listings: {},
+      shopee: null,
+    });
+  });
+
+  it("maps each Product's Subjects to its Exam's codes", async () => {
+    const codes = async (slug: string) => (await getProductBySlug(slug))?.subjectCodes;
+    expect(await codes("me-formula-flash-cards")).toEqual(["PIP", "MATH", "MD"]);
+    expect(await codes("ee-flash-cards")).toEqual(["MATH", "ESAS", "EE PROF"]);
+    expect(await codes("cpa-flash-cards")).toEqual(["FAR", "AUD", "AFAR", "TAX", "RFBT", "MS"]);
+    expect(await codes("medtech-essential-notebook")).toEqual([
+      "CLIN CHEM",
+      "HEMA",
+      "CLIN MIC & PARA",
+      "ISBB",
+      "HISTOPATH",
+      "MICRO",
+    ]);
+  });
+
+  it.each(["no-such-product", "", "CE-FORMULA-FLASH-CARDS"])(
+    "returns null for the unknown slug %j",
+    async (slug) => {
+      expect(await getProductBySlug(slug)).toBeNull();
+    },
+  );
+
+  it("never returns a Product with Show on website off", async () => {
+    const seam = await seamWith((seed) => {
+      product(seed, "cpa-flash-cards").showOnWebsite = false;
+      product(seed, "ce-solving-notebook").showOnWebsite = false;
+    });
+    expect(await seam.getProductBySlug("cpa-flash-cards")).toBeNull();
+    expect(slugs(await seam.listProducts())).not.toContain("cpa-flash-cards");
+    expect(slugs(await seam.listProducts({ state: "coming-soon" }))).not.toContain(
+      "ce-solving-notebook",
+    );
+    expect((await seam.listBestSellers(10)).map((p) => p.slug)).not.toContain("cpa-flash-cards");
+  });
+
+  it("serves every photo from public/, optimised to at most 200 KB", async () => {
+    const products = (await listProducts()).items;
+    const photos = products.flatMap((p) => p.photos);
+    expect(photos.length).toBeGreaterThanOrEqual(products.length);
+    for (const photo of photos) {
+      const file = statSync(join(process.cwd(), "public", photo.src));
+      expect(file.size, photo.src).toBeLessThanOrEqual(200 * 1024);
+    }
+  });
+
+  it("hands out copies of Products", async () => {
+    const p = await getProductBySlug("ee-flash-cards");
+    p?.photos.pop();
+    expect((await getProductBySlug("ee-flash-cards"))?.photos).toHaveLength(2);
+  });
+
+  it.each(["ce", "CE"])("filters by the Exam code %s", async (examCode) => {
+    expect(slugs(await listProducts({ examCode }))).toEqual([
+      "ce-formula-flash-cards",
+      "ultimate-ce-posters-2-0",
+      "ce-review-bundle-3-in-1",
+    ]);
+  });
+
+  it("filters by format", async () => {
+    const result = await listProducts({ format: "notebook" });
+    expect(slugs(result)).toEqual(["medtech-essential-notebook"]);
+    expect(result.total).toBe(1);
+  });
+
+  it.each([
+    ["poster", ["ultimate-ce-posters-2-0"]],
+    ["MELE", ["me-formula-flash-cards"]],
+    ["accountancy", ["cpa-flash-cards"]],
+    ["  medtech  ", ["medtech-essential-notebook", "medtech-comprehensive-flash-cards"]],
+    [
+      "hydraulics",
+      ["ce-formula-flash-cards", "ultimate-ce-posters-2-0", "ce-review-bundle-3-in-1"],
+    ],
+    ["ISBB", ["medtech-essential-notebook", "medtech-comprehensive-flash-cards"]],
+    ["bundle", ["ce-review-bundle-3-in-1"]],
+    [
+      "Flash Cards",
+      [
+        "ce-formula-flash-cards",
+        "me-formula-flash-cards",
+        "cpa-flash-cards",
+        "ee-flash-cards",
+        "medtech-comprehensive-flash-cards",
+      ],
+    ],
+  ])("searches title, names, board, Exam, format and Subjects for %j", async (query, expected) => {
+    expect(slugs(await listProducts({ query }))).toEqual(expected);
+  });
+
+  it("returns an empty result with a total of 0 when nothing matches", async () => {
+    expect(await listProducts({ query: "pharmacy" })).toEqual({ items: [], total: 0 });
+  });
+
+  it("keeps Products whose lowest price is within the max price", async () => {
+    const result = await listProducts({ maxPrice: 60000 });
+    expect(slugs(result)).toEqual([
+      "ee-flash-cards",
+      "ultimate-ce-posters-2-0",
+      "medtech-comprehensive-flash-cards",
+    ]);
+    expect(result.total).toBe(3);
+  });
+
+  it("never lets a Coming Soon Product through the price filter", async () => {
+    const result = await listProducts({ maxPrice: 100 });
+    expect(result).toEqual({ items: [], total: 0 });
+  });
+
+  it("filters to the Products available in the app", async () => {
+    expect(slugs(await listProducts({ availableInApp: true }))).toEqual([
+      "ce-formula-flash-cards",
+      "me-formula-flash-cards",
+      "cpa-flash-cards",
+      "ee-flash-cards",
+      "medtech-comprehensive-flash-cards",
+    ]);
+  });
+
+  it("combines filters, and counts after filtering", async () => {
+    const result = await listProducts({ examCode: "CE", format: "posters", maxPrice: 50000 });
+    expect(slugs(result)).toEqual(["ultimate-ce-posters-2-0"]);
+    expect(result.total).toBe(1);
+  });
+
+  it("sorts by price, low to high, breaking ties by units sold", async () => {
+    expect(slugs(await listProducts({ sort: "price-asc" }))).toEqual([
+      "ultimate-ce-posters-2-0",
+      "medtech-comprehensive-flash-cards",
+      "ee-flash-cards",
+      "medtech-essential-notebook",
+      "me-formula-flash-cards",
+      "cpa-flash-cards",
+      "ce-formula-flash-cards",
+      "ce-review-bundle-3-in-1",
+    ]);
+  });
+
+  it("sorts by price, high to low, breaking ties by units sold", async () => {
+    expect(slugs(await listProducts({ sort: "price-desc" }))).toEqual([
+      "ce-formula-flash-cards",
+      "ce-review-bundle-3-in-1",
+      "cpa-flash-cards",
+      "me-formula-flash-cards",
+      "medtech-essential-notebook",
+      "ee-flash-cards",
+      "medtech-comprehensive-flash-cards",
+      "ultimate-ce-posters-2-0",
+    ]);
+  });
+
+  it("sorts top rated by rating, then by number of ratings", async () => {
+    expect(slugs(await listProducts({ sort: "top-rated" }))).toEqual([
+      "medtech-comprehensive-flash-cards",
+      "ultimate-ce-posters-2-0",
+      "ce-formula-flash-cards",
+      "me-formula-flash-cards",
+      "ee-flash-cards",
+      "cpa-flash-cards",
+      "ce-review-bundle-3-in-1",
+      "medtech-essential-notebook",
+    ]);
+  });
+
+  it("puts Live Products without Shopee figures last when sorting by sales or rating", async () => {
+    const seam = await seamWith((seed) => {
+      product(seed, "ce-formula-flash-cards").shopee = null;
+    });
+    expect(slugs(await seam.listProducts()).at(-1)).toBe("ce-formula-flash-cards");
+    expect(slugs(await seam.listProducts({ sort: "top-rated" })).at(-1)).toBe(
+      "ce-formula-flash-cards",
+    );
+  });
+
+  it("lists Coming Soon Products by Exam, then title, ignoring sort and max price", async () => {
+    const expected = [
+      "ce-solving-notebook",
+      "me-notebook",
+      "me-posters",
+      "ee-notebook",
+      "ee-posters",
+      "medtech-essentials-flash-cards",
+      "medtech-essentials-posters",
+    ];
+    const result = await listProducts({ state: "coming-soon" });
+    expect(slugs(result)).toEqual(expected);
+    expect(result.total).toBe(7);
+    expect(
+      slugs(await listProducts({ state: "coming-soon", sort: "price-desc", maxPrice: 1 })),
+    ).toEqual(expected);
+  });
+
+  it("filters Coming Soon Products by Exam and format", async () => {
+    expect(slugs(await listProducts({ state: "coming-soon", examCode: "EE" }))).toEqual([
+      "ee-notebook",
+      "ee-posters",
+    ]);
+    expect(slugs(await listProducts({ state: "coming-soon", format: "notebook" }))).toEqual([
+      "ce-solving-notebook",
+      "me-notebook",
+      "ee-notebook",
+    ]);
+  });
+});
+
+describe("catalogue seam: related Products and best sellers", () => {
+  afterEach(() => {
+    vi.resetModules();
+  });
+
+  async function related(slug: string, limit?: number) {
+    const p = await getProductBySlug(slug);
+    if (!p) throw new Error(`no Product "${slug}"`);
+    const result = await listRelatedProducts(p, limit);
+    return { scope: result.scope, slugs: result.items.map((x) => x.slug) };
+  }
+
+  it("relates the other Live Products of the same Exam, by units sold", async () => {
+    expect(await related("ce-formula-flash-cards")).toEqual({
+      scope: "same-exam",
+      slugs: ["ultimate-ce-posters-2-0", "ce-review-bundle-3-in-1"],
+    });
+    expect(await related("medtech-essential-notebook")).toEqual({
+      scope: "same-exam",
+      slugs: ["medtech-comprehensive-flash-cards"],
+    });
+  });
+
+  it("respects the limit", async () => {
+    expect((await related("ce-review-bundle-3-in-1", 1)).slugs).toEqual(["ce-formula-flash-cards"]);
+  });
+
+  it("falls back to best sellers from other Exams, never Coming Soon, when the Exam has no other Live Product", async () => {
+    // ME has two Coming Soon Products, which must not count as related.
+    expect(await related("me-formula-flash-cards")).toEqual({
+      scope: "other-exams",
+      slugs: ["ce-formula-flash-cards", "cpa-flash-cards", "ee-flash-cards"],
+    });
+  });
+
+  it("relates Live Products to a Coming Soon Product's page too", async () => {
+    expect(await related("ce-solving-notebook")).toEqual({
+      scope: "same-exam",
+      slugs: ["ce-formula-flash-cards", "ultimate-ce-posters-2-0", "ce-review-bundle-3-in-1"],
+    });
+  });
+
+  it("lists best sellers by units sold, up to the limit", async () => {
+    expect((await listBestSellers(3)).map((p) => p.slug)).toEqual(LIVE_BY_UNITS_SOLD.slice(0, 3));
+    expect((await listBestSellers(50)).map((p) => p.slug)).toEqual(LIVE_BY_UNITS_SOLD);
+  });
+
+  it("leaves Live Products without Shopee figures out of the best sellers", async () => {
+    const seam = await seamWith((seed) => {
+      product(seed, "me-formula-flash-cards").shopee = null;
+    });
+    expect((await seam.listBestSellers(3)).map((p) => p.slug)).toEqual([
+      "ce-formula-flash-cards",
+      "cpa-flash-cards",
+      "ee-flash-cards",
+    ]);
+  });
+});
+
+describe("catalogue seam: Reviews", () => {
+  afterEach(() => {
+    vi.resetModules();
+  });
+
+  it("lists every Review, most helpful first, with its Product", async () => {
+    const { items, total } = await listReviews();
+    expect(total).toBe(16);
+    expect(ids(items).slice(0, 6)).toEqual([
+      "rev-013",
+      "rev-006",
+      "rev-001",
+      "rev-007",
+      "rev-002",
+      "rev-010",
+    ]);
+    expect(items[0]).toMatchObject({
+      stars: 5,
+      text: "Perfect quality for Engineering students, fresh grads and retakers readying for board exam",
+      variation: "MSTC, HPGE, PSAD",
+      helpful: 19,
+      marketplace: "shopee",
+      product: {
+        slug: "ultimate-ce-posters-2-0",
+        shortName: "Ultimate CE Posters 2.0",
+        examCode: "CE",
+      },
+    });
+  });
+
+  it("keeps a Review's line breaks and wording exactly", async () => {
+    const { items } = await listReviews({ productSlug: "cpa-flash-cards" });
+    expect(items.map((r) => r.text)).toContain(
+      "Suitability: Very suitable!\nI haven't really read it but as I scan, I loved it. The text is not too small. It is understandable enough. It is good for recalling. Hoping that this could really help me reach my goal. 🙏",
+    );
+  });
+
+  it("breaks most-helpful ties by stars, then by the longer text", async () => {
+    const { items } = await listReviews();
+    const helpfulOnce = items.filter((r) => r.helpful === 1);
+    const lengths = helpfulOnce.map((r) => r.text.length);
+    expect(lengths).toEqual([...lengths].sort((a, b) => b - a));
+    expect(items.at(-1)?.stars).toBe(3);
+  });
+
+  it("filters by Product", async () => {
+    const result = await listReviews({ productSlug: "ce-formula-flash-cards" });
+    expect(ids(result.items).sort()).toEqual([
+      "rev-001",
+      "rev-002",
+      "rev-003",
+      "rev-004",
+      "rev-005",
+    ]);
+    expect(result.total).toBe(5);
+  });
+
+  it("returns no Reviews for a Product that has none, or an unknown Product", async () => {
+    expect(await listReviews({ productSlug: "ce-review-bundle-3-in-1" })).toEqual({
+      items: [],
+      total: 0,
+    });
+    expect(await listReviews({ productSlug: "nope" })).toEqual({ items: [], total: 0 });
+  });
+
+  it.each(["MT", "mt"])("filters by the Exam %s", async (examCode) => {
+    expect(ids((await listReviews({ examCode })).items)).toEqual(["rev-016"]);
+  });
+
+  it("filters by star bucket", async () => {
+    expect((await listReviews({ stars: "5" })).total).toBe(15);
+    expect(await listReviews({ stars: "4" })).toEqual({ items: [], total: 0 });
+    expect(ids((await listReviews({ stars: "3-or-less" })).items)).toEqual(["rev-016"]);
+  });
+
+  it.each([
+    ["GLOSSY", ["rev-014"]],
+    ["ultimate ce posters", ["rev-013", "rev-014", "rev-015"]],
+    ["bundle,160 gsm", ["rev-006", "rev-007", "rev-011", "rev-008", "rev-012"]],
+  ])("searches text, Product short name and variation for %j", async (query, expected) => {
+    expect(ids((await listReviews({ query })).items).sort()).toEqual([...expected].sort());
+  });
+
+  it("sorts highest first, then by helpful", async () => {
+    const { items } = await listReviews({ sort: "highest" });
+    expect(items[0]?.id).toBe("rev-013");
+    expect(items.at(-1)?.id).toBe("rev-016");
+  });
+
+  it("sorts most critical first, then by helpful", async () => {
+    const { items } = await listReviews({ sort: "most-critical" });
+    expect(ids(items).slice(0, 3)).toEqual(["rev-016", "rev-013", "rev-006"]);
+  });
+
+  it("sorts most detailed first, by text length", async () => {
+    const { items } = await listReviews({ sort: "most-detailed" });
+    const lengths = items.map((r) => r.text.length);
+    expect(lengths).toEqual([...lengths].sort((a, b) => b - a));
+    expect(items[0]?.id).toBe("rev-003");
+  });
+
+  it("sorts for an Exam page: by the Products' best-seller order, then seed order", async () => {
+    const { items } = await listReviews({ examCode: "CE", sort: "exam-page" });
+    expect(ids(items)).toEqual([
+      "rev-001",
+      "rev-002",
+      "rev-003",
+      "rev-004",
+      "rev-005",
+      "rev-013",
+      "rev-014",
+      "rev-015",
+    ]);
+  });
+
+  it("applies the limit after sorting, and still reports the full total", async () => {
+    const result = await listReviews({ examCode: "CE", sort: "exam-page", limit: 7 });
+    expect(ids(result.items)).toEqual([
+      "rev-001",
+      "rev-002",
+      "rev-003",
+      "rev-004",
+      "rev-005",
+      "rev-013",
+      "rev-014",
+    ]);
+    expect(result.total).toBe(8);
+  });
+
+  it("leaves out Reviews of a Product with Show on website off", async () => {
+    const seam = await seamWith((seed) => {
+      product(seed, "ultimate-ce-posters-2-0").showOnWebsite = false;
+    });
+    const { items, total } = await seam.listReviews();
+    expect(total).toBe(13);
+    expect(items.map((r) => r.product.slug)).not.toContain("ultimate-ce-posters-2-0");
+    expect(ids(await seam.listHomeReviews())).not.toContain("rev-013");
+  });
+
+  it("returns the 9 pinned Home Reviews in pin order, including the 3-star one", async () => {
+    const home = await listHomeReviews();
+    expect(ids(home)).toEqual([
+      "rev-013",
+      "rev-006",
+      "rev-001",
+      "rev-009",
+      "rev-016",
+      "rev-014",
+      "rev-011",
+      "rev-007",
+      "rev-004",
+    ]);
+    expect(home.find((r) => r.stars === 3)?.product.slug).toBe("medtech-essential-notebook");
+  });
+
+  it("caps the Home selection at 9 Reviews", async () => {
+    const seam = await seamWith((seed) => {
+      seed.reviews.forEach((review, index) => {
+        review.homePin = index + 1;
+      });
+    });
+    const home = await seam.listHomeReviews();
+    expect(home).toHaveLength(9);
+    expect(home[0]?.id).toBe("rev-001");
   });
 });
