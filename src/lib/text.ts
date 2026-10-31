@@ -10,3 +10,11 @@ export function truncate(text: string, max: number): string {
 export function listNumber(index: number): string {
   return String(index + 1).padStart(2, "0");
 }
+
+// "en", as the Products page joins its Exams.
+const listFormat = new Intl.ListFormat("en", { style: "long", type: "conjunction" });
+
+/** Pure: names joined the English way: "A, B, and C", "A and B" or "A". */
+export function formatList(items: string[]): string {
+  return listFormat.format(items);
+}

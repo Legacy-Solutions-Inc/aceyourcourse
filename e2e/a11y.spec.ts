@@ -16,6 +16,7 @@ for (const path of [
   "/exams/me",
   "/reviews",
   "/reviews?exam=cpa&stars=3-or-less",
+  "/about",
   "/legal/privacy",
   "/legal/terms",
 ]) {

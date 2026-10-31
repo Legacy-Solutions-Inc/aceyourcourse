@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { listNumber, truncate } from "./text";
+import { formatList, listNumber, truncate } from "./text";
 
 describe("truncate", () => {
   it("leaves text that fits as it is", () => {
@@ -22,5 +22,24 @@ describe("listNumber", () => {
   it("keeps two digits and more as they are", () => {
     expect(listNumber(9)).toBe("10");
     expect(listNumber(99)).toBe("100");
+  });
+});
+
+describe("formatList", () => {
+  it("joins names the English way, with a serial comma", () => {
+    expect(formatList(["Civil Engineering", "Mechanical Engineering", "Accountancy"])).toBe(
+      "Civil Engineering, Mechanical Engineering, and Accountancy",
+    );
+  });
+
+  it("joins two with “and” and leaves one as it is", () => {
+    expect(formatList(["Civil Engineering", "Accountancy"])).toBe(
+      "Civil Engineering and Accountancy",
+    );
+    expect(formatList(["Accountancy"])).toBe("Accountancy");
+  });
+
+  it("gives an empty string for no names", () => {
+    expect(formatList([])).toBe("");
   });
 });
