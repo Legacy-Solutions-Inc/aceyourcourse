@@ -87,7 +87,7 @@ export function BestSellersCarousel({ headingId, intro, children }: BestSellersC
         ref={track}
         aria-labelledby={headingId}
         onScroll={measure}
-        className="-mr-3 -ml-1 flex snap-x snap-mandatory scroll-pl-1 [scrollbar-width:none] gap-5 overflow-x-auto pt-1 pr-3 pb-4 pl-1"
+        className="-mr-3 -ml-1 flex snap-x snap-mandatory scroll-pl-1 scrollbar-none gap-5 overflow-x-auto pt-1 pr-3 pb-4 pl-1"
       >
         {children}
       </ol>
