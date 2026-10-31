@@ -2,6 +2,8 @@ export const paths = {
   home: "/",
   /** The site's default share image (src/app/opengraph-image.tsx). */
   shareImage: "/opengraph-image",
+  /** The brand mark as a 512 × 512 PNG (src/app/icon.tsx). */
+  icon: "/icon",
   products: {
     list: "/products",
     details: (slug: string) => `/products/${slug}`,

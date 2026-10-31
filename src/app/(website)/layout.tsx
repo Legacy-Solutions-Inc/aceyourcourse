@@ -1,9 +1,15 @@
+import { JsonLd } from "@/components/website/json-ld";
 import { SiteFooter } from "@/components/website/site-footer";
 import { SiteNav } from "@/components/website/site-nav";
+import { config } from "@/config";
+import { organizationJsonLd } from "@/lib/catalogue/json-ld";
+import { getWebsiteSettings } from "@/services/catalogue";
 
 // The Website shell: every public page gets the announcement bar, the site
-// navigation and the footer.
-export default function WebsiteLayout({ children }: { children: React.ReactNode }) {
+// navigation, the footer and AYC's Organization structured data.
+export default async function WebsiteLayout({ children }: { children: React.ReactNode }) {
+  const settings = await getWebsiteSettings();
+
   return (
     <div className="flex min-h-svh flex-col">
       <a
@@ -17,6 +23,7 @@ export default function WebsiteLayout({ children }: { children: React.ReactNode 
         {children}
       </main>
       <SiteFooter />
+      <JsonLd data={organizationJsonLd(settings, config.site.url)} />
     </div>
   );
 }

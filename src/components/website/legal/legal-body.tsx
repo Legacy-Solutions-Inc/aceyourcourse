@@ -19,7 +19,8 @@ function withEmailLinks(text: string, email: string): React.ReactNode {
           <a
             key={index}
             href={`mailto:${email}`}
-            className="font-bold text-ayc-blue underline underline-offset-[0.15em] hover:text-ayc-blue-dark"
+            // An address has no break points, so let it break anywhere on a 320 px phone.
+            className="font-bold wrap-anywhere text-ayc-blue underline underline-offset-[0.15em] hover:text-ayc-blue-dark"
           >
             {email}
           </a>,

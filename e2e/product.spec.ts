@@ -118,9 +118,9 @@ test.describe("a Live Product page", () => {
       offers: [{ "@type": "Offer", url: CE_CARDS_LISTING, price: 1200, priceCurrency: "PHP" }],
     });
     expect(blocks.find((b) => b["@type"] === "BreadcrumbList")).toBeTruthy();
-    const all = JSON.stringify(blocks);
-    expect(all).not.toMatch(/aggregateRating|"review/i);
-    expect(all).not.toContain(LAZADA_SHOP);
+    expect(JSON.stringify(blocks)).not.toMatch(/aggregateRating|"review/i);
+    // The shop pages are in the Organization's sameAs, but never a Product Offer.
+    expect(JSON.stringify(product)).not.toContain(LAZADA_SHOP);
   });
 
   test("shows nothing about the Member App while the switch is off", async ({ page }) => {
@@ -177,7 +177,7 @@ test.describe("a Coming Soon Product page", () => {
   test("has no Reviews section and no Product structured data", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Reviews" })).toHaveCount(0);
     const types = (await jsonLd(page)).map((b) => b["@type"]);
-    expect(types).toEqual(["BreadcrumbList"]);
+    expect(types.sort()).toEqual(["BreadcrumbList", "Organization"]);
   });
 });
 

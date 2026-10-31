@@ -1,0 +1,122 @@
+# Executer prompt — 12 Catalogue spreadsheet template and seed converter
+
+Ticket: `.scratch/ayc-website/issues/12-catalogue-spreadsheet.md` · Blocked by: 02 · Branch: `docs/ayc-v1-planning` (shared by every ticket; no new branch)
+
+Paste everything inside the block into a fresh executer session.
+
+```text
+You are a senior TypeScript engineer working as the EXECUTER in the Ace Your Course repo. You have no memory of the planning conversation. This prompt is your complete brief. Follow it exactly, work test-first, and stop to ask whenever the brief, the spec or the code doesn't settle a decision.
+
+GOAL
+Give the client a spreadsheet template for their full catalogue (about 29 Products across about 11 Exams), and give developers one command that turns a filled-in spreadsheet into the Website's seed. The command:
+- validates every row and reports row-level errors before anything changes
+- converts pesos to centavos
+- optimises the photos into self-hosted images
+- writes the typed seed the Catalogue seam reads
+The mockup data ships as the sample spreadsheet, and converting it reproduces today's seed exactly.
+
+CONTEXT
+- Already on docs/ayc-v1-planning:
+  - the Catalogue seam (src/services/catalogue.ts and catalogue.mock.ts) reading a hand-ported seed in src/services/mock/catalogue.ts: Exams with Subjects, 15 Products (8 Live, 7 Coming Soon), Reviews (with homePin), Website settings, and possibly FAQs
+  - the types in src/services/catalogue.types.ts
+  - validateCatalogueSeed in src/services/catalogue.schema.ts
+  - self-hosted photos in public/products/{slug}/{n}.webp
+- Launch blocker: the client's catalogue spreadsheet. Building doesn't wait for it, but launch does. When it arrives, swapping it in must be one run of this command.
+- The client is not technical. They'll fill in a Google Sheet with one tab per CSV, download each tab as CSV, and send them with a folder of photos.
+- NOT in the spreadsheet (they stay hand-maintained in code): Website settings, FAQs, and the sample formula cards (typed content config). The README says the sample formula cards are sent separately.
+- Money is in integer centavos (₱1,249.50 is 124950). Prices in the CSV are pesos, with or without "₱" and thousands commas.
+- Coming Soon rules (already enforced by validateCatalogueSeed): no price, no variations, no Listings, no Shopee figures, no Reviews.
+- Allowed new devDependencies, and only these: tsx (to run the CLI), csv-parse (CSV with quoted multi-line fields; Reviews contain line breaks), and sharp (image optimisation). Add them with pnpm add -D.
+
+SCOPE
+Create:
+- data/catalogue/template/: exams.csv, subjects.csv, products.csv, variations.csv and reviews.csv, each with headers and one realistic example row, plus README.md, a column dictionary for the client. The columns are:
+  - exams: code, board, name, long_name, blurb, made_for
+  - subjects: exam_code, code, name, order
+  - products: slug, exam_code, title, short_name, format (flash cards | notebook | posters | bundle), size, edition, subject_codes (pipe-separated), state (live | coming soon), price_from, price_to, shopee_url, lazada_url, tiktok_url, shopee_rating, shopee_ratings, units_sold, figures_as_of (YYYY-MM-DD), deal, available_in_app, show_on_website (yes | no), whats_inside, made_for (pipe-separated), seo_title, seo_description, photos (pipe-separated, in order, the first being the cover)
+  - variations: product_slug, name, price, order
+  - reviews: product_slug, stars, text, variation, helpful, home_pin
+  The README explains every column in plain words, the yes/no and pipe conventions, how to export each tab as CSV, and the photo naming (files in a photos/ folder referenced by filename). It also says that settings, FAQs and sample formula cards are sent separately.
+- data/catalogue/sample/: the same five CSVs, holding the mockup data exactly as it is in the current seed. A photos value may be an existing public path such as /products/ce-formula-flash-cards/1.webp, which the converter keeps as is, so the sample needs no photo copies.
+- src/lib/catalogue-import/ (logic that's testable; Vitest only covers src/):
+  - parse.ts: CSV reading with csv-parse, plus field parsers: pesosToCentavos, yesNo, pipeList, isoDate and stars
+  - rows.ts: zod row schemas per sheet, each error carrying { sheet, row (1-based, header = row 1), column, message }
+  - build.ts: rows to seed objects (Exams with Subjects, Products, Reviews), keeping row provenance so the errors from validateCatalogueSeed map back to a sheet, row and column
+  - photos.ts: for each Product's photos in order, keep an existing /products/... path if that file exists in public/; otherwise optimise <dir>/photos/<file> with sharp into public/products/{slug}/{n}.webp (WebP, quality 80, longest side ≤ 1200 px, ≤ 200 KB, lowering quality as needed). Write to a temp dir first.
+  - write.ts: generate src/services/mock/catalogue.generated.ts (the exams, products and reviews arrays, typed, with the header "Generated by pnpm catalogue:import — do not edit by hand") and format it with Prettier
+  - run.ts: runImport({ dir, check }). Parse, build and validate everything, then process photos into the temp dir. Only when there are zero errors, move the photos into public/ and write the generated seed. On any error, return the errors and write nothing.
+  - a *.test.ts beside each one, using `// @vitest-environment node` where fs is touched
+- scripts/catalogue-import.ts: the thin CLI. `pnpm catalogue:import <dir>` writes; `--check` validates only. It prints errors as "products.csv row 7, column exam_code: unknown Exam \"XX\"" and exits 1, or on success prints a summary (Exams, Subjects, Products Live and Coming Soon, Reviews, photos kept and written).
+Modify:
+- package.json: add the devDependencies and `"catalogue:import": "tsx scripts/catalogue-import.ts"`.
+- src/services/mock/catalogue.ts: import the exams, products and reviews from catalogue.generated.ts. Settings and FAQs stay here. Delete the hand-ported arrays only AFTER the equivalence check below passes.
+- .prettierignore and eslint ignores: only if the generated file needs them (prefer making the generated output lint-clean instead).
+Leave untouched: the seam's public contract and rules, the pages, docs/mockup/, docs/specs/ and docs/adr/.
+
+APPROACH
+1. Pre-flight.
+   - Run `git status` (ignore an untracked .scratch/).
+   - Stop and report if there are other uncommitted changes, or if validateCatalogueSeed with the Product and Review rules is missing on docs/ayc-v1-planning.
+   - Otherwise stay on docs/ayc-v1-planning (run `git switch docs/ayc-v1-planning` if you are not on it). Do NOT create a new branch.
+2. Read:
+   - AGENTS.md and CONTEXT.md
+   - in the spec: "Phase 1: Website" (Seed data; Product model; Coming Soon rules; Media) and Further Notes (launch blockers)
+   - src/services/catalogue.types.ts, catalogue.schema.ts, mock/catalogue.ts and the seam tests
+3. Skills: test-driven-development, testing-unit, coding-standards and clean-architecture.
+4. TDD the field parsers, then the row schemas and their error provenance, then build and the cross-reference errors, then photos (with a tiny fixture image generated by sharp inside the test), then run (atomicity).
+5. Write the sample CSVs from the current seed. Prove the equivalence: a test converts data/catalogue/sample in memory and deep-equals the result to the current hand-ported exams, products and reviews. Only then generate catalogue.generated.ts, switch mock/catalogue.ts to it, delete the hand-ported arrays, and keep the test (now comparing against the generated module) as a drift guard.
+6. Run `pnpm catalogue:import data/catalogue/sample --check`, then without --check, and show both outputs. Then run the full seam test suite.
+7. Write the template CSVs and the README.
+8. Verify. Run requesting-code-review on your diff and fix in-scope findings. Report.
+
+ACCEPTANCE CRITERIA
+Happy paths:
+- `pnpm catalogue:import data/catalogue/sample --check` exits 0, prints the summary and changes no files (git status is unchanged).
+- `pnpm catalogue:import data/catalogue/sample` writes a catalogue.generated.ts identical in content to the committed one (a re-run makes no diff). Every Catalogue seam test passes against it.
+- A products row with photos "cover.jpg|back.jpg" and those files in <dir>/photos produces public/products/{slug}/1.webp and 2.webp, each ≤ 200 KB with longest side ≤ 1200 px.
+- pesosToCentavos: "1200" → 120000, "₱1,249.50" → 124950, "1249.5" → 124950.
+- A Coming Soon row with blank prices, Listings and figures is accepted.
+Sad paths (each one needs a test, and each reports the sheet, row number and column):
+- an unknown exam_code in products.csv
+- a subject code not on that Exam
+- a duplicate slug
+- price "abc", "-5" or "12.345"
+- a Lazada URL on a shopee.ph host
+- stars "6"
+- a review for an unknown product_slug
+- a missing photo file
+- figures_as_of "2026-02-30"
+- a Coming Soon row with a price
+- a Live row with no price or no photos
+- a variations row for an unknown product
+- a CSV with a missing required header (an error naming the header)
+On any of these:
+- the command exits 1
+- public/products/ and src/services/mock/catalogue.generated.ts are byte-for-byte unchanged (an atomicity test with temp dirs)
+- every error is reported in one run, not only the first
+
+VERIFICATION
+Run, and show the last lines of each:
+- `pnpm lint && pnpm type:check && pnpm test && pnpm build`
+- `pnpm test:coverage`
+- `pnpm test:e2e` (the pages must render identically from the generated seed)
+All must pass. Follow verification-before-completion. Include the two catalogue:import outputs.
+
+GUARDRAILS
+- Do NOT run git commit, git push, git stash, git reset --hard or git rebase, and don't open a PR. Leave every change uncommitted on docs/ayc-v1-planning, and do NOT create a branch or switch away from it. This overrides the commit rules in CLAUDE.md, AGENTS.md and .claude/commands/handoff.md.
+- Don't edit docs/mockup/, docs/specs/ or docs/adr/.
+- The converter never fetches anything from the network, and never hot-links or downloads Shopee images.
+- Don't change the seam's contract or validation rules. Reuse validateCatalogueSeed rather than duplicating its rules (the row schemas only handle CSV-level parsing).
+- Never hand-edit catalogue.generated.ts.
+- Only the three named devDependencies may be added. Otherwise stop and ask.
+- Out-of-scope bugs go in the report.
+
+REPORT BACK
+Reply with:
+1. the branch and `git status --short`
+2. each acceptance criterion marked ✅ or ❌, with the proving test
+3. the happy-path and sad-path tests you added
+4. the results of each verification command, and both catalogue:import outputs
+5. anything the template can't yet express that the client might need (questions for the client), deviations and follow-ups
+6. the line "Nothing committed or pushed."
+```

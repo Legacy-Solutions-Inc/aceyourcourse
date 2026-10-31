@@ -1,6 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+import { PUBLIC_PAGES } from "./public-pages";
+
 // Gate accessibility at the "serious"/"critical" impact levels on the public,
 // shadcn/ui-built pages, with every axe rule on, including color-contrast.
 // Lower-impact findings are not failed here (they'd be a separate, dedicated
@@ -8,17 +10,9 @@ import { expect, test } from "@playwright/test";
 const BLOCKING_IMPACTS = new Set(["serious", "critical"]);
 
 for (const path of [
-  "/",
-  "/products/ce-formula-flash-cards",
+  ...PUBLIC_PAGES,
   "/products/ultimate-ce-posters-2-0",
-  "/products/ce-solving-notebook",
-  "/exams/ce",
-  "/exams/me",
-  "/reviews",
   "/reviews?exam=cpa&stars=3-or-less",
-  "/about",
-  "/legal/privacy",
-  "/legal/terms",
 ]) {
   test(`no serious or critical accessibility violations on ${path}`, async ({ page }) => {
     await page.goto(path);

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { getExamByCode, listProducts } from "@/services/catalogue";
+import { getExamByCode, getWebsiteSettings, listProducts } from "@/services/catalogue";
 
 import { testComingSoonProduct, testExam, testLiveProduct } from "../../../test/fixtures/catalogue";
-import { breadcrumbJsonLd, productJsonLd, serializeJsonLd } from "./json-ld";
+import { breadcrumbJsonLd, organizationJsonLd, productJsonLd, serializeJsonLd } from "./json-ld";
 
 const SITE = "https://aceyourcourse.ph/";
 const exam = testExam();
@@ -112,6 +112,67 @@ describe("breadcrumbJsonLd", () => {
           item: "https://aceyourcourse.ph/products/ce-formula-flash-cards",
         },
       ],
+    });
+  });
+});
+
+describe("organizationJsonLd", () => {
+  it("names AYC with its URL, logo, contact email and every shop and social link", async () => {
+    expect(organizationJsonLd(await getWebsiteSettings(), SITE)).toEqual({
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "Ace Your Course",
+      url: "https://aceyourcourse.ph/",
+      logo: "https://aceyourcourse.ph/icon",
+      email: "aceyourcourseinc@gmail.com",
+      sameAs: [
+        "https://shopee.ph/aceyourcourse",
+        "https://www.lazada.com.ph/shop/aceyourcourse",
+        "https://vt.tiktok.com/ZS49ve6cu/?page=TikTokShop",
+        "https://www.tiktok.com/@aceyourcourse",
+        "https://www.facebook.com/aceyourcourseph",
+        "https://www.instagram.com/aceyourcourseph",
+      ],
+    });
+  });
+
+  it("drops a hidden shop or social link from sameAs", async () => {
+    const settings = await getWebsiteSettings();
+    const { sameAs } = organizationJsonLd(
+      {
+        ...settings,
+        shopLinks: { ...settings.shopLinks, lazada: null },
+        socialLinks: { ...settings.socialLinks, instagram: null },
+      },
+      SITE,
+    );
+    expect(sameAs).toEqual([
+      "https://shopee.ph/aceyourcourse",
+      "https://vt.tiktok.com/ZS49ve6cu/?page=TikTokShop",
+      "https://www.tiktok.com/@aceyourcourse",
+      "https://www.facebook.com/aceyourcourseph",
+    ]);
+  });
+
+  it("leaves sameAs out, rather than empty, when every link is hidden", async () => {
+    const settings = await getWebsiteSettings();
+    expect(
+      organizationJsonLd(
+        {
+          ...settings,
+          shopLinks: { shopee: null, lazada: null, tiktok: null },
+          socialLinks: { tiktok: null, facebook: null, instagram: null },
+        },
+        SITE,
+      ),
+    ).not.toHaveProperty("sameAs");
+  });
+
+  it("is on the site URL with or without a trailing slash", async () => {
+    const settings = await getWebsiteSettings();
+    expect(organizationJsonLd(settings, "https://www.example.ph")).toMatchObject({
+      url: "https://www.example.ph/",
+      logo: "https://www.example.ph/icon",
     });
   });
 });

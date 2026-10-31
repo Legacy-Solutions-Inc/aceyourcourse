@@ -85,7 +85,8 @@ export function AboutHero({ stats, shopFiguresAsOf }: AboutHeroProps) {
       </div>
 
       {stats.length > 0 ? (
-        <div className="border-t-[1.5px] border-ayc-cream/30">
+        // Clips the right border each row's last tile pushes past the edge.
+        <div className="overflow-hidden border-t-[1.5px] border-ayc-cream/30">
           <ul
             aria-label={copy.statsLabel}
             className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))]"

@@ -1,7 +1,7 @@
 import { config } from "@/config";
 import { productSeoDescription } from "@/lib/catalogue/product-copy";
 import { paths } from "@/paths";
-import type { Exam, Product } from "@/services/catalogue.types";
+import type { Exam, Product, WebsiteSettings } from "@/services/catalogue.types";
 
 // JSON-LD builders. Reviews and Shopee ratings are copied from the Marketplaces,
 // so they are NEVER emitted as Review or AggregateRating markup (Google's
@@ -62,6 +62,30 @@ export function breadcrumbJsonLd(
       name: item.name,
       item: absolute(item.path, siteUrl),
     })),
+  };
+}
+
+/**
+ * AYC itself, on every Website page: its logo, contact email, and in sameAs the
+ * Marketplace shops and socials it links to. A hidden (null) link is left out,
+ * and with none, so is sameAs.
+ */
+export function organizationJsonLd(
+  settings: Pick<WebsiteSettings, "shopLinks" | "socialLinks" | "contactEmail">,
+  siteUrl: string,
+): JsonLdObject {
+  const sameAs = [
+    ...Object.values(settings.shopLinks),
+    ...Object.values(settings.socialLinks),
+  ].filter((url): url is string => !!url);
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: config.site.name,
+    url: absolute(paths.home, siteUrl),
+    logo: absolute(paths.icon, siteUrl),
+    email: settings.contactEmail,
+    ...(sameAs.length > 0 ? { sameAs } : {}),
   };
 }
 
