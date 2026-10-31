@@ -14,6 +14,8 @@ for (const path of [
   "/products/ce-solving-notebook",
   "/exams/ce",
   "/exams/me",
+  "/reviews",
+  "/reviews?exam=cpa&stars=3-or-less",
   "/legal/privacy",
   "/legal/terms",
 ]) {

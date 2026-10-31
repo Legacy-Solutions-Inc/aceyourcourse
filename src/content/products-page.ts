@@ -104,6 +104,8 @@ export const productsPageCopy = {
     } satisfies Record<ProductSort, string>,
     examLabel: "Exam",
     formatLabel: "Format",
+    /** What a chip's count is of, for screen readers. */
+    reviewerNoun: { one: "reviewer", other: "reviewers" },
     allChip: "All",
     maxPriceLabel: "Max price",
     anyPrice: "Any",

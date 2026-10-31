@@ -657,6 +657,27 @@ describe("catalogue seam: Reviews", () => {
     expect(items[0]?.id).toBe("rev-003");
   });
 
+  it.each(["most-helpful", "highest", "most-critical", "most-detailed"] as const)(
+    "keeps the seed order for Reviews that tie on every %s key",
+    async (sort) => {
+      // Same stars, helpful votes and text length, so only the seed order is
+      // left. The FAQ quotes go too, as they must match their Review's text.
+      let seedOrder: string[] = [];
+      const seam = await seamWith((seed) => {
+        for (const review of seed.reviews) {
+          review.stars = 5;
+          review.helpful = 2;
+          review.text = `Review ${review.id}`;
+        }
+        for (const faq of seed.faqs) faq.reviewQuote = null;
+        seedOrder = ids(seed.reviews);
+      });
+      const { items } = await seam.listReviews({ sort });
+      // Every seeded Review is of a Live Product, so all of them are listed.
+      expect(ids(items)).toEqual(seedOrder);
+    },
+  );
+
   it("sorts for an Exam page: by the Products' best-seller order, then seed order", async () => {
     const { items } = await listReviews({ examCode: "CE", sort: "exam-page" });
     expect(ids(items)).toEqual([

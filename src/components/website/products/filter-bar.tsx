@@ -1,9 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { startTransition, useCallback, useEffect, useId, useOptimistic, useState } from "react";
+import { startTransition, useCallback, useId, useOptimistic } from "react";
 
+import { FilterChip, FilterChipGroup } from "@/components/website/filter-chips";
 import { productsPageCopy } from "@/content/products-page";
+import { useSettledValue } from "@/hooks/use-settled-value";
 import { productFormatLabel } from "@/lib/catalogue/format";
 import {
   DEFAULT_SORT,
@@ -21,53 +23,12 @@ import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
 
 const copy = productsPageCopy.all;
-/** How long typing or sliding pauses before the URL is replaced. */
-const SETTLE_MS = 300;
 
 const mono = "font-mono text-[11px] font-medium tracking-[0.04em] text-ayc-slate uppercase";
 const control = "flex min-h-11.5 items-center border-[1.5px] border-ayc-navy bg-ayc-cream";
 
 const trim = (text: string) => text.trim();
 const asIs = <T,>(value: T) => value;
-
-/**
- * A value the Visitor edits here and that goes to the URL once they pause. It
- * follows the URL when something else changes it (Clear filters, the picker),
- * but not while the URL is only catching up with what was sent. `reset` sets
- * it without sending it.
- */
-function useSettledValue<T>(
-  urlValue: T,
-  send: (value: T) => void,
-  normalise: (value: T) => T,
-): [T, (value: T) => void, (value: T) => void] {
-  const [value, setValue] = useState(urlValue);
-  const [sent, setSent] = useState(urlValue);
-  const [seen, setSeen] = useState(urlValue);
-  if (!Object.is(seen, urlValue)) {
-    setSeen(urlValue);
-    if (!Object.is(urlValue, sent)) {
-      setValue(urlValue);
-      setSent(urlValue);
-    }
-  }
-
-  useEffect(() => {
-    const next = normalise(value);
-    if (Object.is(next, sent)) return;
-    const timer = setTimeout(() => {
-      setSent(next);
-      send(next);
-    }, SETTLE_MS);
-    return () => clearTimeout(timer);
-  }, [value, sent, send, normalise]);
-
-  const reset = useCallback((next: T) => {
-    setValue(next);
-    setSent(next);
-  }, []);
-  return [value, setValue, reset];
-}
 
 interface FilterBarProps {
   /** The filters in the URL. */
@@ -135,7 +96,13 @@ export function FilterBar({
   return (
     <div className="z-10 flex flex-col gap-3 border-[1.5px] border-ayc-navy bg-ayc-paper p-4 shadow-hard wide:sticky wide:top-21">
       <div className="flex flex-wrap items-center gap-2.5">
-        <div className={cn(control, "flex-[1_1_240px] gap-2.5 px-3.5")}>
+        {/* The input drops its own outline, so the box shows the focus ring instead. */}
+        <div
+          className={cn(
+            control,
+            "flex-[1_1_240px] gap-2.5 px-3.5 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ayc-blue",
+          )}
+        >
           <span aria-hidden="true" className="text-base">
             ⌕
           </span>
@@ -197,39 +164,43 @@ export function FilterBar({
       </div>
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5">
-        <ChipGroup label={copy.examLabel}>
-          <Chip
+        <FilterChipGroup label={copy.examLabel}>
+          <FilterChip
+            noun={copy.reviewerNoun}
             pressed={!selectedExam}
             count={counts.all}
             onClick={() => applyFilters({ exam: undefined })}
             className="font-mono"
           >
             {copy.allChip}
-          </Chip>
+          </FilterChip>
           {examCodes.map((code) => (
-            <Chip
+            <FilterChip
               key={code}
+              noun={copy.reviewerNoun}
               pressed={selectedExam === code}
               count={counts.exams[code] ?? 0}
               onClick={() => applyFilters({ exam: selectedExam === code ? undefined : code })}
               className="font-mono"
             >
               {code}
-            </Chip>
+            </FilterChip>
           ))}
-        </ChipGroup>
+        </FilterChipGroup>
 
-        <ChipGroup label={copy.formatLabel}>
-          <Chip
+        <FilterChipGroup label={copy.formatLabel}>
+          <FilterChip
+            noun={copy.reviewerNoun}
             pressed={!current.format}
             count={inSelectedExam}
             onClick={() => applyFilters({ format: undefined })}
           >
             {copy.allChip}
-          </Chip>
+          </FilterChip>
           {PRODUCT_FORMATS.map((format) => (
-            <Chip
+            <FilterChip
               key={format}
+              noun={copy.reviewerNoun}
               pressed={current.format === format}
               count={counts.formats[format]}
               onClick={() =>
@@ -237,9 +208,9 @@ export function FilterBar({
               }
             >
               {productFormatLabel(format)}
-            </Chip>
+            </FilterChip>
           ))}
-        </ChipGroup>
+        </FilterChipGroup>
 
         <div className="flex flex-[1_1_220px] items-center gap-2.5">
           <label htmlFor={`${ids}-max`} className={mono}>
@@ -276,46 +247,5 @@ export function FilterBar({
         ) : null}
       </div>
     </div>
-  );
-}
-
-function ChipGroup({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div role="group" aria-label={label} className="flex flex-wrap items-center gap-1.5">
-      <span aria-hidden="true" className={cn(mono, "mr-1")}>
-        {label}
-      </span>
-      {children}
-    </div>
-  );
-}
-
-interface ChipProps {
-  pressed: boolean;
-  /** Live Products it would show. A chip with none is disabled, not hidden. */
-  count: number;
-  onClick: () => void;
-  className?: string;
-  children: React.ReactNode;
-}
-
-function Chip({ pressed, count, onClick, className, children }: ChipProps) {
-  return (
-    <button
-      type="button"
-      aria-pressed={pressed}
-      disabled={count === 0 && !pressed}
-      onClick={onClick}
-      className={cn(
-        "flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border-[1.5px] border-ayc-navy px-3 text-[13px] font-bold transition-colors hover:bg-ayc-sand disabled:cursor-not-allowed disabled:border-ayc-rule disabled:text-ayc-slate disabled:hover:bg-transparent aria-pressed:bg-ayc-navy aria-pressed:text-ayc-cream motion-reduce:transition-none",
-        className,
-      )}
-    >
-      {children}
-      <span className="font-mono text-[11px] font-medium">
-        {count}
-        <span className="sr-only">{count === 1 ? " reviewer" : " reviewers"}</span>
-      </span>
-    </button>
   );
 }

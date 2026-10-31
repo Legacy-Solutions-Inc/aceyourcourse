@@ -108,6 +108,20 @@ test.describe("the Products page", () => {
     await expect(gridNames(page)).toHaveText(["Ultimate CE Posters 2.0"]);
   });
 
+  test("rings the search box while it has keyboard focus", async ({ page }) => {
+    await openProducts(page);
+    const search = page.getByRole("searchbox", { name: "Search reviewers" });
+
+    await search.focus();
+
+    // The input drops its own outline, so the box around it shows the ring.
+    const ring = await search.evaluate((input) => {
+      const box = input.parentElement;
+      return box ? getComputedStyle(box).outlineStyle : "none";
+    });
+    expect(ring).toBe("solid");
+  });
+
   test("clears every filter", async ({ page, baseURL }) => {
     await openProducts(page, "/products?exam=ce&q=cards&sort=top-rated");
     await expect(page.getByRole("searchbox", { name: "Search reviewers" })).toHaveValue("cards");
