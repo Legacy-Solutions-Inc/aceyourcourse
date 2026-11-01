@@ -13,7 +13,19 @@ export default defineConfig({
     baseURL,
     trace: "on-first-retry",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    // The Website specs.
+    { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: "admin/**" },
+    // The Admin specs change the shared sample data, so they run after the
+    // Website specs, one at a time (CONVENTIONS §6).
+    {
+      name: "admin",
+      testDir: "./e2e/admin",
+      use: { ...devices["Desktop Chrome"] },
+      dependencies: ["chromium"],
+      workers: 1,
+    },
+  ],
   webServer: {
     command: "pnpm dev",
     url: baseURL,

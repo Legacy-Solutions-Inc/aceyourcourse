@@ -22,6 +22,10 @@ export default defineConfig({
         // which is unavailable offline (see docs/adr/0006 KNOWN GAP).
         "src/lib/db/client.ts",
         "**/*.d.ts",
+        // The seams' type-only modules (catalogue.types.ts, admin.types.ts):
+        // like .d.ts files they compile to nothing, so v8 would count every
+        // line as uncovered code.
+        "src/**/*.types.ts",
         "**/*.config.*",
         "e2e/**",
       ],

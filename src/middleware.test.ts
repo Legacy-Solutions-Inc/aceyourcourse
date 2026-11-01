@@ -81,13 +81,27 @@ describe("middleware", () => {
     expect(cspOf(response)).toMatch(/script-src 'self' 'nonce-[^']+' 'strict-dynamic'/);
   });
 
-  it.each(["/app", "/app/library", "/admin", "/admin/x", "/auth/callback"])(
+  it.each(["/app", "/app/library", "/auth/callback"])(
     "refreshes the session for %s",
     async (pathname) => {
       const response = await runMiddleware(pathname);
       expect(createClient).toHaveBeenCalledTimes(1);
       expect(getUser).toHaveBeenCalledTimes(1);
       expect(cspOf(response)).toContain("'strict-dynamic'");
+    },
+  );
+
+  // The Admin's sample mode signs Staff in with its own cookie (CONVENTIONS §1),
+  // so /admin needs no Supabase session there, signed in or not.
+  it.each(["/admin", "/admin/sign-in", "/admin/products", "/admin/denied"])(
+    "makes no Supabase call for %s in sample mode, and still sets the CSP",
+    async (pathname) => {
+      const response = await runMiddleware(pathname, { signedIn: true });
+      expect(createClient).not.toHaveBeenCalled();
+      expect(getUser).not.toHaveBeenCalled();
+      expect(response.headers.get("location")).toBeNull();
+      expect(cspOf(response)).toMatch(/script-src 'self' 'nonce-[^']+' 'strict-dynamic'/);
+      expect(response.headers.get("x-middleware-request-x-nonce")).toBeTruthy();
     },
   );
 

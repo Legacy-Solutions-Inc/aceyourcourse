@@ -3,8 +3,9 @@ import { NextResponse } from "next/server";
 
 import { analyticsSessionReplay, authDisabled, isSupabaseConfigured } from "@/config";
 import { env } from "@/env";
+import { adminMode } from "@/lib/admin/mode";
 import { buildCsp } from "@/lib/csp";
-import { needsSession } from "@/lib/session-routes";
+import { isAdminPath, needsSession } from "@/lib/session-routes";
 import { createClient } from "@/lib/supabase/middleware";
 
 export async function middleware(req: NextRequest) {
@@ -36,6 +37,12 @@ export async function middleware(req: NextRequest) {
   // Supabase client exists, so public pages make no Supabase round trip. Only
   // the Member App, the Admin and the OAuth callback go on (see needsSession).
   if (!needsSession(pathname)) {
+    return passThrough();
+  }
+
+  // The Admin's sample mode signs Staff in with its own cookie (CONVENTIONS §1),
+  // so it needs no Supabase session: no round trip for /admin there.
+  if (adminMode === "sample" && isAdminPath(pathname)) {
     return passThrough();
   }
 

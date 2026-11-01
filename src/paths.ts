@@ -1,3 +1,5 @@
+import type { DeniedScreenReason } from "@/services/admin.types";
+
 export const paths = {
   home: "/",
   /** The site's default share image (src/app/opengraph-image.tsx). */
@@ -25,5 +27,19 @@ export const paths = {
   auth: {
     /** The OAuth callback, kept for Phase 2's Google sign-in. */
     callback: "/auth/callback",
+  },
+  /** The staff-only Admin (CONVENTIONS §2). */
+  admin: {
+    overview: "/admin",
+    /** The sign-in screen; `next` is where to go afterwards (an /admin path only). */
+    signIn: (next?: string) =>
+      next ? `/admin/sign-in?next=${encodeURIComponent(next)}` : "/admin/sign-in",
+    /** The 403 screen, saying why. */
+    denied: (reason?: DeniedScreenReason) =>
+      reason ? `/admin/denied?reason=${reason}` : "/admin/denied",
+    examPages: "/admin/exam-pages",
+    products: "/admin/products",
+    reviews: "/admin/reviews",
+    settings: "/admin/settings",
   },
 } as const;
