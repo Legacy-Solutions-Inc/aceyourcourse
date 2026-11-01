@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 
+import { paths } from "../../src/paths";
 import { openSignInAs, resetSampleData, type SampleUserKey, signInAs } from "./helpers";
 
 // The Admin's screens, signed in where they need it, through axe with every
@@ -72,6 +73,22 @@ test("no serious or critical accessibility violations on the signed-in screens",
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expectNoBlockingViolations(page);
   }
+});
+
+test("no serious or critical accessibility violations on Settings showing field messages", async ({
+  page,
+}) => {
+  await signInAs(page, "owner", paths.admin.settings);
+  await expect(page).toHaveURL(/\/admin\/settings$/, { timeout: 15_000 });
+  const contact = page.getByRole("form", { name: "CONTACT EMAIL" });
+  await contact.getByLabel("EMAIL ADDRESS").fill("not-an-email");
+  await contact.getByRole("button", { name: "Save" }).click();
+  await expect(contact.getByText("ENTER A VALID EMAIL ADDRESS")).toBeVisible({ timeout: 15_000 });
+  const links = page.getByRole("form", { name: "STORE & SOCIAL LINKS" });
+  await links.getByLabel("SHOPEE").fill("lazada.com.ph/shop");
+  await links.getByRole("button", { name: "Save links" }).click();
+  await expect(links.getByText("SHOULD BE A SHOPEE.PH LINK")).toBeVisible({ timeout: 15_000 });
+  await expectNoBlockingViolations(page);
 });
 
 test.describe("on a phone", () => {

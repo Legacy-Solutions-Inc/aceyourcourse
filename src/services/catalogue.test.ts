@@ -3,6 +3,9 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { resetSampleStore } from "@/services/mock/sample-store";
+
+import { editSampleCatalogue } from "../../test/catalogue-seed";
 import type { CatalogueSeed } from "./catalogue.schema";
 import {
   getExamByCode,
@@ -22,18 +25,10 @@ import {
 // CONTACT, SHOP, PRODUCTS), docs/mockup/website/SiteNav.dc.html and the Home
 // Review selection at Home_v2.dc.html L349–351.
 
-/** The seam loaded over an edited copy of the seed, for states the seed lacks. */
+/** The seam over an edited copy of the seed, for states the seed lacks. */
 async function seamWith(edit: (seed: CatalogueSeed) => void) {
-  vi.resetModules();
-  vi.doMock("@/services/mock/catalogue", async (importOriginal) => {
-    const real = await importOriginal<typeof import("@/services/mock/catalogue")>();
-    const seed = structuredClone(real.CATALOGUE_SEED);
-    edit(seed);
-    return { CATALOGUE_SEED: seed };
-  });
-  const seam = await import("./catalogue");
-  vi.doUnmock("@/services/mock/catalogue");
-  return seam;
+  editSampleCatalogue(edit);
+  return import("./catalogue");
 }
 
 function product(seed: CatalogueSeed, slug: string) {
@@ -55,6 +50,11 @@ const LIVE_BY_UNITS_SOLD = [
   "medtech-comprehensive-flash-cards",
   "ce-review-bundle-3-in-1",
 ];
+
+// Every test starts from the seed, whatever the one before it edited.
+afterEach(() => {
+  resetSampleStore();
+});
 
 describe("catalogue seam: Exams", () => {
   it("lists the five Exams with Products, in seed order", async () => {

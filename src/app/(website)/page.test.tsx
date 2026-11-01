@@ -2,6 +2,9 @@ import { render, screen, within } from "@testing-library/react";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CatalogueSeed } from "@/services/catalogue.schema";
+import { resetSampleStore } from "@/services/mock/sample-store";
+
+import { editSampleCatalogue } from "../../../test/catalogue-seed";
 
 // Home rendered from the real seed, with the Member App switch off and on
 // (e2e/home.spec.ts runs with it off only). The seed has 8 Live Products
@@ -34,14 +37,8 @@ async function renderHome({ memberAppLive = false } = {}) {
 async function renderHomeFromSeed(editSeed: (seed: CatalogueSeed) => void) {
   vi.stubEnv("MEMBER_APP_LIVE", "false");
   vi.resetModules();
-  vi.doMock("@/services/mock/catalogue", async (importOriginal) => {
-    const real = await importOriginal<typeof import("@/services/mock/catalogue")>();
-    const seed = structuredClone(real.CATALOGUE_SEED);
-    editSeed(seed);
-    return { CATALOGUE_SEED: seed };
-  });
+  editSampleCatalogue(editSeed);
   const { default: HomePage } = await import("./page");
-  vi.doUnmock("@/services/mock/catalogue");
   return render(await HomePage());
 }
 
@@ -68,6 +65,11 @@ const storeBand = () =>
   );
 const promoStrip = () => screen.queryByRole("complementary", { name: "Sale" });
 const SHOPEE_SHOP = "https://shopee.ph/aceyourcourse";
+
+// Every test starts from the seed, whatever the one before it edited.
+afterEach(() => {
+  resetSampleStore();
+});
 
 describe("Home", () => {
   afterAll(() => {

@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { testComingSoonProduct, testLiveProduct } from "../../../test/fixtures/catalogue";
-import { followLink, isMarketplaceUrl, resolveStoreLink, storeLinksFor } from "./store-links";
+import {
+  followLink,
+  isMarketplaceUrl,
+  isOnHost,
+  resolveStoreLink,
+  storeLinksFor,
+} from "./store-links";
 
 const SHOP_LINKS = {
   shopee: "https://shopee.ph/aceyourcourse",
@@ -106,5 +112,20 @@ describe("isMarketplaceUrl", () => {
     expect(isMarketplaceUrl("https://shopee.ph.example.com/sale", "shopee")).toBe(false);
     expect(isMarketplaceUrl("https://notshopee.ph/sale", "shopee")).toBe(false);
     expect(isMarketplaceUrl("shopee.ph/aceyourcourse", "shopee")).toBe(false);
+  });
+});
+
+describe("isOnHost", () => {
+  it("accepts a link on one of the hosts or a subdomain of one", () => {
+    expect(isOnHost("https://www.facebook.com/aceyourcourseph", ["facebook.com"])).toBe(true);
+    expect(isOnHost("https://m.facebook.com/aceyourcourseph", ["facebook.com"])).toBe(true);
+    expect(isOnHost("https://instagram.com/x", ["facebook.com", "instagram.com"])).toBe(true);
+  });
+
+  it("rejects another host, a look-alike host and a non-URL", () => {
+    expect(isOnHost("https://www.instagram.com/x", ["facebook.com"])).toBe(false);
+    expect(isOnHost("https://facebook.com.example.com/x", ["facebook.com"])).toBe(false);
+    expect(isOnHost("https://notfacebook.com/x", ["facebook.com"])).toBe(false);
+    expect(isOnHost("facebook.com/x", ["facebook.com"])).toBe(false);
   });
 });

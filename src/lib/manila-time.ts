@@ -17,6 +17,13 @@ const monthYear = new Intl.DateTimeFormat("en-PH", {
 
 const yearOnly = new Intl.DateTimeFormat("en-PH", { year: "numeric", timeZone: MANILA });
 
+const isoParts = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  timeZone: MANILA,
+});
+
 // en-GB for the day-first order ("1 Dec 2026"); en-PH puts the month first.
 const dayMonthYear = {
   short: new Intl.DateTimeFormat("en-GB", {
@@ -74,6 +81,12 @@ export function manilaDayStart(isoDate: string): Date {
     throw new RangeError(`Expected a YYYY-MM-DD date, got "${isoDate}"`);
   }
   return parseDate(`${isoDate}T00:00:00${MANILA_OFFSET}`);
+}
+
+/** Pure: the calendar date in Manila at the given instant, as YYYY-MM-DD. */
+export function manilaDate(now: Date): string {
+  const part = Object.fromEntries(isoParts.formatToParts(now).map((p) => [p.type, p.value]));
+  return `${part.year}-${part.month}-${part.day}`;
 }
 
 /** Pure: the calendar year in Manila at the given instant. */

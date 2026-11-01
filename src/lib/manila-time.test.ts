@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { formatAsOf, formatDate, isCalendarDate, manilaDayStart, manilaYear } from "./manila-time";
+import {
+  formatAsOf,
+  formatDate,
+  isCalendarDate,
+  manilaDate,
+  manilaDayStart,
+  manilaYear,
+} from "./manila-time";
 
 // All day boundaries use Asia/Manila (UTC+8, no DST).
 describe("formatAsOf", () => {
@@ -53,6 +60,22 @@ describe("manilaYear", () => {
 
   it("is still the old year one minute before Manila midnight", () => {
     expect(manilaYear(new Date("2026-12-31T15:59:00Z"))).toBe(2026);
+  });
+});
+
+describe("manilaDate", () => {
+  it("gives the YYYY-MM-DD date in Manila", () => {
+    expect(manilaDate(new Date("2026-10-29T04:00:00Z"))).toBe("2026-10-29");
+  });
+
+  it("rolls over at Manila midnight, before UTC does", () => {
+    // 16:00 UTC on 1 Nov is 00:00 on 2 Nov in Manila.
+    expect(manilaDate(new Date("2026-11-01T16:00:00Z"))).toBe("2026-11-02");
+    expect(manilaDate(new Date("2026-11-01T15:59:59Z"))).toBe("2026-11-01");
+  });
+
+  it("pads the month and day", () => {
+    expect(manilaDate(new Date("2027-01-04T00:00:00Z"))).toBe("2027-01-04");
   });
 });
 

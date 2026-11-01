@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CatalogueSeed } from "@/services/catalogue.schema";
+import { resetSampleStore } from "@/services/mock/sample-store";
+
+import { editSampleCatalogue } from "../../../../../test/catalogue-seed";
 
 // The Product page's own decisions, called directly rather than rendered: its
 // metadata, and the 404 for an unknown or hidden Product. Rendering is covered
@@ -14,19 +17,18 @@ vi.mock("next/navigation", () => ({
 async function loadPage(editSeed?: (seed: CatalogueSeed) => void) {
   vi.resetModules();
   if (editSeed) {
-    vi.doMock("@/services/mock/catalogue", async (importOriginal) => {
-      const real = await importOriginal<typeof import("@/services/mock/catalogue")>();
-      const seed = structuredClone(real.CATALOGUE_SEED);
-      editSeed(seed);
-      return { CATALOGUE_SEED: seed };
-    });
+    editSampleCatalogue(editSeed);
   }
   const page = await import("./page");
-  vi.doUnmock("@/services/mock/catalogue");
   return page;
 }
 
 const props = (slug: string) => ({ params: Promise.resolve({ slug }) });
+
+// Every test starts from the seed, whatever the one before it edited.
+afterEach(() => {
+  resetSampleStore();
+});
 
 describe("Product page", () => {
   afterEach(() => {

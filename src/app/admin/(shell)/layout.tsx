@@ -1,6 +1,7 @@
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { adminMenu } from "@/components/admin/admin-menu";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { Toaster } from "@/components/ui/sonner";
 import { getStaff } from "@/lib/admin/guard";
 
 import { signOut } from "../actions";
@@ -34,6 +35,8 @@ export default async function AdminShellLayout({ children }: { children: React.R
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">{children}</div>
       <AdminDrawer menu={menu} actor={actor} signOutAction={signOut} />
+      {/* The "Couldn't save" toast (mockup 943–949). */}
+      <Toaster position="bottom-right" />
     </div>
   );
 }

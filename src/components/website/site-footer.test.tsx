@@ -4,6 +4,9 @@ import posthog from "posthog-js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CatalogueSeed } from "@/services/catalogue.schema";
+import { resetSampleStore } from "@/services/mock/sample-store";
+
+import { editSampleCatalogue } from "../../../test/catalogue-seed";
 
 // The footer is an async Server Component that reads the real Catalogue seam.
 // Each test imports it fresh, so the Member App switch and seed edits apply.
@@ -20,12 +23,7 @@ async function renderFooter({
   vi.stubEnv("MEMBER_APP_LIVE", memberAppLive);
   vi.resetModules();
   if (editSeed) {
-    vi.doMock("@/services/mock/catalogue", async (importOriginal) => {
-      const real = await importOriginal<typeof import("@/services/mock/catalogue")>();
-      const seed = structuredClone(real.CATALOGUE_SEED);
-      editSeed(seed);
-      return { CATALOGUE_SEED: seed };
-    });
+    editSampleCatalogue(editSeed);
   }
   const { SiteFooter } = await import("./site-footer");
   render(await SiteFooter());
@@ -36,11 +34,15 @@ function link(footer: HTMLElement, name: string | RegExp) {
   return within(footer).getByRole("link", { name });
 }
 
+// Every test starts from the seed, whatever the one before it edited.
+afterEach(() => {
+  resetSampleStore();
+});
+
 describe("SiteFooter", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllEnvs();
-    vi.doUnmock("@/services/mock/catalogue");
     vi.mocked(posthog.capture).mockReset();
   });
 

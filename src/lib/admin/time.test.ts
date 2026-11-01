@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { formatLoggedAt, greeting, overviewDateLine } from "./time";
+import {
+  formatAsOfDate,
+  formatChangedOn,
+  formatLoggedAt,
+  formatSavedAt,
+  greeting,
+  overviewDateLine,
+} from "./time";
 
 // The Overview greeting and the 403 time are Manila time (UTC+8, no daylight
 // saving), whatever the server's own time zone is.
@@ -58,5 +65,50 @@ describe("formatLoggedAt", () => {
 
   it("throws a RangeError for a non-date", () => {
     expect(() => formatLoggedAt("yesterday")).toThrow(RangeError);
+  });
+});
+
+describe("formatChangedOn", () => {
+  it("gives the Manila date of a save, for LAST CHANGED", () => {
+    expect(formatChangedOn("2026-10-14T02:00:00.000Z")).toBe("14 OCT 2026");
+  });
+
+  it("uses Manila's date, already the next day at 16:00 UTC", () => {
+    expect(formatChangedOn("2026-09-30T16:00:00.000Z")).toBe("1 OCT 2026");
+    expect(formatChangedOn("2026-09-29T15:59:00.000Z")).toBe("29 SEP 2026");
+  });
+
+  it("throws a RangeError for a non-date", () => {
+    expect(() => formatChangedOn("soon")).toThrow(RangeError);
+  });
+});
+
+describe("formatAsOfDate", () => {
+  it("gives a calendar date, for AS OF", () => {
+    expect(formatAsOfDate("2026-10-29")).toBe("29 OCT 2026");
+    expect(formatAsOfDate("2026-09-01")).toBe("1 SEP 2026");
+  });
+
+  it("throws a RangeError for a date that isn't on the calendar", () => {
+    expect(() => formatAsOfDate("2026-02-30")).toThrow(RangeError);
+  });
+});
+
+describe("formatSavedAt", () => {
+  const now = manila("2026-10-22T16:05:00");
+
+  it("gives only the Manila time for a save made earlier today", () => {
+    expect(formatSavedAt(manila("2026-10-22T14:41:00").toISOString(), now)).toBe("2:41 PM");
+    expect(formatSavedAt(manila("2026-10-22T00:05:00").toISOString(), now)).toBe("12:05 AM");
+  });
+
+  it("adds the date for a save made on another day in Manila", () => {
+    expect(formatSavedAt(manila("2026-10-21T23:59:00").toISOString(), now)).toBe(
+      "11:59 PM on 21 Oct 2026",
+    );
+  });
+
+  it("throws a RangeError for a non-date", () => {
+    expect(() => formatSavedAt("soon", now)).toThrow(RangeError);
   });
 });

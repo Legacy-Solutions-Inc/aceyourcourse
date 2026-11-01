@@ -1,3 +1,4 @@
+import { resetSampleData } from "@/app/admin/actions";
 import { adminMode } from "@/lib/admin/mode";
 
 import { AdminHeader } from "./admin-header";
@@ -17,7 +18,7 @@ export function AdminScreen({ screen, primaryAction, children }: AdminScreenProp
       <AdminHeader
         group={group}
         title={title}
-        sampleData={adminMode === "sample"}
+        sampleData={adminMode === "sample" ? { reset: resetSampleData } : undefined}
         primaryAction={primaryAction}
       />
       <main

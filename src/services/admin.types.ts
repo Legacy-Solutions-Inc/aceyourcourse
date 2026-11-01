@@ -1,6 +1,8 @@
 // The Admin seam's types (CONVENTIONS §3). Every Admin read and write goes
 // through src/services/admin.ts; these are its inputs and outputs.
 
+import type { ShopStats, SocialLinks, WebsiteSettings } from "@/services/catalogue.types";
+
 export type StaffRole = "owner" | "editor";
 
 /** The signed-in Staff User a write acts as, from the Staff Guard. */
@@ -15,6 +17,20 @@ export type AdminError =
 /** What every Admin write returns: the value and the cache tags to clear, or an error. */
 export type AdminResult<T> =
   { ok: true; value: T; tags: string[] } | { ok: false; error: AdminError };
+
+/** Who may make a write: any Staff User, or Owners only. */
+export type RequiredRole = "staff" | "owner";
+
+/**
+ * When an editable record was last saved, and by whom. Editors hold `savedAt`
+ * from when they opened, for the conflict check. `savedBy` is null for a record
+ * nobody has saved in the Admin yet.
+ */
+export interface RecordStamp {
+  /** ISO time of the last save. */
+  savedAt: string;
+  savedBy: string | null;
+}
 
 // ── Staff, Invites and sign-in ──────────────────────────────────────────────
 
@@ -76,3 +92,22 @@ export interface SignInIdentity {
 /** The staff list's answer to a sign-in. */
 export type SignInResolution =
   { status: "staff"; actor: StaffActor } | { status: "denied"; reason: DeniedReason };
+
+// ── Settings ────────────────────────────────────────────────────────────────
+
+/**
+ * What an Owner edits in Settings. The announcement and the promo banner are
+ * Website settings too, but they're edited on their own screen.
+ */
+export interface EditableWebsiteSettings {
+  contactEmail: string;
+  shopLinks: WebsiteSettings["shopLinks"];
+  socialLinks: SocialLinks;
+  shopStats: ShopStats;
+}
+
+/** Settings as the Admin reads them: the values, and when and by whom they were last saved. */
+export interface AdminWebsiteSettings {
+  values: EditableWebsiteSettings;
+  stamp: RecordStamp;
+}

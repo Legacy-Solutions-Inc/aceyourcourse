@@ -1,7 +1,10 @@
+import { manilaDayStart } from "@/lib/manila-time";
+
 /**
- * The Admin's Manila-time labels: the Overview greeting and date line, and the
- * 403 screen's "attempt was logged" time. Manila is UTC+8 all year. See
- * src/lib/manila-time.ts for the Website's date helpers.
+ * The Admin's Manila-time labels: the Overview greeting and date line, the 403
+ * screen's "attempt was logged" time, and the save stamps' dates and times.
+ * Manila is UTC+8 all year. See src/lib/manila-time.ts for the Website's date
+ * helpers.
  */
 
 // en-US for three-letter months ("Sep"); en-GB says "Sept".
@@ -33,6 +36,15 @@ function manilaParts(at: Date) {
     hour: Number(values.hour),
   };
 }
+
+/** "22 Oct 2026" in Manila. */
+function dayMonthYear(at: Date): string {
+  const { day, month, year } = manilaParts(at);
+  return `${day} ${month} ${year}`;
+}
+
+/** "11:42 AM" in Manila. Some ICU versions put a narrow no-break space before AM/PM. */
+const clockTime = (at: Date) => clock.format(at).replace(/\s/g, " ");
 
 function parseInstant(iso: string): Date {
   const date = new Date(iso);
@@ -66,7 +78,26 @@ export function overviewDateLine(now: Date): string {
  */
 export function formatLoggedAt(iso: string): string {
   const at = parseInstant(iso);
-  const { day, month, year } = manilaParts(at);
-  // Some ICU versions put a narrow no-break space before AM/PM.
-  return `${day} ${month.toUpperCase()} ${year}, ${clock.format(at).replace(/\s/g, " ")}`;
+  return `${dayMonthYear(at).toUpperCase()}, ${clockTime(at)}`;
+}
+
+/** Pure: the Manila date of a save, for "LAST CHANGED 14 OCT 2026". Throws a RangeError for a non-date. */
+export function formatChangedOn(iso: string): string {
+  return dayMonthYear(parseInstant(iso)).toUpperCase();
+}
+
+/** Pure: a YYYY-MM-DD date, for "AS OF 29 OCT 2026". Throws a RangeError for a date not on the calendar. */
+export function formatAsOfDate(isoDate: string): string {
+  return dayMonthYear(manilaDayStart(isoDate)).toUpperCase();
+}
+
+/**
+ * Pure: when a record was saved, for the conflict notice: "2:41 PM" for a save
+ * made earlier the same Manila day as `now`, otherwise "2:41 PM on 21 Oct
+ * 2026". Throws a RangeError for a non-date.
+ */
+export function formatSavedAt(iso: string, now: Date): string {
+  const at = parseInstant(iso);
+  const date = dayMonthYear(at);
+  return date === dayMonthYear(now) ? clockTime(at) : `${clockTime(at)} on ${date}`;
 }

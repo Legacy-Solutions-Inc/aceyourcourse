@@ -2,6 +2,9 @@ import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CatalogueSeed } from "@/services/catalogue.schema";
+import { resetSampleStore } from "@/services/mock/sample-store";
+
+import { editSampleCatalogue } from "../../../../../test/catalogue-seed";
 
 // The Exam page rendered from the real seed, with the Member App switch off and
 // on (e2e/exam.spec.ts runs with it off only), plus seed and content fixtures
@@ -36,12 +39,7 @@ async function loadPage({ memberAppLive = false, editSeed, editContent }: LoadOp
   vi.stubEnv("MEMBER_APP_LIVE", memberAppLive ? "true" : "false");
   vi.resetModules();
   if (editSeed) {
-    vi.doMock("@/services/mock/catalogue", async (importOriginal) => {
-      const real = await importOriginal<typeof import("@/services/mock/catalogue")>();
-      const seed = structuredClone(real.CATALOGUE_SEED);
-      editSeed(seed);
-      return { CATALOGUE_SEED: seed };
-    });
+    editSampleCatalogue(editSeed);
   }
   if (editContent) {
     vi.doMock("@/content/exam-pages", async (importOriginal) => {
@@ -50,7 +48,6 @@ async function loadPage({ memberAppLive = false, editSeed, editContent }: LoadOp
     });
   }
   const page = await import("./page");
-  vi.doUnmock("@/services/mock/catalogue");
   vi.doUnmock("@/content/exam-pages");
   return page;
 }
@@ -89,6 +86,11 @@ function breadcrumbJsonLd() {
     .map((script) => JSON.parse(script.textContent ?? "null") as Record<string, unknown>)
     .find((data) => data["@type"] === "BreadcrumbList");
 }
+
+// Every test starts from the seed, whatever the one before it edited.
+afterEach(() => {
+  resetSampleStore();
+});
 
 describe("Exam page", () => {
   afterEach(() => {

@@ -38,6 +38,13 @@
   --ayc-rule: #c9bfa8;
   /* The ruled-paper lines on Review cards. */
   --ayc-ruled: #d5e2f0;
+  /*
+   * The Admin's save-state lines (mockup #2E7D4F and #E07400). The amber is
+   * darker than the mockup's, which is under 3:1 on paper; both pass 4.5:1 on
+   * paper, where the lines sit.
+   */
+  --ayc-success: #2e7d4f;
+  --ayc-warning: #a35200;
 
   /* Square corners everywhere; pills use rounded-full. */
   --radius: 0rem;
@@ -110,6 +117,8 @@
   --color-ayc-star-off: var(--ayc-star-off);
   --color-ayc-rule: var(--ayc-rule);
   --color-ayc-ruled: var(--ayc-ruled);
+  --color-ayc-success: var(--ayc-success);
+  --color-ayc-warning: var(--ayc-warning);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

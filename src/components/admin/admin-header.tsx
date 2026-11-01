@@ -2,18 +2,23 @@ import Link from "next/link";
 
 import { paths } from "@/paths";
 
+import { ResetSampleDataButton } from "./reset-sample-data-button";
+
 interface AdminHeaderProps {
   group: string;
   title: string;
-  /** Shows the red "SAMPLE DATA" tag (Stage A). */
-  sampleData: boolean;
+  /**
+   * Set while the Admin runs on sample data (Stage A): the header shows the red
+   * "SAMPLE DATA" tag, with Reset, which calls `reset`.
+   */
+  sampleData?: { reset: () => Promise<void> };
   /** The screen's primary button, such as "+ Add product". */
   primaryAction?: React.ReactNode;
 }
 
 /**
  * Each screen's header (mockup 72–79): the group label and title, the
- * "SAMPLE DATA" tag, "View site ↗" and the screen's primary action.
+ * "SAMPLE DATA" tag with Reset, "View site ↗" and the screen's primary action.
  */
 export function AdminHeader({ group, title, sampleData, primaryAction }: AdminHeaderProps) {
   return (
@@ -24,9 +29,12 @@ export function AdminHeader({ group, title, sampleData, primaryAction }: AdminHe
       </div>
       <div className="flex flex-wrap items-center gap-2.5">
         {sampleData ? (
-          <span className="border-[1.5px] border-dashed border-destructive px-1.75 py-1.5 font-mono text-[10px] leading-none font-bold tracking-[0.06em] text-destructive">
-            SAMPLE DATA
-          </span>
+          <>
+            <span className="border-[1.5px] border-dashed border-destructive px-1.75 py-1.5 font-mono text-[10px] leading-none font-bold tracking-[0.06em] text-destructive">
+              SAMPLE DATA
+            </span>
+            <ResetSampleDataButton action={sampleData.reset} />
+          </>
         ) : null}
         <Link
           href={paths.home}

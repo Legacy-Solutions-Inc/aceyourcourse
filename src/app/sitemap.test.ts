@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CatalogueSeed } from "@/services/catalogue.schema";
+import { resetSampleStore } from "@/services/mock/sample-store";
+
+import { editSampleCatalogue } from "../../test/catalogue-seed";
 
 // The sitemap route, read from the Catalogue seam (the real seed, or an edited
 // copy of it). Its URLs are on the site-URL setting, "http://localhost:3000/"
@@ -10,12 +13,7 @@ import type { CatalogueSeed } from "@/services/catalogue.schema";
 async function sitemapUrls(editSeed?: (seed: CatalogueSeed) => void) {
   vi.resetModules();
   if (editSeed) {
-    vi.doMock("@/services/mock/catalogue", async (importOriginal) => {
-      const real = await importOriginal<typeof import("@/services/mock/catalogue")>();
-      const seed = structuredClone(real.CATALOGUE_SEED);
-      editSeed(seed);
-      return { CATALOGUE_SEED: seed };
-    });
+    editSampleCatalogue(editSeed);
   }
   const { default: sitemap } = await import("./sitemap");
   return (await sitemap()).map((entry) => entry.url);
@@ -30,11 +28,12 @@ const hide = (seed: CatalogueSeed, slugs: string[]) => {
   }
 };
 
-describe("sitemap", () => {
-  afterEach(() => {
-    vi.doUnmock("@/services/mock/catalogue");
-  });
+// Every test starts from the seed, whatever the one before it edited.
+afterEach(() => {
+  resetSampleStore();
+});
 
+describe("sitemap", () => {
   it("lists the static pages, every Exam and every Product on the Website, Live and Coming Soon", async () => {
     const urls = await sitemapUrls();
 

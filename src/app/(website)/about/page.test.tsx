@@ -2,6 +2,9 @@ import { render, screen, within } from "@testing-library/react";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CatalogueSeed } from "@/services/catalogue.schema";
+import { resetSampleStore } from "@/services/mock/sample-store";
+
+import { editSampleCatalogue } from "../../../../test/catalogue-seed";
 
 // About rendered from the real seed: 8 Live Products and 7 Coming Soon across
 // 5 Exams (CE, ME, EE, MT, CPA; CPA has one Product, its flash cards). The
@@ -30,14 +33,8 @@ async function renderAbout() {
 async function renderAboutFromSeed(editSeed: (seed: CatalogueSeed) => void) {
   vi.stubEnv("MEMBER_APP_LIVE", "false");
   vi.resetModules();
-  vi.doMock("@/services/mock/catalogue", async (importOriginal) => {
-    const real = await importOriginal<typeof import("@/services/mock/catalogue")>();
-    const seed = structuredClone(real.CATALOGUE_SEED);
-    editSeed(seed);
-    return { CATALOGUE_SEED: seed };
-  });
+  editSampleCatalogue(editSeed);
   const { default: AboutPage } = await import("./page");
-  vi.doUnmock("@/services/mock/catalogue");
   page = undefined;
   return render(await AboutPage());
 }
@@ -72,11 +69,12 @@ const hide = (seed: CatalogueSeed, keep: (examCode: string) => boolean) => {
   }
 };
 
-describe("About", () => {
-  afterEach(() => {
-    vi.doUnmock("@/services/mock/catalogue");
-  });
+// Every test starts from the seed, whatever the one before it edited.
+afterEach(() => {
+  resetSampleStore();
+});
 
+describe("About", () => {
   afterAll(() => {
     vi.unstubAllEnvs();
     vi.resetModules();

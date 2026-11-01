@@ -17,21 +17,29 @@ import type {
   WebsiteSettings,
 } from "@/services/catalogue.types";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
+import { getSampleStore } from "@/services/mock/sample-store";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // In-memory implementation of the Catalogue seam, and the Phase 1 default. It
-// reads the typed seed, validated once at load so a bad edit fails loudly. The
-// Member App switch comes from MEMBER_APP_LIVE, not the seed. See
+// reads the catalogue held in the Admin's sample store, a copy of the typed
+// seed, so an Admin save shows on the Website (src/services/mock/sample-store.ts).
+// The seed is validated once at load so a bad edit fails loudly, and every
+// Admin write is validated again before the store takes it. The Member App
+// switch comes from MEMBER_APP_LIVE, not the seed. See
 // docs/adr/0003-mock-first-service-seam.md.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// The sample store validates the seed too, but only when it's first read; this
+// makes a bad seed fail as soon as the Website loads.
 const validation = validateCatalogueSeed(CATALOGUE_SEED);
 if (!validation.success) {
   throw new Error(`Invalid catalogue seed — ${validation.errors.join("; ")}`);
 }
-const seed = validation.data;
 
-// Callers get copies, so nothing a page does can change the seed for the next
+/** The catalogue as it is now, with every Admin save so far. */
+const catalogue = () => getSampleStore().catalogue;
+
+// Callers get copies, so nothing a page does can change the catalogue for the next
 // request (a database read returns fresh rows the same way).
 const copy = <T>(value: T): T => structuredClone(value);
 
@@ -78,17 +86,17 @@ const PRODUCT_SORTS: Record<ProductSort, Compare<Product>> = {
   "top-rated": by(descending(rating), descending(ratingCount)),
 };
 
-const examOrder = (p: Product) => seed.exams.findIndex((e) => e.code === p.examCode);
+const examOrder = (p: Product) => catalogue().exams.findIndex((e) => e.code === p.examCode);
 const comingSoonOrder = by(ascending(examOrder), byTitle);
 
 // ── Products ────────────────────────────────────────────────────────────────
 
-const visibleProducts = () => seed.products.filter((p) => p.showOnWebsite);
+const visibleProducts = () => catalogue().products.filter((p) => p.showOnWebsite);
 const liveProducts = () => visibleProducts().filter((p) => p.state === "live");
 
 /** Everything a Visitor's search is matched against, lowercased. */
 function searchText(p: Product): string {
-  const exam = seed.exams.find((e) => e.code === p.examCode);
+  const exam = catalogue().exams.find((e) => e.code === p.examCode);
   const subjects = (exam?.subjects ?? []).filter((s) => p.subjectCodes.includes(s.code));
   return [
     p.title,
@@ -155,13 +163,13 @@ export async function listBestSellers(limit: number): Promise<Product[]> {
 /** Exams with at least one Product on the Website, Live or Coming Soon. */
 export async function listExams(): Promise<Exam[]> {
   const shown = new Set(visibleProducts().map((p) => p.examCode));
-  return copy(seed.exams.filter((e) => shown.has(e.code)));
+  return copy(catalogue().exams.filter((e) => shown.has(e.code)));
 }
 
 export async function getExamByCode(code: string): Promise<Exam | null> {
   const wanted = code.trim().toUpperCase();
   if (!wanted) return null;
-  const exam = seed.exams.find((e) => e.code === wanted);
+  const exam = catalogue().exams.find((e) => e.code === wanted);
   return exam ? copy(exam) : null;
 }
 
@@ -170,7 +178,7 @@ export async function getExamByCode(code: string): Promise<Exam | null> {
 /** Reviews of the visible Live Products, each with its Product. */
 function visibleReviews(): ReviewWithProduct[] {
   const products = new Map(liveProducts().map((p) => [p.id, p]));
-  return seed.reviews.flatMap((review) => {
+  return catalogue().reviews.flatMap((review) => {
     const p = products.get(review.productId);
     return p
       ? [{ ...review, product: { slug: p.slug, shortName: p.shortName, examCode: p.examCode } }]
@@ -269,7 +277,9 @@ function withQuoteCredit(faq: Faq, reviews: Map<string, ReviewWithProduct>): Faq
 export async function listFaqs(): Promise<FaqGroupWithItems[]> {
   const appLive = memberAppLive();
   const reviews = new Map(visibleReviews().map((review) => [review.id, review]));
-  const shown = seed.faqs.filter((faq) => faq.showOnFaqPage && (appLive || !faq.requiresMemberApp));
+  const shown = catalogue().faqs.filter(
+    (faq) => faq.showOnFaqPage && (appLive || !faq.requiresMemberApp),
+  );
   const groups = FAQ_GROUPS.flatMap((group) => {
     const { title, appTitle } = FAQ_GROUP_TITLES[group];
     const items = shown
@@ -285,5 +295,5 @@ export async function listFaqs(): Promise<FaqGroupWithItems[]> {
 // ── Settings ────────────────────────────────────────────────────────────────
 
 export async function getWebsiteSettings(): Promise<WebsiteSettings> {
-  return { ...copy(seed.settings), memberAppLive: memberAppLive() };
+  return { ...copy(catalogue().settings), memberAppLive: memberAppLive() };
 }

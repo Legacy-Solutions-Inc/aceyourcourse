@@ -73,10 +73,23 @@ describe("Admin screens", () => {
       expect(within(header).getByRole("heading", { level: 1 })).toHaveTextContent(title);
       expect(within(header).getByText(group, { exact: true })).toBeInTheDocument();
       expect(within(header).getByText("SAMPLE DATA")).toBeInTheDocument();
+      expect(within(header).getByRole("button", { name: "Reset" })).toBeInTheDocument();
       expect(within(header).getByRole("link", { name: "View site" })).toHaveAttribute("href", "/");
       expect(screen.getByRole("main")).toBeInTheDocument();
     },
   );
+
+  it("shows the Owner Settings' three parts with the sample data's values", async () => {
+    signInAs("angel@aceyourcourse.ph");
+    render(await SettingsPage());
+    expect(screen.getByLabelText("EMAIL ADDRESS")).toHaveValue("aceyourcourseinc@gmail.com");
+    expect(screen.getByLabelText("SHOPEE")).toHaveValue("https://shopee.ph/aceyourcourse");
+    expect(screen.getByLabelText("FOLLOWERS")).toHaveValue("3.7K");
+    expect(screen.getByText("NOT CHANGED IN THE ADMIN YET")).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent),
+    ).toEqual(["CONTACT EMAIL", "TRUST FIGURES", "STORE & SOCIAL LINKS"]);
+  });
 
   it("refuses an Editor Settings with the owners-only 403 screen", async () => {
     signInAs("content@aceyourcourse.ph");

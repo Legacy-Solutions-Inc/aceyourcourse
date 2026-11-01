@@ -38,7 +38,8 @@ const nonBlank = (label: string) => z.string().trim().min(1, `${label} must not 
 /** A YYYY-MM-DD date on the calendar: "2026-02-30" is rejected, not rolled over to 2 March. */
 const isoDate = z.string().refine(isCalendarDate, "must be a real ISO date (YYYY-MM-DD)");
 
-const httpsUrl = z
+/** An https link. */
+export const httpsUrl = z
   .string()
   .url("must be a URL")
   .refine((value) => value.startsWith("https://"), "must be an https link");

@@ -1,4 +1,8 @@
+import { unstable_cache } from "next/cache";
+
+import { adminMode } from "@/lib/admin/mode";
 import * as mockImpl from "@/services/catalogue.mock";
+import { CATALOGUE_TAG, CATALOGUE_TAGS, type CatalogueAreaTag } from "@/services/catalogue.tags";
 import type {
   Exam,
   FaqGroupWithItems,
@@ -8,6 +12,7 @@ import type {
   ReviewWithProduct,
   WebsiteSettings,
 } from "@/services/catalogue.types";
+import { getSampleStore } from "@/services/mock/sample-store";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Catalogue Service Seam. Every Website page and component reads Exams,
@@ -16,6 +21,11 @@ import type {
 // Phase 1 has only the in-memory mock arm. Phase 2 adds the Drizzle arm
 // (catalogue.db.ts, chosen when a DATABASE_URL is configured) with no page
 // changes. See docs/adr/0003 and docs/adr/0006.
+//
+// Every page renders per request (the CSP nonce), so speed comes from here:
+// each read is cached once, tagged with the areas it reads (catalogue.tags.ts),
+// and an Admin save clears the tags it affects (spec, Phase 1 → Rendering and
+// caching).
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -71,13 +81,41 @@ interface CatalogueService {
 
 const impl: CatalogueService = mockImpl;
 
-export const listExams = impl.listExams;
-export const getExamByCode = impl.getExamByCode;
-export const listProducts = impl.listProducts;
-export const getProductBySlug = impl.getProductBySlug;
-export const listRelatedProducts = impl.listRelatedProducts;
-export const listBestSellers = impl.listBestSellers;
-export const listReviews = impl.listReviews;
-export const listHomeReviews = impl.listHomeReviews;
-export const listFaqs = impl.listFaqs;
-export const getWebsiteSettings = impl.getWebsiteSettings;
+/**
+ * What the cache keys hold besides each read's arguments. The sample data
+ * starts again on every boot and Reset, with a new generation, so nothing
+ * cached before a restart (the dev server keeps its cache on disk) is served
+ * after it. With the Admin closed, the data is the seed and never changes.
+ */
+const dataVersion = (): string => (adminMode === "sample" ? getSampleStore().generation : "seed");
+
+/** A read, cached under its name and arguments, with CATALOGUE_TAG and its areas' tags. */
+function cached<Args extends unknown[], Result>(
+  name: string,
+  read: (...args: Args) => Promise<Result>,
+  areas: readonly CatalogueAreaTag[],
+): (...args: Args) => Promise<Result> {
+  const cachedRead = unstable_cache(
+    (_version: string, ...args: Args) => read(...args),
+    [CATALOGUE_TAG, name],
+    { tags: [CATALOGUE_TAG, ...areas] },
+  );
+  return (...args) => cachedRead(dataVersion(), ...args);
+}
+
+const { exams, products, reviews, faqs, settings } = CATALOGUE_TAGS;
+
+// Each read is tagged with every area its answer depends on: listExams, for
+// example, lists only the Exams with a Product on the Website.
+export const listExams = cached("listExams", impl.listExams, [exams, products]);
+export const getExamByCode = cached("getExamByCode", impl.getExamByCode, [exams]);
+export const listProducts = cached("listProducts", impl.listProducts, [products, exams]);
+export const getProductBySlug = cached("getProductBySlug", impl.getProductBySlug, [products]);
+export const listRelatedProducts = cached("listRelatedProducts", impl.listRelatedProducts, [
+  products,
+]);
+export const listBestSellers = cached("listBestSellers", impl.listBestSellers, [products]);
+export const listReviews = cached("listReviews", impl.listReviews, [reviews, products]);
+export const listHomeReviews = cached("listHomeReviews", impl.listHomeReviews, [reviews, products]);
+export const listFaqs = cached("listFaqs", impl.listFaqs, [faqs, reviews, products]);
+export const getWebsiteSettings = cached("getWebsiteSettings", impl.getWebsiteSettings, [settings]);

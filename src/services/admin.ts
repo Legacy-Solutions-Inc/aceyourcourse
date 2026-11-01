@@ -1,5 +1,8 @@
 import * as mockImpl from "@/services/admin.mock";
+import type { WebsiteSettingsUpdate } from "@/services/admin.schema";
 import type {
+  AdminResult,
+  AdminWebsiteSettings,
   DeniedReason,
   DeniedSignIn,
   SignInIdentity,
@@ -13,6 +16,12 @@ import type {
 // Stage B, the database. Like src/services/catalogue.ts, this module is a thin
 // SELECTOR. Stage A has the sample arm only; ticket 15 adds the database arm
 // behind the same contract. Reads are always fresh and never cached.
+//
+// Every write takes the acting Staff User, its input and, from an editor, the
+// stamp the record had when it opened, and returns an AdminResult: the saved
+// value and the Catalogue cache tags to clear, or why it was refused. Each one
+// checks the Staff Role itself, validates the input with zod, runs the
+// conflict check, and records Staff Activity (CONVENTIONS §3).
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -43,6 +52,18 @@ export interface AdminService {
    * (case-insensitive), or null. Invites don't count until they're activated.
    */
   getStaffByEmail(email: string): Promise<StaffActor | null>;
+
+  /** Settings: the contact email, shop and social links and trust figures, with their stamp. */
+  getSettingsForAdmin(): Promise<AdminWebsiteSettings>;
+  /**
+   * Saves any of Settings' parts (Owners only). Saving the trust figures sets
+   * their "as of" date to today in Manila. Clears the settings tag.
+   */
+  updateWebsiteSettings(
+    actor: StaffActor,
+    input: WebsiteSettingsUpdate,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminWebsiteSettings>>;
 }
 
 const impl: AdminService = mockImpl;
@@ -51,3 +72,5 @@ export const resolveSignIn = impl.resolveSignIn;
 export const recordDeniedSignIn = impl.recordDeniedSignIn;
 export const getLatestDeniedSignIn = impl.getLatestDeniedSignIn;
 export const getStaffByEmail = impl.getStaffByEmail;
+export const getSettingsForAdmin = impl.getSettingsForAdmin;
+export const updateWebsiteSettings = impl.updateWebsiteSettings;

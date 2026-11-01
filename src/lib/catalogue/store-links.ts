@@ -8,12 +8,15 @@ export const MARKETPLACE_HOSTS: Record<Marketplace, string[]> = {
   tiktok: ["tiktok.com"],
 };
 
+/** Pure: whether a link is on one of these hosts, or a subdomain of one. */
+export function isOnHost(value: string, hosts: readonly string[]): boolean {
+  const host = URL.canParse(value) ? new URL(value).hostname : "";
+  return hosts.some((allowed) => host === allowed || host.endsWith(`.${allowed}`));
+}
+
 /** Pure: whether a link is on one of this Marketplace's hosts, or a subdomain of one. */
 export function isMarketplaceUrl(value: string, marketplace: Marketplace): boolean {
-  const host = URL.canParse(value) ? new URL(value).hostname : "";
-  return MARKETPLACE_HOSTS[marketplace].some(
-    (allowed) => host === allowed || host.endsWith(`.${allowed}`),
-  );
+  return isOnHost(value, MARKETPLACE_HOSTS[marketplace]);
 }
 
 export interface StoreLink {

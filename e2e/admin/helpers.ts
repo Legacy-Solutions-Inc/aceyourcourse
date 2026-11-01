@@ -1,5 +1,6 @@
 import { type APIRequestContext, expect, type Page } from "@playwright/test";
 
+import { paths } from "../../src/paths";
 import { SAMPLE_USERS, type SampleUserKey } from "../../src/services/mock/staff";
 
 // Shared steps for the Admin specs (CONVENTIONS §6). Stage A signs in through
@@ -33,9 +34,10 @@ export async function signInAs(page: Page, who: SampleUserKey, next?: string) {
 }
 
 /**
- * Restores the sample data before a test. The reset route
- * (POST /api/dev/sample-data/reset) arrives in ticket 02, so until then this
- * does nothing, and ticket 01's specs are written to pass on data they have
- * already changed (an activated Invite stays activated).
+ * Restores the sample data, and clears every Catalogue cache tag, before a
+ * test: POST /api/dev/sample-data/reset (sample mode only).
  */
-export async function resetSampleData(_request: APIRequestContext): Promise<void> {}
+export async function resetSampleData(request: APIRequestContext): Promise<void> {
+  const response = await request.post(paths.admin.resetSampleData);
+  expect(response.status(), "the sample data reset route").toBe(204);
+}

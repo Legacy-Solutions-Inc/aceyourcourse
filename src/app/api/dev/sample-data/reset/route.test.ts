@@ -1,0 +1,81 @@
+import { revalidateTag } from "next/cache";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
+
+// POST /api/dev/sample-data/reset (CONVENTIONS §2): the Admin specs call it
+// before each test, signed out. It exists only with sample data, and a page on
+// another site can't call it from a browser.
+const RESET_URL = "http://localhost:3000/api/dev/sample-data/reset";
+const post = (headers: Record<string, string> = {}) =>
+  new Request(RESET_URL, { method: "POST", headers });
+
+/** Changes the sample data as an Admin save would. */
+function editSampleData() {
+  const store = getSampleStore();
+  store.catalogue.settings.contactEmail = "hello@aceyourcourse.ph";
+  store.stamps = { settings: { savedAt: new Date().toISOString(), savedBy: "Angel" } };
+  return store.generation;
+}
+
+describe("POST /api/dev/sample-data/reset", () => {
+  beforeEach(() => {
+    resetSampleStore();
+    vi.mocked(revalidateTag).mockClear();
+  });
+
+  it("starts the sample data again from the seed and clears every Catalogue read", async () => {
+    const generation = editSampleData();
+    const { POST } = await import("./route");
+
+    const response = await POST(post());
+
+    expect(response.status).toBe(204);
+    const store = getSampleStore();
+    expect(store.catalogue.settings.contactEmail).toBe("aceyourcourseinc@gmail.com");
+    expect(store.stamps).toEqual({});
+    expect(store.generation).not.toBe(generation);
+    expect(vi.mocked(revalidateTag).mock.calls).toEqual([["catalogue"]]);
+  });
+
+  it("answers a POST from this site's own pages", async () => {
+    const { POST } = await import("./route");
+    expect((await POST(post({ origin: "http://localhost:3000" }))).status).toBe(204);
+  });
+
+  it.each(["https://evil.example", "http://localhost:3001"])(
+    "refuses a POST from a page on %s, changing nothing",
+    async (origin) => {
+      const generation = editSampleData();
+      const { POST } = await import("./route");
+
+      expect((await POST(post({ origin }))).status).toBe(403);
+      expect(getSampleStore().generation).toBe(generation);
+      expect(revalidateTag).not.toHaveBeenCalled();
+    },
+  );
+
+  describe("with the Admin closed", () => {
+    beforeEach(() => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      vi.stubEnv("NODE_ENV", "production");
+      vi.resetModules();
+    });
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      vi.restoreAllMocks();
+      vi.resetModules();
+    });
+
+    it("answers 404 and changes nothing", async () => {
+      const generation = editSampleData();
+      const { POST } = await import("./route");
+
+      expect((await POST(post())).status).toBe(404);
+      expect(getSampleStore().generation).toBe(generation);
+      expect(getSampleStore().catalogue.settings.contactEmail).toBe("hello@aceyourcourse.ph");
+      expect(revalidateTag).not.toHaveBeenCalled();
+    });
+  });
+});
