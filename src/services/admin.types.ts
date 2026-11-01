@@ -55,6 +55,12 @@ export interface Invite {
   expiresAt: string;
 }
 
+/** Who can use the Admin, as an Owner manages it in Settings. */
+export interface StaffList {
+  staff: StaffMember[];
+  invites: Invite[];
+}
+
 /** Why a signed-in User was refused the Admin. */
 export type DeniedReason = "not-staff" | "invite-expired";
 

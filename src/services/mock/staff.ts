@@ -1,4 +1,4 @@
-import type { Invite, StaffMember } from "@/services/admin.types";
+import type { Invite, StaffMember, StaffRole } from "@/services/admin.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The sample Users for the Admin's Stage A "Sign in as" list (CONVENTIONS §5),
@@ -60,14 +60,18 @@ function sampleUser(key: SampleUserKey): SampleUser {
   return user;
 }
 
-function invite(key: SampleUserKey, createdAt: number): Invite {
+/** An Invite made, or renewed, at `createdAt`: it expires 7 days later. */
+export function inviteMadeAt(email: string, role: StaffRole, createdAt: Date): Invite {
   return {
-    email: sampleUser(key).email,
-    role: "editor",
-    createdAt: new Date(createdAt).toISOString(),
-    expiresAt: new Date(createdAt + INVITE_DAYS * DAY).toISOString(),
+    email,
+    role,
+    createdAt: createdAt.toISOString(),
+    expiresAt: new Date(createdAt.getTime() + INVITE_DAYS * DAY).toISOString(),
   };
 }
+
+const invite = (key: SampleUserKey, createdAt: number) =>
+  inviteMadeAt(sampleUser(key).email, "editor", new Date(createdAt));
 
 /**
  * The staff list the sample data starts with, timed from when the server

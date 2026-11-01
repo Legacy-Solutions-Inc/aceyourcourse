@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import { AdminTextField } from "@/components/admin/admin-text-field";
 import { ConflictNotice } from "@/components/admin/conflict-notice";
@@ -19,6 +19,8 @@ interface SettingsEditorProps {
     saveLinks: SettingsAction;
     saveTrustFigures: SettingsAction;
   };
+  /** ADMIN ACCOUNTS, shown under the links (mockup 694–699). */
+  accounts?: ReactNode;
 }
 
 /**
@@ -28,7 +30,7 @@ interface SettingsEditorProps {
  * others, and while one part is saving the others wait for it: saving the
  * email and then the links is never a conflict.
  */
-export function SettingsEditor({ initial, actions }: SettingsEditorProps) {
+export function SettingsEditor({ initial, actions, accounts }: SettingsEditorProps) {
   const [settings, setSettings] = useState(initial);
   const [saving, setSaving] = useState(0);
   const shared = {
@@ -51,7 +53,10 @@ export function SettingsEditor({ initial, actions }: SettingsEditorProps) {
             {...shared}
           />
         </div>
-        <LinksForm initial={initial} action={actions.saveLinks} {...shared} />
+        <div className="flex min-w-0 flex-col gap-4.5">
+          <LinksForm initial={initial} action={actions.saveLinks} {...shared} />
+          {accounts}
+        </div>
       </div>
     </div>
   );
@@ -218,7 +223,6 @@ function LinksForm({ initial, ...options }: PartProps) {
       <p className="font-mono text-[11px] text-muted-foreground">
         AN EMPTY LINK HIDES THAT BUTTON OR LINK
       </p>
-      {/* Ticket 03 adds ADMIN ACCOUNTS below, in this card (mockup 694–699). */}
     </SettingsPart>
   );
 }

@@ -33,6 +33,13 @@ export async function signInAs(page: Page, who: SampleUserKey, next?: string) {
     .click();
 }
 
+/** Signs in with any email, through the list's "Other email" field. */
+export async function signInWithEmail(page: Page, email: string, next?: string) {
+  const list = await openSignInAs(page, next);
+  await list.getByLabel("Other email").fill(email);
+  await list.getByRole("button", { name: "Sign in", exact: true }).click();
+}
+
 /**
  * Restores the sample data, and clears every Catalogue cache tag, before a
  * test: POST /api/dev/sample-data/reset (sample mode only).

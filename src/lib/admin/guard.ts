@@ -9,6 +9,7 @@ import {
   getLatestDeniedSignIn,
   getStaffByEmail,
   recordDeniedSignIn,
+  recordSignIn,
   resolveSignIn,
 } from "@/services/admin";
 import type { DeniedReason, SignInIdentity, StaffActor } from "@/services/admin.types";
@@ -37,6 +38,16 @@ export async function admit(identity: SignInIdentity): Promise<StaffActor> {
   if (result.status === "staff") return result.actor;
   await recordDeniedSignIn({ email: identity.email, reason: result.reason, at: now });
   redirect(paths.admin.denied(result.reason));
+}
+
+/**
+ * A sign-in: admit, then record its time on the Staff User's row, for "LAST
+ * SIGNED IN …". Only signing in records it, not each request after.
+ */
+export async function signIn(identity: SignInIdentity): Promise<StaffActor> {
+  const actor = await admit(identity);
+  await recordSignIn(actor.email, new Date());
+  return actor;
 }
 
 /**

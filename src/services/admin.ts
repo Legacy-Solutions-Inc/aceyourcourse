@@ -1,13 +1,20 @@
 import * as mockImpl from "@/services/admin.mock";
-import type { WebsiteSettingsUpdate } from "@/services/admin.schema";
+import type {
+  ChangeStaffRoleInput,
+  InviteStaffInput,
+  WebsiteSettingsUpdate,
+} from "@/services/admin.schema";
 import type {
   AdminResult,
   AdminWebsiteSettings,
   DeniedReason,
   DeniedSignIn,
+  Invite,
   SignInIdentity,
   SignInResolution,
   StaffActor,
+  StaffList,
+  StaffMember,
 } from "@/services/admin.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -52,6 +59,36 @@ export interface AdminService {
    * (case-insensitive), or null. Invites don't count until they're activated.
    */
   getStaffByEmail(email: string): Promise<StaffActor | null>;
+  /**
+   * Records a successful sign-in on the Staff User's row, for "LAST SIGNED
+   * IN …". Someone who isn't active Staff is ignored. It records no Staff
+   * Activity: signing in changes nothing in the Admin.
+   */
+  recordSignIn(email: string, at: Date): Promise<void>;
+
+  // Staff and Invites (Owners only). Every write appends one Staff Activity
+  // record and clears no cache tags. "invalid" carries the rule a write broke:
+  // an email already on the staff list (as the email field's message), the
+  // last Owner, or the actor's own access (as the form's message).
+
+  /** Who can use the Admin: the active Staff, then the Invites, each in the order they were added. */
+  listStaff(actor: StaffActor): Promise<AdminResult<StaffList>>;
+  /** Makes an Invite for an email not yet on the staff list. It expires 7 days from now. */
+  inviteStaff(actor: StaffActor, input: InviteStaffInput): Promise<AdminResult<Invite>>;
+  /** Restarts an Invite's 7 days from now, even once it has expired. */
+  renewInvite(actor: StaffActor, email: string): Promise<AdminResult<Invite>>;
+  /** Deletes an Invite, so its email is no longer on the staff list. Gives the cancelled Invite. */
+  cancelInvite(actor: StaffActor, email: string): Promise<AdminResult<Invite>>;
+  /** Makes an active Staff User an Owner or an Editor, from their next request. */
+  changeStaffRole(
+    actor: StaffActor,
+    input: ChangeStaffRoleInput,
+  ): Promise<AdminResult<StaffMember>>;
+  /**
+   * Takes an active Staff User off the staff list: they're refused on their
+   * next request. Their Staff Activity stays. Gives the removed Staff User.
+   */
+  removeStaff(actor: StaffActor, email: string): Promise<AdminResult<StaffMember>>;
 
   /** Settings: the contact email, shop and social links and trust figures, with their stamp. */
   getSettingsForAdmin(): Promise<AdminWebsiteSettings>;
@@ -72,5 +109,12 @@ export const resolveSignIn = impl.resolveSignIn;
 export const recordDeniedSignIn = impl.recordDeniedSignIn;
 export const getLatestDeniedSignIn = impl.getLatestDeniedSignIn;
 export const getStaffByEmail = impl.getStaffByEmail;
+export const recordSignIn = impl.recordSignIn;
+export const listStaff = impl.listStaff;
+export const inviteStaff = impl.inviteStaff;
+export const renewInvite = impl.renewInvite;
+export const cancelInvite = impl.cancelInvite;
+export const changeStaffRole = impl.changeStaffRole;
+export const removeStaff = impl.removeStaff;
 export const getSettingsForAdmin = impl.getSettingsForAdmin;
 export const updateWebsiteSettings = impl.updateWebsiteSettings;

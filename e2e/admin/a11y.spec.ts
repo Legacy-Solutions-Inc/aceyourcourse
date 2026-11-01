@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
 import { openSignInAs, resetSampleData, type SampleUserKey, signInAs } from "./helpers";
@@ -88,6 +88,49 @@ test("no serious or critical accessibility violations on Settings showing field 
   await links.getByLabel("SHOPEE").fill("lazada.com.ph/shop");
   await links.getByRole("button", { name: "Save links" }).click();
   await expect(links.getByText("SHOULD BE A SHOPEE.PH LINK")).toBeVisible({ timeout: 15_000 });
+  await expectNoBlockingViolations(page);
+});
+
+/**
+ * Waits for a dialog's open animation: mid fade-in it is partly transparent,
+ * and axe would measure the blended colours.
+ */
+async function settled(dialog: Locator) {
+  await expect(dialog).toBeVisible({ timeout: 15_000 });
+  await dialog.evaluate((element) =>
+    Promise.all(element.getAnimations({ subtree: true }).map((animation) => animation.finished)),
+  );
+}
+
+test("no serious or critical accessibility violations on Settings' Admin accounts dialogs", async ({
+  page,
+}) => {
+  await signInAs(page, "owner", paths.admin.settings);
+  await expect(page).toHaveURL(/\/admin\/settings$/, { timeout: 15_000 });
+  const accounts = page.getByRole("region", { name: "ADMIN ACCOUNTS" });
+
+  await accounts.getByRole("button", { name: "+ Authorise an account" }).click();
+  const modal = page.getByRole("dialog", { name: "Give someone admin access" });
+  await settled(modal);
+  await modal.getByLabel("GOOGLE ACCOUNT EMAIL").fill("bad");
+  await modal.getByRole("button", { name: "Add invite" }).click();
+  await expect(modal.getByText("Enter a valid email address, like name@example.com.")).toBeVisible({
+    timeout: 15_000,
+  });
+  await expectNoBlockingViolations(page);
+  await modal.getByLabel("GOOGLE ACCOUNT EMAIL").fill("new.editor@example.com");
+  await modal.getByRole("button", { name: "Add invite" }).click();
+  await settled(page.getByRole("dialog", { name: "Now send them the invite" }));
+  await expectNoBlockingViolations(page);
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await accounts
+    .getByRole("listitem")
+    .filter({ hasText: "content@aceyourcourse.ph" })
+    .getByRole("button", { name: /^Remove/ })
+    .click();
+  await settled(page.getByRole("dialog", { name: /^Remove/ }));
   await expectNoBlockingViolations(page);
 });
 

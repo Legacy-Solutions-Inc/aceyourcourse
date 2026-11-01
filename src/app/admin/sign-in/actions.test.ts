@@ -70,6 +70,21 @@ describe("signInAs (sample mode)", () => {
     },
   );
 
+  it("records the time of the sign-in on the Staff User's row, for LAST SIGNED IN", async () => {
+    const editor = () =>
+      getSampleStore().staff.find((member) => member.email === "content@aceyourcourse.ph");
+    const before = editor()?.lastSignedInAt ?? "";
+    const signedInAt = Date.now();
+
+    await expect(signInAs({ email: "Content@AceYourCourse.ph" })).rejects.toThrow(
+      /^NEXT_REDIRECT \/admin$/,
+    );
+    const recorded = editor()?.lastSignedInAt ?? "";
+    expect(recorded).not.toBe(before);
+    expect(new Date(recorded).getTime()).toBeGreaterThanOrEqual(signedInAt);
+    expect(getSampleStore().staffActivity).toEqual([]);
+  });
+
   it("activates Kim's Invite from an upper-case Other email, and records it", async () => {
     await expect(signInAs({ email: " KIM.REYES@GMAIL.COM " })).rejects.toThrow(
       /^NEXT_REDIRECT \/admin$/,

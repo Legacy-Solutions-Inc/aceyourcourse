@@ -13,14 +13,18 @@ export const staffEmailSchema = z.string().trim().toLowerCase().email();
 
 const MISSING_EMAIL = "Enter an email address.";
 
+/** A typed email, trimmed, with one message for an empty or a malformed one. */
+const typedEmail = z
+  .string({ required_error: MISSING_EMAIL, invalid_type_error: MISSING_EMAIL })
+  .trim()
+  .min(1, MISSING_EMAIL)
+  .pipe(z.string().email("Enter a valid email address, like name@example.com."));
+
 /** The "Sign in as" form's "Other email" (sample mode). */
-export const signInAsSchema = z.object({
-  email: z
-    .string({ required_error: MISSING_EMAIL, invalid_type_error: MISSING_EMAIL })
-    .trim()
-    .min(1, MISSING_EMAIL)
-    .email("Enter a valid email address, like name@example.com."),
-});
+export const signInAsSchema = z.object({ email: typedEmail });
+
+/** A typed email for the staff list, which stores emails lowercase. */
+const typedStaffEmail = typedEmail.transform((email) => email.toLowerCase());
 
 // ── Writes ──────────────────────────────────────────────────────────────────
 
@@ -168,3 +172,29 @@ export const websiteSettingsUpdateSchema = contactSettingsSchema
   .refine((update) => Object.keys(update).length > 0, "NOTHING TO SAVE");
 
 export type WebsiteSettingsUpdate = z.infer<typeof websiteSettingsUpdateSchema>;
+
+// ── Staff and Invites ───────────────────────────────────────────────────────
+// Owners manage who can use the Admin (spec, Phase 2 → Invites, Staff Role
+// permissions). Emails are stored lowercase, because the staff list compares
+// them case-insensitively.
+
+const ROLE = "Choose Editor or Owner.";
+const staffRoleSchema = z.enum(["owner", "editor"], {
+  errorMap: () => ({ message: ROLE }),
+});
+
+/** An email on the staff list, and a Staff Role for it. */
+const staffEmailAndRoleSchema = z.object({ email: typedStaffEmail, role: staffRoleSchema });
+
+/** "+ Authorise an account": a Google email and the Staff Role it gets. */
+export const inviteStaffSchema = staffEmailAndRoleSchema;
+
+export type InviteStaffInput = z.infer<typeof inviteStaffSchema>;
+
+/** The Staff User or Invite an action is for (Renew, Cancel invite, Remove). */
+export const staffEmailInputSchema = z.object({ email: typedStaffEmail });
+
+/** Change role: an active Staff User and their new Staff Role. */
+export const changeStaffRoleSchema = staffEmailAndRoleSchema;
+
+export type ChangeStaffRoleInput = z.infer<typeof changeStaffRoleSchema>;

@@ -28,6 +28,8 @@ vi.mock("next/navigation", () => ({
     throw new Error("NEXT_NOT_FOUND");
   },
   usePathname: () => "/admin/products",
+  useRouter: () => ({ refresh: () => {} }),
+  unstable_rethrow: () => {},
 }));
 
 const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
@@ -79,7 +81,7 @@ describe("Admin screens", () => {
     },
   );
 
-  it("shows the Owner Settings' three parts with the sample data's values", async () => {
+  it("shows the Owner Settings' four parts with the sample data's values", async () => {
     signInAs("angel@aceyourcourse.ph");
     render(await SettingsPage());
     expect(screen.getByLabelText("EMAIL ADDRESS")).toHaveValue("aceyourcourseinc@gmail.com");
@@ -88,7 +90,25 @@ describe("Admin screens", () => {
     expect(screen.getByText("NOT CHANGED IN THE ADMIN YET")).toBeInTheDocument();
     expect(
       screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent),
-    ).toEqual(["CONTACT EMAIL", "TRUST FIGURES", "STORE & SOCIAL LINKS"]);
+    ).toEqual(["CONTACT EMAIL", "TRUST FIGURES", "STORE & SOCIAL LINKS", "ADMIN ACCOUNTS"]);
+  });
+
+  it("lists the sample staff list in ADMIN ACCOUNTS, with the Owner's own row first", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-22T03:42:00Z"));
+    resetSampleStore();
+    signInAs("angel@aceyourcourse.ph");
+    render(await SettingsPage());
+
+    const rows = within(screen.getByRole("list", { name: "Admin accounts" })).getAllByRole(
+      "listitem",
+    );
+    expect(rows.map((row) => row.textContent)).toEqual([
+      "Angel Rose L. Lepañaangel@aceyourcourse.phYOU · CAN’T BE REMOVEDOWNER",
+      "AYC Content Teamcontent@aceyourcourse.phLAST SIGNED IN 2 DAYS AGOEDITORAYC Content Team: Make OwnerRemove AYC Content Team",
+      "Invitedkim.reyes@gmail.comEXPIRES IN 6 DAYS · RENEW the invite to kim.reyes@gmail.comINVITEDCopy invite message for kim.reyes@gmail.comCancel invite to kim.reyes@gmail.com",
+      "Invitedexpired.invite@example.comEXPIRED · RENEW the invite to expired.invite@example.comINVITEDCancel invite to expired.invite@example.com",
+    ]);
   });
 
   it("refuses an Editor Settings with the owners-only 403 screen", async () => {

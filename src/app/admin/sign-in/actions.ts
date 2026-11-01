@@ -2,7 +2,7 @@
 
 import { notFound, redirect } from "next/navigation";
 
-import { admit } from "@/lib/admin/guard";
+import { signIn } from "@/lib/admin/guard";
 import { startSampleSession } from "@/lib/admin/identity";
 import { adminMode } from "@/lib/admin/mode";
 import { safeAdminNext } from "@/lib/admin/safe-next";
@@ -17,7 +17,7 @@ export interface SignInAsState {
 /**
  * The development-only "Sign in as" (sample mode only; any other mode answers
  * 404). Anyone may sign in, so no Staff Role is required here: the Staff
- * Guard's admit decides what happens next, exactly as it will after Google
+ * Guard's signIn decides what happens next, exactly as it will after Google
  * sign-in. Staff go to `next`; anyone else is recorded and goes to the 403
  * screen.
  */
@@ -36,6 +36,6 @@ export async function signInAs(
     };
   }
 
-  await admit(await startSampleSession(parsed.data.email));
+  await signIn(await startSampleSession(parsed.data.email));
   redirect(safeAdminNext(formData.get("next")));
 }

@@ -119,6 +119,16 @@ describe("Staff Guard (sample mode)", () => {
       },
     );
 
+    it("records no sign-in: a request isn't a sign-in", async () => {
+      signInAs(EDITOR);
+      const { requireStaff } = await loadGuard();
+      const lastSignedIn = () =>
+        getSampleStore().staff.find((member) => member.email === EDITOR)?.lastSignedInAt;
+      const before = lastSignedIn();
+      await requireStaff();
+      expect(lastSignedIn()).toBe(before);
+    });
+
     it("reads the staff list on every call: a removed Staff User is denied on the next one", async () => {
       signInAs(EDITOR);
       const { requireStaff } = await loadGuard();
