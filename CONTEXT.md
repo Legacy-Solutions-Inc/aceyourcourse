@@ -132,8 +132,16 @@ Ace Your Course is one application with three Surfaces.
   _Avoid_: customer, subscriber, student, account.
 
 - **Staff** — a User on the staff list, allowed into the Admin. Staff are
-  invited by email before their account exists. A Staff User is also a Member.
+  invited by their Google email address before their account exists. A Staff
+  User is also a Member.
   _Avoid_: admin (as a noun for a person), superadmin.
+
+- **Invite** — a pending place on the staff list: one Google email address and
+  a Staff Role. It becomes active the first time a User signs in with a Google
+  account whose verified email matches it. It expires 7 days after it was made
+  or last renewed. The invite itself is the permission. The Admin address it is
+  shared with is not secret.
+  _Avoid_: invitation link, invite token.
 
 - **Staff Role** — a Staff User's level of Admin access: **Owner** (everything,
   including Plans and their prices, orders, Members' data, Settings and Staff
