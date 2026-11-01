@@ -198,3 +198,31 @@ export const staffEmailInputSchema = z.object({ email: typedStaffEmail });
 export const changeStaffRoleSchema = staffEmailAndRoleSchema;
 
 export type ChangeStaffRoleInput = z.infer<typeof changeStaffRoleSchema>;
+
+// ── Products ────────────────────────────────────────────────────────────────
+
+const flag = z.boolean({
+  invalid_type_error: "SHOULD BE ON OR OFF",
+  required_error: "SHOULD BE ON OR OFF",
+});
+
+const productFlagFields = z.object({
+  showOnWebsite: flag.optional(),
+  availableInApp: flag.optional(),
+});
+
+/** A single toggle on a Product: "Show on website", "Available in app", or both. */
+export type ProductFlags = z.infer<typeof productFlagFields>;
+
+const hasAFlag = (flags: ProductFlags) =>
+  flags.showOnWebsite !== undefined || flags.availableInApp !== undefined;
+
+/** A single toggle's flags, at least one of them. */
+export const productFlagsSchema = productFlagFields.refine(hasAFlag, "NOTHING TO SAVE");
+
+/** The Products list's toggle, as its Server Action takes it: the Product and its flags. */
+export const productFlagsInputSchema = productFlagFields
+  .extend({ id: z.string().trim().min(1).max(100) })
+  .refine(hasAFlag, "NOTHING TO SAVE");
+
+export type ProductFlagsInput = z.infer<typeof productFlagsInputSchema>;

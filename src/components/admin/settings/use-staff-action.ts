@@ -1,8 +1,9 @@
 "use client";
 
-import { unstable_rethrow, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
+import { callAdminAction } from "@/components/admin/call-admin-action";
 import type { AdminAction, AdminActionState } from "@/lib/admin/action";
 
 /**
@@ -21,15 +22,7 @@ export function useStaffAction() {
     onAnswer: (state: AdminActionState<T>) => void,
   ) {
     startTransition(async () => {
-      let state: AdminActionState<T>;
-      try {
-        state = await action({ status: "idle" }, { input });
-      } catch (error) {
-        // A redirect from the Staff Guard isn't a failure: let Next follow it.
-        unstable_rethrow(error);
-        state = { status: "failed" };
-      }
-      onAnswer(state);
+      onAnswer(await callAdminAction(action, { input }));
       router.refresh();
     });
   }

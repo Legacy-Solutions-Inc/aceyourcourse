@@ -1,6 +1,5 @@
 "use client";
 
-import { unstable_rethrow } from "next/navigation";
 import {
   type ChangeEvent,
   type FormEvent,
@@ -14,6 +13,7 @@ import type { AdminAction, AdminActionState } from "@/lib/admin/action";
 import { type FormValues, sameValues, valueAt, withValueAt } from "@/lib/admin/form-values";
 import type { AdminError } from "@/services/admin.types";
 
+import { callAdminAction } from "./call-admin-action";
 import { showSaveFailedToast } from "./save-failed-toast";
 import type { SaveStatus } from "./save-state";
 
@@ -93,11 +93,7 @@ export function useAdminForm<Values extends FormValues, Saved>({
     ): Promise<AdminActionState<Saved>> => {
       let next: AdminActionState<Saved>;
       try {
-        next = await action(previous, submitted);
-      } catch (error) {
-        // A redirect from the Staff Guard isn't a failure: let Next follow it.
-        unstable_rethrow(error);
-        next = { status: "failed" };
+        next = await callAdminAction(action, submitted, previous);
       } finally {
         onSaving?.(false);
       }

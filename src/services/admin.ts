@@ -2,14 +2,18 @@ import * as mockImpl from "@/services/admin.mock";
 import type {
   ChangeStaffRoleInput,
   InviteStaffInput,
+  ProductFlags,
   WebsiteSettingsUpdate,
 } from "@/services/admin.schema";
 import type {
+  AdminProductList,
+  AdminProductRow,
   AdminResult,
   AdminWebsiteSettings,
   DeniedReason,
   DeniedSignIn,
   Invite,
+  ProductListQuery,
   SignInIdentity,
   SignInResolution,
   StaffActor,
@@ -101,6 +105,35 @@ export interface AdminService {
     input: WebsiteSettingsUpdate,
     expected?: { savedAt: string },
   ): Promise<AdminResult<AdminWebsiteSettings>>;
+
+  // Products (any Staff User). The reads take the actor too, though the sample
+  // arm has no use for it: the database arm (ticket 15) reads with Drizzle,
+  // which bypasses RLS, so it scopes each read by the Staff User in the app
+  // layer (coding standards §3).
+
+  /**
+   * The Products list: every Product, Coming Soon and hidden ones included,
+   * Live ones by units sold and then title, then Coming Soon by title. The
+   * filters combine: the search (title or short name, case-insensitive), the
+   * Exam (an unknown one is ignored) and Missing product links (Live Products
+   * with a Marketplace on its shop page).
+   */
+  listProductsForAdmin(actor: StaffActor, query: ProductListQuery): Promise<AdminProductList>;
+  /**
+   * One Product's row, whatever the list's filters, or null when it isn't in
+   * the catalogue: the selected Product, for the panel beside the list.
+   */
+  getProductRowForAdmin(actor: StaffActor, id: string): Promise<AdminProductRow | null>;
+  /**
+   * A single toggle, "Show on website" or "Available in app": it always saves,
+   * with no conflict check, and appends Staff Activity. A Product that's gone
+   * answers not-found. Clears the products tag.
+   */
+  setProductFlags(
+    actor: StaffActor,
+    id: string,
+    flags: ProductFlags,
+  ): Promise<AdminResult<AdminProductRow>>;
 }
 
 const impl: AdminService = mockImpl;
@@ -118,3 +151,6 @@ export const changeStaffRole = impl.changeStaffRole;
 export const removeStaff = impl.removeStaff;
 export const getSettingsForAdmin = impl.getSettingsForAdmin;
 export const updateWebsiteSettings = impl.updateWebsiteSettings;
+export const listProductsForAdmin = impl.listProductsForAdmin;
+export const getProductRowForAdmin = impl.getProductRowForAdmin;
+export const setProductFlags = impl.setProductFlags;

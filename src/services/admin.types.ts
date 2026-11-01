@@ -1,7 +1,15 @@
 // The Admin seam's types (CONVENTIONS §3). Every Admin read and write goes
 // through src/services/admin.ts; these are its inputs and outputs.
 
-import type { ShopStats, SocialLinks, WebsiteSettings } from "@/services/catalogue.types";
+import type {
+  Marketplace,
+  ProductFormat,
+  ProductPhoto,
+  ProductState,
+  ShopStats,
+  SocialLinks,
+  WebsiteSettings,
+} from "@/services/catalogue.types";
 
 export type StaffRole = "owner" | "editor";
 
@@ -116,4 +124,60 @@ export interface EditableWebsiteSettings {
 export interface AdminWebsiteSettings {
   values: EditableWebsiteSettings;
   stamp: RecordStamp;
+}
+
+// ── Products ────────────────────────────────────────────────────────────────
+
+/**
+ * Where a Product's store button for one Marketplace goes, as the Products
+ * list's S/L/T badges show it: its own Listing ("product", green), that
+ * Marketplace's shop page from Settings ("shop", amber), or nowhere, so the
+ * Website hides the button ("none"). A Coming Soon Product has no store
+ * buttons, so every Marketplace is "none".
+ */
+export type StoreLinkStatus = "product" | "shop" | "none";
+
+/** One row of the Products list. */
+export interface AdminProductRow {
+  id: string;
+  slug: string;
+  title: string;
+  shortName: string;
+  examCode: string;
+  format: ProductFormat;
+  state: ProductState;
+  /** Centavos. Null only for Coming Soon. */
+  priceFrom: number | null;
+  /** Centavos. Set when the Product is priced as a range. */
+  priceTo: number | null;
+  /** From the Shopee figures; null when it has none (Coming Soon). */
+  unitsSold: number | null;
+  /** The first photo, or null when it has none. */
+  cover: ProductPhoto | null;
+  storeLinks: Record<Marketplace, StoreLinkStatus>;
+  showOnWebsite: boolean;
+  availableInApp: boolean;
+  stamp: RecordStamp;
+}
+
+/** The Products list's filters, as its URL gives them. Each one is optional. */
+export interface ProductListQuery {
+  /** Matched case-insensitively against the title and the short name. */
+  q?: string;
+  /** An Exam code, in any case. An unknown one is ignored. */
+  exam?: string;
+  /** Live Products with at least one Marketplace on its shop page. */
+  missing?: boolean;
+}
+
+/** The Products list: the rows that match, and the filters as they were applied. */
+export interface AdminProductList {
+  /** Live Products by units sold, then by title; then Coming Soon, by title. */
+  rows: AdminProductRow[];
+  /** The filters applied: the search trimmed, an unknown Exam dropped. */
+  query: { q: string | null; exam: string | null; missing: boolean };
+  /** Every Exam code, in the catalogue's order, for the Exam chips. */
+  examCodes: string[];
+  /** How many Products the catalogue has, whatever the filters. */
+  total: number;
 }

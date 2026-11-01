@@ -11,7 +11,8 @@ import { getSampleStore, nextStamp, stampOf } from "@/services/mock/sample-store
 // edits the catalogue. In order, a write:
 //   1. checks the actor's Staff Role,
 //   2. validates its input with the area's zod schema,
-//   3. runs the conflict check against the stamp the editor opened with,
+//   3. answers not-found when the record is gone, then runs the conflict check
+//      against the stamp the editor opened with (single toggles send none),
 //   4. applies the change to a draft copy of the catalogue, and commits it only
 //      if the whole catalogue still validates, so no save can break the Website,
 //   5. appends one Staff Activity record, with the values before and after,
@@ -28,6 +29,8 @@ export interface CatalogueWrite<Schema extends z.ZodTypeAny, Snapshot, Value> {
   schema: Schema;
   /** The record's key for its stamp, e.g. "settings". */
   record: string;
+  /** Whether the record is still there; a write to one that isn't answers not-found. */
+  exists?: (catalogue: CatalogueSeed) => boolean;
   /** How Staff Activity names the change. */
   activity: { entity: string; entityId: string; action: string };
   /** The record's values, for Staff Activity's before and after. */
@@ -53,6 +56,9 @@ export function writeCatalogue<Schema extends z.ZodTypeAny, Snapshot, Value>(
   if (!parsed.success) return { ok: false, error: invalidInput(parsed.error) };
 
   const store = getSampleStore();
+  if (write.exists && !write.exists(store.catalogue)) {
+    return { ok: false, error: { kind: "not-found" } };
+  }
   const stamp = stampOf(store, write.record);
   if (expected && expected.savedAt !== stamp.savedAt) {
     return { ok: false, error: { kind: "conflict", ...stamp } };

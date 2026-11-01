@@ -37,7 +37,12 @@ const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
 const SCREENS = [
   ["Overview", OverviewPage, "/admin", "HOME"],
   ["Exam pages & promo", ExamPagesPage, "/admin/exam-pages", "WEBSITE"],
-  ["Products & store links", ProductsPage, "/admin/products", "WEBSITE"],
+  [
+    "Products & store links",
+    () => ProductsPage({ searchParams: Promise.resolve({}) }),
+    "/admin/products",
+    "WEBSITE",
+  ],
   ["Reviews & FAQs", ReviewsPage, "/admin/reviews", "WEBSITE"],
   ["Settings", SettingsPage, "/admin/settings", "SETTINGS"],
 ] as const;

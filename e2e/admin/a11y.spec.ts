@@ -91,6 +91,23 @@ test("no serious or critical accessibility violations on Settings showing field 
   await expectNoBlockingViolations(page);
 });
 
+test("no serious or critical accessibility violations on Products with a hidden, a selected and no matching row", async ({
+  page,
+}) => {
+  await signInAs(page, "editor", `${paths.admin.products}?product=prd-005`);
+  await expect(page).toHaveURL(/\/admin\/products\?product=prd-005$/, { timeout: 15_000 });
+  const hide = page.getByRole("switch", { name: "Show CE Formula Flash Cards on the website" });
+  await hide.click();
+  await expect(hide).toHaveAttribute("aria-checked", "false", { timeout: 15_000 });
+  await page.reload();
+  await expect(page.getByText("Hidden from the website")).toBeAttached({ timeout: 15_000 });
+  await expectNoBlockingViolations(page);
+
+  await page.goto(`${paths.admin.products}?exam=cpa&q=poster&missing=1`);
+  await expect(page.getByText("No products match.")).toBeVisible({ timeout: 15_000 });
+  await expectNoBlockingViolations(page);
+});
+
 /**
  * Waits for a dialog's open animation: mid fade-in it is partly transparent,
  * and axe would measure the blended colours.
@@ -143,6 +160,12 @@ test.describe("on a phone", () => {
     await expectNoBlockingViolations(page);
     await page.getByRole("button", { name: "Menu", exact: true }).click();
     await expect(page.getByRole("dialog", { name: "Menu" })).toBeVisible();
+    await expectNoBlockingViolations(page);
+  });
+
+  test("no serious or critical accessibility violations on Products", async ({ page }) => {
+    await signInAs(page, "editor", paths.admin.products);
+    await expect(page.getByRole("region", { name: "Products" })).toBeVisible({ timeout: 15_000 });
     await expectNoBlockingViolations(page);
   });
 });
