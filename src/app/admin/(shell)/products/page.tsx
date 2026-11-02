@@ -18,6 +18,7 @@ import {
 import {
   addProduct,
   countProductDelete,
+  createPhotoUpload,
   removeProduct,
   saveProduct,
   setProductFlag,
@@ -72,6 +73,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             remove: removeProduct,
             countDelete: countProductDelete,
             setFlag: setProductFlag,
+            createUpload: createPhotoUpload,
           }}
         />
       </div>

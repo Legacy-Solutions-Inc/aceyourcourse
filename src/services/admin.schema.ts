@@ -241,17 +241,27 @@ export type ProductFlagsInput = z.infer<typeof productFlagsInputSchema>;
 // pesos, the Shopee figures as three fields, Made for one per line (spec,
 // Phase 2 → Products; BUILD-MAP §3.3, Editor panel). The Server Actions check
 // only this shape; the seam parses it with every rule, so each arm refuses
-// the same input with the same messages, all of them at once. The photos and
-// the page address aren't here: the address is set when a Product is created,
-// and the photos are edited on their own (ticket 06). Rules that need the
-// catalogue (the Exam's Subjects, photos, Reviews) are the seam's.
+// the same input with the same messages, all of them at once. The page
+// address isn't here: it's set when a Product is created. The photos are in
+// order, the first the cover, each one a photo the Product has (its src) or a
+// new upload (its path from the upload seam). Rules that need the catalogue
+// (the Exam's Subjects, the photos, Reviews) are the seam's.
 
 /** The Website's limits for a search result's title and description (product-copy.ts). */
 export const SEO_TITLE_MAX = 60;
 export const SEO_DESCRIPTION_MAX = 160;
 
-/** What a Live Product with no photo is told: photos are added in ticket 06. */
-export const PHOTO_TO_GO_LIVE = "Add at least one photo to make it Live";
+/** What a Live Product with no photo is told. */
+export const PHOTO_TO_GO_LIVE = "A Live Product needs at least one photo.";
+
+/** What a save with a photo whose file hasn't arrived yet is told. */
+export const WAIT_FOR_UPLOADS = "Wait for uploads to finish.";
+
+/** What a photo that's neither the Product's nor a finished upload is told. */
+export const PHOTO_NOT_UPLOADED = "A PHOTO ISN’T UPLOADED · ADD IT AGAIN";
+
+/** The most photos a Product can have. */
+export const MAX_PRODUCT_PHOTOS = 20;
 
 const LISTING_MARKETPLACES = [
   "shopee",
@@ -276,6 +286,7 @@ const productFormFields = z.object({
   format: z.enum(PRODUCT_FORMATS, { errorMap: () => ({ message: "CHOOSE A FORMAT" }) }),
   size: formText(80),
   subjectCodes: z.array(formText(40)).max(30),
+  photos: z.array(formText(300)).max(MAX_PRODUCT_PHOTOS, `KEEP IT TO ${MAX_PRODUCT_PHOTOS} PHOTOS`),
   comingSoon: flag,
   deal: flag,
   priceFrom: formText(30),
@@ -428,6 +439,8 @@ function toProductInput(form: ProductForm) {
     format: form.format,
     size: form.size.trim(),
     subjectCodes: [...new Set(form.subjectCodes.map((code) => code.trim()).filter(Boolean))],
+    /** The photos' srcs and upload paths, in order; the seam resolves them. */
+    photos: [...new Set(form.photos.map((photo) => photo.trim()).filter(Boolean))],
     state: comingSoon ? ("coming-soon" as const) : ("live" as const),
     deal: form.deal,
     priceFrom: comingSoon ? null : centavosOf(form.priceFrom),

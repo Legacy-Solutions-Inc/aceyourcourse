@@ -10,7 +10,6 @@ import { ConflictNotice } from "@/components/admin/conflict-notice";
 import { SaveState } from "@/components/admin/save-state";
 import { TypedDeleteDialog } from "@/components/admin/typed-delete-dialog";
 import { useAdminForm } from "@/components/admin/use-admin-form";
-import { ProductImage } from "@/components/website/product-image";
 import type { AdminAction } from "@/lib/admin/action";
 import { productDeleteCopy } from "@/lib/admin/product-delete";
 import {
@@ -22,13 +21,13 @@ import {
 } from "@/lib/admin/product-form";
 import { productListHref } from "@/lib/admin/product-list";
 import { formatAsOfDate } from "@/lib/admin/time";
+import { photoUploadBlocker } from "@/lib/admin/photo-rules";
 import { productFormatLabel } from "@/lib/catalogue/format";
 import { variationLabel } from "@/lib/catalogue/price";
 import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
 import {
   type NewProductForm,
-  PHOTO_TO_GO_LIVE,
   type ProductForm,
   SEO_DESCRIPTION_MAX,
   SEO_TITLE_MAX,
@@ -41,8 +40,10 @@ import type {
   ProductDeletePreview,
 } from "@/services/admin.types";
 import { PRODUCT_FORMATS } from "@/services/catalogue.schema";
-import type { Exam, Marketplace, ProductPhoto } from "@/services/catalogue.types";
+import type { Exam, Marketplace } from "@/services/catalogue.types";
+import type { UploadTicket } from "@/services/uploads.types";
 
+import { PhotoStrip } from "./photo-strip";
 import { ProductFlagSwitch } from "./product-flag-switch";
 import { ChipsField, PanelSection, SelectField, TextField, ToggleRow } from "./product-fields";
 
@@ -52,8 +53,8 @@ import { ChipsField, PanelSection, SelectField, TextField, ToggleRow } from "./p
 // and "Available in app" on an existing Product: those are single toggles,
 // which save at once (spec, Phase 2 → Conflict check). Coming Soon hides the
 // sale fields, which a Coming Soon Product doesn't have. Blank text fields
-// show the text the Website generates in their place. Photos are shown here
-// and edited in ticket 06.
+// show the text the Website generates in their place. The photos save with
+// the rest, once their uploads have finished.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ProductEditorActions {
@@ -63,6 +64,8 @@ export interface ProductEditorActions {
   /** What deleting a Product takes with it, read as the dialog opens. */
   countDelete: AdminAction<ProductDeletePreview>;
   setFlag: AdminAction<AdminProductRow>;
+  /** A one-time upload URL for one photo. */
+  createUpload: AdminAction<UploadTicket>;
 }
 
 const SAVED = "✓ SAVED · LIVE ON THE SITE";
@@ -109,8 +112,16 @@ const STORES: { marketplace: Marketplace; label: string; placeholder: string }[]
 interface FieldsForm {
   values: ProductForm;
   change: (path: string, value: unknown) => void;
+  changeWith: (path: string, next: (current: unknown) => unknown) => void;
   fieldError: (path: string) => string | undefined;
 }
+
+/** Saving waits for the photos' uploads. */
+const uploadsBlocker = (values: ProductForm) => photoUploadBlocker(values.photos);
+
+/** Pure: the form's photos, from a value the form holds as unknown. */
+const photosIn = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((photo) => typeof photo === "string") : [];
 
 interface EditProductProps {
   opened: AdminProduct;
@@ -147,6 +158,7 @@ export function EditProduct({
     savedOnOpen,
     title: opened.product.shortName,
     invalidMessage: INVALID,
+    blocker: uploadsBlocker,
   });
   const { product } = opened;
 
@@ -175,7 +187,7 @@ export function EditProduct({
       <ProductFields
         form={form}
         exams={exams}
-        photos={product.photos}
+        createUpload={actions.createUpload}
         slug={product.slug}
         figuresAsOf={product.shopee?.asOf ?? null}
         flags={
@@ -240,6 +252,7 @@ export function NewProduct({ exams, actions, onAdded }: NewProductProps) {
     onSaved: onAdded,
     title: "New product",
     invalidMessage: INVALID,
+    blocker: uploadsBlocker,
   });
   const { values } = form;
 
@@ -249,7 +262,7 @@ export function NewProduct({ exams, actions, onAdded }: NewProductProps) {
       <ProductFields
         form={form}
         exams={exams}
-        photos={[]}
+        createUpload={actions.createUpload}
         slug={null}
         figuresAsOf={null}
         flags={FLAG_ROWS.map(({ flag, label, hint }) => (
@@ -297,7 +310,7 @@ function SaveRow({ saveLabel, form, extra }: SaveRowProps) {
 interface ProductFieldsProps {
   form: FieldsForm;
   exams: Exam[];
-  photos: ProductPhoto[];
+  createUpload: AdminAction<UploadTicket>;
   /** The page address, fixed once the Product is added; null for a new one. */
   slug: string | null;
   figuresAsOf: string | null;
@@ -306,8 +319,15 @@ interface ProductFieldsProps {
 }
 
 /** Every field but the flags' switches, in the mockup's order. */
-function ProductFields({ form, exams, photos, slug, figuresAsOf, flags }: ProductFieldsProps) {
-  const { values, change, fieldError } = form;
+function ProductFields({
+  form,
+  exams,
+  createUpload,
+  slug,
+  figuresAsOf,
+  flags,
+}: ProductFieldsProps) {
+  const { values, change, changeWith, fieldError } = form;
   const exam = exams.find((e) => e.code === values.examCode);
   const generated = generatedProductCopy(values, exam);
   const text = (path: TextPath) => ({
@@ -318,7 +338,12 @@ function ProductFields({ form, exams, photos, slug, figuresAsOf, flags }: Produc
 
   return (
     <>
-      <Photos photos={photos} />
+      <PhotoStrip
+        photos={values.photos}
+        onChange={(next) => changeWith("photos", (current) => next(photosIn(current)))}
+        createUpload={createUpload}
+        error={fieldError("photos")}
+      />
       <TextField label="FULL NAME" {...text("title")} />
       <div className="grid grid-cols-2 items-end gap-2.5">
         <TextField label="SHORT NAME · FOR CARDS" {...text("shortName")} />
@@ -467,48 +492,6 @@ function ProductFields({ form, exams, photos, slug, figuresAsOf, flags }: Produc
         {flags}
       </PanelSection>
     </>
-  );
-}
-
-/** PHOTOS · FIRST IS THE COVER (mockup 179–183). Editing them is ticket 06. */
-function Photos({ photos }: { photos: ProductPhoto[] }) {
-  const note =
-    photos.length === 0
-      ? PHOTO_TO_GO_LIVE
-      : `${photos.length} ${photos.length === 1 ? "photo" : "photos"}`;
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="font-mono text-xs font-medium text-muted-foreground">
-        PHOTOS · FIRST IS THE COVER
-      </span>
-      <div className="grid grid-cols-5 gap-1.5">
-        {photos.slice(0, 4).map((photo, index) => (
-          <span
-            key={photo.src}
-            className={cn(
-              "relative aspect-square overflow-hidden bg-ayc-sand",
-              index === 0 ? "border-2 border-ayc-blue" : "border",
-            )}
-          >
-            <ProductImage photo={photo} sizes="64px" />
-          </span>
-        ))}
-        <span
-          aria-hidden="true"
-          className="flex aspect-square items-center justify-center border-[1.5px] border-dashed text-lg font-bold text-muted-foreground"
-        >
-          +
-        </span>
-      </div>
-      <p
-        className={cn(
-          "text-xs",
-          photos.length === 0 ? "text-ayc-warning" : "text-muted-foreground",
-        )}
-      >
-        {note}
-      </p>
-    </div>
   );
 }
 

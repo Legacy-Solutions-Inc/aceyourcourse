@@ -43,5 +43,11 @@ export const paths = {
     settings: "/admin/settings",
     /** Development-only: POST resets the sample data; 404 unless the Admin runs on it. */
     resetSampleData: "/api/dev/sample-data/reset",
+    /**
+     * Development-only: an upload in the sample arm of the upload seam. PUT
+     * (with its one-time token) sends the file, GET serves it; 404 unless the
+     * Admin runs on sample data.
+     */
+    sampleUpload: (id: string) => `/api/dev/uploads/${id}`,
   },
 } as const;

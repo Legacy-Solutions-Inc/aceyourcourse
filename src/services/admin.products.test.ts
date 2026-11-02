@@ -402,6 +402,18 @@ describe.each(ADMIN_ARMS)("Admin seam: the Product editor ($name)", (arm) => {
   const save = async (id: string, changes: Partial<ProductForm>, actor = EDITOR) =>
     seam.updateProduct(actor, id, await formOf(id, changes), BOOT_STAMP);
 
+  /** Saves with the stamp the Product has now, as an editor opened after the last save does. */
+  async function saveFresh(id: string, changes: Partial<ProductForm>) {
+    const opened = await seam.getProductForAdmin(EDITOR, id);
+    if (!opened) throw new Error(`No Product ${id}`);
+    return seam.updateProduct(
+      EDITOR,
+      id,
+      { ...productFormValues(opened.product), ...changes },
+      { savedAt: opened.stamp.savedAt },
+    );
+  }
+
   /** "MT Notebook", a new Coming Soon Product for MT. */
   const MT_NOTEBOOK: NewProductForm = {
     ...newProductForm("MT"),
@@ -558,7 +570,11 @@ describe.each(ADMIN_ARMS)("Admin seam: the Product editor ($name)", (arm) => {
 
       expect(result.ok && result.value.product).toMatchObject({
         slug: POSTERS,
-        photos: before?.product.photos,
+        // The same photos, their alt text following the new name.
+        photos: before?.product.photos.map((photo, index, all) => ({
+          src: photo.src,
+          alt: `Renamed Posters, photo ${index + 1} of ${all.length}`,
+        })),
         showOnWebsite: false,
         availableInApp: true,
       });
@@ -888,8 +904,200 @@ describe.each(ADMIN_ARMS)("Admin seam: the Product editor ($name)", (arm) => {
       expect(fieldErrorsOf(result)).toEqual({
         kind: "invalid",
         fieldErrors: {},
-        formError: "Add at least one photo to make it Live",
+        formError: "A Live Product needs at least one photo.",
       });
+    });
+  });
+
+  describe("updateProduct and createProduct: photos", () => {
+    const CARDS = "prd-001";
+    const CARDS_TITLE = "Civil Engineering Formula Flash Cards";
+
+    /** The Product's photo srcs, in order, as saved. */
+    async function srcsOf(id: string) {
+      return (await seam.getProductForAdmin(EDITOR, id))?.product.photos.map((p) => p.src) ?? [];
+    }
+
+    it("saves the photos in their new order, the first as the cover, live on the Website", async () => {
+      const srcs = await srcsOf(CARDS);
+      const last = srcs.at(-1) ?? "";
+      const reordered = [last, ...srcs.slice(0, -1)];
+
+      const result = await save(CARDS, { photos: reordered });
+
+      expect(result.ok && result.value.product.photos.map((p) => p.src)).toEqual(reordered);
+      const page = await getProductBySlug("ce-formula-flash-cards");
+      expect(page?.photos[0]?.src).toBe(last);
+      const cards = await listProducts({});
+      expect(cards.items.find((p) => p.id === CARDS)?.photos[0]?.src).toBe(last);
+    });
+
+    it("adds an uploaded photo at its public URL, and makes it the cover", async () => {
+      const upload = await arm.uploadPhoto();
+      const srcs = await srcsOf(CARDS);
+
+      const result = await save(CARDS, { photos: [upload.path, ...srcs] });
+
+      expect(result).toMatchObject({ ok: true, tags: ["catalogue:products"] });
+      expect(await srcsOf(CARDS)).toEqual([upload.publicUrl, ...srcs]);
+      expect((await getProductBySlug("ce-formula-flash-cards"))?.photos[0]).toEqual({
+        src: upload.publicUrl,
+        alt: `${CARDS_TITLE}, photo 1 of 9`,
+      });
+    });
+
+    it("generates every photo's alt text from the full name: “{name}, photo N of M”", async () => {
+      const srcs = await srcsOf(CARDS);
+      const result = await save(CARDS, { title: "CE Flash Cards 2027", photos: srcs.slice(0, 3) });
+
+      expect(result.ok && result.value.product.photos.map((p) => p.alt)).toEqual([
+        "CE Flash Cards 2027, photo 1 of 3",
+        "CE Flash Cards 2027, photo 2 of 3",
+        "CE Flash Cards 2027, photo 3 of 3",
+      ]);
+    });
+
+    it("removes a photo, and saves a repeated one once", async () => {
+      const [first, second] = await srcsOf("prd-005");
+      if (!first || !second) throw new Error("The Posters have two photos");
+
+      expect((await save("prd-005", { photos: [second, second] })).ok).toBe(true);
+      expect(await srcsOf("prd-005")).toEqual([second]);
+    });
+
+    it("lets a Coming Soon Product have photos, and none", async () => {
+      const upload = await arm.uploadPhoto();
+      expect((await save("prd-009", { photos: [upload.path] })).ok).toBe(true);
+      expect((await saveFresh("prd-009", { photos: [] })).ok).toBe(true);
+    });
+
+    async function expectPhotosUnchanged(id: string, srcs: string[]) {
+      expect(await srcsOf(id)).toEqual(srcs);
+      expect(await arm.staffActivity()).toEqual([]);
+    }
+
+    it("refuses removing the last photo of a Live Product", async () => {
+      const srcs = await srcsOf("prd-007");
+
+      const result = await save("prd-007", { photos: [] });
+
+      expect(fieldErrorsOf(result)).toEqual({
+        kind: "invalid",
+        fieldErrors: {},
+        formError: "A Live Product needs at least one photo.",
+      });
+      await expectPhotosUnchanged("prd-007", srcs);
+    });
+
+    it("refuses an upload whose file never arrived: Wait for uploads to finish.", async () => {
+      const srcs = await srcsOf(CARDS);
+      const waiting = await arm.uploadPhoto({ send: false });
+
+      const result = await save(CARDS, { photos: [...srcs, waiting.path] });
+
+      expect(fieldErrorsOf(result)).toEqual({
+        kind: "invalid",
+        fieldErrors: {},
+        formError: "Wait for uploads to finish.",
+      });
+      await expectPhotosUnchanged(CARDS, srcs);
+    });
+
+    it.each([
+      ["an unknown upload path", "uploads/no-such-upload"],
+      ["another Product's photo", "/products/ultimate-ce-posters-2-0/1.webp"],
+      ["a path of the site's", "/admin/products"],
+      ["another site's image", "https://cf.shopee.ph/file/cover.jpg"],
+    ])("refuses %s, with the photos' message", async (_, photo) => {
+      const srcs = await srcsOf(CARDS);
+
+      const result = await save(CARDS, { photos: [...srcs, photo] });
+
+      expect(fieldErrorsOf(result)).toEqual({
+        kind: "invalid",
+        fieldErrors: { photos: ["A PHOTO ISN’T UPLOADED · ADD IT AGAIN"] },
+      });
+      await expectPhotosUnchanged(CARDS, srcs);
+    });
+
+    it("refuses an upload made for something else, such as a share image", async () => {
+      const share = await arm.uploadPhoto({ purpose: "share-image" });
+
+      const result = await save(CARDS, { photos: [share.path] });
+
+      expect(fieldErrorsOf(result)?.fieldErrors).toEqual({
+        photos: ["A PHOTO ISN’T UPLOADED · ADD IT AGAIN"],
+      });
+    });
+
+    it("refuses more than 20 photos", async () => {
+      const uploads = await Promise.all(Array.from({ length: 21 }, () => arm.uploadPhoto()));
+
+      const result = await save(CARDS, { photos: uploads.map((upload) => upload.path) });
+
+      expect(fieldErrorsOf(result)?.fieldErrors).toEqual({ photos: ["KEEP IT TO 20 PHOTOS"] });
+    });
+
+    it("refuses a stale save with new photos as a conflict, and the upload still saves after", async () => {
+      const srcs = await srcsOf(CARDS);
+      clockAt(at(MINUTE));
+      await save(CARDS, { priceFrom: "1,250" }, OWNER);
+      const upload = await arm.uploadPhoto();
+
+      const stale = await save(CARDS, { photos: [upload.path, ...srcs] });
+
+      expect(stale).toEqual({
+        ok: false,
+        error: { kind: "conflict", savedBy: OWNER.name, savedAt: at(MINUTE).toISOString() },
+      });
+      expect(await srcsOf(CARDS)).toEqual(srcs);
+
+      const fresh = await saveFresh(CARDS, { photos: [upload.path, ...srcs] });
+      expect(fresh.ok && fresh.value.product.photos[0]?.src).toBe(upload.publicUrl);
+    });
+
+    it("records the photos before and after in Staff Activity", async () => {
+      const upload = await arm.uploadPhoto();
+      const before = (await seam.getProductForAdmin(EDITOR, "prd-007"))?.product.photos;
+
+      await save("prd-007", { photos: [upload.path] });
+
+      const [record] = await arm.staffActivity();
+      expect(record).toMatchObject({
+        before: { photos: before },
+        after: {
+          photos: [{ src: upload.publicUrl, alt: expect.stringMatching(/, photo 1 of 1$/) }],
+        },
+      });
+    });
+
+    it("adds a new Live Product with an uploaded photo as its cover", async () => {
+      const upload = await arm.uploadPhoto();
+
+      const result = await seam.createProduct(EDITOR, {
+        ...MT_NOTEBOOK,
+        comingSoon: false,
+        priceFrom: "699",
+        photos: [upload.path],
+      });
+
+      expect(result.ok && result.value.product).toMatchObject({
+        state: "live",
+        photos: [{ src: upload.publicUrl, alt: "MT Notebook, photo 1 of 1" }],
+      });
+      expect((await getProductBySlug("mt-notebook"))?.photos[0]?.src).toBe(upload.publicUrl);
+    });
+
+    it("refuses a new Product's photo that isn't an upload, adding nothing", async () => {
+      const result = await seam.createProduct(EDITOR, {
+        ...MT_NOTEBOOK,
+        photos: ["/products/ce-formula-flash-cards/1.webp"],
+      });
+
+      expect(fieldErrorsOf(result)?.fieldErrors).toEqual({
+        photos: ["A PHOTO ISN’T UPLOADED · ADD IT AGAIN"],
+      });
+      expect(await getProductBySlug("mt-notebook")).toBeNull();
     });
   });
 
@@ -969,7 +1177,7 @@ describe.each(ADMIN_ARMS)("Admin seam: the Product editor ($name)", (arm) => {
       ]);
     });
 
-    it("refuses a new Live Product: it has no photo yet", async () => {
+    it("refuses a new Live Product with no photo", async () => {
       const result = await seam.createProduct(EDITOR, {
         ...MT_NOTEBOOK,
         comingSoon: false,
@@ -981,7 +1189,7 @@ describe.each(ADMIN_ARMS)("Admin seam: the Product editor ($name)", (arm) => {
         error: {
           kind: "invalid",
           fieldErrors: {},
-          formError: "Add at least one photo to make it Live",
+          formError: "A Live Product needs at least one photo.",
         },
       });
       expect(await arm.staffActivity()).toEqual([]);

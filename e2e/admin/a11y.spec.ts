@@ -1,3 +1,6 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
@@ -174,6 +177,33 @@ test("no serious or critical accessibility violations on the Product editor, its
 
   await page.goto(`${paths.admin.products}?product=new`);
   await expect(page.getByRole("form", { name: "New product" })).toBeVisible({ timeout: 15_000 });
+  await expectNoBlockingViolations(page);
+});
+
+test("no serious or critical accessibility violations on the photo strip with uploads, a failure and a refusal", async ({
+  page,
+}) => {
+  await signInAs(page, "editor", `${paths.admin.products}?product=prd-005`);
+  const editor = page.getByRole("complementary", { name: "Product editor" });
+  await expect(editor.getByRole("form")).toBeVisible({ timeout: 15_000 });
+  let puts = 0;
+  await page.route("**/api/dev/uploads/**", (route) => {
+    if (route.request().method() !== "PUT") return route.continue();
+    puts += 1;
+    return puts === 1 ? route.abort("failed") : route.continue();
+  });
+  const photo = await readFile(
+    path.join(import.meta.dirname, "..", "fixtures", "product-photo.png"),
+  );
+
+  await editor.getByLabel("Add photos").setInputFiles([
+    { name: "front.png", mimeType: "image/png", buffer: photo },
+    { name: "back.png", mimeType: "image/png", buffer: photo },
+    { name: "spinner.gif", mimeType: "image/gif", buffer: Buffer.from("GIF89a") },
+  ]);
+  await expect(editor.getByText(/^Upload failed ·/)).toBeVisible({ timeout: 15_000 });
+  await expect(editor.getByText("UNSAVED")).toBeVisible();
+  await expect(editor.getByRole("alert")).toBeVisible();
   await expectNoBlockingViolations(page);
 });
 

@@ -11,6 +11,7 @@ import type {
   ProductDeletePreview,
 } from "@/services/admin.types";
 import type { Product } from "@/services/catalogue.types";
+import type { UploadTicket } from "@/services/uploads.types";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 
 import { EditProduct, NewProduct, type ProductEditorActions } from "./product-editor";
@@ -56,6 +57,7 @@ function actionsWith(actions: Partial<ProductEditorActions> = {}): ProductEditor
     remove: answering<DeletedProduct>(),
     countDelete: vi.fn(async () => ({ status: "saved" as const, value: PREVIEW })),
     setFlag: answering<AdminProductRow>(),
+    createUpload: answering<UploadTicket>(),
     ...actions,
   };
 }
@@ -101,7 +103,7 @@ describe("EditProduct", () => {
     expect(
       screen.getByText("PAGE ADDRESS · aceyourcourse.ph/products/ultimate-ce-posters-2-0"),
     ).toBeInTheDocument();
-    expect(screen.getByText("2 photos")).toBeInTheDocument();
+    expect(screen.getByText("2 photos · drag to reorder")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /View page ↗/ })).toHaveAttribute(
       "href",
       "/products/ultimate-ce-posters-2-0",
@@ -464,11 +466,13 @@ describe("EditProduct: Delete", () => {
 });
 
 describe("NewProduct", () => {
-  it("opens blank for the first Exam, saying a photo is needed to go Live", () => {
+  it("opens blank for the first Exam, saying what photos work best", () => {
     render(<NewProduct exams={EXAMS} actions={actionsWith()} onAdded={() => {}} />);
 
     expect(screen.getByText("NEW PRODUCT")).toBeInTheDocument();
-    expect(screen.getByText("Add at least one photo to make it Live")).toBeInTheDocument();
+    expect(
+      screen.getByText("Add photos. Square images work best, at least 1000 × 1000."),
+    ).toBeInTheDocument();
     expect(
       screen.getByText("PAGE ADDRESS · SET FROM THE FULL NAME WHEN YOU ADD IT"),
     ).toBeInTheDocument();

@@ -53,6 +53,12 @@ export interface AdminFormOptions<Values extends FormValues, Saved> {
   title: string;
   /** The save-state line for a refused input, e.g. "FIX THE LINKS MARKED IN RED". */
   invalidMessage: string;
+  /**
+   * Why the form's values can't be sent yet, e.g. "Wait for uploads to
+   * finish.", or null when they can. Save then shows it instead of sending,
+   * for as long as it holds.
+   */
+  blocker?: (values: Values) => string | null;
 }
 
 const IDLE = { status: "idle" } as const;
@@ -85,8 +91,11 @@ export function useAdminForm<Values extends FormValues, Saved>({
   savedOnOpen,
   title,
   invalidMessage,
+  blocker,
 }: AdminFormOptions<Values, Saved>) {
   const [values, setValues] = useState(initialValues);
+  // Save was pressed while the blocker held; it shows until the next Save.
+  const [blocked, setBlocked] = useState(false);
   const [lastSaved, setLastSaved] = useState(initialValues);
   // The fields edited since the last answer: their messages are out of date.
   const [edited, setEdited] = useState<ReadonlySet<string>>(() => new Set());
@@ -122,28 +131,38 @@ export function useAdminForm<Values extends FormValues, Saved>({
   const answered = edited.size === 0;
   const refusal: AdminError | null = state.status === "refused" ? state.error : null;
 
+  const blockedMessage = blocked ? (blocker?.(values) ?? null) : null;
+
   let status: SaveStatus;
   if (pending) status = "saving";
+  else if (blockedMessage) status = "error";
   else if (answered && (state.status === "refused" || state.status === "failed")) status = "error";
   else if (dirty) status = "unsaved";
   else if (answered && state.status === "saved") status = "saved";
   else status = "up-to-date";
 
-  function change(path: string, value: unknown) {
-    setValues((current) => withValueAt(current, path, value));
+  /** Sets the field at `path` from its current value, for changes that land later, like uploads. */
+  function changeWith(path: string, next: (current: unknown) => unknown) {
+    setValues((current) => withValueAt(current, path, next(valueAt(current, path))));
     setEdited((current) => new Set(current).add(path));
+  }
+
+  function change(path: string, value: unknown) {
+    changeWith(path, () => value);
   }
 
   return {
     values,
     status,
-    errorMessage: status === "error" ? errorLine(state, invalidMessage) : undefined,
+    errorMessage:
+      status !== "error" ? undefined : (blockedMessage ?? errorLine(state, invalidMessage)),
     /** The newer save that refused this one, while the form shows it. */
     conflict: refusal?.kind === "conflict" ? refusal : null,
     pending,
     /** Whether Save can be pressed: not while this form, or one it shares a stamp with, is saving. */
     canSave: !pending && !busy,
     change,
+    changeWith,
     /**
      * The field's message from the last save, until the field, or a list it's
      * in ("variations" for "variations.1.price"), is edited.
@@ -170,6 +189,9 @@ export function useAdminForm<Values extends FormValues, Saved>({
       onSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         if (pending || busy) return;
+        const blockedBy = blocker?.(values) ?? null;
+        setBlocked(blockedBy !== null);
+        if (blockedBy !== null) return;
         onSaving?.(true);
         setEdited(new Set());
         const submission = { input: values, expected: { savedAt } };

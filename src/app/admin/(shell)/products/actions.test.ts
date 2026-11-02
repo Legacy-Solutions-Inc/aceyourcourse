@@ -8,6 +8,7 @@ import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import {
   addProduct,
   countProductDelete,
+  createPhotoUpload,
   removeProduct,
   saveProduct,
   setProductFlag,
@@ -263,5 +264,66 @@ describe("Products actions: the Product editor", () => {
       saveProduct(IDLE, { input: formOf("prd-001"), expected: BOOT_STAMP() }),
     ).rejects.toThrow("NEXT_REDIRECT /admin/denied?reason=not-staff");
     expect(product("prd-005")).toBeDefined();
+  });
+});
+
+describe("Products actions: createPhotoUpload", () => {
+  beforeEach(() => {
+    jar.clear();
+    resetSampleStore();
+  });
+
+  const uploads = () => Object.values(getSampleStore().uploads);
+
+  it("gives an Editor a one-time URL for a Product photo", async () => {
+    signInAs("content@aceyourcourse.ph");
+
+    const state = await createPhotoUpload(IDLE, {
+      input: { contentType: "image/jpeg", size: 2048 },
+    });
+
+    expect(state).toEqual({
+      status: "saved",
+      value: {
+        uploadUrl: expect.stringMatching(/^\/api\/dev\/uploads\/[\w-]+\?token=[\w-]+$/),
+        path: expect.stringMatching(/^uploads\//),
+        publicUrl: expect.stringMatching(/^\/api\/dev\/uploads\//),
+      },
+    });
+    expect(uploads()).toMatchObject([
+      { purpose: "product-photo", contentType: "image/jpeg", size: 2048, bytes: null },
+    ]);
+  });
+
+  it("refuses a GIF or a file over 10 MB, making no upload", async () => {
+    signInAs("content@aceyourcourse.ph");
+
+    expect(
+      await createPhotoUpload(IDLE, { input: { contentType: "image/gif", size: 2048 } }),
+    ).toEqual({
+      status: "refused",
+      error: { kind: "invalid", fieldErrors: { contentType: ["USE A JPEG, PNG OR WEBP IMAGE"] } },
+    });
+    expect(
+      await createPhotoUpload(IDLE, {
+        input: { contentType: "image/png", size: 12 * 1024 * 1024 },
+      }),
+    ).toEqual({
+      status: "refused",
+      error: { kind: "invalid", fieldErrors: { size: ["KEEP EACH PHOTO TO 10 MB"] } },
+    });
+    expect(uploads()).toEqual([]);
+  });
+
+  it("sends a signed-out caller to sign-in, and a User who isn't Staff to the 403 screen", async () => {
+    const input = { contentType: "image/png", size: 2048 };
+    await expect(createPhotoUpload(IDLE, { input })).rejects.toThrow(
+      "NEXT_REDIRECT /admin/sign-in",
+    );
+    signInAs("juan.delacruz@gmail.com");
+    await expect(createPhotoUpload(IDLE, { input })).rejects.toThrow(
+      "NEXT_REDIRECT /admin/denied?reason=not-staff",
+    );
+    expect(uploads()).toEqual([]);
   });
 });

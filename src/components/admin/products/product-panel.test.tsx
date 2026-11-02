@@ -35,7 +35,14 @@ describe("ProductPanel", () => {
       deletePreview: null,
       exams: CATALOGUE_SEED.exams,
       listQuery: { q: null, exam: null, missing: false },
-      actions: { save: unused, add, remove: unused, countDelete: unused, setFlag: unused },
+      actions: {
+        save: unused,
+        add,
+        remove: unused,
+        countDelete: unused,
+        setFlag: unused,
+        createUpload: unused,
+      },
     };
     const user = userEvent.setup();
     const { rerender } = render(<ProductPanel selected="new" opened={null} {...props} />);
@@ -77,6 +84,7 @@ describe("ProductPanel", () => {
           remove: unused,
           countDelete: unused,
           setFlag: unused,
+          createUpload: unused,
         }}
       />,
     );

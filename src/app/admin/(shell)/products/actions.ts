@@ -14,6 +14,8 @@ import {
   productIdInputSchema,
   saveProductInputSchema,
 } from "@/services/admin.schema";
+import { createUpload } from "@/services/uploads";
+import { uploadRequestSchema } from "@/services/uploads.types";
 
 // The Products screen's Server Actions, for any Staff User. Each one checks
 // the input's shape; the seam checks every Product rule, so the form is told
@@ -28,7 +30,7 @@ export const setProductFlag = adminAction(
   async (actor, { id, ...flags }) => setProductFlags(actor, id, flags),
 );
 
-/** "Add product": a new Product, Coming Soon until it has photos (ticket 06). */
+/** "Add product": a new Product, with the photos uploaded for it. */
 export const addProduct = adminAction(
   { role: "staff", schema: addProductInputSchema },
   createProduct,
@@ -58,4 +60,13 @@ export const countProductDelete = adminAction(
 export const removeProduct = adminAction(
   { role: "staff", schema: productIdInputSchema },
   async (actor, { id }) => deleteProduct(actor, id),
+);
+
+/**
+ * A one-time upload URL for one Product photo: a JPEG, PNG or WebP of up to
+ * 10 MB. The browser sends the file there; "Save product" records its path.
+ */
+export const createPhotoUpload = adminAction(
+  { role: "staff", schema: uploadRequestSchema.omit({ purpose: true }) },
+  async (actor, request) => createUpload(actor, { purpose: "product-photo", ...request }),
 );

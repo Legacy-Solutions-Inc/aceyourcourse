@@ -8,6 +8,7 @@ import type {
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { sampleStaff } from "@/services/mock/staff";
+import type { UploadContentType, UploadRequest } from "@/services/uploads.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The Admin's Stage A sample data (CONVENTIONS §3): one editable in-memory copy,
@@ -20,6 +21,22 @@ import { sampleStaff } from "@/services/mock/staff";
 // resetSampleStore(), with an edited seed when they need one, rather than
 // reloading modules.
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * One upload in the sample arm of the upload seam (uploads.mock.ts): its
+ * one-time URL's token, and the file once the browser has sent it. Uploads no
+ * save records stay until the next reset (spec: orphans are fine in Stage A).
+ */
+export interface SampleUpload {
+  id: string;
+  purpose: UploadRequest["purpose"];
+  contentType: UploadContentType;
+  /** The size the browser declared, in bytes; the file sent must match it. */
+  size: number;
+  token: string;
+  /** The file, once sent. Null until then. */
+  bytes: Uint8Array | null;
+}
 
 export interface SampleStore {
   /** Changes on boot and on every reset, so caches can't outlive the data. */
@@ -34,6 +51,8 @@ export interface SampleStore {
   invites: Invite[];
   deniedSignIns: DeniedSignIn[];
   staffActivity: StaffActivity[];
+  /** The upload seam's files, by upload id. */
+  uploads: Record<string, SampleUpload>;
 }
 
 const STORE = Symbol.for("aceyourcourse.admin.sample-store");
@@ -52,6 +71,7 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     ...sampleStaff(now),
     deniedSignIns: [],
     staffActivity: [],
+    uploads: {},
   };
 }
 

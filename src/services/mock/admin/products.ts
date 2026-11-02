@@ -26,10 +26,17 @@ import type {
   StoreLinkStatus,
 } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
-import type { Exam, Marketplace, Product, ShopeeFigures } from "@/services/catalogue.types";
+import type {
+  Exam,
+  Marketplace,
+  Product,
+  ProductPhoto,
+  ShopeeFigures,
+} from "@/services/catalogue.types";
 import { CATALOGUE_TAGS } from "@/services/catalogue.tags";
 import { getSampleStore, stampOf } from "@/services/mock/sample-store";
 
+import { resolveProductPhotos } from "./photos";
 import { writeCatalogue } from "./write";
 
 // The sample arm of the Admin seam's Products area: the Products list, with
@@ -226,11 +233,17 @@ function productRules(
       formError: `Coming Soon Products can’t have Reviews. Delete or move its ${pluralReviews(reviews)} first.`,
     };
   }
-  if (input.state === "live" && (existing?.photos.length ?? 0) === 0) {
+  const photos = photosAsSaved(input, existing);
+  if (!photos.ok) return photos.error;
+  if (input.state === "live" && photos.photos.length === 0) {
     return { kind: "invalid", fieldErrors: {}, formError: PHOTO_TO_GO_LIVE };
   }
   return null;
 }
+
+/** The photos a save gives the Product (photos.ts), from those it has now. */
+const photosAsSaved = (input: ProductInput, existing: Product | undefined) =>
+  resolveProductPhotos(input.photos, existing?.photos ?? [], input.title);
 
 const sameFigures = (a: ShopeeFigures | null, b: ProductInput["shopee"]) =>
   a !== null &&
@@ -253,11 +266,17 @@ function figuresAsSaved(
   return { ...figures, asOf: manilaDate(now) };
 }
 
-/** Pure: the editor's fields applied to a Product, leaving its id, address, photos and toggles. */
+/**
+ * The editor's fields applied to a Product, leaving its id, address and
+ * toggles. Called once productRules has passed, so its photos resolve.
+ */
 function withFields(product: Product, input: ProductInput, now: Date): Product {
+  const photos = photosAsSaved(input, product);
+  if (!photos.ok) throw new Error(`Product ${product.id}'s photos changed during its own save`);
   return {
     ...product,
     ...input,
+    photos: photos.photos satisfies ProductPhoto[],
     shopee: figuresAsSaved(product.shopee, input.shopee, now),
   };
 }
@@ -301,8 +320,9 @@ export async function createProduct(
           fields.title,
           draft.products.map((p) => p.slug),
         ),
-        photos: [],
         ...fields,
+        // The photos and figures as saved are set by withFields.
+        photos: [],
         shopee: null,
       };
       draft.products.push(withFields(blank, fields, now));

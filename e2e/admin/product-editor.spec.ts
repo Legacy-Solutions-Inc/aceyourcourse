@@ -152,7 +152,9 @@ test("a new Coming Soon Product saves with no price, at a fixed address, in the 
   page,
 }) => {
   await openEditor(page, "new");
-  await expect(editor(page).getByText("Add at least one photo to make it Live")).toBeVisible();
+  await expect(
+    editor(page).getByText("Add photos. Square images work best, at least 1000 × 1000."),
+  ).toBeVisible();
 
   await editor(page).getByRole("combobox", { name: "EXAM" }).selectOption({ label: "MT · MTLE" });
   await field(page, "FULL NAME").fill("MT Notebook");
@@ -160,10 +162,10 @@ test("a new Coming Soon Product saves with no price, at a fixed address, in the 
   await field(page, "SIZE & PAPER").fill("A5 · 100 gsm");
   await editor(page).getByRole("button", { name: "HEMA" }).click();
 
-  // Live needs a photo, which can't be added until ticket 06.
+  // Live needs a photo (product-photos.spec.ts adds one).
   await field(page, "PRICE FROM").fill("699");
   await editor(page).getByRole("button", { name: "Add product" }).click();
-  await expect(saveState(page)).toHaveText("Add at least one photo to make it Live");
+  await expect(saveState(page)).toHaveText("A Live Product needs at least one photo.");
 
   await editor(page).getByRole("switch", { name: "Coming Soon" }).click();
   await expect(field(page, "PRICE FROM")).toHaveCount(0);

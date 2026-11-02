@@ -140,7 +140,12 @@ export interface AdminService {
   // (admin.schema.ts) and refuses, with the field's message, a Subject that
   // isn't on the Product's Exam, a Live Product with no photo, and a Coming
   // Soon one with Reviews. Saving changed Shopee figures sets their "as of"
-  // date to today in Manila. Each one appends one Staff Activity record and
+  // date to today in Manila. The photos are saved in the form's order, the
+  // first the cover: each one the Product's own or a finished upload's path
+  // from the upload seam (src/services/uploads.ts), which becomes its public
+  // URL. Any other photo is refused, and an upload whose file hasn't arrived
+  // is refused with "Wait for uploads to finish." Every photo's alt text is
+  // generated: "{full name}, photo N of M". Each one appends one Staff Activity record and
   // clears the tags of what it changed, so the Website shows it on its next
   // load.
 
@@ -149,14 +154,13 @@ export interface AdminService {
   /** One Product as its editor opens it, or null when it isn't in the catalogue. */
   getProductForAdmin(actor: StaffActor, id: string): Promise<AdminProduct | null>;
   /**
-   * Adds a Product, with no photos yet, so it can only be Coming Soon until
-   * photos can be added (ticket 06). Its page address is made from its name,
+   * Adds a Product with its photos. Its page address is made from its name,
    * unique with -2, -3…, and never changes after.
    */
   createProduct(actor: StaffActor, input: NewProductForm): Promise<AdminResult<AdminProduct>>;
   /**
-   * Saves a Product's fields, with the conflict check against the stamp its
-   * editor opened with. Its page address, photos and the two single toggles
+   * Saves a Product's fields and photos, with the conflict check against the
+   * stamp its editor opened with. Its page address and the two single toggles
    * ("Show on website", "Available in app") stay as they are.
    */
   updateProduct(

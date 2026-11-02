@@ -59,6 +59,7 @@ describe("productFormValues", () => {
       format: "posters",
       size: "A3",
       subjectCodes: ["MSTC", "HPGE", "PSAD"],
+      photos: ["/products/ultimate-ce-posters-2-0/1.webp"],
       comingSoon: false,
       deal: true,
       priceFrom: "400",

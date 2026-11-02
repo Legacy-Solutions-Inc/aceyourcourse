@@ -11,7 +11,8 @@ import type { Exam, Product } from "@/services/catalogue.types";
 
 // The Product editor's values (BUILD-MAP §3.3, Editor panel): a Product's
 // fields as its form holds them, and back through the seam's schema
-// (admin.schema.ts). Prices are written in pesos, "Made for" one per line.
+// (admin.schema.ts). Prices are written in pesos, "Made for" one per line,
+// and the photos as their srcs, in order.
 
 const figureText = (value: number | undefined) => (value === undefined ? "" : String(value));
 
@@ -25,6 +26,7 @@ export function productFormValues(product: Product): ProductForm {
     format: product.format,
     size: product.size,
     subjectCodes: [...product.subjectCodes],
+    photos: product.photos.map((photo) => photo.src),
     comingSoon: product.state === "coming-soon",
     deal: product.deal,
     priceFrom: pesoText(product.priceFrom),
@@ -60,6 +62,7 @@ export function newProductForm(examCode: string): NewProductForm {
     format: "flash-cards",
     size: "",
     subjectCodes: [],
+    photos: [],
     comingSoon: false,
     deal: false,
     priceFrom: "",
