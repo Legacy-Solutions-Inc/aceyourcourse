@@ -1,8 +1,10 @@
 import { z } from "zod";
 
+import { parsePeso } from "@/lib/admin/peso";
 import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
+import { variationLabel } from "@/lib/catalogue/price";
 import type { AdminError, RequiredRole, StaffActor } from "@/services/admin.types";
-import { httpsUrl } from "@/services/catalogue.schema";
+import { httpsUrl, PRODUCT_FORMATS } from "@/services/catalogue.schema";
 import type { Marketplace } from "@/services/catalogue.types";
 
 // The Admin seam's zod input schemas (CONVENTIONS §3), shared by the seam's
@@ -121,12 +123,19 @@ export const contactSettingsSchema = z.object({
   contactEmail: z.string({ invalid_type_error: EMAIL, required_error: EMAIL }).trim().email(EMAIL),
 });
 
+/** What a link on the wrong host is told, for each Marketplace's shop pages and Listings. */
+const MARKETPLACE_LINK: Record<Marketplace, string> = {
+  shopee: "SHOULD BE A SHOPEE.PH LINK",
+  lazada: "SHOULD BE A LAZADA.COM.PH LINK",
+  tiktok: "SHOULD BE A TIKTOK LINK",
+};
+
 /** Each Marketplace's shop page and the social profiles. An empty one is hidden. */
 export const linkSettingsSchema = z.object({
   shopLinks: z.object({
-    shopee: shopLink("shopee", "SHOULD BE A SHOPEE.PH LINK"),
-    lazada: shopLink("lazada", "SHOULD BE A LAZADA.COM.PH LINK"),
-    tiktok: shopLink("tiktok", "SHOULD BE A TIKTOK LINK"),
+    shopee: shopLink("shopee", MARKETPLACE_LINK.shopee),
+    lazada: shopLink("lazada", MARKETPLACE_LINK.lazada),
+    tiktok: shopLink("tiktok", MARKETPLACE_LINK.tiktok),
   }),
   socialLinks: z.object({
     tiktok: linkOn(isTikTokProfile, "SHOULD LOOK LIKE TIKTOK.COM/@NAME"),
@@ -226,3 +235,249 @@ export const productFlagsInputSchema = productFlagFields
   .refine(hasAFlag, "NOTHING TO SAVE");
 
 export type ProductFlagsInput = z.infer<typeof productFlagsInputSchema>;
+
+// ── The Product editor ──────────────────────────────────────────────────────
+// A Product's fields as the editor's form holds them: text as typed, prices in
+// pesos, the Shopee figures as three fields, Made for one per line (spec,
+// Phase 2 → Products; BUILD-MAP §3.3, Editor panel). The Server Actions check
+// only this shape; the seam parses it with every rule, so each arm refuses
+// the same input with the same messages, all of them at once. The photos and
+// the page address aren't here: the address is set when a Product is created,
+// and the photos are edited on their own (ticket 06). Rules that need the
+// catalogue (the Exam's Subjects, photos, Reviews) are the seam's.
+
+/** The Website's limits for a search result's title and description (product-copy.ts). */
+export const SEO_TITLE_MAX = 60;
+export const SEO_DESCRIPTION_MAX = 160;
+
+/** What a Live Product with no photo is told: photos are added in ticket 06. */
+export const PHOTO_TO_GO_LIVE = "Add at least one photo to make it Live";
+
+const LISTING_MARKETPLACES = [
+  "shopee",
+  "lazada",
+  "tiktok",
+] as const satisfies readonly Marketplace[];
+
+const NAME_AND_PRICE = "ADD A NAME AND PRICE TO SAVE";
+const NAME_ONLY = "ADD A NAME TO SAVE";
+const SHOPEE_FIGURES = "Fill in all three Shopee figures, or none.";
+
+const formText = (max: number) =>
+  z
+    .string({ invalid_type_error: "SHOULD BE TEXT", required_error: "SHOULD BE TEXT" })
+    .max(max, `KEEP IT TO ${max} CHARACTERS`);
+
+const productFormFields = z.object({
+  title: formText(120),
+  shortName: formText(60),
+  edition: formText(40),
+  examCode: formText(10),
+  format: z.enum(PRODUCT_FORMATS, { errorMap: () => ({ message: "CHOOSE A FORMAT" }) }),
+  size: formText(80),
+  subjectCodes: z.array(formText(40)).max(30),
+  comingSoon: flag,
+  deal: flag,
+  priceFrom: formText(30),
+  priceTo: formText(30),
+  variations: z.array(z.object({ name: formText(120), price: formText(30) })).max(30),
+  shopee: z.object({ rating: formText(10), ratingCount: formText(15), unitsSold: formText(15) }),
+  whatsInside: formText(1000),
+  madeFor: formText(1000),
+  listings: z.object({ shopee: formText(500), lazada: formText(500), tiktok: formText(500) }),
+  // Longer than the limits, so an over-long one is told the limit by the rules below.
+  seoTitle: formText(500),
+  seoDescription: formText(1000),
+});
+
+/** The Product editor's values, as its form holds them and its Server Actions send them. */
+export type ProductForm = z.infer<typeof productFormFields>;
+
+/** The flags a new Product is added with. An existing one's are single toggles. */
+const newProductFlags = z.object({ showOnWebsite: flag, availableInApp: flag });
+
+/** A new Product's values: the editor's, and its "Show on website" and "Available in app". */
+export type NewProductForm = ProductForm & z.infer<typeof newProductFlags>;
+
+/** Pure: a typed count of ratings or units sold, or NaN when it isn't one. */
+const countOf = (text: string) => {
+  const value = typedNumber(text);
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : Number.NaN;
+};
+
+const blank = (text: string) => text.trim() === "";
+const textOrNull = (text: string) => text.trim() || null;
+const centavosOf = (text: string) => {
+  const parsed = parsePeso(text);
+  return parsed.ok ? parsed.centavos : null;
+};
+
+/** Every rule on the typed values, each on its own field, plus the form's message. */
+function checkProductForm(form: ProductForm, ctx: z.RefinementCtx) {
+  const issue = (path: (string | number)[], message: string) =>
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
+
+  /** A price field's centavos, after adding its message if it isn't a price. */
+  const price = (path: (string | number)[], text: string) => {
+    const parsed = parsePeso(text);
+    if (!parsed.ok) issue(path, parsed.message);
+    return parsed.ok ? parsed.centavos : undefined;
+  };
+
+  if (blank(form.title)) issue(["title"], "ADD A NAME");
+  if (blank(form.shortName)) issue(["shortName"], "ADD A SHORT NAME FOR CARDS");
+  if (blank(form.examCode)) issue(["examCode"], "CHOOSE AN EXAM");
+  if (blank(form.size)) issue(["size"], "ADD THE SIZE AND PAPER");
+  if (!form.subjectCodes.some((code) => !blank(code))) {
+    issue(["subjectCodes"], "CHOOSE AT LEAST ONE SUBJECT");
+  }
+  if (form.seoTitle.trim().length > SEO_TITLE_MAX) {
+    issue(["seoTitle"], `KEEP IT TO ${SEO_TITLE_MAX} CHARACTERS`);
+  }
+  if (form.seoDescription.trim().length > SEO_DESCRIPTION_MAX) {
+    issue(["seoDescription"], `KEEP IT TO ${SEO_DESCRIPTION_MAX} CHARACTERS`);
+  }
+  madeForLines(form.madeFor).forEach((line, index) => {
+    if (line.length > 120) issue(["madeFor"], `KEEP LINE ${index + 1} TO 120 CHARACTERS`);
+  });
+
+  // Coming Soon: nothing that implies a sale is saved, so none of it is checked.
+  if (form.comingSoon) {
+    if (blank(form.title)) issue([], NAME_ONLY);
+    return;
+  }
+
+  const from = price(["priceFrom"], form.priceFrom);
+  if (from === null) issue(["priceFrom"], "ADD A PRICE");
+  else if (from === 0) issue(["priceFrom"], "ENTER A PRICE ABOVE ₱0");
+  if (blank(form.title) || from === null) issue([], NAME_AND_PRICE);
+
+  const to = price(["priceTo"], form.priceTo);
+  if (typeof to === "number" && typeof from === "number" && to < from) {
+    issue(["priceTo"], "SHOULD NOT BE BELOW THE PRICE FROM");
+  }
+
+  form.variations.forEach((variation, index) => {
+    if (blank(variationLabel(variation.name))) issue(["variations", index, "name"], "ADD A NAME");
+    const centavos = price(["variations", index, "price"], variation.price);
+    if (centavos === null) issue(["variations", index, "price"], "ADD A PRICE");
+    else if (centavos === 0) issue(["variations", index, "price"], "ENTER A PRICE ABOVE ₱0");
+  });
+
+  const figures = form.shopee;
+  const filled = [figures.rating, figures.ratingCount, figures.unitsSold].filter((t) => !blank(t));
+  if (filled.length > 0 && filled.length < 3) {
+    (["rating", "ratingCount", "unitsSold"] as const).forEach((field) => {
+      if (blank(figures[field])) issue(["shopee", field], SHOPEE_FIGURES);
+    });
+  }
+  if (!blank(figures.rating)) {
+    const rating = typedNumber(figures.rating);
+    if (
+      typeof rating !== "number" ||
+      !(rating >= 0 && rating <= 5) ||
+      !hasOneDecimalAtMost(rating)
+    ) {
+      issue(["shopee", "rating"], RATING);
+    }
+  }
+  if (!blank(figures.ratingCount) && Number.isNaN(countOf(figures.ratingCount))) {
+    issue(["shopee", "ratingCount"], COUNT);
+  }
+  if (!blank(figures.unitsSold) && Number.isNaN(countOf(figures.unitsSold))) {
+    issue(["shopee", "unitsSold"], COUNT);
+  }
+
+  LISTING_MARKETPLACES.forEach((marketplace) => {
+    const link = typedLink(form.listings[marketplace]);
+    if (link === null) return;
+    const valid =
+      typeof link === "string" &&
+      httpsUrl.safeParse(link).success &&
+      isMarketplaceUrl(link, marketplace);
+    if (!valid) issue(["listings", marketplace], MARKETPLACE_LINK[marketplace]);
+  });
+}
+
+/** Pure: "Made for · one per line" as its lines, trimmed, blank ones dropped. */
+function madeForLines(text: string): string[] {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+/** Pure: a checked form as the Product's fields. A Coming Soon Product drops its sale fields. */
+function toProductInput(form: ProductForm) {
+  const comingSoon = form.comingSoon;
+  const figures = form.shopee;
+  const hasFigures = !comingSoon && !blank(figures.rating);
+  const listings: Partial<Record<Marketplace, string>> = {};
+  if (!comingSoon) {
+    for (const marketplace of LISTING_MARKETPLACES) {
+      const link = typedLink(form.listings[marketplace]);
+      if (typeof link === "string") listings[marketplace] = link;
+    }
+  }
+  const lines = madeForLines(form.madeFor);
+  return {
+    title: form.title.trim(),
+    shortName: form.shortName.trim(),
+    edition: textOrNull(form.edition),
+    examCode: form.examCode.trim().toUpperCase(),
+    format: form.format,
+    size: form.size.trim(),
+    subjectCodes: [...new Set(form.subjectCodes.map((code) => code.trim()).filter(Boolean))],
+    state: comingSoon ? ("coming-soon" as const) : ("live" as const),
+    deal: form.deal,
+    priceFrom: comingSoon ? null : centavosOf(form.priceFrom),
+    priceTo: comingSoon ? null : centavosOf(form.priceTo),
+    variations: comingSoon
+      ? []
+      : form.variations.map((variation) => ({
+          name: variation.name.trim(),
+          price: centavosOf(variation.price) ?? 0,
+        })),
+    shopee: hasFigures
+      ? {
+          rating: Number(typedNumber(figures.rating)),
+          ratingCount: countOf(figures.ratingCount),
+          unitsSold: countOf(figures.unitsSold),
+        }
+      : null,
+    listings,
+    whatsInside: textOrNull(form.whatsInside),
+    madeFor: lines.length > 0 ? lines : null,
+    seoTitle: textOrNull(form.seoTitle),
+    seoDescription: textOrNull(form.seoDescription),
+  };
+}
+
+/** The Product editor's form, checked against every rule and read as the Product's fields. */
+export const productFormSchema = productFormFields
+  .superRefine(checkProductForm)
+  .transform(toProductInput);
+
+/** A Product's fields, as the seam saves them. The "as of" date is set by the seam. */
+export type ProductInput = z.output<typeof productFormSchema>;
+
+/** A new Product's form, checked, with its two flags. */
+export const newProductFormSchema = productFormFields
+  .merge(newProductFlags)
+  .superRefine(checkProductForm)
+  .transform(({ showOnWebsite, availableInApp, ...form }) => ({
+    ...toProductInput(form),
+    showOnWebsite,
+    availableInApp,
+  }));
+
+const productId = z.string().trim().min(1).max(100);
+
+/** "Add product": the new Product's form, its shape checked (the seam checks the rules). */
+export const addProductInputSchema = productFormFields.merge(newProductFlags);
+
+/** "Save product": the Product and its form, its shape checked (the seam checks the rules). */
+export const saveProductInputSchema = productFormFields.extend({ id: productId });
+
+/** The Product a delete, or its preview, is for. */
+export const productIdInputSchema = z.object({ id: productId });

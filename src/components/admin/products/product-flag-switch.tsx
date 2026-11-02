@@ -4,10 +4,10 @@ import { useRouter } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import { toast } from "sonner";
 
+import { AdminSwitch } from "@/components/admin/admin-switch";
 import { callAdminAction } from "@/components/admin/call-admin-action";
 import { showSaveFailedToast } from "@/components/admin/save-failed-toast";
 import type { AdminAction } from "@/lib/admin/action";
-import { cn } from "@/lib/utils";
 import type { ProductFlags } from "@/services/admin.schema";
 import type { AdminError, AdminProductRow } from "@/services/admin.types";
 
@@ -60,26 +60,12 @@ export function ProductFlagSwitch({
   }
 
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={shown}
+    <AdminSwitch
+      checked={shown}
+      onCheckedChange={save}
       aria-label={label}
       aria-busy={pending || undefined}
-      onClick={() => save(!shown)}
-      className={cn(
-        "relative h-5 w-9 flex-none cursor-pointer rounded-full border-[1.5px] border-ayc-navy transition-colors motion-reduce:transition-none",
-        shown ? "bg-ayc-blue" : "bg-ayc-rule",
-      )}
-    >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "absolute top-px size-3.5 rounded-full bg-white transition-[left] motion-reduce:transition-none",
-          shown ? "left-4.5" : "left-px",
-        )}
-      />
-    </button>
+    />
   );
 }
 

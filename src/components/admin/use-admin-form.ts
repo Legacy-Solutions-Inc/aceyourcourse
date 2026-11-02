@@ -44,6 +44,11 @@ export interface AdminFormOptions<Values extends FormValues, Saved> {
    */
   busy?: boolean;
   onSaving?: (saving: boolean) => void;
+  /**
+   * What a save made just before this form opened, so it opens saying
+   * "✓ SAVED": a new record's editor, opened once it was added.
+   */
+  savedOnOpen?: Saved;
   /** The form's name, for the "Couldn't save" toast. */
   title: string;
   /** The save-state line for a refused input, e.g. "FIX THE LINKS MARKED IN RED". */
@@ -77,6 +82,7 @@ export function useAdminForm<Values extends FormValues, Saved>({
   onSaved,
   busy = false,
   onSaving,
+  savedOnOpen,
   title,
   invalidMessage,
 }: AdminFormOptions<Values, Saved>) {
@@ -109,7 +115,7 @@ export function useAdminForm<Values extends FormValues, Saved>({
       }
       return next;
     },
-    IDLE,
+    savedOnOpen === undefined ? IDLE : { status: "saved", value: savedOnOpen },
   );
 
   const dirty = !sameValues(values, lastSaved);
@@ -138,9 +144,14 @@ export function useAdminForm<Values extends FormValues, Saved>({
     /** Whether Save can be pressed: not while this form, or one it shares a stamp with, is saving. */
     canSave: !pending && !busy,
     change,
-    /** The field's message from the last save, until the field is edited. */
+    /**
+     * The field's message from the last save, until the field, or a list it's
+     * in ("variations" for "variations.1.price"), is edited.
+     */
     fieldError(path: string): string | undefined {
-      if (refusal?.kind !== "invalid" || edited.has(path)) return undefined;
+      if (refusal?.kind !== "invalid") return undefined;
+      const keys = path.split(".");
+      if (keys.some((_, end) => edited.has(keys.slice(0, end + 1).join(".")))) return undefined;
       return refusal.fieldErrors[path]?.[0];
     },
     /** A text input's value and change handler, for the field at `path`. */

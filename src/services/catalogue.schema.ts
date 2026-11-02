@@ -119,6 +119,9 @@ const kebabSlug = z
     "must be kebab-case: lowercase letters and digits joined by single hyphens",
   );
 
+/** A Product's formats, as the catalogue stores them. */
+export const PRODUCT_FORMATS = ["flash-cards", "notebook", "posters", "bundle"] as const;
+
 const productSchema = z
   .object({
     id: nonBlank("Product id"),
@@ -126,7 +129,7 @@ const productSchema = z
     examCode: nonBlank("Exam code"),
     title: nonBlank("Title"),
     shortName: nonBlank("Short name"),
-    format: z.enum(["flash-cards", "notebook", "posters", "bundle"]),
+    format: z.enum(PRODUCT_FORMATS),
     size: nonBlank("Size"),
     edition: nonBlank("Edition").nullable(),
     subjectCodes: z.array(nonBlank("Subject code")).min(1, "a Product covers at least one Subject"),

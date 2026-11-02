@@ -3,6 +3,7 @@
 
 import type {
   Marketplace,
+  Product,
   ProductFormat,
   ProductPhoto,
   ProductState,
@@ -180,4 +181,29 @@ export interface AdminProductList {
   examCodes: string[];
   /** How many Products the catalogue has, whatever the filters. */
   total: number;
+}
+
+/**
+ * One Product as its editor opens it: every field the catalogue holds, its
+ * stamp for the conflict check, and how many Reviews it has, since a Product
+ * with Reviews can't be Coming Soon.
+ */
+export interface AdminProduct {
+  product: Product;
+  stamp: RecordStamp;
+  reviewCount: number;
+}
+
+/** What goes with a Product when it's deleted, as the typed-DELETE dialog counts it. */
+export interface ProductDeletePreview {
+  reviews: number;
+  photos: number;
+  /** FAQ quotes taken from its Reviews, which are removed from their FAQs. */
+  faqQuotes: number;
+}
+
+/** A deleted Product: what its delete removed. */
+export interface DeletedProduct extends ProductDeletePreview {
+  id: string;
+  slug: string;
 }

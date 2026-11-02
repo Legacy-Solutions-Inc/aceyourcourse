@@ -2,9 +2,16 @@ import { revalidateTag } from "next/cache";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AdminActionState } from "@/lib/admin/action";
+import { newProductForm, productFormValues } from "@/lib/admin/product-form";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
-import { setProductFlag } from "./actions";
+import {
+  addProduct,
+  countProductDelete,
+  removeProduct,
+  saveProduct,
+  setProductFlag,
+} from "./actions";
 
 // The Products list's toggle, called as a browser would call it: a public
 // endpoint, so the Staff Guard and the input are checked here on the server.
@@ -42,7 +49,7 @@ describe("Products actions: setProductFlag", () => {
 
     expect(state).toMatchObject({
       status: "saved",
-      value: { id: "prd-001", showOnWebsite: false, stamp: { savedBy: "AYC Content Team" } },
+      value: { id: "prd-001", showOnWebsite: false },
     });
     expect(product("prd-001")?.showOnWebsite).toBe(false);
     expect(revalidateTag).toHaveBeenCalledWith("catalogue:products");
@@ -103,5 +110,158 @@ describe("Products actions: setProductFlag", () => {
       setProductFlag(IDLE, { input: { id: "prd-001", showOnWebsite: false } }),
     ).rejects.toThrow(/^NEXT_REDIRECT \/admin\/denied\?reason=not-staff$/);
     expect(product("prd-001")?.showOnWebsite).toBe(true);
+  });
+});
+
+describe("Products actions: the Product editor", () => {
+  const BOOT_STAMP = () => ({ savedAt: getSampleStore().bootedAt });
+  const formOf = (id: string) => {
+    const found = product(id);
+    if (!found) throw new Error(`No Product ${id}`);
+    return { id, ...productFormValues(found) };
+  };
+
+  beforeEach(() => {
+    jar.clear();
+    resetSampleStore();
+    vi.mocked(revalidateTag).mockClear();
+  });
+
+  it("saves an Editor's change and clears the products tag, so it's live", async () => {
+    signInAs("content@aceyourcourse.ph");
+
+    const state = await saveProduct(IDLE, {
+      input: { ...formOf("prd-001"), priceFrom: "1,250" },
+      expected: BOOT_STAMP(),
+    });
+
+    expect(state).toMatchObject({
+      status: "saved",
+      value: {
+        product: { id: "prd-001", priceFrom: 125000 },
+        stamp: { savedBy: "AYC Content Team" },
+      },
+    });
+    expect(product("prd-001")?.priceFrom).toBe(125000);
+    expect(revalidateTag).toHaveBeenCalledWith("catalogue:products");
+  });
+
+  it("refuses a stale save with the conflict, keeping the newer save", async () => {
+    signInAs("content@aceyourcourse.ph");
+    const opened = formOf("prd-001");
+    await saveProduct(IDLE, { input: { ...opened, priceFrom: "1,300" }, expected: BOOT_STAMP() });
+
+    const stale = await saveProduct(IDLE, {
+      input: { ...opened, priceFrom: "1,250" },
+      expected: BOOT_STAMP(),
+    });
+
+    expect(stale).toEqual({
+      status: "refused",
+      error: { kind: "conflict", savedBy: "AYC Content Team", savedAt: expect.any(String) },
+    });
+    expect(product("prd-001")?.priceFrom).toBe(130000);
+  });
+
+  it("answers the seam's field messages, changing nothing", async () => {
+    signInAs("content@aceyourcourse.ph");
+
+    const state = await saveProduct(IDLE, {
+      input: { ...formOf("prd-001"), priceFrom: "abc" },
+      expected: BOOT_STAMP(),
+    });
+
+    expect(state).toEqual({
+      status: "refused",
+      error: {
+        kind: "invalid",
+        fieldErrors: { priceFrom: ["ENTER A PRICE IN PESOS, LIKE 1,250"] },
+      },
+    });
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("refuses a form that isn't the editor's shape", async () => {
+    signInAs("content@aceyourcourse.ph");
+
+    const state = await saveProduct(IDLE, { input: { id: "prd-001", priceFrom: 1250 } });
+
+    expect(state).toMatchObject({ status: "refused", error: { kind: "invalid" } });
+    expect(product("prd-001")?.priceFrom).toBe(120000);
+  });
+
+  it("adds a Coming Soon Product, live in the Website's Coming Soon list", async () => {
+    signInAs("content@aceyourcourse.ph");
+
+    const state = await addProduct(IDLE, {
+      input: {
+        ...newProductForm("MT"),
+        title: "MT Notebook",
+        shortName: "MT Notebook",
+        size: "A5",
+        subjectCodes: ["HEMA"],
+        comingSoon: true,
+      },
+    });
+
+    expect(state).toMatchObject({
+      status: "saved",
+      value: { product: { slug: "mt-notebook", state: "coming-soon" } },
+    });
+    expect(revalidateTag).toHaveBeenCalledWith("catalogue:products");
+  });
+
+  it("deletes a Product, clearing the products, reviews and FAQs tags", async () => {
+    signInAs("content@aceyourcourse.ph");
+
+    const state = await removeProduct(IDLE, { input: { id: "prd-005" } });
+
+    expect(state).toEqual({
+      status: "saved",
+      value: {
+        id: "prd-005",
+        slug: "ultimate-ce-posters-2-0",
+        reviews: 3,
+        photos: 2,
+        faqQuotes: 1,
+      },
+    });
+    expect(product("prd-005")).toBeUndefined();
+    for (const tag of ["catalogue:products", "catalogue:reviews", "catalogue:faqs"]) {
+      expect(revalidateTag).toHaveBeenCalledWith(tag);
+    }
+    expect(await removeProduct(IDLE, { input: { id: "prd-005" } })).toEqual({
+      status: "refused",
+      error: { kind: "not-found" },
+    });
+  });
+
+  it("counts what a delete takes, changing nothing, and answers not-found once it's gone", async () => {
+    signInAs("content@aceyourcourse.ph");
+
+    expect(await countProductDelete(IDLE, { input: { id: "prd-005" } })).toEqual({
+      status: "saved",
+      value: { reviews: 3, photos: 2, faqQuotes: 1 },
+    });
+    expect(revalidateTag).not.toHaveBeenCalled();
+    expect(product("prd-005")).toBeDefined();
+    expect(await countProductDelete(IDLE, { input: { id: "prd-999" } })).toEqual({
+      status: "refused",
+      error: { kind: "not-found" },
+    });
+  });
+
+  it("sends a signed-out caller to sign-in, and a User who isn't Staff to the 403 screen", async () => {
+    await expect(countProductDelete(IDLE, { input: { id: "prd-005" } })).rejects.toThrow(
+      "NEXT_REDIRECT /admin/sign-in",
+    );
+    await expect(removeProduct(IDLE, { input: { id: "prd-005" } })).rejects.toThrow(
+      "NEXT_REDIRECT /admin/sign-in",
+    );
+    signInAs("juan.delacruz@gmail.com");
+    await expect(
+      saveProduct(IDLE, { input: formOf("prd-001"), expected: BOOT_STAMP() }),
+    ).rejects.toThrow("NEXT_REDIRECT /admin/denied?reason=not-staff");
+    expect(product("prd-005")).toBeDefined();
   });
 });

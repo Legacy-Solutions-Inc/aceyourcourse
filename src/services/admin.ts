@@ -2,17 +2,22 @@ import * as mockImpl from "@/services/admin.mock";
 import type {
   ChangeStaffRoleInput,
   InviteStaffInput,
+  NewProductForm,
   ProductFlags,
+  ProductForm,
   WebsiteSettingsUpdate,
 } from "@/services/admin.schema";
 import type {
+  AdminProduct,
   AdminProductList,
   AdminProductRow,
   AdminResult,
   AdminWebsiteSettings,
+  DeletedProduct,
   DeniedReason,
   DeniedSignIn,
   Invite,
+  ProductDeletePreview,
   ProductListQuery,
   SignInIdentity,
   SignInResolution,
@@ -20,6 +25,7 @@ import type {
   StaffList,
   StaffMember,
 } from "@/services/admin.types";
+import type { Exam } from "@/services/catalogue.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Admin Service Seam (CONVENTIONS §3). Every Admin read and write goes through
@@ -120,11 +126,6 @@ export interface AdminService {
    */
   listProductsForAdmin(actor: StaffActor, query: ProductListQuery): Promise<AdminProductList>;
   /**
-   * One Product's row, whatever the list's filters, or null when it isn't in
-   * the catalogue: the selected Product, for the panel beside the list.
-   */
-  getProductRowForAdmin(actor: StaffActor, id: string): Promise<AdminProductRow | null>;
-  /**
    * A single toggle, "Show on website" or "Available in app": it always saves,
    * with no conflict check, and appends Staff Activity. A Product that's gone
    * answers not-found. Clears the products tag.
@@ -134,6 +135,44 @@ export interface AdminService {
     id: string,
     flags: ProductFlags,
   ): Promise<AdminResult<AdminProductRow>>;
+
+  // The Product editor. Each write parses the editor's form with every rule
+  // (admin.schema.ts) and refuses, with the field's message, a Subject that
+  // isn't on the Product's Exam, a Live Product with no photo, and a Coming
+  // Soon one with Reviews. Saving changed Shopee figures sets their "as of"
+  // date to today in Manila. Each one appends one Staff Activity record and
+  // clears the tags of what it changed, so the Website shows it on its next
+  // load.
+
+  /** The Exams a Product can be for, each with its Subjects, in the catalogue's order. */
+  listExamsForAdmin(actor: StaffActor): Promise<Exam[]>;
+  /** One Product as its editor opens it, or null when it isn't in the catalogue. */
+  getProductForAdmin(actor: StaffActor, id: string): Promise<AdminProduct | null>;
+  /**
+   * Adds a Product, with no photos yet, so it can only be Coming Soon until
+   * photos can be added (ticket 06). Its page address is made from its name,
+   * unique with -2, -3…, and never changes after.
+   */
+  createProduct(actor: StaffActor, input: NewProductForm): Promise<AdminResult<AdminProduct>>;
+  /**
+   * Saves a Product's fields, with the conflict check against the stamp its
+   * editor opened with. Its page address, photos and the two single toggles
+   * ("Show on website", "Available in app") stay as they are.
+   */
+  updateProduct(
+    actor: StaffActor,
+    id: string,
+    input: ProductForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminProduct>>;
+  /** What deleting a Product takes with it, or null when it isn't in the catalogue. */
+  previewProductDelete(actor: StaffActor, id: string): Promise<ProductDeletePreview | null>;
+  /**
+   * Deletes a Product with its Reviews and photos, and removes the FAQ quotes
+   * taken from those Reviews. Its Staff Activity keeps every value from before.
+   * Marketplace Listings are on the Marketplaces, so they aren't affected.
+   */
+  deleteProduct(actor: StaffActor, id: string): Promise<AdminResult<DeletedProduct>>;
 }
 
 const impl: AdminService = mockImpl;
@@ -152,5 +191,10 @@ export const removeStaff = impl.removeStaff;
 export const getSettingsForAdmin = impl.getSettingsForAdmin;
 export const updateWebsiteSettings = impl.updateWebsiteSettings;
 export const listProductsForAdmin = impl.listProductsForAdmin;
-export const getProductRowForAdmin = impl.getProductRowForAdmin;
 export const setProductFlags = impl.setProductFlags;
+export const listExamsForAdmin = impl.listExamsForAdmin;
+export const getProductForAdmin = impl.getProductForAdmin;
+export const createProduct = impl.createProduct;
+export const updateProduct = impl.updateProduct;
+export const previewProductDelete = impl.previewProductDelete;
+export const deleteProduct = impl.deleteProduct;

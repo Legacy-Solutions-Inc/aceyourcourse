@@ -151,6 +151,32 @@ test("no serious or critical accessibility violations on Settings' Admin account
   await expectNoBlockingViolations(page);
 });
 
+test("no serious or critical accessibility violations on the Product editor, its messages and the typed-DELETE dialog", async ({
+  page,
+}) => {
+  await signInAs(page, "editor", `${paths.admin.products}?product=prd-005`);
+  const editor = page.getByRole("complementary", { name: "Product editor" });
+  await expect(editor.getByRole("form")).toBeVisible({ timeout: 15_000 });
+  await expectNoBlockingViolations(page);
+
+  await editor.getByRole("textbox", { name: "PRICE FROM", exact: true }).fill("abc");
+  await editor.getByRole("textbox", { name: "PAGE TITLE", exact: true }).fill("x".repeat(61));
+  await editor.getByRole("button", { name: "Save product" }).click();
+  await expect(editor.getByText("ENTER A PRICE IN PESOS, LIKE 1,250")).toBeVisible({
+    timeout: 15_000,
+  });
+  await expectNoBlockingViolations(page);
+
+  await editor.getByRole("button", { name: "Delete", exact: true }).click();
+  await settled(page.getByRole("dialog", { name: "Delete “Ultimate CE Posters 2.0”?" }));
+  await expectNoBlockingViolations(page);
+  await page.keyboard.press("Escape");
+
+  await page.goto(`${paths.admin.products}?product=new`);
+  await expect(page.getByRole("form", { name: "New product" })).toBeVisible({ timeout: 15_000 });
+  await expectNoBlockingViolations(page);
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
