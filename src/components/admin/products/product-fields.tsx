@@ -198,12 +198,14 @@ export interface ToggleRowIds {
 interface ToggleRowProps {
   label: string;
   hint: string;
+  /** The hint's colour, when it warns. */
+  hintClassName?: string;
   /** The switch, named by the label: a form field, or a single toggle that saves at once. */
   children: (ids: ToggleRowIds) => ReactNode;
 }
 
 /** One of VISIBILITY's rows: the label and its hint, and the switch (mockup 220–221). */
-export function ToggleRow({ label, hint, children }: ToggleRowProps) {
+export function ToggleRow({ label, hint, hintClassName, children }: ToggleRowProps) {
   const id = useId();
   const ids = { "aria-labelledby": `${id}-label`, "aria-describedby": `${id}-hint` };
   return (
@@ -212,7 +214,10 @@ export function ToggleRow({ label, hint, children }: ToggleRowProps) {
         <span id={ids["aria-labelledby"]} className="text-sm font-bold">
           {label}
         </span>
-        <span id={ids["aria-describedby"]} className="text-xs text-muted-foreground">
+        <span
+          id={ids["aria-describedby"]}
+          className={cn("text-xs text-muted-foreground", hintClassName)}
+        >
           {hint}
         </span>
       </span>

@@ -2,5 +2,6 @@
 // in-memory sample store (src/services/mock/sample-store.ts). Later tickets
 // add their areas here.
 export * from "@/services/mock/admin/products";
+export * from "@/services/mock/admin/reviews";
 export * from "@/services/mock/admin/settings";
 export * from "@/services/mock/admin/staff";

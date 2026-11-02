@@ -49,6 +49,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="en" className={fontVariables}>
       <body className="antialiased">
         {children}
+        {/* The one toaster, bottom right: the Admin's "Couldn't save" toast (mockup 943–949) too. */}
         <Toaster />
       </body>
     </html>

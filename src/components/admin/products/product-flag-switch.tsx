@@ -1,12 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useOptimistic, useTransition } from "react";
-import { toast } from "sonner";
+import { useOptimistic } from "react";
 
 import { AdminSwitch } from "@/components/admin/admin-switch";
-import { callAdminAction } from "@/components/admin/call-admin-action";
-import { showSaveFailedToast } from "@/components/admin/save-failed-toast";
+import { useInstantSave } from "@/components/admin/use-instant-save";
 import type { AdminAction } from "@/lib/admin/action";
 import type { ProductFlags } from "@/services/admin.schema";
 import type { AdminError, AdminProductRow } from "@/services/admin.types";
@@ -25,10 +22,8 @@ interface ProductFlagSwitchProps {
 
 /**
  * An inline App or Site toggle (mockup 167–168): it flips at once and saves
- * with no conflict check (spec, Phase 2 → Conflict check: single toggles always
- * save). After every answer the list is read again, so it shows what the
- * server now holds. A failed toggle switches back and shows the "Couldn't
- * save" toast; a Product deleted elsewhere says so.
+ * with no conflict check (useInstantSave). A failed toggle switches back and
+ * shows the "Couldn't save" toast; a Product deleted elsewhere says so.
  */
 export function ProductFlagSwitch({
   productId,
@@ -38,31 +33,17 @@ export function ProductFlagSwitch({
   title,
   action,
 }: ProductFlagSwitchProps) {
-  const router = useRouter();
   const [shown, show] = useOptimistic(checked);
-  const [pending, startTransition] = useTransition();
-
-  function save(next: boolean) {
-    startTransition(async () => {
-      show(next);
-      const state = await callAdminAction(action, { input: { id: productId, [flag]: next } });
-      if (state.status === "failed") {
-        showSaveFailedToast({
-          what: title,
-          kept: "The switch is back as it was.",
-          onRetry: () => save(next),
-        });
-      } else if (state.status === "refused") {
-        toast(refusalText(state.error.kind, title));
-      }
-      router.refresh();
-    });
-  }
+  const { save, pending } = useInstantSave(action, {
+    what: title,
+    kept: "The switch is back as it was.",
+    refused: (error) => refusalText(error.kind, title),
+  });
 
   return (
     <AdminSwitch
       checked={shown}
-      onCheckedChange={save}
+      onCheckedChange={(next) => save({ id: productId, [flag]: next }, () => show(next))}
       aria-label={label}
       aria-busy={pending || undefined}
     />

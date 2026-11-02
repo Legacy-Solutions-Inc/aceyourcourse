@@ -207,6 +207,46 @@ test("no serious or critical accessibility violations on the photo strip with up
   await expectNoBlockingViolations(page);
 });
 
+test("no serious or critical accessibility violations on Reviews: the editor, its messages, ▲▼ and the delete dialog", async ({
+  page,
+}) => {
+  await signInAs(page, "editor", `${paths.admin.reviews}?review=rev-014`);
+  const editor = page.getByRole("complementary", { name: "Review editor" });
+  await expect(editor.getByRole("form", { name: "Edit review" })).toBeVisible({ timeout: 15_000 });
+  await expect(editor.getByRole("figure")).toBeVisible();
+  await expectNoBlockingViolations(page);
+
+  await editor.getByLabel("REVIEW TEXT · COPY WORD FOR WORD").fill("");
+  await editor.getByLabel("HELPFUL VOTES").fill("-1");
+  await editor.getByRole("button", { name: "Save review" }).click();
+  await expect(editor.getByText("ENTER A WHOLE NUMBER, 0 OR MORE")).toBeVisible({
+    timeout: 15_000,
+  });
+  await expectNoBlockingViolations(page);
+
+  await editor.getByRole("button", { name: "Delete" }).click();
+  await settled(page.getByRole("dialog", { name: "Delete this review?" }));
+  await expectNoBlockingViolations(page);
+
+  await page.goto(`${paths.admin.reviews}?pinned=1&review=new`);
+  await expect(page.getByRole("button", { name: /^Move up on Home/ }).first()).toBeDisabled({
+    timeout: 15_000,
+  });
+  await expectNoBlockingViolations(page);
+
+  await page.goto(`${paths.admin.reviews}?q=nothing-matches`);
+  await expect(page.getByText("No reviews match. Clear the search or filters.")).toBeVisible({
+    timeout: 15_000,
+  });
+  await expectNoBlockingViolations(page);
+
+  await page.goto(`${paths.admin.reviews}?tab=faqs`);
+  await expect(
+    page.getByRole("navigation", { name: "Reviews and FAQs" }).getByRole("link", { name: "FAQS" }),
+  ).toHaveAttribute("aria-current", "page", { timeout: 15_000 });
+  await expectNoBlockingViolations(page);
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
@@ -222,6 +262,12 @@ test.describe("on a phone", () => {
   test("no serious or critical accessibility violations on Products", async ({ page }) => {
     await signInAs(page, "editor", paths.admin.products);
     await expect(page.getByRole("region", { name: "Products" })).toBeVisible({ timeout: 15_000 });
+    await expectNoBlockingViolations(page);
+  });
+
+  test("no serious or critical accessibility violations on Reviews", async ({ page }) => {
+    await signInAs(page, "editor", `${paths.admin.reviews}?review=rev-001`);
+    await expect(page.getByRole("region", { name: "Reviews" })).toBeVisible({ timeout: 15_000 });
     await expectNoBlockingViolations(page);
   });
 });

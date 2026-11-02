@@ -5,7 +5,7 @@ import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
 import { variationLabel } from "@/lib/catalogue/price";
 import type { AdminError, RequiredRole, StaffActor } from "@/services/admin.types";
 import { httpsUrl, PRODUCT_FORMATS } from "@/services/catalogue.schema";
-import type { Marketplace } from "@/services/catalogue.types";
+import type { Marketplace, Review } from "@/services/catalogue.types";
 
 // The Admin seam's zod input schemas (CONVENTIONS §3), shared by the seam's
 // arms, the Staff Guard and the forms.
@@ -494,3 +494,111 @@ export const saveProductInputSchema = productFormFields.extend({ id: productId }
 
 /** The Product a delete, or its preview, is for. */
 export const productIdInputSchema = z.object({ id: productId });
+
+// ── Reviews ─────────────────────────────────────────────────────────────────
+// A Review's fields as the editor's form holds them: the stars it was clicked
+// to, the text as pasted, the Product's id, the variation ("" when it isn't
+// specified), the Marketplace and the helpful votes as typed (spec, Phase 2 →
+// Reviews; BUILD-MAP §3.4, Editor). As with Products, the Server Actions
+// check only this shape and the seam parses it with every rule. Rules that
+// need the catalogue (a Live Product, one of its variations, the FAQ quotes
+// taken from the Review) are the seam's. "Pin on Home" is a single toggle on
+// an existing Review, so only a new Review's form carries it.
+
+/** What a Review with no text is told, on the save-state line. */
+export const REVIEW_TEXT_TO_SAVE = "PASTE THE REVIEW TEXT TO SAVE";
+
+const STARS = "CHOOSE 1 TO 5 STARS";
+
+/** Pure: whether a number is a Review's stars, a whole 1 to 5. */
+export const isReviewStars = (stars: number): stars is Review["stars"] =>
+  Number.isInteger(stars) && stars >= 1 && stars <= 5;
+
+const reviewFormFields = z.object({
+  stars: z.number({ invalid_type_error: STARS, required_error: STARS }),
+  text: formText(5000),
+  productId: formText(100),
+  variation: formText(200),
+  marketplace: z.enum(LISTING_MARKETPLACES, { errorMap: () => ({ message: "CHOOSE A STORE" }) }),
+  helpful: formText(15),
+});
+
+/** The Review editor's values, as its form holds them and its Server Actions send them. */
+export type ReviewForm = z.infer<typeof reviewFormFields>;
+
+const newReviewPin = z.object({ pinned: flag });
+
+/** A new Review's values: the editor's, and whether it's pinned on Home. */
+export type NewReviewForm = ReviewForm & z.infer<typeof newReviewPin>;
+
+/** Every rule on the typed values, each on its own field, plus the form's message. */
+function checkReviewForm(form: ReviewForm, ctx: z.RefinementCtx) {
+  const issue = (path: (string | number)[], message: string) =>
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
+
+  if (blank(form.text)) {
+    issue(["text"], "PASTE THE REVIEW TEXT");
+    issue([], REVIEW_TEXT_TO_SAVE);
+  }
+  if (!isReviewStars(form.stars)) issue(["stars"], STARS);
+  if (blank(form.productId)) issue(["productId"], "CHOOSE A PRODUCT");
+  if (!blank(form.helpful) && Number.isNaN(countOf(form.helpful))) issue(["helpful"], COUNT);
+}
+
+/**
+ * Pure: a checked form as the Review's fields. The text keeps its words and
+ * line breaks; only the space around it, and Windows line endings, go.
+ */
+function toReviewInput(form: ReviewForm) {
+  // Called once checkReviewForm has passed, so the stars are 1 to 5.
+  if (!isReviewStars(form.stars)) throw new Error(`${form.stars} isn't a number of stars`);
+  return {
+    stars: form.stars,
+    text: form.text.replace(/\r\n?/g, "\n").trim(),
+    productId: form.productId.trim(),
+    variation: textOrNull(form.variation),
+    marketplace: form.marketplace,
+    helpful: blank(form.helpful) ? 0 : countOf(form.helpful),
+  };
+}
+
+/** The Review editor's form, checked against every rule and read as the Review's fields. */
+export const reviewFormSchema = reviewFormFields
+  .superRefine(checkReviewForm)
+  .transform(toReviewInput);
+
+/** A Review's fields, as the seam saves them. Its id and Home pin are the seam's. */
+export type ReviewInput = z.output<typeof reviewFormSchema>;
+
+/** A new Review's form, checked, with its pin. */
+export const newReviewFormSchema = reviewFormFields
+  .merge(newReviewPin)
+  .superRefine(checkReviewForm)
+  .transform(({ pinned, ...form }) => ({ ...toReviewInput(form), pinned }));
+
+const reviewId = z.string().trim().min(1).max(100);
+
+/** "Add review": the new Review's form, its shape checked (the seam checks the rules). */
+export const addReviewInputSchema = reviewFormFields.merge(newReviewPin);
+
+/** "Save review": the Review and its form, its shape checked (the seam checks the rules). */
+export const saveReviewInputSchema = reviewFormFields.extend({ id: reviewId });
+
+/** The Review a delete, or its preview, is for. */
+export const reviewIdInputSchema = z.object({ id: reviewId });
+
+/** The HOME switch, a single toggle: pinned or not. */
+export const reviewPinSchema = z.object({ pinned: flag });
+
+/** The HOME switch, as its Server Action takes it: the Review and its pin. */
+export const reviewPinInputSchema = reviewPinSchema.extend({ id: reviewId });
+
+/** ▲ or ▼: one place earlier or later in the Home order. */
+export const reviewMoveSchema = z.object({
+  direction: z.enum(["up", "down"], { errorMap: () => ({ message: "SHOULD BE UP OR DOWN" }) }),
+});
+
+export type ReviewMove = z.infer<typeof reviewMoveSchema>["direction"];
+
+/** ▲▼, as its Server Action takes it: the Review and the way it moves. */
+export const reviewMoveInputSchema = reviewMoveSchema.extend({ id: reviewId });

@@ -3,8 +3,11 @@ import type {
   ChangeStaffRoleInput,
   InviteStaffInput,
   NewProductForm,
+  NewReviewForm,
   ProductFlags,
   ProductForm,
+  ReviewForm,
+  ReviewMove,
   WebsiteSettingsUpdate,
 } from "@/services/admin.schema";
 import type {
@@ -12,13 +15,18 @@ import type {
   AdminProductList,
   AdminProductRow,
   AdminResult,
+  AdminReview,
+  AdminReviewList,
   AdminWebsiteSettings,
   DeletedProduct,
+  DeletedReview,
   DeniedReason,
   DeniedSignIn,
   Invite,
   ProductDeletePreview,
   ProductListQuery,
+  ReviewDeletePreview,
+  ReviewListQuery,
   SignInIdentity,
   SignInResolution,
   StaffActor,
@@ -177,6 +185,73 @@ export interface AdminService {
    * Marketplace Listings are on the Marketplaces, so they aren't affected.
    */
   deleteProduct(actor: StaffActor, id: string): Promise<AdminResult<DeletedProduct>>;
+
+  // Reviews (any Staff User). Reviews are copied word for word from a
+  // Marketplace, for a Live Product, with one of its variations or none. Home
+  // shows the pinned Reviews in the Home order, the first 9 (spec, Phase 2 →
+  // Reviews). Each write appends one Staff Activity record and clears the
+  // reviews tag, so the Website shows it on its next load.
+
+  /**
+   * The Reviews list: every Review, a hidden Product's included, in the
+   * catalogue's order, or in the Home order with "Pinned on Home only". The
+   * filters combine: the search (the text, case-insensitive), the Exam (an
+   * unknown one is ignored), the stars and "Pinned on Home only". Whatever the
+   * filters, it gives the Home order, for ▲▼; how many of the pins Home can
+   * show, their Products shown on the website, for "N OF 9 PINNED ON HOME";
+   * and the Live Products, for the editor.
+   */
+  listReviewsForAdmin(actor: StaffActor, query: ReviewListQuery): Promise<AdminReviewList>;
+  /** One Review as its editor opens it, or null when it isn't in the catalogue. */
+  getReviewForAdmin(actor: StaffActor, id: string): Promise<AdminReview | null>;
+  /**
+   * Adds a Review, numbered after the highest id ("rev-017"). Pinned, it goes
+   * to the end of the Home order. Refused, with the field's message: no text,
+   * stars outside 1–5, helpful votes that aren't a whole number of 0 or more,
+   * a Product that isn't Live, or a variation the Product doesn't have.
+   */
+  createReview(actor: StaffActor, input: NewReviewForm): Promise<AdminResult<AdminReview>>;
+  /**
+   * Saves a Review's fields with the conflict check, keeping its place in the
+   * Home order, with createReview's rules. A variation copied from the Marketplace
+   * that isn't one of the Product's is kept while the Review stays on its
+   * Product. An edit that removes the words an FAQ quotes from the Review is
+   * refused, naming the FAQ: only a delete removes a quote.
+   */
+  updateReview(
+    actor: StaffActor,
+    id: string,
+    input: ReviewForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminReview>>;
+  /**
+   * The HOME switch, a single toggle: it always saves, with no conflict check.
+   * Pinning puts the Review at the end of the Home order (a pinned one keeps
+   * its place); unpinning takes it off Home.
+   */
+  setReviewPinned(
+    actor: StaffActor,
+    id: string,
+    pinned: boolean,
+  ): Promise<AdminResult<AdminReview>>;
+  /**
+   * ▲ or ▼: swaps a pinned Review with the one before or after it in the Home
+   * order, which it gives back. It always saves. The first can't move up, the
+   * last can't move down, and a Review that isn't pinned can't move.
+   */
+  moveReviewPin(
+    actor: StaffActor,
+    id: string,
+    direction: ReviewMove,
+  ): Promise<AdminResult<string[]>>;
+  /** What deleting a Review takes with it, or null when it isn't in the catalogue. */
+  previewReviewDelete(actor: StaffActor, id: string): Promise<ReviewDeletePreview | null>;
+  /**
+   * Deletes a Review from the Website and Home, and removes the FAQ quotes
+   * taken from it; the FAQs stay. Its Staff Activity keeps every value from
+   * before. The original stays on the Marketplace.
+   */
+  deleteReview(actor: StaffActor, id: string): Promise<AdminResult<DeletedReview>>;
 }
 
 const impl: AdminService = mockImpl;
@@ -202,3 +277,11 @@ export const createProduct = impl.createProduct;
 export const updateProduct = impl.updateProduct;
 export const previewProductDelete = impl.previewProductDelete;
 export const deleteProduct = impl.deleteProduct;
+export const listReviewsForAdmin = impl.listReviewsForAdmin;
+export const getReviewForAdmin = impl.getReviewForAdmin;
+export const createReview = impl.createReview;
+export const updateReview = impl.updateReview;
+export const setReviewPinned = impl.setReviewPinned;
+export const moveReviewPin = impl.moveReviewPin;
+export const previewReviewDelete = impl.previewReviewDelete;
+export const deleteReview = impl.deleteReview;

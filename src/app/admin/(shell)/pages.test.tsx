@@ -43,7 +43,12 @@ const SCREENS = [
     "/admin/products",
     "WEBSITE",
   ],
-  ["Reviews & FAQs", ReviewsPage, "/admin/reviews", "WEBSITE"],
+  [
+    "Reviews & FAQs",
+    () => ReviewsPage({ searchParams: Promise.resolve({}) }),
+    "/admin/reviews",
+    "WEBSITE",
+  ],
   ["Settings", SettingsPage, "/admin/settings", "SETTINGS"],
 ] as const;
 

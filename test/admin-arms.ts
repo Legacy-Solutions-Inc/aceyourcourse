@@ -27,6 +27,8 @@ export interface AdminArm {
   reset(edit?: (seed: CatalogueSeed) => void): Promise<void>;
   /** Deletes a Product (and its Reviews) behind the seam's back, as another Staff User might. */
   deleteProductElsewhere(id: string): Promise<void>;
+  /** Deletes a Review behind the seam's back, as another Staff User might. */
+  deleteReviewElsewhere(id: string): Promise<void>;
   /**
    * Uploads a PNG through the upload seam, as the photo strip does, and gives
    * the path a save records and where the Website will load it from. With
@@ -53,6 +55,10 @@ export const ADMIN_ARMS: AdminArm[] = [
       const { catalogue } = getSampleStore();
       catalogue.products = catalogue.products.filter((product) => product.id !== id);
       catalogue.reviews = catalogue.reviews.filter((review) => review.productId !== id);
+    },
+    deleteReviewElsewhere: async (id) => {
+      const { catalogue } = getSampleStore();
+      catalogue.reviews = catalogue.reviews.filter((review) => review.id !== id);
     },
     uploadPhoto: async ({ send = true, purpose = "product-photo" } = {}) => {
       const [uploads] = UPLOAD_ARMS;

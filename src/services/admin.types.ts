@@ -7,6 +7,7 @@ import type {
   ProductFormat,
   ProductPhoto,
   ProductState,
+  Review,
   ShopStats,
   SocialLinks,
   WebsiteSettings,
@@ -206,4 +207,79 @@ export interface ProductDeletePreview {
 export interface DeletedProduct extends ProductDeletePreview {
   id: string;
   slug: string;
+}
+
+// ── Reviews ─────────────────────────────────────────────────────────────────
+
+/** The Reviews list's star chips: 5★, 4★, or "3★ and below". */
+export type ReviewStarsFilter = "5" | "4" | "3-or-less";
+
+/** The Reviews list's filters, as its URL gives them. Each one is optional. */
+export interface ReviewListQuery {
+  /** Matched case-insensitively against the Review's text. */
+  q?: string;
+  /** An Exam code, in any case. An unknown one is ignored. */
+  exam?: string;
+  stars?: ReviewStarsFilter;
+  /** "Pinned on Home only": the pinned Reviews, in the Home order. */
+  pinned?: boolean;
+}
+
+/** One row of the Reviews list: the Review, and the Product it's for. */
+export interface AdminReviewRow {
+  review: Review;
+  product: { shortName: string; examCode: string };
+}
+
+/** A Live Product a Review can be for, as the editor's PRODUCT select lists it. */
+export interface ReviewProductOption {
+  id: string;
+  slug: string;
+  examCode: string;
+  shortName: string;
+  /** Its variations as a buyer sees them ("MSTC ONLY"), for VARIATION BOUGHT. */
+  variations: string[];
+}
+
+/** The Reviews list: the rows that match, the filters as applied, and the counters. */
+export interface AdminReviewList {
+  /** In the catalogue's order; with "Pinned on Home only", in the Home order. */
+  rows: AdminReviewRow[];
+  /** The filters applied: the search trimmed, an unknown Exam dropped. */
+  query: {
+    q: string | null;
+    exam: string | null;
+    stars: ReviewStarsFilter | null;
+    pinned: boolean;
+  };
+  /** Every Exam code, in the catalogue's order, for the Exam chips. */
+  examCodes: string[];
+  /** How many Reviews the catalogue has, whatever the filters. */
+  total: number;
+  /** The Home order, first to last, whatever the filters, for ▲▼. */
+  homeOrder: string[];
+  /**
+   * How many pinned Reviews Home can show, their Products shown on the
+   * website: "N OF 9 PINNED ON HOME". Home shows the first 9 of them.
+   */
+  pinnedOnHome: number;
+  /** The Live Products, in the catalogue's order, for the editor. */
+  products: ReviewProductOption[];
+}
+
+/** One Review as its editor opens it, with its stamp for the conflict check. */
+export interface AdminReview {
+  review: Review;
+  stamp: RecordStamp;
+}
+
+/** What goes with a Review when it's deleted. */
+export interface ReviewDeletePreview {
+  /** FAQ quotes taken from it, which are removed from their FAQs. */
+  faqQuotes: number;
+}
+
+/** A deleted Review: what its delete removed. */
+export interface DeletedReview extends ReviewDeletePreview {
+  id: string;
 }
