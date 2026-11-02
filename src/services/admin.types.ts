@@ -2,6 +2,8 @@
 // through src/services/admin.ts; these are its inputs and outputs.
 
 import type {
+  Faq,
+  FaqGroup,
   Marketplace,
   Product,
   ProductFormat,
@@ -281,5 +283,58 @@ export interface ReviewDeletePreview {
 
 /** A deleted Review: what its delete removed. */
 export interface DeletedReview extends ReviewDeletePreview {
+  id: string;
+}
+
+// ── FAQs ────────────────────────────────────────────────────────────────────
+
+/** The FAQS tab's selection, as its URL gives it. Each one is optional. */
+export interface FaqListQuery {
+  /** One of the 5 groups. Any other falls back to the first. */
+  group?: string;
+  /** Matched case-insensitively against every group's questions and answers. */
+  q?: string;
+}
+
+/** One of the 5 fixed groups, with how many FAQs it has, hidden ones included. */
+export interface FaqGroupCount {
+  group: FaqGroup;
+  title: string;
+  count: number;
+}
+
+/** A Review an FAQ can quote: one shown on the Website, with its Product. */
+export interface FaqReviewOption {
+  id: string;
+  stars: Review["stars"];
+  text: string;
+  product: { shortName: string; examCode: string };
+}
+
+/** The FAQS tab: the groups, the FAQs that match, and the editor's choices. */
+export interface AdminFaqList {
+  /** The 5 groups, in the FAQ page's order. */
+  groups: FaqGroupCount[];
+  /** The selection applied: the group checked, the search trimmed. */
+  query: { group: FaqGroup; q: string | null };
+  /**
+   * The group's FAQs, in order; while searching, the matches in every group,
+   * in the FAQ page's order. Hidden and app-only FAQs are included.
+   */
+  rows: Faq[];
+  /** The Reviews a quote can come from, in the catalogue's order. */
+  reviews: FaqReviewOption[];
+  /** Every FAQ's deep-link slug, so a new FAQ's can be shown before it's added. */
+  slugs: string[];
+}
+
+/** One FAQ as its editor opens it, with its stamp for the conflict check. */
+export interface AdminFaq {
+  faq: Faq;
+  stamp: RecordStamp;
+}
+
+/** A deleted FAQ. */
+export interface DeletedFaq {
   id: string;
 }

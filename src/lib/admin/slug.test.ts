@@ -50,3 +50,30 @@ describe("uniqueSlug", () => {
     expect(uniqueSlug(name, ["a".repeat(60)])).toBe(`${"a".repeat(58)}-2`);
   });
 });
+
+describe("slugs of another length", () => {
+  const FAQ = { max: 40, fallback: "question" };
+
+  it("cuts at a word, at most the length given", () => {
+    const slug = slugify(
+      "How long does it take for an order to reach Mindanao by the courier?",
+      FAQ,
+    );
+    expect(slug).toBe("how-long-does-it-take-for-an-order-to");
+  });
+
+  it("names a slug with no letters or digits by the fallback given", () => {
+    expect(slugify("₱?", FAQ)).toBe("question");
+  });
+
+  it("keeps a unique slug within the length, suffix included", () => {
+    const taken = ["how-long-does-it-take-for-an-order-to"];
+    const slug = uniqueSlug(
+      "How long does it take for an order to reach Mindanao by the courier?",
+      taken,
+      FAQ,
+    );
+    expect(slug).toBe("how-long-does-it-take-for-an-order-to-2");
+    expect(slug.length).toBeLessThanOrEqual(40);
+  });
+});

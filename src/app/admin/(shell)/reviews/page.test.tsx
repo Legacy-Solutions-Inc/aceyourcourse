@@ -200,8 +200,18 @@ describe("Reviews page", () => {
     await renderPage({ review: "rev-999" });
     expect(screen.getByText("Select a review")).toBeInTheDocument();
   });
+});
 
-  it("shows the FAQS tab with an empty body until ticket 08, and no + Add", async () => {
+describe("Reviews page: the FAQS tab", () => {
+  beforeEach(() => {
+    jar.clear();
+    resetSampleStore();
+    jar.set("ayc_admin_sample", "content@aceyourcourse.ph");
+  });
+
+  const questions = () => screen.getByRole("region", { name: "Questions" });
+
+  it("shows GROUPS with counts and the first group's questions, with + Add for an FAQ", async () => {
     await renderPage({ tab: "faqs" });
 
     const tabs = screen.getByRole("navigation", { name: "Reviews and FAQs" });
@@ -210,6 +220,64 @@ describe("Reviews page", () => {
       "page",
     );
     expect(screen.queryByRole("region", { name: "Reviews" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "+ Add review" })).not.toBeInTheDocument();
+    const groups = screen.getByRole("navigation", { name: "FAQ groups" });
+    expect(
+      within(groups)
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual([
+      "Shipping3 questions",
+      "Paper and print3 questions",
+      "What’s covered4 questions",
+      "Buying6 questions",
+      "Authenticity2 questions",
+    ]);
+    expect(
+      within(questions()).getByText("SHIPPING · 3 QUESTIONS · ▲▼ TO REORDER"),
+    ).toBeInTheDocument();
+    expect(within(questions()).getAllByRole("listitem")).toHaveLength(3);
+    expect(screen.getByRole("link", { name: "+ Add question" })).toHaveAttribute(
+      "href",
+      "/admin/reviews?tab=faqs&group=shipping&faq=new",
+    );
+    expect(screen.getByText("Select a question")).toBeInTheDocument();
+  });
+
+  it("lists the group in the URL, its hidden and app-only questions included", async () => {
+    await renderPage({ tab: "faqs", group: "buying" });
+
+    expect(
+      within(questions()).getByText("BUYING · 6 QUESTIONS · ▲▼ TO REORDER"),
+    ).toBeInTheDocument();
+    expect(within(questions()).getAllByText("ANSWER ONLY · MEMBER APP ONLY")).toHaveLength(3);
+  });
+
+  it("searches every group from the URL", async () => {
+    await renderPage({ tab: "faqs", group: "buying", q: "notebook" });
+
+    expect(within(questions()).getByText("2 MATCHES IN ALL GROUPS")).toBeInTheDocument();
+    expect(within(questions()).getByRole("searchbox")).toHaveValue("notebook");
+  });
+
+  it("opens the selected FAQ in the editor, and a new one at faq=new in the group", async () => {
+    await renderPage({ tab: "faqs", group: "paper", faq: "faq-005" });
+
+    const editor = screen.getByRole("form", { name: "Edit question" });
+    expect(within(editor).getByLabelText("QUESTION")).toHaveValue("What are the posters like?");
+    expect(within(editor).getByText("★★★★★ · Ultimate CE Posters 2.0")).toBeInTheDocument();
+  });
+
+  it("opens a new FAQ's editor in the URL's group", async () => {
+    await renderPage({ tab: "faqs", group: "buying", faq: "new" });
+
+    expect(screen.getByRole("form", { name: "New question" })).toHaveTextContent(
+      "NEW QUESTION · BUYING",
+    );
+  });
+
+  it("prompts to pick a question when the selected one is gone", async () => {
+    await renderPage({ tab: "faqs", faq: "faq-999" });
+
+    expect(screen.getByText("Select a question")).toBeInTheDocument();
   });
 });

@@ -247,6 +247,40 @@ test("no serious or critical accessibility violations on Reviews: the editor, it
   await expectNoBlockingViolations(page);
 });
 
+test("no serious or critical accessibility violations on FAQs: the editor, its quote, its messages, a search and the delete dialog", async ({
+  page,
+}) => {
+  await signInAs(page, "editor", `${paths.admin.reviews}?tab=faqs&group=paper&faq=faq-005`);
+  const editor = page.getByRole("complementary", { name: "FAQ editor" });
+  await expect(editor.getByRole("form", { name: "Edit question" })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(editor.getByText("★★★★★ · Ultimate CE Posters 2.0")).toBeVisible();
+  await expectNoBlockingViolations(page);
+
+  await editor.getByLabel("QUESTION").fill("");
+  await editor.getByLabel("ANSWER").fill("a".repeat(401));
+  await editor.getByRole("switch", { name: "Popular question" }).click();
+  await editor.getByRole("button", { name: "Save question" }).click();
+  await expect(editor.getByText("WRITE A QUESTION AND ANSWER TO SAVE")).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(editor.getByText("WRITE THE CHIP LABEL")).toBeVisible();
+  await expectNoBlockingViolations(page);
+
+  await editor.getByRole("button", { name: "Delete" }).click();
+  await settled(page.getByRole("dialog", { name: /^Delete “/ }));
+  await expectNoBlockingViolations(page);
+
+  await page.goto(`${paths.admin.reviews}?tab=faqs&group=buying&q=shopee&faq=new`);
+  const newForm = page.getByRole("form", { name: "New question" });
+  await expect(newForm).toBeVisible({ timeout: 15_000 });
+  await newForm.getByLabel("FIND A REVIEW TO QUOTE").fill("glossy");
+  await expect(newForm.getByRole("list", { name: "Matching reviews" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Move up/ }).first()).toBeDisabled();
+  await expectNoBlockingViolations(page);
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 375, height: 812 } });
 

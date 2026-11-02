@@ -1,6 +1,8 @@
 import * as mockImpl from "@/services/admin.mock";
 import type {
   ChangeStaffRoleInput,
+  FaqForm,
+  FaqMove,
   InviteStaffInput,
   NewProductForm,
   NewReviewForm,
@@ -11,6 +13,8 @@ import type {
   WebsiteSettingsUpdate,
 } from "@/services/admin.schema";
 import type {
+  AdminFaq,
+  AdminFaqList,
   AdminProduct,
   AdminProductList,
   AdminProductRow,
@@ -18,10 +22,12 @@ import type {
   AdminReview,
   AdminReviewList,
   AdminWebsiteSettings,
+  DeletedFaq,
   DeletedProduct,
   DeletedReview,
   DeniedReason,
   DeniedSignIn,
+  FaqListQuery,
   Invite,
   ProductDeletePreview,
   ProductListQuery,
@@ -252,6 +258,52 @@ export interface AdminService {
    * before. The original stays on the Marketplace.
    */
   deleteReview(actor: StaffActor, id: string): Promise<AdminResult<DeletedReview>>;
+
+  // FAQs (any Staff User). The FAQ page has 5 fixed groups, each ordered with
+  // ▲▼. Answers are at most 400 characters, and a supporting quote is copied
+  // word for word from a Review shown on the Website (spec, Phase 2 → FAQ).
+  // Each write appends one Staff Activity record and clears the faqs tag, so
+  // the FAQ page and its FAQPage data show it on its next load.
+
+  /**
+   * The FAQS tab: the 5 groups with their counts, and the group's FAQs in
+   * order (an unknown group is the first), hidden and app-only ones included.
+   * A search matches every group's questions and answers, case-insensitively,
+   * in the FAQ page's order. It also gives the Reviews a quote can come from,
+   * and every deep-link slug.
+   */
+  listFaqsForAdmin(actor: StaffActor, query: FaqListQuery): Promise<AdminFaqList>;
+  /** One FAQ as its editor opens it, or null when it isn't in the catalogue. */
+  getFaqForAdmin(actor: StaffActor, id: string): Promise<AdminFaq | null>;
+  /**
+   * Adds an FAQ last in its group, numbered after the highest id ("faq-019"),
+   * with its deep link set from the question: at most 40 characters, made
+   * unique, and fixed afterwards. Refused, with the field's message: no
+   * question or answer, an answer over 400 characters, a quote that isn't in
+   * its Review word for word or whose Review isn't shown on the Website,
+   * Popular with no chip label or one over 40 characters, or a second FAQ
+   * showing the Subjects table.
+   */
+  createFaq(actor: StaffActor, input: FaqForm): Promise<AdminResult<AdminFaq>>;
+  /**
+   * Saves an FAQ's fields with the conflict check and createFaq's rules,
+   * keeping its deep link. Moved to another group, it goes last there and its
+   * old group closes the gap. A quote it already has is kept while unchanged.
+   */
+  updateFaq(
+    actor: StaffActor,
+    id: string,
+    input: FaqForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminFaq>>;
+  /**
+   * ▲ or ▼: swaps an FAQ with the one before or after it in its group, and
+   * gives back the group's order. It always saves. The first can't move up
+   * and the last can't move down.
+   */
+  moveFaq(actor: StaffActor, id: string, direction: FaqMove): Promise<AdminResult<string[]>>;
+  /** Deletes an FAQ and closes the gap in its group. Its Staff Activity keeps it from before. */
+  deleteFaq(actor: StaffActor, id: string): Promise<AdminResult<DeletedFaq>>;
 }
 
 const impl: AdminService = mockImpl;
@@ -285,3 +337,9 @@ export const setReviewPinned = impl.setReviewPinned;
 export const moveReviewPin = impl.moveReviewPin;
 export const previewReviewDelete = impl.previewReviewDelete;
 export const deleteReview = impl.deleteReview;
+export const listFaqsForAdmin = impl.listFaqsForAdmin;
+export const getFaqForAdmin = impl.getFaqForAdmin;
+export const createFaq = impl.createFaq;
+export const updateFaq = impl.updateFaq;
+export const moveFaq = impl.moveFaq;
+export const deleteFaq = impl.deleteFaq;

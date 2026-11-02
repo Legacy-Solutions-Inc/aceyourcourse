@@ -4,7 +4,7 @@ import { parsePeso } from "@/lib/admin/peso";
 import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
 import { variationLabel } from "@/lib/catalogue/price";
 import type { AdminError, RequiredRole, StaffActor } from "@/services/admin.types";
-import { httpsUrl, PRODUCT_FORMATS } from "@/services/catalogue.schema";
+import { FAQ_ANSWER_MAX, FAQ_GROUPS, httpsUrl, PRODUCT_FORMATS } from "@/services/catalogue.schema";
 import type { Marketplace, Review } from "@/services/catalogue.types";
 
 // The Admin seam's zod input schemas (CONVENTIONS §3), shared by the seam's
@@ -602,3 +602,110 @@ export type ReviewMove = z.infer<typeof reviewMoveSchema>["direction"];
 
 /** ▲▼, as its Server Action takes it: the Review and the way it moves. */
 export const reviewMoveInputSchema = reviewMoveSchema.extend({ id: reviewId });
+
+// ── FAQs ────────────────────────────────────────────────────────────────────
+// An FAQ's fields as the editor's form holds them: the question and answer as
+// typed, its group, the supporting quote as the Review's id and the words
+// taken from it ("" for none), Popular with its chip label, and the toggles
+// (spec, Phase 2 → FAQ; BUILD-MAP §3.4, FAQS tab). As with Reviews, the
+// Server Actions check only this shape and the seam parses it with every
+// rule. Rules that need the catalogue (the quote is in its Review word for
+// word, from a Review shown on the Website; one question shows the Subjects
+// table) are the seam's. The deep link and the place in the group are the
+// seam's too.
+
+/** What an FAQ missing its question or answer is told, on the save-state line. */
+export const QUESTION_AND_ANSWER_TO_SAVE = "WRITE A QUESTION AND ANSWER TO SAVE";
+
+/** What a quote that isn't in its Review word for word is told. */
+export const QUOTE_NOT_WORD_FOR_WORD = "This text isn’t in the Review word for word.";
+
+/** The longest popular-question chip label. */
+export const FAQ_CHIP_LABEL_MAX = 40;
+
+const faqFormFields = z.object({
+  question: formText(300),
+  // Longer than the limits, so an over-long one is told the limit by the rules below.
+  answer: formText(5000),
+  group: z.enum(FAQ_GROUPS, { errorMap: () => ({ message: "CHOOSE A GROUP" }) }),
+  quoteReviewId: formText(100),
+  quoteText: formText(5000),
+  popular: flag,
+  popularLabel: formText(500),
+  requiresMemberApp: flag,
+  showOnFaqPage: flag,
+  showCoverageTable: flag,
+});
+
+/** The FAQ editor's values, as its form holds them and its Server Actions send them. */
+export type FaqForm = z.infer<typeof faqFormFields>;
+
+/** Pure: text as saved: Windows line endings made plain, the space around it gone. */
+const savedText = (text: string) => text.replace(/\r\n?/g, "\n").trim();
+
+/** Pure: an answer's length as it's saved, which the 400-character limit counts. */
+export const faqAnswerLength = (answer: string) => savedText(answer).length;
+
+/** Every rule on the typed values, each on its own field, plus the form's message. */
+function checkFaqForm(form: FaqForm, ctx: z.RefinementCtx) {
+  const issue = (path: (string | number)[], message: string) =>
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
+
+  if (blank(form.question)) issue(["question"], "WRITE THE QUESTION");
+  if (blank(form.answer)) issue(["answer"], "WRITE THE ANSWER");
+  else if (faqAnswerLength(form.answer) > FAQ_ANSWER_MAX) {
+    issue(["answer"], `KEEP THE ANSWER TO ${FAQ_ANSWER_MAX} CHARACTERS`);
+  }
+  if (blank(form.question) || blank(form.answer)) issue([], QUESTION_AND_ANSWER_TO_SAVE);
+
+  const quoting = !blank(form.quoteReviewId) || !blank(form.quoteText);
+  if (quoting && blank(form.quoteReviewId)) issue(["quoteReviewId"], "PICK THE REVIEW IT’S FROM");
+  if (quoting && blank(form.quoteText)) {
+    issue(["quoteText"], "PASTE OR SELECT THE WORDS TO QUOTE");
+  }
+
+  if (form.popular && blank(form.popularLabel)) issue(["popularLabel"], "WRITE THE CHIP LABEL");
+  else if (form.popular && form.popularLabel.trim().length > FAQ_CHIP_LABEL_MAX) {
+    issue(["popularLabel"], `KEEP THE CHIP LABEL TO ${FAQ_CHIP_LABEL_MAX} CHARACTERS`);
+  }
+}
+
+/** Pure: a checked form as the FAQ's fields. A chip label counts only with Popular on. */
+function toFaqInput(form: FaqForm) {
+  const reviewId = form.quoteReviewId.trim();
+  return {
+    question: savedText(form.question),
+    answer: savedText(form.answer),
+    group: form.group,
+    reviewQuote: reviewId ? { reviewId, text: savedText(form.quoteText) } : null,
+    popularLabel: form.popular ? form.popularLabel.trim() : null,
+    requiresMemberApp: form.requiresMemberApp,
+    showOnFaqPage: form.showOnFaqPage,
+    showCoverageTable: form.showCoverageTable,
+  };
+}
+
+/** The FAQ editor's form, checked against every rule and read as the FAQ's fields. */
+export const faqFormSchema = faqFormFields.superRefine(checkFaqForm).transform(toFaqInput);
+
+/** An FAQ's fields, as the seam saves them. Its id, deep link and place are the seam's. */
+export type FaqInput = z.output<typeof faqFormSchema>;
+
+const faqId = z.string().trim().min(1).max(100);
+
+/** "Add question": the new FAQ's form, its shape checked (the seam checks the rules). */
+export const addFaqInputSchema = faqFormFields;
+
+/** "Save question": the FAQ and its form, its shape checked (the seam checks the rules). */
+export const saveFaqInputSchema = faqFormFields.extend({ id: faqId });
+
+/** The FAQ a delete is for. */
+export const faqIdInputSchema = z.object({ id: faqId });
+
+/** ▲ or ▼: one place earlier or later in the FAQ's group. */
+export const faqMoveSchema = reviewMoveSchema;
+
+export type FaqMove = z.infer<typeof faqMoveSchema>["direction"];
+
+/** ▲▼, as its Server Action takes it: the FAQ and the way it moves. */
+export const faqMoveInputSchema = faqMoveSchema.extend({ id: faqId });

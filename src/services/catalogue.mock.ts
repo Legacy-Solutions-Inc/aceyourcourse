@@ -1,10 +1,9 @@
 import { serverEnv } from "@/env.server";
 import { productFormatLabel } from "@/lib/catalogue/format";
-import { FAQ_GROUPS, validateCatalogueSeed } from "@/services/catalogue.schema";
+import { FAQ_GROUP_TITLES, FAQ_GROUPS, validateCatalogueSeed } from "@/services/catalogue.schema";
 import type {
   Exam,
   Faq,
-  FaqGroup,
   FaqGroupWithItems,
   FaqWithQuote,
   Product,
@@ -246,18 +245,6 @@ export async function listHomeReviews(): Promise<ReviewWithProduct[]> {
 }
 
 // ── FAQs ────────────────────────────────────────────────────────────────────
-
-/**
- * Each group's title. While the Member App switch is off, the buying group's
- * title doesn't mention the app.
- */
-const FAQ_GROUP_TITLES: Record<FaqGroup, { title: string; appTitle?: string }> = {
-  shipping: { title: "Shipping" },
-  paper: { title: "Paper and print" },
-  coverage: { title: "What’s covered" },
-  buying: { title: "Buying", appTitle: "Buying and the app" },
-  authenticity: { title: "Authenticity" },
-};
 
 /** Credits the FAQ's quote to its Review, or drops it if that Review isn't shown. */
 function withQuoteCredit(faq: Faq, reviews: Map<string, ReviewWithProduct>): FaqWithQuote {

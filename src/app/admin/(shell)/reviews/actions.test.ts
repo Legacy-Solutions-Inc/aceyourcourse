@@ -2,14 +2,19 @@ import { revalidateTag } from "next/cache";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AdminActionState } from "@/lib/admin/action";
+import { faqFormValues, newFaqForm } from "@/lib/admin/faq-form";
 import { newReviewForm, reviewFormValues } from "@/lib/admin/review-form";
 import { getSampleStore, resetSampleStore, stampOf } from "@/services/mock/sample-store";
 
 import {
+  addFaq,
   addReview,
   countReviewDelete,
+  moveFaqInGroup,
   moveReviewOnHome,
+  removeFaq,
   removeReview,
+  saveFaq,
   saveReview,
   setReviewPin,
 } from "./actions";
@@ -215,6 +220,119 @@ describe("Reviews actions: the Staff Guard", () => {
 
     await expect(call()).rejects.toThrow(/^NEXT_REDIRECT \/admin\/sign-in/);
     expect(getSampleStore().catalogue.reviews).toEqual(before);
+    expect(getSampleStore().staffActivity).toEqual([]);
+  });
+
+  it.each(calls)("sends %s from a User who isn't Staff to the 403 screen", async (_name, call) => {
+    signInAs("juan.delacruz@gmail.com");
+
+    await expect(call()).rejects.toThrow("NEXT_REDIRECT /admin/denied?reason=not-staff");
+    expect(getSampleStore().staffActivity).toEqual([]);
+  });
+});
+
+const faq = (id: string) => getSampleStore().catalogue.faqs.find((f) => f.id === id);
+const faqFormOf = (id: string) => {
+  const found = faq(id);
+  if (!found) throw new Error(`${id} isn't in the catalogue`);
+  return { id, ...faqFormValues(found) };
+};
+const faqStamp = (id: string) => ({ savedAt: stampOf(getSampleStore(), `faq:${id}`).savedAt });
+const GCASH = { ...newFaqForm("buying"), question: "Can I pay by GCash?", answer: "Yes." };
+
+describe("FAQ actions", () => {
+  it("lets an Editor add an FAQ, and clears the FAQs tag, so it's live", async () => {
+    signInAs("content@aceyourcourse.ph");
+
+    const state = await addFaq(IDLE, { input: GCASH });
+
+    expect(state).toMatchObject({
+      status: "saved",
+      value: { faq: { id: "faq-019", slug: "can-i-pay-by-gcash", group: "buying", order: 7 } },
+    });
+    expect(revalidateTag).toHaveBeenCalledWith("catalogue:faqs");
+  });
+
+  it("saves an edit with the conflict check, and refuses a stale one", async () => {
+    signInAs("angel@aceyourcourse.ph");
+    const opened = faqStamp("faq-002");
+    expect(
+      await saveFaq(IDLE, { input: { ...faqFormOf("faq-002"), answer: "Yes." }, expected: opened }),
+    ).toMatchObject({ status: "saved", value: { faq: { answer: "Yes." } } });
+
+    expect(
+      await saveFaq(IDLE, { input: { ...faqFormOf("faq-002"), answer: "No." }, expected: opened }),
+    ).toMatchObject({
+      status: "refused",
+      error: { kind: "conflict", savedBy: "Angel Rose L. Lepaña" },
+    });
+    expect(faq("faq-002")?.answer).toBe("Yes.");
+  });
+
+  it("answers the seam's messages", async () => {
+    signInAs("content@aceyourcourse.ph");
+
+    expect(await addFaq(IDLE, { input: newFaqForm("buying") })).toMatchObject({
+      status: "refused",
+      error: { kind: "invalid", formError: "WRITE A QUESTION AND ANSWER TO SAVE" },
+    });
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("refuses a form that isn't the editor's shape", async () => {
+    signInAs("content@aceyourcourse.ph");
+
+    expect(
+      await saveFaq(IDLE, { input: { id: "faq-002", question: 7 }, expected: faqStamp("faq-002") }),
+    ).toMatchObject({ status: "refused", error: { kind: "invalid" } });
+  });
+
+  it("moves an FAQ down in its group, and refuses ▲ on the first", async () => {
+    signInAs("content@aceyourcourse.ph");
+
+    expect(await moveFaqInGroup(IDLE, { input: { id: "faq-001", direction: "down" } })).toEqual({
+      status: "saved",
+      value: ["faq-002", "faq-001", "faq-003"],
+    });
+    expect(await moveFaqInGroup(IDLE, { input: { id: "faq-002", direction: "up" } })).toEqual({
+      status: "refused",
+      error: { kind: "invalid", fieldErrors: {}, formError: "IT’S ALREADY FIRST IN ITS GROUP" },
+    });
+  });
+
+  it("deletes an FAQ, then answers not-found to deleting or moving it again", async () => {
+    signInAs("content@aceyourcourse.ph");
+
+    expect(await removeFaq(IDLE, { input: { id: "faq-001" } })).toEqual({
+      status: "saved",
+      value: { id: "faq-001" },
+    });
+    expect(revalidateTag).toHaveBeenCalledWith("catalogue:faqs");
+    expect(await removeFaq(IDLE, { input: { id: "faq-001" } })).toEqual({
+      status: "refused",
+      error: { kind: "not-found" },
+    });
+    expect(await moveFaqInGroup(IDLE, { input: { id: "faq-001", direction: "down" } })).toEqual({
+      status: "refused",
+      error: { kind: "not-found" },
+    });
+  });
+
+  const calls = [
+    ["addFaq", () => addFaq(IDLE, { input: GCASH })],
+    [
+      "saveFaq",
+      () => saveFaq(IDLE, { input: faqFormOf("faq-002"), expected: faqStamp("faq-002") }),
+    ],
+    ["moveFaqInGroup", () => moveFaqInGroup(IDLE, { input: { id: "faq-001", direction: "down" } })],
+    ["removeFaq", () => removeFaq(IDLE, { input: { id: "faq-001" } })],
+  ] as const;
+
+  it.each(calls)("sends a signed-out %s to sign-in, changing nothing", async (_name, call) => {
+    const before = structuredClone(getSampleStore().catalogue.faqs);
+
+    await expect(call()).rejects.toThrow(/^NEXT_REDIRECT \/admin\/sign-in/);
+    expect(getSampleStore().catalogue.faqs).toEqual(before);
     expect(getSampleStore().staffActivity).toEqual([]);
   });
 

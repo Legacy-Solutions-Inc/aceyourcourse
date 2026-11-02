@@ -1,13 +1,19 @@
-// A new Product's page address, /products/{slug} (spec, Phase 2 → Products:
-// "The page address is set from the name when the Product is created and
-// stays fixed afterwards"). The catalogue's rule is kebab-case: lowercase
-// ASCII letters and digits joined by single hyphens.
+// A new Product's page address, /products/{slug}, and a new FAQ's deep link,
+// /faq#faq-{slug} (spec, Phase 2 → Products, FAQ: each is set when the record
+// is created and stays fixed afterwards). The catalogue's rule is kebab-case:
+// lowercase ASCII letters and digits joined by single hyphens.
 
-const MAX_LENGTH = 60;
-const FALLBACK = "product";
+/** How long a slug can be, and what one with no letters or digits is called. */
+export interface SlugOptions {
+  max: number;
+  fallback: string;
+}
+
+/** A Product's page address. */
+const PRODUCT: SlugOptions = { max: 60, fallback: "product" };
 
 /** Pure: a name's slug, at most 60 characters, cut at a word where it can be. */
-export function slugify(name: string): string {
+export function slugify(name: string, { max, fallback }: SlugOptions = PRODUCT): string {
   const slug = name
     .normalize("NFKD")
     .replace(/[̀-ͯ]/g, "")
@@ -16,17 +22,21 @@ export function slugify(name: string): string {
     .replace(/['’]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  return cut(slug, MAX_LENGTH) || FALLBACK;
+  return cut(slug, max) || fallback;
 }
 
-/** Pure: the name's slug, or with -2, -3… when a Product already has it. */
-export function uniqueSlug(name: string, taken: Iterable<string>): string {
+/** Pure: the name's slug, or with -2, -3… when another record already has it. */
+export function uniqueSlug(
+  name: string,
+  taken: Iterable<string>,
+  options: SlugOptions = PRODUCT,
+): string {
   const used = new Set(taken);
-  const slug = slugify(name);
+  const slug = slugify(name, options);
   if (!used.has(slug)) return slug;
   for (let n = 2; ; n++) {
     const suffix = `-${n}`;
-    const candidate = `${cut(slug, MAX_LENGTH - suffix.length)}${suffix}`;
+    const candidate = `${cut(slug, options.max - suffix.length)}${suffix}`;
     if (!used.has(candidate)) return candidate;
   }
 }

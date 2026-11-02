@@ -210,8 +210,20 @@ export const FAQ_GROUPS = [
   "authenticity",
 ] as const satisfies readonly FaqGroup[];
 
+/**
+ * Each group's title, on the FAQ page and in the Admin. While the Member App
+ * switch is off, the buying group's title doesn't mention the app.
+ */
+export const FAQ_GROUP_TITLES: Record<FaqGroup, { title: string; appTitle?: string }> = {
+  shipping: { title: "Shipping" },
+  paper: { title: "Paper and print" },
+  coverage: { title: "What’s covered" },
+  buying: { title: "Buying", appTitle: "Buying and the app" },
+  authenticity: { title: "Authenticity" },
+};
+
 /** The Admin's limit, so every answer stays short. */
-const FAQ_ANSWER_MAX = 400;
+export const FAQ_ANSWER_MAX = 400;
 
 const faqSchema = z.object({
   id: nonBlank("FAQ id"),

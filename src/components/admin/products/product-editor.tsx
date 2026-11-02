@@ -7,8 +7,8 @@ import { toast } from "sonner";
 import { AdminSwitch } from "@/components/admin/admin-switch";
 import { callAdminAction } from "@/components/admin/call-admin-action";
 import { ConflictNotice } from "@/components/admin/conflict-notice";
-import { SaveState } from "@/components/admin/save-state";
 import { TypedDeleteDialog } from "@/components/admin/typed-delete-dialog";
+import { EditorSaveRow } from "@/components/admin/editor-save-row";
 import { useAdminForm } from "@/components/admin/use-admin-form";
 import type { AdminAction } from "@/lib/admin/action";
 import { productDeleteCopy } from "@/lib/admin/product-delete";
@@ -213,7 +213,8 @@ export function EditProduct({
         }
       />
       {form.conflict ? <ConflictNotice {...form.conflict} what="this Product" /> : null}
-      <SaveRow
+      <EditorSaveRow
+        savedMessage={SAVED}
         saveLabel="Save product"
         form={form}
         extra={
@@ -277,33 +278,8 @@ export function NewProduct({ exams, actions, onAdded }: NewProductProps) {
           </ToggleRow>
         ))}
       />
-      <SaveRow saveLabel="Add product" form={form} />
+      <EditorSaveRow savedMessage={SAVED} saveLabel="Add product" form={form} />
     </form>
-  );
-}
-
-interface SaveRowProps {
-  saveLabel: string;
-  form: Pick<ReturnType<typeof useAdminForm>, "status" | "errorMessage" | "canSave">;
-  extra?: ReactNode;
-}
-
-/** Save, the save-state line, and Delete (mockup 223–227). */
-function SaveRow({ saveLabel, form, extra }: SaveRowProps) {
-  return (
-    <div className="flex flex-wrap items-center gap-2.5 border-t-[1.5px] pt-3.5">
-      <button
-        type="submit"
-        disabled={!form.canSave}
-        className="min-h-10.5 cursor-pointer border-[1.5px] bg-primary px-5 text-sm font-bold text-primary-foreground disabled:cursor-wait"
-      >
-        {saveLabel}
-      </button>
-      <div className="min-w-0 flex-1">
-        <SaveState status={form.status} savedMessage={SAVED} errorMessage={form.errorMessage} />
-      </div>
-      {extra}
-    </div>
   );
 }
 

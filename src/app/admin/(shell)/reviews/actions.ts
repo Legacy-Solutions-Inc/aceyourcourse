@@ -2,24 +2,34 @@
 
 import { adminAction } from "@/lib/admin/action";
 import {
+  createFaq,
   createReview,
+  deleteFaq,
   deleteReview,
+  moveFaq,
   moveReviewPin,
   previewReviewDelete,
   setReviewPinned,
+  updateFaq,
   updateReview,
 } from "@/services/admin";
 import {
+  addFaqInputSchema,
   addReviewInputSchema,
+  faqIdInputSchema,
+  faqMoveInputSchema,
   reviewIdInputSchema,
   reviewMoveInputSchema,
   reviewPinInputSchema,
+  saveFaqInputSchema,
   saveReviewInputSchema,
 } from "@/services/admin.schema";
 
-// The REVIEWS tab's Server Actions, for any Staff User. Each one checks the
-// input's shape; the seam checks every Review rule, so the form is told each
-// field's message.
+// The Reviews & FAQs screen's Server Actions, for any Staff User. Each one
+// checks the input's shape; the seam checks every Review and FAQ rule, so the
+// form is told each field's message.
+
+// ── REVIEWS ─────────────────────────────────────────────────────────────────
 
 /** The HOME switch: it always saves, with no conflict check. */
 export const setReviewPin = adminAction(
@@ -60,4 +70,27 @@ export const countReviewDelete = adminAction(
 export const removeReview = adminAction(
   { role: "staff", schema: reviewIdInputSchema },
   async (actor, { id }) => deleteReview(actor, id),
+);
+
+// ── FAQS ────────────────────────────────────────────────────────────────────
+
+/** "Add question": a new FAQ, last in its group. */
+export const addFaq = adminAction({ role: "staff", schema: addFaqInputSchema }, createFaq);
+
+/** "Save question": the editor's fields, with the conflict check against the stamp it opened with. */
+export const saveFaq = adminAction(
+  { role: "staff", schema: saveFaqInputSchema },
+  async (actor, { id, ...form }, expected) => updateFaq(actor, id, form, expected),
+);
+
+/** ▲ or ▼: one place in the FAQ's group. It always saves. */
+export const moveFaqInGroup = adminAction(
+  { role: "staff", schema: faqMoveInputSchema },
+  async (actor, { id, direction }) => moveFaq(actor, id, direction),
+);
+
+/** The delete dialog's "Delete question". */
+export const removeFaq = adminAction(
+  { role: "staff", schema: faqIdInputSchema },
+  async (actor, { id }) => deleteFaq(actor, id),
 );

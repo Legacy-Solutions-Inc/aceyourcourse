@@ -18,7 +18,7 @@ import {
   TextField,
   ToggleRow,
 } from "@/components/admin/products/product-fields";
-import { SaveState } from "@/components/admin/save-state";
+import { EditorSaveRow } from "@/components/admin/editor-save-row";
 import { useAdminForm } from "@/components/admin/use-admin-form";
 import { ReviewCard } from "@/components/website/review-card";
 import { MARKETPLACES } from "@/content/website";
@@ -139,7 +139,8 @@ export function EditReview({
         }
       />
       {form.conflict ? <ConflictNotice {...form.conflict} what="this Review" /> : null}
-      <SaveRow
+      <EditorSaveRow
+        savedMessage={SAVED}
         saveLabel="Save review"
         form={form}
         extra={
@@ -193,7 +194,7 @@ export function NewReview({ products, pinnedCount, actions, onAdded }: NewReview
           </PinRow>
         }
       />
-      <SaveRow saveLabel="Add review" form={form} />
+      <EditorSaveRow savedMessage={SAVED} saveLabel="Add review" form={form} />
     </form>
   );
 }
@@ -348,31 +349,6 @@ function StarsField({ stars, onChange, error }: StarsFieldProps) {
         </p>
       ) : null}
     </fieldset>
-  );
-}
-
-interface SaveRowProps {
-  saveLabel: string;
-  form: Pick<ReturnType<typeof useAdminForm>, "status" | "errorMessage" | "canSave">;
-  extra?: ReactNode;
-}
-
-/** Save, the save-state line, and Delete (mockup 274). */
-function SaveRow({ saveLabel, form, extra }: SaveRowProps) {
-  return (
-    <div className="flex flex-wrap items-center gap-2.5 border-t-[1.5px] pt-3.5">
-      <button
-        type="submit"
-        disabled={!form.canSave}
-        className="min-h-10.5 cursor-pointer border-[1.5px] bg-primary px-5 text-sm font-bold text-primary-foreground disabled:cursor-wait"
-      >
-        {saveLabel}
-      </button>
-      <div className="min-w-0 flex-1">
-        <SaveState status={form.status} savedMessage={SAVED} errorMessage={form.errorMessage} />
-      </div>
-      {extra}
-    </div>
   );
 }
 
