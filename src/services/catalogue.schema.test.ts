@@ -202,6 +202,22 @@ function validSeed(): CatalogueSeed {
         showCoverageTable: false,
       },
     ],
+    examPages: [
+      {
+        examCode: "CE",
+        sections: { subjects: true, bundleOffer: true, reviews: false },
+        bundleOffer: {
+          productId: "prd-1",
+          headline: "CE Posters",
+          text: "Every CE formula on your wall.",
+          buttonLabel: "See the posters",
+        },
+        seoTitle: "CE Board Exam Reviewer",
+        seoDescription: null,
+        shareImage: "/api/dev/uploads/share-1",
+        officialExamDate: "2027-04-24",
+      },
+    ],
   };
 }
 
@@ -683,5 +699,71 @@ describe("validateCatalogueSeed: FAQs", () => {
     const seed = validSeed();
     faq(seed, 0).popularLabel = "";
     expect(errorsFor(seed)).toEqual([expect.stringMatching(/^faqs\.0\.popularLabel: /)]);
+  });
+});
+
+describe("validateCatalogueSeed: Exam pages", () => {
+  const page = (seed: CatalogueSeed) => at(seed.examPages, 0);
+
+  it("accepts an Exam page with a bundle offer, SEO overrides, a share image and a date", () => {
+    expect(validateCatalogueSeed(validSeed()).success).toBe(true);
+  });
+
+  it("accepts an Exam with no Exam page, which uses the defaults", () => {
+    const seed = validSeed();
+    seed.examPages = [];
+    expect(validateCatalogueSeed(seed).success).toBe(true);
+  });
+
+  it("rejects a bundle offer of a Product from another Exam", () => {
+    const seed = validSeed();
+    present(page(seed).bundleOffer).productId = "prd-2";
+    expect(errorsFor(seed)).toEqual([
+      expect.stringMatching(/^examPages\.0\.bundleOffer\.productId: .*"me-notebook".*not a CE/),
+    ]);
+  });
+
+  it("rejects a bundle offer of an unknown Product", () => {
+    const seed = validSeed();
+    present(page(seed).bundleOffer).productId = "prd-404";
+    expect(errorsFor(seed)).toEqual([
+      expect.stringMatching(/^examPages\.0\.bundleOffer\.productId: .*unknown Product "prd-404"/),
+    ]);
+  });
+
+  it("rejects a bundle offer with a blank headline", () => {
+    const seed = validSeed();
+    present(page(seed).bundleOffer).headline = " ";
+    expect(errorsFor(seed)).toEqual([
+      expect.stringMatching(/^examPages\.0\.bundleOffer\.headline: /),
+    ]);
+  });
+
+  it("rejects an Exam page for an unknown Exam", () => {
+    const seed = validSeed();
+    seed.examPages.push({ ...page(seed), examCode: "XX", bundleOffer: null });
+    expect(errorsFor(seed)).toEqual([
+      expect.stringMatching(/^examPages\.1\.examCode: .*unknown Exam "XX"/),
+    ]);
+  });
+
+  it("rejects a second Exam page for the same Exam", () => {
+    const seed = validSeed();
+    seed.examPages.push({ ...page(seed) });
+    expect(errorsFor(seed)).toEqual([
+      expect.stringMatching(/^examPages\.1\.examCode: .*second Exam page for "CE"/),
+    ]);
+  });
+
+  it("rejects an Official Exam Date that isn't on the calendar", () => {
+    const seed = validSeed();
+    page(seed).officialExamDate = "2026-02-30";
+    expect(errorsFor(seed)).toEqual([expect.stringMatching(/^examPages\.0\.officialExamDate: /)]);
+  });
+
+  it("rejects a share image hot-linked from another site", () => {
+    const seed = validSeed();
+    page(seed).shareImage = "https://example.com/share.jpg";
+    expect(errorsFor(seed)).toEqual([expect.stringMatching(/^examPages\.0\.shareImage: /)]);
   });
 });

@@ -5,6 +5,7 @@ import * as mockImpl from "@/services/catalogue.mock";
 import { CATALOGUE_TAG, CATALOGUE_TAGS, type CatalogueAreaTag } from "@/services/catalogue.tags";
 import type {
   Exam,
+  ExamPageContent,
   FaqGroupWithItems,
   Product,
   ProductFilters,
@@ -40,6 +41,13 @@ interface CatalogueService {
   listExams(): Promise<Exam[]>;
   /** Case-insensitive. Null when the code is unknown or blank. Ignores Products. */
   getExamByCode(code: string): Promise<Exam | null>;
+  /**
+   * The Exam's page: which sections show, its SEO overrides, share image and
+   * Official Exam Date, and its bundle offer with the Product, only while that
+   * Product is Live and on the Website. An Exam without a record shows every
+   * section and sets nothing. Case-insensitive; null like getExamByCode.
+   */
+  getExamPage(code: string): Promise<ExamPageContent | null>;
 
   /**
    * Products shown on the Website. `state` defaults to "live" and `sort` to
@@ -103,12 +111,14 @@ function cached<Args extends unknown[], Result>(
   return (...args) => cachedRead(dataVersion(), ...args);
 }
 
-const { exams, products, reviews, faqs, settings } = CATALOGUE_TAGS;
+const { exams, products, reviews, faqs, settings, examPages } = CATALOGUE_TAGS;
 
 // Each read is tagged with every area its answer depends on: listExams, for
 // example, lists only the Exams with a Product on the Website.
 export const listExams = cached("listExams", impl.listExams, [exams, products]);
 export const getExamByCode = cached("getExamByCode", impl.getExamByCode, [exams]);
+// The page record's Exam is only matched by its fixed code, so the exams tag isn't needed.
+export const getExamPage = cached("getExamPage", impl.getExamPage, [examPages, products]);
 export const listProducts = cached("listProducts", impl.listProducts, [products, exams]);
 export const getProductBySlug = cached("getProductBySlug", impl.getProductBySlug, [products]);
 export const listRelatedProducts = cached("listRelatedProducts", impl.listRelatedProducts, [

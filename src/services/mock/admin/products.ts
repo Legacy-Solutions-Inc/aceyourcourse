@@ -225,6 +225,19 @@ function productRules(
     };
   }
 
+  // An Exam page's bundle offer is of one of its own Exam's Products.
+  const offeredBy = existing
+    ? catalogue.examPages.find((page) => page.bundleOffer?.productId === existing.id)
+    : undefined;
+  if (offeredBy && input.examCode !== offeredBy.examCode) {
+    return {
+      kind: "invalid",
+      fieldErrors: {
+        examCode: [`THE ${offeredBy.examCode} PAGE OFFERS IT AS ITS BUNDLE · CHANGE THAT FIRST`],
+      },
+    };
+  }
+
   const reviews = existing ? reviewsOf(catalogue, existing.id).length : 0;
   if (input.state === "coming-soon" && reviews > 0) {
     return {
@@ -362,7 +375,8 @@ function withCascade(catalogue: CatalogueSeed, id: string) {
   if (!product) return null;
   const reviews = reviewsOf(catalogue, id);
   const faqQuotes = faqsQuoting(catalogue, new Set(reviews.map((review) => review.id)));
-  return { product, reviews, faqQuotes };
+  const bundleOffers = catalogue.examPages.filter((page) => page.bundleOffer?.productId === id);
+  return { product, reviews, faqQuotes, bundleOffers };
 }
 
 function previewOf(catalogue: CatalogueSeed, id: string): ProductDeletePreview | null {
@@ -406,8 +420,17 @@ export async function deleteProduct(
           ? { ...faq, reviewQuote: null }
           : faq,
       );
+      // An Exam page offering it keeps its Bundle offer section, with no offer.
+      draft.examPages = draft.examPages.map((page) =>
+        page.bundleOffer?.productId === id ? { ...page, bundleOffer: null } : page,
+      );
     },
     result: () => ({ id, slug, reviews: 0, photos: 0, faqQuotes: 0, ...preview }),
-    tags: [CATALOGUE_TAGS.products, CATALOGUE_TAGS.reviews, CATALOGUE_TAGS.faqs],
+    tags: [
+      CATALOGUE_TAGS.products,
+      CATALOGUE_TAGS.reviews,
+      CATALOGUE_TAGS.faqs,
+      CATALOGUE_TAGS.examPages,
+    ],
   });
 }

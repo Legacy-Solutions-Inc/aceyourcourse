@@ -1,8 +1,14 @@
 import { serverEnv } from "@/env.server";
 import { productFormatLabel } from "@/lib/catalogue/format";
-import { FAQ_GROUP_TITLES, FAQ_GROUPS, validateCatalogueSeed } from "@/services/catalogue.schema";
+import {
+  examPageDefaults,
+  FAQ_GROUP_TITLES,
+  FAQ_GROUPS,
+  validateCatalogueSeed,
+} from "@/services/catalogue.schema";
 import type {
   Exam,
+  ExamPageContent,
   Faq,
   FaqGroupWithItems,
   FaqWithQuote,
@@ -170,6 +176,31 @@ export async function getExamByCode(code: string): Promise<Exam | null> {
   if (!wanted) return null;
   const exam = catalogue().exams.find((e) => e.code === wanted);
   return exam ? copy(exam) : null;
+}
+
+/**
+ * An Exam's page as the Website shows it. Its bundle offer comes with its
+ * Product, and only while that Product is Live and on the Website.
+ */
+export async function getExamPage(code: string): Promise<ExamPageContent | null> {
+  const exam = await getExamByCode(code);
+  if (!exam) return null;
+  const page =
+    catalogue().examPages.find((p) => p.examCode === exam.code) ?? examPageDefaults(exam.code);
+  const { bundleOffer, ...rest } = page;
+  const product = bundleOffer
+    ? liveProducts().find((p) => p.id === bundleOffer.productId)
+    : undefined;
+  const offer =
+    bundleOffer && product
+      ? {
+          headline: bundleOffer.headline,
+          text: bundleOffer.text,
+          buttonLabel: bundleOffer.buttonLabel,
+          product,
+        }
+      : null;
+  return copy({ ...rest, bundleOffer: offer });
 }
 
 // ── Reviews ─────────────────────────────────────────────────────────────────

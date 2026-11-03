@@ -4,6 +4,8 @@ import { isMarketplaceUrl, MARKETPLACE_HOSTS } from "@/lib/catalogue/store-links
 import { isCalendarDate } from "@/lib/manila-time";
 import type {
   Exam,
+  ExamPage,
+  ExamPageSection,
   Faq,
   FaqGroup,
   Marketplace,
@@ -31,6 +33,8 @@ export interface CatalogueSeed {
   products: Product[];
   reviews: Review[];
   faqs: Faq[];
+  /** At most one per Exam. An Exam without one gets examPageDefaults. */
+  examPages: ExamPage[];
 }
 
 const nonBlank = (label: string) => z.string().trim().min(1, `${label} must not be blank`);
@@ -239,6 +243,43 @@ const faqSchema = z.object({
   showCoverageTable: z.boolean(),
 });
 
+/** The Exam page sections that can be hidden, in page order. */
+export const EXAM_PAGE_SECTIONS = [
+  "subjects",
+  "bundleOffer",
+  "reviews",
+] as const satisfies readonly ExamPageSection[];
+
+/** Pure: the Exam page of an Exam with no record: every section shown, nothing else set. */
+export function examPageDefaults(examCode: string): ExamPage {
+  return {
+    examCode,
+    sections: { subjects: true, bundleOffer: true, reviews: true },
+    bundleOffer: null,
+    seoTitle: null,
+    seoDescription: null,
+    shareImage: null,
+    officialExamDate: null,
+  };
+}
+
+const examPageSchema = z.object({
+  examCode: nonBlank("Exam code"),
+  sections: z.object({ subjects: z.boolean(), bundleOffer: z.boolean(), reviews: z.boolean() }),
+  bundleOffer: z
+    .object({
+      productId: nonBlank("Product id"),
+      headline: nonBlank("Bundle headline"),
+      text: nonBlank("Bundle text"),
+      buttonLabel: nonBlank("Bundle button label"),
+    })
+    .nullable(),
+  seoTitle: nonBlank("SEO title").nullable(),
+  seoDescription: nonBlank("SEO description").nullable(),
+  shareImage: selfHostedPath.nullable(),
+  officialExamDate: isoDate.nullable(),
+});
+
 const promoBannerSchema = z
   .object({
     visible: z.boolean(),
@@ -295,8 +336,9 @@ export const catalogueSeedSchema: z.ZodType<CatalogueSeed> = z
     products: z.array(productSchema),
     reviews: z.array(reviewSchema),
     faqs: z.array(faqSchema),
+    examPages: z.array(examPageSchema),
   })
-  .superRefine(({ exams, products, reviews, faqs }, ctx) => {
+  .superRefine(({ exams, products, reviews, faqs, examPages }, ctx) => {
     const issue = (path: (string | number)[], message: string) =>
       ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
 
@@ -405,6 +447,33 @@ export const catalogueSeedSchema: z.ZodType<CatalogueSeed> = z
         issue(
           ["faqs", index, "reviewQuote", "text"],
           `must be word for word from Review "${reviewId}"`,
+        );
+      }
+    });
+
+    flagDuplicates(
+      ctx,
+      examPages,
+      (page) => page.examCode,
+      (page, index) => ({
+        path: ["examPages", index, "examCode"],
+        message: `a second Exam page for "${page.examCode}"`,
+      }),
+    );
+    // A bundle offer links to its Product, which must be one of that Exam's.
+    examPages.forEach((page, index) => {
+      if (!exams.some((exam) => exam.code === page.examCode)) {
+        issue(["examPages", index, "examCode"], `unknown Exam "${page.examCode}"`);
+      }
+      if (!page.bundleOffer) return;
+      const { productId } = page.bundleOffer;
+      const product = products.find((p) => p.id === productId);
+      if (!product) {
+        issue(["examPages", index, "bundleOffer", "productId"], `unknown Product "${productId}"`);
+      } else if (product.examCode !== page.examCode) {
+        issue(
+          ["examPages", index, "bundleOffer", "productId"],
+          `"${product.slug}" is not a ${page.examCode} Product`,
         );
       }
     });

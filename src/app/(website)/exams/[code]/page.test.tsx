@@ -469,6 +469,108 @@ describe("Exam page", () => {
     });
   });
 
+  describe("the sections Staff show or hide", () => {
+    const hide =
+      (code: string, section: "subjects" | "bundleOffer" | "reviews") => (seed: CatalogueSeed) => {
+        const page = seed.examPages.find((p) => p.examCode === code);
+        if (!page) throw new Error(`the seed has no ${code} page`);
+        page.sections[section] = false;
+      };
+
+    it("leaves out Subjects covered while it's hidden, keeping the hero's Subjects", async () => {
+      await renderPage("ce", { editSeed: hide("CE", "subjects") });
+      expect(screen.queryByRole("region", { name: "What’s covered" })).not.toBeInTheDocument();
+      expect(screen.getByRole("region", { name: "CE subjects" })).toBeInTheDocument();
+      expect(productNames("CE")).toHaveLength(4);
+    });
+
+    it("leaves out the Reviews while they're hidden", async () => {
+      await renderPage("me", { editSeed: hide("ME", "reviews") });
+      expect(screen.queryByRole("list", { name: "From ME reviewees" })).not.toBeInTheDocument();
+      expect(screen.queryByText("From ME reviewees")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("region", { name: "Get your ME reviewer from our official stores." }),
+      ).toBeInTheDocument();
+    });
+
+    it("leaves out the bundle offer while it's hidden", async () => {
+      await renderPage("ce", { editSeed: hide("CE", "bundleOffer") });
+      expect(bundleBanner()).toBeNull();
+    });
+
+    it("shows the bundle offer Staff set on another Exam, with its own copy and button", async () => {
+      await renderPage("me", {
+        editSeed: (seed) => {
+          const page = seed.examPages.find((p) => p.examCode === "ME");
+          if (!page) throw new Error("the seed has no ME page");
+          page.sections.bundleOffer = true;
+          page.bundleOffer = {
+            productId: product(seed, "me-formula-flash-cards").id,
+            headline: "ME Formula Flash Cards",
+            text: "All three MELE subjects on 160 gsm paper.",
+            buttonLabel: "See the cards",
+          };
+        },
+      });
+      const banner = screen.getByRole("region", { name: "ME Formula Flash Cards" });
+      expect(within(banner).getByRole("link")).toHaveAttribute(
+        "href",
+        "/products/me-formula-flash-cards",
+      );
+      expect(within(banner).getByRole("link")).toHaveTextContent(
+        "ME Formula Flash CardsAll three MELE subjects on 160 gsm paper.₱950See the cards",
+      );
+    });
+  });
+
+  describe("the SEO Staff set", () => {
+    const setCe =
+      (fields: Partial<CatalogueSeed["examPages"][number]>) => (seed: CatalogueSeed) => {
+        const page = seed.examPages.find((p) => p.examCode === "CE");
+        if (!page) throw new Error("the seed has no CE page");
+        Object.assign(page, fields);
+      };
+
+    it("titles and describes the page with its overrides, for search and sharing", async () => {
+      const { generateMetadata } = await loadPage({
+        editSeed: setCe({
+          seoTitle: "CE Board Exam Reviewer",
+          seoDescription: "Formula flash cards, notebooks and posters for the CELE.",
+        }),
+      });
+      const metadata = await generateMetadata(props("ce"));
+      expect(metadata.title).toBe("CE Board Exam Reviewer");
+      expect(metadata.description).toBe("Formula flash cards, notebooks and posters for the CELE.");
+      expect(metadata.openGraph).toMatchObject({
+        title: "CE Board Exam Reviewer · Ace Your Course",
+        description: "Formula flash cards, notebooks and posters for the CELE.",
+      });
+      expect(metadata.twitter).toMatchObject({ title: "CE Board Exam Reviewer · Ace Your Course" });
+    });
+
+    it("describes the page from the Exam's text while it sets no description", async () => {
+      const { generateMetadata } = await loadPage({
+        editSeed: (seed) => {
+          const ce = seed.exams.find((exam) => exam.code === "CE");
+          if (ce) ce.blurb = "Every CE formula, in four formats. Start with the cards.";
+        },
+      });
+      expect((await generateMetadata(props("ce"))).description).toBe(
+        "Every CE formula, in four formats. Start with the cards.",
+      );
+    });
+
+    it("shares the page with its own share image when it has one", async () => {
+      const { generateMetadata } = await loadPage({
+        editSeed: setCe({ shareImage: "/api/dev/uploads/share-1" }),
+      });
+      const metadata = await generateMetadata(props("ce"));
+      const image = { url: "/api/dev/uploads/share-1", alt: "CELE Reviewer · Civil Engineering" };
+      expect(metadata.openGraph).toMatchObject({ images: [image] });
+      expect(metadata.twitter).toMatchObject({ images: [image] });
+    });
+  });
+
   it("hides Try a card for an Exam with no sample cards", async () => {
     await renderPage("ce", { editContent: () => ({ sampleCards: {} }) });
     expect(tryCard("CE")).not.toBeInTheDocument();

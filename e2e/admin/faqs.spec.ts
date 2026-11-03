@@ -73,8 +73,8 @@ test("adds an FAQ to Buying with a Review quote: last in Buying on /faq, credite
 
   const form = editor(page).getByRole("form", { name: "New question" });
   await expect(form.getByText("NEW QUESTION · BUYING")).toBeVisible();
-  await form.getByLabel("QUESTION").fill(QUESTION);
-  await form.getByLabel("ANSWER").fill(ANSWER);
+  await form.getByLabel("QUESTION", { exact: true }).fill(QUESTION);
+  await form.getByLabel("ANSWER", { exact: true }).fill(ANSWER);
   await expect(form.getByText("120 / 400 CHARACTERS")).toBeVisible();
   await expect(
     form.getByText("DEEP LINK · aceyourcourse.ph/faq#faq-can-i-pay-by-gcash"),
@@ -200,7 +200,7 @@ test("moving an FAQ from Paper to Coverage puts it last there, and Paper closes 
 }) => {
   await openFaqs(page, "&group=paper&faq=faq-004");
   const form = editor(page).getByRole("form", { name: "Edit question" });
-  await form.getByLabel("GROUP").selectOption({ label: "What’s covered" });
+  await form.getByLabel("GROUP", { exact: true }).selectOption({ label: "What’s covered" });
   await form.getByRole("button", { name: "Save question" }).click();
 
   await expect(page).toHaveURL(/group=coverage&faq=faq-004$/);

@@ -1,6 +1,6 @@
 import { paths } from "@/paths";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
-import type { Faq } from "@/services/catalogue.types";
+import type { ExamPage, Faq } from "@/services/catalogue.types";
 import { exams, products, reviews } from "@/services/mock/catalogue.generated";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -14,8 +14,10 @@ import { exams, products, reviews } from "@/services/mock/catalogue.generated";
 // launch. The Website settings and FAQs are kept here by hand: the settings
 // from aycData.js (STORES, CONTACT, SHOP) and the announcement in
 // docs/mockup/website/SiteNav.dc.html, and the FAQs from FAQ_v2.dc.html
-// L111–133, rewritten for the Website (see the FAQ note below). Pages never
-// import this file: they read it through @/services/catalogue.
+// L111–133, rewritten for the Website (see the FAQ note below). The Exam
+// pages' records hold what the Admin edits about each Exam page; the CE
+// bundle offer is the Phase 1 banner's copy (Exam_v2.dc.html L163–170). Pages
+// never import this file: they read it through @/services/catalogue.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SHOPEE_SHOP = "https://shopee.ph/aceyourcourse";
@@ -48,6 +50,24 @@ function faq(
     requiresMemberApp: false,
     showOnFaqPage: true,
     showCoverageTable: false,
+    ...fields,
+  };
+}
+
+/**
+ * An Exam page with every section shown, as Phase 1 rendered it, and no SEO
+ * override, share image or Official Exam Date. Only CE has a bundle offer, so
+ * the other Exams' Bundle offer section starts hidden.
+ */
+function examPage(examCode: string, fields: Partial<ExamPage> = {}): ExamPage {
+  return {
+    examCode,
+    sections: { subjects: true, bundleOffer: false, reviews: true },
+    bundleOffer: null,
+    seoTitle: null,
+    seoDescription: null,
+    shareImage: null,
+    officialExamDate: null,
     ...fields,
   };
 }
@@ -198,5 +218,21 @@ export const CATALOGUE_SEED: CatalogueSeed = {
       answer:
         "No. AceYourCourse products are registered with IPOPHIL and protected by copyright law. Unauthorized reproduction, distribution, or use is prohibited. Copies may be outdated or incomplete. If you see one, send us the link through Shopee chat.",
     }),
+  ],
+  examPages: [
+    examPage("CE", {
+      sections: { subjects: true, bundleOffer: true, reviews: true },
+      bundleOffer: {
+        // The CE Review Bundle 3-in-1. Its price and saving are read from the catalogue.
+        productId: "prd-008",
+        headline: "CE Review Bundle 3-in-1",
+        text: "Cards, notebook, and posters for MSTC, HPGE, and PSAD in one order.",
+        buttonLabel: "See the bundle",
+      },
+    }),
+    examPage("ME"),
+    examPage("EE"),
+    examPage("MT"),
+    examPage("CPA"),
   ],
 };

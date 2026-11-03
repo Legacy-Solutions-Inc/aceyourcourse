@@ -18,14 +18,21 @@ const EXAMS = [
 ];
 
 describe("CoverageTable", () => {
-  it("lists each Exam with its Subject codes, linking to its Exam page", () => {
+  it("lists each Exam with its Subjects' codes and names, linking to its Exam page", () => {
     render(<CoverageTable exams={EXAMS} />);
     const rows = within(screen.getByRole("list", { name: "Subjects per exam" })).getAllByRole(
       "link",
     );
     expect(rows.map((row) => row.getAttribute("href"))).toEqual(["/exams/ce", "/exams/cpa"]);
-    expect(rows[0]).toHaveTextContent("CECivil EngineeringMSTCHPGEPSAD");
-    expect(rows[1]).toHaveTextContent("CPAAccountancyFARAUD");
+    expect(rows[0]).toHaveTextContent(
+      "CECivil Engineering" +
+        "MSTC Mathematics, Surveying & Transportation Engineering" +
+        "HPGE Hydraulics & Geotechnical Engineering" +
+        "PSAD Principles of Structural Analysis & Design",
+    );
+    expect(rows[1]).toHaveTextContent(
+      "CPAAccountancyFAR Financial Accounting and ReportingAUD Auditing",
+    );
   });
 
   it("renders nothing when there are no Exams", () => {

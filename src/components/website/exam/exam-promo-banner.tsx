@@ -1,10 +1,12 @@
 import Link from "next/link";
 
-import { examPageCopy, type ExamPromo } from "@/content/exam-pages";
+import { examPageCopy } from "@/content/exam-pages";
 import { paths } from "@/paths";
+import type { ExamBundleOffer } from "@/services/catalogue.types";
 
 interface ExamPromoBannerProps {
-  promo: Pick<ExamPromo, "eyebrow" | "body">;
+  /** The Exam page's bundle offer, as the Admin set it (mockup L163–170). */
+  offer: Pick<ExamBundleOffer, "headline" | "text" | "buttonLabel">;
   productSlug: string;
   /** The Product's price, read from the catalogue, e.g. "₱3,499". */
   price: string;
@@ -13,8 +15,8 @@ interface ExamPromoBannerProps {
 }
 
 /** An offer of one Live Product on its Exam page, linking to the Product page. */
-export function ExamPromoBanner({ promo, productSlug, price, saving }: ExamPromoBannerProps) {
-  const eyebrow = examPageCopy.promo.withSaving(promo.eyebrow, saving);
+export function ExamPromoBanner({ offer, productSlug, price, saving }: ExamPromoBannerProps) {
+  const eyebrow = examPageCopy.promo.withSaving(offer.headline, saving);
   return (
     <section
       aria-label={eyebrow}
@@ -29,7 +31,7 @@ export function ExamPromoBanner({ promo, productSlug, price, saving }: ExamPromo
             {eyebrow}
           </span>
           <span className="text-[clamp(26px,3.2vw,42px)] leading-[1.05] font-extrabold tracking-[-0.03em] text-balance">
-            {promo.body}
+            {offer.text}
           </span>
         </span>
         <span className="flex flex-col items-start gap-2">
@@ -37,7 +39,7 @@ export function ExamPromoBanner({ promo, productSlug, price, saving }: ExamPromo
             {price}
           </span>
           <span className="border-b-2 border-ayc-orange text-base font-bold">
-            {examPageCopy.promo.seeBundle} <span aria-hidden="true">→</span>
+            {offer.buttonLabel} <span aria-hidden="true">→</span>
           </span>
         </span>
       </Link>

@@ -2,6 +2,8 @@
 // through src/services/admin.ts; these are its inputs and outputs.
 
 import type {
+  Exam,
+  ExamPage,
   Faq,
   FaqGroup,
   Marketplace,
@@ -337,4 +339,32 @@ export interface AdminFaq {
 /** A deleted FAQ. */
 export interface DeletedFaq {
   id: string;
+}
+
+// ── Exam pages ──────────────────────────────────────────────────────────────
+
+/**
+ * A part of an Exam page that its own editor saves, with its own stamp for
+ * the conflict check. The section toggles always save, so theirs is never
+ * checked.
+ */
+export type ExamPagePart =
+  "header" | "subjects" | "sections" | "bundleOffer" | "seo" | "officialExamDate";
+
+/** A Product a bundle offer can be of: one of the Exam's, Live or not, shown or not. */
+export interface BundleProductOption {
+  id: string;
+  shortName: string;
+  state: ProductState;
+  showOnWebsite: boolean;
+}
+
+/** One Exam's page as its editors open it: the Exam, its page record, and each part's stamp. */
+export interface AdminExamPage {
+  exam: Exam;
+  /** Its record, or the defaults while it has none. */
+  page: ExamPage;
+  stamps: Record<ExamPagePart, RecordStamp>;
+  /** The Exam's Products, in the catalogue's order, for the bundle offer. */
+  products: BundleProductOption[];
 }

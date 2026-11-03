@@ -258,8 +258,8 @@ test("no serious or critical accessibility violations on FAQs: the editor, its q
   await expect(editor.getByText("★★★★★ · Ultimate CE Posters 2.0")).toBeVisible();
   await expectNoBlockingViolations(page);
 
-  await editor.getByLabel("QUESTION").fill("");
-  await editor.getByLabel("ANSWER").fill("a".repeat(401));
+  await editor.getByLabel("QUESTION", { exact: true }).fill("");
+  await editor.getByLabel("ANSWER", { exact: true }).fill("a".repeat(401));
   await editor.getByRole("switch", { name: "Popular question" }).click();
   await editor.getByRole("button", { name: "Save question" }).click();
   await expect(editor.getByText("WRITE A QUESTION AND ANSWER TO SAVE")).toBeVisible({
@@ -281,6 +281,31 @@ test("no serious or critical accessibility violations on FAQs: the editor, its q
   await expectNoBlockingViolations(page);
 });
 
+test("no serious or critical accessibility violations on Exam pages: each editor, a field message and a hidden section", async ({
+  page,
+}) => {
+  await signInAs(page, "editor", `${paths.admin.examPages}?exam=ce&section=seo`);
+  const editor = page.getByRole("complementary", { name: "Exam page editor" });
+  await expect(editor.getByLabel("PAGE TITLE")).toBeVisible({ timeout: 15_000 });
+  await editor.getByLabel("PAGE TITLE").fill("T".repeat(50));
+  await editor.getByRole("button", { name: "Save" }).click();
+  await expect(editor.getByText("KEEP THE WHOLE TITLE TO 60 CHARACTERS")).toBeVisible({
+    timeout: 15_000,
+  });
+  await expectNoBlockingViolations(page);
+
+  for (const section of ["subjects", "bundle", "date"]) {
+    await page.goto(`${paths.admin.examPages}?exam=me&section=${section}`);
+    await expect(editor.getByRole("button", { name: "Save" })).toBeVisible({ timeout: 15_000 });
+    await expectNoBlockingViolations(page);
+  }
+
+  await page.goto(`${paths.admin.examPages}?exam=me&section=reviews`);
+  await page.getByRole("switch", { name: "Show Reviews on the ME page" }).click();
+  await expect(editor.getByText("HIDDEN ON SITE")).toBeVisible({ timeout: 15_000 });
+  await expectNoBlockingViolations(page);
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
@@ -296,6 +321,14 @@ test.describe("on a phone", () => {
   test("no serious or critical accessibility violations on Products", async ({ page }) => {
     await signInAs(page, "editor", paths.admin.products);
     await expect(page.getByRole("region", { name: "Products" })).toBeVisible({ timeout: 15_000 });
+    await expectNoBlockingViolations(page);
+  });
+
+  test("no serious or critical accessibility violations on Exam pages", async ({ page }) => {
+    await signInAs(page, "editor", `${paths.admin.examPages}?exam=ce&section=seo`);
+    await expect(page.getByRole("complementary", { name: "Exam page editor" })).toBeVisible({
+      timeout: 15_000,
+    });
     await expectNoBlockingViolations(page);
   });
 

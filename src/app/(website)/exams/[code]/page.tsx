@@ -13,8 +13,8 @@ import { TryACard } from "@/components/website/exam/try-a-card";
 import { JsonLd } from "@/components/website/json-ld";
 import { ProductCard } from "@/components/website/product-card";
 import { config } from "@/config";
-import { examPageCopy, examPromos, sampleCards } from "@/content/exam-pages";
-import { examSeoDescription, examSeoTitle } from "@/lib/catalogue/exam-copy";
+import { examPageCopy, sampleCards } from "@/content/exam-pages";
+import { examPageSeo } from "@/lib/catalogue/exam-copy";
 import { examStats } from "@/lib/catalogue/exam-stats";
 import { breadcrumbJsonLd } from "@/lib/catalogue/json-ld";
 import { bundleSaving, productFullPrice } from "@/lib/catalogue/price";
@@ -22,7 +22,7 @@ import { formatPeso } from "@/lib/money";
 import { paths } from "@/paths";
 import {
   getExamByCode,
-  getProductBySlug,
+  getExamPage,
   getWebsiteSettings,
   listExams,
   listProducts,
@@ -39,8 +39,14 @@ const REVIEW_LIMIT = 7;
 // One read per request, shared by generateMetadata and the page. Null for an
 // unknown code or an Exam with no Products shown on the Website.
 const findExam = cache(async (code: string) => {
-  const [exam, exams] = await Promise.all([getExamByCode(code), listExams()]);
-  return exam && exams.some((shown) => shown.code === exam.code) ? { exam, exams } : null;
+  const [exam, exams, page] = await Promise.all([
+    getExamByCode(code),
+    listExams(),
+    getExamPage(code),
+  ]);
+  return exam && page && exams.some((shown) => shown.code === exam.code)
+    ? { exam, exams, page }
+    : null;
 });
 
 /** URLs use the lowercase code; any other case redirects to it. */
@@ -52,13 +58,18 @@ export async function generateMetadata({ params }: ExamPageProps): Promise<Metad
   // the Website shell. (Calling it here would render the root 404 instead.)
   const found = isCanonical(code) ? await findExam(code) : null;
   if (!found) return {};
-  const { exam } = found;
-  const title = examSeoTitle(exam);
-  const description = examSeoDescription(exam);
+  const { exam, page } = found;
+  // Staff's overrides, or the generated text (blank in the Admin uses it).
+  const { title, description } = examPageSeo(exam, page);
   const url = paths.exams.details(exam.code);
   const shareTitle = `${title} · ${config.site.name}`;
-  // Setting openGraph here replaces the root's, so the share image is repeated.
-  const images = [{ url: paths.shareImage, alt: config.site.name }];
+  // Setting openGraph here replaces the root's, so the site's share image is
+  // repeated when the page has none of its own.
+  const images = [
+    page.shareImage
+      ? { url: page.shareImage, alt: title }
+      : { url: paths.shareImage, alt: config.site.name },
+  ];
   return {
     title,
     description,
@@ -81,31 +92,28 @@ export default async function ExamPage({ params }: ExamPageProps) {
   if (!isCanonical(code)) permanentRedirect(paths.exams.details(code));
   const found = await findExam(code);
   if (!found) notFound();
-  const { exam, exams } = found;
+  const { exam, exams, page } = found;
+  const { sections } = page;
 
-  const promos = examPromos.filter((promo) => promo.examCode === exam.code);
-  const [settings, { items: live }, { items: comingSoon }, { items: reviews }, promoProducts] =
-    await Promise.all([
-      getWebsiteSettings(),
-      listProducts({ examCode: exam.code }),
-      listProducts({ examCode: exam.code, state: "coming-soon" }),
-      listReviews({ examCode: exam.code, sort: "exam-page", limit: REVIEW_LIMIT }),
-      Promise.all(promos.map((promo) => getProductBySlug(promo.productSlug))),
-    ]);
+  const [settings, { items: live }, { items: comingSoon }, { items: reviews }] = await Promise.all([
+    getWebsiteSettings(),
+    listProducts({ examCode: exam.code }),
+    listProducts({ examCode: exam.code, state: "coming-soon" }),
+    sections.reviews
+      ? listReviews({ examCode: exam.code, sort: "exam-page", limit: REVIEW_LIMIT })
+      : { items: [] },
+  ]);
 
   // Live Products come best selling first, so the first is the top seller.
   // Its "#1" needs Shopee figures to back it.
   const topSeller = live[0] ?? null;
   const numberOneId = topSeller?.shopee ? topSeller.id : null;
   const showAppLinks = settings.memberAppLive && live.some((product) => product.availableInApp);
-  // A banner offers its Product's whole set (the CE bundle's 3-in-1), only while it's Live.
-  const offers = promos.flatMap((promo, index) => {
-    const product = promoProducts[index];
-    const price = product ? productFullPrice(product) : null;
-    if (!product || !price) return [];
-    const saving = bundleSaving(product);
-    return [{ promo, product, price, saving: saving === null ? null : formatPeso(saving) }];
-  });
+  // The offer is of its Product's whole set (the CE bundle's 3-in-1). The seam
+  // gives it only while that Product is Live.
+  const offer = sections.bundleOffer ? page.bundleOffer : null;
+  const offerPrice = offer ? productFullPrice(offer.product) : null;
+  const offerSaving = offer ? bundleSaving(offer.product) : null;
   const breadcrumb = [
     { name: "Home", path: paths.home },
     { name: exam.name, path: paths.exams.details(exam.code) },
@@ -120,7 +128,8 @@ export default async function ExamPage({ params }: ExamPageProps) {
         liveProducts={live}
         showAppLink={showAppLinks}
       />
-      <SubjectsCovered exam={exam} />
+      {/* Staff can hide these three sections (Exam pages & promo); the rest are always on. */}
+      {sections.subjects ? <SubjectsCovered exam={exam} /> : null}
       {/* Keyed by Exam, so a chosen format or card doesn't carry over to another Exam's page. */}
       <ExamProducts
         key={`products-${exam.code}`}
@@ -149,16 +158,15 @@ export default async function ExamPage({ params }: ExamPageProps) {
         printedSetSlug={topSeller?.slug ?? null}
         showAppPlans={showAppLinks}
       />
-      {offers.map(({ promo, product, price, saving }) => (
+      {offer && offerPrice ? (
         <ExamPromoBanner
-          key={promo.productSlug}
-          promo={promo}
-          productSlug={product.slug}
-          price={price}
-          saving={saving}
+          offer={offer}
+          productSlug={offer.product.slug}
+          price={offerPrice}
+          saving={offerSaving === null ? null : formatPeso(offerSaving)}
         />
-      ))}
-      <ExamReviews examCode={exam.code} reviews={reviews} />
+      ) : null}
+      {sections.reviews ? <ExamReviews examCode={exam.code} reviews={reviews} /> : null}
       <StoreBand examCode={exam.code} shopLinks={settings.shopLinks} />
       <JsonLd data={breadcrumbJsonLd(breadcrumb, config.site.url)} />
     </>

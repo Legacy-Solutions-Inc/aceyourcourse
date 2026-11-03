@@ -246,6 +246,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Products ($name)", (arm) => {
         seed.products = [];
         seed.reviews = [];
         for (const faq of seed.faqs) faq.reviewQuote = null;
+        for (const page of seed.examPages) page.bundleOffer = null;
       });
 
       expect(await list()).toMatchObject({ rows: [], total: 0 });
@@ -1244,7 +1245,7 @@ describe.each(ADMIN_ARMS)("Admin seam: the Product editor ($name)", (arm) => {
       expect(result).toEqual({
         ok: true,
         value: { id: "prd-005", slug: POSTERS, reviews: 3, photos: 2, faqQuotes: 1 },
-        tags: ["catalogue:products", "catalogue:reviews", "catalogue:faqs"],
+        tags: ["catalogue:products", "catalogue:reviews", "catalogue:faqs", "catalogue:exam-pages"],
       });
       expect(await getProductBySlug(POSTERS)).toBeNull();
       expect(await seam.getProductForAdmin(EDITOR, "prd-005")).toBeNull();

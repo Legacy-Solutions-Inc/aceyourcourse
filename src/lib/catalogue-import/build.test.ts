@@ -370,12 +370,12 @@ describe("convertSpreadsheet: row errors", () => {
   });
 });
 
-describe("convertSpreadsheet: the hand-maintained settings and FAQs", () => {
+describe("convertSpreadsheet: the hand-maintained settings, FAQs and Exam pages", () => {
   it("reports an FAQ quote that no longer matches its Review, with no sheet", () => {
     const [faq] = CATALOGUE_SEED.faqs;
     if (!faq) throw new Error("the seed has no FAQs");
     const { errors } = convertSpreadsheet(spreadsheet(), {
-      settings: CATALOGUE_SEED.settings,
+      ...HAND_MAINTAINED,
       faqs: [{ ...faq, reviewQuote: { reviewId: "rev-001", text: "not in it" } }],
     });
 
@@ -385,6 +385,24 @@ describe("convertSpreadsheet: the hand-maintained settings and FAQs", () => {
         row: null,
         column: null,
         message: 'faqs.0.reviewQuote.text: must be word for word from Review "rev-001"',
+      },
+    ]);
+  });
+
+  it("reports an Exam page bundle offer whose Product the spreadsheet no longer has", () => {
+    const [page] = CATALOGUE_SEED.examPages;
+    if (!page?.bundleOffer) throw new Error("the seed's first Exam page has no bundle offer");
+    const { errors } = convertSpreadsheet(spreadsheet(), {
+      ...HAND_MAINTAINED,
+      examPages: [{ ...page, bundleOffer: { ...page.bundleOffer, productId: "prd-404" } }],
+    });
+
+    expect(errors).toEqual([
+      {
+        sheet: null,
+        row: null,
+        column: null,
+        message: 'examPages.0.bundleOffer.productId: unknown Product "prd-404"',
       },
     ]);
   });

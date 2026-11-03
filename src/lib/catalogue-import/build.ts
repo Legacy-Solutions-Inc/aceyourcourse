@@ -37,8 +37,8 @@ import {
 /** The part of the seed the spreadsheet holds. */
 export type GeneratedCatalogue = Pick<CatalogueSeed, "exams" | "products" | "reviews">;
 
-/** The part kept by hand in code: Website settings and FAQs. */
-export type HandMaintained = Pick<CatalogueSeed, "settings" | "faqs">;
+/** The part kept by hand in code: Website settings, FAQs and Exam pages. */
+export type HandMaintained = Pick<CatalogueSeed, "settings" | "faqs" | "examPages">;
 
 export interface Conversion {
   catalogue: GeneratedCatalogue;
@@ -50,7 +50,7 @@ export interface Conversion {
 type ErrorLocation = Omit<ImportError, "message">;
 type SeedPath = (string | number)[];
 
-/** A problem with a whole sheet, or (sheet null) with the hand-maintained settings and FAQs. */
+/** A problem with a whole sheet, or (sheet null) with the hand-maintained part of the seed. */
 const sheetError = (sheet: SheetName | null, message: string): ImportError => ({
   sheet,
   row: null,
@@ -263,7 +263,7 @@ function build(sheets: Sheets) {
     ];
   });
 
-  /** Where a seed field came from, or null for the hand-maintained settings and FAQs. */
+  /** Where a seed field came from, or null for the hand-maintained part of the seed. */
   function locate(path: SeedPath): ErrorLocation | null {
     const [collection, index, field, ...rest] = path;
     if (typeof index !== "number") return null;
@@ -348,8 +348,9 @@ export function sortErrors(errors: ImportError[]): ImportError[] {
 /**
  * Pure: converts the spreadsheet (each sheet's CSV text, or null if it wasn't
  * sent) into the seed's Exams, Products and Reviews, and the photos they list.
- * The result is checked together with the hand-maintained settings and FAQs,
- * so an FAQ quote that no longer matches its Review is caught too. Every
+ * The result is checked together with the hand-maintained settings, FAQs and
+ * Exam pages, so an FAQ quote that no longer matches its Review, or a bundle
+ * offer whose Product is gone, is caught too. Every
  * problem is reported, not only the first. A sheet that is missing, can't be
  * read or lacks a header stops the conversion there, since every row that
  * refers to it would fail too.

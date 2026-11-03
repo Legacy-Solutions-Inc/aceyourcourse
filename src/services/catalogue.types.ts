@@ -27,6 +27,45 @@ export interface Exam {
   subjects: Subject[];
 }
 
+/** The Exam page sections an Editor can hide. Header and Reviewers are always on. */
+export type ExamPageSection = "subjects" | "bundleOffer" | "reviews";
+
+/** An Exam page's offer of one of its Exam's Products, e.g. the CE bundle. */
+export interface ExamBundleOffer {
+  productId: string;
+  /** Followed by "· save ₱…" while the catalogue gives the Product a saving. */
+  headline: string;
+  text: string;
+  buttonLabel: string;
+}
+
+/**
+ * What Staff edit about an Exam's Website page, beyond the Exam itself. The
+ * compare table, "Try a card", the store band and every heading are fixed in
+ * code. An Exam with no record gets every section shown and nothing else.
+ */
+export interface ExamPage {
+  examCode: string;
+  sections: Record<ExamPageSection, boolean>;
+  bundleOffer: ExamBundleOffer | null;
+  /** The page's own title, before the site name. Null uses the generated one. */
+  seoTitle: string | null;
+  /** Null uses the generated description. */
+  seoDescription: string | null;
+  /** A self-hosted 1200 × 630 image. Null uses the site's share image. */
+  shareImage: string | null;
+  /** ISO date from the PRC schedule, for the Member App's countdown (Phase 3). */
+  officialExamDate: string | null;
+}
+
+/**
+ * An Exam page as the Website reads it: its bundle offer comes with its
+ * Product, and only while that Product is Live and shown on the Website.
+ */
+export interface ExamPageContent extends Omit<ExamPage, "bundleOffer"> {
+  bundleOffer: (Omit<ExamBundleOffer, "productId"> & { product: Product }) | null;
+}
+
 export interface AnnouncementMessage {
   text: string;
   href: string;

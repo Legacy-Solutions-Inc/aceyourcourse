@@ -1,10 +1,18 @@
 import { z } from "zod";
 
 import { parsePeso } from "@/lib/admin/peso";
+import { fullTitle, WHOLE_TITLE_MAX } from "@/lib/admin/seo-check";
 import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
+import { isCalendarDate } from "@/lib/manila-time";
 import { variationLabel } from "@/lib/catalogue/price";
 import type { AdminError, RequiredRole, StaffActor } from "@/services/admin.types";
-import { FAQ_ANSWER_MAX, FAQ_GROUPS, httpsUrl, PRODUCT_FORMATS } from "@/services/catalogue.schema";
+import {
+  EXAM_PAGE_SECTIONS,
+  FAQ_ANSWER_MAX,
+  FAQ_GROUPS,
+  httpsUrl,
+  PRODUCT_FORMATS,
+} from "@/services/catalogue.schema";
 import type { Marketplace, Review } from "@/services/catalogue.types";
 
 // The Admin seam's zod input schemas (CONVENTIONS §3), shared by the seam's
@@ -709,3 +717,204 @@ export type FaqMove = z.infer<typeof faqMoveSchema>["direction"];
 
 /** ▲▼, as its Server Action takes it: the FAQ and the way it moves. */
 export const faqMoveInputSchema = faqMoveSchema.extend({ id: faqId });
+
+// ── Exam pages ──────────────────────────────────────────────────────────────
+// Each part of an Exam page as its editor's form holds it (spec, Phase 2 →
+// Exam pages & promo; BUILD-MAP §3.2): the Header's fields, the Subject names
+// (their codes are fixed), the bundle offer, the SEO overrides and the
+// Official Exam Date. As with Products, the Server Actions check only each
+// form's shape and the seam parses it with every rule. Rules that need the
+// catalogue (the Subject codes are the Exam's, the bundle Product is one of
+// its Products, the share image is an upload) are the seam's. The section
+// toggles are single toggles.
+
+/** An Exam's code, as the editors send it. The seam matches it case-insensitively. */
+const examCode = z.string().trim().min(1).max(20);
+
+/** Pure: a rule's limit on a field, checked on its text as saved. */
+const longerThan = (text: string, max: number) => text.trim().length > max;
+
+/** A field that must have text: its message when blank, and its limit. */
+type RequiredText = { max: number; blank: string };
+
+/** Adds the field's message when its text is blank or longer than its limit. */
+function checkRequiredText(
+  ctx: z.RefinementCtx,
+  path: (string | number)[],
+  text: string,
+  { max, blank: missing }: RequiredText,
+) {
+  const issue = (message: string) => ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
+  if (blank(text)) issue(missing);
+  else if (longerThan(text, max)) issue(`KEEP IT TO ${max} CHARACTERS`);
+}
+
+const examHeaderFormFields = z.object({
+  name: formText(500),
+  longName: formText(500),
+  blurb: formText(5000),
+  madeFor: formText(500),
+});
+
+/** The Header editor's values: EXAM NAME, LONG NAME, TEXT and MADE FOR. */
+export type ExamHeaderForm = z.infer<typeof examHeaderFormFields>;
+
+const HEADER_FIELDS: Record<keyof ExamHeaderForm, RequiredText> = {
+  name: { max: 60, blank: "ADD THE EXAM NAME" },
+  longName: { max: 120, blank: "ADD THE LONG NAME" },
+  blurb: { max: 600, blank: "ADD THE TEXT" },
+  madeFor: { max: 160, blank: "ADD WHO IT’S MADE FOR" },
+};
+
+/** The Header editor's form, checked and trimmed. */
+export const examHeaderFormSchema = examHeaderFormFields
+  .superRefine((form, ctx) => {
+    for (const field of ["name", "longName", "blurb", "madeFor"] as const) {
+      checkRequiredText(ctx, [field], form[field], HEADER_FIELDS[field]);
+    }
+  })
+  .transform((form) => ({
+    name: form.name.trim(),
+    longName: form.longName.trim(),
+    blurb: savedText(form.blurb),
+    madeFor: form.madeFor.trim(),
+  }));
+
+/** "Save header": the Exam and its Header fields, their shape checked. */
+export const saveExamHeaderInputSchema = examHeaderFormFields.extend({ code: examCode });
+
+const SUBJECT_NAME: RequiredText = { max: 120, blank: "ADD THE SUBJECT’S NAME" };
+
+const subjectNamesFormFields = z.object({
+  subjects: z
+    .array(z.object({ code: formText(40), name: formText(1000) }))
+    .min(1)
+    .max(30),
+});
+
+/** The Subjects covered editor's values: each Subject's fixed code and its name. */
+export type SubjectNamesForm = z.infer<typeof subjectNamesFormFields>;
+
+/** The Subjects covered editor's form, checked, with the names trimmed. */
+export const subjectNamesFormSchema = subjectNamesFormFields
+  .superRefine((form, ctx) => {
+    form.subjects.forEach((subject, index) => {
+      checkRequiredText(ctx, ["subjects", index, "name"], subject.name, SUBJECT_NAME);
+    });
+  })
+  .transform((form) => ({
+    subjects: form.subjects.map(({ code, name }) => ({ code: code.trim(), name: name.trim() })),
+  }));
+
+/** "Save subjects": the Exam and its Subject names, their shape checked. */
+export const saveSubjectNamesInputSchema = subjectNamesFormFields.extend({ code: examCode });
+
+/** A section toggle: Subjects covered, Bundle offer or Reviews, shown or hidden. */
+export const examSectionSchema = z.object({
+  section: z.enum(EXAM_PAGE_SECTIONS, { errorMap: () => ({ message: "UNKNOWN SECTION" }) }),
+  on: flag,
+});
+
+/** A section toggle, as its Server Action takes it: the Exam, the section and its state. */
+export const examSectionInputSchema = examSectionSchema.extend({ code: examCode });
+
+const BUNDLE_FIELDS: Record<"headline" | "text" | "buttonLabel", RequiredText> = {
+  headline: { max: 80, blank: "ADD A HEADLINE" },
+  text: { max: 200, blank: "ADD THE TEXT" },
+  buttonLabel: { max: 30, blank: "ADD THE BUTTON LABEL" },
+};
+
+const bundleOfferFormFields = z.object({
+  productId: formText(100),
+  headline: formText(1000),
+  text: formText(5000),
+  buttonLabel: formText(1000),
+});
+
+/** The Bundle offer editor's values. No Product ("") means no offer. */
+export type BundleOfferForm = z.infer<typeof bundleOfferFormFields>;
+
+/** The Bundle offer editor's form, checked: the offer, or null with no Product chosen. */
+export const bundleOfferFormSchema = bundleOfferFormFields
+  .superRefine((form, ctx) => {
+    if (blank(form.productId)) return;
+    for (const field of ["headline", "text", "buttonLabel"] as const) {
+      checkRequiredText(ctx, [field], form[field], BUNDLE_FIELDS[field]);
+    }
+  })
+  .transform((form) =>
+    blank(form.productId)
+      ? null
+      : {
+          productId: form.productId.trim(),
+          headline: form.headline.trim(),
+          text: savedText(form.text),
+          buttonLabel: form.buttonLabel.trim(),
+        },
+  );
+
+/** "Save bundle offer": the Exam and its offer, its shape checked. */
+export const saveBundleOfferInputSchema = bundleOfferFormFields.extend({ code: examCode });
+
+const examSeoFormFields = z.object({
+  // Longer than the limits, so an over-long one is told the limit by the rules below.
+  seoTitle: formText(500),
+  seoDescription: formText(1000),
+  /** The image it has (its src), a new upload's path, or "" for the site's. */
+  shareImage: formText(300),
+});
+
+/** The Search & AI visibility editor's values. Blank uses the generated text. */
+export type ExamSeoForm = z.infer<typeof examSeoFormFields>;
+
+/** The Search & AI visibility editor's form, checked: blank fields are null. */
+export const examSeoFormSchema = examSeoFormFields
+  .superRefine((form, ctx) => {
+    const issue = (path: string, message: string) =>
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
+    // Counted with the site name the layout adds, as the editor's counter counts it.
+    if (!blank(form.seoTitle) && fullTitle(form.seoTitle).length > WHOLE_TITLE_MAX) {
+      issue("seoTitle", `KEEP THE WHOLE TITLE TO ${WHOLE_TITLE_MAX} CHARACTERS`);
+    }
+    if (longerThan(form.seoDescription, SEO_DESCRIPTION_MAX)) {
+      issue("seoDescription", `KEEP IT TO ${SEO_DESCRIPTION_MAX} CHARACTERS`);
+    }
+  })
+  .transform((form) => ({
+    seoTitle: textOrNull(form.seoTitle),
+    seoDescription: textOrNull(savedText(form.seoDescription)),
+    shareImage: textOrNull(form.shareImage),
+  }));
+
+/** "Save": the Exam and its SEO fields, their shape checked. */
+export const saveExamSeoInputSchema = examSeoFormFields.extend({ code: examCode });
+
+/** What a share image that's neither the page's nor a finished upload is told. */
+export const SHARE_IMAGE_NOT_UPLOADED = "THE IMAGE ISN’T UPLOADED · ADD IT AGAIN";
+
+const officialExamDateFormFields = z.object({
+  /** YYYY-MM-DD, as a date input gives it, or "" for none. */
+  officialExamDate: formText(20),
+});
+
+/** The Official Exam Date editor's value. */
+export type OfficialExamDateForm = z.infer<typeof officialExamDateFormFields>;
+
+/** The Official Exam Date editor's form, checked: a date on the calendar, or null. */
+export const officialExamDateFormSchema = officialExamDateFormFields
+  .superRefine((form, ctx) => {
+    const date = form.officialExamDate.trim();
+    if (date && !isCalendarDate(date)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["officialExamDate"],
+        message: "ENTER A REAL DATE",
+      });
+    }
+  })
+  .transform((form) => ({ officialExamDate: textOrNull(form.officialExamDate) }));
+
+/** "Save date": the Exam and its Official Exam Date, its shape checked. */
+export const saveOfficialExamDateInputSchema = officialExamDateFormFields.extend({
+  code: examCode,
+});

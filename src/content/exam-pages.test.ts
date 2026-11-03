@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { getProductBySlug, listExams } from "@/services/catalogue";
+import { listExams } from "@/services/catalogue";
 
-import { bestFor, examPageCopy, examPromos, sampleCards } from "./exam-pages";
+import { bestFor, examPageCopy, sampleCards } from "./exam-pages";
 
-// The Exam page's fixed copy (docs/mockup/website/Exam_v2.dc.html L213–220,
-// L163–170), checked against the catalogue it sits beside.
+// The Exam page's fixed copy (docs/mockup/website/Exam_v2.dc.html L213–220),
+// checked against the catalogue it sits beside.
 
 describe("the Exam page's sample formula cards", () => {
   it("has three cards for every Exam on the Website", async () => {
@@ -51,37 +51,14 @@ describe("the Exam page's best-for map", () => {
   });
 });
 
-describe("the Exam page's promo banners", () => {
-  it("offers the CE Review Bundle 3-in-1 on the CE page", () => {
-    expect(examPromos).toEqual([
-      {
-        examCode: "CE",
-        productSlug: "ce-review-bundle-3-in-1",
-        eyebrow: "CE Review Bundle 3-in-1",
-        body: "Cards, notebook, and posters for MSTC, HPGE, and PSAD in one order.",
-      },
-    ]);
-  });
-
-  it("adds the saving to a banner's eyebrow only when the catalogue gives one", () => {
+// The bundle offer itself is catalogue data (catalogue.test.ts, "Exam pages").
+describe("the Exam page's bundle offer", () => {
+  it("adds the saving to the offer's headline only when the catalogue gives one", () => {
     const { withSaving } = examPageCopy.promo;
     expect(withSaving("CE Review Bundle 3-in-1", "₱200")).toBe(
       "CE Review Bundle 3-in-1 · save ₱200",
     );
     expect(withSaving("CE Review Bundle 3-in-1", null)).toBe("CE Review Bundle 3-in-1");
-  });
-
-  it("points each banner at a Product of its own Exam", async () => {
-    for (const promo of examPromos) {
-      const product = await getProductBySlug(promo.productSlug);
-      expect(product?.examCode, promo.productSlug).toBe(promo.examCode);
-    }
-  });
-
-  it("leaves the banner's price out of its text, so the catalogue supplies it", () => {
-    for (const promo of examPromos) {
-      expect(promo.body).not.toMatch(/₱/);
-    }
   });
 });
 

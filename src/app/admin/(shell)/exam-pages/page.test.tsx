@@ -1,0 +1,204 @@
+import { render, screen, within } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
+
+import ExamPagesPage from "./page";
+
+// Exam pages & promo, rendered from the sample data with its page, Exam and
+// section read from the URL. The cookie jar and the router are the framework
+// boundary, so they are replaced.
+const { jar } = vi.hoisted(() => ({ jar: new Map<string, string>() }));
+
+vi.mock("next/headers", () => ({
+  cookies: async () => ({
+    get: (name: string) => (jar.has(name) ? { name, value: jar.get(name) } : undefined),
+  }),
+}));
+vi.mock("next/navigation", () => ({
+  redirect: (url: string) => {
+    throw new Error(`NEXT_REDIRECT ${url}`);
+  },
+  notFound: () => {
+    throw new Error("NEXT_NOT_FOUND");
+  },
+  usePathname: () => "/admin/exam-pages",
+  useRouter: () => ({ refresh: () => {}, replace: () => {} }),
+  unstable_rethrow: () => {},
+}));
+
+type Params = Record<string, string | string[] | undefined>;
+
+async function renderPage(params: Params = {}) {
+  render(await ExamPagesPage({ searchParams: Promise.resolve(params) }));
+}
+
+const pages = () => screen.getByRole("navigation", { name: "Pages" });
+const column = (code: string) => screen.getByRole("region", { name: `${code} Exam page` });
+const editor = () => screen.getByRole("complementary", { name: "Exam page editor" });
+const sectionRows = (code: string) =>
+  within(column(code))
+    .getAllByRole("listitem")
+    .filter((item) =>
+      within(item).queryByRole("link", { name: /^(Header|Subjects|Reviewers|Bundle|Reviews)/ }),
+    );
+
+describe("Exam pages & promo", () => {
+  beforeEach(() => {
+    jar.clear();
+    resetSampleStore();
+    jar.set("ayc_admin_sample", "content@aceyourcourse.ph");
+  });
+
+  it("lists PAGES with the fixed note, the Exam pages selected", async () => {
+    await renderPage();
+    expect(
+      within(pages())
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual(["Exam pages× 5", "Home promo banner", "Announcement bar"]);
+    expect(within(pages()).getByRole("link", { name: /^Exam pages/ })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(
+      within(pages()).getByText(
+        "Home, About, Products, menu, footer, and legal pages are fixed. Changes to those go through the developer.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("opens the first Exam's Header with the chips, View page ↗ and the visibility card", async () => {
+    await renderPage();
+    const ce = column("CE");
+    const chips = within(within(ce).getByRole("list", { name: "Exam" }));
+    expect(chips.getAllByRole("link").map((link) => link.textContent)).toEqual([
+      "CE",
+      "ME",
+      "EE",
+      "MT",
+      "CPA",
+    ]);
+    expect(chips.getByRole("link", { name: "CE" })).toHaveAttribute("aria-current", "page");
+    expect(chips.getByRole("link", { name: "ME" })).toHaveAttribute(
+      "href",
+      "/admin/exam-pages?exam=me",
+    );
+    expect(within(ce).getByRole("link", { name: /^View page/ })).toHaveAttribute(
+      "href",
+      "/exams/ce",
+    );
+    // CE's generated title and description both fit: GOOD.
+    expect(within(ce).getByRole("link", { name: /^Search & AI visibility/ })).toHaveTextContent(
+      "GOOD",
+    );
+    expect(within(ce).getByRole("link", { name: /^Official Exam Date/ })).toHaveTextContent(
+      "NOT SET",
+    );
+    expect(within(editor()).getByRole("heading")).toHaveTextContent("EDIT · HEADER · CE");
+    expect(within(editor()).getByLabelText("EXAM NAME")).toHaveValue("Civil Engineering");
+  });
+
+  it("shows ME's sections: Header and Reviewers always on, the rest as switches", async () => {
+    await renderPage({ exam: "me" });
+    const rows = sectionRows("ME");
+    expect(rows.map((row) => row.textContent)).toEqual([
+      "HeaderName, text, imageALWAYS ON",
+      "Subjects covered3 subjects",
+      "ReviewersEvery ME productALWAYS ON",
+      "Bundle offerNo offer set · HIDDEN ON SITE",
+      "ReviewsFrom ME products",
+    ]);
+    const switches = within(column("ME")).getAllByRole("switch");
+    expect(
+      switches.map((s) => [s.getAttribute("aria-label"), s.getAttribute("aria-checked")]),
+    ).toEqual([
+      ["Show Subjects covered on the ME page", "true"],
+      ["Show Bundle offer on the ME page", "false"],
+      ["Show Reviews on the ME page", "true"],
+    ]);
+  });
+
+  it("shows the first Exam for an unknown ?exam", async () => {
+    await renderPage({ exam: "xx" });
+    expect(column("CE")).toBeInTheDocument();
+  });
+
+  it("opens Subjects covered with each code read-only and its name editable", async () => {
+    await renderPage({ exam: "ce", section: "subjects" });
+    expect(within(editor()).getByRole("heading")).toHaveTextContent("EDIT · SUBJECTS COVERED · CE");
+    expect(within(editor()).getByLabelText("01 · MSTC")).toHaveValue(
+      "Mathematics, Surveying & Transportation Engineering",
+    );
+    expect(within(editor()).getAllByRole("textbox")).toHaveLength(3);
+  });
+
+  it("opens the bundle offer with the CE Products to choose from", async () => {
+    await renderPage({ exam: "ce", section: "bundle" });
+    const product = within(editor()).getByLabelText("PRODUCT");
+    expect(product).toHaveDisplayValue("CE Review Bundle 3-in-1");
+    expect(
+      within(product)
+        .getAllByRole("option")
+        .map((o) => o.textContent),
+    ).toEqual([
+      "No offer",
+      "CE Formula Flash Cards",
+      "Ultimate CE Posters 2.0",
+      "CE Review Bundle 3-in-1",
+      "CE Solving Notebook · COMING SOON",
+    ]);
+    expect(within(editor()).getByLabelText("HEADLINE")).toHaveValue("CE Review Bundle 3-in-1");
+    expect(within(editor()).getByLabelText("BUTTON LABEL")).toHaveValue("See the bundle");
+  });
+
+  it("opens Search & AI visibility with the address, the generated text as placeholders, and the counters", async () => {
+    await renderPage({ exam: "ce", section: "seo" });
+    expect(within(editor()).getByText("SEARCH & AI VISIBILITY · EXAM PAGES · CE")).toBeVisible();
+    expect(within(editor()).getAllByText("aceyourcourse.ph/exams/ce")).toHaveLength(2);
+    const title = within(editor()).getByLabelText("PAGE TITLE");
+    expect(title).toHaveValue("");
+    expect(title).toHaveAttribute("placeholder", "CELE Reviewer · Civil Engineering");
+    // "CELE Reviewer · Civil Engineering · Ace Your Course"
+    expect(title).toHaveAccessibleDescription("51 / 60 characters, with the site name");
+    expect(within(editor()).getByText("Breadcrumbs")).toBeInTheDocument();
+    expect(within(editor()).getByLabelText("SHARE IMAGE · 1200 × 630")).toHaveAccessibleDescription(
+      "Uses the site’s share image",
+    );
+  });
+
+  it("says HIDDEN ON SITE over a hidden section's editor", async () => {
+    const ce = getSampleStore().catalogue.examPages.find((page) => page.examCode === "CE");
+    if (!ce) throw new Error("the seed has no CE page");
+    ce.sections.reviews = false;
+    await renderPage({ exam: "ce", section: "reviews" });
+    expect(within(editor()).getByText("HIDDEN ON SITE")).toBeInTheDocument();
+    expect(within(editor()).getByRole("link", { name: /^Reviews/ })).toHaveAttribute(
+      "href",
+      "/admin/reviews?exam=ce",
+    );
+  });
+
+  it("shows CHECK while the description is under 80 characters", async () => {
+    const ce = getSampleStore().catalogue.examPages.find((page) => page.examCode === "CE");
+    if (!ce) throw new Error("the seed has no CE page");
+    ce.seoDescription = "d".repeat(70);
+    await renderPage({ exam: "ce" });
+    expect(
+      within(column("CE")).getByRole("link", { name: /^Search & AI visibility/ }),
+    ).toHaveTextContent("CHECK");
+  });
+
+  it.each(["promo", "announcement"])(
+    "shows ?page=%s with an empty editor for now",
+    async (page) => {
+      await renderPage({ page });
+      expect(within(pages()).getByRole("link", { current: "page" })).not.toHaveTextContent(
+        "Exam pages",
+      );
+      expect(screen.getByRole("complementary", { name: "Page editor" })).toHaveTextContent(
+        "This editor isn’t ready yet.",
+      );
+    },
+  );
+});

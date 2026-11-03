@@ -1,6 +1,6 @@
 import { config } from "@/config";
 import { truncate } from "@/lib/text";
-import type { Exam } from "@/services/catalogue.types";
+import type { Exam, ExamPage } from "@/services/catalogue.types";
 
 // The Exam page's SEO text. Visitors search by board acronym ("CELE
 // reviewer"), so the title leads with it.
@@ -28,4 +28,15 @@ export function examSeoDescription(exam: Exam): string {
     description += ` ${sentence}`;
   }
   return description;
+}
+
+/** The Exam page's title and description: the overrides Staff set, or the generated text. */
+export function examPageSeo(
+  exam: Exam,
+  page: Pick<ExamPage, "seoTitle" | "seoDescription">,
+): { title: string; description: string } {
+  return {
+    title: page.seoTitle ?? examSeoTitle(exam),
+    description: page.seoDescription ?? examSeoDescription(exam),
+  };
 }

@@ -4,8 +4,9 @@ import { paths } from "@/paths";
 import type { Exam } from "@/services/catalogue.types";
 
 /**
- * The FAQ's coverage answer: each Exam with its Subject codes, from the
- * catalogue, each row linking to the Exam page.
+ * The FAQ's coverage answer: each Exam with its Subjects' codes and names,
+ * from the catalogue, each row linking to the Exam page. A Subject renamed in
+ * the Admin shows here too.
  */
 export function CoverageTable({ exams }: { exams: Exam[] }) {
   if (exams.length === 0) return null;
@@ -30,9 +31,12 @@ export function CoverageTable({ exams }: { exams: Exam[] }) {
               {exam.subjects.map((subject) => (
                 <span
                   key={subject.code}
-                  className="border-[1.5px] border-ayc-navy px-1.5 py-1.25 font-mono text-[11px] leading-none font-bold"
+                  className="inline-flex items-baseline gap-1.5 border-[1.5px] border-ayc-navy px-1.5 py-1.25"
                 >
-                  {subject.code}
+                  <span className="shrink-0 font-mono text-[11px] leading-none font-bold whitespace-nowrap">
+                    {subject.code}
+                  </span>{" "}
+                  <span className="text-xs leading-snug">{subject.name}</span>
                 </span>
               ))}
             </span>

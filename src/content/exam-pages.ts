@@ -3,11 +3,12 @@ import type { ProductFormat } from "@/services/catalogue.types";
 // ─────────────────────────────────────────────────────────────────────────────
 // Fixed Exam page copy (docs/mockup/website/Exam_v2.dc.html), typed so a
 // missing string is a type error: the best-for map, three sample formula cards
-// per Exam (exam-pages.test.ts checks every Exam has its three) and the promo
-// banners. Exams, Subjects, counts and prices are
-// catalogue data, read through the Catalogue seam; a banner's price is always
-// its Product's. Copy that mentions the Member App is kept separate, so it
-// renders only while the switch is on. Arrows are added by the components.
+// per Exam (exam-pages.test.ts checks every Exam has its three) and every
+// heading. Exams, Subjects, counts and prices are catalogue data, read through
+// the Catalogue seam, and so is each Exam page's bundle offer, which the Admin
+// edits; its price is always its Product's. Copy that mentions the Member App
+// is kept separate, so it renders only while the switch is on. Arrows are
+// added by the components.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** What each format is best for, in the "Which one should I get?" table (L220). */
@@ -128,28 +129,6 @@ export const sampleCards: Partial<Record<string, SampleCard[]>> = {
   ],
 };
 
-export interface ExamPromo {
-  examCode: string;
-  /** The Product the banner offers and links to. Its price is read from the catalogue. */
-  productSlug: string;
-  /** Followed by "· save ₱…" while the catalogue gives the Product a saving. */
-  eyebrow: string;
-  body: string;
-}
-
-/**
- * A banner on an Exam page offering one Product (L163–170). It shows only while
- * that Product is Live.
- */
-export const examPromos: ExamPromo[] = [
-  {
-    examCode: "CE",
-    productSlug: "ce-review-bundle-3-in-1",
-    eyebrow: "CE Review Bundle 3-in-1",
-    body: "Cards, notebook, and posters for MSTC, HPGE, and PSAD in one order.",
-  },
-];
-
 const plural = (count: number, one: string, many: string) => (count === 1 ? one : many);
 
 export const examPageCopy = {
@@ -217,10 +196,9 @@ export const examPageCopy = {
     seeAppPlans: (code: string) => `See ${code} app plans`,
   },
   promo: {
-    seeBundle: "See the bundle",
-    /** The eyebrow with the bundle's saving, e.g. "₱200", when it has one. */
-    withSaving: (eyebrow: string, saving: string | null) =>
-      saving ? `${eyebrow} · save ${saving}` : eyebrow,
+    /** The bundle offer's headline with its saving, e.g. "₱200", when it has one. */
+    withSaving: (headline: string, saving: string | null) =>
+      saving ? `${headline} · save ${saving}` : headline,
   },
   reviews: {
     eyebrow: "Copied word for word from Shopee",

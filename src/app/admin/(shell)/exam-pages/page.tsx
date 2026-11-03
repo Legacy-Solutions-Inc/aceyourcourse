@@ -2,13 +2,106 @@ import type { Metadata } from "next";
 
 import { adminScreen } from "@/components/admin/admin-menu";
 import { AdminScreen } from "@/components/admin/admin-screen";
+import { ExamPageColumn, ExamPagesNav } from "@/components/admin/exam-pages/exam-pages-columns";
+import { ExamPagePanel } from "@/components/admin/exam-pages/exam-page-panel";
+import { parseExamPagesParams } from "@/lib/admin/exam-pages-view";
 import { requireStaff } from "@/lib/admin/guard";
+import { seoCheck } from "@/lib/admin/seo-check";
+import { examPageSeo } from "@/lib/catalogue/exam-copy";
+import { manilaDate } from "@/lib/manila-time";
 import { paths } from "@/paths";
+import { getExamPageForAdmin, listExamsForAdmin } from "@/services/admin";
+
+import {
+  createShareImageUpload,
+  saveBundleOffer,
+  saveExamHeader,
+  saveExamSeo,
+  saveOfficialExamDate,
+  saveSubjectNames,
+  setExamPageSection,
+} from "./actions";
 
 export const metadata: Metadata = { title: adminScreen("exam-pages").title };
 
-/** Exam pages & promo. Tickets 09 and 10 fill it in. */
-export default async function ExamPagesPage() {
-  await requireStaff(paths.admin.examPages);
-  return <AdminScreen screen="exam-pages" />;
+interface ExamPagesPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+/** The grid of the mockup's three columns (mockup 83), stacked on narrower screens. */
+const COLUMNS =
+  "grid items-start gap-4.5 lg:grid-cols-[190px_minmax(0,1fr)] xl:grid-cols-[190px_290px_minmax(0,1fr)]";
+
+/**
+ * Exam pages & promo (BUILD-MAP §3.2): PAGES, the selected Exam page's chips,
+ * search check and sections, and the selected part's editor. The page, the
+ * Exam and the section live in the URL; an unknown Exam shows the first.
+ * Everything is read fresh on every request.
+ */
+export default async function ExamPagesPage({ searchParams }: ExamPagesPageProps) {
+  const actor = await requireStaff(paths.admin.examPages);
+  const { page, exam: wanted, section } = parseExamPagesParams(await searchParams);
+  const exams = await listExamsForAdmin(actor);
+
+  if (page !== "exam") {
+    return (
+      <AdminScreen screen="exam-pages">
+        <div className={COLUMNS}>
+          <ExamPagesNav current={page} examCount={exams.length} />
+          <aside
+            aria-label="Page editor"
+            className="flex flex-col gap-2 border-[1.5px] bg-ayc-paper p-4.5 xl:col-span-2"
+          >
+            <h2 className="font-mono text-[11px] font-bold tracking-[0.06em] text-ayc-blue">
+              {page === "promo" ? "HOME PROMO BANNER" : "ANNOUNCEMENT BAR"}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              This editor isn’t ready yet. Until it is, changes go through the developer.
+            </p>
+          </aside>
+        </div>
+      </AdminScreen>
+    );
+  }
+
+  const exam = exams.find((e) => e.code === wanted?.toUpperCase()) ?? exams[0];
+  const opened = exam ? await getExamPageForAdmin(actor, exam.code) : null;
+  if (!opened) {
+    return (
+      <AdminScreen screen="exam-pages">
+        <p className="text-sm text-muted-foreground">The catalogue has no Exams yet.</p>
+      </AdminScreen>
+    );
+  }
+
+  return (
+    <AdminScreen screen="exam-pages">
+      <div className={COLUMNS}>
+        <ExamPagesNav current="exam" examCount={exams.length} />
+        <ExamPageColumn
+          opened={opened}
+          examCodes={exams.map((e) => e.code)}
+          selected={section}
+          seoState={seoCheck(examPageSeo(opened.exam, opened.page))}
+          setSection={setExamPageSection}
+        />
+        <div className="lg:col-span-2 xl:col-span-1">
+          <ExamPagePanel
+            opened={opened}
+            selected={section}
+            today={manilaDate(new Date())}
+            actions={{
+              setSection: setExamPageSection,
+              saveHeader: saveExamHeader,
+              saveSubjects: saveSubjectNames,
+              saveBundle: saveBundleOffer,
+              saveSeo: saveExamSeo,
+              saveDate: saveOfficialExamDate,
+              createShareImageUpload,
+            }}
+          />
+        </div>
+      </div>
+    </AdminScreen>
+  );
 }

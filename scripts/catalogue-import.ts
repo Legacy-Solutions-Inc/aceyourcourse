@@ -32,7 +32,7 @@ const check = values.check;
 const result = await runImport({
   dir: resolve(folder),
   check,
-  // The settings and FAQs stay in code; they are checked with the spreadsheet.
+  // The settings, FAQs and Exam pages stay in code; they are checked with the spreadsheet.
   handMaintained: CATALOGUE_SEED,
   publicDir: join(REPO, "public"),
 });

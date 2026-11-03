@@ -1,18 +1,24 @@
 import * as mockImpl from "@/services/admin.mock";
 import type {
+  BundleOfferForm,
   ChangeStaffRoleInput,
+  ExamHeaderForm,
+  ExamSeoForm,
   FaqForm,
   FaqMove,
   InviteStaffInput,
   NewProductForm,
   NewReviewForm,
+  OfficialExamDateForm,
   ProductFlags,
   ProductForm,
   ReviewForm,
   ReviewMove,
+  SubjectNamesForm,
   WebsiteSettingsUpdate,
 } from "@/services/admin.schema";
 import type {
+  AdminExamPage,
   AdminFaq,
   AdminFaqList,
   AdminProduct,
@@ -39,7 +45,7 @@ import type {
   StaffList,
   StaffMember,
 } from "@/services/admin.types";
-import type { Exam } from "@/services/catalogue.types";
+import type { Exam, ExamPageSection } from "@/services/catalogue.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Admin Service Seam (CONVENTIONS §3). Every Admin read and write goes through
@@ -152,8 +158,9 @@ export interface AdminService {
 
   // The Product editor. Each write parses the editor's form with every rule
   // (admin.schema.ts) and refuses, with the field's message, a Subject that
-  // isn't on the Product's Exam, a Live Product with no photo, and a Coming
-  // Soon one with Reviews. Saving changed Shopee figures sets their "as of"
+  // isn't on the Product's Exam, a Live Product with no photo, a Coming Soon
+  // one with Reviews, and moving the Product an Exam page offers as its
+  // bundle to another Exam. Saving changed Shopee figures sets their "as of"
   // date to today in Manila. The photos are saved in the form's order, the
   // first the cover: each one the Product's own or a finished upload's path
   // from the upload seam (src/services/uploads.ts), which becomes its public
@@ -187,8 +194,9 @@ export interface AdminService {
   previewProductDelete(actor: StaffActor, id: string): Promise<ProductDeletePreview | null>;
   /**
    * Deletes a Product with its Reviews and photos, and removes the FAQ quotes
-   * taken from those Reviews. Its Staff Activity keeps every value from before.
-   * Marketplace Listings are on the Marketplaces, so they aren't affected.
+   * taken from those Reviews and the Exam page bundle offer of it, if any.
+   * Its Staff Activity keeps every value from before. Marketplace Listings are
+   * on the Marketplaces, so they aren't affected.
    */
   deleteProduct(actor: StaffActor, id: string): Promise<AdminResult<DeletedProduct>>;
 
@@ -304,6 +312,84 @@ export interface AdminService {
   moveFaq(actor: StaffActor, id: string, direction: FaqMove): Promise<AdminResult<string[]>>;
   /** Deletes an FAQ and closes the gap in its group. Its Staff Activity keeps it from before. */
   deleteFaq(actor: StaffActor, id: string): Promise<AdminResult<DeletedFaq>>;
+
+  // Exam pages (any Staff User). Each Exam's Website page: the Header and
+  // the Subject names, which are the Exam's own fields; the sections that can
+  // be hidden; the bundle offer; the SEO overrides and share image; and the
+  // Official Exam Date (spec, Phase 2 → Exam pages & promo). The code is
+  // matched case-insensitively, and an unknown one answers not-found. Each
+  // part saves on its own, with its own stamp, so saving one never makes
+  // another's editor conflict. Each write appends one Staff Activity record
+  // and gives the page as it now is.
+
+  /** One Exam's page as its editors open it, or null for an unknown code. */
+  getExamPageForAdmin(actor: StaffActor, code: string): Promise<AdminExamPage | null>;
+  /**
+   * Saves the Header: the Exam's name, long name, text and "made for".
+   * Refused, with the field's message, when one is blank or too long. Clears
+   * the exams tag: the Exam shows on Home, its page and its Products' pages.
+   */
+  updateExamHeader(
+    actor: StaffActor,
+    code: string,
+    input: ExamHeaderForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminExamPage>>;
+  /**
+   * Renames the Exam's Subjects, given in its order with their codes. The
+   * codes are fixed: a list whose codes aren't the Exam's, in its order, is
+   * refused. Clears the exams tag, so every place the Website names a Subject
+   * shows the new name.
+   */
+  updateSubjectNames(
+    actor: StaffActor,
+    code: string,
+    input: SubjectNamesForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminExamPage>>;
+  /**
+   * A section toggle, a single toggle: Subjects covered, Bundle offer or
+   * Reviews, shown or hidden. It always saves, with no conflict check.
+   */
+  setExamSection(
+    actor: StaffActor,
+    code: string,
+    section: ExamPageSection,
+    on: boolean,
+  ): Promise<AdminResult<AdminExamPage>>;
+  /**
+   * Saves the bundle offer: one of the Exam's Products, Live or not, with a
+   * headline, text and button label, or no offer. A Product of another Exam,
+   * or one that isn't in the catalogue, is refused. The Website shows it only
+   * while the section is on and the Product is Live and shown.
+   */
+  updateBundleOffer(
+    actor: StaffActor,
+    code: string,
+    input: BundleOfferForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminExamPage>>;
+  /**
+   * Saves the SEO title and description (blank uses the generated text) and
+   * the share image: the page's own, a finished "share-image" upload's path
+   * from the upload seam, or none for the site's. A whole title over 60
+   * characters with the site name, a description over 160, or a share image
+   * that's neither is refused; an upload whose file hasn't arrived is told
+   * "Wait for uploads to finish."
+   */
+  updateExamSeo(
+    actor: StaffActor,
+    code: string,
+    input: ExamSeoForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminExamPage>>;
+  /** Saves the Official Exam Date, a date on the calendar, or none. A past date saves. */
+  updateOfficialExamDate(
+    actor: StaffActor,
+    code: string,
+    input: OfficialExamDateForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminExamPage>>;
 }
 
 const impl: AdminService = mockImpl;
@@ -343,3 +429,10 @@ export const createFaq = impl.createFaq;
 export const updateFaq = impl.updateFaq;
 export const moveFaq = impl.moveFaq;
 export const deleteFaq = impl.deleteFaq;
+export const getExamPageForAdmin = impl.getExamPageForAdmin;
+export const updateExamHeader = impl.updateExamHeader;
+export const updateSubjectNames = impl.updateSubjectNames;
+export const setExamSection = impl.setExamSection;
+export const updateBundleOffer = impl.updateBundleOffer;
+export const updateExamSeo = impl.updateExamSeo;
+export const updateOfficialExamDate = impl.updateOfficialExamDate;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { testExam } from "../../../test/fixtures/catalogue";
-import { examSeoDescription, examSeoTitle } from "./exam-copy";
+import { examPageSeo, examSeoDescription, examSeoTitle } from "./exam-copy";
 
 // The Exam page's search-result title and description. Visitors search by
 // board acronym ("CELE reviewer"), so the title leads with it. The root
@@ -44,5 +44,22 @@ describe("examSeoDescription", () => {
     const description = examSeoDescription(testExam({ blurb }));
     expect(description.length).toBeLessThanOrEqual(160);
     expect(description).toMatch(/^Formula cards Formula .*cards…$/);
+  });
+});
+
+describe("examPageSeo", () => {
+  const exam = testExam({ blurb: "Three subjects, four formats. Our CE line started it all." });
+
+  it("uses the generated title and description while the page sets none", () => {
+    expect(examPageSeo(exam, { seoTitle: null, seoDescription: null })).toEqual({
+      title: "CELE Reviewer · Civil Engineering",
+      description: "Three subjects, four formats. Our CE line started it all.",
+    });
+  });
+
+  it("uses the page's own title and description when it sets them", () => {
+    expect(
+      examPageSeo(exam, { seoTitle: "CE Board Exam Reviewer", seoDescription: "Formula cards." }),
+    ).toEqual({ title: "CE Board Exam Reviewer", description: "Formula cards." });
   });
 });

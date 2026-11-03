@@ -9,6 +9,7 @@ import { editSampleCatalogue } from "../../test/catalogue-seed";
 import type { CatalogueSeed } from "./catalogue.schema";
 import {
   getExamByCode,
+  getExamPage,
   getProductBySlug,
   getWebsiteSettings,
   listBestSellers,
@@ -139,6 +140,89 @@ describe("catalogue seam: Exams", () => {
     const again = await getExamByCode("CE");
     expect(again?.name).toBe("Civil Engineering");
     expect(again?.subjects).toHaveLength(3);
+  });
+});
+
+describe("catalogue seam: Exam pages", () => {
+  afterEach(() => {
+    resetSampleStore();
+  });
+
+  it("gives CE its bundle offer of the CE Review Bundle 3-in-1, with today's copy, and every section on", async () => {
+    const page = await getExamPage("ce");
+    expect(page).toMatchObject({
+      examCode: "CE",
+      sections: { subjects: true, bundleOffer: true, reviews: true },
+      bundleOffer: {
+        headline: "CE Review Bundle 3-in-1",
+        text: "Cards, notebook, and posters for MSTC, HPGE, and PSAD in one order.",
+        buttonLabel: "See the bundle",
+        product: { slug: "ce-review-bundle-3-in-1", priceTo: 349900 },
+      },
+      seoTitle: null,
+      seoDescription: null,
+      shareImage: null,
+      officialExamDate: null,
+    });
+  });
+
+  it("gives the other Exams no bundle offer, with that section hidden", async () => {
+    for (const code of ["ME", "EE", "MT", "CPA"]) {
+      expect(await getExamPage(code), code).toMatchObject({
+        examCode: code,
+        sections: { subjects: true, bundleOffer: false, reviews: true },
+        bundleOffer: null,
+      });
+    }
+  });
+
+  it.each(["zz", "", "  "])("returns null for the unknown code %j", async (code) => {
+    expect(await getExamPage(code)).toBeNull();
+  });
+
+  it.each([
+    ["Coming Soon", { state: "coming-soon" as const }],
+    ["hidden from the Website", { showOnWebsite: false }],
+  ])("drops the bundle offer while its Product is %s", async (_state, change) => {
+    const seam = await seamWith((seed) => {
+      const bundle = product(seed, "ce-review-bundle-3-in-1");
+      Object.assign(bundle, change);
+      if (bundle.state === "coming-soon") {
+        Object.assign(bundle, { priceFrom: null, priceTo: null, shopee: null });
+        Object.assign(bundle, { variations: [], listings: {} });
+        seed.reviews = seed.reviews.filter((review) => review.productId !== bundle.id);
+      }
+    });
+    const page = await seam.getExamPage("ce");
+    expect(page?.bundleOffer).toBeNull();
+    // The section stays on: the offer is back once the Product is Live again.
+    expect(page?.sections.bundleOffer).toBe(true);
+  });
+
+  it("gives an Exam with no Exam page every section shown and nothing set", async () => {
+    const seam = await seamWith((seed) => {
+      seed.examPages = seed.examPages.filter((page) => page.examCode !== "ME");
+    });
+    expect(await seam.getExamPage("me")).toEqual({
+      examCode: "ME",
+      sections: { subjects: true, bundleOffer: true, reviews: true },
+      bundleOffer: null,
+      seoTitle: null,
+      seoDescription: null,
+      shareImage: null,
+      officialExamDate: null,
+    });
+  });
+
+  it("hands out copies, so a caller's change never leaks into the next read", async () => {
+    const page = await getExamPage("CE");
+    if (!page?.bundleOffer) throw new Error("expected CE's bundle offer");
+    page.sections.reviews = false;
+    page.bundleOffer.headline = "Changed";
+
+    const again = await getExamPage("CE");
+    expect(again?.sections.reviews).toBe(true);
+    expect(again?.bundleOffer?.headline).toBe("CE Review Bundle 3-in-1");
   });
 });
 
