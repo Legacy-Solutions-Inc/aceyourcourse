@@ -39,13 +39,19 @@ regression fails CI — raise tests, don't lower thresholds. Some code is
 deliberately **excluded**: vendored `src/components/ui/**`, generated
 `database.types.ts`, and the **offline-unverifiable Drizzle DB layer**
 (`src/lib/db/client.ts`, and Phase 2's `*.db.ts` seam arms) — its query bodies
-need a live Postgres (see **drizzle-data** KNOWN GAP); pure row mappers are
-tested separately.
+need a live Postgres, so they're checked by the database tests instead; pure row
+mappers are tested separately.
+
+**Database tests** are `*.db.test.ts`, in the `db` project (node env). They
+connect through `src/lib/db/test-database.ts` with `TEST_DATABASE_URL` (never
+`DATABASE_URL`) and skip with the reason when it's unset or unreachable, so
+`pnpm test` needs no Docker. See **drizzle-data**.
 
 ## 4. In this template
 
-- `vitest.config.ts` — `environment: "jsdom"`, `globals: true`,
-  `setupFiles: ["./vitest.setup.ts"]`, the `@` alias, a `server-only` test alias,
+- `vitest.config.ts` — two `projects`: `unit` (`environment: "jsdom"`,
+  `setupFiles: ["./vitest.setup.ts"]`, every test but `*.db.test.ts`) and `db`
+  (node, `*.db.test.ts`); `globals: true`, the `@` alias, a `server-only` test alias,
   and the `coverage` block (v8; `text`+`lcov`; `include: src/**`; excludes above;
   global + `src/lib/**` + `src/services/**` thresholds).
 - `vitest.setup.ts` — `import "@testing-library/jest-dom/vitest";`.
@@ -60,7 +66,8 @@ tested separately.
   - Pure row mapper and env-driven seam selection — the template's Customers
     tests in git history at commit `aea34ea` (list them with
     `git ls-tree -r --name-only aea34ea | grep -i customer`).
-- Scripts: `test` (`vitest run`), `test:coverage`, `test:watch`.
+- Scripts: `test` (`vitest run`, both projects), `test:db` (`vitest run --project
+db`), `test:coverage`, `test:watch`.
 
 ## 5. Red flags
 

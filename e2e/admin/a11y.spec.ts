@@ -10,8 +10,8 @@ import { openSignInAs, resetSampleData, type SampleUserKey, signInAs } from "./h
 // Every Admin screen and state, signed in where it needs it, through axe with
 // every rule on, on a desktop and on a phone (ticket 12). Serious and critical
 // issues block, as on the Website (e2e/a11y.spec.ts), and no screen may
-// scroll sideways. On Products and Settings, the keyboard alone reaches every
-// control, each with a visible focus ring.
+// scroll sideways. On every screen, with its editor and dialog open, the
+// keyboard alone reaches every control, each with a visible focus ring.
 const BLOCKING_IMPACTS = new Set(["serious", "critical"]);
 
 const SIZES = [
@@ -44,16 +44,20 @@ async function settled(dialog: Locator) {
 }
 
 /**
- * Tabs through the page from the top, and checks that it reaches every
- * visible control that isn't disabled, and that each one shows a focus ring
- * as it does: an outline, or a ring drawn with a box shadow it hasn't at rest.
+ * Tabs through `scope` (the page, or an open dialog, which keeps focus inside
+ * it), and checks that it reaches every visible control there that isn't
+ * disabled, and that each one shows a focus ring as it does: an outline, or a
+ * ring drawn with a box shadow it hasn't at rest.
  */
-async function expectKeyboardReachesEveryControl(page: Page) {
+async function expectKeyboardReachesEveryControl(page: Page, scope = page.locator("body")) {
   // No locator lists every focusable control, so the page marks its own, and
   // each Tab reads which mark has focus.
-  const total = await page.evaluate(() => {
+  const total = await scope.evaluate((root) => {
+    for (const marked of document.querySelectorAll<HTMLElement>("[data-keyboard-check]")) {
+      delete marked.dataset.keyboardCheck;
+    }
     let count = 0;
-    for (const element of document.querySelectorAll<HTMLElement>(
+    for (const element of root.querySelectorAll<HTMLElement>(
       "a[href], button, input, select, textarea, [tabindex]",
     )) {
       const box = element.getBoundingClientRect();
@@ -64,8 +68,32 @@ async function expectKeyboardReachesEveryControl(page: Page) {
         getComputedStyle(element).visibility !== "hidden" &&
         box.width > 0 &&
         box.height > 0;
-      if (!usable) continue;
+      // Tab stops once in a group of radios, at the checked one (else the
+      // first), and the arrow keys move within it.
+      const radioStop =
+        !(element instanceof HTMLInputElement) ||
+        element.type !== "radio" ||
+        element ===
+          ([
+            ...root.querySelectorAll<HTMLInputElement>(
+              `input[type="radio"][name="${element.name}"]`,
+            ),
+          ].find((radio) => radio.checked) ??
+            root.querySelector(`input[type="radio"][name="${element.name}"]`));
+      if (!usable || !radioStop) continue;
       element.dataset.keyboardCheck = String(count++);
+      // What the failure message calls it: its tag and role, and its name.
+      const label =
+        element.getAttribute("aria-label") ??
+        (element instanceof HTMLInputElement ? element.labels?.[0]?.textContent : null) ??
+        element.textContent;
+      element.dataset.keyboardName = [
+        element.tagName.toLowerCase(),
+        element.getAttribute("type") ?? element.getAttribute("role") ?? "",
+        `“${label?.trim().slice(0, 60) ?? ""}”`,
+      ]
+        .filter(Boolean)
+        .join(" ");
       // A shadow it has at rest isn't a focus ring.
       element.dataset.restingShadow = getComputedStyle(element).boxShadow;
     }
@@ -82,17 +110,24 @@ async function expectKeyboardReachesEveryControl(page: Page) {
       if (!(element instanceof HTMLElement) || element.dataset.keyboardCheck === undefined) {
         return null;
       }
+      const outlined = (style: CSSStyleDeclaration) =>
+        style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0;
       const style = getComputedStyle(element);
-      const outlined = style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0;
+      // A radio or checkbox inside its label may ring the label instead.
+      const label = element.closest("label");
       return {
         id: element.dataset.keyboardCheck,
-        name: element.getAttribute("aria-label") ?? element.textContent?.trim() ?? "",
+        name: element.dataset.keyboardName ?? "",
         ring:
           element.matches(":focus-visible") &&
-          (outlined || style.boxShadow !== element.dataset.restingShadow),
+          (outlined(style) ||
+            style.boxShadow !== element.dataset.restingShadow ||
+            (label !== null && outlined(getComputedStyle(label)))),
       };
     });
-    if (!focused) continue;
+    // Judged as Tab arrives: further Tabs inside a date field reach its own
+    // calendar button, which the browser rings itself.
+    if (!focused || reached.has(focused.id)) continue;
     reached.add(focused.id);
     if (!focused.ring) withoutRing.add(focused.name);
   }
@@ -101,12 +136,107 @@ async function expectKeyboardReachesEveryControl(page: Page) {
     (ids) =>
       [...document.querySelectorAll<HTMLElement>("[data-keyboard-check]")]
         .filter((element) => !ids.includes(element.dataset.keyboardCheck ?? ""))
-        .map((element) => element.getAttribute("aria-label") ?? element.textContent?.trim() ?? ""),
+        .map((element) => element.dataset.keyboardName ?? ""),
     [...reached],
   );
   expect(missed, "controls Tab never reached").toEqual([]);
   expect([...withoutRing], "controls with no visible focus ring").toEqual([]);
 }
+
+/**
+ * The keyboard sweep's screens: each Admin screen with its editor open, and
+ * the dialog it opens, if any.
+ */
+const KEYBOARD_SCREENS: {
+  name: string;
+  who: SampleUserKey;
+  path: string;
+  /** Something that shows once the screen is ready. */
+  ready: (page: Page) => Locator;
+  dialog?: { open: (page: Page) => Promise<void>; name: string | RegExp };
+}[] = [
+  {
+    name: "the Overview",
+    who: "owner",
+    path: paths.admin.overview,
+    ready: (page) => page.getByRole("heading", { level: 1, name: "Overview" }),
+  },
+  {
+    name: "Products, with the Product editor and its typed-DELETE dialog",
+    who: "editor",
+    path: `${paths.admin.products}?product=prd-005`,
+    ready: (page) => page.getByRole("complementary", { name: "Product editor" }).getByRole("form"),
+    dialog: {
+      open: (page) =>
+        page
+          .getByRole("complementary", { name: "Product editor" })
+          .getByRole("button", { name: "Delete", exact: true })
+          .click(),
+      name: "Delete “Ultimate CE Posters 2.0”?",
+    },
+  },
+  {
+    name: "Reviews, with the Review editor and its delete dialog",
+    who: "editor",
+    path: `${paths.admin.reviews}?review=rev-014`,
+    ready: (page) => page.getByRole("form", { name: "Edit review" }),
+    dialog: {
+      open: (page) =>
+        page
+          .getByRole("complementary", { name: "Review editor" })
+          .getByRole("button", { name: "Delete" })
+          .click(),
+      name: "Delete this review?",
+    },
+  },
+  {
+    name: "FAQs, with the FAQ editor and its delete dialog",
+    who: "editor",
+    path: `${paths.admin.reviews}?tab=faqs&group=paper&faq=faq-005`,
+    ready: (page) => page.getByRole("form", { name: "Edit question" }),
+    dialog: {
+      open: (page) =>
+        page
+          .getByRole("complementary", { name: "FAQ editor" })
+          .getByRole("button", { name: "Delete" })
+          .click(),
+      name: /^Delete “/,
+    },
+  },
+  {
+    name: "Exam pages, with the Search & AI visibility editor",
+    who: "editor",
+    path: `${paths.admin.examPages}?exam=ce&section=seo`,
+    ready: (page) =>
+      page.getByRole("complementary", { name: "Exam page editor" }).getByLabel("PAGE TITLE"),
+  },
+  {
+    name: "the Home promo banner",
+    who: "editor",
+    path: `${paths.admin.examPages}?page=promo`,
+    ready: (page) => page.getByRole("form", { name: "Home promo banner" }),
+  },
+  {
+    name: "the announcement bar",
+    who: "editor",
+    path: `${paths.admin.examPages}?page=announcement`,
+    ready: (page) => page.getByRole("form", { name: "Announcement bar" }),
+  },
+  {
+    name: "Settings, with the add-invite modal",
+    who: "owner",
+    path: paths.admin.settings,
+    ready: (page) => page.getByRole("region", { name: "ADMIN ACCOUNTS" }),
+    dialog: {
+      open: (page) =>
+        page
+          .getByRole("region", { name: "ADMIN ACCOUNTS" })
+          .getByRole("button", { name: "+ Authorise an account" })
+          .click(),
+      name: "Give someone admin access",
+    },
+  },
+];
 
 test.beforeEach(async ({ request }) => {
   await resetSampleData(request);
@@ -441,23 +571,22 @@ for (const size of SIZES) {
       await expectNoBlockingViolations(page);
     });
 
-    test("the keyboard alone reaches every control on Products, with a visible focus ring", async ({
-      page,
-    }) => {
-      await signInAs(page, "editor", paths.admin.products);
-      await expect(page.getByRole("region", { name: "Products" })).toBeVisible({ timeout: 15_000 });
-      await expectKeyboardReachesEveryControl(page);
-    });
+    for (const screen of KEYBOARD_SCREENS) {
+      test(`the keyboard alone reaches every control on ${screen.name}, with a visible focus ring`, async ({
+        page,
+      }) => {
+        await signInAs(page, screen.who, screen.path);
+        await expect(screen.ready(page)).toBeVisible({ timeout: 15_000 });
+        await expectKeyboardReachesEveryControl(page);
 
-    test("the keyboard alone reaches every control on Settings, with a visible focus ring", async ({
-      page,
-    }) => {
-      await signInAs(page, "owner", paths.admin.settings);
-      await expect(page.getByRole("region", { name: "ADMIN ACCOUNTS" })).toBeVisible({
-        timeout: 15_000,
+        if (screen.dialog) {
+          await screen.dialog.open(page);
+          const dialog = page.getByRole("dialog", { name: screen.dialog.name });
+          await settled(dialog);
+          await expectKeyboardReachesEveryControl(page, dialog);
+        }
       });
-      await expectKeyboardReachesEveryControl(page);
-    });
+    }
   });
 }
 
@@ -470,5 +599,16 @@ test.describe("on a phone, with the drawer", () => {
     await page.getByRole("button", { name: "Menu", exact: true }).click();
     await settled(page.getByRole("dialog", { name: "Menu" }));
     await expectNoBlockingViolations(page);
+  });
+
+  test("the keyboard alone reaches every control in the open drawer, with a visible focus ring", async ({
+    page,
+  }) => {
+    await signInAs(page, "editor");
+    await expect(page).toHaveURL(/\/admin$/, { timeout: 15_000 });
+    await page.getByRole("button", { name: "Menu", exact: true }).click();
+    const drawer = page.getByRole("dialog", { name: "Menu" });
+    await settled(drawer);
+    await expectKeyboardReachesEveryControl(page, drawer);
   });
 });

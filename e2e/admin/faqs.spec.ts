@@ -102,6 +102,10 @@ test("adds an FAQ to Buying with a Review quote: last in Buying on /faq, credite
   expect(await jsonLdQuestions(page)).toContain(QUESTION);
   await expect(page.getByText("FAQ · 16 answers")).toBeVisible();
 
+  // A Visitor arrives at the deep link on a fresh load. Only changing the hash
+  // of the /faq already open could beat its hydration, and Next then restores
+  // the URL it loaded with, dropping the hash.
+  await page.goto("about:blank");
   await page.goto(`${paths.faq}#faq-can-i-pay-by-gcash`);
   const added = page.locator("#faq-can-i-pay-by-gcash");
   await expect(added.getByRole("button", { name: QUESTION })).toHaveAttribute(

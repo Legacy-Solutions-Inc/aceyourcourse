@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793682153530,
+      "tag": "20261103050233_revoke_default_privileges",
+      "breakpoints": true
+    }
+  ]
+}

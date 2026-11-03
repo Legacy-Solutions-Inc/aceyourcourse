@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { faqFormValues, newFaqForm } from "@/lib/admin/faq-form";
-import { newProductForm, productFormValues } from "@/lib/admin/product-form";
+import { faqFormValues } from "@/lib/admin/faq-form";
+import { productFormValues } from "@/lib/admin/product-form";
 import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
-import { newReviewForm, reviewFormValues } from "@/lib/admin/review-form";
+import { reviewFormValues } from "@/lib/admin/review-form";
 import * as adminSeam from "@/services/admin";
 import type { AdminService } from "@/services/admin";
 import type { AdminResult, StaffActor } from "@/services/admin.types";
 
+import { SAVES, sampleActor, sampleEmail } from "../../test/admin-inputs";
 import { ADMIN_ARMS } from "../../test/admin-arms";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -20,16 +21,10 @@ import { ADMIN_ARMS } from "../../test/admin-arms";
 // a new one can't skip Staff Activity unnoticed.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const OWNER: StaffActor = {
-  email: "angel@aceyourcourse.ph",
-  name: "Angel Rose L. Lepaña",
-  role: "owner",
-};
-const EDITOR: StaffActor = {
-  email: "content@aceyourcourse.ph",
-  name: "AYC Content Team",
-  role: "editor",
-};
+const OWNER = sampleActor("owner");
+const EDITOR = sampleActor("editor");
+const KIM = sampleEmail("invited");
+const EXPIRED = sampleEmail("expired");
 
 /** The seam's reads: they change nothing. */
 const READS = [
@@ -111,25 +106,24 @@ const WRITES: Record<string, Write> = {
   inviteStaff: {
     actor: OWNER,
     entity: "invite",
-    entityId: "new.editor@example.com",
-    saves: (seam, actor) =>
-      seam.inviteStaff(actor, { email: "new.editor@example.com", role: "editor" }),
+    entityId: SAVES.invite.email,
+    saves: (seam, actor) => seam.inviteStaff(actor, SAVES.invite),
     refused: (seam, actor) => seam.inviteStaff(actor, { email: "not-an-email", role: "editor" }),
     refusal: "invalid",
   },
   renewInvite: {
     actor: OWNER,
     entity: "invite",
-    entityId: "expired.invite@example.com",
-    saves: (seam, actor) => seam.renewInvite(actor, "expired.invite@example.com"),
+    entityId: EXPIRED,
+    saves: (seam, actor) => seam.renewInvite(actor, EXPIRED),
     refused: (seam, actor) => seam.renewInvite(actor, "not-an-email"),
     refusal: "invalid",
   },
   cancelInvite: {
     actor: OWNER,
     entity: "invite",
-    entityId: "kim.reyes@gmail.com",
-    saves: (seam, actor) => seam.cancelInvite(actor, "kim.reyes@gmail.com"),
+    entityId: KIM,
+    saves: (seam, actor) => seam.cancelInvite(actor, KIM),
     refused: (seam, actor) => seam.cancelInvite(actor, "not-an-email"),
     refusal: "invalid",
   },
@@ -156,11 +150,7 @@ const WRITES: Record<string, Write> = {
     entity: "settings",
     entityId: "website",
     saves: async (seam, actor) =>
-      seam.updateWebsiteSettings(
-        actor,
-        { contactEmail: "hello@aceyourcourse.ph" },
-        await opened(seam),
-      ),
+      seam.updateWebsiteSettings(actor, { contactEmail: SAVES.contactEmail }, await opened(seam)),
     refused: async (seam, actor) =>
       seam.updateWebsiteSettings(actor, { contactEmail: "not-an-email" }, await opened(seam)),
     refusal: "invalid",
@@ -177,17 +167,8 @@ const WRITES: Record<string, Write> = {
     actor: EDITOR,
     entity: "product",
     entityId: null,
-    saves: (seam, actor) =>
-      seam.createProduct(actor, {
-        ...newProductForm("MT"),
-        title: "MT Notebook",
-        shortName: "MT Notebook",
-        size: "A5",
-        subjectCodes: ["HEMA"],
-        comingSoon: true,
-      }),
-    refused: (seam, actor) =>
-      seam.createProduct(actor, { ...newProductForm("MT"), comingSoon: true, title: "" }),
+    saves: (seam, actor) => seam.createProduct(actor, SAVES.newProduct),
+    refused: (seam, actor) => seam.createProduct(actor, { ...SAVES.newProduct, title: "" }),
     refusal: "invalid",
   },
   updateProduct: {
@@ -198,7 +179,7 @@ const WRITES: Record<string, Write> = {
       seam.updateProduct(
         actor,
         "prd-001",
-        { ...(await productForm(seam, "prd-001")), priceFrom: "1,250" },
+        { ...(await productForm(seam, "prd-001")), priceFrom: SAVES.priceFrom },
         await opened(seam),
       ),
     refused: async (seam, actor) =>
@@ -222,9 +203,8 @@ const WRITES: Record<string, Write> = {
     actor: EDITOR,
     entity: "review",
     entityId: null,
-    saves: (seam, actor) =>
-      seam.createReview(actor, { ...newReviewForm("prd-001"), text: "Sulit!" }),
-    refused: (seam, actor) => seam.createReview(actor, { ...newReviewForm("prd-001"), text: "" }),
+    saves: (seam, actor) => seam.createReview(actor, SAVES.newReview),
+    refused: (seam, actor) => seam.createReview(actor, { ...SAVES.newReview, text: "" }),
     refusal: "invalid",
   },
   updateReview: {
@@ -276,18 +256,8 @@ const WRITES: Record<string, Write> = {
     actor: EDITOR,
     entity: "faq",
     entityId: null,
-    saves: (seam, actor) =>
-      seam.createFaq(actor, {
-        ...newFaqForm("buying"),
-        question: "Can I pay by GCash?",
-        answer: "Yes.",
-      }),
-    refused: (seam, actor) =>
-      seam.createFaq(actor, {
-        ...newFaqForm("buying"),
-        question: "Can I pay by GCash?",
-        answer: "a".repeat(401),
-      }),
+    saves: (seam, actor) => seam.createFaq(actor, SAVES.newFaq),
+    refused: (seam, actor) => seam.createFaq(actor, { ...SAVES.newFaq, answer: "a".repeat(401) }),
     refusal: "invalid",
   },
   updateFaq: {
@@ -337,7 +307,7 @@ const WRITES: Record<string, Write> = {
       return seam.updateExamHeader(
         actor,
         "ce",
-        { name, longName, madeFor, blurb: "Every CE formula." },
+        { name, longName, madeFor, blurb: SAVES.examBlurb },
         stamps.header,
       );
     },
@@ -387,7 +357,7 @@ const WRITES: Record<string, Write> = {
       return seam.updateBundleOffer(
         actor,
         "ce",
-        { ...offer, headline: "The CE bundle" },
+        { ...offer, headline: SAVES.bundleHeadline },
         stamps.bundleOffer,
       );
     },
@@ -413,7 +383,7 @@ const WRITES: Record<string, Write> = {
       return seam.updateExamSeo(
         actor,
         "ce",
-        { seoTitle: "CE Board Exam Reviewer", seoDescription: "", shareImage: "" },
+        { seoTitle: SAVES.seoTitle, seoDescription: "", shareImage: "" },
         stamps.seo,
       );
     },
@@ -436,7 +406,7 @@ const WRITES: Record<string, Write> = {
       seam.updateOfficialExamDate(
         actor,
         "ce",
-        { officialExamDate: "2027-04-24" },
+        { officialExamDate: SAVES.officialExamDate },
         (await cePage(seam)).stamps.officialExamDate,
       ),
     refused: async (seam, actor) =>
@@ -455,7 +425,7 @@ const WRITES: Record<string, Write> = {
     saves: async (seam, actor) =>
       seam.updatePromoBanner(
         actor,
-        { ...(await promoForm(seam)), buttonLabel: "Shop now" },
+        { ...(await promoForm(seam)), buttonLabel: SAVES.bannerButtonLabel },
         (await seam.getPromoForAdmin(actor)).stamp,
       ),
     refused: async (seam, actor) =>
@@ -565,7 +535,7 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
   );
 
   it("resolveSignIn appends one record when an Invite activates, and none for a refusal", async () => {
-    const kim = { email: "kim.reyes@gmail.com", name: "Kim Reyes" };
+    const kim = { email: KIM, name: "Kim Reyes" };
     const activated = await appendedBy(() => seam.resolveSignIn(kim, new Date()));
     expect(activated.result).toMatchObject({ status: "staff" });
     expect(activated.appended).toEqual([
@@ -579,7 +549,7 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
     ]);
 
     const refused = await appendedBy(() =>
-      seam.resolveSignIn({ email: "expired.invite@example.com", name: null }, new Date()),
+      seam.resolveSignIn({ email: EXPIRED, name: null }, new Date()),
     );
     expect(refused.result).toEqual({ status: "denied", reason: "invite-expired" });
     expect(refused.appended).toEqual([]);
@@ -592,7 +562,7 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
     const { appended } = await appendedBy(async () => {
       await seam.recordSignIn(EDITOR.email, new Date());
       await seam.recordDeniedSignIn({
-        email: "juan.delacruz@gmail.com",
+        email: sampleEmail("not-staff"),
         reason: "not-staff",
         at: new Date(),
       });

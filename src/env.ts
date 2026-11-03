@@ -6,11 +6,10 @@ import { z } from "zod";
  * the `process.env.X!` non-null-assertion class and silent `as`/`|| default`
  * casts that let a misconfiguration surface late (e.g. the auth fail-open).
  *
- * Every variable here is PUBLIC (`NEXT_PUBLIC_*`) or `NODE_ENV`; this template
- * has no server-only secrets today. If one is ever added, split this into
- * separate server and client schemas (t3-env style) and validate them apart, so
- * server secrets are never referenced from — and thus never inlined into — the
- * client bundle.
+ * Every variable here is PUBLIC (`NEXT_PUBLIC_*`) or `NODE_ENV`. Server secrets
+ * (`DATABASE_URL`, `SUPABASE_SECRET_KEY`) are validated apart in
+ * `src/env.server.ts`, so they are never referenced from — and thus never
+ * inlined into — the client bundle.
  *
  * Optional-but-validated: the template must still run with Supabase absent (the
  * auth-disabled dev mode), so the Supabase vars are `.optional()`, not required.
@@ -27,7 +26,10 @@ function optionalEnv<T extends z.ZodTypeAny>(schema: T) {
 
 const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: optionalEnv(z.string().url().optional()),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: optionalEnv(z.string().min(1).optional()),
+  // Supabase's publishable key (sb_publishable_…), safe in the browser: every
+  // table has RLS on with no policies for it. There is no fallback to the old
+  // anon key name.
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: optionalEnv(z.string().min(1).optional()),
   NEXT_PUBLIC_SITE_URL: optionalEnv(z.string().url().optional()),
   NEXT_PUBLIC_SITE_VERSION: optionalEnv(z.string().optional()),
   NEXT_PUBLIC_LOG_LEVEL: optionalEnv(z.enum(["NONE", "ERROR", "WARN", "DEBUG", "ALL"]).optional()),
@@ -66,7 +68,7 @@ export function parseEnv(raw: Record<string, unknown>): Env {
 // at import — a misconfiguration then fails the build/boot loudly, not later.
 export const env = parseEnv({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   NEXT_PUBLIC_SITE_VERSION: process.env.NEXT_PUBLIC_SITE_VERSION,
   NEXT_PUBLIC_LOG_LEVEL: process.env.NEXT_PUBLIC_LOG_LEVEL,

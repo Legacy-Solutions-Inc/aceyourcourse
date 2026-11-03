@@ -4,12 +4,11 @@ import { z } from "zod";
 
 /**
  * Server-only environment. The companion to `src/env.ts`, which validates the
- * PUBLIC (`NEXT_PUBLIC_*`) vars. This module holds the first server secret —
- * `DATABASE_URL` — and is split out exactly as `src/env.ts` anticipated:
- * server secrets are validated apart and, thanks to the `import "server-only"`
- * marker above, can never be referenced from — and thus never inlined into —
- * the client bundle. Do NOT reference `DATABASE_URL` from `src/env.ts`,
- * `src/config.ts`, or any client component.
+ * PUBLIC (`NEXT_PUBLIC_*`) vars. This module holds the server secrets —
+ * `DATABASE_URL` and `SUPABASE_SECRET_KEY` — validated apart so that, thanks
+ * to the `import "server-only"` marker above, they can never be referenced
+ * from — and thus never inlined into — the client bundle. Do NOT reference
+ * either from `src/env.ts`, `src/config.ts`, or any client component.
  */
 
 /**
@@ -32,6 +31,9 @@ const serverEnvSchema = z.object({
   // deploy-time setting, so it flips with no code change. Read through the
   // Catalogue seam's `getWebsiteSettings().memberAppLive`, never directly.
   MEMBER_APP_LIVE: optionalEnv(z.enum(["true", "false"]).optional()),
+  // Supabase's secret key (sb_secret_…), which bypasses RLS. Used for Storage
+  // only (ticket 17). Optional, and never NEXT_PUBLIC_.
+  SUPABASE_SECRET_KEY: optionalEnv(z.string().min(1).optional()),
 });
 
 /** The validated, typed server environment. */
@@ -57,6 +59,7 @@ export function parseServerEnv(raw: Record<string, unknown>): ServerEnv {
 export const serverEnv = parseServerEnv({
   DATABASE_URL: process.env.DATABASE_URL,
   MEMBER_APP_LIVE: process.env.MEMBER_APP_LIVE,
+  SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
 });
 
 /**

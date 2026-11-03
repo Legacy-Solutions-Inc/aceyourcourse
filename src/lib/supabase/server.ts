@@ -6,7 +6,7 @@ import { config } from "@/config";
 import { env } from "@/env";
 
 export function createClient(cookieStore: ReturnType<typeof cookies>): SupabaseClient {
-  return createServerClient(config.supabase.url!, config.supabase.anonKey!, {
+  return createServerClient(config.supabase.url!, config.supabase.publishableKey!, {
     cookieOptions: {
       name: "sb",
       path: "/",

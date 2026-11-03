@@ -12,13 +12,14 @@ import {
   seoFormValues,
   subjectFormValues,
 } from "@/lib/admin/exam-page-form";
-import { faqFormValues, newFaqForm } from "@/lib/admin/faq-form";
-import { newProductForm, productFormValues } from "@/lib/admin/product-form";
+import { faqFormValues } from "@/lib/admin/faq-form";
+import { productFormValues } from "@/lib/admin/product-form";
 import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
-import { newReviewForm, reviewFormValues } from "@/lib/admin/review-form";
+import { reviewFormValues } from "@/lib/admin/review-form";
 import { getExamPageForAdmin } from "@/services/admin";
-import type { StaffActor } from "@/services/admin.types";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
+
+import { SAVES, sampleActor, sampleEmail } from "../../../test/admin-inputs";
 
 import * as examPages from "./(shell)/exam-pages/actions";
 import * as products from "./(shell)/products/actions";
@@ -73,10 +74,10 @@ vi.mock("@/lib/admin/mode", async (importOriginal) => ({
 }));
 
 const IDLE: AdminActionState<never> = { status: "idle" };
-const OWNER = "angel@aceyourcourse.ph";
-const EDITOR = "content@aceyourcourse.ph";
-const NOT_STAFF = "juan.delacruz@gmail.com";
-const READER: StaffActor = { email: EDITOR, name: "AYC Content Team", role: "editor" };
+const OWNER = sampleEmail("owner");
+const EDITOR = sampleEmail("editor");
+const NOT_STAFF = sampleEmail("not-staff");
+const READER = sampleActor("editor");
 
 const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
 /** The stamp every record has before anyone saves it. */
@@ -131,7 +132,7 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
   "./(shell)/settings/actions.ts": {
     saveContactEmail: owner(() =>
       settings.saveContactEmail(IDLE, {
-        input: { contactEmail: "hello@aceyourcourse.ph" },
+        input: { contactEmail: SAVES.contactEmail },
         expected: opened(),
       }),
     ),
@@ -150,14 +151,12 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
         expected: opened(),
       }),
     ),
-    addInvite: owner(() =>
-      settings.addInvite(IDLE, { input: { email: "new.editor@example.com", role: "editor" } }),
-    ),
+    addInvite: owner(() => settings.addInvite(IDLE, { input: SAVES.invite })),
     renewStaffInvite: owner(() =>
-      settings.renewStaffInvite(IDLE, { input: { email: "expired.invite@example.com" } }),
+      settings.renewStaffInvite(IDLE, { input: { email: sampleEmail("expired") } }),
     ),
     cancelStaffInvite: owner(() =>
-      settings.cancelStaffInvite(IDLE, { input: { email: "kim.reyes@gmail.com" } }),
+      settings.cancelStaffInvite(IDLE, { input: { email: sampleEmail("invited") } }),
     ),
     changeStaffMemberRole: owner(() =>
       settings.changeStaffMemberRole(IDLE, { input: { email: EDITOR, role: "owner" } }),
@@ -170,20 +169,13 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     ),
     addProduct: staff(() =>
       products.addProduct(IDLE, {
-        input: {
-          ...newProductForm("MT"),
-          title: "MT Notebook",
-          shortName: "MT Notebook",
-          size: "A5",
-          subjectCodes: ["HEMA"],
-          comingSoon: true,
-        },
+        input: SAVES.newProduct,
       }),
     ),
     saveProduct: staff(() => {
       const product = find(getSampleStore().catalogue.products, "prd-001");
       return products.saveProduct(IDLE, {
-        input: { id: product.id, ...productFormValues(product), priceFrom: "1,250" },
+        input: { id: product.id, ...productFormValues(product), priceFrom: SAVES.priceFrom },
         expected: opened(),
       });
     }),
@@ -202,9 +194,7 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     moveReviewOnHome: staff(() =>
       reviews.moveReviewOnHome(IDLE, { input: { id: "rev-006", direction: "up" } }),
     ),
-    addReview: staff(() =>
-      reviews.addReview(IDLE, { input: { ...newReviewForm("prd-001"), text: "Sulit!" } }),
-    ),
+    addReview: staff(() => reviews.addReview(IDLE, { input: SAVES.newReview })),
     saveReview: staff(() => {
       const review = find(getSampleStore().catalogue.reviews, "rev-002");
       return reviews.saveReview(IDLE, {
@@ -216,7 +206,7 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     removeReview: staff(() => reviews.removeReview(IDLE, { input: { id: "rev-014" } })),
     addFaq: staff(() =>
       reviews.addFaq(IDLE, {
-        input: { ...newFaqForm("buying"), question: "Can I pay by GCash?", answer: "Yes." },
+        input: SAVES.newFaq,
       }),
     ),
     saveFaq: staff(() => {
@@ -238,7 +228,7 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     saveExamHeader: staff(async () => {
       const { exam } = await cePage();
       return examPages.saveExamHeader(IDLE, {
-        input: { code: "ce", ...headerFormValues(exam), blurb: "Every CE formula." },
+        input: { code: "ce", ...headerFormValues(exam), blurb: SAVES.examBlurb },
         expected: opened(),
       });
     }),
@@ -257,20 +247,20 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     saveBundleOffer: staff(async () => {
       const { page } = await cePage();
       return examPages.saveBundleOffer(IDLE, {
-        input: { code: "ce", ...bundleFormValues(page), headline: "The CE bundle" },
+        input: { code: "ce", ...bundleFormValues(page), headline: SAVES.bundleHeadline },
         expected: opened(),
       });
     }),
     saveExamSeo: staff(async () => {
       const { page } = await cePage();
       return examPages.saveExamSeo(IDLE, {
-        input: { code: "ce", ...seoFormValues(page), seoTitle: "CE Board Exam Reviewer" },
+        input: { code: "ce", ...seoFormValues(page), seoTitle: SAVES.seoTitle },
         expected: opened(),
       });
     }),
     saveOfficialExamDate: staff(() =>
       examPages.saveOfficialExamDate(IDLE, {
-        input: { code: "ce", officialExamDate: "2027-04-24" },
+        input: { code: "ce", officialExamDate: SAVES.officialExamDate },
         expected: opened(),
       }),
     ),
@@ -281,7 +271,7 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
       examPages.savePromoBanner(IDLE, {
         input: {
           ...promoBannerFormValues(getSampleStore().catalogue.settings.promoBanner),
-          buttonLabel: "Shop now",
+          buttonLabel: SAVES.bannerButtonLabel,
         },
         expected: opened(),
       }),

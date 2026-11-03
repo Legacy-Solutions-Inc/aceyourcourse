@@ -35,7 +35,7 @@ export function createClient(
 
   let res = buildResponse();
 
-  const supabaseClient = createServerClient(config.supabase.url!, config.supabase.anonKey!, {
+  const supabaseClient = createServerClient(config.supabase.url!, config.supabase.publishableKey!, {
     cookies: {
       getAll() {
         return req.cookies.getAll();

@@ -12,7 +12,7 @@ export interface Config {
   };
   logLevel: keyof typeof LogLevel;
   auth: { strategy: keyof typeof AuthStrategy };
-  supabase: { url?: string; anonKey?: string };
+  supabase: { url?: string; publishableKey?: string };
 }
 
 export const config = {
@@ -29,14 +29,14 @@ export const config = {
   },
   supabase: {
     url: env.NEXT_PUBLIC_SUPABASE_URL,
-    anonKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    publishableKey: env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
   },
 } satisfies Config;
 
 // Fact: are the Supabase env vars present? NEXT_PUBLIC_* vars are inlined at
 // build time, so this is fixed for a given build.
 export const isSupabaseConfigured = Boolean(
-  env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
 );
 
 // Fact: is PostHog analytics configured? The project token is publishable and
@@ -75,6 +75,6 @@ if (env.NODE_ENV === "production" && !isSupabaseConfigured) {
   console.error(
     "[config] Supabase env vars missing in production — auth is enforced (fail-closed): " +
       "no one can sign in until NEXT_PUBLIC_SUPABASE_URL and " +
-      "NEXT_PUBLIC_SUPABASE_ANON_KEY are set.",
+      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY are set.",
   );
 }

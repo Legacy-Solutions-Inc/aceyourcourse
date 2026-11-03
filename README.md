@@ -41,29 +41,51 @@ Phase 2 a seam gains a Drizzle arm, chosen when `DATABASE_URL` is set, and the
 pages don't change. See [ADR 0003](docs/adr/0003-mock-first-service-seam.md)
 and [ADR 0006](docs/adr/0006-drizzle-data-layer.md).
 
-### Connect Supabase (optional in Phase 1)
+### Local database (Supabase)
 
-The Website needs no Supabase. The session plumbing and the OAuth callback
-(`/auth/callback`) are kept for Phase 2's Google sign-in. To point them at a
-project — hosted or local:
+Development and every test use a **local Supabase** in Docker. The hosted
+project is production only; its values live in Vercel, never in `.env`.
 
-**Hosted**
+1. Install **Docker** (Docker Desktop, or Colima) and start it.
+2. Start Supabase and apply `supabase/migrations`:
 
-1. In your Supabase project, open **Settings → Data API** and copy the **Project
-   URL** into `NEXT_PUBLIC_SUPABASE_URL`.
-2. Open **Settings → API Keys** and copy the **anon/public** key into
-   `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-3. Under **Authentication → URL Configuration**, set the Site URL to
-   `http://localhost:3000` and add `http://localhost:3000/**` as a redirect URL.
+   ```bash
+   pnpm db:start            # supabase start (the first run pulls the images)
+   supabase status          # prints the local URL and keys
+   ```
 
-**Local (Supabase CLI)**
+3. Put the local values in `.env`:
 
-```bash
-supabase start           # prints the API URL and anon key
-```
+   | Variable                               | Value                                                     |
+   | -------------------------------------- | --------------------------------------------------------- |
+   | `NEXT_PUBLIC_SUPABASE_URL`             | the **API URL** (`http://127.0.0.1:54321`)                |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | the **Publishable** key (`sb_publishable_…`)              |
+   | `SUPABASE_SECRET_KEY`                  | the **Secret** key (`sb_secret_…`); server-only           |
+   | `DATABASE_URL`                         | `postgresql://postgres:postgres@127.0.0.1:54322/postgres` |
+   | `TEST_DATABASE_URL`                    | the same local database, for `pnpm test:db`               |
 
-Copy the printed values into `.env`. A minimal `supabase/config.toml` is
-included; run `supabase init` to regenerate a full one for your CLI version.
+**Updating an older `.env`:** the anon key variable is now
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, with no fallback. Rename that line,
+and replace any hosted values (`NEXT_PUBLIC_SUPABASE_URL`, `DATABASE_URL`)
+with the local ones above.
+
+`pnpm db:stop` stops the containers, and `pnpm db:reset` rebuilds the local
+database from `supabase/migrations`.
+
+**Migrations.** The Drizzle schema (`src/lib/db/schema.ts`) is the source of
+truth. `pnpm db:generate` writes a timestamped migration into
+`supabase/migrations`; hand-written SQL sits beside it (`pnpm db:generate
+--custom --name=<name>` makes an empty one). Production applies them with
+`supabase db push`. Every table enables RLS with no policies: the server
+checks access, and the browser keys reach nothing.
+
+**Database tests** (`*.db.test.ts`) run against `TEST_DATABASE_URL`, never
+`DATABASE_URL`. Without it, or with Supabase stopped, they are skipped with
+the reason, so `pnpm test` needs no Docker.
+
+The session plumbing and the OAuth callback (`/auth/callback`) are kept for
+Phase 2's Google sign-in. A minimal `supabase/config.toml` is included; its
+Postgres major version matches the hosted project.
 
 ---
 
@@ -110,17 +132,20 @@ production only in Stage B, with the database and Google sign-in.
 
 ## Scripts
 
-| Command                         | What it does                                |
-| ------------------------------- | ------------------------------------------- |
-| `pnpm dev`                      | Start the dev server (Turbopack)            |
-| `pnpm build` / `pnpm start`     | Production build / serve                    |
-| `pnpm lint`                     | ESLint                                      |
-| `pnpm type:check`               | TypeScript, no emit                         |
-| `pnpm test` / `pnpm test:watch` | Vitest unit + component tests               |
-| `pnpm test:coverage`            | Vitest with the coverage thresholds CI runs |
-| `pnpm test:e2e`                 | Playwright end-to-end tests                 |
-| `pnpm db:generate`              | Generate a Drizzle migration (no DB needed) |
-| `pnpm format`                   | Prettier                                    |
+| Command                          | What it does                                |
+| -------------------------------- | ------------------------------------------- |
+| `pnpm dev`                       | Start the dev server (Turbopack)            |
+| `pnpm build` / `pnpm start`      | Production build / serve                    |
+| `pnpm lint`                      | ESLint                                      |
+| `pnpm type:check`                | TypeScript, no emit                         |
+| `pnpm test` / `pnpm test:watch`  | Vitest unit + component tests               |
+| `pnpm test:coverage`             | Vitest with the coverage thresholds CI runs |
+| `pnpm test:e2e`                  | Playwright end-to-end tests                 |
+| `pnpm test:db`                   | The database tests alone (local Supabase)   |
+| `pnpm db:start` / `pnpm db:stop` | Start / stop local Supabase (Docker)        |
+| `pnpm db:reset`                  | Rebuild the local database from migrations  |
+| `pnpm db:generate`               | Generate a Drizzle migration (no DB needed) |
+| `pnpm format`                    | Prettier                                    |
 
 ---
 
@@ -160,7 +185,11 @@ The template's Server Action, data-table and RLS-integration-test examples
 ## Deploy
 
 **Vercel** — import the repo and deploy. Set `NEXT_PUBLIC_SITE_URL`, and the
-Supabase variables once Phase 2 needs them. See
+Supabase variables once Phase 2 needs them: the hosted project's URL,
+publishable key, secret key and transaction-pooler `DATABASE_URL`. In the hosted
+project, under **Authentication → URL Configuration**, set the Site URL to the
+production domain and add `<domain>/**` as a redirect URL. Apply migrations
+with `supabase db push`. See
 [ADR 0012](docs/adr/0012-vercel-and-supabase-singapore.md).
 
 **Self-host (Docker)** — the app builds to a standalone server:

@@ -38,30 +38,35 @@ support prepared statements. Use the transaction-pooler connection string.
 `getDb()` on first use, never at module eval, so `next build` never opens a
 socket. `getDb()` throws a clear error if `DATABASE_URL` is unset.
 
-**`DATABASE_URL` is a server-only secret.** It is validated ONLY in
+**`DATABASE_URL` (and `SUPABASE_SECRET_KEY`) are server-only secrets.** They are validated ONLY in
 `src/env.server.ts` (top-of-file `import "server-only"`). Never `NEXT_PUBLIC`,
 never referenced from `src/env.ts`, `src/config.ts`, or any client module.
 
 **Schema & migrations.** Define tables with `pgTable`/`pgEnum`; derive row types
 with `$inferSelect` / `$inferInsert`. `pnpm db:generate` diffs the schema to SQL
-under `./drizzle/` **offline** (no DB); `pnpm db:migrate` and `pnpm db:studio`
-require a live `DATABASE_URL`. Keep a **pure** row→domain mapper so it's unit
--testable without a DB.
+**offline** (no DB) and writes it into `supabase/migrations/` with Supabase
+timestamp prefixes (`migrations.prefix: "supabase"`; snapshots in
+`supabase/migrations/meta/`). Hand-written SQL (revokes, buckets) sits beside it:
+`pnpm db:generate --custom --name=<name>`. `pnpm db:reset` applies them locally,
+`supabase db push` in production; there is no `db:migrate`. Keep a **pure**
+row→domain mapper so it's unit-testable without a DB.
 
-**Two migration sources, aligned.** Drizzle owns `./drizzle/` (app data);
-Supabase owns `supabase/migrations/` (RLS policies, from Phase 2). Where objects
-overlap, keep names identical (enums, snake_case columns such as `created_at`).
-There is no tenancy (ADR 0008): RLS is scoped by User and Staff Role.
+**One migration folder; access is checked on the server.** Drizzle connects as
+`postgres` (full access) and the Staff Guard decides. Every table enables RLS
+with **no policies**, and the first migration revokes `anon`/`authenticated`
+default privileges on `public`, so the browser keys reach nothing.
+`src/lib/db/deny-all.db.test.ts` checks every table in `public`.
 
-> **KNOWN GAP:** the live query path (`db:migrate`, real reads/writes, RLS) is
-> **unverified** — no Postgres/Supabase database has been available. Only the
-> offline migration generation and the mock-default app/build are verified.
+**Database tests** are `*.db.test.ts` (Vitest project `db`, node env, run alone
+by `pnpm test:db`). They connect through `src/lib/db/test-database.ts` with
+`TEST_DATABASE_URL` (never `DATABASE_URL`) and skip with the reason when it's
+unset or unreachable. Local Supabase: `pnpm db:start`.
 
 ## 4. In this template
 
 - `src/lib/db/schema.ts` — empty in Phase 1 (the Website reads the Catalogue's
   in-memory seed). Phase 2 adds the catalogue tables and generates the first
-  migration; `drizzle/meta/_journal.json` starts with no entries.
+  migration into `supabase/migrations/`.
 - `src/lib/db/client.ts` — `import "server-only"`; lazy `getDb()` singleton;
   `postgres(url, { prepare: false })` → `drizzle(client, { schema })`; throws if
   `DATABASE_URL` unset.
@@ -75,11 +80,12 @@ mockImpl`.
 - The template's Drizzle impl (`customers.db.ts`, `import "server-only"`, with a
   pure exported `rowToCustomer(row)` mapper) lives in git history at commit
   `aea34ea`; copy its shape for `catalogue.db.ts`.
-- `drizzle.config.ts` — `import "dotenv/config"`; `schema`, `out: ./drizzle`,
+- `drizzle.config.ts` — `import "dotenv/config"`; `schema`,
+  `out: ./supabase/migrations`, `migrations.prefix: "supabase"`,
   `dialect: postgresql`, `schemaFilter: ["public"]`, and a placeholder
   `dbCredentials.url` fallback so `db:generate` runs offline.
-- `package.json` — `db:generate` / `db:migrate` / `db:studio` (Supabase's
-  `db:reset` / `db:types` are separate).
+- `package.json` — `db:generate` / `db:studio` (Drizzle), `db:start` /
+  `db:stop` / `db:reset` / `db:types` (Supabase CLI), `test:db`.
 - `docs/adr/0006-drizzle-data-layer.md` — the decision and posture (read-only).
 
 RLS postures: see [`references/drizzle-rls.md`](references/drizzle-rls.md)
@@ -95,7 +101,7 @@ Staff Role instead of Organization).
   pooler.
 - Calling Drizzle / `getDb()` from a component or Server Action instead of the
   seam.
-- Treating the live query path as verified — it is the stated KNOWN GAP.
+- Treating the live query path as verified by `pnpm test` alone — without `TEST_DATABASE_URL` the database tests skip; run `pnpm test:db` against local Supabase.
 - Adding `organization_id` / tenancy to the Drizzle schema (there is no tenancy,
   ADR 0008).
 - Letting the Drizzle and Supabase migrations drift on shared object names.

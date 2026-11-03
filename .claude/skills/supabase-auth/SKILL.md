@@ -15,17 +15,18 @@ routes, reading the current user, or authorization checks. Auth is the ONE thing
 
 - `@supabase/ssr` **0.6.1**, `@supabase/supabase-js` **2.49.4** (from
   `package.json` / installed).
-- Env vars used here: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- Env vars used here: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
   (validated in `src/env.ts`; both `.optional()` so the app runs with auth
-  disabled).
+  disabled). There is no fallback to the old anon key name. The server-only
+  `SUPABASE_SECRET_KEY` (`src/env.server.ts`) is for Storage only.
 
 ## 3. Core standards
 
 **Three client-creation contexts** with `@supabase/ssr`:
 
-- **Browser** (Client Components) → `createBrowserClient(url, anonKey)`.
+- **Browser** (Client Components) → `createBrowserClient(url, publishableKey)`.
 - **Server** (Server Components, Server Actions, Route Handlers) →
-  `createServerClient(url, anonKey, { cookies })` bound to Next's `cookies()`.
+  `createServerClient(url, publishableKey, { cookies })` bound to Next's `cookies()`.
 - **Middleware** → `createServerClient` bound to `req`/`res` cookies, so it can
   refresh the session and write cookies back.
 

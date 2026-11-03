@@ -39,7 +39,7 @@ blanket-disable.
 - `playwright.config.ts` — `testDir: "./e2e"`, `fullyParallel`, `chromium`
   project, `retries: 2` on CI, `trace: "on-first-retry"`, `baseURL` from
   `PLAYWRIGHT_PORT`. The **`webServer`** runs `pnpm dev` and injects **placeholder
-  Supabase env** (`NEXT_PUBLIC_SUPABASE_URL`/`_ANON_KEY` fallbacks) so the app
+  Supabase env** (`NEXT_PUBLIC_SUPABASE_URL`/`_PUBLISHABLE_KEY` fallbacks) so the app
   boots — and, because Supabase then reads as "configured", the session routes
   really run the session refresh (see **supabase-auth**).
 - `e2e/smoke.spec.ts` — Home's heading renders; the removed template screens

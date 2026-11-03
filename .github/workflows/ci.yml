@@ -7,7 +7,7 @@ on:
 
 env:
   NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: placeholder
 
 jobs:
   verify:
@@ -32,6 +32,22 @@ jobs:
       - run: pnpm type:check
 
       - run: pnpm test:coverage
+
+      # The database tests run against a local Supabase (spec Phase 2:
+      # Environments). Only Postgres is needed, so every other service stays
+      # off. `supabase start` applies supabase/migrations.
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.104.0
+
+      - run: supabase start -x gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+
+      - run: pnpm test:db
+        env:
+          # The CLI's documented local default, not a secret.
+          TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+          # A database that didn't start fails the run instead of skipping.
+          TEST_DATABASE_REQUIRED: "true"
 
       - run: pnpm exec playwright install --with-deps chromium
 
