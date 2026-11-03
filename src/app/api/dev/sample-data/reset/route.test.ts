@@ -118,15 +118,14 @@ describe("POST /api/dev/sample-data/reset", () => {
       expect(vi.mocked(revalidateTag).mock.calls).toEqual([["catalogue"]]);
     });
 
-    it("refuses a database that isn't on this machine, even in development, changing nothing", async () => {
+    it("answers 404 for a database that isn't on this machine, even in development", async () => {
+      // The Admin is closed then (src/lib/admin/mode.ts), so the route doesn't exist.
       const generation = editSampleData();
       const { POST } = await routeWithDatabase(
         "postgresql://postgres.abc:pw@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres",
       );
 
-      const response = await POST(post());
-      expect(response.status).toBe(403);
-      expect(await response.text()).toBe("The sample data can only be reset on a local database.");
+      expect((await POST(post())).status).toBe(404);
       expect(seedCatalogue).not.toHaveBeenCalled();
       expect(getSampleStore().generation).toBe(generation);
       expect(revalidateTag).not.toHaveBeenCalled();

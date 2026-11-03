@@ -86,44 +86,4 @@ describe("resetSampleData", () => {
       expect(getSampleStore().generation).toBe(generation);
     });
   });
-
-  describe("on a database that isn't on this machine", () => {
-    const seedCatalogue = vi.fn();
-
-    beforeEach(() => {
-      vi.stubEnv(
-        "DATABASE_URL",
-        "postgresql://postgres.abc:pw@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres",
-      );
-      vi.resetModules();
-      // The Staff Guard would read the staff list from that database.
-      vi.doMock("@/lib/admin/guard", () => ({
-        requireStaff: async () => ({
-          email: "angel@aceyourcourse.ph",
-          name: "Angel",
-          role: "owner",
-        }),
-      }));
-      vi.doMock("@/lib/catalogue-seed/seed", () => ({ seedCatalogue }));
-    });
-
-    afterEach(() => {
-      vi.doUnmock("@/lib/admin/guard");
-      vi.doUnmock("@/lib/catalogue-seed/seed");
-      vi.unstubAllEnvs();
-      vi.resetModules();
-    });
-
-    it("refuses, as the reset route does, and changes nothing", async () => {
-      const generation = editSampleData();
-      const { resetSampleData } = await import("./actions");
-
-      await expect(resetSampleData()).rejects.toThrow(
-        "The sample data can only be reset on a local database.",
-      );
-      expect(seedCatalogue).not.toHaveBeenCalled();
-      expect(getSampleStore().generation).toBe(generation);
-      expect(revalidateTag).not.toHaveBeenCalled();
-    });
-  });
 });
