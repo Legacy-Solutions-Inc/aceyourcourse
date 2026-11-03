@@ -40,9 +40,13 @@ interface ExamPagesPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
-/** The grid of the mockup's three columns (mockup 83), stacked on narrower screens. */
+/**
+ * The grid of the mockup's three columns (mockup 83), stacked on narrower screens.
+ * Stacked, its one column still fits the screen: a long unbroken title in the
+ * search preview can't widen it.
+ */
 const COLUMNS =
-  "grid items-start gap-4.5 lg:grid-cols-[190px_minmax(0,1fr)] xl:grid-cols-[190px_290px_minmax(0,1fr)]";
+  "grid grid-cols-1 items-start gap-4.5 lg:grid-cols-[190px_minmax(0,1fr)] xl:grid-cols-[190px_290px_minmax(0,1fr)]";
 
 /**
  * Exam pages & promo (BUILD-MAP §3.2): PAGES, the selected Exam page's chips,

@@ -226,6 +226,10 @@ test("moving an FAQ from Paper to Coverage puts it last there, and Paper closes 
   await questions(page)
     .getByRole("button", { name: "Move down: “What are the posters like?”" })
     .click();
+  // The list shows the new order once the move has saved.
+  await expect(questions(page).getByRole("listitem").first()).toContainText(
+    "What size is the notebook?",
+  );
   expect(await faqPageGroup(page, "paper")).toEqual(["notebook", "posters"]);
 });
 

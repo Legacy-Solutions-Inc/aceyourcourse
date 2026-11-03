@@ -67,6 +67,47 @@ included; run `supabase init` to regenerate a full one for your CLI version.
 
 ---
 
+## Admin prototype
+
+Until the database work (Stage B), the Admin runs on **sample data**: an
+editable, in-memory copy of the Website's seed, held by the dev server. Saves
+in the Admin show on the Website on its next load. There is no database and no
+Google sign-in yet.
+
+**Run it**
+
+```bash
+pnpm dev                  # then open http://localhost:3000/admin
+```
+
+**Sign in as a sample User.** On the sign-in screen, "Continue with Google"
+opens a development-only **Sign in as** list:
+
+| User                 | Email                        | What happens                                     |
+| -------------------- | ---------------------------- | ------------------------------------------------ |
+| Angel Rose L. Lepaña | `angel@aceyourcourse.ph`     | Owner: every screen, Settings included           |
+| AYC Content Team     | `content@aceyourcourse.ph`   | Editor: every screen but Settings                |
+| Kim Reyes            | `kim.reyes@gmail.com`        | Invite: activates on first sign-in, as an Editor |
+| Expired Invite       | `expired.invite@example.com` | 403: the Invite expired                          |
+| Juan Dela Cruz       | `juan.delacruz@gmail.com`    | 403: not on the staff list                       |
+
+The list's "Other email" field signs in with any address, such as one you've
+just invited from Settings.
+
+**Reset.** The header's **Reset** button (beside SAMPLE DATA) starts the
+sample data again from the seed, for every screen and the Website. Tests do
+the same with `POST /api/dev/sample-data/reset`.
+
+**Restarts.** The sample data lives only in the dev server's memory, so
+stopping `pnpm dev` loses every change: it starts again from the seed.
+
+**Production keeps the Admin closed.** In a production build (`pnpm build`,
+`pnpm start`), every `/admin` page and the development-only routes under
+`/api/dev/` answer 404, and every Admin action is refused. The Admin opens in
+production only in Stage B, with the database and Google sign-in.
+
+---
+
 ## Scripts
 
 | Command                         | What it does                                |
