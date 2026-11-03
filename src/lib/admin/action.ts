@@ -53,9 +53,14 @@ const submissionSchema = z.object({
   expected: z.object({ savedAt: z.string().datetime() }).optional(),
 });
 
-/** An Admin Server Action: `role` decides who may use it, `schema` validates its input. */
+/**
+ * An Admin Server Action: `role` decides who may use it, `schema` validates its
+ * input. `requiresStamp` marks an editor's save, which must send the stamp the
+ * record had when the editor opened, so a forged request can't skip the
+ * conflict check. Single toggles, ▲▼, deletes and new records send none.
+ */
 export function adminAction<Schema extends z.ZodTypeAny, T>(
-  options: { role: RequiredRole; schema: Schema },
+  options: { role: RequiredRole; schema: Schema; requiresStamp?: boolean },
   handler: AdminHandler<z.output<Schema>, T>,
 ): AdminAction<T> {
   return async (_previous, submission) => {
@@ -66,7 +71,7 @@ export function adminAction<Schema extends z.ZodTypeAny, T>(
     if (refusal) return { status: "refused", error: refusal };
 
     const sent = submissionSchema.safeParse(submission);
-    if (!sent.success) {
+    if (!sent.success || (options.requiresStamp && !sent.data.expected)) {
       return { status: "refused", error: { kind: "invalid", fieldErrors: {}, formError: RELOAD } };
     }
     const input = options.schema.safeParse(sent.data.input);

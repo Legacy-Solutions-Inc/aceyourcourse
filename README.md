@@ -35,10 +35,12 @@ Requirements: **Node 22**, **pnpm 10** (both pinned via Volta and
 
 ### Mock-first
 
-Every screen reads through a typed **Service Seam** in `src/services/*`. Today
-the seams return in-memory seed data, so the Website runs with no database. In
-Phase 2 a seam gains a Drizzle arm, chosen when `DATABASE_URL` is set, and the
-pages don't change. See [ADR 0003](docs/adr/0003-mock-first-service-seam.md)
+Every screen reads through a typed **Service Seam** in `src/services/*`. With
+no `DATABASE_URL`, the seams return in-memory seed data, so the Website runs
+with no database. A seam's Drizzle arm is chosen when `DATABASE_URL` is set,
+and the pages don't change. The Catalogue seam has its Drizzle arm: the
+Website reads Postgres. The Admin and its sign-in stay on the sample data
+until their database arms land (see Admin prototype). See [ADR 0003](docs/adr/0003-mock-first-service-seam.md)
 and [ADR 0006](docs/adr/0006-drizzle-data-layer.md).
 
 ### Local database (Supabase)
@@ -64,13 +66,34 @@ project is production only; its values live in Vercel, never in `.env`.
    | `DATABASE_URL`                         | `postgresql://postgres:postgres@127.0.0.1:54322/postgres` |
    | `TEST_DATABASE_URL`                    | the same local database, for `pnpm test:db`               |
 
+4. Build the database and load the catalogue:
+
+   ```bash
+   pnpm db:reset            # supabase db reset, then pnpm catalogue:seed --local
+   ```
+
 **Updating an older `.env`:** the anon key variable is now
 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, with no fallback. Rename that line,
 and replace any hosted values (`NEXT_PUBLIC_SUPABASE_URL`, `DATABASE_URL`)
 with the local ones above.
 
-`pnpm db:stop` stops the containers, and `pnpm db:reset` rebuilds the local
-database from `supabase/migrations`.
+`pnpm db:stop` stops the containers. `pnpm db:reset` rebuilds the local
+database from `supabase/migrations` and loads the Phase 1 seed into it.
+
+**Loading the catalogue.** `pnpm catalogue:seed` checks the seed, then writes
+it in one transaction and prints what it wrote (Exams, Subjects, Products Live
+and Coming Soon, Reviews, FAQs). Photos keep their `/products/…` paths for now.
+
+| Command                            | Loads into                  | When data is there           |
+| ---------------------------------- | --------------------------- | ---------------------------- |
+| `pnpm catalogue:seed --local`      | the local Supabase database | replaces it                  |
+| `pnpm catalogue:seed`              | `DATABASE_URL` (local only) | replaces it                  |
+| `pnpm catalogue:seed --production` | `DATABASE_URL`              | refuses, and changes nothing |
+
+`--production` is for the one load into the empty hosted database; it never
+deletes. The command never prints `DATABASE_URL`: a failure shows only its
+error code. The Website caches its reads, so restart `pnpm dev` after
+`pnpm db:reset`, `pnpm catalogue:seed` or `pnpm test:db` to see the new data.
 
 **Migrations.** The Drizzle schema (`src/lib/db/schema.ts`) is the source of
 truth. `pnpm db:generate` writes a timestamped migration into
@@ -81,7 +104,9 @@ checks access, and the browser keys reach nothing.
 
 **Database tests** (`*.db.test.ts`) run against `TEST_DATABASE_URL`, never
 `DATABASE_URL`. Without it, or with Supabase stopped, they are skipped with
-the reason, so `pnpm test` needs no Docker.
+the reason, so `pnpm test` needs no Docker. They run the Catalogue seam's
+whole behaviour suite on the database, and replace the local catalogue as they
+go, leaving the seed loaded.
 
 The session plumbing and the OAuth callback (`/auth/callback`) are kept for
 Phase 2's Google sign-in. A minimal `supabase/config.toml` is included; its
@@ -101,6 +126,13 @@ Google sign-in yet.
 ```bash
 pnpm dev                  # then open http://localhost:3000/admin
 ```
+
+Leave `DATABASE_URL` unset to try the Admin: with it set, the Website reads
+the catalogue from Postgres while the Admin still saves to the sample data, so
+saves don't show on the Website until the Admin's database arm (ticket 15).
+Playwright (`pnpm test:e2e`) runs its own server with `DATABASE_URL` unset for
+this reason. When it reuses a `pnpm dev` you started, start that one with
+`DATABASE_URL=` (empty) too.
 
 **Sign in as a sample User.** On the sign-in screen, "Continue with Google"
 opens a development-only **Sign in as** list:
@@ -143,7 +175,8 @@ production only in Stage B, with the database and Google sign-in.
 | `pnpm test:e2e`                  | Playwright end-to-end tests                 |
 | `pnpm test:db`                   | The database tests alone (local Supabase)   |
 | `pnpm db:start` / `pnpm db:stop` | Start / stop local Supabase (Docker)        |
-| `pnpm db:reset`                  | Rebuild the local database from migrations  |
+| `pnpm db:reset`                  | Rebuild the local database, load the seed   |
+| `pnpm catalogue:seed`            | Load the seed into the catalogue tables     |
 | `pnpm db:generate`               | Generate a Drizzle migration (no DB needed) |
 | `pnpm format`                    | Prettier                                    |
 

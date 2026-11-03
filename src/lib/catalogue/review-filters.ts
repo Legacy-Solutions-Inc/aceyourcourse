@@ -53,27 +53,37 @@ export function reviewsHref(filters: ReviewsQuery): string {
 
 /** The numbers on the wall's filter chips. */
 export interface ReviewFacetCounts {
-  /** Every written Review. */
-  all: number;
-  /** Reviews per Exam code. An Exam with none is left out. */
-  exams: Record<string, number>;
-  stars: Record<StarBucket, number>;
+  /** "All", then per Exam code. An Exam with none is left out. */
+  exams: { all: number; byCode: Record<string, number> };
+  /** "All", then per star bucket. */
+  stars: { all: number; byBucket: Record<StarBucket, number> };
 }
 
 const bucketOf = (stars: ReviewWithProduct["stars"]): StarBucket =>
   stars === 5 ? "5" : stars === 4 ? "4" : "3-or-less";
 
 /**
- * Pure: the chip counts over every written Review, so they don't change as
- * filters are picked (the Products page's Exam chips work the same way).
+ * Pure: the chip counts, as the mockup counts them. Each group counts the
+ * Reviews that every other filter lets through, so each chip's number is
+ * what picking it would show: `forExams` is the wall with every filter but
+ * the Exam, and `forStars` with every filter but the stars.
  */
-export function reviewFacetCounts(reviews: ReviewWithProduct[]): ReviewFacetCounts {
-  const exams: Record<string, number> = {};
-  const stars: Record<StarBucket, number> = { "5": 0, "4": 0, "3-or-less": 0 };
-  for (const review of reviews) {
+export function reviewFacetCounts({
+  forExams,
+  forStars,
+}: {
+  forExams: ReviewWithProduct[];
+  forStars: ReviewWithProduct[];
+}): ReviewFacetCounts {
+  const byCode: Record<string, number> = {};
+  for (const review of forExams) {
     const { examCode } = review.product;
-    exams[examCode] = (exams[examCode] ?? 0) + 1;
-    stars[bucketOf(review.stars)] += 1;
+    byCode[examCode] = (byCode[examCode] ?? 0) + 1;
   }
-  return { all: reviews.length, exams, stars };
+  const byBucket: Record<StarBucket, number> = { "5": 0, "4": 0, "3-or-less": 0 };
+  for (const review of forStars) byBucket[bucketOf(review.stars)] += 1;
+  return {
+    exams: { all: forExams.length, byCode },
+    stars: { all: forStars.length, byBucket },
+  };
 }

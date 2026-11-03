@@ -26,19 +26,19 @@ import {
 
 /** Saves the contact email. */
 export const saveContactEmail = adminAction(
-  { role: "owner", schema: contactSettingsSchema },
+  { role: "owner", schema: contactSettingsSchema, requiresStamp: true },
   updateWebsiteSettings,
 );
 
 /** Saves the Marketplace shop links and the social links. */
 export const saveLinks = adminAction(
-  { role: "owner", schema: linkSettingsSchema },
+  { role: "owner", schema: linkSettingsSchema, requiresStamp: true },
   updateWebsiteSettings,
 );
 
 /** Saves the trust figures, dated today. */
 export const saveTrustFigures = adminAction(
-  { role: "owner", schema: trustFiguresSchema },
+  { role: "owner", schema: trustFiguresSchema, requiresStamp: true },
   updateWebsiteSettings,
 );
 

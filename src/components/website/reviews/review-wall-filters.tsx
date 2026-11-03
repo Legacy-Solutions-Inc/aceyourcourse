@@ -136,7 +136,7 @@ export function ReviewWallFilters({
             noun={copy.reviewNoun}
             className="font-mono"
             pressed={!current.examCode}
-            count={counts.all}
+            count={counts.exams.all}
             onClick={() => applyFilters({ examCode: undefined, productSlug: undefined })}
           >
             {copy.allChip}
@@ -147,7 +147,7 @@ export function ReviewWallFilters({
               noun={copy.reviewNoun}
               className="font-mono"
               pressed={current.examCode === code}
-              count={counts.exams[code] ?? 0}
+              count={counts.exams.byCode[code] ?? 0}
               onClick={() =>
                 applyFilters({
                   examCode: current.examCode === code ? undefined : code,
@@ -165,7 +165,7 @@ export function ReviewWallFilters({
             noun={copy.reviewNoun}
             className="font-mono"
             pressed={!current.stars}
-            count={counts.all}
+            count={counts.stars.all}
             onClick={() => applyFilters({ stars: undefined })}
           >
             {copy.allChip}
@@ -176,7 +176,7 @@ export function ReviewWallFilters({
               noun={copy.reviewNoun}
               className="font-mono"
               pressed={current.stars === bucket}
-              count={counts.stars[bucket]}
+              count={counts.stars.byBucket[bucket]}
               onClick={() => applyFilters({ stars: current.stars === bucket ? undefined : bucket })}
             >
               <span aria-hidden="true">{copy.starChips[bucket].label}</span>

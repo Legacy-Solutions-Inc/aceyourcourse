@@ -48,7 +48,7 @@ export const addReview = adminAction({ role: "staff", schema: addReviewInputSche
 
 /** "Save review": the editor's fields, with the conflict check against the stamp it opened with. */
 export const saveReview = adminAction(
-  { role: "staff", schema: saveReviewInputSchema },
+  { role: "staff", schema: saveReviewInputSchema, requiresStamp: true },
   async (actor, { id, ...form }, expected) => updateReview(actor, id, form, expected),
 );
 
@@ -79,7 +79,7 @@ export const addFaq = adminAction({ role: "staff", schema: addFaqInputSchema }, 
 
 /** "Save question": the editor's fields, with the conflict check against the stamp it opened with. */
 export const saveFaq = adminAction(
-  { role: "staff", schema: saveFaqInputSchema },
+  { role: "staff", schema: saveFaqInputSchema, requiresStamp: true },
   async (actor, { id, ...form }, expected) => updateFaq(actor, id, form, expected),
 );
 

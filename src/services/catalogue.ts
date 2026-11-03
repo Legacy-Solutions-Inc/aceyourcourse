@@ -1,6 +1,8 @@
 import { unstable_cache } from "next/cache";
 
+import { isDatabaseConfigured } from "@/env.server";
 import { adminMode } from "@/lib/admin/mode";
+import * as dbImpl from "@/services/catalogue.db";
 import * as mockImpl from "@/services/catalogue.mock";
 import { CATALOGUE_TAG, CATALOGUE_TAGS, type CatalogueAreaTag } from "@/services/catalogue.tags";
 import type {
@@ -18,10 +20,11 @@ import { getSampleStore } from "@/services/mock/sample-store";
 // ─────────────────────────────────────────────────────────────────────────────
 // Catalogue Service Seam. Every Website page and component reads Exams,
 // Products, Reviews, FAQs and Website settings from here, and never imports
-// the seed. This module is a thin SELECTOR, the pattern every seam copies.
-// Phase 1 has only the in-memory mock arm. Phase 2 adds the Drizzle arm
-// (catalogue.db.ts, chosen when a DATABASE_URL is configured) with no page
-// changes. See docs/adr/0003 and docs/adr/0006.
+// the seed. This module is a thin SELECTOR, the pattern every seam copies:
+// with DATABASE_URL set it reads Postgres through the Drizzle arm
+// (catalogue.db.ts), otherwise the in-memory sample data (catalogue.mock.ts).
+// Both arms apply the same rules (catalogue.rules.ts), so pages never change
+// with the data source. See docs/adr/0003 and docs/adr/0006.
 //
 // Every page renders per request (the CSP nonce), so speed comes from here:
 // each read is cached once, tagged with the areas it reads (catalogue.tags.ts),
@@ -31,7 +34,7 @@ import { getSampleStore } from "@/services/mock/sample-store";
 
 /**
  * The seam's public contract. Each implementation is checked against it below,
- * so the mock and (from Phase 2) the database arm can never drift apart.
+ * so the mock and the database arm can never drift apart.
  */
 interface CatalogueService {
   /**
@@ -87,15 +90,25 @@ interface CatalogueService {
   getWebsiteSettings(): Promise<WebsiteSettings>;
 }
 
-const impl: CatalogueService = mockImpl;
+const dbArm: CatalogueService = dbImpl;
+const mockArm: CatalogueService = mockImpl;
+const impl = isDatabaseConfigured ? dbArm : mockArm;
 
 /**
  * What the cache keys hold besides each read's arguments. The sample data
  * starts again on every boot and Reset, with a new generation, so nothing
  * cached before a restart (the dev server keeps its cache on disk) is served
- * after it. With the Admin closed, the data is the seed and never changes.
+ * after it. That holds for the database arm in development too, where
+ * `pnpm db:reset`, `pnpm catalogue:seed` and the database tests change the
+ * data without clearing any tag: restarting `pnpm dev` (or Reset) reads it
+ * afresh. With the Admin closed (production), the sample data is the seed and
+ * never changes, and the database changes through Admin saves, which clear the
+ * tags they affect.
  */
-const dataVersion = (): string => (adminMode === "sample" ? getSampleStore().generation : "seed");
+const dataVersion = (): string => {
+  if (adminMode === "sample") return getSampleStore().generation;
+  return isDatabaseConfigured ? "database" : "seed";
+};
 
 /** A read, cached under its name and arguments, with CATALOGUE_TAG and its areas' tags. */
 function cached<Args extends unknown[], Result>(

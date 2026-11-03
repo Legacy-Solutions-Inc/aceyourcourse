@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { revalidateTag } from "next/cache";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AdminActionState } from "@/lib/admin/action";
+import type { AdminAction, AdminActionState } from "@/lib/admin/action";
 import {
   bundleFormValues,
   headerFormValues,
@@ -111,11 +111,26 @@ interface Entry {
   role: Role;
   /** Calls the action with an input it would save. */
   call: () => Promise<unknown>;
+  /** An editor's save: the same call without the stamp its editor opened with. */
+  withoutStamp?: () => Promise<unknown>;
 }
 
 const staff = (call: Entry["call"]): Entry => ({ role: "staff", call });
 const owner = (call: Entry["call"]): Entry => ({ role: "owner", call });
 const anyone = (call: Entry["call"]): Entry => ({ role: "anyone", call });
+
+/** An editor's save, which must send the stamp its editor opened with. */
+function editorSave<T>(
+  role: "staff" | "owner",
+  action: AdminAction<T>,
+  input: () => unknown,
+): Entry {
+  return {
+    role,
+    call: async () => action(IDLE, { input: await input(), expected: opened() }),
+    withoutStamp: async () => action(IDLE, { input: await input() }),
+  };
+}
 
 /** This folder: every actions.ts under it holds Admin Server Actions. */
 const ADMIN_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -130,27 +145,16 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     signInAs: anyone(() => signIn.signInAs({ error: null, email: "" }, signInForm(OWNER))),
   },
   "./(shell)/settings/actions.ts": {
-    saveContactEmail: owner(() =>
-      settings.saveContactEmail(IDLE, {
-        input: { contactEmail: SAVES.contactEmail },
-        expected: opened(),
-      }),
-    ),
-    saveLinks: owner(() =>
-      settings.saveLinks(IDLE, {
-        input: {
-          shopLinks: { shopee: "shopee.ph/aceyourcourse", lazada: "", tiktok: "" },
-          socialLinks: { tiktok: "", facebook: "", instagram: "" },
-        },
-        expected: opened(),
-      }),
-    ),
-    saveTrustFigures: owner(() =>
-      settings.saveTrustFigures(IDLE, {
-        input: { shopStats: { rating: "4.9", ratingCount: "900", followers: "3.8K" } },
-        expected: opened(),
-      }),
-    ),
+    saveContactEmail: editorSave("owner", settings.saveContactEmail, () => ({
+      contactEmail: SAVES.contactEmail,
+    })),
+    saveLinks: editorSave("owner", settings.saveLinks, () => ({
+      shopLinks: { shopee: "shopee.ph/aceyourcourse", lazada: "", tiktok: "" },
+      socialLinks: { tiktok: "", facebook: "", instagram: "" },
+    })),
+    saveTrustFigures: editorSave("owner", settings.saveTrustFigures, () => ({
+      shopStats: { rating: "4.9", ratingCount: "900", followers: "3.8K" },
+    })),
     addInvite: owner(() => settings.addInvite(IDLE, { input: SAVES.invite })),
     renewStaffInvite: owner(() =>
       settings.renewStaffInvite(IDLE, { input: { email: sampleEmail("expired") } }),
@@ -172,12 +176,9 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
         input: SAVES.newProduct,
       }),
     ),
-    saveProduct: staff(() => {
+    saveProduct: editorSave("staff", products.saveProduct, () => {
       const product = find(getSampleStore().catalogue.products, "prd-001");
-      return products.saveProduct(IDLE, {
-        input: { id: product.id, ...productFormValues(product), priceFrom: SAVES.priceFrom },
-        expected: opened(),
-      });
+      return { id: product.id, ...productFormValues(product), priceFrom: SAVES.priceFrom };
     }),
     countProductDelete: staff(() =>
       products.countProductDelete(IDLE, { input: { id: "prd-005" } }),
@@ -195,12 +196,9 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
       reviews.moveReviewOnHome(IDLE, { input: { id: "rev-006", direction: "up" } }),
     ),
     addReview: staff(() => reviews.addReview(IDLE, { input: SAVES.newReview })),
-    saveReview: staff(() => {
+    saveReview: editorSave("staff", reviews.saveReview, () => {
       const review = find(getSampleStore().catalogue.reviews, "rev-002");
-      return reviews.saveReview(IDLE, {
-        input: { id: review.id, ...reviewFormValues(review), stars: 4 },
-        expected: opened(),
-      });
+      return { id: review.id, ...reviewFormValues(review), stars: 4 };
     }),
     countReviewDelete: staff(() => reviews.countReviewDelete(IDLE, { input: { id: "rev-014" } })),
     removeReview: staff(() => reviews.removeReview(IDLE, { input: { id: "rev-014" } })),
@@ -209,12 +207,9 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
         input: SAVES.newFaq,
       }),
     ),
-    saveFaq: staff(() => {
+    saveFaq: editorSave("staff", reviews.saveFaq, () => {
       const faq = find(getSampleStore().catalogue.faqs, "faq-002");
-      return reviews.saveFaq(IDLE, {
-        input: { id: faq.id, ...faqFormValues(faq), answer: "Yes." },
-        expected: opened(),
-      });
+      return { id: faq.id, ...faqFormValues(faq), answer: "Yes." };
     }),
     moveFaqInGroup: staff(() =>
       reviews.moveFaqInGroup(IDLE, { input: { id: "faq-001", direction: "down" } }),
@@ -225,64 +220,43 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     setExamPageSection: staff(() =>
       examPages.setExamPageSection(IDLE, { input: { code: "me", section: "reviews", on: false } }),
     ),
-    saveExamHeader: staff(async () => {
-      const { exam } = await cePage();
-      return examPages.saveExamHeader(IDLE, {
-        input: { code: "ce", ...headerFormValues(exam), blurb: SAVES.examBlurb },
-        expected: opened(),
-      });
-    }),
-    saveSubjectNames: staff(async () => {
+    saveExamHeader: editorSave("staff", examPages.saveExamHeader, async () => ({
+      code: "ce",
+      ...headerFormValues((await cePage()).exam),
+      blurb: SAVES.examBlurb,
+    })),
+    saveSubjectNames: editorSave("staff", examPages.saveSubjectNames, async () => {
       const { subjects } = subjectFormValues((await cePage()).exam);
-      return examPages.saveSubjectNames(IDLE, {
-        input: {
-          code: "ce",
-          subjects: subjects.map((subject, i) =>
-            i === 0 ? { ...subject, name: "Math" } : subject,
-          ),
-        },
-        expected: opened(),
-      });
+      return {
+        code: "ce",
+        subjects: subjects.map((subject, i) => (i === 0 ? { ...subject, name: "Math" } : subject)),
+      };
     }),
-    saveBundleOffer: staff(async () => {
-      const { page } = await cePage();
-      return examPages.saveBundleOffer(IDLE, {
-        input: { code: "ce", ...bundleFormValues(page), headline: SAVES.bundleHeadline },
-        expected: opened(),
-      });
-    }),
-    saveExamSeo: staff(async () => {
-      const { page } = await cePage();
-      return examPages.saveExamSeo(IDLE, {
-        input: { code: "ce", ...seoFormValues(page), seoTitle: SAVES.seoTitle },
-        expected: opened(),
-      });
-    }),
-    saveOfficialExamDate: staff(() =>
-      examPages.saveOfficialExamDate(IDLE, {
-        input: { code: "ce", officialExamDate: SAVES.officialExamDate },
-        expected: opened(),
-      }),
-    ),
+    saveBundleOffer: editorSave("staff", examPages.saveBundleOffer, async () => ({
+      code: "ce",
+      ...bundleFormValues((await cePage()).page),
+      headline: SAVES.bundleHeadline,
+    })),
+    saveExamSeo: editorSave("staff", examPages.saveExamSeo, async () => ({
+      code: "ce",
+      ...seoFormValues((await cePage()).page),
+      seoTitle: SAVES.seoTitle,
+    })),
+    saveOfficialExamDate: editorSave("staff", examPages.saveOfficialExamDate, () => ({
+      code: "ce",
+      officialExamDate: SAVES.officialExamDate,
+    })),
     createShareImageUpload: staff(() =>
       examPages.createShareImageUpload(IDLE, { input: { contentType: "image/png", size: 2048 } }),
     ),
-    savePromoBanner: staff(() =>
-      examPages.savePromoBanner(IDLE, {
-        input: {
-          ...promoBannerFormValues(getSampleStore().catalogue.settings.promoBanner),
-          buttonLabel: SAVES.bannerButtonLabel,
-        },
-        expected: opened(),
-      }),
-    ),
+    savePromoBanner: editorSave("staff", examPages.savePromoBanner, () => ({
+      ...promoBannerFormValues(getSampleStore().catalogue.settings.promoBanner),
+      buttonLabel: SAVES.bannerButtonLabel,
+    })),
     setPromoBanner: staff(() => examPages.setPromoBanner(IDLE, { input: { visible: true } })),
-    saveAnnouncement: staff(() => {
+    saveAnnouncement: editorSave("staff", examPages.saveAnnouncement, () => {
       const { messages } = announcementFormValues(getSampleStore().catalogue.settings.announcement);
-      return examPages.saveAnnouncement(IDLE, {
-        input: { messages: messages.slice(0, 1) },
-        expected: opened(),
-      });
+      return { messages: messages.slice(0, 1) };
     }),
   },
 };
@@ -292,6 +266,9 @@ const ENTRIES = Object.entries(REGISTRY).flatMap(([module, actions]) =>
 );
 const GUARDED = ENTRIES.filter((entry) => entry.role !== "anyone");
 const OWNERS_ONLY = ENTRIES.filter((entry) => entry.role === "owner");
+const EDITOR_SAVES = ENTRIES.flatMap(({ withoutStamp, ...entry }) =>
+  withoutStamp ? [{ ...entry, withoutStamp }] : [],
+);
 const named = <T extends { module: string; name: string }>(entries: T[]) =>
   entries.map(
     (entry) => [`${entry.module.replace(/^\.\/(\(shell\)\/)?/, "")} ${entry.name}`, entry] as const,
@@ -404,6 +381,22 @@ describe("the permission matrix", () => {
     expect(snapshot()).toBe(before);
     expect(revalidateTag).not.toHaveBeenCalled();
   });
+
+  // A forged request can't skip the conflict check by leaving out the stamp.
+  it.each(named(EDITOR_SAVES))(
+    "%s refuses a save sent without its editor's stamp, changing nothing",
+    async (_, entry) => {
+      signInAs(entry.role === "owner" ? OWNER : EDITOR);
+      const before = snapshot();
+
+      expect(await entry.withoutStamp()).toEqual({
+        status: "refused",
+        error: { kind: "invalid", fieldErrors: {}, formError: "RELOAD THE PAGE AND TRY AGAIN" },
+      });
+      expect(snapshot()).toBe(before);
+      expect(revalidateTag).not.toHaveBeenCalled();
+    },
+  );
 
   it.each(named(ENTRIES))(
     "%s answers 404 to an Owner with the Admin closed, changing nothing",

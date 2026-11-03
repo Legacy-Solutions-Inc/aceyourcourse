@@ -11,14 +11,18 @@ import { ReviewWallFilters } from "./review-wall-filters";
 const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
 
+/** The counts with nothing picked: every written Review, in both groups. */
 const COUNTS: ReviewFacetCounts = {
-  all: 16,
-  exams: { CE: 8, ME: 3, EE: 2, MT: 1, CPA: 2 },
-  stars: { "5": 15, "4": 0, "3-or-less": 1 },
+  exams: { all: 16, byCode: { CE: 8, ME: 3, EE: 2, MT: 1, CPA: 2 } },
+  stars: { all: 16, byBucket: { "5": 15, "4": 0, "3-or-less": 1 } },
 };
 
-function renderFilters(filters: ReviewsQuery = {}, productName: string | null = null) {
-  const props = { examCodes: ["CE", "ME", "EE", "MT", "CPA", "PHLE"], counts: COUNTS };
+function renderFilters(
+  filters: ReviewsQuery = {},
+  productName: string | null = null,
+  counts = COUNTS,
+) {
+  const props = { examCodes: ["CE", "ME", "EE", "MT", "CPA", "PHLE"], counts };
   const view = render(<ReviewWallFilters filters={filters} productName={productName} {...props} />);
   return {
     ...view,
@@ -38,9 +42,14 @@ describe("ReviewWallFilters", () => {
   });
 
   it("shows the Exam and star chips with their counts, the selected ones pressed", () => {
-    renderFilters({ examCode: "MT", stars: "3-or-less" });
+    // With MT and ≤3★ picked, the Exam chips count the ≤3★ Reviews and the
+    // star chips count MT's.
+    renderFilters({ examCode: "MT", stars: "3-or-less" }, null, {
+      exams: { all: 2, byCode: { MT: 1, CPA: 1 } },
+      stars: { all: 3, byBucket: { "5": 2, "4": 0, "3-or-less": 1 } },
+    });
 
-    expect(examChips().getByRole("button", { name: "All 16 reviews" })).toHaveAttribute(
+    expect(examChips().getByRole("button", { name: "All 2 reviews" })).toHaveAttribute(
       "aria-pressed",
       "false",
     );
@@ -48,12 +57,12 @@ describe("ReviewWallFilters", () => {
       "aria-pressed",
       "true",
     );
-    expect(examChips().getByRole("button", { name: "CE 8 reviews" })).toBeVisible();
-    expect(starChips().getByRole("button", { name: "All 16 reviews" })).toHaveAttribute(
+    expect(examChips().getByRole("button", { name: "CE 0 reviews" })).toBeVisible();
+    expect(starChips().getByRole("button", { name: "All 3 reviews" })).toHaveAttribute(
       "aria-pressed",
       "false",
     );
-    expect(starChips().getByRole("button", { name: "5 stars 15 reviews" })).toBeVisible();
+    expect(starChips().getByRole("button", { name: "5 stars 2 reviews" })).toBeVisible();
     expect(starChips().getByRole("button", { name: "3 stars or fewer 1 review" })).toHaveAttribute(
       "aria-pressed",
       "true",

@@ -83,16 +83,28 @@ const subjectSchema = z.object({
   name: nonBlank("Subject name"),
 });
 
-const examSchema = z.object({
-  // Uppercase so every Exam has exactly one lowercase URL (/exams/ce).
-  code: z.string().regex(/^[A-Z][A-Z0-9]*$/, "Exam code must be uppercase letters and digits"),
-  board: nonBlank("Board"),
-  name: nonBlank("Exam name"),
-  longName: nonBlank("Exam long name"),
-  blurb: nonBlank("Exam blurb"),
-  madeFor: nonBlank("Made for"),
-  subjects: z.array(subjectSchema).min(1, "an Exam needs at least one Subject"),
-});
+const examSchema = z
+  .object({
+    // Uppercase so every Exam has exactly one lowercase URL (/exams/ce).
+    code: z.string().regex(/^[A-Z][A-Z0-9]*$/, "Exam code must be uppercase letters and digits"),
+    board: nonBlank("Board"),
+    name: nonBlank("Exam name"),
+    longName: nonBlank("Exam long name"),
+    blurb: nonBlank("Exam blurb"),
+    madeFor: nonBlank("Made for"),
+    subjects: z.array(subjectSchema).min(1, "an Exam needs at least one Subject"),
+  })
+  .superRefine((exam, ctx) => {
+    flagDuplicates(
+      ctx,
+      exam.subjects,
+      (subject) => subject.code,
+      (subject, index) => ({
+        path: ["subjects", index, "code"],
+        message: `duplicate Subject code "${subject.code}" in ${exam.code}`,
+      }),
+    );
+  });
 
 const examsSchema = z.array(examSchema).superRefine((exams, ctx) => {
   // Codes are looked up case-insensitively, so "CE" and "Ce" collide.
@@ -172,6 +184,13 @@ const productSchema = z
   .superRefine((product, ctx) => {
     const issue = (path: (string | number)[], message: string) =>
       ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
+
+    flagDuplicates(
+      ctx,
+      product.subjectCodes,
+      (code) => code,
+      (code, index) => ({ path: ["subjectCodes", index], message: `"${code}" is listed twice` }),
+    );
 
     if (product.state === "live") {
       if (product.priceFrom === null || product.priceFrom <= 0) {

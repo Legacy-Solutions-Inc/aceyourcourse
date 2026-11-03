@@ -45,6 +45,8 @@ export default defineConfig({
           environment: "node",
           include: [DATABASE_TESTS],
           env: testDatabaseEnv(),
+          // The files share one database and replace its catalogue: one at a time.
+          poolOptions: { forks: { singleFork: true } },
         },
       },
     ],
@@ -59,6 +61,7 @@ export default defineConfig({
         // Drizzle DB layer: its query bodies only run against a live Postgres,
         // so the database tests (`pnpm test:db`) check them, not coverage.
         "src/lib/db/client.ts",
+        "src/services/*.db.ts",
         "**/*.d.ts",
         // The seams' type-only modules (catalogue.types.ts, admin.types.ts):
         // like .d.ts files they compile to nothing, so v8 would count every

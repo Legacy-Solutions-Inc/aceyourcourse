@@ -167,16 +167,33 @@ describe("Reviews page", () => {
     expect(firstCard().getByText("MedTech Essential Notebook")).toBeVisible();
   });
 
-  it("counts every written Review on the Exam and star chips", async () => {
+  it("counts each chip group with the other filters applied: CE's Reviews on the star chips", async () => {
     await renderPage({ exam: "ce" });
 
     expect(examChip("All")).toHaveAccessibleName("All 16 reviews");
     expect(examChip("CE")).toHaveAccessibleName("CE 8 reviews");
     expect(examChip("CE")).toHaveAttribute("aria-pressed", "true");
     expect(examChip("MT")).toHaveAccessibleName("MT 1 review");
-    expect(starChip("5 stars")).toHaveAccessibleName("5 stars 15 reviews");
-    expect(starChip("4 stars")).toBeDisabled();
+    expect(starChip("All")).toHaveAccessibleName("All 8 reviews");
+    expect(starChip("5 stars")).toHaveAccessibleName("5 stars 8 reviews");
+    expect(starChip("3 stars or fewer")).toBeDisabled();
     expect(count()).toHaveTextContent("8 of 16 written reviews");
+  });
+
+  it("counts the Exam chips over the picked stars and the search", async () => {
+    await renderPage({ stars: "3-or-less" });
+
+    expect(examChip("All")).toHaveAccessibleName("All 1 review");
+    expect(examChip("MT")).toHaveAccessibleName("MT 1 review");
+    expect(examChip("CE")).toBeDisabled();
+    expect(starChip("5 stars")).toHaveAccessibleName("5 stars 15 reviews");
+  });
+
+  it("counts both chip groups over the search", async () => {
+    await renderPage({ q: "delivery" });
+
+    expect(examChip("All")).toHaveAccessibleName("All 1 review");
+    expect(starChip("All")).toHaveAccessibleName("All 1 review");
   });
 
   it("searches the Review text, Product short name and variation", async () => {

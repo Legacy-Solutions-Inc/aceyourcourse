@@ -8,6 +8,13 @@
       "when": 1793682153530,
       "tag": "20261103050233_revoke_default_privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793694302041,
+      "tag": "20261103082502_catalogue",
+      "breakpoints": true
     }
   ]
 }

@@ -38,7 +38,7 @@ export const addProduct = adminAction(
 
 /** "Save product": the editor's fields, with the conflict check against the stamp it opened with. */
 export const saveProduct = adminAction(
-  { role: "staff", schema: saveProductInputSchema },
+  { role: "staff", schema: saveProductInputSchema, requiresStamp: true },
   async (actor, { id, ...form }, expected) => updateProduct(actor, id, form, expected),
 );
 

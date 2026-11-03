@@ -40,6 +40,10 @@ export default defineConfig({
         process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co",
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
         process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "placeholder",
+      // The sample data, whatever .env says: the Admin's writes still go to
+      // the sample store until ticket 15, so the Website must read it too. An
+      // empty value wins over .env (Next never overrides a variable that is set).
+      DATABASE_URL: "",
     },
   },
 });

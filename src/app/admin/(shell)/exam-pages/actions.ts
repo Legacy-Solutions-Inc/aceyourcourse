@@ -41,31 +41,31 @@ export const setExamPageSection = adminAction(
 
 /** The Header's Save: the Exam's name, long name, text and "made for". */
 export const saveExamHeader = adminAction(
-  { role: "staff", schema: saveExamHeaderInputSchema },
+  { role: "staff", schema: saveExamHeaderInputSchema, requiresStamp: true },
   async (actor, { code, ...form }, expected) => updateExamHeader(actor, code, form, expected),
 );
 
 /** Subjects covered's Save: the Subject names, their codes fixed. */
 export const saveSubjectNames = adminAction(
-  { role: "staff", schema: saveSubjectNamesInputSchema },
+  { role: "staff", schema: saveSubjectNamesInputSchema, requiresStamp: true },
   async (actor, { code, ...form }, expected) => updateSubjectNames(actor, code, form, expected),
 );
 
 /** Bundle offer's Save: one of the Exam's Products, its headline, text and button label. */
 export const saveBundleOffer = adminAction(
-  { role: "staff", schema: saveBundleOfferInputSchema },
+  { role: "staff", schema: saveBundleOfferInputSchema, requiresStamp: true },
   async (actor, { code, ...form }, expected) => updateBundleOffer(actor, code, form, expected),
 );
 
 /** Search & AI visibility's Save: the title, the description and the share image. */
 export const saveExamSeo = adminAction(
-  { role: "staff", schema: saveExamSeoInputSchema },
+  { role: "staff", schema: saveExamSeoInputSchema, requiresStamp: true },
   async (actor, { code, ...form }, expected) => updateExamSeo(actor, code, form, expected),
 );
 
 /** Official Exam Date's Save. */
 export const saveOfficialExamDate = adminAction(
-  { role: "staff", schema: saveOfficialExamDateInputSchema },
+  { role: "staff", schema: saveOfficialExamDateInputSchema, requiresStamp: true },
   async (actor, { code, ...form }, expected) => updateOfficialExamDate(actor, code, form, expected),
 );
 
@@ -80,7 +80,7 @@ export const createShareImageUpload = adminAction(
 
 /** The Home promo banner's Save: its text, button label, link and dates. */
 export const savePromoBanner = adminAction(
-  { role: "staff", schema: savePromoBannerInputSchema },
+  { role: "staff", schema: savePromoBannerInputSchema, requiresStamp: true },
   async (actor, form, expected) => updatePromoBanner(actor, form, expected),
 );
 
@@ -92,6 +92,6 @@ export const setPromoBanner = adminAction(
 
 /** The announcement bar's Save: its 1–3 messages, in order. */
 export const saveAnnouncement = adminAction(
-  { role: "staff", schema: saveAnnouncementInputSchema },
+  { role: "staff", schema: saveAnnouncementInputSchema, requiresStamp: true },
   async (actor, form, expected) => updateAnnouncement(actor, form, expected),
 );

@@ -62,7 +62,13 @@ export default async function ReviewsPage({ searchParams }: ReviewsPageProps) {
     productSlugs: live.map((product) => product.slug),
     examCodes,
   });
-  const { items: shown } = await listReviews(filters);
+  // The wall, and what each chip group would show with its own filter
+  // cleared, for the chip counts.
+  const [{ items: shown }, { items: forExams }, { items: forStars }] = await Promise.all([
+    listReviews(filters),
+    listReviews({ ...filters, examCode: undefined }),
+    listReviews({ ...filters, stars: undefined }),
+  ]);
   const product = live.find((p) => p.slug === filters.productSlug);
   const { shopStats } = settings;
 
@@ -129,7 +135,7 @@ export default async function ReviewsPage({ searchParams }: ReviewsPageProps) {
           <ReviewWallFilters
             filters={filters}
             examCodes={examCodes}
-            counts={reviewFacetCounts(written)}
+            counts={reviewFacetCounts({ forExams, forStars })}
             productName={product?.shortName ?? null}
           />
         }

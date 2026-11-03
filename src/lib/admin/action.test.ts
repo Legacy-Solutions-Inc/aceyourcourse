@@ -164,6 +164,23 @@ describe("adminAction", () => {
       expect(handler).not.toHaveBeenCalled();
     });
 
+    it("refuses an editor's save sent without its stamp, so it can't skip the conflict check", async () => {
+      const handler = saves({ title: "x" }, ["catalogue"]);
+      const action = adminAction({ role: "owner", schema, requiresStamp: true }, handler);
+
+      expect(await action(IDLE, { input: { title: "x" } })).toEqual({
+        status: "refused",
+        error: { kind: "invalid", fieldErrors: {}, formError: "RELOAD THE PAGE AND TRY AGAIN" },
+      });
+      expect(handler).not.toHaveBeenCalled();
+      expect(revalidateTag).not.toHaveBeenCalled();
+
+      expect(await action(IDLE, { input: { title: "x" }, expected: STAMP })).toMatchObject({
+        status: "saved",
+      });
+      expect(handler).toHaveBeenCalledWith(OWNER, { title: "x" }, STAMP);
+    });
+
     it("returns the seam's refusal as it is, and clears nothing", async () => {
       const conflict = { kind: "conflict", savedBy: "Kim Reyes", savedAt: STAMP.savedAt } as const;
       const action = adminAction({ role: "owner", schema }, async () => ({

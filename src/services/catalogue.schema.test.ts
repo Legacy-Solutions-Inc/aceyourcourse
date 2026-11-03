@@ -259,6 +259,20 @@ describe("validateCatalogueSeed", () => {
     expect(errors).toContainEqual(expect.stringMatching(/^exams\.1\.code: .*duplicate/i));
   });
 
+  it("rejects a Subject code used twice in one Exam, naming the field", () => {
+    const seed = validSeed();
+    at(seed.exams, 0).subjects.push({ code: "MSTC", name: "Mathematics again" });
+    expect(errorsFor(seed)).toEqual([
+      'exams.0.subjects.2.code: duplicate Subject code "MSTC" in CE',
+    ]);
+  });
+
+  it("allows the same Subject code in two Exams", () => {
+    const seed = validSeed();
+    at(seed.exams, 1).subjects.push({ code: "MSTC", name: "Mathematics" });
+    expect(validateCatalogueSeed(seed).success).toBe(true);
+  });
+
   it("rejects a lowercase Exam code, which would break its Exam page URL", () => {
     const seed = validSeed();
     at(seed.exams, 1).code = "me";
@@ -392,6 +406,15 @@ describe("validateCatalogueSeed: Products", () => {
     seed.reviews = [];
     seed.faqs = []; // one quotes a Review
     expect(validateCatalogueSeed(seed).success).toBe(true);
+  });
+
+  it("rejects a Product that lists a Subject twice, naming the field", () => {
+    const seed = validSeed();
+    const subjects = live(seed).subjectCodes;
+    subjects.push(at(subjects, 0));
+    expect(errorsFor(seed)).toEqual([
+      `products.0.subjectCodes.${subjects.length - 1}: "${at(subjects, 0)}" is listed twice`,
+    ]);
   });
 
   it("rejects a duplicate Product id", () => {
