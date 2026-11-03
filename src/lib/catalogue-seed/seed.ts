@@ -210,6 +210,22 @@ async function uploadSeedPhotos(
   return { seed: inBucket, uploaded: plan.length };
 }
 
+/** The seed once validated, with its photo files read when there are photos to upload. */
+type PreparedSeed =
+  | { ok: true; seed: CatalogueSeed; files: Map<string, Uint8Array> | null }
+  | { ok: false; reason: "invalid"; errors: string[] }
+  | { ok: false; reason: "photos"; problems: string[] };
+
+/** Validates the seed and reads its photos, before the database is touched. */
+async function prepareSeed(seed: unknown, photos: SeedPhotos | undefined): Promise<PreparedSeed> {
+  const validation = validateCatalogueSeed(seed);
+  if (!validation.success) return { ok: false, reason: "invalid", errors: validation.errors };
+  if (!photos) return { ok: true, seed: validation.data, files: null };
+  const read = await readSeedPhotos(validation.data, photos);
+  if (!read.ok) return { ok: false, reason: "photos", problems: read.problems };
+  return { ok: true, seed: validation.data, files: read.files };
+}
+
 /**
  * Validates the seed, then writes it in one transaction. Without
  * `production`, it replaces whatever catalogue is there, and the Admin's data
@@ -228,11 +244,9 @@ export async function seedCatalogue(
     photos,
   }: { production?: boolean; now?: Date; photos?: SeedPhotos } = {},
 ): Promise<SeedOutcome> {
-  const validation = validateCatalogueSeed(seed);
-  if (!validation.success) return { ok: false, reason: "invalid", errors: validation.errors };
-  const valid = validation.data;
-  const read = photos ? await readSeedPhotos(valid, photos) : null;
-  if (read && !read.ok) return { ok: false, reason: "photos", problems: read.problems };
+  const prepared = await prepareSeed(seed, photos);
+  if (!prepared.ok) return prepared;
+  const { seed: valid, files } = prepared;
 
   return db.transaction(async (tx): Promise<SeedOutcome> => {
     if (production) {
@@ -240,7 +254,7 @@ export async function seedCatalogue(
     } else {
       await clearCatalogue(tx);
     }
-    const loaded = photos && read ? await uploadSeedPhotos(valid, photos, read.files) : null;
+    const loaded = photos && files ? await uploadSeedPhotos(valid, photos, files) : null;
     await writeCatalogue(tx, loaded?.seed ?? valid);
     const staff = production ? null : await writeSampleStaff(tx, now);
     await stampSeed(tx, now);
@@ -251,4 +265,38 @@ export async function seedCatalogue(
       uploadedPhotos: loaded?.uploaded ?? null,
     };
   });
+}
+
+/** What the one-time production load would do, from its dry run. */
+export type SeedPlan =
+  | {
+      ok: true;
+      counts: SeedCounts;
+      /** How many photos would go into Storage; null when the photos would stay in public/. */
+      photos: number | null;
+    }
+  | { ok: false; reason: "invalid"; errors: string[] }
+  | { ok: false; reason: "photos"; problems: string[] }
+  | { ok: false; reason: "not-empty" };
+
+/**
+ * The dry run of `seedCatalogue(…, { production: true })`, for
+ * `catalogue:seed --production --check`: the same validation and photo
+ * reads, then whether the catalogue is empty, read in a READ ONLY
+ * transaction. It writes nothing and uploads nothing.
+ */
+export async function planCatalogueSeed(
+  db: Database,
+  seed: unknown,
+  { photos }: { photos?: SeedPhotos } = {},
+): Promise<SeedPlan> {
+  const prepared = await prepareSeed(seed, photos);
+  if (!prepared.ok) return prepared;
+  const hasData = await db.transaction(hasCatalogue, { accessMode: "read only" });
+  if (hasData) return { ok: false, reason: "not-empty" };
+  return {
+    ok: true,
+    counts: seedCounts(prepared.seed),
+    photos: prepared.files ? seedPhotoPlan(prepared.seed).length : null,
+  };
 }

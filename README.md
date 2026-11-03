@@ -101,6 +101,10 @@ Activity, save stamps) with the sample Staff; `--production` never adds Staff.
 | `pnpm catalogue:seed`              | `DATABASE_URL` (local only) | replaces it, with the Staff  |
 | `pnpm catalogue:seed --production` | `DATABASE_URL`              | refuses, and changes nothing |
 
+`pnpm catalogue:seed --production --check` is that load's dry run: it
+validates the seed and reads its photos, then says what it would load into
+an empty catalogue, or "would refuse" (exit 1), and writes nothing.
+
 `--production` is for the one load into the empty hosted database; it never
 deletes. The command never prints `DATABASE_URL` or the secret key: a failure
 shows only its error code. The Website caches its reads, so restart `pnpm dev` after
@@ -207,6 +211,35 @@ production only in Stage B, with the database and Google sign-in.
 
 ---
 
+## Environment variables
+
+Every variable the app reads (`src/env.ts`, and the server-only
+`src/env.server.ts`). Locally they go in `.env` (copy `.env.example`); in
+production, in Vercel's Production environment only (the runbook's step 9).
+Secrets are server-only, and never get a `NEXT_PUBLIC_` name.
+
+| Variable                               | Local (`.env`)                            | Production (Vercel)                       | Secret  |
+| -------------------------------------- | ----------------------------------------- | ----------------------------------------- | ------- |
+| `NEXT_PUBLIC_SITE_URL`                 | `http://localhost:3000`                   | the site URL                              | no      |
+| `NEXT_PUBLIC_SUPABASE_URL`             | `http://127.0.0.1:54321`                  | `https://<ref>.supabase.co`               | no      |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | local `sb_publishable_…`                  | the project's `sb_publishable_…`          | no      |
+| `SUPABASE_SECRET_KEY`                  | local `sb_secret_…` (Storage)             | the project's `sb_secret_…`               | **yes** |
+| `DATABASE_URL`                         | the local database, or unset for the mock | the transaction pooler, port 6543         | **yes** |
+| `MEMBER_APP_LIVE`                      | `false`                                   | unset (off) until the Member App launches | no      |
+| `NEXT_PUBLIC_LOG_LEVEL`                | `ALL`                                     | `WARN`                                    | no      |
+| `NEXT_PUBLIC_AUTH_STRATEGY`            | `SUPABASE`, the only one                  | unset (`SUPABASE`)                        | no      |
+| `NEXT_PUBLIC_SITE_VERSION`             | empty                                     | optional, e.g. the git sha                | no      |
+| `NEXT_PUBLIC_POSTHOG_KEY`              | unset (analytics off)                     | the PostHog project token, when live      | no      |
+| `NEXT_PUBLIC_POSTHOG_HOST`             | unset                                     | the PostHog ingestion host, with the key  | no      |
+
+Vercel sets `NEXT_PUBLIC_VERCEL_URL` itself. The tests' variables
+(`TEST_DATABASE_URL`, `TEST_SUPABASE_SECRET_KEY`, `PLAYWRIGHT_DATABASE_URL`)
+are local only and never go in Vercel. A test (`src/env-names.test.ts`)
+checks this table, `.env.example` and the runbook list every variable, and
+another (`src/repo-secrets.test.ts`) that no file in the repo holds a
+secret key, a Google client secret or a connection string with a real
+password.
+
 ## Scripts
 
 | Command                          | What it does                                |
@@ -222,6 +255,7 @@ production only in Stage B, with the database and Google sign-in.
 | `pnpm db:start` / `pnpm db:stop` | Start / stop local Supabase (Docker)        |
 | `pnpm db:reset`                  | Rebuild the local database, load the seed   |
 | `pnpm catalogue:seed`            | Load the seed into the catalogue tables     |
+| `pnpm db:check`                  | Read-only health check of `DATABASE_URL`    |
 | `pnpm db:generate`               | Generate a Drizzle migration (no DB needed) |
 | `pnpm format`                    | Prettier                                    |
 
@@ -262,13 +296,18 @@ The template's Server Action, data-table and RLS-integration-test examples
 
 ## Deploy
 
-**Vercel** — import the repo and deploy. Set `NEXT_PUBLIC_SITE_URL`, and the
-Supabase variables once Phase 2 needs them: the hosted project's URL,
-publishable key, secret key and transaction-pooler `DATABASE_URL`. In the hosted
-project, under **Authentication → URL Configuration**, set the Site URL to the
-production domain and add `<domain>/**` as a redirect URL. Apply migrations
-with `supabase db push`. See
-[ADR 0012](docs/adr/0012-vercel-and-supabase-singapore.md).
+**Vercel** — production runs on Vercel and the hosted Supabase project, both
+in Singapore ([ADR 0012](docs/adr/0012-vercel-and-supabase-singapore.md)).
+Switching it on (the migrations, the one-time seed, the first Owner, Google
+sign-in, the Vercel variables and a smoke checklist) is in the runbook,
+[`docs/runbooks/production.md`](docs/runbooks/production.md).
+
+`pnpm db:check` checks any database read-only, inside a READ ONLY
+transaction: the Postgres version against `supabase/config.toml`, the
+migrations applied against `supabase/migrations`, that every table is
+deny-all (RLS on, no policy or grant for `anon` or `authenticated`), the
+`catalogue` bucket's limits, and the catalogue and staff counts. It exits 1
+when a check fails, naming what's wrong, and never prints `DATABASE_URL`.
 
 **Self-host (Docker)** — the app builds to a standalone server:
 

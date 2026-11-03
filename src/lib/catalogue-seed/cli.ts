@@ -1,15 +1,22 @@
 import { parseArgs } from "node:util";
 
-import { connectDatabase } from "@/lib/db/connect";
+import { connectDatabase, type Database } from "@/lib/db/connect";
 import { connectionFailureCode, postgresErrorCode } from "@/lib/db/errors";
 import { isLocalDatabase, LOCAL_DATABASE_URL, LOCAL_SUPABASE_URL } from "@/lib/db/local-database";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 
 import { PhotoUploadError, type SeedPhotos, storageSeedPhotos } from "./photos";
-import { formatSampleStaff, formatSeedCounts, seedCatalogue } from "./seed";
+import {
+  formatSampleStaff,
+  formatSeedCounts,
+  planCatalogueSeed,
+  seedCatalogue,
+  type SeedOutcome,
+  type SeedPlan,
+} from "./seed";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// pnpm catalogue:seed [--local | --production]
+// pnpm catalogue:seed [--local | --production [--check]]
 //
 // Loads the Phase 1 seed into the catalogue tables (seed.ts):
 //   --local       the local Supabase database (`pnpm db:reset` runs this),
@@ -17,13 +24,17 @@ import { formatSampleStaff, formatSeedCounts, seedCatalogue } from "./seed";
 //   (no flag)     DATABASE_URL, the same; a local database only
 //   --production  DATABASE_URL, once: refuses when any catalogue data exists,
 //                 never deletes, and never adds Staff
+//   --production --check
+//                 the dry run of that load (ticket 18): validates the seed,
+//                 reads its photos, and says what it would insert or that it
+//                 would refuse, writing and uploading nothing
 // Every load uploads the seed's photos into the Storage bucket (ticket 17):
 // local Supabase's for --local, NEXT_PUBLIC_SUPABASE_URL's otherwise, with
 // SUPABASE_SECRET_KEY. It never prints DATABASE_URL or the key: a failure
 // shows only its code.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const USAGE = "Usage: pnpm catalogue:seed [--local | --production]";
+const USAGE = "Usage: pnpm catalogue:seed [--local | --production [--check]]";
 
 export interface SeedCommand {
   args: string[];
@@ -105,26 +116,80 @@ function storagePhotos(
   return { photos: storageSeedPhotos({ supabaseUrl, secretKey, publicDir: "public" }) };
 }
 
+/** The lines for a seed refused before loading, shared by the load and its dry run. */
+function seedProblems(outcome: SeedPlan | SeedOutcome): string[] | null {
+  if (outcome.ok) return null;
+  if (outcome.reason === "invalid") {
+    return [
+      `The seed has ${outcome.errors.length} problem(s). Nothing was written.`,
+      ...outcome.errors.map((problem) => `  ${problem}`),
+    ];
+  }
+  if (outcome.reason === "photos") {
+    return [
+      `The seed's photos have ${outcome.problems.length} problem(s). Nothing was written.`,
+      ...outcome.problems.map((problem) => `  ${problem}`),
+    ];
+  }
+  return null;
+}
+
+/** `--production --check`: what the one-time load would do. Exits 1 when it would refuse. */
+async function dryRun(
+  db: Database,
+  seed: unknown,
+  photos: SeedPhotos | undefined,
+  { log, error }: Pick<SeedCommand, "log" | "error">,
+): Promise<number> {
+  const plan = await planCatalogueSeed(db, seed, { photos });
+  const problems = seedProblems(plan);
+  if (problems) {
+    for (const line of problems) error(line);
+    return 1;
+  }
+  if (!plan.ok) {
+    error(
+      "Dry run: would refuse: catalogue data exists. --production only loads an empty " +
+        "catalogue, and never deletes. Nothing was written.",
+    );
+    return 1;
+  }
+  log("Dry run: would load into the production database:");
+  for (const line of formatSeedCounts(plan.counts)) log(`  ${line}`);
+  if (plan.photos !== null) log(`  ${plan.photos} photos, uploaded into the Storage bucket`);
+  log("Nothing was written.");
+  return 0;
+}
+
 /** Runs the command and gives its exit code. */
 export async function runCatalogueSeed(command: SeedCommand): Promise<number> {
   const { log, error } = command;
 
-  let flags: { local: boolean; production: boolean };
+  let flags: { local: boolean; production: boolean; check: boolean };
   try {
     const parsed = parseArgs({
       args: command.args,
       options: {
         local: { type: "boolean", default: false },
         production: { type: "boolean", default: false },
+        check: { type: "boolean", default: false },
       },
     });
-    flags = { local: parsed.values.local === true, production: parsed.values.production === true };
+    flags = {
+      local: parsed.values.local === true,
+      production: parsed.values.production === true,
+      check: parsed.values.check === true,
+    };
   } catch {
     error(USAGE);
     return 1;
   }
   if (flags.local && flags.production) {
     error(`--local and --production can't be used together.\n${USAGE}`);
+    return 1;
+  }
+  if (flags.check && !flags.production) {
+    error(`--check dry-runs the one-time load, so it needs --production.\n${USAGE}`);
     return 1;
   }
 
@@ -174,18 +239,16 @@ export async function runCatalogueSeed(command: SeedCommand): Promise<number> {
     max: 1,
   });
   try {
+    if (flags.check) {
+      return await dryRun(connection.db, command.seed ?? CATALOGUE_SEED, photos, command);
+    }
     const outcome = await seedCatalogue(connection.db, command.seed ?? CATALOGUE_SEED, {
       production: flags.production,
       photos,
     });
-    if (!outcome.ok && outcome.reason === "invalid") {
-      error(`The seed has ${outcome.errors.length} problem(s). Nothing was written.`);
-      for (const problem of outcome.errors) error(`  ${problem}`);
-      return 1;
-    }
-    if (!outcome.ok && outcome.reason === "photos") {
-      error(`The seed's photos have ${outcome.problems.length} problem(s). Nothing was written.`);
-      for (const problem of outcome.problems) error(`  ${problem}`);
+    const problems = seedProblems(outcome);
+    if (problems) {
+      for (const line of problems) error(line);
       return 1;
     }
     if (!outcome.ok) {

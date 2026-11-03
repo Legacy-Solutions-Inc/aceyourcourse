@@ -91,3 +91,50 @@ describe("Supabase key names", () => {
     expect(clientModules.filter((file) => imports.test(readFileSync(file, "utf8")))).toEqual([]);
   });
 });
+
+// Ticket 18: the docs list every variable the app reads, so the production
+// runbook's Vercel list and a new .env can't miss one.
+describe("the documented environment", () => {
+  /** Every variable src/env.ts and src/env.server.ts validate (`NAME: process.env.NAME`). */
+  const appVariables = ["src/env.ts", "src/env.server.ts"]
+    .flatMap((file) => [
+      ...readFileSync(file, "utf8").matchAll(/^\s*([A-Z0-9_]+): process\.env\.\1,$/gm),
+    ])
+    .map((match) => match[1] ?? "")
+    // NODE_ENV and NEXT_PUBLIC_VERCEL_URL are set by Next and Vercel, never by hand.
+    .filter((name) => name !== "NODE_ENV" && name !== "NEXT_PUBLIC_VERCEL_URL");
+
+  /** A Markdown section: from its heading to the next heading of the same level. */
+  function section(markdown: string, heading: string): string {
+    const start = markdown.indexOf(`${heading}\n`);
+    expect(start, heading).toBeGreaterThanOrEqual(0);
+    const next = markdown.indexOf("\n## ", start + heading.length);
+    return markdown.slice(start, next === -1 ? undefined : next);
+  }
+
+  it("finds the variables the app reads", () => {
+    expect(appVariables).toEqual(
+      expect.arrayContaining(["DATABASE_URL", SECRET_KEY_NAME, "NEXT_PUBLIC_SITE_URL"]),
+    );
+  });
+
+  it("lists every one in .env.example", () => {
+    const example = readFileSync(".env.example", "utf8");
+    expect(appVariables.filter((name) => !new RegExp(`^#? ?${name}=`, "m").test(example))).toEqual(
+      [],
+    );
+  });
+
+  it("lists every one in the README's environment table", () => {
+    const table = section(readFileSync("README.md", "utf8"), "## Environment variables");
+    expect(appVariables.filter((name) => !table.includes(`| \`${name}\``))).toEqual([]);
+  });
+
+  it("lists every one in the production runbook's Vercel step", () => {
+    const step = section(
+      readFileSync("docs/runbooks/production.md", "utf8"),
+      "## 9. Set the Vercel environment variables",
+    );
+    expect(appVariables.filter((name) => !step.includes(`| \`${name}\``))).toEqual([]);
+  });
+});

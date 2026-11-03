@@ -46,7 +46,7 @@ describe("catalogue:seed command: refusals", () => {
     const result = await run({ args: ["--force"], databaseUrl: LOCAL_NOBODY });
     expect(result).toMatchObject({
       code: 1,
-      err: "Usage: pnpm catalogue:seed [--local | --production]",
+      err: "Usage: pnpm catalogue:seed [--local | --production [--check]]",
     });
   });
 
@@ -94,6 +94,44 @@ describe("catalogue:seed command: refusals", () => {
     expect(result.err).toMatch(/priceFrom: a Coming Soon Product has no price/);
     // Port 1 refuses every connection: had it connected, the error would say so.
     expect(result.err).not.toMatch(/Couldn't reach/);
+  });
+});
+
+describe("catalogue:seed --production --check: the dry run (ticket 18)", () => {
+  it("only dry-runs the one-time load, so it needs --production", async () => {
+    const result = await run({ args: ["--check"], databaseUrl: LOCAL_NOBODY });
+    expect(result).toMatchObject({
+      code: 1,
+      err: "--check dry-runs the one-time load, so it needs --production.\nUsage: pnpm catalogue:seed [--local | --production [--check]]",
+    });
+  });
+
+  it.each([undefined, ""])("exits 1 asking for DATABASE_URL when it is %j", async (databaseUrl) => {
+    const result = await run({ args: ["--production", "--check"], databaseUrl });
+    expect(result).toEqual({
+      code: 1,
+      out: "",
+      err: "DATABASE_URL is not set. Set it, or use --local for the local Supabase database.",
+    });
+  });
+
+  it("refuses an invalid seed with its problems, before connecting", async () => {
+    const result = await run({
+      args: ["--production", "--check"],
+      databaseUrl: HOSTED_NOWHERE,
+      seed: { exams: "nope" },
+    });
+    expect(result.code).toBe(1);
+    expect(result.err).toMatch(/^The seed has \d+ problem\(s\)\. Nothing was written\./);
+    expect(result.err).not.toMatch(/Couldn't reach/);
+  });
+
+  it("says it couldn't reach the production database, never printing DATABASE_URL", async () => {
+    const result = await run({ args: ["--production", "--check"], databaseUrl: HOSTED_NOWHERE });
+    expect(result.code).toBe(1);
+    expect(result.err).toMatch(/^Couldn't reach the production database \([A-Z_]+\)\./);
+    expectNoSecret(result, HOSTED_NOWHERE);
+    expect(result.out + result.err).not.toContain("nowhere.invalid");
   });
 });
 

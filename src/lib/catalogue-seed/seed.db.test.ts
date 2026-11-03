@@ -16,6 +16,7 @@ import {
   clearCatalogue,
   formatSampleStaff,
   formatSeedCounts,
+  planCatalogueSeed,
   seedCatalogue,
   seedCounts,
 } from "./seed";
@@ -191,11 +192,56 @@ describeWithDatabase("catalogue seed on the database", database, () => {
     expect(await db().select().from(schema.staff)).toEqual([]);
   });
 
+  it("with --production --check, reports what an empty database would get, and writes nothing", async () => {
+    await clearCatalogue(db());
+    const result = await seedCommand({ args: ["--production", "--check"] });
+
+    expect(result).toEqual({
+      code: 0,
+      err: "",
+      out: [
+        "Dry run: would load into the production database:",
+        ...formatSeedCounts(seedCounts(CATALOGUE_SEED)).map((line) => `  ${line}`),
+        "Nothing was written.",
+      ].join("\n"),
+    });
+    expect(await db().select().from(schema.exams)).toEqual([]);
+    expect(await db().select().from(schema.websiteSettings)).toEqual([]);
+  });
+
+  it('with --production --check, reports "would refuse" on a database with catalogue data, and exits 1', async () => {
+    await mark();
+    const result = await seedCommand({ args: ["--production", "--check"] });
+
+    expect(result).toEqual({
+      code: 1,
+      out: "",
+      err: "Dry run: would refuse: catalogue data exists. --production only loads an empty catalogue, and never deletes. Nothing was written.",
+    });
+    expect(await contactEmail()).toBe(MARKER);
+  });
+
+  it("dry-runs in a read-only transaction, with reads only", async () => {
+    await clearCatalogue(db());
+    if (!database.sql) throw new Error("No test database: this suite should have been skipped.");
+    const statements: string[] = [];
+    const watched = drizzle(database.sql, {
+      schema,
+      logger: { logQuery: (query) => statements.push(query) },
+    });
+    expect(await planCatalogueSeed(watched, CATALOGUE_SEED)).toMatchObject({ ok: true });
+    const [first, ...rest] = statements;
+    expect(first).toBe("set transaction read only");
+    expect(rest.length).toBeGreaterThan(0);
+    expect(rest.filter((query) => !/^select /i.test(query))).toEqual([]);
+  });
+
   it("never prints DATABASE_URL", async () => {
     const url = process.env.TEST_DATABASE_URL ?? "";
     const outputs = [
       await seedCommand({}),
       await seedCommand({ args: ["--production"] }),
+      await seedCommand({ args: ["--production", "--check"] }),
       await seedCommand({ seed: { exams: "nope" } }),
     ];
     for (const { out, err } of outputs) expect(out + err).not.toContain(url);

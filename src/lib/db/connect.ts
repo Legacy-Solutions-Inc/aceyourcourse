@@ -1,5 +1,5 @@
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import postgres, { type Sql } from "postgres";
 
 import * as schema from "@/lib/db/schema";
 
@@ -21,14 +21,17 @@ export interface DatabaseConnection {
   close(): Promise<void>;
 }
 
-export function connectDatabase(
+export interface ConnectOptions {
+  connectTimeoutSeconds?: number;
+  max?: number;
+}
+
+/** The postgres.js client under connectDatabase, for raw SQL (`pnpm db:check`). */
+export function connectSql(
   url: string,
-  {
-    connectTimeoutSeconds = CONNECT_TIMEOUT_SECONDS,
-    max,
-  }: { connectTimeoutSeconds?: number; max?: number } = {},
-): DatabaseConnection {
-  const client = postgres(url, {
+  { connectTimeoutSeconds = CONNECT_TIMEOUT_SECONDS, max }: ConnectOptions = {},
+): Sql {
+  return postgres(url, {
     // REQUIRED for the Supabase transaction pooler (port 6543), which does
     // not support prepared statements.
     prepare: false,
@@ -37,5 +40,9 @@ export function connectDatabase(
     max,
     onnotice: () => {},
   });
+}
+
+export function connectDatabase(url: string, options: ConnectOptions = {}): DatabaseConnection {
+  const client = connectSql(url, options);
   return { db: drizzle(client, { schema }), close: () => client.end({ timeout: 5 }) };
 }

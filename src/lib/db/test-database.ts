@@ -1,4 +1,4 @@
-import postgres, { type Sql } from "postgres";
+import postgres, { type Sql, type TransactionSql } from "postgres";
 import { afterAll, describe } from "vitest";
 
 /**
@@ -66,4 +66,24 @@ export function describeWithDatabase(
       return sql;
     });
   });
+}
+
+class RolledBack extends Error {}
+
+/** Runs `body` in a transaction that is always rolled back, returning its result: a test's fixture. */
+export async function rolledBack<T>(
+  sql: Sql,
+  body: (tx: TransactionSql) => Promise<T>,
+): Promise<T> {
+  let result: { value: T } | undefined;
+  try {
+    await sql.begin(async (tx) => {
+      result = { value: await body(tx) };
+      throw new RolledBack();
+    });
+  } catch (error) {
+    if (!(error instanceof RolledBack)) throw error;
+  }
+  if (!result) throw new Error("The transaction body never finished.");
+  return result.value;
 }
