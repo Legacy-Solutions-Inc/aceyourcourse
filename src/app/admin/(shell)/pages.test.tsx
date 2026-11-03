@@ -142,7 +142,9 @@ describe("Admin screens", () => {
     vi.setSystemTime(new Date("2026-10-22T03:42:00Z"));
     signInAs("angel@aceyourcourse.ph");
     render(await OverviewPage());
-    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Good morning, Angel.");
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Good morning, Angel." }),
+    ).toBeInTheDocument();
     expect(screen.getByText("THURSDAY · 22 OCT 2026")).toBeInTheDocument();
   });
 });

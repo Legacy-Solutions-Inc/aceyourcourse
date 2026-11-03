@@ -2,12 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import type { AdminProductRow } from "@/services/admin.types";
 
+import { testComingSoonProduct, testLiveProduct } from "../../../test/fixtures/catalogue";
 import {
   adminPriceLabel,
   formatAndSold,
+  hasMissingLinks,
   parseProductListParams,
   productLinkCount,
   productListHref,
+  storeLinkStatuses,
 } from "./product-list";
 
 const row = (overrides: Partial<AdminProductRow> = {}): AdminProductRow => ({
@@ -116,5 +119,25 @@ describe("productLinkCount", () => {
     expect(productLinkCount(row().storeLinks)).toBe(1);
     expect(productLinkCount({ shopee: "product", lazada: "product", tiktok: "product" })).toBe(3);
     expect(productLinkCount({ shopee: "none", lazada: "shop", tiktok: "none" })).toBe(0);
+  });
+});
+
+describe("storeLinkStatuses and hasMissingLinks", () => {
+  const shopLinks = {
+    shopee: "https://shopee.ph/aceyourcourse",
+    lazada: "https://www.lazada.com.ph/shop/aceyourcourse",
+    tiktok: null,
+  };
+
+  it("gives each Marketplace its Listing, its shop page, or nothing", () => {
+    const links = storeLinkStatuses(testLiveProduct(), shopLinks);
+    expect(links).toEqual({ shopee: "product", lazada: "shop", tiktok: "none" });
+    expect(hasMissingLinks(links)).toBe(true);
+  });
+
+  it("gives a Coming Soon Product no store buttons, so it never has missing links", () => {
+    const links = storeLinkStatuses(testComingSoonProduct({ listings: {} }), shopLinks);
+    expect(links).toEqual({ shopee: "none", lazada: "none", tiktok: "none" });
+    expect(hasMissingLinks(links)).toBe(false);
   });
 });

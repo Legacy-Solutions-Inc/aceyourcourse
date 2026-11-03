@@ -28,9 +28,13 @@ export function parseFaqListParams(params: SearchParams): {
   return { query, faq: value("faq")?.slice(0, MAX_QUERY_LENGTH) ?? null };
 }
 
-/** Pure: the FAQS tab's URL for this group, search and selected FAQ. */
-export function faqListHref({ group, q }: AdminFaqList["query"], faq: string | null = null) {
-  const params = new URLSearchParams({ tab: "faqs", group });
+/** Pure: the FAQS tab's URL for this group (the first without one), search and selected FAQ. */
+export function faqListHref(
+  { group, q }: Partial<AdminFaqList["query"]>,
+  faq: string | null = null,
+) {
+  const params = new URLSearchParams({ tab: "faqs" });
+  if (group) params.set("group", group);
   if (q) params.set("q", q);
   if (faq) params.set("faq", faq);
   return `${paths.admin.reviews}?${params.toString()}`;

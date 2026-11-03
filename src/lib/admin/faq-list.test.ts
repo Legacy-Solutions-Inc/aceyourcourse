@@ -48,6 +48,10 @@ describe("faqListHref", () => {
       "/admin/reviews?tab=faqs&group=shipping",
     );
   });
+
+  it("leaves the group out when none is given, so the tab opens on its first group", () => {
+    expect(faqListHref({}, "new")).toBe("/admin/reviews?tab=faqs&faq=new");
+  });
 });
 
 describe("faqListLabel", () => {

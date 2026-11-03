@@ -1,5 +1,5 @@
+import { hasMissingLinks, storeLinkStatuses } from "@/lib/admin/product-list";
 import { uniqueSlug } from "@/lib/admin/slug";
-import { resolveStoreLink } from "@/lib/catalogue/store-links";
 import { manilaDate } from "@/lib/manila-time";
 import {
   type NewProductForm,
@@ -23,16 +23,9 @@ import type {
   ProductListQuery,
   RecordStamp,
   StaffActor,
-  StoreLinkStatus,
 } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
-import type {
-  Exam,
-  Marketplace,
-  Product,
-  ProductPhoto,
-  ShopeeFigures,
-} from "@/services/catalogue.types";
+import type { Exam, Product, ProductPhoto, ShopeeFigures } from "@/services/catalogue.types";
 import { CATALOGUE_TAGS } from "@/services/catalogue.tags";
 import { getSampleStore, stampOf } from "@/services/mock/sample-store";
 
@@ -53,19 +46,6 @@ const recordOf = (id: string) => `product:${id}`;
 /** The record key of a Product's two single toggles. */
 const flagsRecordOf = (id: string) => `product:${id}:flags`;
 
-/** Pure: where each of the Product's store buttons goes, as the S/L/T badges show it. */
-function storeLinksOf(
-  product: Product,
-  shopLinks: ShopLinks,
-): Record<Marketplace, StoreLinkStatus> {
-  const status = (marketplace: Marketplace): StoreLinkStatus => {
-    const link = resolveStoreLink(product, marketplace, shopLinks);
-    if (!link) return "none";
-    return link.link === "listing" ? "product" : "shop";
-  };
-  return { shopee: status("shopee"), lazada: status("lazada"), tiktok: status("tiktok") };
-}
-
 type ShopLinks = CatalogueSeed["settings"]["shopLinks"];
 
 function rowOf(product: Product, shopLinks: ShopLinks, stamp: RecordStamp): AdminProductRow {
@@ -81,7 +61,7 @@ function rowOf(product: Product, shopLinks: ShopLinks, stamp: RecordStamp): Admi
     priceTo: product.priceTo,
     unitsSold: product.shopee?.unitsSold ?? null,
     cover: product.photos[0] ?? null,
-    storeLinks: storeLinksOf(product, shopLinks),
+    storeLinks: storeLinkStatuses(product, shopLinks),
     showOnWebsite: product.showOnWebsite,
     availableInApp: product.availableInApp,
     stamp,
@@ -97,12 +77,6 @@ function compareRows(a: AdminProductRow, b: AdminProductRow): number {
     a.title.localeCompare(b.title, "en")
   );
 }
-
-/**
- * At least one Marketplace's button opens the shop page. Never a Coming Soon
- * Product, which has no store buttons at all.
- */
-const isMissingLinks = (row: AdminProductRow) => Object.values(row.storeLinks).includes("shop");
 
 export async function listProductsForAdmin(
   _actor: StaffActor,
@@ -126,7 +100,7 @@ export async function listProductsForAdmin(
         (!search ||
           row.title.toLowerCase().includes(search) ||
           row.shortName.toLowerCase().includes(search)) &&
-        (!missing || isMissingLinks(row)),
+        (!missing || hasMissingLinks(row.storeLinks)),
     )
     .sort(compareRows);
 

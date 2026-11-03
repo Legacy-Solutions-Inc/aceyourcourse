@@ -386,3 +386,21 @@ export interface AdminAnnouncement {
   memberAppLive: boolean;
   stamp: RecordStamp;
 }
+
+// ── Overview ────────────────────────────────────────────────────────────────
+
+/**
+ * What the Overview works out what needs Staff from (src/lib/admin/needs-attention.ts):
+ * every Product, hidden and Coming Soon ones included, the Exams and their
+ * page records, and the settings it checks.
+ */
+export interface AdminOverview {
+  products: Product[];
+  exams: Exam[];
+  /** Only the Exams that have one; the others have the defaults. */
+  examPages: ExamPage[];
+  settings: OverviewSettings;
+}
+
+/** The Website's settings the Overview checks: the shop pages, the trust figures and the promo banner. */
+export type OverviewSettings = Pick<WebsiteSettings, "shopLinks" | "shopStats" | "promoBanner">;

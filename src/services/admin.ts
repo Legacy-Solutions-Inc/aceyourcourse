@@ -24,6 +24,7 @@ import type {
   AdminExamPage,
   AdminFaq,
   AdminFaqList,
+  AdminOverview,
   AdminProduct,
   AdminProductList,
   AdminProductRow,
@@ -123,6 +124,13 @@ export interface AdminService {
    * next request. Their Staff Activity stays. Gives the removed Staff User.
    */
   removeStaff(actor: StaffActor, email: string): Promise<AdminResult<StaffMember>>;
+
+  /**
+   * The Overview's read (any Staff User): every Product, the Exams, the Exam
+   * page records, the shop pages, the trust figures and the promo banner, read fresh, so a fix made
+   * elsewhere shows on the next load.
+   */
+  getOverview(actor: StaffActor): Promise<AdminOverview>;
 
   /** Settings: the contact email, shop and social links and trust figures, with their stamp. */
   getSettingsForAdmin(): Promise<AdminWebsiteSettings>;
@@ -449,6 +457,7 @@ export const renewInvite = impl.renewInvite;
 export const cancelInvite = impl.cancelInvite;
 export const changeStaffRole = impl.changeStaffRole;
 export const removeStaff = impl.removeStaff;
+export const getOverview = impl.getOverview;
 export const getSettingsForAdmin = impl.getSettingsForAdmin;
 export const updateWebsiteSettings = impl.updateWebsiteSettings;
 export const listProductsForAdmin = impl.listProductsForAdmin;

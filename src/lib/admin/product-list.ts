@@ -1,5 +1,6 @@
 import { productFormatLabel } from "@/lib/catalogue/format";
 import { MAX_QUERY_LENGTH } from "@/lib/catalogue/product-filters";
+import { resolveStoreLink } from "@/lib/catalogue/store-links";
 import { formatPeso } from "@/lib/money";
 import { paths } from "@/paths";
 import type {
@@ -8,7 +9,7 @@ import type {
   ProductListQuery,
   StoreLinkStatus,
 } from "@/services/admin.types";
-import type { Marketplace } from "@/services/catalogue.types";
+import type { Marketplace, Product, WebsiteSettings } from "@/services/catalogue.types";
 
 // The Products list's URL and its row labels (BUILD-MAP §3.3, List). The
 // filters live in the URL, so a reload keeps them: ?q=poster&exam=ce&missing=1,
@@ -66,3 +67,23 @@ export function formatAndSold({ format, unitsSold }: AdminProductRow): string {
 export function productLinkCount(storeLinks: Record<Marketplace, StoreLinkStatus>): number {
   return Object.values(storeLinks).filter((status) => status === "product").length;
 }
+
+/** Pure: where each of the Product's store buttons goes, as the S/L/T badges show it. */
+export function storeLinkStatuses(
+  product: Pick<Product, "state" | "listings">,
+  shopLinks: WebsiteSettings["shopLinks"],
+): Record<Marketplace, StoreLinkStatus> {
+  const status = (marketplace: Marketplace): StoreLinkStatus => {
+    const link = resolveStoreLink(product, marketplace, shopLinks);
+    if (!link) return "none";
+    return link.link === "listing" ? "product" : "shop";
+  };
+  return { shopee: status("shopee"), lazada: status("lazada"), tiktok: status("tiktok") };
+}
+
+/**
+ * Pure: Missing product links: at least one Marketplace's button opens the
+ * shop page. Never a Coming Soon Product, which has no store buttons at all.
+ */
+export const hasMissingLinks = (storeLinks: Record<Marketplace, StoreLinkStatus>) =>
+  Object.values(storeLinks).includes("shop");

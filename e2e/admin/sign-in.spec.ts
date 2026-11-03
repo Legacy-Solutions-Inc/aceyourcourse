@@ -90,9 +90,12 @@ test.describe("the Owner", () => {
 
     await expect(page).toHaveURL(/\/admin$/);
     await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
-    await expect(page.getByRole("heading", { level: 2 })).toHaveText(
-      /^Good (morning|afternoon|evening), Angel\.$/,
-    );
+    await expect(
+      page.getByRole("heading", {
+        level: 2,
+        name: /^Good (morning|afternoon|evening), Angel\.$/,
+      }),
+    ).toBeVisible();
     await expect(page.getByText(todaysDateLine(), { exact: true })).toBeVisible();
   });
 
@@ -204,9 +207,12 @@ test.describe("an invited email", () => {
   }) => {
     await signInAs(page, "invited");
     await expect(page).toHaveURL(/\/admin$/);
-    await expect(page.getByRole("heading", { level: 2 })).toHaveText(
-      /^Good (morning|afternoon|evening), Kim\.$/,
-    );
+    await expect(
+      page.getByRole("heading", {
+        level: 2,
+        name: /^Good (morning|afternoon|evening), Kim\.$/,
+      }),
+    ).toBeVisible();
     await expect(
       page.getByRole("complementary").getByText("EDITOR", { exact: true }),
     ).toBeVisible();
