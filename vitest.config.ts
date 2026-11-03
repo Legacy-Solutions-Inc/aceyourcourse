@@ -6,6 +6,14 @@ import { parse } from "dotenv";
 import { configDefaults, defineConfig } from "vitest/config";
 
 const DATABASE_TESTS = "src/**/*.db.test.ts";
+/** The Admin seam's suites, written over ADMIN_ARMS (test/admin-arms.ts). */
+const ADMIN_SUITES = "src/services/admin.*.test.ts";
+/** Admin tests that aren't written over ADMIN_ARMS. */
+const NOT_ADMIN_SUITES = [
+  "src/services/admin.rows.test.ts",
+  "src/services/admin.schema.test.ts",
+  "src/services/admin.selector.test.ts",
+];
 
 /**
  * The database tests' settings (TEST_DATABASE_*) from `.env`, so `pnpm test:db`
@@ -20,6 +28,23 @@ function testDatabaseEnv(): Record<string, string> {
     ),
   );
 }
+
+const testDatabase = testDatabaseEnv();
+const testDatabaseUrl = process.env.TEST_DATABASE_URL ?? testDatabase.TEST_DATABASE_URL;
+
+/**
+ * With a test database, the database project runs the Admin suites too, over
+ * the database arm: the seams' DATABASE_URL is the test database, never the
+ * shell's or .env's. Without one, it runs only the `*.db.test.ts` files, which
+ * skip saying why.
+ */
+const adminSuitesOnDatabase = testDatabaseUrl
+  ? {
+      include: [DATABASE_TESTS, ADMIN_SUITES],
+      exclude: [...configDefaults.exclude, ...NOT_ADMIN_SUITES],
+      env: { ...testDatabase, DATABASE_URL: testDatabaseUrl, ADMIN_TEST_ARM: "database" },
+    }
+  : { include: [DATABASE_TESTS], env: testDatabase };
 
 export default defineConfig({
   plugins: [react()],
@@ -43,8 +68,8 @@ export default defineConfig({
         test: {
           name: "db",
           environment: "node",
-          include: [DATABASE_TESTS],
-          env: testDatabaseEnv(),
+          setupFiles: ["./vitest.setup.ts"],
+          ...adminSuitesOnDatabase,
           // The files share one database and replace its catalogue: one at a time.
           poolOptions: { forks: { singleFork: true } },
         },

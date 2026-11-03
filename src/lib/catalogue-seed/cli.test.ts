@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 
-import { describeSeedFailure, isLocalDatabase, runCatalogueSeed, type SeedCommand } from "./cli";
+import { describeSeedFailure, runCatalogueSeed, type SeedCommand } from "./cli";
 
 // `pnpm catalogue:seed`'s command, with no database: every case here is
 // refused, or fails to connect, before anything is written. Its output never
@@ -111,19 +111,6 @@ describe("catalogue:seed command: an unreachable database", () => {
     );
     expectNoSecret(result, HOSTED_NOWHERE);
     expect(result.err).not.toContain("nowhere.invalid");
-  });
-});
-
-describe("catalogue:seed command: local or not", () => {
-  it.each([
-    ["postgresql://postgres:postgres@127.0.0.1:54322/postgres", true],
-    ["postgresql://postgres:postgres@localhost:54322/postgres", true],
-    ["postgresql://postgres:postgres@[::1]:54322/postgres", true],
-    ["postgresql://postgres.abc:pw@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres", false],
-    ["postgresql://postgres:pw@db.abc.supabase.co:5432/postgres", false],
-    ["nonsense", null],
-  ])("reads %s as local: %s", (url, expected) => {
-    expect(isLocalDatabase(url)).toBe(expected);
   });
 });
 

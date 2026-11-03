@@ -5,14 +5,16 @@ import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import type { UploadRequest } from "@/services/uploads.types";
 
+import { DATABASE_ARM } from "./admin-database";
 import { editSampleCatalogue } from "./catalogue-seed";
-import { imageBytes } from "./image-bytes";
-import { UPLOAD_ARMS } from "./upload-arms";
+import { uploadSamplePhoto } from "./sample-photo";
 
 /**
  * The Admin seam's arms, for `describe.each(ADMIN_ARMS)` (CONVENTIONS §6). Each
- * suite runs the same behaviour against every arm. Stage A has the sample arm
- * only; Stage B adds the database arm here.
+ * suite runs the same behaviour against every arm: the sample arm in the unit
+ * project (`pnpm test`), and the database arm in the database project
+ * (`pnpm test:db`), which runs these suites too when TEST_DATABASE_URL is set
+ * and marks them with ADMIN_TEST_ARM=database (vitest.config.ts).
  *
  * Besides the arm itself, each entry can reset its data to the seed and read
  * back what the seam has no read for yet, such as Staff Activity.
@@ -43,38 +45,26 @@ export interface AdminArm {
   deniedSignIns(): Promise<DeniedSignIn[]>;
 }
 
-export const ADMIN_ARMS: AdminArm[] = [
-  {
-    name: "sample data",
-    seam: sampleArm,
-    reset: async (edit) => {
-      if (edit) editSampleCatalogue(edit);
-      else resetSampleStore();
-    },
-    deleteProductElsewhere: async (id) => {
-      const { catalogue } = getSampleStore();
-      catalogue.products = catalogue.products.filter((product) => product.id !== id);
-      catalogue.reviews = catalogue.reviews.filter((review) => review.productId !== id);
-    },
-    deleteReviewElsewhere: async (id) => {
-      const { catalogue } = getSampleStore();
-      catalogue.reviews = catalogue.reviews.filter((review) => review.id !== id);
-    },
-    uploadPhoto: async ({ send = true, purpose = "product-photo" } = {}) => {
-      const [uploads] = UPLOAD_ARMS;
-      if (!uploads) throw new Error("No upload arm");
-      const bytes = imageBytes("image/png");
-      const created = await uploads.seam.createUpload(
-        { email: "content@aceyourcourse.ph", name: "AYC Content Team", role: "editor" },
-        { purpose, contentType: "image/png", size: bytes.byteLength },
-      );
-      if (!created.ok) throw new Error("The upload was refused");
-      if (send && !(await uploads.send(created.value, "image/png", bytes))) {
-        throw new Error("The file wasn't stored");
-      }
-      return { path: created.value.path, publicUrl: created.value.publicUrl };
-    },
-    staffActivity: async () => structuredClone(getSampleStore().staffActivity),
-    deniedSignIns: async () => structuredClone(getSampleStore().deniedSignIns),
+const SAMPLE_ARM: AdminArm = {
+  name: "sample data",
+  seam: sampleArm,
+  reset: async (edit) => {
+    if (edit) editSampleCatalogue(edit);
+    else resetSampleStore();
   },
-];
+  deleteProductElsewhere: async (id) => {
+    const { catalogue } = getSampleStore();
+    catalogue.products = catalogue.products.filter((product) => product.id !== id);
+    catalogue.reviews = catalogue.reviews.filter((review) => review.productId !== id);
+  },
+  deleteReviewElsewhere: async (id) => {
+    const { catalogue } = getSampleStore();
+    catalogue.reviews = catalogue.reviews.filter((review) => review.id !== id);
+  },
+  uploadPhoto: uploadSamplePhoto,
+  staffActivity: async () => structuredClone(getSampleStore().staffActivity),
+  deniedSignIns: async () => structuredClone(getSampleStore().deniedSignIns),
+};
+
+export const ADMIN_ARMS: AdminArm[] =
+  process.env.ADMIN_TEST_ARM === "database" ? [DATABASE_ARM] : [SAMPLE_ARM];

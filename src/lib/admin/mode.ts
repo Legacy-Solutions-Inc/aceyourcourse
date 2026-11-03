@@ -2,12 +2,14 @@ import "server-only";
 
 import { isSupabaseConfigured } from "@/config";
 import { env } from "@/env";
-import { isDatabaseConfigured } from "@/env.server";
+import { serverEnv } from "@/env.server";
+import { isLocalDatabase } from "@/lib/db/local-database";
 
 /**
  * How the Admin runs (CONVENTIONS §1):
- * - "sample": every screen works on the in-memory sample data, and Staff sign
- *   in from the development-only "Sign in as" list.
+ * - "sample": every screen works on the sample data (in memory, or the local
+ *   database when DATABASE_URL points at one), and Staff sign in from the
+ *   development-only "Sign in as" list.
  * - "closed": every /admin route and development-only route answers 404, and
  *   every Admin Server Action refuses.
  *
@@ -17,22 +19,31 @@ export type AdminMode = "sample" | "closed";
 
 export interface AdminModeInputs {
   nodeEnv: string | undefined;
-  databaseConfigured: boolean;
+  /** Where DATABASE_URL points: unset, this machine, or anywhere else. */
+  database: "none" | "local" | "elsewhere";
   supabaseConfigured: boolean;
 }
 
 /**
- * Pure: the Stage A rule. Sample data everywhere but production, where the
- * Admin stays closed until Stage B. The database and Supabase are ignored, even
- * when .env sets them.
+ * Pure: the rule until ticket 16. Sample data everywhere but production, where
+ * the Admin stays closed. "Sign in as" asks for no real sign-in, so it never
+ * reaches a database that isn't on this machine: with DATABASE_URL pointing
+ * elsewhere (such as the hosted one), the Admin stays closed in development
+ * too. Supabase is ignored, even when .env sets it.
  */
-export function computeAdminMode({ nodeEnv }: AdminModeInputs): AdminMode {
-  return nodeEnv === "production" ? "closed" : "sample";
+export function computeAdminMode({ nodeEnv, database }: AdminModeInputs): AdminMode {
+  if (nodeEnv === "production" || database === "elsewhere") return "closed";
+  return "sample";
+}
+
+function whereDatabaseIs(url: string | undefined): AdminModeInputs["database"] {
+  if (!url) return "none";
+  return isLocalDatabase(url) ? "local" : "elsewhere";
 }
 
 /** The mode this server runs in. NODE_ENV is fixed for a given build. */
 export const adminMode = computeAdminMode({
   nodeEnv: env.NODE_ENV,
-  databaseConfigured: isDatabaseConfigured,
+  database: whereDatabaseIs(serverEnv.DATABASE_URL),
   supabaseConfigured: isSupabaseConfigured,
 });

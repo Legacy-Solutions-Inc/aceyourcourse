@@ -62,3 +62,26 @@ describe("catalogue seam, database arm: an unreachable database", () => {
     expect(String(error)).not.toMatch(/127\.0\.0\.1|s3cret|postgresql:/);
   });
 });
+
+describe("Admin seam, database arm: an unreachable database", () => {
+  it("fails a read and a write within the connect timeout, naming no host", async () => {
+    const { databaseArm } = await import("./admin.db");
+    const owner = {
+      email: "angel@aceyourcourse.ph",
+      name: "Angel Rose L. Lepaña",
+      role: "owner" as const,
+    };
+    const started = Date.now();
+
+    for (const call of [
+      () => databaseArm.getSettingsForAdmin(),
+      () => databaseArm.updateWebsiteSettings(owner, { contactEmail: "hello@aceyourcourse.ph" }),
+    ]) {
+      const error = await call().catch((failure: unknown) => failure);
+      expect(error).toBeInstanceOf(DatabaseUnreachableError);
+      expect(String(error)).not.toMatch(/127\.0\.0\.1|s3cret|postgresql:/);
+    }
+    // Two connect timeouts of 1 s each, not a hang.
+    expect(Date.now() - started).toBeLessThan(4500);
+  });
+});

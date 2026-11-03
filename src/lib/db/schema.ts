@@ -1,17 +1,22 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   check,
   date,
   doublePrecision,
   foreignKey,
+  index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
   smallint,
   text,
+  timestamp,
   unique,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 import { FAQ_GROUPS, PRODUCT_FORMATS } from "@/services/catalogue.schema";
@@ -30,6 +35,10 @@ import type { Marketplace } from "@/services/catalogue.types";
  * connects with full access and the server decides, so the browser's
  * publishable key reaches nothing (spec, Phase 2 → Access is checked on the
  * server; src/lib/db/deny-all.db.test.ts).
+ *
+ * The Admin's own records: the staff list with its Invites, denied sign-ins,
+ * Staff Activity, and each editable record's save stamp, which the conflict
+ * check compares (CONVENTIONS §3).
  */
 
 export const MARKETPLACES = [
@@ -288,3 +297,85 @@ export const promoBanner = pgTable(
   },
   (t) => [check("promo_banner_single_row", sql`${t.id} = 1`)],
 ).enableRLS();
+
+// ── The Admin ───────────────────────────────────────────────────────────────
+
+/** A time with its zone, as a Date: the Admin's ISO strings map to and from it. */
+const at = (name: string) => timestamp(name, { withTimezone: true, mode: "date" });
+
+export const staffRole = pgEnum("staff_role", ["owner", "editor"]);
+export const staffStatus = pgEnum("staff_status", ["active", "invited"]);
+export const deniedReason = pgEnum("denied_reason", ["not-staff", "invite-expired"]);
+
+/**
+ * The staff list: each Staff User, and each Invite not yet used. An email is
+ * on it once, lowercased. An Invite becomes Staff on its first sign-in, so the
+ * same row changes status. Each list keeps its order in `position`.
+ */
+export const staff = pgTable(
+  "staff",
+  {
+    email: text("email").primaryKey(),
+    position: integer("position").notNull(),
+    status: staffStatus("status").notNull(),
+    role: staffRole("role").notNull(),
+    name: text("name"),
+    addedAt: at("added_at"),
+    lastSignedInAt: at("last_signed_in_at"),
+    invitedAt: at("invited_at"),
+    expiresAt: at("expires_at"),
+  },
+  (t) => [
+    check("staff_email_lowercase", sql`${t.email} = lower(${t.email})`),
+    check(
+      "staff_active_or_invited",
+      sql`(${t.status} = 'active' and ${t.name} is not null and ${t.addedAt} is not null)
+        or (${t.status} = 'invited' and ${t.invitedAt} is not null and ${t.expiresAt} is not null)`,
+    ),
+  ],
+).enableRLS();
+
+/** Sign-ins refused because the email isn't Staff, newest last (`seq`). */
+export const deniedSignIns = pgTable(
+  "denied_sign_ins",
+  {
+    id: uuid("id").primaryKey(),
+    seq: bigint("seq", { mode: "number" }).generatedAlwaysAsIdentity(),
+    email: text("email").notNull(),
+    reason: deniedReason("reason").notNull(),
+    at: at("at").notNull(),
+  },
+  (t) => [index("denied_sign_ins_email_at_idx").on(t.email, t.at)],
+).enableRLS();
+
+/**
+ * Staff Activity: one record per entity each Admin write changed, with the
+ * values before and after, in the order they were written (`seq`). It keeps
+ * the actor's email and name, so it outlives their removal from the staff list.
+ */
+export const staffActivity = pgTable("staff_activity", {
+  id: uuid("id").primaryKey(),
+  seq: bigint("seq", { mode: "number" }).generatedAlwaysAsIdentity(),
+  at: at("at").notNull(),
+  actorEmail: text("actor_email").notNull(),
+  actorName: text("actor_name").notNull(),
+  entity: text("entity").notNull(),
+  entityId: text("entity_id").notNull(),
+  action: text("action").notNull(),
+  before: jsonb("before"),
+  after: jsonb("after"),
+}).enableRLS();
+
+/**
+ * Each editable record's last save: when, and by whom. A record is what one
+ * Admin editor saves, keyed as the sample arm keys it (e.g. `product:prd-001`,
+ * `product-flags:prd-001`, `exam-page:CE:header`), so a toggle and an editor
+ * on the same row never conflict. The conflict check updates a stamp only
+ * where `updated_at` still holds the value the write read. A record with no
+ * row was last changed by the seed, whose time the `seeded` row holds.
+ */
+export const recordStamps = pgTable("record_stamps", {
+  record: text("record").primaryKey(),
+  updatedAt: at("updated_at").notNull(),
+  updatedBy: text("updated_by"),
+}).enableRLS();

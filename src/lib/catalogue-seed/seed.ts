@@ -2,15 +2,19 @@ import { sql } from "drizzle-orm";
 
 import type { Database } from "@/lib/db/connect";
 import * as schema from "@/lib/db/schema";
+import { SEEDED_RECORD, staffToRows } from "@/services/admin.rows";
 import { catalogueToRows } from "@/services/catalogue.rows";
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
+import { sampleStaff } from "@/services/mock/staff";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Loading the catalogue seed into Postgres, for `pnpm catalogue:seed`
 // (scripts/catalogue-seed.ts) and the database tests. The seed is validated
 // before anything is written, then written in one transaction, so a failure
-// leaves the catalogue as it was. Locally the seed replaces the catalogue; in
-// production it loads only into an empty one and never deletes.
+// leaves the catalogue as it was. Locally the seed replaces the catalogue and
+// the Admin's data, adding the sample Staff for "Sign in as" (CONVENTIONS §5);
+// in production it loads only into an empty catalogue, never deletes, and
+// never adds Staff.
 // ─────────────────────────────────────────────────────────────────────────────
 
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -25,8 +29,14 @@ export interface SeedCounts {
   faqs: number;
 }
 
+/** The sample staff list a local load adds. */
+export interface SampleStaffCounts {
+  staff: number;
+  invites: number;
+}
+
 export type SeedOutcome =
-  | { ok: true; counts: SeedCounts }
+  | { ok: true; counts: SeedCounts; sampleStaff: SampleStaffCounts | null }
   | { ok: false; reason: "invalid"; errors: string[] }
   | { ok: false; reason: "not-empty" };
 
@@ -54,6 +64,11 @@ export function formatSeedCounts(counts: SeedCounts): string[] {
     plural(counts.reviews, "Review"),
     plural(counts.faqs, "FAQ"),
   ];
+}
+
+/** Pure: the line the command prints for the sample staff a local load added. */
+export function formatSampleStaff({ staff, invites }: SampleStaffCounts): string {
+  return `${plural(staff, "sample Staff User")} and ${plural(invites, "Invite")}, for "Sign in as"`;
 }
 
 /** Every Catalogue table, parents before children, the order rows are written in. */
@@ -85,9 +100,39 @@ async function hasCatalogue(tx: Transaction): Promise<boolean> {
   return false;
 }
 
+/**
+ * The Admin's own tables. They describe the catalogue that is loaded (its
+ * save stamps, who changed it), so a local load replaces them too.
+ */
+const ADMIN_TABLES = [
+  schema.staffActivity,
+  schema.deniedSignIns,
+  schema.recordStamps,
+  schema.staff,
+];
+
 /** Deletes every Catalogue row, children before parents. */
 export async function clearCatalogue(db: Database | Transaction): Promise<void> {
   for (const table of [...TABLES].reverse()) await db.delete(table);
+}
+
+/** Records when the catalogue was loaded: the stamp of every record nobody has saved since. */
+async function stampSeed(tx: Transaction, now: Date): Promise<void> {
+  await tx
+    .insert(schema.recordStamps)
+    .values({ record: SEEDED_RECORD, updatedAt: now, updatedBy: null })
+    .onConflictDoUpdate({
+      target: schema.recordStamps.record,
+      set: { updatedAt: now, updatedBy: null },
+    });
+}
+
+/** Replaces the Admin's data with the sample staff list, timed from `now`. */
+async function writeSampleStaff(tx: Transaction, now: Date): Promise<SampleStaffCounts> {
+  for (const table of ADMIN_TABLES) await tx.delete(table);
+  const list = sampleStaff(now);
+  await tx.insert(schema.staff).values(staffToRows(list));
+  return { staff: list.staff.length, invites: list.invites.length };
 }
 
 async function writeCatalogue(tx: Transaction, seed: CatalogueSeed): Promise<void> {
@@ -118,14 +163,15 @@ async function writeCatalogue(tx: Transaction, seed: CatalogueSeed): Promise<voi
 
 /**
  * Validates the seed, then writes it in one transaction. Without
- * `production`, it replaces whatever catalogue is there. With it, it refuses
- * when any Catalogue row exists, and deletes nothing. An invalid seed is
+ * `production`, it replaces whatever catalogue is there, and the Admin's data
+ * with the sample staff list, timed from `now`. With it, it refuses when any
+ * Catalogue row exists, deletes nothing and adds no Staff. An invalid seed is
  * refused before the database is touched.
  */
 export async function seedCatalogue(
   db: Database,
   seed: unknown,
-  { production = false }: { production?: boolean } = {},
+  { production = false, now = new Date() }: { production?: boolean; now?: Date } = {},
 ): Promise<SeedOutcome> {
   const validation = validateCatalogueSeed(seed);
   if (!validation.success) return { ok: false, reason: "invalid", errors: validation.errors };
@@ -138,6 +184,8 @@ export async function seedCatalogue(
       await clearCatalogue(tx);
     }
     await writeCatalogue(tx, valid);
-    return { ok: true, counts: seedCounts(valid) };
+    const staff = production ? null : await writeSampleStaff(tx, now);
+    await stampSeed(tx, now);
+    return { ok: true, counts: seedCounts(valid), sampleStaff: staff };
   });
 }

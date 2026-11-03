@@ -2,40 +2,24 @@ import { parseArgs } from "node:util";
 
 import { connectDatabase } from "@/lib/db/connect";
 import { connectionFailureCode, postgresErrorCode } from "@/lib/db/errors";
+import { isLocalDatabase, LOCAL_DATABASE_URL } from "@/lib/db/local-database";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 
-import { formatSeedCounts, seedCatalogue } from "./seed";
+import { formatSampleStaff, formatSeedCounts, seedCatalogue } from "./seed";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // pnpm catalogue:seed [--local | --production]
 //
 // Loads the Phase 1 seed into the catalogue tables (seed.ts):
 //   --local       the local Supabase database (`pnpm db:reset` runs this),
-//                 replacing its catalogue
-//   (no flag)     DATABASE_URL, replacing its catalogue; a local database only
+//                 replacing its catalogue and adding the sample Staff
+//   (no flag)     DATABASE_URL, the same; a local database only
 //   --production  DATABASE_URL, once: refuses when any catalogue data exists,
-//                 and never deletes
+//                 never deletes, and never adds Staff
 // It never prints DATABASE_URL: a failure shows only its code.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * The local Supabase database, as the CLI's documented defaults give it: the
- * `postgres` user and password, on supabase/config.toml's [db] port.
- */
-export const LOCAL_DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
-
 const USAGE = "Usage: pnpm catalogue:seed [--local | --production]";
-
-const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
-
-/** Pure: whether a connection string points at this machine. Null when it isn't a URL. */
-export function isLocalDatabase(url: string): boolean | null {
-  try {
-    return LOCAL_HOSTS.has(new URL(url).hostname);
-  } catch {
-    return null;
-  }
-}
 
 export interface SeedCommand {
   args: string[];
@@ -140,6 +124,7 @@ export async function runCatalogueSeed(command: SeedCommand): Promise<number> {
     }
     log(`Loaded the catalogue into ${target}:`);
     for (const line of formatSeedCounts(outcome.counts)) log(`  ${line}`);
+    if (outcome.sampleStaff) log(`  ${formatSampleStaff(outcome.sampleStaff)}`);
     return 0;
   } catch (failure) {
     for (const line of describeSeedFailure(failure, target)) error(line);

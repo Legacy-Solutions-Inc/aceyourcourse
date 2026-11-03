@@ -131,7 +131,7 @@ export async function recordSignIn(email: string, at: Date): Promise<void> {
 // touches the Catalogue, so none returns a cache tag.
 
 const FORBIDDEN = "ONLY AN OWNER CAN MANAGE STAFF";
-const ALREADY_ON_LIST = "This email is already on the staff list.";
+export const ALREADY_ON_LIST = "This email is already on the staff list.";
 const LAST_OWNER = "There must always be at least one Owner.";
 const OWN_ACCESS = "You can't remove or change your own access.";
 

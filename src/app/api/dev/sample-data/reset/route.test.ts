@@ -78,4 +78,69 @@ describe("POST /api/dev/sample-data/reset", () => {
       expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
+
+  describe("on the database (DATABASE_URL set)", () => {
+    const seedCatalogue = vi.fn();
+
+    /** Imports the route with DATABASE_URL as given, over a stand-in seed and database. */
+    async function routeWithDatabase(url: string) {
+      vi.stubEnv("DATABASE_URL", url);
+      vi.resetModules();
+      vi.doMock("@/lib/catalogue-seed/seed", () => ({ seedCatalogue }));
+      vi.doMock("@/lib/db/client", () => ({ getDb: () => "the database" }));
+      return import("./route");
+    }
+
+    beforeEach(() => {
+      seedCatalogue.mockReset();
+      seedCatalogue.mockResolvedValue({ ok: true, counts: {}, sampleStaff: {} });
+    });
+
+    afterEach(() => {
+      vi.doUnmock("@/lib/catalogue-seed/seed");
+      vi.doUnmock("@/lib/db/client");
+      vi.unstubAllEnvs();
+      vi.restoreAllMocks();
+      vi.resetModules();
+    });
+
+    it.each([
+      "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
+      "postgresql://postgres:postgres@localhost:54322/postgres",
+    ])("re-seeds a local database (%s), then clears every Catalogue read", async (url) => {
+      const generation = editSampleData();
+      const { POST } = await routeWithDatabase(url);
+
+      expect((await POST(post())).status).toBe(204);
+      expect(seedCatalogue).toHaveBeenCalledOnce();
+      expect(seedCatalogue.mock.calls[0]?.[0]).toBe("the database");
+      expect(getSampleStore().generation).not.toBe(generation);
+      expect(vi.mocked(revalidateTag).mock.calls).toEqual([["catalogue"]]);
+    });
+
+    it("refuses a database that isn't on this machine, even in development, changing nothing", async () => {
+      const generation = editSampleData();
+      const { POST } = await routeWithDatabase(
+        "postgresql://postgres.abc:pw@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres",
+      );
+
+      const response = await POST(post());
+      expect(response.status).toBe(403);
+      expect(await response.text()).toBe("The sample data can only be reset on a local database.");
+      expect(seedCatalogue).not.toHaveBeenCalled();
+      expect(getSampleStore().generation).toBe(generation);
+      expect(revalidateTag).not.toHaveBeenCalled();
+    });
+
+    it("answers 404 in production, even for a local database", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      vi.stubEnv("NODE_ENV", "production");
+      const { POST } = await routeWithDatabase(
+        "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
+      );
+
+      expect((await POST(post())).status).toBe(404);
+      expect(seedCatalogue).not.toHaveBeenCalled();
+    });
+  });
 });

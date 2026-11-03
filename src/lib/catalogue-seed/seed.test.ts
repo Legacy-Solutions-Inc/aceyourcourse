@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { Database } from "@/lib/db/connect";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 
-import { formatSeedCounts, seedCatalogue, seedCounts } from "./seed";
+import { formatSampleStaff, formatSeedCounts, seedCatalogue, seedCounts } from "./seed";
 
 // The parts of `pnpm catalogue:seed` that need no database. Writing, the one
 // transaction and --production's refusal are checked against Postgres in
@@ -17,6 +17,15 @@ const untouchable = new Proxy({} as Database, {
 });
 
 describe("catalogue seed: counts", () => {
+  it("names the sample staff a local load adds, for Sign in as", () => {
+    expect(formatSampleStaff({ staff: 2, invites: 2 })).toBe(
+      '2 sample Staff Users and 2 Invites, for "Sign in as"',
+    );
+    expect(formatSampleStaff({ staff: 1, invites: 1 })).toBe(
+      '1 sample Staff User and 1 Invite, for "Sign in as"',
+    );
+  });
+
   it("counts the seed's Exams, Subjects, Products by state, Reviews and FAQs", () => {
     expect(seedCounts(CATALOGUE_SEED)).toEqual({
       exams: CATALOGUE_SEED.exams.length,

@@ -68,3 +68,9 @@ export class DatabaseUnreachableError extends Error {
     this.code = code;
   }
 }
+
+/** `error` as the seams throw it: a DatabaseUnreachableError when the database didn't answer. */
+export function asDatabaseError(error: unknown): unknown {
+  const code = connectionFailureCode(error);
+  return code ? new DatabaseUnreachableError(code) : error;
+}

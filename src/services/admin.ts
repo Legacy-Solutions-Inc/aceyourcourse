@@ -1,3 +1,5 @@
+import { isDatabaseConfigured } from "@/env.server";
+import { databaseArm } from "@/services/admin.db";
 import * as mockImpl from "@/services/admin.mock";
 import type {
   AnnouncementForm,
@@ -56,8 +58,9 @@ import type { Exam, ExamPageSection } from "@/services/catalogue.types";
 // Admin Service Seam (CONVENTIONS §3). Every Admin read and write goes through
 // here: Admin pages and Server Actions never touch the sample store or, from
 // Stage B, the database. Like src/services/catalogue.ts, this module is a thin
-// SELECTOR. Stage A has the sample arm only; ticket 15 adds the database arm
-// behind the same contract. Reads are always fresh and never cached.
+// SELECTOR: the database arm (admin.db.ts) when DATABASE_URL is set, the
+// sample arm otherwise, behind the same contract. Reads are always fresh and
+// never cached.
 //
 // Every write takes the acting Staff User, its input and, from an editor, the
 // stamp the record had when it opened, and returns an AdminResult: the saved
@@ -444,7 +447,7 @@ export interface AdminService {
   ): Promise<AdminResult<AdminAnnouncement>>;
 }
 
-const impl: AdminService = mockImpl;
+const impl: AdminService = isDatabaseConfigured ? databaseArm : mockImpl;
 
 export const resolveSignIn = impl.resolveSignIn;
 export const recordDeniedSignIn = impl.recordDeniedSignIn;

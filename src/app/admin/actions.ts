@@ -22,10 +22,12 @@ export async function signOut(): Promise<void> {
 /**
  * The header's Reset button: starts the sample data again from the seed and
  * clears every Catalogue cache tag. Any Staff User may use it, with sample
- * data only; any other mode answers 404.
+ * data only; any other mode answers 404. On a database that isn't local it
+ * refuses, as the reset route does.
  */
 export async function resetSampleData(): Promise<void> {
   if (adminMode !== "sample") notFound();
   await requireStaff();
-  restoreSampleData();
+  const restored = await restoreSampleData();
+  if (!restored.ok) throw new Error("The sample data can only be reset on a local database.");
 }

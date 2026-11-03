@@ -38,9 +38,10 @@ Requirements: **Node 22**, **pnpm 10** (both pinned via Volta and
 Every screen reads through a typed **Service Seam** in `src/services/*`. With
 no `DATABASE_URL`, the seams return in-memory seed data, so the Website runs
 with no database. A seam's Drizzle arm is chosen when `DATABASE_URL` is set,
-and the pages don't change. The Catalogue seam has its Drizzle arm: the
-Website reads Postgres. The Admin and its sign-in stay on the sample data
-until their database arms land (see Admin prototype). See [ADR 0003](docs/adr/0003-mock-first-service-seam.md)
+and the pages don't change. The Catalogue and Admin seams have their Drizzle
+arms: the Website reads Postgres, and the Admin reads and writes it. Sign-in
+stays on the sample "Sign in as" list until Google sign-in lands (see Admin
+prototype). See [ADR 0003](docs/adr/0003-mock-first-service-seam.md)
 and [ADR 0006](docs/adr/0006-drizzle-data-layer.md).
 
 ### Local database (Supabase)
@@ -78,16 +79,19 @@ and replace any hosted values (`NEXT_PUBLIC_SUPABASE_URL`, `DATABASE_URL`)
 with the local ones above.
 
 `pnpm db:stop` stops the containers. `pnpm db:reset` rebuilds the local
-database from `supabase/migrations` and loads the Phase 1 seed into it.
+database from `supabase/migrations` and loads the Phase 1 seed into it, with
+the sample Staff for "Sign in as".
 
 **Loading the catalogue.** `pnpm catalogue:seed` checks the seed, then writes
 it in one transaction and prints what it wrote (Exams, Subjects, Products Live
 and Coming Soon, Reviews, FAQs). Photos keep their `/products/…` paths for now.
+A local load also replaces the Admin's data (the staff list, Staff Activity,
+save stamps) with the sample Staff; `--production` never adds Staff.
 
 | Command                            | Loads into                  | When data is there           |
 | ---------------------------------- | --------------------------- | ---------------------------- |
-| `pnpm catalogue:seed --local`      | the local Supabase database | replaces it                  |
-| `pnpm catalogue:seed`              | `DATABASE_URL` (local only) | replaces it                  |
+| `pnpm catalogue:seed --local`      | the local Supabase database | replaces it, with the Staff  |
+| `pnpm catalogue:seed`              | `DATABASE_URL` (local only) | replaces it, with the Staff  |
 | `pnpm catalogue:seed --production` | `DATABASE_URL`              | refuses, and changes nothing |
 
 `--production` is for the one load into the empty hosted database; it never
@@ -105,8 +109,10 @@ checks access, and the browser keys reach nothing.
 **Database tests** (`*.db.test.ts`) run against `TEST_DATABASE_URL`, never
 `DATABASE_URL`. Without it, or with Supabase stopped, they are skipped with
 the reason, so `pnpm test` needs no Docker. They run the Catalogue seam's
-whole behaviour suite on the database, and replace the local catalogue as they
-go, leaving the seed loaded.
+whole behaviour suite on the database, and with `TEST_DATABASE_URL` set,
+`pnpm test:db` also runs every Admin suite (`src/services/admin.*.test.ts`)
+over the Admin's database arm. They replace the local catalogue and staff list
+as they go.
 
 The session plumbing and the OAuth callback (`/auth/callback`) are kept for
 Phase 2's Google sign-in. A minimal `supabase/config.toml` is included; its
@@ -116,10 +122,12 @@ Postgres major version matches the hosted project.
 
 ## Admin prototype
 
-Until the database work (Stage B), the Admin runs on **sample data**: an
-editable, in-memory copy of the Website's seed, held by the dev server. Saves
-in the Admin show on the Website on its next load. There is no database and no
-Google sign-in yet.
+The Admin runs on the **local database** when `DATABASE_URL` is set, and on
+**sample data** otherwise: an editable, in-memory copy of the Website's seed,
+held by the dev server. Either way, saves in the Admin show on the Website on
+its next load. On the database, each save and its Staff Activity are written
+in one transaction. There is no Google sign-in yet: Staff sign in from the
+sample list below, which `pnpm db:reset` puts on the local staff list.
 
 **Run it**
 
@@ -127,12 +135,18 @@ Google sign-in yet.
 pnpm dev                  # then open http://localhost:3000/admin
 ```
 
-Leave `DATABASE_URL` unset to try the Admin: with it set, the Website reads
-the catalogue from Postgres while the Admin still saves to the sample data, so
-saves don't show on the Website until the Admin's database arm (ticket 15).
-Playwright (`pnpm test:e2e`) runs its own server with `DATABASE_URL` unset for
-this reason. When it reuses a `pnpm dev` you started, start that one with
-`DATABASE_URL=` (empty) too.
+Run `pnpm db:reset` first to work on the local database (Docker running), or
+leave `DATABASE_URL` unset for the in-memory sample data. With `DATABASE_URL`
+pointing anywhere else (such as the hosted database), the Admin stays closed
+(404): "Sign in as" asks for no real sign-in, so it never reaches a database
+off this machine.
+
+Playwright (`pnpm test:e2e`) runs on the local database: its server's
+`DATABASE_URL` is the local Supabase database, whatever `.env` says, and a
+setup step resets it through the reset route before any spec. Start Supabase
+first (`pnpm db:start`). `PLAYWRIGHT_DATABASE_URL` points the run at another
+local database. When it reuses a `pnpm dev` you started, that one must use a
+local database too, or the reset step fails with 403.
 
 **Sign in as a sample User.** On the sign-in screen, "Continue with Google"
 opens a development-only **Sign in as** list:
@@ -150,10 +164,15 @@ just invited from Settings.
 
 **Reset.** The header's **Reset** button (beside SAMPLE DATA) starts the
 sample data again from the seed, for every screen and the Website. Tests do
-the same with `POST /api/dev/sample-data/reset`.
+the same with `POST /api/dev/sample-data/reset`. On the database, both re-seed
+it as `pnpm db:reset` does (the catalogue, the sample Staff, no Staff
+Activity), and refuse with 403 unless `DATABASE_URL` points at this machine
+(`localhost` or `127.0.0.1`).
 
-**Restarts.** The sample data lives only in the dev server's memory, so
-stopping `pnpm dev` loses every change: it starts again from the seed.
+**Restarts.** Without a database, the sample data lives only in the dev
+server's memory, so stopping `pnpm dev` loses every change: it starts again
+from the seed. On the database, changes stay until a reset. Uploaded photos
+stay in the dev server's memory either way until photo storage lands.
 
 **Production keeps the Admin closed.** In a production build (`pnpm build`,
 `pnpm start`), every `/admin` page and the development-only routes under

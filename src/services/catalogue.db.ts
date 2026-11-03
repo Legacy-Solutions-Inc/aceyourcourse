@@ -2,7 +2,7 @@ import "server-only";
 
 import { getDb } from "@/lib/db/client";
 import type { Database } from "@/lib/db/connect";
-import { connectionFailureCode, DatabaseUnreachableError } from "@/lib/db/errors";
+import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
 import {
   examPagesFromRows,
@@ -78,8 +78,7 @@ const load: LoadCatalogue = async (parts) => {
   try {
     return await readCatalogue(getDb(), parts);
   } catch (error) {
-    const code = connectionFailureCode(error);
-    throw code ? new DatabaseUnreachableError(code) : error;
+    throw asDatabaseError(error);
   }
 };
 

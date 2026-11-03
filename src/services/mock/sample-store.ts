@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+
 import type {
   DeniedSignIn,
   Invite,
@@ -75,9 +77,23 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
   };
 }
 
-/** The sample data, made from the seed on first use. */
+/** A store standing in for the sample data, while withStandInStore runs. */
+const standIn = new AsyncLocalStorage<SampleStore>();
+
+/** The sample data, made from the seed on first use (or the stand-in store, inside withStandInStore). */
 export function getSampleStore(): SampleStore {
-  return (holder[STORE] ??= createSampleStore(new Date(), CATALOGUE_SEED));
+  return standIn.getStore() ?? (holder[STORE] ??= createSampleStore(new Date(), CATALOGUE_SEED));
+}
+
+/**
+ * Runs `work` with `store` standing in for the sample data: every
+ * getSampleStore() inside it, however deep, gets `store`, and the sample data
+ * itself is left alone. The Admin seam's database arm (admin.db.ts) loads a
+ * store from Postgres and runs the sample arm's areas over it, so both arms
+ * apply the same rules; it then writes back what they changed.
+ */
+export function withStandInStore<T>(store: SampleStore, work: () => Promise<T>): Promise<T> {
+  return standIn.run(store, work);
 }
 
 /**
