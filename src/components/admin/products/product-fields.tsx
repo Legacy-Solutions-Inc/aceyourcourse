@@ -104,6 +104,40 @@ export function TextField({
   );
 }
 
+interface CountedFieldProps {
+  label: string;
+  max: number;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+}
+
+/** A field with its limit, counted as it's saved, trimmed (spec, Phase 2 → Exam pages & promo). */
+export function CountedField({ max, value, ...field }: CountedFieldProps) {
+  const counter = useId();
+  const length = value.trim().length;
+  return (
+    <TextField
+      {...field}
+      value={value}
+      describedBy={counter}
+      aside={
+        <span
+          id={counter}
+          className={cn(
+            "font-mono text-xs font-medium",
+            length > max ? "text-destructive" : "text-ayc-success",
+          )}
+        >
+          {length} / {max}
+          <span className="sr-only"> characters</span>
+        </span>
+      }
+    />
+  );
+}
+
 interface SelectFieldProps {
   label: string;
   value: string;

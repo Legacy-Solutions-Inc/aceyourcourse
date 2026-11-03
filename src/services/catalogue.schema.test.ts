@@ -350,6 +350,17 @@ describe("validateCatalogueSeed", () => {
     ]);
   });
 
+  it.each(["//evil.example", "/\\evil.example", "/products page", "https://"])(
+    "rejects a link a browser would read as another site, or not at all: %s",
+    (href) => {
+      const seed = validSeed();
+      at(seed.settings.announcement.messages, 0).href = href;
+      expect(errorsFor(seed)).toEqual([
+        expect.stringMatching(/^settings\.announcement\.messages\.0\.href: /),
+      ]);
+    },
+  );
+
   it("reports every problem at once", () => {
     const seed = validSeed();
     at(at(seed.exams, 0).subjects, 0).name = "";

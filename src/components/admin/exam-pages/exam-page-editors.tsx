@@ -72,7 +72,7 @@ export function useExamPartForm<Values extends FormValues>(
 }
 
 /** A note in the editor, with a link to where it's edited (mockup 133). */
-function InfoNote({
+export function InfoNote({
   children,
   link,
 }: {

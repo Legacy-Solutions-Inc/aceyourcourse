@@ -48,13 +48,19 @@ export const httpsUrl = z
   .url("must be a URL")
   .refine((value) => value.startsWith("https://"), "must be an https link");
 
+/**
+ * Pure: whether a link is a Website path ("/products") or an https link. A
+ * path starting "//" or "/\" is refused, as is any space: browsers read
+ * those as another site.
+ */
+export function isSiteHref(value: string): boolean {
+  if (/\s/.test(value)) return false;
+  if (value.startsWith("/")) return !/^\/[/\\]/.test(value);
+  return httpsUrl.safeParse(value).success;
+}
+
 /** An internal path ("/products") or an external https link. */
-const href = z
-  .string()
-  .refine(
-    (value) => (value.startsWith("/") && !value.startsWith("//")) || value.startsWith("https://"),
-    "must be a path starting with / or an https link",
-  );
+const href = z.string().refine(isSiteHref, "must be a path starting with / or an https link");
 
 /** Adds an issue at each item whose key was already seen earlier in the list. */
 function flagDuplicates<T>(

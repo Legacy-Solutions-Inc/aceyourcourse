@@ -23,7 +23,7 @@ export interface MoveButtonsProps {
   className?: string;
 }
 
-const BUTTON =
+export const MOVE_BUTTON =
   "flex size-6 cursor-pointer items-center justify-center border-[1.5px] bg-ayc-paper font-mono text-[11px] font-bold hover:bg-ayc-sand disabled:cursor-not-allowed disabled:border-ayc-rule disabled:text-ayc-rule disabled:hover:bg-ayc-paper";
 
 /**
@@ -58,7 +58,7 @@ export function MoveButtons({
         title={disabledReason ?? undefined}
         disabled={locked || first}
         onClick={() => move("up")}
-        className={BUTTON}
+        className={MOVE_BUTTON}
       >
         <span aria-hidden="true">▲</span>
       </button>
@@ -68,7 +68,7 @@ export function MoveButtons({
         title={disabledReason ?? undefined}
         disabled={locked || last}
         onClick={() => move("down")}
-        className={BUTTON}
+        className={MOVE_BUTTON}
       >
         <span aria-hidden="true">▼</span>
       </button>

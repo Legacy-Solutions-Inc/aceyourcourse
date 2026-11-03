@@ -8,17 +8,21 @@ import {
   seoFormValues,
   subjectFormValues,
 } from "@/lib/admin/exam-page-form";
-import { getExamPageForAdmin } from "@/services/admin";
+import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
+import { getAnnouncementForAdmin, getExamPageForAdmin, getPromoForAdmin } from "@/services/admin";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import {
   createShareImageUpload,
+  saveAnnouncement,
   saveBundleOffer,
   saveExamHeader,
   saveExamSeo,
   saveOfficialExamDate,
+  savePromoBanner,
   saveSubjectNames,
   setExamPageSection,
+  setPromoBanner,
 } from "./actions";
 
 // Exam pages & promo's Server Actions, called as a browser would call them:
@@ -181,11 +185,102 @@ describe("Exam pages actions", () => {
   });
 });
 
+describe("Promo actions", () => {
+  it("lets an Editor save the banner, clearing the settings tag, and refuses a stale save", async () => {
+    signInAs(EDITOR.email);
+    const { banner, stamp } = await getPromoForAdmin(EDITOR);
+    const input = { ...promoBannerFormValues(banner), buttonLabel: "Shop now" };
+
+    expect(await savePromoBanner(IDLE, { input, expected: stamp })).toMatchObject({
+      status: "saved",
+      value: { banner: { buttonLabel: "Shop now" } },
+    });
+    expect(revalidateTag).toHaveBeenCalledWith("catalogue:settings");
+    expect(await savePromoBanner(IDLE, { input, expected: stamp })).toMatchObject({
+      status: "refused",
+      error: { kind: "conflict", savedBy: EDITOR.name },
+    });
+  });
+
+  it("refuses an end date before the start date with its field's message", async () => {
+    signInAs(EDITOR.email);
+    const { banner, stamp } = await getPromoForAdmin(EDITOR);
+    const state = await savePromoBanner(IDLE, {
+      input: { ...promoBannerFormValues(banner), startDate: "2026-11-11", endDate: "2026-11-09" },
+      expected: stamp,
+    });
+    expect(state).toMatchObject({
+      status: "refused",
+      error: { fieldErrors: { endDate: ["The end date can’t be before the start date."] } },
+    });
+  });
+
+  it("turns the banner on and off at once, clearing the settings tag", async () => {
+    signInAs("angel@aceyourcourse.ph");
+    expect(await setPromoBanner(IDLE, { input: { visible: true } })).toMatchObject({
+      status: "saved",
+      value: { banner: { visible: true } },
+    });
+    expect(await setPromoBanner(IDLE, { input: { visible: false } })).toMatchObject({
+      status: "saved",
+      value: { banner: { visible: false } },
+    });
+    expect(vi.mocked(revalidateTag).mock.calls).toEqual([
+      ["catalogue:settings"],
+      ["catalogue:settings"],
+    ]);
+  });
+
+  it("saves the announcement's messages under a new id, and refuses a fourth", async () => {
+    signInAs(EDITOR.email);
+    const { announcement, stamp } = await getAnnouncementForAdmin(EDITOR);
+    const { messages } = announcementFormValues(announcement);
+
+    const state = await saveAnnouncement(IDLE, {
+      input: { messages: messages.slice(0, 2) },
+      expected: stamp,
+    });
+    expect(state).toMatchObject({
+      status: "saved",
+      value: { announcement: { id: expect.stringMatching(/^ann-/) } },
+    });
+    expect(revalidateTag).toHaveBeenCalledWith("catalogue:settings");
+
+    const fourth = { text: "Four", href: "/", requiresMemberApp: false };
+    const after = await getAnnouncementForAdmin(EDITOR);
+    expect(
+      await saveAnnouncement(IDLE, {
+        input: { messages: [...messages, fourth] },
+        expected: after.stamp,
+      }),
+    ).toMatchObject({
+      status: "refused",
+      error: { kind: "invalid", formError: "THE BAR NEEDS 1 TO 3 MESSAGES" },
+    });
+  });
+
+  it("refuses a switch of the wrong shape before the seam sees it", async () => {
+    signInAs(EDITOR.email);
+    expect(await setPromoBanner(IDLE, { input: { visible: "off" } })).toMatchObject({
+      status: "refused",
+      error: { kind: "invalid" },
+    });
+    expect(getSampleStore().staffActivity).toEqual([]);
+  });
+});
+
 describe("Exam pages actions: the Staff Guard", () => {
   const calls = [
     () => setExamPageSection(IDLE, { input: { code: "ce", section: "reviews", on: false } }),
     () => saveOfficialExamDate(IDLE, { input: { code: "ce", officialExamDate: "" } }),
     () => createShareImageUpload(IDLE, { input: { contentType: "image/png", size: 10 } }),
+    () => setPromoBanner(IDLE, { input: { visible: false } }),
+    () =>
+      savePromoBanner(IDLE, {
+        input: promoBannerFormValues(null),
+        expected: { savedAt: new Date().toISOString() },
+      }),
+    () => saveAnnouncement(IDLE, { input: { messages: [] } }),
   ];
 
   it.each(calls.map((call, index) => [index, call] as const))(

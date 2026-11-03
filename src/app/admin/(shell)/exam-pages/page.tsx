@@ -3,23 +3,35 @@ import type { Metadata } from "next";
 import { adminScreen } from "@/components/admin/admin-menu";
 import { AdminScreen } from "@/components/admin/admin-screen";
 import { ExamPageColumn, ExamPagesNav } from "@/components/admin/exam-pages/exam-pages-columns";
+import { AnnouncementEditor } from "@/components/admin/exam-pages/announcement-editor";
 import { ExamPagePanel } from "@/components/admin/exam-pages/exam-page-panel";
+import { PromoBannerEditor } from "@/components/admin/exam-pages/promo-banner-editor";
 import { parseExamPagesParams } from "@/lib/admin/exam-pages-view";
 import { requireStaff } from "@/lib/admin/guard";
+import { promoStatus } from "@/lib/admin/promo-status";
 import { seoCheck } from "@/lib/admin/seo-check";
 import { examPageSeo } from "@/lib/catalogue/exam-copy";
 import { manilaDate } from "@/lib/manila-time";
 import { paths } from "@/paths";
-import { getExamPageForAdmin, listExamsForAdmin } from "@/services/admin";
+import {
+  getAnnouncementForAdmin,
+  getExamPageForAdmin,
+  getPromoForAdmin,
+  listExamsForAdmin,
+} from "@/services/admin";
+import type { StaffActor } from "@/services/admin.types";
 
 import {
   createShareImageUpload,
+  saveAnnouncement,
   saveBundleOffer,
   saveExamHeader,
   saveExamSeo,
   saveOfficialExamDate,
+  savePromoBanner,
   saveSubjectNames,
   setExamPageSection,
+  setPromoBanner,
 } from "./actions";
 
 export const metadata: Metadata = { title: adminScreen("exam-pages").title };
@@ -34,7 +46,8 @@ const COLUMNS =
 
 /**
  * Exam pages & promo (BUILD-MAP §3.2): PAGES, the selected Exam page's chips,
- * search check and sections, and the selected part's editor. The page, the
+ * search check and sections, and the selected part's editor; or the Home
+ * promo banner's or the announcement bar's editor. The page, the
  * Exam and the section live in the URL; an unknown Exam shows the first.
  * Everything is read fresh on every request.
  */
@@ -44,20 +57,19 @@ export default async function ExamPagesPage({ searchParams }: ExamPagesPageProps
   const exams = await listExamsForAdmin(actor);
 
   if (page !== "exam") {
+    const editor = page === "promo" ? await promoEditor(actor) : await announcementEditor(actor);
     return (
       <AdminScreen screen="exam-pages">
         <div className={COLUMNS}>
           <ExamPagesNav current={page} examCount={exams.length} />
           <aside
             aria-label="Page editor"
-            className="flex flex-col gap-2 border-[1.5px] bg-ayc-paper p-4.5 xl:col-span-2"
+            className="flex min-w-0 flex-col gap-3.5 border-[1.5px] bg-ayc-paper p-4.5 xl:col-span-2"
           >
             <h2 className="font-mono text-[11px] font-bold tracking-[0.06em] text-ayc-blue">
               {page === "promo" ? "HOME PROMO BANNER" : "ANNOUNCEMENT BAR"}
             </h2>
-            <p className="text-sm text-muted-foreground">
-              This editor isn’t ready yet. Until it is, changes go through the developer.
-            </p>
+            {editor}
           </aside>
         </div>
       </AdminScreen>
@@ -104,4 +116,21 @@ export default async function ExamPagesPage({ searchParams }: ExamPagesPageProps
       </div>
     </AdminScreen>
   );
+}
+
+/** The Home promo banner's editor, with its status as the Website sees it now. */
+async function promoEditor(actor: StaffActor) {
+  const opened = await getPromoForAdmin(actor);
+  return (
+    <PromoBannerEditor
+      opened={opened}
+      status={promoStatus(opened.banner, new Date())}
+      actions={{ save: savePromoBanner, setVisible: setPromoBanner }}
+    />
+  );
+}
+
+async function announcementEditor(actor: StaffActor) {
+  const opened = await getAnnouncementForAdmin(actor);
+  return <AnnouncementEditor opened={opened} action={saveAnnouncement} />;
 }

@@ -189,16 +189,66 @@ describe("Exam pages & promo", () => {
     ).toHaveTextContent("CHECK");
   });
 
-  it.each(["promo", "announcement"])(
-    "shows ?page=%s with an empty editor for now",
-    async (page) => {
-      await renderPage({ page });
-      expect(within(pages()).getByRole("link", { current: "page" })).not.toHaveTextContent(
-        "Exam pages",
-      );
-      expect(screen.getByRole("complementary", { name: "Page editor" })).toHaveTextContent(
-        "This editor isn’t ready yet.",
-      );
-    },
-  );
+  it("shows ?page=promo: the Home promo banner's editor with its status, for an Editor", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-10T04:00:00Z"));
+    try {
+      getSampleStore().catalogue.settings.promoBanner = {
+        visible: true,
+        text: "11.11 · Any 2 reviewers, 4% off on Shopee",
+        buttonLabel: "Shop the sale",
+        href: "https://shopee.ph/aceyourcourse",
+        startDate: "2026-11-09",
+        endDate: "2026-11-11",
+      };
+      await renderPage({ page: "promo" });
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(within(pages()).getByRole("link", { current: "page" })).toHaveTextContent(
+      "Home promo banner",
+    );
+    const editor = screen.getByRole("complementary", { name: "Page editor" });
+    expect(within(editor).getByRole("heading", { name: "HOME PROMO BANNER" })).toBeInTheDocument();
+    expect(within(editor).getByText("ON · SHOWS 9–11 NOV")).toBeInTheDocument();
+    expect(within(editor).getByLabelText("BANNER TEXT")).toHaveValue(
+      "11.11 · Any 2 reviewers, 4% off on Shopee",
+    );
+    expect(within(editor).getByRole("button", { name: "Turn off banner now" })).toBeInTheDocument();
+  });
+
+  it("says OFF for the seed's banner, which is turned off", async () => {
+    await renderPage({ page: "promo" });
+    expect(screen.getByRole("complementary", { name: "Page editor" })).toHaveTextContent("OFF");
+    expect(screen.getByRole("switch", { name: "Show banner" })).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
+    expect(screen.queryByRole("button", { name: "Turn off banner now" })).not.toBeInTheDocument();
+  });
+
+  it("shows ?page=announcement: the bar's messages in order", async () => {
+    await renderPage({ page: "announcement" });
+
+    expect(within(pages()).getByRole("link", { current: "page" })).toHaveTextContent(
+      "Announcement bar",
+    );
+    const editor = screen.getByRole("complementary", { name: "Page editor" });
+    expect(within(editor).getByRole("heading", { name: "ANNOUNCEMENT BAR" })).toBeInTheDocument();
+    const texts = within(editor)
+      .getAllByRole("group")
+      .map((group) => within(group).getByLabelText("TEXT"));
+    expect(texts).toHaveLength(3);
+    [
+      "Physical copies on Shopee, Lazada & TikTok Shop",
+      "Digital reviewers in the app · no auto-renew",
+      "Ships from Iloilo City · SPayLater 0% on Shopee",
+    ].forEach((text, index) => expect(texts[index]).toHaveValue(text));
+  });
+
+  it("sends a signed-out visitor to sign in from the promo page", async () => {
+    jar.clear();
+    await expect(renderPage({ page: "promo" })).rejects.toThrow(/^NEXT_REDIRECT \/admin\/sign-in/);
+  });
 });

@@ -11,6 +11,7 @@ import {
   FAQ_ANSWER_MAX,
   FAQ_GROUPS,
   httpsUrl,
+  isSiteHref,
   PRODUCT_FORMATS,
 } from "@/services/catalogue.schema";
 import type { Marketplace, Review } from "@/services/catalogue.types";
@@ -918,3 +919,122 @@ export const officialExamDateFormSchema = officialExamDateFormFields
 export const saveOfficialExamDateInputSchema = officialExamDateFormFields.extend({
   code: examCode,
 });
+
+// ── Home promo banner and announcement bar ──────────────────────────────────
+// Exam pages & promo's two strips (spec, Phase 2 → Exam pages & promo; story
+// 76): the Home promo banner's text, button, link and dates, with its switch
+// as a single toggle, and the announcement bar's 1–3 messages. As with Exam
+// pages, the Server Actions check only each form's shape and the seam parses
+// it with every rule.
+
+export const PROMO_TEXT_MAX = 80;
+export const PROMO_BUTTON_LABEL_MAX = 24;
+export const ANNOUNCEMENT_TEXT_MAX = 70;
+export const ANNOUNCEMENT_MESSAGES_MAX = 3;
+
+const LINK = "ENTER AN HTTPS LINK OR A PATH STARTING WITH /";
+
+/** Adds the link's message when it's blank or neither an https link nor a path. */
+function checkStripLink(ctx: z.RefinementCtx, path: (string | number)[], link: string) {
+  const issue = (message: string) => ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
+  if (blank(link)) issue("ADD THE LINK");
+  else if (!isSiteHref(link.trim())) issue(LINK);
+}
+
+const promoBannerFormFields = z.object({
+  // Longer than the limits, so an over-long one is told the limit by the rules below.
+  text: formText(1000),
+  buttonLabel: formText(1000),
+  href: formText(2000),
+  /** YYYY-MM-DD, as a date input gives it. */
+  startDate: formText(20),
+  endDate: formText(20),
+});
+
+/** The Home promo banner editor's values. The switch saves on its own. */
+export type PromoBannerForm = z.infer<typeof promoBannerFormFields>;
+
+const PROMO_FIELDS: Record<"text" | "buttonLabel", RequiredText> = {
+  text: { max: PROMO_TEXT_MAX, blank: "ADD THE BANNER TEXT" },
+  buttonLabel: { max: PROMO_BUTTON_LABEL_MAX, blank: "ADD THE BUTTON LABEL" },
+};
+
+/** Adds the date's message when it's blank or not on the calendar; true when it's a real date. */
+function checkDate(ctx: z.RefinementCtx, field: string, date: string, missing: string): boolean {
+  const issue = (message: string) =>
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message });
+  if (blank(date)) issue(missing);
+  else if (!isCalendarDate(date.trim())) issue("ENTER A REAL DATE");
+  else return true;
+  return false;
+}
+
+/** The Home promo banner editor's form, checked and trimmed. */
+export const promoBannerFormSchema = promoBannerFormFields
+  .superRefine((form, ctx) => {
+    for (const field of ["text", "buttonLabel"] as const) {
+      checkRequiredText(ctx, [field], form[field], PROMO_FIELDS[field]);
+    }
+    checkStripLink(ctx, ["href"], form.href);
+    const starts = checkDate(ctx, "startDate", form.startDate, "ADD THE START DATE");
+    const ends = checkDate(ctx, "endDate", form.endDate, "ADD THE END DATE");
+    if (starts && ends && form.endDate.trim() < form.startDate.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["endDate"],
+        message: "The end date can’t be before the start date.",
+      });
+    }
+  })
+  .transform((form) => ({
+    text: form.text.trim(),
+    buttonLabel: form.buttonLabel.trim(),
+    href: form.href.trim(),
+    startDate: form.startDate.trim(),
+    endDate: form.endDate.trim(),
+  }));
+
+/** "Save banner": its fields, their shape checked. */
+export const savePromoBannerInputSchema = promoBannerFormFields;
+
+/** "Show banner" and "Turn off banner now": a single toggle. */
+export const promoBannerVisibleSchema = z.object({ visible: flag });
+
+const announcementFormFields = z.object({
+  messages: z
+    .array(z.object({ text: formText(1000), href: formText(2000), requiresMemberApp: flag }))
+    // Room past the limit, so a fourth message is told the rule below.
+    .max(10),
+});
+
+/** The announcement bar editor's values: its messages, in the bar's order. */
+export type AnnouncementForm = z.infer<typeof announcementFormFields>;
+
+const MESSAGE_TEXT: RequiredText = { max: ANNOUNCEMENT_TEXT_MAX, blank: "ADD THE MESSAGE" };
+
+/** The announcement bar editor's form, checked and trimmed. */
+export const announcementFormSchema = announcementFormFields
+  .superRefine((form, ctx) => {
+    const count = form.messages.length;
+    if (count < 1 || count > ANNOUNCEMENT_MESSAGES_MAX) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [],
+        message: `THE BAR NEEDS 1 TO ${ANNOUNCEMENT_MESSAGES_MAX} MESSAGES`,
+      });
+    }
+    form.messages.forEach((message, index) => {
+      checkRequiredText(ctx, ["messages", index, "text"], message.text, MESSAGE_TEXT);
+      checkStripLink(ctx, ["messages", index, "href"], message.href);
+    });
+  })
+  .transform((form) => ({
+    messages: form.messages.map(({ text, href, requiresMemberApp }) => ({
+      text: text.trim(),
+      href: href.trim(),
+      requiresMemberApp,
+    })),
+  }));
+
+/** "Save announcement": its messages, their shape checked. */
+export const saveAnnouncementInputSchema = announcementFormFields;

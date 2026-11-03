@@ -3,18 +3,24 @@
 import { adminAction } from "@/lib/admin/action";
 import {
   setExamSection,
+  setPromoBannerVisible,
+  updateAnnouncement,
   updateBundleOffer,
   updateExamHeader,
   updateExamSeo,
   updateOfficialExamDate,
+  updatePromoBanner,
   updateSubjectNames,
 } from "@/services/admin";
 import {
   examSectionInputSchema,
+  promoBannerVisibleSchema,
+  saveAnnouncementInputSchema,
   saveBundleOfferInputSchema,
   saveExamHeaderInputSchema,
   saveExamSeoInputSchema,
   saveOfficialExamDateInputSchema,
+  savePromoBannerInputSchema,
   saveSubjectNamesInputSchema,
 } from "@/services/admin.schema";
 import { createUpload } from "@/services/uploads";
@@ -22,8 +28,10 @@ import { uploadRequestSchema } from "@/services/uploads.types";
 
 // Exam pages & promo's Server Actions, for any Staff User. Each one checks the
 // input's shape; the seam checks every rule, so the form is told each field's
-// message. Each part of an Exam page saves on its own, with the conflict check
-// against the stamp its editor opened with; the section toggles always save.
+// message. Each part of an Exam page, the Home promo banner and the
+// announcement bar saves on its own, with the conflict check against the stamp
+// its editor opened with; the section toggles and the banner's switch always
+// save.
 
 /** A section toggle: Subjects covered, Bundle offer or Reviews, shown or hidden. */
 export const setExamPageSection = adminAction(
@@ -68,4 +76,22 @@ export const saveOfficialExamDate = adminAction(
 export const createShareImageUpload = adminAction(
   { role: "staff", schema: uploadRequestSchema.omit({ purpose: true }) },
   async (actor, request) => createUpload(actor, { purpose: "share-image", ...request }),
+);
+
+/** The Home promo banner's Save: its text, button label, link and dates. */
+export const savePromoBanner = adminAction(
+  { role: "staff", schema: savePromoBannerInputSchema },
+  async (actor, form, expected) => updatePromoBanner(actor, form, expected),
+);
+
+/** "Show banner", and "Turn off banner now" once it's confirmed. */
+export const setPromoBanner = adminAction(
+  { role: "staff", schema: promoBannerVisibleSchema },
+  async (actor, { visible }) => setPromoBannerVisible(actor, visible),
+);
+
+/** The announcement bar's Save: its 1–3 messages, in order. */
+export const saveAnnouncement = adminAction(
+  { role: "staff", schema: saveAnnouncementInputSchema },
+  async (actor, form, expected) => updateAnnouncement(actor, form, expected),
 );

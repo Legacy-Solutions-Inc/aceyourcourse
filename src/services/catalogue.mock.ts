@@ -49,7 +49,7 @@ const catalogue = () => getSampleStore().catalogue;
 const copy = <T>(value: T): T => structuredClone(value);
 
 /** The Member App switch (MEMBER_APP_LIVE). */
-const memberAppLive = () => serverEnv.MEMBER_APP_LIVE === "true";
+export const memberAppLive = () => serverEnv.MEMBER_APP_LIVE === "true";
 
 // ── Ordering ────────────────────────────────────────────────────────────────
 

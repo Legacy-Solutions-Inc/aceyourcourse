@@ -1,5 +1,6 @@
 import * as mockImpl from "@/services/admin.mock";
 import type {
+  AnnouncementForm,
   BundleOfferForm,
   ChangeStaffRoleInput,
   ExamHeaderForm,
@@ -12,18 +13,21 @@ import type {
   OfficialExamDateForm,
   ProductFlags,
   ProductForm,
+  PromoBannerForm,
   ReviewForm,
   ReviewMove,
   SubjectNamesForm,
   WebsiteSettingsUpdate,
 } from "@/services/admin.schema";
 import type {
+  AdminAnnouncement,
   AdminExamPage,
   AdminFaq,
   AdminFaqList,
   AdminProduct,
   AdminProductList,
   AdminProductRow,
+  AdminPromoBanner,
   AdminResult,
   AdminReview,
   AdminReviewList,
@@ -390,6 +394,46 @@ export interface AdminService {
     input: OfficialExamDateForm,
     expected?: { savedAt: string },
   ): Promise<AdminResult<AdminExamPage>>;
+
+  // The Home promo banner and the announcement bar (any Staff User; spec,
+  // Phase 2 → Exam pages & promo). Both are part of the Website's settings,
+  // so every write clears the settings tag and appends one Staff Activity
+  // record. Links are https links or Website paths.
+
+  /** The banner as its editor opens it: its fields and switch, or null while there's none. */
+  getPromoForAdmin(actor: StaffActor): Promise<AdminPromoBanner>;
+  /**
+   * Saves the banner's text (at most 80 characters), button label (at most
+   * 24), link and dates. The end date can't be before the start date. Its
+   * switch stays as it is; a banner the Website didn't have starts off.
+   */
+  updatePromoBanner(
+    actor: StaffActor,
+    input: PromoBannerForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminPromoBanner>>;
+  /**
+   * "Show banner", and "Turn off banner now": a single toggle, so it always
+   * saves, and never makes the open editor conflict. Home shows the banner
+   * only within its dates (isPromoActive). Refused while there's no banner.
+   */
+  setPromoBannerVisible(
+    actor: StaffActor,
+    visible: boolean,
+  ): Promise<AdminResult<AdminPromoBanner>>;
+  /** The announcement bar as its editor opens it, with whether the Member App is live. */
+  getAnnouncementForAdmin(actor: StaffActor): Promise<AdminAnnouncement>;
+  /**
+   * Saves the bar's 1–3 messages, in order, each with its text (at most 70
+   * characters), link and "only while the Member App is live". Changed
+   * messages get a new announcement id, which shows the bar again to Visitors
+   * who dismissed it; a save that changes nothing keeps the id.
+   */
+  updateAnnouncement(
+    actor: StaffActor,
+    input: AnnouncementForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminAnnouncement>>;
 }
 
 const impl: AdminService = mockImpl;
@@ -436,3 +480,8 @@ export const setExamSection = impl.setExamSection;
 export const updateBundleOffer = impl.updateBundleOffer;
 export const updateExamSeo = impl.updateExamSeo;
 export const updateOfficialExamDate = impl.updateOfficialExamDate;
+export const getPromoForAdmin = impl.getPromoForAdmin;
+export const updatePromoBanner = impl.updatePromoBanner;
+export const setPromoBannerVisible = impl.setPromoBannerVisible;
+export const getAnnouncementForAdmin = impl.getAnnouncementForAdmin;
+export const updateAnnouncement = impl.updateAnnouncement;

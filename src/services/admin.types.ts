@@ -11,6 +11,7 @@ import type {
   ProductFormat,
   ProductPhoto,
   ProductState,
+  PromoBanner,
   Review,
   ShopStats,
   SocialLinks,
@@ -367,4 +368,21 @@ export interface AdminExamPage {
   stamps: Record<ExamPagePart, RecordStamp>;
   /** The Exam's Products, in the catalogue's order, for the bundle offer. */
   products: BundleProductOption[];
+}
+
+// ── Home promo banner and announcement bar ──────────────────────────────────
+
+/** The Home promo banner as its editor opens it, with the stamp its Save checks. */
+export interface AdminPromoBanner {
+  /** null while the Website has none: the first Save makes it, turned off. */
+  banner: PromoBanner | null;
+  stamp: RecordStamp;
+}
+
+/** The announcement bar as its editor opens it, with the stamp its Save checks. */
+export interface AdminAnnouncement {
+  announcement: WebsiteSettings["announcement"];
+  /** The Member App switch: while it's off, messages that need it don't show. */
+  memberAppLive: boolean;
+  stamp: RecordStamp;
 }

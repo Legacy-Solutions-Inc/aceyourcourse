@@ -306,6 +306,40 @@ test("no serious or critical accessibility violations on Exam pages: each editor
   await expectNoBlockingViolations(page);
 });
 
+test("no serious or critical accessibility violations on the promo banner, its messages and the turn-off dialog, and the announcement bar", async ({
+  page,
+}) => {
+  await signInAs(page, "editor", `${paths.admin.examPages}?page=promo`);
+  const editor = page.getByRole("complementary", { name: "Page editor" });
+  const banner = editor.getByRole("form", { name: "Home promo banner" });
+  await expect(banner).toBeVisible({ timeout: 15_000 });
+  await banner.getByLabel("BANNER TEXT").fill("a".repeat(81));
+  await banner.getByLabel("ENDS ON").fill("2026-11-01");
+  await banner.getByRole("button", { name: "Save" }).click();
+  await expect(banner.getByText("KEEP IT TO 80 CHARACTERS")).toBeVisible({ timeout: 15_000 });
+  await expectNoBlockingViolations(page);
+
+  // A banner on Home now, so "Turn off banner now" asks first.
+  const today = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  await banner.getByLabel("BANNER TEXT").fill("Payday sale");
+  await banner.getByLabel("STARTS ON").fill(today);
+  await banner.getByLabel("ENDS ON").fill(today);
+  await banner.getByRole("button", { name: "Save" }).click();
+  await expect(editor.getByRole("status")).toHaveText("✓ SAVED · LIVE ON HOME", {
+    timeout: 15_000,
+  });
+  await editor.getByRole("switch", { name: "Show banner" }).click();
+  await editor.getByRole("button", { name: "Turn off banner now" }).click({ timeout: 15_000 });
+  await settled(page.getByRole("dialog"));
+  await expectNoBlockingViolations(page);
+
+  await page.goto(`${paths.admin.examPages}?page=announcement`);
+  await editor.getByRole("group", { name: "MESSAGE 1" }).getByLabel("TEXT").fill("");
+  await editor.getByRole("button", { name: "Save" }).click();
+  await expect(editor.getByText("ADD THE MESSAGE")).toBeVisible({ timeout: 15_000 });
+  await expectNoBlockingViolations(page);
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
