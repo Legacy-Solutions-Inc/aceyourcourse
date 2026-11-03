@@ -295,6 +295,22 @@ describe("Products actions: createPhotoUpload", () => {
     ]);
   });
 
+  it("files a photo for an existing Product under it, and refuses an unknown Product", async () => {
+    signInAs("content@aceyourcourse.ph");
+
+    expect(
+      await createPhotoUpload(IDLE, {
+        input: { productId: "prd-001", contentType: "image/png", size: 2048 },
+      }),
+    ).toMatchObject({ status: "saved" });
+    expect(
+      await createPhotoUpload(IDLE, {
+        input: { productId: "prd-nope", contentType: "image/png", size: 2048 },
+      }),
+    ).toEqual({ status: "refused", error: { kind: "not-found" } });
+    expect(uploads()).toHaveLength(1);
+  });
+
   it("refuses a GIF or a file over 10 MB, making no upload", async () => {
     signInAs("content@aceyourcourse.ph");
 

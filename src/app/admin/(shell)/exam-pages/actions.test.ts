@@ -166,7 +166,7 @@ describe("Exam pages actions", () => {
   it("gives an Editor a one-time URL for a share image, and refuses a GIF", async () => {
     signInAs(EDITOR.email);
     const state = await createShareImageUpload(IDLE, {
-      input: { contentType: "image/png", size: 2048 },
+      input: { code: "CE", contentType: "image/png", size: 2048 },
     });
     expect(state).toMatchObject({
       status: "saved",
@@ -177,11 +177,24 @@ describe("Exam pages actions", () => {
     ]);
 
     expect(
-      await createShareImageUpload(IDLE, { input: { contentType: "image/gif", size: 2048 } }),
+      await createShareImageUpload(IDLE, {
+        input: { code: "CE", contentType: "image/gif", size: 2048 },
+      }),
     ).toMatchObject({
       status: "refused",
       error: { fieldErrors: { contentType: ["USE A JPEG, PNG OR WEBP IMAGE"] } },
     });
+  });
+
+  it("refuses a share image for an Exam that isn't there, making no upload", async () => {
+    signInAs(EDITOR.email);
+
+    expect(
+      await createShareImageUpload(IDLE, {
+        input: { code: "XYZ", contentType: "image/png", size: 2048 },
+      }),
+    ).toEqual({ status: "refused", error: { kind: "not-found" } });
+    expect(getSampleStore().uploads).toEqual({});
   });
 });
 

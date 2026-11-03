@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+import { storageImagePatterns } from "./src/lib/catalogue-bucket";
+
 // Static security response headers applied to every route. CSP is intentionally
 // NOT here — it needs a per-request nonce and is set in src/middleware.ts.
 const securityHeaders = [
@@ -31,6 +33,12 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // Don't advertise the framework via the X-Powered-By header.
   poweredByHeader: false,
+  // Product photos and share images in the Storage bucket (ticket 17), on the
+  // Supabase NEXT_PUBLIC_SUPABASE_URL names: the hosted project in production,
+  // local Supabase (http://127.0.0.1:54321) in development.
+  images: {
+    remotePatterns: storageImagePatterns(process.env.NEXT_PUBLIC_SUPABASE_URL),
+  },
   // PostHog same-origin reverse proxy. `/relay` is ONE base path that MUST stay
   // identical in THREE places: (1) these rewrites, (2) the client `api_host` in
   // src/instrumentation-client.ts, (3) the middleware matcher exclusion in

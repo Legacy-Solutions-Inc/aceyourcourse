@@ -247,7 +247,9 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
       officialExamDate: SAVES.officialExamDate,
     })),
     createShareImageUpload: staff(() =>
-      examPages.createShareImageUpload(IDLE, { input: { contentType: "image/png", size: 2048 } }),
+      examPages.createShareImageUpload(IDLE, {
+        input: { code: "CE", contentType: "image/png", size: 2048 },
+      }),
     ),
     savePromoBanner: editorSave("staff", examPages.savePromoBanner, () => ({
       ...promoBannerFormValues(getSampleStore().catalogue.settings.promoBanner),

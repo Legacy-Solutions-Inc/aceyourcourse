@@ -62,10 +62,14 @@ export async function createUpload(
   const parsed = uploadRequestSchema.safeParse(request);
   if (!parsed.success) return { ok: false, error: invalidInput(parsed.error) };
 
+  // What the file is for doesn't matter here: every sample upload is filed by its id.
+  const { purpose, contentType, size } = parsed.data;
   const store = getSampleStore();
   const upload: SampleUpload = {
     id: crypto.randomUUID(),
-    ...parsed.data,
+    purpose,
+    contentType,
+    size,
     token: newToken(),
     bytes: null,
   };

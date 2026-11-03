@@ -33,6 +33,15 @@ describe("buildCsp", () => {
     expect(csp).not.toContain("upgrade-insecure-requests");
   });
 
+  it("img-src: https: everywhere, which covers hosted Storage; local Storage in dev only", () => {
+    const imgSrc = (isDev: boolean) =>
+      buildCsp(NONCE, { isDev })
+        .split("; ")
+        .find((directive) => directive.startsWith("img-src "));
+    expect(imgSrc(false)).toBe("img-src 'self' data: blob: https:");
+    expect(imgSrc(true)).toBe("img-src 'self' data: blob: https: http://127.0.0.1:54321");
+  });
+
   it("derives supabase https + wss origins into connect-src", () => {
     const csp = buildCsp(NONCE, { isDev: false, supabaseUrl: "https://abc.supabase.co" });
     expect(csp).toContain("https://abc.supabase.co");

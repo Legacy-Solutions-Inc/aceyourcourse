@@ -263,7 +263,7 @@ describe("Search & AI visibility", () => {
     ).toBeInTheDocument();
     await waitFor(() => expect(field).toHaveAccessibleDescription("square.png"));
     expect(createShareImageUpload).toHaveBeenCalledWith(expect.anything(), {
-      input: { contentType: "image/png", size: 3 },
+      input: { code: "CE", contentType: "image/png", size: 3 },
     });
     expect(network.sent).toEqual([{ url: "/api/dev/uploads/1?token=t", name: "square.png" }]);
 

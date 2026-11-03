@@ -10,7 +10,7 @@ import type {
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { sampleStaff } from "@/services/mock/staff";
-import type { UploadContentType, UploadRequest } from "@/services/uploads.types";
+import type { UploadContentType, UploadLookup, UploadRequest } from "@/services/uploads.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The Admin's Stage A sample data (CONVENTIONS §3): one editable in-memory copy,
@@ -55,6 +55,11 @@ export interface SampleStore {
   staffActivity: StaffActivity[];
   /** The upload seam's files, by upload id. */
   uploads: Record<string, SampleUpload>;
+  /**
+   * What a save finds at an upload's path. Unset, it's the sample uploads'
+   * (uploads.mock.ts); the Admin's database arm sets Storage's (ticket 17).
+   */
+  uploadAt?: UploadLookup;
 }
 
 const STORE = Symbol.for("aceyourcourse.admin.sample-store");

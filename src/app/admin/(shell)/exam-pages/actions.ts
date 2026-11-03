@@ -2,6 +2,7 @@
 
 import { adminAction } from "@/lib/admin/action";
 import {
+  getExamPageForAdmin,
   setExamSection,
   setPromoBannerVisible,
   updateAnnouncement,
@@ -24,7 +25,7 @@ import {
   saveSubjectNamesInputSchema,
 } from "@/services/admin.schema";
 import { createUpload } from "@/services/uploads";
-import { uploadRequestSchema } from "@/services/uploads.types";
+import { uploadFileSchema, uploadOwnerSchema } from "@/services/uploads.types";
 
 // Exam pages & promo's Server Actions, for any Staff User. Each one checks the
 // input's shape; the seam checks every rule, so the form is told each field's
@@ -70,12 +71,17 @@ export const saveOfficialExamDate = adminAction(
 );
 
 /**
- * A one-time upload URL for a share image: a JPEG, PNG or WebP of up to
- * 10 MB. The browser sends the file there; Save records its path.
+ * A one-time upload URL for an Exam's share image: a JPEG, PNG or WebP of up
+ * to 10 MB. The browser sends the file there; Save records its path. Storage
+ * files it under the Exam; refused when there's no such Exam.
  */
 export const createShareImageUpload = adminAction(
-  { role: "staff", schema: uploadRequestSchema.omit({ purpose: true }) },
-  async (actor, request) => createUpload(actor, { purpose: "share-image", ...request }),
+  { role: "staff", schema: uploadFileSchema.extend({ code: uploadOwnerSchema }) },
+  async (actor, { code, ...file }) => {
+    const page = await getExamPageForAdmin(actor, code);
+    if (!page) return { ok: false as const, error: { kind: "not-found" as const } };
+    return createUpload(actor, { purpose: "share-image", owner: page.exam.code, ...file });
+  },
 );
 
 /** The Home promo banner's Save: its text, button label, link and dates. */

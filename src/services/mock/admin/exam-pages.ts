@@ -24,8 +24,8 @@ import { type CatalogueSeed, examPageDefaults } from "@/services/catalogue.schem
 import type { ExamPage, ExamPageSection } from "@/services/catalogue.types";
 import { CATALOGUE_TAGS } from "@/services/catalogue.tags";
 import { getSampleStore, stampOf } from "@/services/mock/sample-store";
-import { sampleUploadAt } from "@/services/uploads.mock";
 
+import { uploadAt } from "./photos";
 import { writeCatalogue } from "./write";
 
 // The sample arm of the Admin seam's Exam pages area: each Exam page's
@@ -232,7 +232,7 @@ function shareImageAsSaved(
   current: string | null,
 ): { ok: true; src: string | null } | { ok: false; error: AdminError } {
   if (ref === null || ref === current) return { ok: true, src: ref };
-  const upload = sampleUploadAt(ref, "share-image");
+  const upload = uploadAt(ref, "share-image");
   if (upload === null) return { ok: false, error: invalid("shareImage", SHARE_IMAGE_NOT_UPLOADED) };
   if (upload === "waiting") {
     return { ok: false, error: { kind: "invalid", fieldErrors: {}, formError: WAIT_FOR_UPLOADS } };

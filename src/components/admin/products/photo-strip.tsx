@@ -53,6 +53,8 @@ interface PhotoStripProps {
   /** Changes the form's photos from their current value; uploads finish after other edits. */
   onChange: (next: (photos: string[]) => string[]) => void;
   createUpload: AdminAction<UploadTicket>;
+  /** The Product's id, for Storage to file its uploads under; a new Product has none yet. */
+  productId?: string;
   /** The last save's message about the photos. */
   error?: string;
 }
@@ -71,7 +73,7 @@ function refusalOf(answer: AdminActionState<UploadTicket>): string | null {
 /** The strip's caption and its messages share these. */
 const NOTE = "font-mono text-[11px] font-medium";
 
-export function PhotoStrip({ photos, onChange, createUpload, error }: PhotoStripProps) {
+export function PhotoStrip({ photos, onChange, createUpload, productId, error }: PhotoStripProps) {
   const [uploads, setUploads] = useState<Record<string, PhotoUpload>>({});
   const [refusals, setRefusals] = useState<string[]>([]);
   const [dragged, setDragged] = useState<number | null>(null);
@@ -115,7 +117,7 @@ export function PhotoStrip({ photos, onChange, createUpload, error }: PhotoStrip
     if (!file) return;
     patch(key, { started: true, progress: 0 });
     const ticket = await callAdminAction(createUpload, {
-      input: { contentType: file.type, size: file.size },
+      input: { ...(productId ? { productId } : {}), contentType: file.type, size: file.size },
     });
     let sent = ticket.status === "saved";
     if (ticket.status === "saved") {

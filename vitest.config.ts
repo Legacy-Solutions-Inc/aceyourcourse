@@ -5,6 +5,8 @@ import react from "@vitejs/plugin-react";
 import { parse } from "dotenv";
 import { configDefaults, defineConfig } from "vitest/config";
 
+import { LOCAL_SUPABASE_URL } from "./src/lib/db/local-database";
+
 const DATABASE_TESTS = "src/**/*.db.test.ts";
 /** The Admin seam's suites, written over ADMIN_ARMS (test/admin-arms.ts). */
 const ADMIN_SUITES = "src/services/admin.*.test.ts";
@@ -16,21 +18,38 @@ const NOT_ADMIN_SUITES = [
 ];
 
 /**
- * The database tests' settings (TEST_DATABASE_*) from `.env`, so `pnpm test:db`
- * finds the local database. Only these: nothing else in `.env` (DATABASE_URL
- * above all) reaches a test run. The shell's values win.
+ * The database tests' settings (TEST_DATABASE_*, and TEST_SUPABASE_* for
+ * Storage) from `.env`, so `pnpm test:db` finds local Supabase. Only these:
+ * nothing else in `.env` (DATABASE_URL and SUPABASE_SECRET_KEY above all)
+ * reaches a test run. The shell's values win.
  */
 function testDatabaseEnv(): Record<string, string> {
   const file = existsSync(".env") ? parse(readFileSync(".env")) : {};
   return Object.fromEntries(
     Object.entries(file).filter(
-      ([name]) => name.startsWith("TEST_DATABASE_") && process.env[name] === undefined,
+      ([name]) =>
+        (name.startsWith("TEST_DATABASE_") || name.startsWith("TEST_SUPABASE_")) &&
+        process.env[name] === undefined,
     ),
   );
 }
 
 const testDatabase = testDatabaseEnv();
 const testDatabaseUrl = process.env.TEST_DATABASE_URL ?? testDatabase.TEST_DATABASE_URL;
+const testSecretKey = process.env.TEST_SUPABASE_SECRET_KEY ?? testDatabase.TEST_SUPABASE_SECRET_KEY;
+
+/**
+ * With TEST_SUPABASE_SECRET_KEY, the seams in the database project get local
+ * Supabase's Storage, as a server with the database has (ticket 17): the
+ * Admin suites then upload through Storage, and saves clean it up.
+ */
+const testStorage: Record<string, string> = testSecretKey
+  ? {
+      NEXT_PUBLIC_SUPABASE_URL:
+        process.env.TEST_SUPABASE_URL ?? testDatabase.TEST_SUPABASE_URL ?? LOCAL_SUPABASE_URL,
+      SUPABASE_SECRET_KEY: testSecretKey,
+    }
+  : {};
 
 /**
  * With a test database, the database project runs the Admin suites too, over
@@ -42,7 +61,12 @@ const adminSuitesOnDatabase = testDatabaseUrl
   ? {
       include: [DATABASE_TESTS, ADMIN_SUITES],
       exclude: [...configDefaults.exclude, ...NOT_ADMIN_SUITES],
-      env: { ...testDatabase, DATABASE_URL: testDatabaseUrl, ADMIN_TEST_ARM: "database" },
+      env: {
+        ...testDatabase,
+        ...testStorage,
+        DATABASE_URL: testDatabaseUrl,
+        ADMIN_TEST_ARM: "database",
+      },
     }
   : { include: [DATABASE_TESTS], env: testDatabase };
 

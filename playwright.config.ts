@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-import { LOCAL_DATABASE_URL } from "./src/lib/db/local-database";
+import { LOCAL_DATABASE_URL, LOCAL_SUPABASE_URL } from "./src/lib/db/local-database";
 
 const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 3000);
 const baseURL = `http://localhost:${PORT}`;
@@ -47,8 +47,10 @@ export default defineConfig({
       // The site URL follows the port, so canonical URLs, the sitemap and the
       // JSON-LD point at the server under test on any PLAYWRIGHT_PORT.
       NEXT_PUBLIC_SITE_URL: `${baseURL}/`,
-      NEXT_PUBLIC_SUPABASE_URL:
-        process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co",
+      // Local Supabase, beside the local database: uploads go to its Storage,
+      // and next/image loads the bucket's photos from it (ticket 17). The
+      // server reads SUPABASE_SECRET_KEY from .env, never this file.
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? LOCAL_SUPABASE_URL,
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
         process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "placeholder",
       // The local database, whatever .env says (Next never overrides a

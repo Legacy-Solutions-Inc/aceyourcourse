@@ -160,6 +160,7 @@ export function SeoEditor({ opened, action, createUpload }: SeoEditorProps) {
         value={values.shareImage}
         onChange={(next) => changeWith("shareImage", (current) => next(String(current ?? "")))}
         createUpload={createUpload}
+        examCode={opened.exam.code}
         error={fieldError("shareImage")}
       />
       <div className="flex flex-col gap-2 border-t border-dashed border-ayc-rule pt-3">
@@ -187,11 +188,13 @@ interface ShareImageFieldProps {
   /** Changes the value from its current one: an upload finishes after other edits. */
   onChange: (next: (current: string) => string) => void;
   createUpload: AdminAction<UploadTicket>;
+  /** The Exam, for Storage to file the image under. */
+  examCode: string;
   error?: string;
 }
 
 /** SHARE IMAGE · 1200 × 630 (mockup 120): the image link previews show, or the site's. */
-function ShareImageField({ value, onChange, createUpload, error }: ShareImageFieldProps) {
+function ShareImageField({ value, onChange, createUpload, examCode, error }: ShareImageFieldProps) {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
   const [chosen, setChosen] = useState<{ name: string; preview: string } | null>(null);
@@ -219,7 +222,7 @@ function ShareImageField({ value, onChange, createUpload, error }: ShareImageFie
     void measureImage(file).then((size) => setWarning(size ? shareImageWarning(size) : null));
 
     const ticket = await callAdminAction(createUpload, {
-      input: { contentType: file.type, size: file.size },
+      input: { code: examCode, contentType: file.type, size: file.size },
     });
     let sent = ticket.status === "saved";
     if (ticket.status === "saved") {

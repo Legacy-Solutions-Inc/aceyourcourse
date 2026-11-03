@@ -1,8 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { Database } from "@/lib/db/connect";
+import * as schema from "@/lib/db/schema";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 
+import { type SeedPhotos, seedPhotoPlan } from "./photos";
 import { formatSampleStaff, formatSeedCounts, seedCatalogue, seedCounts } from "./seed";
 
 // The parts of `pnpm catalogue:seed` that need no database. Writing, the one
@@ -87,5 +89,117 @@ describe("catalogue seed: validation first", () => {
   it("refuses something that isn't a seed at all, in production too", async () => {
     const outcome = await seedCatalogue(untouchable, { exams: "nope" }, { production: true });
     expect(outcome).toMatchObject({ ok: false, reason: "invalid" });
+  });
+});
+
+describe("catalogue seed: photos into Storage (ticket 17)", () => {
+  const BUCKET = "http://127.0.0.1:54321/storage/v1/object/public/catalogue/";
+  const photoSrcs = CATALOGUE_SEED.products.flatMap((product) => product.photos.map((p) => p.src));
+
+  /** Seed photos read from a stand-in for public/, uploaded to a stand-in bucket. */
+  function fakePhotos(missing: readonly string[] = []) {
+    const uploaded: { path: string; bytes: Uint8Array; contentType: string }[] = [];
+    const photos: SeedPhotos = {
+      read: vi.fn(async (src: string) =>
+        missing.includes(src) ? null : new TextEncoder().encode(`file ${src}`),
+      ),
+      upload: vi.fn(async (path: string, bytes: Uint8Array, contentType: string) => {
+        uploaded.push({ path, bytes, contentType });
+        return `${BUCKET}${path}`;
+      }),
+    };
+    return { photos, uploaded };
+  }
+
+  /** A database that accepts the load, keeping each table's inserted rows. */
+  function recordingDatabase() {
+    const inserted = new Map<unknown, unknown[]>();
+    const tx = {
+      select: () => ({ from: () => ({ limit: async () => [] }) }),
+      delete: async () => {},
+      insert: (table: unknown) => ({
+        values: (rows: unknown[]) => {
+          inserted.set(table, rows);
+          return Object.assign(Promise.resolve(), { onConflictDoUpdate: async () => {} });
+        },
+      }),
+    };
+    const db = { transaction: async (work: (t: typeof tx) => unknown) => work(tx) };
+    return { db: db as unknown as Database, inserted };
+  }
+
+  it("plans each Product photo into its Product's folder, by its file's name and type", () => {
+    const plan = seedPhotoPlan(CATALOGUE_SEED);
+    const product = CATALOGUE_SEED.products.find((p) => p.photos.length > 1);
+    if (!product) throw new Error("No Product with photos");
+
+    expect(plan).toHaveLength(photoSrcs.length);
+    expect(plan.filter((photo) => photo.productId === product.id)).toEqual(
+      product.photos.map((photo, index) => ({
+        productId: product.id,
+        index,
+        src: photo.src,
+        path: `products/${product.id}/${photo.src.split("/").at(-1)}`,
+        contentType: "image/webp",
+      })),
+    );
+  });
+
+  it("uploads every seed photo, and loads each Product with its photos' bucket URLs", async () => {
+    const { photos, uploaded } = fakePhotos();
+    const { db, inserted } = recordingDatabase();
+
+    expect(await seedCatalogue(db, CATALOGUE_SEED, { photos })).toMatchObject({
+      ok: true,
+      uploadedPhotos: photoSrcs.length,
+    });
+    expect(uploaded.map(({ path, contentType }) => ({ path, contentType }))).toEqual(
+      seedPhotoPlan(CATALOGUE_SEED).map(({ path, contentType }) => ({ path, contentType })),
+    );
+    expect(uploaded[0]?.bytes).toEqual(new TextEncoder().encode(`file ${photoSrcs[0]}`));
+    const rows = inserted.get(schema.productPhotos) as { src: string }[];
+    expect(rows.map((row) => row.src)).toEqual(
+      seedPhotoPlan(CATALOGUE_SEED).map(({ path }) => `${BUCKET}${path}`),
+    );
+  });
+
+  it("aborts before any write or upload when a seed photo's file is missing", async () => {
+    const [gone] = photoSrcs;
+    if (!gone) throw new Error("The seed has no photos");
+    const { photos } = fakePhotos([gone]);
+
+    expect(await seedCatalogue(untouchable, CATALOGUE_SEED, { photos })).toEqual({
+      ok: false,
+      reason: "photos",
+      problems: [`${gone}: no such file in public/`],
+    });
+    expect(photos.upload).not.toHaveBeenCalled();
+  });
+
+  it("aborts before any write when a seed photo isn't a JPEG, PNG or WebP", async () => {
+    const seed = structuredClone(CATALOGUE_SEED);
+    const photo = seed.products.flatMap((product) => product.photos)[0];
+    if (!photo) throw new Error("The seed has no photos");
+    photo.src = "/products/ce-posters/cover.gif";
+    const { photos } = fakePhotos();
+
+    expect(await seedCatalogue(untouchable, seed, { photos })).toEqual({
+      ok: false,
+      reason: "photos",
+      problems: ["/products/ce-posters/cover.gif: not a JPEG, PNG or WebP"],
+    });
+    expect(photos.read).not.toHaveBeenCalled();
+  });
+
+  it("leaves the photos at their public/ paths without Storage, as the database tests load them", async () => {
+    const { db, inserted } = recordingDatabase();
+
+    expect(await seedCatalogue(db, CATALOGUE_SEED)).toMatchObject({
+      ok: true,
+      uploadedPhotos: null,
+    });
+    expect((inserted.get(schema.productPhotos) as { src: string }[]).map((r) => r.src)).toEqual(
+      photoSrcs,
+    );
   });
 });

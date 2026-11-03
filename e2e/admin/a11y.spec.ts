@@ -5,7 +5,13 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
-import { openSignInAs, resetSampleData, type SampleUserKey, signInAs } from "./helpers";
+import {
+  openSignInAs,
+  resetSampleData,
+  type SampleUserKey,
+  signInAs,
+  UPLOAD_URLS,
+} from "./helpers";
 
 // Every Admin screen and state, signed in where it needs it, through axe with
 // every rule on, on a desktop and on a phone (ticket 12). Serious and critical
@@ -407,7 +413,7 @@ for (const size of SIZES) {
       const editor = page.getByRole("complementary", { name: "Product editor" });
       await expect(editor.getByRole("form")).toBeVisible({ timeout: 15_000 });
       let puts = 0;
-      await page.route("**/api/dev/uploads/**", (route) => {
+      await page.route(UPLOAD_URLS, (route) => {
         if (route.request().method() !== "PUT") return route.continue();
         puts += 1;
         return puts === 1 ? route.abort("failed") : route.continue();

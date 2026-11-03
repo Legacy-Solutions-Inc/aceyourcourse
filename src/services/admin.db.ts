@@ -8,6 +8,7 @@ import type { Database } from "@/lib/db/connect";
 import { asDatabaseError, postgresErrorCode } from "@/lib/db/errors";
 import { diffRows } from "@/lib/db/row-diff";
 import * as schema from "@/lib/db/schema";
+import { isStorageConfigured } from "@/lib/supabase/admin";
 import type { AdminService } from "@/services/admin";
 import { staffEmailSchema } from "@/services/admin.schema";
 import {
@@ -33,6 +34,8 @@ import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/servic
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { ALREADY_ON_LIST } from "@/services/mock/admin/staff";
 import { getSampleStore, type SampleStore, withStandInStore } from "@/services/mock/sample-store";
+import { imagesRemoved, storageArm, uploadPathsIn } from "@/services/uploads.storage";
+import type { UploadLookup } from "@/services/uploads.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The Admin seam on Postgres (ticket 15), selected by src/services/admin.ts
@@ -51,6 +54,13 @@ import { getSampleStore, type SampleStore, withStandInStore } from "@/services/m
 // the database, where a stamp is only updated if it still holds that value.
 // Drizzle bypasses RLS, so authorisation is the seam's role check and the
 // Staff Guard (coding standards §3).
+//
+// With Storage (ticket 17), a catalogue write first asks Storage which of the
+// upload paths it sends have their file, before its transaction opens, so the
+// save resolves them as the sample arm resolves its own uploads. Once the
+// transaction commits, the files of the images the save stopped using are
+// deleted: removed photos, a deleted Product's photos, a replaced share
+// image. A failed delete is logged, and the save still succeeds.
 // ─────────────────────────────────────────────────────────────────────────────
 
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -110,11 +120,17 @@ function notLoaded(part: string): never {
 
 /**
  * The store the sample arm's code runs over: the parts loaded, empty Staff
- * Activity and denied sign-ins (the call's own are appended to them), and the
- * sample data's uploads, which stay in memory until ticket 17. A part the call
- * didn't load throws when read, rather than reading as empty and being saved.
+ * Activity and denied sign-ins (the call's own are appended to them), and
+ * Storage's uploads when there's a lookup for them. Without Storage (database
+ * tests with no secret key) the sample data's uploads stand in. A part the
+ * call didn't load throws when read, rather than reading as empty and being
+ * saved.
  */
-async function load(tx: Transaction, parts: readonly Part[]): Promise<Loaded> {
+async function load(
+  tx: Transaction,
+  parts: readonly Part[],
+  uploadAt: UploadLookup | undefined,
+): Promise<Loaded> {
   const sample = getSampleStore();
   const loaded: Omit<Loaded, "store"> = {};
   let bootedAt = sample.bootedAt;
@@ -168,6 +184,7 @@ async function load(tx: Transaction, parts: readonly Part[]): Promise<Loaded> {
     get uploads() {
       return sample.uploads;
     },
+    ...(uploadAt ? { uploadAt } : {}),
   };
   return { store, ...loaded };
 }
@@ -332,29 +349,49 @@ async function save(tx: Transaction, loaded: Loaded): Promise<void> {
 
 // ── Running a call ──────────────────────────────────────────────────────────
 
-/** Runs `work` in one transaction, through the steps at the top of this file. */
+/** The images a write stopped using, for Storage's clean-up once it commits. */
+function imagesRemovedBy(loaded: Loaded): string[] {
+  if (!changes(loaded).catalogue || !loaded.catalogue) return [];
+  return imagesRemoved(loaded.catalogue.value, loaded.store.catalogue);
+}
+
+/**
+ * Runs `work` in one transaction, through the steps at the top of this file.
+ * `args` are the call's arguments, where a catalogue write's upload paths are.
+ */
 async function onDatabase<T>(
   parts: readonly Part[],
   mode: "read" | "write",
   work: () => Promise<T>,
+  args: readonly unknown[] = [],
 ): Promise<T> {
+  const storage = isStorageConfigured && mode === "write" && parts.includes("catalogue");
+  // Asked before the transaction opens, so no lock waits on Storage.
+  const uploadAt = storage ? await storageArm.lookupUploads(uploadPathsIn(args)) : undefined;
+  let removed: string[] = [];
+  let result: T;
   try {
-    return await getDb().transaction(
+    result = await getDb().transaction(
       async (tx) => {
         if (mode === "write") for (const part of parts) await tx.execute(writeLock(part));
-        const loaded = await load(tx, parts);
-        const result = await withStandInStore(loaded.store, work);
-        if (mode === "write") await save(tx, loaded);
-        else if (Object.values(changes(loaded)).some(Boolean)) {
+        const loaded = await load(tx, parts, uploadAt);
+        const value = await withStandInStore(loaded.store, work);
+        if (mode === "write") {
+          await save(tx, loaded);
+          removed = imagesRemovedBy(loaded);
+        } else if (Object.values(changes(loaded)).some(Boolean)) {
           throw new Error("An Admin read changed the data; it must be run as a write.");
         }
-        return result;
+        return value;
       },
       mode === "read" ? { isolationLevel: "repeatable read", accessMode: "read only" } : undefined,
     );
   } catch (error) {
     throw asDatabaseError(error);
   }
+  // Committed. A failed delete is logged inside, and never fails the save.
+  if (storage && removed.length > 0) await storageArm.removeImages(removed);
+  return result;
 }
 
 type Call<Args extends unknown[], Result> = (...args: Args) => Promise<Result>;
@@ -367,7 +404,7 @@ const read =
 const write =
   <Args extends unknown[], Result>(parts: readonly Part[], call: Call<Args, Result>) =>
   (...args: Args): Promise<Result> =>
-    onDatabase(parts, "write", () => call(...args));
+    onDatabase(parts, "write", () => call(...args), args);
 
 /**
  * A write that saves a stamped record. Should its stamp have changed in the
@@ -377,7 +414,7 @@ const stampedWrite =
   <Args extends unknown[], Value>(call: Call<Args, AdminResult<Value>>) =>
   async (...args: Args): Promise<AdminResult<Value>> => {
     try {
-      return await onDatabase(["catalogue"], "write", () => call(...args));
+      return await onDatabase(["catalogue"], "write", () => call(...args), args);
     } catch (error) {
       if (!(error instanceof StaleStampError)) throw error;
       const { recordStamps } = schema;

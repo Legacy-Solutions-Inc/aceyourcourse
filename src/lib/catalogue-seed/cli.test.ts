@@ -21,6 +21,10 @@ async function run(command: Partial<SeedCommand>) {
   const code = await runCatalogueSeed({
     args: [],
     databaseUrl: undefined,
+    supabaseUrl: undefined,
+    secretKey: undefined,
+    // Keeps the photos in public/: the Storage cases below set their own.
+    photos: null,
     connectTimeoutSeconds: 2,
     log: (line) => out.push(line),
     error: (line) => err.push(line),
@@ -90,6 +94,75 @@ describe("catalogue:seed command: refusals", () => {
     expect(result.err).toMatch(/priceFrom: a Coming Soon Product has no price/);
     // Port 1 refuses every connection: had it connected, the error would say so.
     expect(result.err).not.toMatch(/Couldn't reach/);
+  });
+});
+
+describe("catalogue:seed command: Storage for the photos (ticket 17)", () => {
+  const SECRET_KEY = "sb_secret_s3cret-value";
+  // Port 1 again: none of these may reach a real database or Storage.
+  const storage = {
+    photos: undefined,
+    databaseUrl: LOCAL_NOBODY,
+    supabaseUrl: "http://127.0.0.1:1",
+    secretKey: SECRET_KEY,
+  };
+
+  it("asks for SUPABASE_SECRET_KEY before connecting, since the photos go to Storage", async () => {
+    const result = await run({ ...storage, secretKey: undefined });
+    expect(result).toMatchObject({
+      code: 1,
+      err: "SUPABASE_SECRET_KEY is not set. catalogue:seed uploads the seed's photos into Storage with it. Nothing was written.",
+    });
+  });
+
+  it("asks for NEXT_PUBLIC_SUPABASE_URL when not loading the local database", async () => {
+    const result = await run({
+      ...storage,
+      args: ["--production"],
+      databaseUrl: HOSTED_NOWHERE,
+      supabaseUrl: undefined,
+    });
+    expect(result.code).toBe(1);
+    expect(result.err).toBe(
+      "NEXT_PUBLIC_SUPABASE_URL is not set. catalogue:seed uploads the seed's photos into its Storage. Nothing was written.",
+    );
+    expectNoSecret(result, HOSTED_NOWHERE);
+  });
+
+  it("refuses to put a local load's photos into a hosted Supabase", async () => {
+    const result = await run({
+      ...storage,
+      databaseUrl: LOCAL_NOBODY,
+      supabaseUrl: "https://abcdefgh.supabase.co",
+    });
+    expect(result.code).toBe(1);
+    expect(result.err).toMatch(/only uploads to a local Supabase\. Nothing was written\./);
+  });
+
+  it("aborts on a missing seed photo before connecting, never printing the key", async () => {
+    const [product] = CATALOGUE_SEED.products.filter((p) => p.photos.length > 0);
+    const gone = product?.photos[0]?.src;
+    const result = await run({
+      databaseUrl: LOCAL_NOBODY,
+      photos: {
+        read: async (src) => (src === gone ? null : new Uint8Array([1])),
+        upload: async () => {
+          throw new Error("nothing should be uploaded");
+        },
+      },
+    });
+    expect(result.code).toBe(1);
+    expect(result.err).toBe(
+      `The seed's photos have 1 problem(s). Nothing was written.\n  ${gone}: no such file in public/`,
+    );
+  });
+
+  it("never prints the secret key", async () => {
+    const outputs = [
+      await run({ ...storage, secretKey: SECRET_KEY, supabaseUrl: undefined }),
+      await run({ ...storage, supabaseUrl: "https://x.supabase.co" }),
+    ];
+    for (const { out, err } of outputs) expect(out + err).not.toContain(SECRET_KEY);
   });
 });
 

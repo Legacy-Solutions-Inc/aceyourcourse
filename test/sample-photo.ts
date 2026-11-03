@@ -5,7 +5,8 @@ import { UPLOAD_ARMS } from "./upload-arms";
 
 /**
  * Uploads a PNG through the upload seam's sample arm, as the photo strip does.
- * Both Admin arms use it: uploads stay in memory until ticket 17.
+ * The sample arm uses it, and the database arm when the database project has
+ * no Storage (test/admin-database.ts).
  */
 export async function uploadSamplePhoto({
   send = true,
@@ -16,7 +17,13 @@ export async function uploadSamplePhoto({
   const bytes = imageBytes("image/png");
   const created = await uploads.seam.createUpload(
     { email: "content@aceyourcourse.ph", name: "AYC Content Team", role: "editor" },
-    { purpose, contentType: "image/png", size: bytes.byteLength },
+    // A share image is always for an Exam; the sample arm files it by id anyway.
+    {
+      purpose,
+      owner: purpose === "share-image" ? "CE" : undefined,
+      contentType: "image/png",
+      size: bytes.byteLength,
+    },
   );
   if (!created.ok) throw new Error("The upload was refused");
   if (send && !(await uploads.send(created.value, "image/png", bytes))) {

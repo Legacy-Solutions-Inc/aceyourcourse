@@ -4,6 +4,7 @@ import { adminAction } from "@/lib/admin/action";
 import {
   createProduct,
   deleteProduct,
+  getProductForAdmin,
   previewProductDelete,
   setProductFlags,
   updateProduct,
@@ -15,7 +16,7 @@ import {
   saveProductInputSchema,
 } from "@/services/admin.schema";
 import { createUpload } from "@/services/uploads";
-import { uploadRequestSchema } from "@/services/uploads.types";
+import { uploadFileSchema, uploadOwnerSchema } from "@/services/uploads.types";
 
 // The Products screen's Server Actions, for any Staff User. Each one checks
 // the input's shape; the seam checks every Product rule, so the form is told
@@ -65,8 +66,15 @@ export const removeProduct = adminAction(
 /**
  * A one-time upload URL for one Product photo: a JPEG, PNG or WebP of up to
  * 10 MB. The browser sends the file there; "Save product" records its path.
+ * An existing Product's editor names it, and Storage files the photo under
+ * it; refused when there's no such Product. A new Product has no id yet.
  */
 export const createPhotoUpload = adminAction(
-  { role: "staff", schema: uploadRequestSchema.omit({ purpose: true }) },
-  async (actor, request) => createUpload(actor, { purpose: "product-photo", ...request }),
+  { role: "staff", schema: uploadFileSchema.extend({ productId: uploadOwnerSchema.optional() }) },
+  async (actor, { productId, ...file }) => {
+    if (productId && !(await getProductForAdmin(actor, productId))) {
+      return { ok: false as const, error: { kind: "not-found" as const } };
+    }
+    return createUpload(actor, { purpose: "product-photo", owner: productId, ...file });
+  },
 );

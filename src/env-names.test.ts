@@ -69,4 +69,25 @@ describe("Supabase key names", () => {
       ),
     ).toEqual([]);
   });
+
+  // Ticket 17: the secret-key Storage client. `import "server-only"` makes
+  // `next build` fail should a client module ever import it; the build is
+  // also checked by hand for the key's value in .next/static.
+  it("keeps the secret-key Storage client server-only, and out of every client module", () => {
+    const storageModules = ["src/lib/supabase/admin.ts", "src/services/uploads.storage.ts"];
+    for (const file of storageModules) {
+      expect(readFileSync(file, "utf8"), file).toMatch(/^import "server-only";$/m);
+    }
+    expect(readFileSync("src/lib/supabase/admin.ts", "utf8")).toMatch(
+      new RegExp(`serverEnv\\.${SECRET_KEY_NAME}`),
+    );
+
+    const imports =
+      /from ["']@\/(lib\/supabase\/admin|services\/uploads\.storage|lib\/catalogue-seed\/photos)["']/;
+    const clientModules = repoFiles().filter(
+      (file) =>
+        /^src\/.*\.tsx?$/.test(file) && /^["']use client["'];?$/m.test(readFileSync(file, "utf8")),
+    );
+    expect(clientModules.filter((file) => imports.test(readFileSync(file, "utf8")))).toEqual([]);
+  });
 });

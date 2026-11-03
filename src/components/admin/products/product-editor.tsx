@@ -188,6 +188,7 @@ export function EditProduct({
         form={form}
         exams={exams}
         createUpload={actions.createUpload}
+        productId={id}
         slug={product.slug}
         figuresAsOf={product.shopee?.asOf ?? null}
         flags={
@@ -287,6 +288,8 @@ interface ProductFieldsProps {
   form: FieldsForm;
   exams: Exam[];
   createUpload: AdminAction<UploadTicket>;
+  /** The Product's id; a new one has none until it's added. */
+  productId?: string;
   /** The page address, fixed once the Product is added; null for a new one. */
   slug: string | null;
   figuresAsOf: string | null;
@@ -299,6 +302,7 @@ function ProductFields({
   form,
   exams,
   createUpload,
+  productId,
   slug,
   figuresAsOf,
   flags,
@@ -318,6 +322,7 @@ function ProductFields({
         photos={values.photos}
         onChange={(next) => changeWith("photos", (current) => next(photosIn(current)))}
         createUpload={createUpload}
+        productId={productId}
         error={fieldError("photos")}
       />
       <TextField label="FULL NAME" {...text("title")} />

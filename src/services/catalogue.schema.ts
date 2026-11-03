@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { isMarketplaceUrl, MARKETPLACE_HOSTS } from "@/lib/catalogue/store-links";
+import { isBucketImageUrl } from "@/lib/catalogue-bucket";
 import { isCalendarDate } from "@/lib/manila-time";
 import type {
   Exam,
@@ -119,12 +120,15 @@ const examsSchema = z.array(examSchema).superRefine((exams, ctx) => {
 /** Money in integer centavos. */
 const centavos = z.number().int("must be whole centavos");
 
-/** Photos are served from this site (public/ today, Storage later), never hot-linked. */
+/**
+ * Photos are self-hosted, never hot-linked: a path on this site (public/, or
+ * the Admin's sample uploads), or a file in our Storage bucket (ticket 17).
+ */
 const selfHostedPath = z
   .string()
   .refine(
-    (value) => value.startsWith("/") && !value.startsWith("//"),
-    "must be a self-hosted path starting with /",
+    (value) => (value.startsWith("/") && !value.startsWith("//")) || isBucketImageUrl(value),
+    "must be a self-hosted path starting with /, or a file in the catalogue bucket",
   );
 
 const listingUrl = (marketplace: Marketplace) =>

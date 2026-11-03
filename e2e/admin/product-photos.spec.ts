@@ -3,12 +3,20 @@ import path from "node:path";
 import { type Browser, expect as baseExpect, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
-import { resetSampleData, signInAs } from "./helpers";
+import {
+  isUploadPut,
+  publicUrlOf,
+  resetSampleData,
+  signInAs,
+  UPLOAD_URLS,
+  uploadPathOf,
+} from "./helpers";
 
-// Product photos on sample data (ticket 06): an Editor uploads a photo
-// straight to the upload seam's one-time URL, makes it the cover, saves, and
-// the Website shows it. Uploads that break, or haven't finished, never reach
-// the save.
+// Product photos (tickets 06 and 17), on the local database: an Editor
+// uploads a photo straight to a one-time signed upload URL in Supabase
+// Storage, makes it the cover, saves, and the Website shows it from the
+// bucket through next/image. Uploads that break, or haven't finished, never
+// reach the save.
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -51,15 +59,13 @@ async function fixtureAs(name: string) {
 }
 
 /** Waits for the browser's PUT of one file, giving its one-time upload URL. */
-const nextUpload = (page: Page) =>
-  page.waitForRequest(
-    (request) => request.method() === "PUT" && request.url().includes("/api/dev/uploads/"),
+const nextUpload = (page: Page) => page.waitForRequest(isUploadPut);
+
+/** The Website's image src for an upload: its public URL, through the image optimizer. */
+const optimized = (uploadUrl: string) =>
+  new RegExp(
+    `^/_next/image\\?url=${encodeURIComponent(publicUrlOf(uploadUrl)).replace(/[.]/g, "\\.")}&`,
   );
-
-const uploadId = (uploadUrl: string) => new URL(uploadUrl).pathname.split("/").at(-1) ?? "";
-
-/** The Website's image src for an upload, through the image optimizer. */
-const optimized = (id: string) => new RegExp(`url=%2Fapi%2Fdev%2Fuploads%2F${id}`);
 
 /** A second Staff User, signed in in a browser of their own. */
 async function secondEditor(browser: Browser, id: string) {
@@ -86,7 +92,11 @@ test("an uploaded photo dragged to first is the cover, live on the Product page,
 
   const put = nextUpload(page);
   await addPhotos(page).setInputFiles(FIXTURE);
-  const id = uploadId((await put).url());
+  const uploadUrl = (await put).url();
+  // Storage files it under the Product.
+  expect(uploadPathOf(uploadUrl)).toMatch(
+    new RegExp(`^products/${POSTERS.id}/[0-9a-f-]{36}\\.png$`),
+  );
   await expect(tile(page, 3)).toContainText("product-photo.png");
   await expect(tile(page, 3)).toContainText("UNSAVED");
   await expect(editor(page).getByText("3 photos · drag to reorder")).toBeVisible();
@@ -102,8 +112,8 @@ test("an uploaded photo dragged to first is the cover, live on the Product page,
   await page.goto(paths.products.details(POSTERS.slug));
   const cover = page.getByTestId("gallery-main").locator("img");
   await expect(cover).toHaveAttribute("alt", `${POSTERS.title}, photo 1 of 3`);
-  await expect(cover).toHaveAttribute("src", optimized(id));
-  // Served: the optimizer read the upload from the development route.
+  await expect(cover).toHaveAttribute("src", optimized(uploadUrl));
+  // Served: the optimizer read the upload from the bucket.
   await expect
     .poll(() => cover.evaluate((img: HTMLImageElement) => img.naturalWidth))
     .toBeGreaterThan(0);
@@ -114,7 +124,7 @@ test("an uploaded photo dragged to first is the cover, live on the Product page,
     const card = page
       .getByRole("article")
       .filter({ has: page.getByRole("heading", { name: POSTERS.shortName }) });
-    await expect(card.locator("img").first()).toHaveAttribute("src", optimized(id));
+    await expect(card.locator("img").first()).toHaveAttribute("src", optimized(uploadUrl));
   }
 });
 
@@ -135,13 +145,13 @@ test("Move left from the keyboard makes an upload the cover, and the upload URL 
   await expect(tile(page, 1)).toContainText("product-photo.png");
   await expect(tile(page, 1)).toContainText("COVER");
 
-  // One-time: the same URL refuses a second file, and GET serves the first.
+  // One-time: Storage refuses a second file on the same URL, and serves the first.
   const again = await request.put(uploadUrl, {
     headers: { "content-type": "image/png" },
     data: (await fixtureAs("again.png")).buffer,
   });
-  expect(again.status()).toBe(409);
-  const served = await request.get(paths.admin.sampleUpload(uploadId(uploadUrl)));
+  expect(again.ok()).toBe(false);
+  const served = await request.get(publicUrlOf(uploadUrl));
   expect(served.status()).toBe(200);
   expect(served.headers()["content-type"]).toBe("image/png");
 
@@ -159,7 +169,7 @@ test("a broken upload shows Upload failed · Try again on that file only, and Tr
 }) => {
   await openEditor(page, POSTERS.id);
   let puts = 0;
-  await page.route("**/api/dev/uploads/**", (route) => {
+  await page.route(UPLOAD_URLS, (route) => {
     if (route.request().method() !== "PUT") return route.continue();
     puts += 1;
     return puts === 1 ? route.abort("failed") : route.continue();
@@ -211,7 +221,7 @@ test("saving while an upload is on its way is refused: Wait for uploads to finis
   const held = new Promise<void>((resolve) => {
     release = resolve;
   });
-  await page.route("**/api/dev/uploads/**", async (route) => {
+  await page.route(UPLOAD_URLS, async (route) => {
     if (route.request().method() === "PUT") await held;
     await route.continue();
   });

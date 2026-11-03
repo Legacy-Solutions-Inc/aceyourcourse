@@ -1,13 +1,24 @@
 import { PHOTO_NOT_UPLOADED, WAIT_FOR_UPLOADS } from "@/services/admin.schema";
 import type { AdminError } from "@/services/admin.types";
 import type { ProductPhoto } from "@/services/catalogue.types";
+import { getSampleStore } from "@/services/mock/sample-store";
 import { sampleUploadAt } from "@/services/uploads.mock";
+import type { UploadLookup } from "@/services/uploads.types";
 
 // The sample arm's Photos area: a Product's photos as its editor saves them
 // (spec, Phase 2 → Products: Photos). The editor sends them in order, the
 // first the cover, each one a photo the Product already has (its src) or a
 // new upload (the path the upload seam gave it). Alt text is generated on
 // every save, so it follows the name and the order.
+
+/**
+ * What a save finds at an upload's path: the store's own lookup when it has
+ * one (Storage's, in the Admin's database arm), or else the sample uploads'.
+ */
+export const uploadAt: UploadLookup = (path, purpose) => {
+  const { uploadAt: lookup } = getSampleStore();
+  return lookup ? lookup(path, purpose) : sampleUploadAt(path, purpose);
+};
 
 /** Pure: a photo's alt text, as the seed has it: "{full name}, photo 2 of 8". */
 export function photoAlt(title: string, index: number, count: number): string {
@@ -32,7 +43,7 @@ export function resolveProductPhotos(
       srcs.push(ref);
       continue;
     }
-    const upload = sampleUploadAt(ref, "product-photo");
+    const upload = uploadAt(ref, "product-photo");
     if (upload === null) {
       return {
         ok: false,

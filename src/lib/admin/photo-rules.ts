@@ -1,5 +1,5 @@
 import { WAIT_FOR_UPLOADS } from "@/services/admin.schema";
-import { MAX_UPLOAD_BYTES, uploadRequestSchema } from "@/services/uploads.types";
+import { MAX_UPLOAD_BYTES, uploadFileSchema } from "@/services/uploads.types";
 
 // The photo strip's rules (spec, Phase 2 → Products: Photos; BUILD-MAP §3.3,
 // "PHOTOS · FIRST IS THE COVER"). A file is checked before it's uploaded, and
@@ -14,8 +14,7 @@ import { MAX_UPLOAD_BYTES, uploadRequestSchema } from "@/services/uploads.types"
 /** The smallest photo that needs no warning, in pixels on each side. */
 const GOOD_SIDE = 1000;
 
-const isUploadType = (type: string) =>
-  uploadRequestSchema.shape.contentType.safeParse(type).success;
+const isUploadType = (type: string) => uploadFileSchema.shape.contentType.safeParse(type).success;
 
 /** Pure: why a chosen file can't be uploaded, naming it, or null when it can. */
 export function photoFileRefusal(file: {

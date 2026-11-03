@@ -66,6 +66,7 @@ project is production only; its values live in Vercel, never in `.env`.
    | `SUPABASE_SECRET_KEY`                  | the **Secret** key (`sb_secret_…`); server-only           |
    | `DATABASE_URL`                         | `postgresql://postgres:postgres@127.0.0.1:54322/postgres` |
    | `TEST_DATABASE_URL`                    | the same local database, for `pnpm test:db`               |
+   | `TEST_SUPABASE_SECRET_KEY`             | the same Secret key, for the Storage tests in `test:db`   |
 
 4. Build the database and load the catalogue:
 
@@ -84,9 +85,15 @@ the sample Staff for "Sign in as".
 
 **Loading the catalogue.** `pnpm catalogue:seed` checks the seed, then writes
 it in one transaction and prints what it wrote (Exams, Subjects, Products Live
-and Coming Soon, Reviews, FAQs). Photos keep their `/products/…` paths for now.
-A local load also replaces the Admin's data (the staff list, Staff Activity,
-save stamps) with the sample Staff; `--production` never adds Staff.
+and Coming Soon, Reviews, FAQs, photos). Every Product photo is uploaded from
+`public/products/<slug>/` into the Storage bucket, at
+`products/<product id>/<file>`, and the Products are loaded with the bucket
+URLs; `public/products/` stays, for the sample data and the tests. The command
+needs `SUPABASE_SECRET_KEY`, and `NEXT_PUBLIC_SUPABASE_URL` except with
+`--local` (which uses local Supabase); a load without `--production` only
+uploads to a local Supabase. A missing photo file stops it before anything is
+written. A local load also replaces the Admin's data (the staff list, Staff
+Activity, save stamps) with the sample Staff; `--production` never adds Staff.
 
 | Command                            | Loads into                  | When data is there           |
 | ---------------------------------- | --------------------------- | ---------------------------- |
@@ -95,8 +102,8 @@ save stamps) with the sample Staff; `--production` never adds Staff.
 | `pnpm catalogue:seed --production` | `DATABASE_URL`              | refuses, and changes nothing |
 
 `--production` is for the one load into the empty hosted database; it never
-deletes. The command never prints `DATABASE_URL`: a failure shows only its
-error code. The Website caches its reads, so restart `pnpm dev` after
+deletes. The command never prints `DATABASE_URL` or the secret key: a failure
+shows only its error code. The Website caches its reads, so restart `pnpm dev` after
 `pnpm db:reset`, `pnpm catalogue:seed` or `pnpm test:db` to see the new data.
 
 **Migrations.** The Drizzle schema (`src/lib/db/schema.ts`) is the source of
@@ -106,13 +113,29 @@ truth. `pnpm db:generate` writes a timestamped migration into
 `supabase db push`. Every table enables RLS with no policies: the server
 checks access, and the browser keys reach nothing.
 
+**Photos (Storage).** Product photos and Exam share images live in the public
+`catalogue` bucket, which a migration creates. The bucket itself refuses
+anything but a JPEG, PNG or WebP of up to 10 MB, and `storage.objects` has no
+policy for the browser keys. An upload goes straight from the browser to a
+one-time signed upload URL, which the server makes with
+`SUPABASE_SECRET_KEY` (`src/lib/supabase/admin.ts`, server-only): an existing
+Product's photos go to `products/<id>/`, a new Product's to `products/new/`,
+and share images to `exam-pages/<code>/`. Once a save commits, the files of
+the photos it removed, of a deleted Product and of a replaced share image are
+deleted; a failed delete is logged and never fails the save. With the
+database configured but no secret key, an upload fails with "Storage isn't
+configured on this server." next/image loads the bucket's files from
+`NEXT_PUBLIC_SUPABASE_URL`'s host.
+
 **Database tests** (`*.db.test.ts`) run against `TEST_DATABASE_URL`, never
 `DATABASE_URL`. Without it, or with Supabase stopped, they are skipped with
 the reason, so `pnpm test` needs no Docker. They run the Catalogue seam's
 whole behaviour suite on the database, and with `TEST_DATABASE_URL` set,
 `pnpm test:db` also runs every Admin suite (`src/services/admin.*.test.ts`)
 over the Admin's database arm. They replace the local catalogue and staff list
-as they go.
+as they go. The Storage tests (the bucket's rules, the upload seam, the seed's
+photos and the clean-up after a save) also need `TEST_SUPABASE_SECRET_KEY`;
+with it, the Admin suites upload through Storage too.
 
 The session plumbing and the OAuth callback (`/auth/callback`) are kept for
 Phase 2's Google sign-in. A minimal `supabase/config.toml` is included; its
@@ -146,7 +169,8 @@ Playwright (`pnpm test:e2e`) runs on the local database: its server's
 setup step resets it through the reset route before any spec. Start Supabase
 first (`pnpm db:start`). `PLAYWRIGHT_DATABASE_URL` points the run at another
 local database. When it reuses a `pnpm dev` you started, that one must use a
-local database too, or the reset step fails with 403.
+local database too, or the reset step fails with 403. Uploads go to local
+Supabase's Storage, so `.env` needs the local `SUPABASE_SECRET_KEY`.
 
 **Sign in as a sample User.** On the sign-in screen, "Continue with Google"
 opens a development-only **Sign in as** list:
@@ -171,8 +195,10 @@ Activity), and refuse with 403 unless `DATABASE_URL` points at this machine
 
 **Restarts.** Without a database, the sample data lives only in the dev
 server's memory, so stopping `pnpm dev` loses every change: it starts again
-from the seed. On the database, changes stay until a reset. Uploaded photos
-stay in the dev server's memory either way until photo storage lands.
+from the seed. On the database, changes stay until a reset, and uploaded
+photos go to local Supabase's Storage; without one, they stay in the dev
+server's memory. The Reset button re-seeds without uploading: the seed's
+photos load from `public/products/` until the next `pnpm db:reset`.
 
 **Production keeps the Admin closed.** In a production build (`pnpm build`,
 `pnpm start`), every `/admin` page and the development-only routes under

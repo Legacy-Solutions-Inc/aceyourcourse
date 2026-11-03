@@ -1,3 +1,5 @@
+import { LOCAL_SUPABASE_URL } from "@/lib/db/local-database";
+
 export interface CspOptions {
   /** Dev enables 'unsafe-eval' (HMR) and local Supabase/websocket origins. */
   isDev: boolean;
@@ -43,14 +45,18 @@ export function buildCsp(nonce: string, opts: CspOptions): string {
   }
   if (isDev) {
     // Local Supabase CLI (http) + the HMR websocket.
-    connectSrc.push("ws:", "http://127.0.0.1:54321");
+    connectSrc.push("ws:", LOCAL_SUPABASE_URL);
   }
+
+  // `https:` covers the hosted Storage bucket's photos. Local Supabase serves
+  // them over http, so development adds its origin (ticket 17).
+  const imgSrc = ["'self'", "data:", "blob:", "https:", ...(isDev ? [LOCAL_SUPABASE_URL] : [])];
 
   const directives: Array<[string, string[]]> = [
     ["default-src", ["'self'"]],
     ["script-src", scriptSrc],
     ["style-src", ["'self'", "'unsafe-inline'"]],
-    ["img-src", ["'self'", "data:", "blob:", "https:"]],
+    ["img-src", imgSrc],
     ["font-src", ["'self'", "data:"]],
     ["connect-src", connectSrc],
     ["frame-ancestors", ["'none'"]],

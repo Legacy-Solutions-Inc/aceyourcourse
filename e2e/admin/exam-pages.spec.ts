@@ -165,8 +165,11 @@ test("uploads a 1200 × 630 share image: og:image; a square one is warned about"
   await expect(saveState(page)).toHaveText(SAVED);
 
   await page.goto(paths.exams.details("CE"));
+  // From the bucket, filed under the Exam (ticket 17).
   const image = await metaContent(page, 'property="og:image"');
-  expect(image).toMatch(/\/api\/dev\/uploads\/[0-9a-f-]+$/);
+  expect(image).toMatch(
+    /\/storage\/v1\/object\/public\/catalogue\/exam-pages\/CE\/share-[0-9a-f-]{36}\.png$/,
+  );
   const served = await page.request.get(image ?? "");
   expect(served.headers()["content-type"]).toBe("image/png");
 });

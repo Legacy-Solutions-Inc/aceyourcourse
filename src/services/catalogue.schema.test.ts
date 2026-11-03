@@ -500,6 +500,22 @@ describe("validateCatalogueSeed: Products", () => {
     ]);
   });
 
+  it("accepts a photo in the Storage bucket (ticket 17)", () => {
+    const seed = validSeed();
+    at(live(seed).photos, 0).src =
+      "https://abcdefgh.supabase.co/storage/v1/object/public/catalogue/products/prd-001/a.webp";
+    expect(validateCatalogueSeed(seed).success).toBe(true);
+  });
+
+  it("rejects a photo in another Storage bucket", () => {
+    const seed = validSeed();
+    at(live(seed).photos, 0).src =
+      "https://abcdefgh.supabase.co/storage/v1/object/public/avatars/a.webp";
+    expect(errorsFor(seed)).toEqual([
+      expect.stringMatching(/^products\.0\.photos\.0\.src: .*self-hosted/i),
+    ]);
+  });
+
   it("rejects a photo with no alt text", () => {
     const seed = validSeed();
     at(live(seed).photos, 0).alt = " ";
@@ -793,6 +809,13 @@ describe("validateCatalogueSeed: Exam pages", () => {
     const seed = validSeed();
     page(seed).officialExamDate = "2026-02-30";
     expect(errorsFor(seed)).toEqual([expect.stringMatching(/^examPages\.0\.officialExamDate: /)]);
+  });
+
+  it("accepts a share image in the Storage bucket (ticket 17)", () => {
+    const seed = validSeed();
+    page(seed).shareImage =
+      "http://127.0.0.1:54321/storage/v1/object/public/catalogue/exam-pages/CE/share-a.png";
+    expect(validateCatalogueSeed(seed).success).toBe(true);
   });
 
   it("rejects a share image hot-linked from another site", () => {

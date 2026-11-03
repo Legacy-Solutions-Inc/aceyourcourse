@@ -55,6 +55,10 @@ async function seedCommand(command: Partial<SeedCommand>) {
   const code = await runCatalogueSeed({
     args: [],
     databaseUrl: process.env.TEST_DATABASE_URL,
+    supabaseUrl: undefined,
+    secretKey: undefined,
+    // The photos stay in public/ here; seed-photos.db.test.ts loads them into Storage.
+    photos: null,
     log: (line) => out.push(line),
     error: (line) => err.push(line),
     ...command,

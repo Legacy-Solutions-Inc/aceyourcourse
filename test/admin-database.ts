@@ -2,14 +2,44 @@ import { asc, eq } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import * as schema from "@/lib/db/schema";
+import { isStorageConfigured } from "@/lib/supabase/admin";
 import { databaseArm } from "@/services/admin.db";
 import { deniedSignInFromRow, staffActivityFromRow } from "@/services/admin.rows";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { resetSampleStore } from "@/services/mock/sample-store";
+import { storageArm } from "@/services/uploads.storage";
+import type { UploadRequest } from "@/services/uploads.types";
 
 import type { AdminArm } from "./admin-arms";
 import { loadTestCatalogue } from "./catalogue-database";
+import { imageBytes } from "./image-bytes";
 import { uploadSamplePhoto } from "./sample-photo";
+import { putFile } from "./storage-database";
+
+/**
+ * Uploads a PNG through the upload seam's Storage arm, as the photo strip
+ * does: to local Supabase's bucket, which the database arm then checks.
+ */
+async function uploadStoragePhoto({
+  send = true,
+  purpose = "product-photo",
+}: { send?: boolean; purpose?: UploadRequest["purpose"] } = {}) {
+  const bytes = imageBytes("image/png");
+  const created = await storageArm.createUpload(
+    { email: "content@aceyourcourse.ph", name: "AYC Content Team", role: "editor" },
+    {
+      purpose,
+      owner: purpose === "share-image" ? "CE" : "prd-001",
+      contentType: "image/png",
+      size: bytes.byteLength,
+    },
+  );
+  if (!created.ok) throw new Error("The upload was refused");
+  if (send && !(await putFile(created.value.uploadUrl, "image/png", bytes)).ok) {
+    throw new Error("The file wasn't stored");
+  }
+  return { path: created.value.path, publicUrl: created.value.publicUrl };
+}
 
 /**
  * The Admin seam's database arm in the database project (`pnpm test:db`),
@@ -23,7 +53,7 @@ export const DATABASE_ARM: AdminArm = {
   reset: async (edit) => {
     const seed = structuredClone(CATALOGUE_SEED);
     edit?.(seed);
-    // The uploads stay in memory until ticket 17: start them again too.
+    // Without Storage, the database arm finds uploads in the sample data: start them again too.
     resetSampleStore();
     await loadTestCatalogue(getDb(), seed);
   },
@@ -34,7 +64,8 @@ export const DATABASE_ARM: AdminArm = {
   deleteReviewElsewhere: async (id) => {
     await getDb().delete(schema.reviews).where(eq(schema.reviews.id, id));
   },
-  uploadPhoto: uploadSamplePhoto,
+  // Storage when the database project has it (TEST_SUPABASE_SECRET_KEY), as the database arm does.
+  uploadPhoto: isStorageConfigured ? uploadStoragePhoto : uploadSamplePhoto,
   staffActivity: async () =>
     (await getDb().select().from(schema.staffActivity).orderBy(asc(schema.staffActivity.seq))).map(
       staffActivityFromRow,

@@ -137,6 +137,20 @@ describe("PhotoStrip: what it shows", () => {
     expect(screen.getByText("2 photos · drag to reorder")).toBeInTheDocument();
   });
 
+  it("asks for a new Product's uploads without an id, which it has only once added", async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    const actions = actionsWith();
+    render(<NewProduct exams={CATALOGUE_SEED.exams} actions={actions} onAdded={() => {}} />);
+
+    await user.upload(addPhotos(), png("front.png"));
+
+    await waitFor(() =>
+      expect(actions.createUpload).toHaveBeenCalledWith(expect.anything(), {
+        input: { contentType: "image/png", size: 2048 },
+      }),
+    );
+  });
+
   it("says what works best for a new Product with no photos", () => {
     render(<NewProduct exams={CATALOGUE_SEED.exams} actions={actionsWith()} onAdded={() => {}} />);
 
@@ -164,8 +178,9 @@ describe("PhotoStrip: uploading", () => {
     ).toBeVisible();
     expect(screen.getByText("4 photos · drag to reorder")).toBeInTheDocument();
     expect(actions.createUpload).toHaveBeenCalledTimes(1);
+    // Storage files an existing Product's photos under it (ticket 17).
     expect(actions.createUpload).toHaveBeenCalledWith(expect.anything(), {
-      input: { contentType: "image/png", size: 2048 },
+      input: { productId: "prd-005", contentType: "image/png", size: 2048 },
     });
 
     network.sent[0]?.finish();
