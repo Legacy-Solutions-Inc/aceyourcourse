@@ -143,7 +143,8 @@ whole behaviour suite on the database, and with `TEST_DATABASE_URL` set,
 over the Admin's database arm. They replace the local catalogue and staff list
 as they go. The Storage tests (the bucket's rules, the upload seam, the seed's
 photos and the clean-up after a save) also need `TEST_SUPABASE_SECRET_KEY`;
-with it, the Admin suites upload through Storage too.
+with it, the Admin suites upload through Storage too. CI reads it from
+`supabase status`, and without it the run fails instead of skipping them.
 
 `supabase/config.toml` is for local Supabase only. Its Postgres major version
 matches the hosted project. Its Google provider is off unless

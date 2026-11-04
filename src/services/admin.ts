@@ -101,8 +101,13 @@ export interface AdminService {
    * Records a successful sign-in on the Staff User's row, for "LAST SIGNED
    * IN …". Someone who isn't active Staff is ignored. It records no Staff
    * Activity: signing in changes nothing in the Admin.
+   *
+   * `profileName` is the Google profile's name, for display only. It names a
+   * Staff User whose name is still their email (the first Owner, added at
+   * deployment by `staff:add-owner`); a name the staff list has is kept, and
+   * a missing or blank one changes nothing.
    */
-  recordSignIn(email: string, at: Date): Promise<void>;
+  recordSignIn(email: string, at: Date, profileName?: string | null): Promise<void>;
 
   // Staff and Invites (Owners only). Every write appends one Staff Activity
   // record and clears no cache tags. "invalid" carries the rule a write broke:

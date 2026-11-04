@@ -663,8 +663,61 @@ describe.each(ADMIN_ARMS)("Admin seam: Staff and Invites ($name)", (arm) => {
     it("changes nothing for someone who isn't active Staff, and records no Staff Activity", async () => {
       const before = await list();
       await seam.recordSignIn(KIM.email, at(DAY));
-      await seam.recordSignIn("bad", at(DAY));
+      await seam.recordSignIn("bad", at(DAY), "Someone");
       await expectNothingChanged(before);
+    });
+
+    // The first Owner is added at deployment named by their email (staff:add-owner),
+    // and an Invite activated without a Google name is too. The first sign-in
+    // with Google gives them the profile's name.
+    describe("the Google profile's name", () => {
+      /** Kim, active and named by their email, as when Google gave no name. */
+      async function activateKimWithoutName() {
+        await seam.resolveSignIn({ email: KIM.email, name: null }, BOOT);
+        const activity = await arm.staffActivity();
+        expect(activity).toHaveLength(1);
+        return activity;
+      }
+      const nameOf = async (email: string) =>
+        (await list()).staff.find((member) => member.email === email)?.name;
+
+      it("replaces a name that is still the email, as display only", async () => {
+        const activity = await activateKimWithoutName();
+
+        await seam.recordSignIn(KIM.email, at(DAY), "  Kim R. Reyes ");
+
+        expect(await nameOf(KIM.email)).toBe("Kim R. Reyes");
+        expect(await arm.staffActivity()).toEqual(activity);
+      });
+
+      it("finds the Staff User by email in any case", async () => {
+        await activateKimWithoutName();
+        await seam.recordSignIn("Kim.Reyes@Gmail.com", at(DAY), "Kim Reyes");
+        expect(await nameOf(KIM.email)).toBe("Kim Reyes");
+      });
+
+      it("keeps a name the staff list already has", async () => {
+        await seam.recordSignIn(EDITOR.email, at(DAY), "Someone Else");
+        await seam.recordSignIn(OWNER.email, at(DAY), null);
+        expect(await nameOf(EDITOR.email)).toBe(EDITOR.name);
+        expect(await nameOf(OWNER.email)).toBe(OWNER.name);
+      });
+
+      it.each([null, undefined, "", "   "])(
+        "keeps the email when the profile gives %j",
+        async (profileName) => {
+          await activateKimWithoutName();
+          await seam.recordSignIn(KIM.email, at(DAY), profileName);
+          expect(await nameOf(KIM.email)).toBe(KIM.email);
+        },
+      );
+
+      it("still records the time of the sign-in", async () => {
+        await activateKimWithoutName();
+        await seam.recordSignIn(KIM.email, at(DAY), "Kim Reyes");
+        const kim = (await list()).staff.find((member) => member.email === KIM.email);
+        expect(kim?.lastSignedInAt).toBe(at(DAY).toISOString());
+      });
     });
   });
 });

@@ -46,7 +46,7 @@ export async function admit(identity: SignInIdentity): Promise<StaffActor> {
  */
 export async function signIn(identity: SignInIdentity): Promise<StaffActor> {
   const actor = await admit(identity);
-  await recordSignIn(actor.email, new Date());
+  await recordSignIn(actor.email, new Date(), identity.name);
   return actor;
 }
 

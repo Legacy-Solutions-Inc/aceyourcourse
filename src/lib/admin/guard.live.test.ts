@@ -219,6 +219,36 @@ describe("Staff Guard (live mode)", () => {
       expect(member?.lastSignedInAt).not.toBeNull();
     });
 
+    it("names the first Owner by the Google profile at their first sign-in, not by their email", async () => {
+      // `pnpm staff:add-owner` adds the Owner named by their email.
+      const store = getSampleStore();
+      store.staff = store.staff.map((member) =>
+        member.email === OWNER ? { ...member, name: OWNER } : member,
+      );
+      signedInAs(OWNER, { name: "Angel Rose Lepaña" });
+      const { continueSignIn, requireStaff } = await import("./guard");
+
+      await continueSignIn();
+
+      expect(getSampleStore().staff.find(({ email }) => email === OWNER)?.name).toBe(
+        "Angel Rose Lepaña",
+      );
+      expect(await requireStaff()).toMatchObject({ email: OWNER, name: "Angel Rose Lepaña" });
+      // Display only: the rename is no Staff Activity.
+      expect(getSampleStore().staffActivity).toEqual([]);
+    });
+
+    it("keeps an Owner's name once the staff list has a real one", async () => {
+      signedInAs(OWNER, { name: "Google Name" });
+      const { continueSignIn } = await import("./guard");
+
+      await continueSignIn();
+
+      expect(getSampleStore().staff.find(({ email }) => email === OWNER)?.name).toBe(
+        "Angel Rose L. Lepaña",
+      );
+    });
+
     it("activates Kim's Invite with the Google profile's name, as in Stage A", async () => {
       signedInAs(KIM, { name: "Kim Reyes" });
       const { continueSignIn } = await import("./guard");

@@ -116,12 +116,22 @@ export async function getStaffByEmail(email: string): Promise<StaffActor | null>
   return member ? toActor(member) : null;
 }
 
-export async function recordSignIn(email: string, at: Date): Promise<void> {
+export async function recordSignIn(
+  email: string,
+  at: Date,
+  profileName?: string | null,
+): Promise<void> {
   const wanted = normaliseEmail(email);
   const store = getSampleStore();
-  store.staff = store.staff.map((member) =>
-    member.email === wanted ? { ...member, lastSignedInAt: at.toISOString() } : member,
-  );
+  store.staff = store.staff.map((member) => {
+    if (member.email !== wanted) return member;
+    // A name that is still the email is a placeholder (staff:add-owner and an
+    // Invite activated without a Google name set it): the Google profile
+    // replaces it. Any other name came from the staff list and stays. It's
+    // display only, so it records no Staff Activity.
+    const name = member.name === member.email ? profileName?.trim() || member.name : member.name;
+    return { ...member, name, lastSignedInAt: at.toISOString() };
+  });
 }
 
 // ── Staff and Invites (Owners only) ─────────────────────────────────────────

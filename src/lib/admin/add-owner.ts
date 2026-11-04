@@ -43,7 +43,8 @@ function shown(row: StaffRow) {
 /**
  * Pure: what the email's staff row becomes. `nextPosition` is the end of the
  * Staff list, where a new Owner goes. A new Owner is named by their email
- * until they sign in, as an Invite activated without a Google name is.
+ * until their first sign-in with Google names them (recordSignIn), as an
+ * Invite activated without a Google name is.
  */
 export function planOwner(
   existing: StaffRow | undefined,

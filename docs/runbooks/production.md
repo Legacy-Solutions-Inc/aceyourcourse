@@ -198,7 +198,8 @@ On a database on another machine:
 (Run again, the second line says `is an Owner already. Nothing was
 changed.`) Then `pnpm db:check` shows the same `Staff: 1 Owner, 0 Editors, 0
 Invites` line. The Owner's name shows as their email until they sign in with
-Google the first time; Settings shows it.
+Google the first time. That sign-in names them from their Google profile (for
+display only, with no Staff Activity), and Settings shows it.
 
 ### While you develop, before go-live
 
