@@ -200,6 +200,30 @@ changed.`) Then `pnpm db:check` shows the same `Staff: 1 Owner, 0 Editors, 0
 Invites` line. The Owner's name shows as their email until they sign in with
 Google the first time; Settings shows it.
 
+### While you develop, before go-live
+
+Until go-live, `pnpm dev` on this project can sign in with a password: the
+sign-in screen's **Development only** box, under "Continue with Google". It
+shows only under `pnpm dev`, and only while this project has its Email
+provider on. Production builds never count a password sign-in, whatever
+Supabase's settings say. The app has no sign-up and no password reset, so you
+make each password User by hand:
+
+1. **Your own User:** Supabase dashboard → **Authentication → Users → Add
+   user → Create new user**, with `<owner-email>` and a password of your
+   own, and **Auto Confirm User** ticked. Sign in with it on
+   http://localhost:3000/admin/sign-in.
+2. **Test Editors:** in the Admin, **Settings → Staff & Invites**, invite
+   plus-addresses of your own (`you+editor@…`), then create each the same way
+   (Add user → Create new user, Auto Confirm User ticked). The Invite
+   activates on its first sign-in.
+3. Keep **Confirm email** on (**Authentication → Sign In / Providers →
+   Email**). Sign-ups stay open, because a first Google sign-in is a sign-up
+   too, so Confirm email is what keeps a stranger's sign-up from counting.
+4. Never click a "Confirm your signup" email you didn't ask for.
+
+Steps 7 and 8 can wait until go-live.
+
 ## 7. Set up Google sign-in (Google Cloud console)
 
 In [Google Cloud console](https://console.cloud.google.com/), pick (or
@@ -230,6 +254,17 @@ with no `localhost` entries, and the Audience page shows **In production**.
 
 ## 8. Set up Supabase Auth (Supabase dashboard)
 
+**First: end development sign-in.** If you signed in with a password while
+you developed (after step 6):
+
+1. Remove the test Editors from the Admin's **Settings → Staff & Invites**.
+2. Delete their Users (**Authentication → Users**).
+3. Your own User stays: your first Google sign-in attaches Google to it.
+4. 8.2 below turns Email off. After that the **Development only** box is
+   gone on localhost too.
+
+Then:
+
 1. **Authentication → Sign In / Providers → Google:** enable it, and paste
    the **Client ID** (under Client IDs) and the **Client Secret** from step 7.
    Save.
@@ -247,7 +282,10 @@ with no `localhost` entries, and the Audience page shows **In production**.
 
 **Check:** Google is the only enabled provider, and the redirect list holds
 `<site-url>/auth/callback`, plus `http://localhost:3000/**` only while you
-develop against this project.
+develop against this project. Staff & Invites lists no test Editors, and
+Authentication → Users has none of their Users. On localhost
+(`pnpm dev`), the sign-in screen shows "Continue with Google" and no
+**Development only** box.
 
 ## 9. Set the Vercel environment variables
 

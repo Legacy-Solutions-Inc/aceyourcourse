@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { User } from "@supabase/supabase-js";
+import { isAuthRetryableFetchError, type User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { z } from "zod";
 
@@ -8,7 +8,8 @@ import { config } from "@/config";
 import { env } from "@/env";
 import { adminMode } from "@/lib/admin/mode";
 import { safeAdminNext } from "@/lib/admin/safe-next";
-import { googleProblem } from "@/lib/admin/sign-in-problem";
+import { signInMethodCounts } from "@/lib/admin/sign-in-method";
+import { googleProblem, type PasswordProblem, passwordProblem } from "@/lib/admin/sign-in-problem";
 import { getSession } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { paths } from "@/paths";
@@ -29,6 +30,10 @@ import { SAMPLE_USERS, type SampleUser } from "@/services/mock/staff";
 //   supabase.auth.getUser(), which asks Supabase to verify the session, never
 //   from getSession() or the cookie alone. Only a verified email counts, and
 //   user_metadata, which the User can change, is never read.
+//   How the session signed in counts too (ticket 19): its `amr`, from the
+//   verified claims (supabase.auth.getClaims()). Google counts everywhere; a
+//   password only under `pnpm dev`, where the development box signs in with
+//   one (see sign-in-method.ts).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const SAMPLE_IDENTITY_COOKIE = "ayc_admin_sample";
@@ -71,8 +76,31 @@ export function attemptFromUser(user: User | null): SignInAttempt {
   return { status: "verified", identity: { email: email.data, name } };
 }
 
-/** getSession() asks Supabase to verify the session; unreachable, it is signed out. */
-const supabaseAttempt = async (): Promise<SignInAttempt> => attemptFromUser(await getSession());
+/**
+ * Whether the session's verified claims, for this User, say it signed in a way
+ * that counts here. getClaims() checks the token's signature (or asks Supabase
+ * when it can't); a failure, or no session, doesn't count.
+ */
+async function sessionMethodCounts(userId: string): Promise<boolean> {
+  try {
+    const { data, error } = await createClient(cookies()).auth.getClaims();
+    if (error || !data) return false;
+    return data.claims.sub === userId && signInMethodCounts(data.claims.amr, env.NODE_ENV);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * getSession() asks Supabase to verify the session; unreachable, it is signed
+ * out. A session that signed in a way that doesn't count here is signed out
+ * too: not recorded, and not a 403.
+ */
+async function supabaseAttempt(): Promise<SignInAttempt> {
+  const user = await getSession();
+  if (!user || !(await sessionMethodCounts(user.id))) return SIGNED_OUT;
+  return attemptFromUser(user);
+}
 
 async function sampleAttempt(): Promise<SignInAttempt> {
   const parsed = staffEmailSchema.safeParse((await cookies()).get(SAMPLE_IDENTITY_COOKIE)?.value);
@@ -123,16 +151,25 @@ export type GoogleSignInStart =
   { ok: true; url: string } | { ok: false; reason: "not-set-up" | "unreachable" };
 
 /** The part of Supabase's public auth settings (GET /auth/v1/settings) read here. */
-const authSettingsSchema = z.object({ external: z.object({ google: z.boolean() }) });
+const authSettingsSchema = z.object({
+  // Email may be missing: Google's check mustn't depend on it.
+  external: z.object({ google: z.boolean(), email: z.boolean().catch(false) }),
+});
+
+/** Which sign-in providers this Supabase has on. */
+type AuthProviders = z.infer<typeof authSettingsSchema>["external"];
+
+const NO_PROVIDERS: AuthProviders = { google: false, email: false };
 
 /**
- * Whether this Supabase has the Google provider on: its public auth settings
- * say so. Asked before sending anyone to Google, because a provider that's
- * off answers the browser with a bare JSON error. Null when it didn't answer.
+ * Which providers this Supabase has on (Google, Email): its public auth
+ * settings say so. Asked before sending anyone to Google, because a provider
+ * that's off answers the browser with a bare JSON error, and before showing
+ * the development password box. Null when it didn't answer.
  */
-async function googleEnabled(): Promise<boolean | null> {
+async function authProviders(): Promise<AuthProviders | null> {
   const { url, publishableKey } = config.supabase;
-  if (!url || !publishableKey) return false;
+  if (!url || !publishableKey) return NO_PROVIDERS;
   try {
     const response = await fetch(new URL("/auth/v1/settings", url), {
       headers: { apikey: publishableKey },
@@ -140,7 +177,7 @@ async function googleEnabled(): Promise<boolean | null> {
     });
     if (!response.ok) return null;
     const settings = authSettingsSchema.safeParse(await response.json());
-    return settings.success && settings.data.external.google;
+    return settings.success ? settings.data.external : NO_PROVIDERS;
   } catch {
     return null;
   }
@@ -155,9 +192,9 @@ async function googleEnabled(): Promise<boolean | null> {
  */
 export async function startGoogleSignIn(next: unknown): Promise<GoogleSignInStart> {
   if (adminMode !== "live") throw new Error("Google sign-in runs in live mode only.");
-  const enabled = await googleEnabled();
-  if (enabled === null) return { ok: false, reason: "unreachable" };
-  if (!enabled) return { ok: false, reason: "not-set-up" };
+  const providers = await authProviders();
+  if (providers === null) return { ok: false, reason: "unreachable" };
+  if (!providers.google) return { ok: false, reason: "not-set-up" };
 
   const redirectTo = new URL(paths.auth.callback, config.site.url);
   redirectTo.searchParams.set("next", safeAdminNext(next));
@@ -180,6 +217,52 @@ export async function googleSignInDestination(next: unknown): Promise<string> {
   const safeNext = safeAdminNext(next);
   const start = await startGoogleSignIn(safeNext);
   return start.ok ? start.url : paths.admin.signIn(safeNext, googleProblem(start.reason));
+}
+
+/**
+ * Where the development password sign-in (ticket 19) may run at all: live
+ * mode under `pnpm dev`. Production builds, previews and tests never offer
+ * it, and never count a password session (sign-in-method.ts).
+ */
+export function passwordSignInAllowed(): boolean {
+  return adminMode === "live" && env.NODE_ENV === "development";
+}
+
+/**
+ * Whether the sign-in screen offers the development password box: where it's
+ * allowed, while Supabase says its Email provider is on. Not when Supabase
+ * doesn't answer.
+ */
+export async function passwordSignInOffered(): Promise<boolean> {
+  if (!passwordSignInAllowed()) return false;
+  return (await authProviders())?.email === true;
+}
+
+export type PasswordSignInStart = { ok: true } | { ok: false; problem: PasswordProblem };
+
+/**
+ * The development password box's sign-in: a Supabase session for this email
+ * and password, set in the cookies as Google's is. Only signs in: Supabase
+ * makes no User here. The Staff Guard decides what happens next. Throws
+ * where the password sign-in isn't allowed.
+ */
+export async function startPasswordSession(
+  email: string,
+  password: string,
+): Promise<PasswordSignInStart> {
+  if (!passwordSignInAllowed()) {
+    throw new Error("The password sign-in runs only under pnpm dev, in live mode.");
+  }
+  try {
+    const { error } = await createClient(cookies()).auth.signInWithPassword({ email, password });
+    if (!error) return { ok: true };
+    return {
+      ok: false,
+      problem: isAuthRetryableFetchError(error) ? "unreachable" : passwordProblem(error),
+    };
+  } catch {
+    return { ok: false, problem: "unreachable" };
+  }
 }
 
 /**

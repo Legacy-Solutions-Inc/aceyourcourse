@@ -5,19 +5,24 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 // The Staff Guard in live mode (ticket 16): the identity comes from Supabase's
-// getUser(), and the staff list decides, exactly as in sample mode. The staff
+// getUser(), and the staff list decides, exactly as in sample mode. The
+// session's verified sign-in method (getClaims' amr, ticket 19) counts too:
+// Google always, a password only under `pnpm dev`. The staff
 // list here is the sample one, through the Admin seam's sample arm; Supabase's
 // server client, next/headers and next/navigation are the boundary, so they
 // are replaced.
 
-const { getUser, signOut, jar } = vi.hoisted(() => ({
+const { getUser, getClaims, signOut, jar } = vi.hoisted(() => ({
   getUser: vi.fn(),
+  getClaims: vi.fn(),
   signOut: vi.fn(),
   jar: new Map<string, string>(),
 }));
 
 vi.mock("@/lib/admin/mode", () => ({ adminMode: "live" }));
-vi.mock("@/lib/supabase/server", () => ({ createClient: () => ({ auth: { getUser, signOut } }) }));
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: () => ({ auth: { getUser, getClaims, signOut } }),
+}));
 vi.mock("next/headers", () => ({
   cookies: async () => ({
     get: (name: string) => (jar.has(name) ? { name, value: jar.get(name) } : undefined),
@@ -38,10 +43,21 @@ const EDITOR = "content@aceyourcourse.ph";
 const KIM = "kim.reyes@gmail.com";
 const JUAN = "juan.delacruz@gmail.com";
 
-/** Signs in to Supabase as a Google User with this email, verified unless said otherwise. */
-function signedInAs(email: string, { verified = true, name = "Google Name" } = {}) {
+/**
+ * Signs in to Supabase as a User with this email, verified unless said
+ * otherwise: with Google unless `method` says how the session signed in.
+ */
+function signedInAs(
+  email: string,
+  { verified = true, name = "Google Name", method = "oauth" } = {},
+) {
+  const id = crypto.randomUUID();
+  getClaims.mockResolvedValue({
+    data: { claims: { sub: id, amr: [{ method, timestamp: 1_793_750_400 }] } },
+    error: null,
+  });
   const user = {
-    id: crypto.randomUUID(),
+    id,
     app_metadata: { provider: "google" },
     // A role set here by the User themselves: it must change nothing.
     user_metadata: { role: "owner" },
@@ -81,6 +97,8 @@ describe("Staff Guard (live mode)", () => {
     resetSampleStore();
     getUser.mockReset();
     getUser.mockResolvedValue({ data: { user: null }, error: null });
+    getClaims.mockReset();
+    getClaims.mockResolvedValue({ data: null, error: null });
     signOut.mockReset();
   });
 
@@ -121,6 +139,68 @@ describe("Staff Guard (live mode)", () => {
     store.staff = store.staff.filter((member) => member.email !== EDITOR);
 
     await expect(requireStaff()).rejects.toThrow(redirectsTo("/admin/denied?reason=not-staff"));
+  });
+
+  it("treats a confirmed password session outside pnpm dev as signed out, recording nothing", async () => {
+    signedInAs(OWNER, { method: "password" });
+    const { getStaff, requireStaff } = await import("./guard");
+    const { getIdentity } = await import("./identity");
+
+    expect(await getIdentity()).toBeNull();
+    expect(await getStaff()).toBeNull();
+    await expect(requireStaff()).rejects.toThrow(redirectsTo("/admin/sign-in?next=%2Fadmin"));
+    expect(getSampleStore().deniedSignIns).toEqual([]);
+  });
+
+  describe("under pnpm dev (ticket 19)", () => {
+    beforeAll(() => {
+      vi.stubEnv("NODE_ENV", "development");
+      vi.resetModules();
+    });
+
+    afterAll(() => {
+      vi.stubEnv("NODE_ENV", "test");
+      vi.resetModules();
+    });
+
+    it("signs in a password session through continueSignIn, as after Google", async () => {
+      signedInAs(OWNER, { method: "password" });
+      const { continueSignIn } = await import("./guard");
+
+      expect(await continueSignIn()).toEqual({
+        status: "staff",
+        actor: { email: OWNER, name: "Angel Rose L. Lepaña", role: "owner" },
+      });
+    });
+
+    it("activates Kim's Invite from a password session", async () => {
+      signedInAs(KIM, { name: "Kim Reyes", method: "password" });
+      const { continueSignIn } = await import("./guard");
+
+      expect(await continueSignIn()).toMatchObject({
+        status: "staff",
+        actor: { email: KIM, role: "editor" },
+      });
+      expect(getSampleStore().invites.map(({ email }) => email)).not.toContain(KIM);
+    });
+
+    it("refuses and records a password User who isn't Staff", async () => {
+      signedInAs(JUAN, { method: "password" });
+      const { continueSignIn } = await import("./guard");
+
+      await expect(continueSignIn()).rejects.toThrow(redirectsTo("/admin/denied?reason=not-staff"));
+      expect(
+        getSampleStore().deniedSignIns.map(({ email, reason }) => ({ email, reason })),
+      ).toEqual([{ email: JUAN, reason: "not-staff" }]);
+    });
+
+    it("still never counts an otp session", async () => {
+      signedInAs(OWNER, { method: "otp" });
+      const { continueSignIn } = await import("./guard");
+
+      expect(await continueSignIn()).toEqual({ status: "signed-out" });
+      expect(getSampleStore().deniedSignIns).toEqual([]);
+    });
   });
 
   describe("continueSignIn", () => {

@@ -146,6 +146,10 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     signInAs: anyone(() => signIn.signInAs({ error: null, email: "" }, signInForm(OWNER))),
     // Live mode only: sample mode answers 404 (see sign-in/live.test.tsx).
     continueWithGoogle: anyone(() => signIn.continueWithGoogle(new FormData())),
+    // Live mode under pnpm dev only (ticket 19): elsewhere it answers 404.
+    signInWithPassword: anyone(() =>
+      signIn.signInWithPassword({ error: null, fieldErrors: {}, email: "" }, signInForm(OWNER)),
+    ),
   },
   "./(shell)/settings/actions.ts": {
     saveContactEmail: editorSave("owner", settings.saveContactEmail, () => ({
@@ -353,6 +357,12 @@ describe("the action registry", () => {
 
   it("has no Continue with Google in sample mode", async () => {
     await expect(REGISTRY["./sign-in/actions.ts"]?.continueWithGoogle?.call()).rejects.toThrow(
+      "NEXT_NOT_FOUND",
+    );
+  });
+
+  it("has no password box in sample mode", async () => {
+    await expect(REGISTRY["./sign-in/actions.ts"]?.signInWithPassword?.call()).rejects.toThrow(
       "NEXT_NOT_FOUND",
     );
   });

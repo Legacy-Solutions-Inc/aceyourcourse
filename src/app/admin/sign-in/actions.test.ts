@@ -137,6 +137,19 @@ describe("signInAs (sample mode)", () => {
   });
 });
 
+describe("signInWithPassword (sample mode)", () => {
+  it("answers 404: the password box runs in live mode only", async () => {
+    const { signInWithPassword } = await import("./actions");
+    await expect(
+      signInWithPassword(
+        { error: null, fieldErrors: {}, email: "" },
+        form({ email: "angel@aceyourcourse.ph", password: "anything" }),
+      ),
+    ).rejects.toThrow("NEXT_NOT_FOUND");
+    expect(jar.size).toBe(0);
+  });
+});
+
 describe("signOut", () => {
   beforeEach(() => {
     jar.clear();
@@ -170,6 +183,16 @@ describe("closed mode", () => {
   it("refuses to sign anyone in", async () => {
     await expect(signInAs({ email: "angel@aceyourcourse.ph" })).rejects.toThrow("NEXT_NOT_FOUND");
     expect(jar.size).toBe(0);
+  });
+
+  it("answers 404 to the password box", async () => {
+    const { signInWithPassword } = await import("./actions");
+    await expect(
+      signInWithPassword(
+        { error: null, fieldErrors: {}, email: "" },
+        form({ email: "angel@aceyourcourse.ph", password: "anything" }),
+      ),
+    ).rejects.toThrow("NEXT_NOT_FOUND");
   });
 
   it("answers 404 to sign out", async () => {

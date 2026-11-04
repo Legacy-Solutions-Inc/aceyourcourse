@@ -34,6 +34,24 @@ const typedEmail = z
 /** The "Sign in as" form's "Other email" (sample mode). */
 export const signInAsSchema = z.object({ email: typedEmail });
 
+const MISSING_SIGN_IN_EMAIL = "Enter your email";
+const MISSING_PASSWORD = "Enter your password";
+
+/**
+ * The development password box (ticket 19): a typed email and a password.
+ * The password is taken exactly as typed; Supabase checks it.
+ */
+export const passwordSignInSchema = z.object({
+  email: z
+    .string({ required_error: MISSING_SIGN_IN_EMAIL, invalid_type_error: MISSING_SIGN_IN_EMAIL })
+    .trim()
+    .min(1, MISSING_SIGN_IN_EMAIL)
+    .pipe(typedEmail),
+  password: z
+    .string({ required_error: MISSING_PASSWORD, invalid_type_error: MISSING_PASSWORD })
+    .min(1, MISSING_PASSWORD),
+});
+
 /** A typed email for the staff list, which stores emails lowercase. */
 const typedStaffEmail = typedEmail.transform((email) => email.toLowerCase());
 

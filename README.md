@@ -151,8 +151,9 @@ matches the hosted project. Its Google provider is off unless
 secret read from the shell (`SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID`,
 `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET`, never written down); off,
 "Continue with Google" says "Google sign-in isn't set up on this server".
-Email/password is on for the e2e test Users only. The hosted project has Google
-only, with Email turned off, set in its dashboard (the runbook, step 8).
+Email/password is on for the e2e test Users. On the hosted project, until
+go-live, Email stays on for the development password box; the runbook turns
+it off (step 8), which leaves Google only.
 
 ---
 
@@ -169,18 +170,30 @@ The Admin (`/admin`) runs in one of three modes (`src/lib/admin/mode.ts`):
 Live, "Continue with Google" runs Supabase's OAuth flow (PKCE) and comes back
 through `/auth/callback`. The Staff Guard reads the verified Google email
 from `supabase.auth.getUser()`, never from the session cookie alone or
-`user_metadata`, and checks the staff list on every request. Saves show on
+`user_metadata`, and checks the staff list on every request. It also reads
+how the session signed in from its verified `amr` claim
+(`supabase.auth.getClaims()`): Google (`oauth`) counts everywhere, a password
+only under `pnpm dev`, and nothing else ever. Saves show on
 the Website on its next load; on the database, each save and its Staff
 Activity are written in one transaction.
 
-**Signing in locally.** Two ways:
+**Signing in locally.** Three ways:
 
-1. **Live, on the hosted project** (`.env` as `.env.example` describes):
-   once the runbook's steps 6 to 8 are done (the first Owner, Google, and
-   `http://localhost:3000/**` in the redirect URLs), `pnpm dev`, open
-   http://localhost:3000/admin, and "Continue with Google" signs you in. Every
-   save is a real edit to the hosted data.
-2. **Sample, in memory:** comment out `DATABASE_URL` and the three Supabase
+1. **Live, with a password** (`.env` as `.env.example` describes): until
+   go-live, the sign-in screen's **Development only** box, under "Continue
+   with Google", signs in with an email and a password. It shows only under
+   `pnpm dev`, in live mode, while the Supabase project has Email on. Make
+   the Users by hand in the Supabase dashboard (Add user → Create new user,
+   Auto Confirm User ticked): yourself as the first Owner (the runbook's step
+   6), and plus-addresses you've invited as test Editors (the runbook, "While
+   you develop, before go-live"). It only signs in, through the Staff Guard as
+   Google does: no sign-up, no password reset. Outside `pnpm dev` a password
+   session counts as signed out, so production stays Google-only.
+2. **Live, with Google:** once the runbook's steps 7 and 8 are done (Google,
+   and `http://localhost:3000/**` in the redirect URLs), "Continue with
+   Google" signs you in. Either way, every save is a real edit to the hosted
+   data.
+3. **Sample, in memory:** comment out `DATABASE_URL` and the three Supabase
    lines in `.env`, then restart `pnpm dev`. "Sign in as" comes back, on an
    in-memory copy of the seed that a restart throws away. Uploaded photos
    stay in the dev server's memory too, served from `/api/dev/uploads/`, and

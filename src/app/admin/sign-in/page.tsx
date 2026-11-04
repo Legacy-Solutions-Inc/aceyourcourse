@@ -3,16 +3,17 @@ import { redirect } from "next/navigation";
 
 import { AuthScreen } from "@/components/admin/auth-screen";
 import { GoogleSignInForm } from "@/components/admin/google-sign-in-form";
+import { PasswordSignInForm } from "@/components/admin/password-sign-in-form";
 import { SignInAsPanel } from "@/components/admin/sign-in-as-panel";
 import { BrandLogo } from "@/components/website/brand-logo";
 import { config } from "@/config";
 import { getStaff } from "@/lib/admin/guard";
-import { listSampleUsers } from "@/lib/admin/identity";
+import { listSampleUsers, passwordSignInOffered } from "@/lib/admin/identity";
 import { adminMode } from "@/lib/admin/mode";
 import { safeAdminNext } from "@/lib/admin/safe-next";
 import { parseSignInProblem, SIGN_IN_PROBLEMS } from "@/lib/admin/sign-in-problem";
 
-import { continueWithGoogle, signInAs } from "./actions";
+import { continueWithGoogle, signInAs, signInWithPassword } from "./actions";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -23,15 +24,18 @@ interface SignInPageProps {
 /**
  * "Sign in to manage the site" (mockup 883–893). Staff already signed in go
  * straight on. "Continue with Google" goes to Google in live mode, and opens
- * the "Sign in as" list in sample mode. `error` says why the last sign-in
- * didn't go on. It only reads: signing in happens in /auth/callback (live)
- * or the Sign in as action (sample).
+ * the "Sign in as" list in sample mode. Under `pnpm dev` in live mode, while
+ * Supabase has Email on, the "Development only" password box sits under it
+ * (ticket 19; not in the mockup). `error` says why the last sign-in didn't go
+ * on. It only reads: signing in happens in /auth/callback (Google), the
+ * password box's action, or the Sign in as action (sample).
  */
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const params = await searchParams;
   const next = safeAdminNext(params.next);
   if (await getStaff()) redirect(next);
   const problem = parseSignInProblem(params.error);
+  const passwordBox = await passwordSignInOffered();
 
   return (
     <AuthScreen tone="sign-in">
@@ -54,7 +58,10 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         </p>
       ) : null}
       {adminMode === "live" ? (
-        <GoogleSignInForm next={next} action={continueWithGoogle} />
+        <>
+          <GoogleSignInForm next={next} action={continueWithGoogle} />
+          {passwordBox ? <PasswordSignInForm next={next} action={signInWithPassword} /> : null}
+        </>
       ) : (
         <SignInAsPanel users={listSampleUsers()} next={next} action={signInAs} />
       )}

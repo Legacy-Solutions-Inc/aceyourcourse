@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { fieldErrorsOf, websiteSettingsUpdateSchema } from "./admin.schema";
+import { fieldErrorsOf, passwordSignInSchema, websiteSettingsUpdateSchema } from "./admin.schema";
 
 // The Settings schema reads what the form sends, which is text, as well as the
 // typed values the seam receives, so the Server Action and the seam parse with
@@ -66,5 +66,35 @@ describe("websiteSettingsUpdateSchema, from the form's text", () => {
     const once = parse(input);
     if (!once.success) throw new Error("the form's input should parse");
     expect(parse(once.data)).toEqual(once);
+  });
+});
+
+// The development password box (ticket 19): one message per empty field, the
+// typed-email message for a malformed one. The password is taken as typed.
+describe("passwordSignInSchema", () => {
+  const signInErrors = (input: unknown) => {
+    const result = passwordSignInSchema.safeParse(input);
+    return result.success ? {} : fieldErrorsOf(result.error);
+  };
+
+  it("takes a typed email, trimmed, and the password exactly as typed", () => {
+    expect(
+      passwordSignInSchema.parse({ email: " angel@aceyourcourse.ph ", password: " pass word " }),
+    ).toEqual({ email: "angel@aceyourcourse.ph", password: " pass word " });
+  });
+
+  it.each([
+    [
+      { email: "", password: "" },
+      { email: ["Enter your email"], password: ["Enter your password"] },
+    ],
+    [{ email: "   ", password: "x" }, { email: ["Enter your email"] }],
+    [{}, { email: ["Enter your email"], password: ["Enter your password"] }],
+    [
+      { email: "angel@", password: "x" },
+      { email: ["Enter a valid email address, like name@example.com."] },
+    ],
+  ])("refuses %j", (input, expected) => {
+    expect(signInErrors(input)).toEqual(expected);
   });
 });

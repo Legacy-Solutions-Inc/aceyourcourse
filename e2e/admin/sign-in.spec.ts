@@ -1,6 +1,8 @@
 import { expect as baseExpect, type Page, test } from "@playwright/test";
 
 import {
+  E2E_PASSWORD,
+  ensurePasswordUser,
   LIVE,
   openSignInAs,
   resetSampleData,
@@ -15,7 +17,9 @@ import {
 // drawer and noindex. They run on the in-memory sample data, where Staff sign
 // in from "Sign in as", and in CI live too, where they are password Users on
 // the runner's local Supabase (e2e/admin/helpers.ts). Google itself is never
-// reached: CI's local Supabase has no Google client.
+// reached: CI's local Supabase has no Google client. Live, the "Development
+// only" password box (ticket 19) signs in too: e2e's server runs `pnpm dev`,
+// and the local Supabase has Email on.
 
 const SAMPLE_ONLY = "The Sign in as list exists in sample mode only.";
 const LIVE_ONLY = "Google sign-in through Supabase runs in live mode only.";
@@ -41,6 +45,18 @@ function todaysDateLine() {
 }
 
 const adminNav = (page: Page) => page.getByRole("navigation", { name: "Admin" });
+
+const passwordBox = (page: Page) => page.getByRole("region", { name: "Development only" });
+
+/** Signs in through the "Development only" password box. Live mode only. */
+async function signInThroughBox(page: Page, email: string, password = E2E_PASSWORD, next?: string) {
+  await page.goto(next ? `/admin/sign-in?next=${encodeURIComponent(next)}` : "/admin/sign-in");
+  const box = passwordBox(page);
+  await box.getByLabel("Email").fill(email);
+  await box.getByLabel("Password").fill(password);
+  await box.getByRole("button", { name: "Sign in" }).click();
+  return box;
+}
 
 test.beforeEach(async ({ request }) => {
   await resetSampleData(request);
@@ -77,6 +93,8 @@ test.describe("signed out", () => {
     }
     await expect(list.getByRole("listitem")).toHaveCount(5);
     await expect(list.getByLabel("Other email")).toBeVisible();
+    // The password box is live mode's only (ticket 19).
+    await expect(passwordBox(page)).toHaveCount(0);
   });
 
   test("Continue with Google says it isn't set up when the local Supabase has no Google client", async ({
@@ -298,14 +316,18 @@ test.describe("the 403 screen", () => {
     await expect(page).toHaveURL(/\/admin\/sign-in\?next=%2Fadmin$/);
   });
 
-  test("Use another account signs out, then tries Google again", async ({ page }) => {
+  test("Use another account signs out, back to sign-in with Google and the password box", async ({
+    page,
+  }) => {
     test.skip(!LIVE, LIVE_ONLY);
     await signInAs(page, "not-staff");
     await expect(page).toHaveURL(/\/admin\/denied\?reason=not-staff$/);
     await page.getByRole("button", { name: "Use another account" }).click();
-    // CI's local Supabase has no Google client, so it says so (a unit test
-    // checks the Google request asks which account to use).
-    await expect(page).toHaveURL(/\/admin\/sign-in\?next=%2Fadmin&error=google-not-set-up$/);
+    // Where the password box shows, it returns to sign-in instead of Google
+    // (ticket 19; a unit test checks Google asks which account to use).
+    await expect(page).toHaveURL(/\/admin\/sign-in$/);
+    await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
+    await expect(passwordBox(page)).toBeVisible();
 
     await page.goto("/admin");
     await expect(page).toHaveURL(/\/admin\/sign-in\?next=%2Fadmin$/);
@@ -358,6 +380,73 @@ test.describe("the 403 screen", () => {
     await expect(page).toHaveURL(/\/admin$/);
     await page.goto("/admin/denied?reason=owners-only");
     await expect(page).toHaveURL(/\/admin$/);
+  });
+});
+
+test.describe("the Development only password box (ticket 19)", () => {
+  test.beforeEach(() => {
+    test.skip(!LIVE, LIVE_ONLY);
+  });
+
+  test("signs the Owner in, landing on the Overview", async ({ page }) => {
+    await ensurePasswordUser(sampleEmail("owner"));
+    await signInThroughBox(page, sampleEmail("owner"));
+
+    await expect(page).toHaveURL(/\/admin$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
+    await expect(page.getByRole("complementary").getByText("OWNER", { exact: true })).toBeVisible();
+  });
+
+  test("lands on next, and on the Overview for another site's next", async ({ page }) => {
+    await ensurePasswordUser(sampleEmail("owner"));
+    await signInThroughBox(page, sampleEmail("owner"), E2E_PASSWORD, "/admin/settings");
+    await expect(page).toHaveURL(/\/admin\/settings$/);
+
+    await page.context().clearCookies();
+    await signInThroughBox(page, sampleEmail("owner"), E2E_PASSWORD, "https://evil.example");
+    await expect(page).toHaveURL(/\/admin$/);
+  });
+
+  test("activates a pending Invite for a confirmed password User", async ({ page }) => {
+    await ensurePasswordUser(sampleEmail("invited"));
+    await signInThroughBox(page, sampleEmail("invited"));
+
+    await expect(page).toHaveURL(/\/admin$/);
+    await expect(
+      page.getByRole("complementary").getByText("EDITOR", { exact: true }),
+    ).toBeVisible();
+  });
+
+  test("sends a confirmed User who isn't Staff to the 403 screen, logging the attempt", async ({
+    page,
+  }) => {
+    await ensurePasswordUser(sampleEmail("not-staff"));
+    await signInThroughBox(page, sampleEmail("not-staff"));
+
+    await expect(page).toHaveURL(/\/admin\/denied\?reason=not-staff$/);
+    await expect(page.getByText(/^THIS ATTEMPT WAS LOGGED · /)).toBeVisible();
+    await page.getByRole("button", { name: "Use another account" }).click();
+    await expect(page).toHaveURL(/\/admin\/sign-in$/);
+    await expect(passwordBox(page)).toBeVisible();
+  });
+
+  test("stays on sign-in with a wrong password, keeping the email", async ({ page }) => {
+    await ensurePasswordUser(sampleEmail("owner"));
+    const box = await signInThroughBox(page, sampleEmail("owner"), "not-the-password");
+
+    await expect(box.getByRole("alert")).toHaveText("That email and password don't match.");
+    await expect(page).toHaveURL(/\/admin\/sign-in$/);
+    await expect(box.getByLabel("Email")).toHaveValue(sampleEmail("owner"));
+    await expect(box.getByLabel("Password")).toHaveValue("");
+  });
+
+  test("says Enter your email and Enter your password next to empty fields", async ({ page }) => {
+    const box = await signInThroughBox(page, "", "");
+
+    await expect(box.getByText("Enter your email")).toBeVisible();
+    await expect(box.getByText("Enter your password")).toBeVisible();
+    await expect(box.getByLabel("Email")).toHaveAttribute("aria-invalid", "true");
+    await expect(page).toHaveURL(/\/admin\/sign-in$/);
   });
 });
 

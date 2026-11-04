@@ -47,6 +47,12 @@ describe("sign-in screen", () => {
     }
   });
 
+  it("offers no password box with sample data (ticket 19)", async () => {
+    render(await SignInPage(props()));
+    expect(screen.queryByRole("region", { name: "Development only" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Password")).not.toBeInTheDocument();
+  });
+
   it("sends back an unsafe next as the Overview", async () => {
     render(await SignInPage(props("https://evil.example")));
     for (const input of document.querySelectorAll<HTMLInputElement>('input[name="next"]')) {

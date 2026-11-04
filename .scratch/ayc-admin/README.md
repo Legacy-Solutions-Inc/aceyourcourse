@@ -39,7 +39,9 @@
 
 Run them one at a time:
 
-01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18
+01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18 → 19
+
+Ticket 19 was added on 2026-11-04, after 01–18 were done. It needs only 16.
 
 | #   | Ticket                                      | Blocked by             |
 | --- | ------------------------------------------- | ---------------------- |
@@ -61,6 +63,7 @@ Run them one at a time:
 | 16  | Real Staff sign-in                          | 15                     |
 | 17  | Photo storage                               | 15                     |
 | 18  | Production go-live                          | 16, 17                 |
+| 19  | Development password sign-in                | 16                     |
 
 **Merge-conflict hotspots** (expected, and small when the tickets run in order):
 
@@ -81,14 +84,18 @@ Run them one at a time:
   - the `catalogue` bucket
   - the seed loaded
   - 0 Staff
-- [ ] **After ticket 16, before signing in on localhost:** runbook steps 6–8:
-  - `staff:add-owner`
-  - Google
-  - the redirect URLs, including `http://localhost:3000/**`
-- [ ] **After ticket 16:** open a PR so CI runs the database tests and the live-mode Admin e2e.
+- [ ] **After ticket 19, to sign in on localhost:**
+  - `pnpm staff:add-owner <your email>`
+  - create your password User in the Supabase dashboard (Authentication → Users → Add user → Create new user, with Auto Confirm User ticked)
+  - keep Confirm email on
+  - `pnpm dev`, then use the "DEVELOPMENT ONLY" box on `/admin`
+
+  Google (runbook steps 7–8) can wait until go-live. ~~After ticket 16: runbook steps 6–8 before signing in on localhost~~ was superseded on 2026-11-04 by ticket 19.
+
+- [ ] **After ticket 19:** open a PR so CI runs the database tests and the live-mode Admin e2e, including ticket 19's CI-only checks.
 
 - [ ] **Before production (ticket 18's runbook):**
   - the Google Auth Platform client and the Supabase Google provider
-  - Email turned off in the hosted project
+  - end development sign-in (top of runbook step 8): remove the test Editors, delete their Users, then turn Email off in the hosted project
   - the Vercel env vars
   - `pnpm staff:add-owner <your email>`, typed at deployment and never written in the repo

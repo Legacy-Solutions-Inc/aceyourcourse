@@ -104,7 +104,8 @@ All routes go in `src/paths.ts` under `paths.admin`. Never hard-code a path.
 - Every Admin page and every Admin Server Action calls the Guard. The staff list is read on every call.
 - **Identity** (`src/lib/admin/identity.ts`) gives the signed-in User's email and name.
   - Sample arm: the `ayc_admin_sample` cookie (httpOnly, `sameSite=lax`, `path=/`), honoured only in `"sample"` mode.
-  - Supabase arm: added in ticket 16.
+  - Supabase arm: added in ticket 16 (Google). Ticket 19 adds the development password sign-in.
+  - **The sign-in method counts too (ticket 19).** It's read from the session's verified `amr` claim. `oauth` always counts, `password` counts only under `pnpm dev` (`NODE_ENV === "development"`), and nothing else counts. So production is Google-only, whatever Supabase's Email setting says. Phase 3's Member sign-in keeps the same rule.
 
 ### Server Actions
 
