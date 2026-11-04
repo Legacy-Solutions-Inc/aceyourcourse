@@ -1,6 +1,6 @@
 // @vitest-environment node
 import type { User } from "@supabase/supabase-js";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
@@ -66,19 +66,22 @@ const redirectsTo = (url: string) =>
   new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 
 describe("Staff Guard (live mode)", () => {
+  // Supabase configured, as live mode has it; the modules load once, after this.
+  beforeAll(() => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "sb_publishable_test");
+  });
+
+  afterAll(() => {
+    vi.unstubAllEnvs();
+  });
+
   beforeEach(() => {
     jar.clear();
     resetSampleStore();
     getUser.mockReset();
     getUser.mockResolvedValue({ data: { user: null }, error: null });
     signOut.mockReset();
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "sb_publishable_test");
-    vi.resetModules();
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
   });
 
   it("lets a verified Staff email in, with its Staff Role", async () => {
