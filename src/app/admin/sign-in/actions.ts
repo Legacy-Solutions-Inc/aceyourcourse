@@ -3,7 +3,7 @@
 import { notFound, redirect } from "next/navigation";
 
 import { signIn } from "@/lib/admin/guard";
-import { startSampleSession } from "@/lib/admin/identity";
+import { googleSignInDestination, startSampleSession } from "@/lib/admin/identity";
 import { adminMode } from "@/lib/admin/mode";
 import { safeAdminNext } from "@/lib/admin/safe-next";
 import { signInAsSchema } from "@/services/admin.schema";
@@ -38,4 +38,15 @@ export async function signInAs(
 
   await signIn(await startSampleSession(parsed.data.email));
   redirect(safeAdminNext(formData.get("next")));
+}
+
+/**
+ * Live mode's "Continue with Google": sends the browser to Google, coming back
+ * through /auth/callback to `next`. When Google sign-in isn't set up on this
+ * Supabase, or it doesn't answer, the sign-in screen says so instead. Any other
+ * mode answers 404.
+ */
+export async function continueWithGoogle(formData: FormData): Promise<void> {
+  if (adminMode !== "live") notFound();
+  redirect(await googleSignInDestination(formData.get("next")));
 }

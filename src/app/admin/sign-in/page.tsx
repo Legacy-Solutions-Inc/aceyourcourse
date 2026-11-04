@@ -2,25 +2,36 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AuthScreen } from "@/components/admin/auth-screen";
+import { GoogleSignInForm } from "@/components/admin/google-sign-in-form";
 import { SignInAsPanel } from "@/components/admin/sign-in-as-panel";
 import { BrandLogo } from "@/components/website/brand-logo";
 import { config } from "@/config";
 import { getStaff } from "@/lib/admin/guard";
 import { listSampleUsers } from "@/lib/admin/identity";
+import { adminMode } from "@/lib/admin/mode";
 import { safeAdminNext } from "@/lib/admin/safe-next";
+import { parseSignInProblem, SIGN_IN_PROBLEMS } from "@/lib/admin/sign-in-problem";
 
-import { signInAs } from "./actions";
+import { continueWithGoogle, signInAs } from "./actions";
 
 export const metadata: Metadata = { title: "Sign in" };
 
 interface SignInPageProps {
-  searchParams: Promise<{ next?: string | string[] }>;
+  searchParams: Promise<{ next?: string | string[]; error?: string | string[] }>;
 }
 
-/** "Sign in to manage the site" (mockup 883–893). Staff already signed in go straight on. */
+/**
+ * "Sign in to manage the site" (mockup 883–893). Staff already signed in go
+ * straight on. "Continue with Google" goes to Google in live mode, and opens
+ * the "Sign in as" list in sample mode. `error` says why the last sign-in
+ * didn't go on. It only reads: signing in happens in /auth/callback (live)
+ * or the Sign in as action (sample).
+ */
 export default async function SignInPage({ searchParams }: SignInPageProps) {
-  const next = safeAdminNext((await searchParams).next);
+  const params = await searchParams;
+  const next = safeAdminNext(params.next);
   if (await getStaff()) redirect(next);
+  const problem = parseSignInProblem(params.error);
 
   return (
     <AuthScreen tone="sign-in">
@@ -37,7 +48,16 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
       <p className="text-[15px] leading-normal">
         Only Google accounts on the admin list can open the dashboard.
       </p>
-      <SignInAsPanel users={listSampleUsers()} next={next} action={signInAs} />
+      {problem ? (
+        <p role="alert" className="text-sm font-semibold text-destructive">
+          {SIGN_IN_PROBLEMS[problem]}
+        </p>
+      ) : null}
+      {adminMode === "live" ? (
+        <GoogleSignInForm next={next} action={continueWithGoogle} />
+      ) : (
+        <SignInAsPanel users={listSampleUsers()} next={next} action={signInAs} />
+      )}
     </AuthScreen>
   );
 }

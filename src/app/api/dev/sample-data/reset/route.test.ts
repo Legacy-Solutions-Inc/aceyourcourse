@@ -82,9 +82,16 @@ describe("POST /api/dev/sample-data/reset", () => {
   describe("on the database (DATABASE_URL set)", () => {
     const seedCatalogue = vi.fn();
 
-    /** Imports the route with DATABASE_URL as given, over a stand-in seed and database. */
+    /**
+     * Imports the route with DATABASE_URL as given, over a stand-in seed and
+     * database. No Supabase, so the Admin is in sample mode on it, whatever
+     * the shell says (CI sets a placeholder Supabase): live mode is
+     * route.live.test.ts.
+     */
     async function routeWithDatabase(url: string) {
       vi.stubEnv("DATABASE_URL", url);
+      vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+      vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "");
       vi.resetModules();
       vi.doMock("@/lib/catalogue-seed/seed", () => ({ seedCatalogue }));
       vi.doMock("@/lib/db/client", () => ({ getDb: () => "the database" }));

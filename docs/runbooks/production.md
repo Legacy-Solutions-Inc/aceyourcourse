@@ -10,11 +10,6 @@ items (the client's catalogue spreadsheet, the lawyer's review of Legal v1.0,
 the PostHog key) are listed in the spec under **Further Notes → Launch
 blockers and checklist** ([`docs/specs/2026-10-29-ayc-v1.md`](../specs/2026-10-29-ayc-v1.md)).
 
-> **⚠ Ticket 16 (real Staff sign-in) isn't on the branch yet.** Until it is,
-> `pnpm staff:add-owner` doesn't exist and the Admin stays closed in
-> production, so step 6 and the sign-in checks in step 11 can't be done. The
-> database, seed, Storage, Google and Vercel steps don't depend on it.
-
 **Placeholders.** Replace each one with your own value as you go. Never
 commit any of these values, or paste them into a file in the repo.
 
@@ -180,16 +175,30 @@ with the same counts. Then `pnpm db:check` shows those counts, and a second
 
 ## 6. Add the first Owner
 
-> **⚠ Needs ticket 16.** `pnpm staff:add-owner` doesn't exist yet.
+With the step 4 `DATABASE_URL` still in the shell:
 
 ```sh
 pnpm staff:add-owner <owner-email>
 ```
 
 Type the Owner's Google email in the terminal only; never write it in the
-repo, this runbook, or `.env`. The command is safe to run again.
+repo, this runbook, or `.env`. It makes that email an active Owner on the
+staff list, recorded in Staff Activity by `deployment`. It's safe to run
+again: an Owner already is left as they are. It never prints the connection
+string.
 
-**Check:** `pnpm db:check` shows `Staff: 1 Owner, 0 Editors, 0 Invites`.
+**Check:** it exits 0, and prints:
+
+```text
+On a database on another machine:
+✓ Added <owner-email> as an Owner.
+  Staff: 1 Owner, 0 Editors, 0 Invites
+```
+
+(Run again, the second line says `is an Owner already. Nothing was
+changed.`) Then `pnpm db:check` shows the same `Staff: 1 Owner, 0 Editors, 0
+Invites` line. The Owner's name shows as their email until they sign in with
+Google the first time; Settings shows it.
 
 ## 7. Set up Google sign-in (Google Cloud console)
 
@@ -229,10 +238,16 @@ with no `localhost` entries, and the Audience page shows **In production**.
 3. **Authentication → URL Configuration:**
    - **Site URL:** `<site-url>`
    - **Redirect URLs:** `<site-url>/auth/callback`. Use that exact path, with
-     no wildcard, in production.
+     no wildcard, for the site.
+   - While you develop against this project (`pnpm dev` with `.env` pointing
+     at it), add `http://localhost:3000/**` too, so Google sign-in can come
+     back to your machine. Supabase sends a sign-in back only to an address
+     on this list. Remove it when nobody develops against production any
+     more.
 
 **Check:** Google is the only enabled provider, and the redirect list holds
-only `<site-url>/auth/callback`.
+`<site-url>/auth/callback`, plus `http://localhost:3000/**` only while you
+develop against this project.
 
 ## 9. Set the Vercel environment variables
 
@@ -256,8 +271,8 @@ shows its value again.
 | `NEXT_PUBLIC_POSTHOG_KEY`              | the PostHog project token, when analytics go live (ADR 0009) | no                 |
 | `NEXT_PUBLIC_POSTHOG_HOST`             | `https://us.i.posthog.com`, or the EU host, with the key     | no                 |
 
-Never set `TEST_DATABASE_URL`, `TEST_SUPABASE_SECRET_KEY` or
-`PLAYWRIGHT_DATABASE_URL` in Vercel: they're for local tests only. Never give
+Never set `TEST_DATABASE_URL`, `TEST_SUPABASE_SECRET_KEY` or any
+`PLAYWRIGHT_*` variable in Vercel: they're for tests only. Never give
 a secret a `NEXT_PUBLIC_` name: that ships it to every browser.
 
 The app needs the transaction pooler's port 6543: its database client turns
@@ -278,15 +293,14 @@ price and photos.
 
 ## 11. Smoke checklist
 
-Do these on `<site-url>` in a private window. The first two need ticket 16.
+Do these on `<site-url>` in a private window.
 
 - [ ] **The Owner signs in with Google:** open `<site-url>/admin`, choose
       "Continue with Google", and sign in as `<owner-email>`. The Admin's
-      Overview opens. _(Needs ticket 16.)_
+      Overview opens.
 - [ ] **Invite an Editor, and the Editor signs in:** in Staff, invite a second
       Google account as an Editor. Signed in as that account (another private
-      window), the Admin opens for it, and Staff shows it as active. _(Needs
-      ticket 16.)_
+      window), the Admin opens for it, and Staff shows it as active.
 - [ ] **An edit goes live:** as the Owner or Editor, change a Product's price
       and save. The Product's page on the Website shows the new price after a
       reload. Change it back.
@@ -330,8 +344,9 @@ Do these on `<site-url>` in a private window. The first two need ticket 16.
 unset DATABASE_URL SUPABASE_SECRET_KEY NEXT_PUBLIC_SUPABASE_URL
 ```
 
-Keep `.env` on the local values (README → Local database): with a hosted
-`DATABASE_URL` in `.env`, the development Admin stays closed.
+`.env` can stay pointed at this project for `pnpm dev` (README → Signing in
+to the Admin locally). The development Admin then runs live, signing in with
+Google: after launch, every save from your machine is a live edit.
 
 **Check:** `env | grep -c -e DATABASE_URL -e SUPABASE_SECRET_KEY` prints `0`.
 

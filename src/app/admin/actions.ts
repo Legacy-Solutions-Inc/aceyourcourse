@@ -3,7 +3,7 @@
 import { notFound, redirect } from "next/navigation";
 
 import { requireAdminOpen, requireStaff } from "@/lib/admin/guard";
-import { endSession } from "@/lib/admin/identity";
+import { endSession, googleSignInDestination } from "@/lib/admin/identity";
 import { adminMode } from "@/lib/admin/mode";
 import { restoreSampleData } from "@/lib/admin/sample-data";
 import { paths } from "@/paths";
@@ -17,6 +17,22 @@ export async function signOut(): Promise<void> {
   requireAdminOpen();
   await endSession();
   redirect(paths.admin.signIn());
+}
+
+/**
+ * The 403 screen's "Use another account": signs out, then, in live mode,
+ * starts Google's sign-in again, which asks which account to use. Sample mode
+ * returns to sign-in, where "Sign in as" picks another. Closed mode answers
+ * 404.
+ */
+export async function switchAccount(): Promise<void> {
+  requireAdminOpen();
+  await endSession();
+  redirect(
+    adminMode === "live"
+      ? await googleSignInDestination(paths.admin.overview)
+      : paths.admin.signIn(),
+  );
 }
 
 /**

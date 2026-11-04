@@ -7,7 +7,7 @@ import { formatLoggedAt } from "@/lib/admin/time";
 import { paths } from "@/paths";
 import { getWebsiteSettings } from "@/services/catalogue";
 
-import { signOut } from "../actions";
+import { switchAccount } from "../actions";
 
 export const metadata: Metadata = { title: "Not authorised" };
 
@@ -29,7 +29,7 @@ export default async function DeniedPage({ searchParams }: DeniedPageProps) {
   const screen = await getDeniedScreen((await searchParams).reason);
 
   const useAnotherAccount = (
-    <form action={signOut}>
+    <form action={switchAccount}>
       <button
         type="submit"
         className={screen.reason === "owners-only" ? secondaryButton : primaryButton}

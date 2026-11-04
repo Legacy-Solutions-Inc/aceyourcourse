@@ -1,12 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
-import { LOCAL_DATABASE_URL, LOCAL_SUPABASE_URL } from "./src/lib/db/local-database";
-
-const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 3000);
-const baseURL = `http://localhost:${PORT}`;
+import { BASE_URL as baseURL, LIVE, PORT, SERVER } from "./e2e/server";
 
 export default defineConfig({
   testDir: "./e2e",
+  // Live mode only (CI): loads the seed into the runner's local database and
+  // makes the sample Staff password Users on its local Supabase.
+  globalSetup: LIVE ? "./e2e/admin/global-setup.ts" : undefined,
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
@@ -47,17 +47,11 @@ export default defineConfig({
       // The site URL follows the port, so canonical URLs, the sitemap and the
       // JSON-LD point at the server under test on any PLAYWRIGHT_PORT.
       NEXT_PUBLIC_SITE_URL: `${baseURL}/`,
-      // Local Supabase, beside the local database: uploads go to its Storage,
-      // and next/image loads the bucket's photos from it (ticket 17). The
-      // server reads SUPABASE_SECRET_KEY from .env, never this file.
-      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? LOCAL_SUPABASE_URL,
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
-        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "placeholder",
-      // The local database, whatever .env says (Next never overrides a
-      // variable that is set): the Website and the Admin read and write it,
-      // and the reset route re-seeds it. PLAYWRIGHT_DATABASE_URL points the run
-      // at another local database, such as one on another port.
-      DATABASE_URL: process.env.PLAYWRIGHT_DATABASE_URL ?? LOCAL_DATABASE_URL,
+      // The database, Supabase and secret key: blank by default, so the Admin
+      // runs on the in-memory sample data whatever .env says (Next never
+      // replaces a variable that is set), or the local Supabase the PLAYWRIGHT_*
+      // values name (CI). Never the hosted project. See e2e/server.ts.
+      ...SERVER.env,
     },
   },
 });

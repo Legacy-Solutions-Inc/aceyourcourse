@@ -177,7 +177,7 @@ Never put a real person's address beyond these mockup samples into the repo. The
 - **Accessibility.** Add every new Admin screen, signed in, to the axe check: serious and critical issues block.
 - **Verification** for every ticket:
   - `pnpm lint && pnpm type:check && pnpm test && pnpm build`, then `pnpm test:coverage` and `pnpm test:e2e`
-  - from ticket 13, also the database tests against local Supabase
+  - from ticket 13, also the database tests against local Supabase. **Since 2026-11-04 those run in CI only.** The user's machine has no Docker, and `.env` points at the hosted project, which no test may touch.
   - repo gotchas:
     - `pnpm build` breaks a dev server running on :3000. If :3000 answers 200, run e2e against it, and run the build in a scratchpad copy (rsync without `node_modules`, `.next` and `.git`; `cp -cR` the `node_modules` back for Turbopack).
     - Never kill the user's server.

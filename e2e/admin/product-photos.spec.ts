@@ -5,6 +5,7 @@ import { type Browser, expect as baseExpect, type Page, test } from "@playwright
 import { paths } from "../../src/paths";
 import {
   isUploadPut,
+  LIVE,
   publicUrlOf,
   resetSampleData,
   signInAs,
@@ -12,11 +13,12 @@ import {
   uploadPathOf,
 } from "./helpers";
 
-// Product photos (tickets 06 and 17), on the local database: an Editor
-// uploads a photo straight to a one-time signed upload URL in Supabase
-// Storage, makes it the cover, saves, and the Website shows it from the
-// bucket through next/image. Uploads that break, or haven't finished, never
-// reach the save.
+// Product photos (tickets 06 and 17): an Editor uploads a photo straight to a
+// one-time upload URL, makes it the cover, saves, and the Website shows it
+// through next/image. On the in-memory sample data the URL is the
+// development-only upload route; live (CI), it's a signed upload URL in the
+// local Supabase's Storage, and the Website loads it from the bucket. Uploads
+// that break, or haven't finished, never reach the save.
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -93,9 +95,9 @@ test("an uploaded photo dragged to first is the cover, live on the Product page,
   const put = nextUpload(page);
   await addPhotos(page).setInputFiles(FIXTURE);
   const uploadUrl = (await put).url();
-  // Storage files it under the Product.
+  // Storage files it under the Product; in memory it's filed by its id.
   expect(uploadPathOf(uploadUrl)).toMatch(
-    new RegExp(`^products/${POSTERS.id}/[0-9a-f-]{36}\\.png$`),
+    LIVE ? new RegExp(`^products/${POSTERS.id}/[0-9a-f-]{36}\\.png$`) : /^uploads\/[0-9a-f-]{36}$/,
   );
   await expect(tile(page, 3)).toContainText("product-photo.png");
   await expect(tile(page, 3)).toContainText("UNSAVED");
@@ -113,7 +115,7 @@ test("an uploaded photo dragged to first is the cover, live on the Product page,
   const cover = page.getByTestId("gallery-main").locator("img");
   await expect(cover).toHaveAttribute("alt", `${POSTERS.title}, photo 1 of 3`);
   await expect(cover).toHaveAttribute("src", optimized(uploadUrl));
-  // Served: the optimizer read the upload from the bucket.
+  // Served: the optimizer read the upload.
   await expect
     .poll(() => cover.evaluate((img: HTMLImageElement) => img.naturalWidth))
     .toBeGreaterThan(0);
@@ -145,7 +147,7 @@ test("Move left from the keyboard makes an upload the cover, and the upload URL 
   await expect(tile(page, 1)).toContainText("product-photo.png");
   await expect(tile(page, 1)).toContainText("COVER");
 
-  // One-time: Storage refuses a second file on the same URL, and serves the first.
+  // One-time: the same URL refuses a second file, and the first is served.
   const again = await request.put(uploadUrl, {
     headers: { "content-type": "image/png" },
     data: (await fixtureAs("again.png")).buffer,

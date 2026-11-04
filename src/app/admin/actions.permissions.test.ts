@@ -139,10 +139,13 @@ const ADMIN_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REGISTRY: Record<string, Record<string, Entry>> = {
   "./actions.ts": {
     signOut: anyone(() => root.signOut()),
+    switchAccount: anyone(() => root.switchAccount()),
     resetSampleData: staff(() => root.resetSampleData()),
   },
   "./sign-in/actions.ts": {
     signInAs: anyone(() => signIn.signInAs({ error: null, email: "" }, signInForm(OWNER))),
+    // Live mode only: sample mode answers 404 (see sign-in/live.test.tsx).
+    continueWithGoogle: anyone(() => signIn.continueWithGoogle(new FormData())),
   },
   "./(shell)/settings/actions.ts": {
     saveContactEmail: editorSave("owner", settings.saveContactEmail, () => ({
@@ -338,6 +341,20 @@ describe("the action registry", () => {
       "NEXT_REDIRECT /admin/sign-in",
     );
     expect(jar.has("ayc_admin_sample")).toBe(false);
+  });
+
+  it("lets anyone use another account: sample mode signs out to the Sign in as list", async () => {
+    signInAs(NOT_STAFF);
+    await expect(REGISTRY["./actions.ts"]?.switchAccount?.call()).rejects.toThrow(
+      /^NEXT_REDIRECT \/admin\/sign-in$/,
+    );
+    expect(jar.has("ayc_admin_sample")).toBe(false);
+  });
+
+  it("has no Continue with Google in sample mode", async () => {
+    await expect(REGISTRY["./sign-in/actions.ts"]?.continueWithGoogle?.call()).rejects.toThrow(
+      "NEXT_NOT_FOUND",
+    );
   });
 });
 

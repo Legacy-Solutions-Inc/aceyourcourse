@@ -23,6 +23,7 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset && pnpm catalogue:seed --local",
     "db:check": "tsx scripts/db-check.ts",
+    "staff:add-owner": "tsx scripts/staff-add-owner.ts",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",

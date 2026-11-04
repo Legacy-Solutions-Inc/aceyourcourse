@@ -14,7 +14,17 @@ vi.mock("@/lib/supabase/middleware", () => ({ createClient }));
 
 async function runMiddleware(
   pathname: string,
-  { signedIn = false, supabaseConfigured = true, nodeEnv = "test" } = {},
+  {
+    signedIn = false,
+    supabaseConfigured = true,
+    nodeEnv = "test",
+    databaseUrl = "",
+  }: {
+    signedIn?: boolean;
+    supabaseConfigured?: boolean;
+    nodeEnv?: string;
+    databaseUrl?: string;
+  } = {},
 ) {
   if (supabaseConfigured) {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://test.supabase.co");
@@ -24,6 +34,9 @@ async function runMiddleware(
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "");
   }
   vi.stubEnv("NODE_ENV", nodeEnv);
+  // The Admin's mode follows the database too: unset, it is sample (or closed
+  // in production), whatever Supabase says.
+  vi.stubEnv("DATABASE_URL", databaseUrl);
   vi.resetModules();
 
   getUser.mockResolvedValue({ data: { user: signedIn ? { id: "u1", app_metadata: {} } : null } });
@@ -36,6 +49,8 @@ async function runMiddleware(
   const { middleware } = await import("./middleware");
   return middleware(new NextRequest(new URL(pathname, "http://localhost:3000")));
 }
+
+const LOCAL_DATABASE = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 
 function cspOf(response: Response) {
   return response.headers.get("Content-Security-Policy") ?? "";
@@ -104,6 +119,30 @@ describe("middleware", () => {
       expect(response.headers.get("x-middleware-request-x-nonce")).toBeTruthy();
     },
   );
+
+  // Live mode (ticket 16): the database and Supabase are both configured, and
+  // Staff sign in with Google, so /admin refreshes the Supabase session.
+  it.each(["/admin", "/admin/sign-in", "/admin/products"])(
+    "refreshes the session for %s in live mode",
+    async (pathname) => {
+      const response = await runMiddleware(pathname, { databaseUrl: LOCAL_DATABASE });
+      expect(createClient).toHaveBeenCalledTimes(1);
+      expect(getUser).toHaveBeenCalledTimes(1);
+      expect(cspOf(response)).toContain("'strict-dynamic'");
+    },
+  );
+
+  it("still makes no Supabase call for a public route in live mode", async () => {
+    await runMiddleware("/products", { databaseUrl: LOCAL_DATABASE });
+    expect(createClient).not.toHaveBeenCalled();
+  });
+
+  it("makes no Supabase call for /admin with the Admin closed", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    // Production with Supabase but no database: closed.
+    await runMiddleware("/admin", { nodeEnv: "production" });
+    expect(createClient).not.toHaveBeenCalled();
+  });
 
   // Phase 2 adds the Member App and Admin gates; until then a session route only
   // refreshes the session and passes through, whoever is signed in.

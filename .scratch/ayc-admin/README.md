@@ -73,15 +73,19 @@ Run them one at a time:
 ## What you do yourself
 
 - [ ] **Before ticket 01:** commit or drop the current `CONTEXT.md` change and the spec update. Commit `.scratch/ayc-admin/`, or ignore `.scratch/`.
-- [ ] **Before ticket 13:**
-  - Install and start Docker Desktop.
-  - Have your hosted Postgres major version ready (Dashboard → Settings → Infrastructure). Ticket 13 asks for it.
-- [ ] **During ticket 13:** update your `.env` to the **local** values the executer gives you:
-  - the renamed publishable key
-  - the secret key
-  - the local `DATABASE_URL`
-
-  Your hosted values move to Vercel in ticket 18. Never paste keys or passwords into chat.
+- [x] ~~Before ticket 13: Docker; during ticket 13: local `.env` values.~~ Superseded on 2026-11-04. There's no Docker on your machine: `.env` points at the hosted project, and the database tests and the live-mode e2e run in CI.
+- [x] **Hosted project ready (checked with `db:check` on 2026-11-04).** `DATABASE_URL` uses the Session pooler. Results:
+  - Postgres 17
+  - all 4 migrations applied
+  - deny-all on 17 tables
+  - the `catalogue` bucket
+  - the seed loaded
+  - 0 Staff
+- [ ] **After ticket 16, before signing in on localhost:** runbook steps 6–8:
+  - `staff:add-owner`
+  - Google
+  - the redirect URLs, including `http://localhost:3000/**`
+- [ ] **After ticket 16:** open a PR so CI runs the database tests and the live-mode Admin e2e.
 
 - [ ] **Before production (ticket 18's runbook):**
   - the Google Auth Platform client and the Supabase Google provider

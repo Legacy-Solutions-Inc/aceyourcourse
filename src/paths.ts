@@ -1,3 +1,4 @@
+import type { SignInProblem } from "@/lib/admin/sign-in-problem";
 import type { DeniedScreenReason } from "@/services/admin.types";
 
 export const paths = {
@@ -25,15 +26,23 @@ export const paths = {
     plans: "/app/plans",
   },
   auth: {
-    /** The OAuth callback, kept for Phase 2's Google sign-in. */
+    /** The OAuth callback: Google sign-in comes back here, then goes on to `next`. */
     callback: "/auth/callback",
   },
   /** The staff-only Admin (CONVENTIONS §2). */
   admin: {
     overview: "/admin",
-    /** The sign-in screen; `next` is where to go afterwards (an /admin path only). */
-    signIn: (next?: string) =>
-      next ? `/admin/sign-in?next=${encodeURIComponent(next)}` : "/admin/sign-in",
+    /**
+     * The sign-in screen; `next` is where to go afterwards (an /admin path
+     * only), and `error` why the last sign-in didn't go on.
+     */
+    signIn: (next?: string, error?: SignInProblem) => {
+      const query = new URLSearchParams();
+      if (next) query.set("next", next);
+      if (error) query.set("error", error);
+      const search = query.toString();
+      return search ? `/admin/sign-in?${search}` : "/admin/sign-in";
+    },
     /** The 403 screen, saying why. */
     denied: (reason?: DeniedScreenReason) =>
       reason ? `/admin/denied?reason=${reason}` : "/admin/denied",

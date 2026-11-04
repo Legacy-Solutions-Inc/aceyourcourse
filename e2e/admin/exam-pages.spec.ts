@@ -3,7 +3,7 @@ import path from "node:path";
 import { expect as baseExpect, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
-import { resetSampleData, signInAs } from "./helpers";
+import { LIVE, resetSampleData, signInAs } from "./helpers";
 
 // Exam pages & promo on sample data (ticket 09): an Editor hides a section of
 // an Exam page and sees it gone from the Website; sets the CE page's search
@@ -165,10 +165,13 @@ test("uploads a 1200 × 630 share image: og:image; a square one is warned about"
   await expect(saveState(page)).toHaveText(SAVED);
 
   await page.goto(paths.exams.details("CE"));
-  // From the bucket, filed under the Exam (ticket 17).
+  // Live, from the bucket, filed under the Exam (ticket 17); on the sample
+  // data, from the development-only upload route.
   const image = await metaContent(page, 'property="og:image"');
   expect(image).toMatch(
-    /\/storage\/v1\/object\/public\/catalogue\/exam-pages\/CE\/share-[0-9a-f-]{36}\.png$/,
+    LIVE
+      ? /\/storage\/v1\/object\/public\/catalogue\/exam-pages\/CE\/share-[0-9a-f-]{36}\.png$/
+      : /\/api\/dev\/uploads\/[0-9a-f-]+$/,
   );
   const served = await page.request.get(image ?? "");
   expect(served.headers()["content-type"]).toBe("image/png");

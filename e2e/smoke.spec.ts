@@ -24,14 +24,16 @@ for (const path of [
   });
 }
 
-// The OAuth callback stays for Phase 2's Google sign-in. Without a code it
-// sends the Visitor Home, and it never follows an off-site `next`.
-test("the OAuth callback without a code lands on Home", async ({ page, baseURL }) => {
+// The OAuth callback is where Google sign-in comes back (ticket 16). Without a
+// code it returns to the Admin's sign-in screen saying so, and it never
+// follows an off-site `next`.
+test("the OAuth callback without a code returns to sign-in, saying so", async ({ page }) => {
   await page.goto("/auth/callback");
-  await expect(page).toHaveURL(`${baseURL}/`);
+  await expect(page).toHaveURL("/admin/sign-in?next=%2Fadmin&error=callback");
+  await expect(page.getByText("Sign-in didn't finish. Try again.")).toBeVisible();
 });
 
 test("the OAuth callback never follows an off-site `next`", async ({ page, baseURL }) => {
   await page.goto("/auth/callback?next=//evil.example");
-  await expect(page).toHaveURL(`${baseURL}/`);
+  await expect(page).toHaveURL(`${baseURL}/admin/sign-in?next=%2Fadmin&error=callback`);
 });

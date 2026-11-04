@@ -1,10 +1,24 @@
 import { expect as baseExpect, type Page, test } from "@playwright/test";
 
-import { openSignInAs, resetSampleData, SAMPLE_USERS, signInAs } from "./helpers";
+import {
+  LIVE,
+  openSignInAs,
+  resetSampleData,
+  SAMPLE_USERS,
+  sampleEmail,
+  signInAs,
+  signInWithEmail,
+} from "./helpers";
 
-// Staff sign-in and the Admin shell on sample data (ticket 01): each sample
-// User's sign-in, the 403 screens, the menu by Staff Role, sign out, the
-// mobile drawer and noindex.
+// Staff sign-in and the Admin shell (tickets 01 and 16): each sample User's
+// sign-in, the 403 screens, the menu by Staff Role, sign out, the mobile
+// drawer and noindex. They run on the in-memory sample data, where Staff sign
+// in from "Sign in as", and in CI live too, where they are password Users on
+// the runner's local Supabase (e2e/admin/helpers.ts). Google itself is never
+// reached: CI's local Supabase has no Google client.
+
+const SAMPLE_ONLY = "The Sign in as list exists in sample mode only.";
+const LIVE_ONLY = "Google sign-in through Supabase runs in live mode only.";
 
 // Sign-in redirects and menu clicks are navigations that wait for a dev server
 // compiling the Admin's routes for the first time.
@@ -49,6 +63,7 @@ test.describe("signed out", () => {
   test("Continue with Google opens the Sign in as list of the five sample Users", async ({
     page,
   }) => {
+    test.skip(LIVE, SAMPLE_ONLY);
     await page.goto("/admin/sign-in");
     const google = page.getByRole("button", { name: "Continue with Google" });
     await expect(google).toHaveAttribute("aria-expanded", "false");
@@ -62,6 +77,29 @@ test.describe("signed out", () => {
     }
     await expect(list.getByRole("listitem")).toHaveCount(5);
     await expect(list.getByLabel("Other email")).toBeVisible();
+  });
+
+  test("Continue with Google says it isn't set up when the local Supabase has no Google client", async ({
+    page,
+  }) => {
+    test.skip(!LIVE, LIVE_ONLY);
+    await page.goto("/admin/sign-in?next=%2Fadmin%2Fproducts");
+    await expect(page.getByRole("region", { name: "Sign in as" })).toHaveCount(0);
+    await page.getByRole("button", { name: "Continue with Google" }).click();
+
+    await expect(page).toHaveURL(
+      /\/admin\/sign-in\?next=%2Fadmin%2Fproducts&error=google-not-set-up$/,
+    );
+    await expect(page.getByRole("alert")).toHaveText("Google sign-in isn't set up on this server");
+  });
+
+  test("a callback with no code, or a bad one, returns to sign-in saying so", async ({ page }) => {
+    test.skip(!LIVE, LIVE_ONLY);
+    for (const query of ["", "?code=not-a-real-code"]) {
+      await page.goto(`/auth/callback${query}`);
+      await expect(page).toHaveURL(/\/admin\/sign-in\?next=%2Fadmin&error=callback$/);
+      await expect(page.getByRole("alert")).toHaveText("Sign-in didn't finish. Try again.");
+    }
   });
 
   test("every Admin screen sends a signed-out visitor to sign-in, coming back to it", async ({
@@ -82,11 +120,7 @@ test.describe("signed out", () => {
 test.describe("the Owner", () => {
   test("lands on the Overview with the greeting and today's date in Manila", async ({ page }) => {
     await page.goto("/admin");
-    await (
-      await openSignInAs(page, "/admin")
-    )
-      .getByRole("button", { name: /angel@aceyourcourse\.ph/ })
-      .click();
+    await signInAs(page, "owner", "/admin");
 
     await expect(page).toHaveURL(/\/admin$/);
     await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
@@ -126,7 +160,8 @@ test.describe("the Owner", () => {
       const header = page.getByRole("banner");
       await expect(header.getByRole("heading", { level: 1 })).toHaveText(title);
       await expect(header.getByText(group, { exact: true })).toBeVisible();
-      await expect(header.getByText("SAMPLE DATA", { exact: true })).toBeVisible();
+      // Only sample data says so; live, the Admin edits the real site.
+      await expect(header.getByText("SAMPLE DATA", { exact: true })).toHaveCount(LIVE ? 0 : 1);
       await expect(header.getByRole("link", { name: "View site" })).toHaveAttribute("href", "/");
       await expect(nav.getByRole("link", { name: title })).toHaveAttribute("aria-current", "page");
     }
@@ -143,11 +178,7 @@ test.describe("the Owner", () => {
   test("comes back to the screen that sent them to sign-in", async ({ page }) => {
     await page.goto("/admin/products");
     await expect(page).toHaveURL(/\/admin\/sign-in\?next=%2Fadmin%2Fproducts$/);
-    await (
-      await openSignInAs(page, "/admin/products")
-    )
-      .getByRole("button", { name: /angel@aceyourcourse\.ph/ })
-      .click();
+    await signInAs(page, "owner", "/admin/products");
     await expect(page).toHaveURL(/\/admin\/products$/);
   });
 
@@ -220,9 +251,8 @@ test.describe("an invited email", () => {
     await page.getByRole("complementary").getByRole("button", { name: "Sign out" }).click();
     await expect(page).toHaveURL(/\/admin\/sign-in$/);
 
-    const list = await openSignInAs(page);
-    await list.getByLabel("Other email").fill("KIM.REYES@GMAIL.COM");
-    await list.getByRole("button", { name: "Sign in", exact: true }).click();
+    // Supabase keeps emails lowercase, so the capitals are sample mode's.
+    await signInWithEmail(page, LIVE ? "kim.reyes@gmail.com" : "KIM.REYES@GMAIL.COM");
     await expect(page).toHaveURL(/\/admin$/);
     await expect(
       page.getByRole("complementary").getByText("kim.reyes@gmail.com", { exact: true }),
@@ -258,10 +288,24 @@ test.describe("the 403 screen", () => {
   });
 
   test("Use another account signs out and returns to sign-in", async ({ page }) => {
+    test.skip(LIVE, SAMPLE_ONLY);
     await signInAs(page, "not-staff");
     await expect(page).toHaveURL(/\/admin\/denied\?reason=not-staff$/);
     await page.getByRole("button", { name: "Use another account" }).click();
     await expect(page).toHaveURL(/\/admin\/sign-in$/);
+
+    await page.goto("/admin");
+    await expect(page).toHaveURL(/\/admin\/sign-in\?next=%2Fadmin$/);
+  });
+
+  test("Use another account signs out, then tries Google again", async ({ page }) => {
+    test.skip(!LIVE, LIVE_ONLY);
+    await signInAs(page, "not-staff");
+    await expect(page).toHaveURL(/\/admin\/denied\?reason=not-staff$/);
+    await page.getByRole("button", { name: "Use another account" }).click();
+    // CI's local Supabase has no Google client, so it says so (a unit test
+    // checks the Google request asks which account to use).
+    await expect(page).toHaveURL(/\/admin\/sign-in\?next=%2Fadmin&error=google-not-set-up$/);
 
     await page.goto("/admin");
     await expect(page).toHaveURL(/\/admin\/sign-in\?next=%2Fadmin$/);
@@ -288,7 +332,17 @@ test.describe("the 403 screen", () => {
     ).toBeVisible();
   });
 
+  test("never honours the sample cookie live, even the Owner's", async ({ page, baseURL }) => {
+    test.skip(!LIVE, LIVE_ONLY);
+    await page
+      .context()
+      .addCookies([{ name: "ayc_admin_sample", value: sampleEmail("owner"), url: baseURL ?? "" }]);
+    await page.goto("/admin");
+    await expect(page).toHaveURL(/\/admin\/sign-in\?next=%2Fadmin$/);
+  });
+
   test("treats a sample cookie for an unknown email as not Staff", async ({ page, baseURL }) => {
+    test.skip(LIVE, SAMPLE_ONLY);
     await page
       .context()
       .addCookies([{ name: "ayc_admin_sample", value: "someone@example.com", url: baseURL ?? "" }]);
@@ -313,6 +367,7 @@ test.describe("Other email", () => {
     ["not-an-email", "Enter a valid email address, like name@example.com."],
   ] as const) {
     test(`rejects ${JSON.stringify(typed)} with a message`, async ({ page }) => {
+      test.skip(LIVE, SAMPLE_ONLY);
       const list = await openSignInAs(page);
       const field = list.getByLabel("Other email");
       await field.fill(typed);
@@ -366,7 +421,8 @@ test.describe("on a phone", () => {
   });
 
   test("fits the sign-in and 403 screens without scrolling sideways", async ({ page }) => {
-    await openSignInAs(page);
+    if (LIVE) await page.goto("/admin/sign-in");
+    else await openSignInAs(page);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       375,
     );

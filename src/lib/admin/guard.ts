@@ -2,7 +2,7 @@ import "server-only";
 
 import { notFound, redirect } from "next/navigation";
 
-import { getIdentity } from "@/lib/admin/identity";
+import { endSession, getIdentity, getSignInAttempt } from "@/lib/admin/identity";
 import { adminMode } from "@/lib/admin/mode";
 import { paths } from "@/paths";
 import {
@@ -48,6 +48,29 @@ export async function signIn(identity: SignInIdentity): Promise<StaffActor> {
   const actor = await admit(identity);
   await recordSignIn(actor.email, new Date());
   return actor;
+}
+
+/** Where a sign-in back from Google goes: on as Staff, or back to sign-in. */
+export type SignInStep =
+  { status: "staff"; actor: StaffActor } | { status: "signed-out" } | { status: "unverified" };
+
+/**
+ * Live mode's sign-in, back from Google: /auth/callback calls it once the code
+ * is exchanged. A verified email signs in (see signIn: Staff go on, and anyone
+ * else is recorded and refused). An email Google didn't verify is recorded as
+ * not Staff, once, and its session ends, so the sign-in screen can say why
+ * and offer Google again.
+ */
+export async function continueSignIn(): Promise<SignInStep> {
+  requireAdminOpen();
+  const attempt = await getSignInAttempt();
+  if (attempt.status === "signed-out") return attempt;
+  if (attempt.status === "unverified") {
+    await recordDeniedSignIn({ email: attempt.email, reason: "not-staff", at: new Date() });
+    await endSession();
+    return { status: "unverified" };
+  }
+  return { status: "staff", actor: await signIn(attempt.identity) };
 }
 
 /**

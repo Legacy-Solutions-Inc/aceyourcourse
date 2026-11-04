@@ -19,13 +19,35 @@ major_version = 17
 enabled = true
 port = 54323
 
+# Local Supabase only (CI's runner, or anyone running it locally). The hosted
+# project is set in its dashboard instead: Google only, Email off
+# (docs/runbooks/production.md, steps 7 and 8).
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["http://localhost:3000/**"]
+# Google sign-in comes back to /auth/callback (ticket 16).
+additional_redirect_urls = [
+  "http://localhost:3000/**",
+  "http://127.0.0.1:3000/**",
+]
 jwt_expiry = 3600
 enable_signup = true
 
+# Email and password, for the e2e test Users only: CI's live-mode Admin specs
+# create them with the secret key and sign in with a password. The app itself
+# offers Google only.
 [auth.email]
 enable_signup = true
 enable_confirmations = false
+
+# Staff sign in with Google. The client id and secret come from the shell, and
+# are never written here. Off unless SUPABASE_AUTH_EXTERNAL_GOOGLE_ENABLED=true
+# is set with them (the CLI reads SUPABASE_* over this file): with no client,
+# "Continue with Google" says "Google sign-in isn't set up on this server"
+# instead of sending the browser to Google with an id it would refuse, as in
+# CI. Unset env() values stay unresolved, and the CLI warns and starts.
+[auth.external.google]
+enabled = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET)"
+skip_nonce_check = false

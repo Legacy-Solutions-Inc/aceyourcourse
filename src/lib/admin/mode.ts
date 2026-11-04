@@ -7,15 +7,15 @@ import { isLocalDatabase } from "@/lib/db/local-database";
 
 /**
  * How the Admin runs (CONVENTIONS §1):
+ * - "live": the database, with Staff signing in with Google through Supabase
+ *   (ticket 16).
  * - "sample": every screen works on the sample data (in memory, or the local
  *   database when DATABASE_URL points at one), and Staff sign in from the
  *   development-only "Sign in as" list.
  * - "closed": every /admin route and development-only route answers 404, and
  *   every Admin Server Action refuses.
- *
- * Ticket 16 adds "live" (the database and Google sign-in through Supabase).
  */
-export type AdminMode = "sample" | "closed";
+export type AdminMode = "live" | "sample" | "closed";
 
 export interface AdminModeInputs {
   nodeEnv: string | undefined;
@@ -25,13 +25,19 @@ export interface AdminModeInputs {
 }
 
 /**
- * Pure: the rule until ticket 16. Sample data everywhere but production, where
- * the Admin stays closed. "Sign in as" asks for no real sign-in, so it never
- * reaches a database that isn't on this machine: with DATABASE_URL pointing
- * elsewhere (such as the hosted one), the Admin stays closed in development
- * too. Supabase is ignored, even when .env sets it.
+ * Pure: live wherever the database and Supabase are both configured, local or
+ * hosted, in any environment. Otherwise sample data everywhere but
+ * production, where the Admin stays closed. "Sign in as" asks for no real
+ * sign-in, so it never reaches a database that isn't on this machine: with
+ * DATABASE_URL pointing elsewhere and no Supabase, the Admin stays closed in
+ * development too.
  */
-export function computeAdminMode({ nodeEnv, database }: AdminModeInputs): AdminMode {
+export function computeAdminMode({
+  nodeEnv,
+  database,
+  supabaseConfigured,
+}: AdminModeInputs): AdminMode {
+  if (database !== "none" && supabaseConfigured) return "live";
   if (nodeEnv === "production" || database === "elsewhere") return "closed";
   return "sample";
 }

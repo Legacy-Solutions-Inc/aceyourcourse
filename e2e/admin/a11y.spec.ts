@@ -6,6 +6,7 @@ import { expect, type Locator, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
 import {
+  LIVE,
   openSignInAs,
   resetSampleData,
   type SampleUserKey,
@@ -262,6 +263,7 @@ for (const size of SIZES) {
     test("no serious or critical accessibility violations on the open Sign in as list", async ({
       page,
     }) => {
+      test.skip(LIVE, "The Sign in as list exists in sample mode only.");
       const list = await openSignInAs(page);
       await list.getByRole("button", { name: "Sign in", exact: true }).click();
       await expect(list.getByRole("alert")).toBeVisible();

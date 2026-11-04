@@ -52,6 +52,14 @@ const testStorage: Record<string, string> = testSecretKey
   : {};
 
 /**
+ * The database tests run the Admin in sample mode: with the database and
+ * Supabase both configured it would be live (ticket 16), and CI's placeholder
+ * Supabase must not make it so. No publishable key, no Supabase sign-in;
+ * Storage needs only the URL and the secret key.
+ */
+const SAMPLE_MODE = { NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "" };
+
+/**
  * With a test database, the database project runs the Admin suites too, over
  * the database arm: the seams' DATABASE_URL is the test database, never the
  * shell's or .env's. Without one, it runs only the `*.db.test.ts` files, which
@@ -64,11 +72,12 @@ const adminSuitesOnDatabase = testDatabaseUrl
       env: {
         ...testDatabase,
         ...testStorage,
+        ...SAMPLE_MODE,
         DATABASE_URL: testDatabaseUrl,
         ADMIN_TEST_ARM: "database",
       },
     }
-  : { include: [DATABASE_TESTS], env: testDatabase };
+  : { include: [DATABASE_TESTS], env: { ...testDatabase, ...SAMPLE_MODE } };
 
 export default defineConfig({
   plugins: [react()],

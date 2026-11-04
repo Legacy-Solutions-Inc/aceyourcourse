@@ -40,9 +40,10 @@ export async function middleware(req: NextRequest) {
     return passThrough();
   }
 
-  // The Admin's sample mode signs Staff in with its own cookie (CONVENTIONS §1),
-  // so it needs no Supabase session: no round trip for /admin there.
-  if (adminMode === "sample" && isAdminPath(pathname)) {
+  // Only the Admin's live mode signs Staff in through Supabase (ticket 16).
+  // Sample mode has its own cookie (CONVENTIONS §1), and closed mode answers
+  // 404: no round trip for /admin there.
+  if (adminMode !== "live" && isAdminPath(pathname)) {
     return passThrough();
   }
 

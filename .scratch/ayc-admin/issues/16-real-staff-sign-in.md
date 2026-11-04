@@ -14,6 +14,13 @@
 
 **Status:** ready-for-agent
 
+> **Planner note, 2026-11-04.**
+>
+> - There's no Docker on the user's machine. `pnpm dev` uses the hosted project, and no test touches it.
+> - Locally, e2e runs on the in-memory sample data.
+> - The live-mode e2e and the database tests below are met in CI, against a local Supabase on the runner.
+> - The prompt has the details.
+
 Spec: Phase 2 stories 51–58; Implementation Decisions → Phase 2 (Staff access, Invites, Seams: Staff Guard, Environments); Testing Decisions → Seam 5 (Admin). Conventions: §1 (mode), §3 (Staff Guard, identity). Skills: supabase-auth, supabase.
 
 - [ ] **The mode has a pure test:**

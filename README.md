@@ -39,15 +39,21 @@ Every screen reads through a typed **Service Seam** in `src/services/*`. With
 no `DATABASE_URL`, the seams return in-memory seed data, so the Website runs
 with no database. A seam's Drizzle arm is chosen when `DATABASE_URL` is set,
 and the pages don't change. The Catalogue and Admin seams have their Drizzle
-arms: the Website reads Postgres, and the Admin reads and writes it. Sign-in
-stays on the sample "Sign in as" list until Google sign-in lands (see Admin
-prototype). See [ADR 0003](docs/adr/0003-mock-first-service-seam.md)
+arms: the Website reads Postgres, and the Admin reads and writes it. With
+Supabase configured too, Staff sign in with Google (see Admin). See [ADR 0003](docs/adr/0003-mock-first-service-seam.md)
 and [ADR 0006](docs/adr/0006-drizzle-data-layer.md).
 
 ### Local database (Supabase)
 
-Development and every test use a **local Supabase** in Docker. The hosted
-project is production only; its values live in Vercel, never in `.env`.
+**Development uses the hosted project** (spec Phase 2: Environments): with no
+Docker, `.env` points `pnpm dev` at it (see Admin → Signing in locally). No
+test touches it: `pnpm test` runs on the mock, `pnpm test:e2e` on the
+in-memory sample data, and the database tests and the live-mode Admin e2e run
+in CI, on a throwaway local Supabase. Until launch the hosted data is working
+data; after launch, every Admin save from your machine is a live edit.
+
+A **local Supabase** in Docker is optional: it's what CI runs, and what
+`pnpm test:db` needs on your machine. To run it:
 
 1. Install **Docker** (Docker Desktop, or Colima) and start it.
 2. Start Supabase and apply `supabase/migrations`:
@@ -75,9 +81,7 @@ project is production only; its values live in Vercel, never in `.env`.
    ```
 
 **Updating an older `.env`:** the anon key variable is now
-`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, with no fallback. Rename that line,
-and replace any hosted values (`NEXT_PUBLIC_SUPABASE_URL`, `DATABASE_URL`)
-with the local ones above.
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, with no fallback. Rename that line.
 
 `pnpm db:stop` stops the containers. `pnpm db:reset` rebuilds the local
 database from `supabase/migrations` and loads the Phase 1 seed into it, with
@@ -141,43 +145,61 @@ as they go. The Storage tests (the bucket's rules, the upload seam, the seed's
 photos and the clean-up after a save) also need `TEST_SUPABASE_SECRET_KEY`;
 with it, the Admin suites upload through Storage too.
 
-The session plumbing and the OAuth callback (`/auth/callback`) are kept for
-Phase 2's Google sign-in. A minimal `supabase/config.toml` is included; its
-Postgres major version matches the hosted project.
+`supabase/config.toml` is for local Supabase only. Its Postgres major version
+matches the hosted project. Its Google provider is off unless
+`SUPABASE_AUTH_EXTERNAL_GOOGLE_ENABLED=true` is set, with the client id and
+secret read from the shell (`SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID`,
+`SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET`, never written down); off,
+"Continue with Google" says "Google sign-in isn't set up on this server".
+Email/password is on for the e2e test Users only. The hosted project has Google
+only, with Email turned off, set in its dashboard (the runbook, step 8).
 
 ---
 
-## Admin prototype
+## Admin
 
-The Admin runs on the **local database** when `DATABASE_URL` is set, and on
-**sample data** otherwise: an editable, in-memory copy of the Website's seed,
-held by the dev server. Either way, saves in the Admin show on the Website on
-its next load. On the database, each save and its Staff Activity are written
-in one transaction. There is no Google sign-in yet: Staff sign in from the
-sample list below, which `pnpm db:reset` puts on the local staff list.
+The Admin (`/admin`) runs in one of three modes (`src/lib/admin/mode.ts`):
 
-**Run it**
+| Mode       | When                                                                      | Staff sign in                 |
+| ---------- | ------------------------------------------------------------------------- | ----------------------------- |
+| **live**   | `DATABASE_URL` and Supabase both set, local or hosted, any build          | with Google, through Supabase |
+| **sample** | otherwise, outside production, with no database or a local one            | from the "Sign in as" list    |
+| **closed** | otherwise: production without both, or a hosted database with no Supabase | nobody: every route is 404    |
 
-```bash
-pnpm dev                  # then open http://localhost:3000/admin
-```
+Live, "Continue with Google" runs Supabase's OAuth flow (PKCE) and comes back
+through `/auth/callback`. The Staff Guard reads the verified Google email
+from `supabase.auth.getUser()`, never from the session cookie alone or
+`user_metadata`, and checks the staff list on every request. Saves show on
+the Website on its next load; on the database, each save and its Staff
+Activity are written in one transaction.
 
-Run `pnpm db:reset` first to work on the local database (Docker running), or
-leave `DATABASE_URL` unset for the in-memory sample data. With `DATABASE_URL`
-pointing anywhere else (such as the hosted database), the Admin stays closed
-(404): "Sign in as" asks for no real sign-in, so it never reaches a database
-off this machine.
+**Signing in locally.** Two ways:
 
-Playwright (`pnpm test:e2e`) runs on the local database: its server's
-`DATABASE_URL` is the local Supabase database, whatever `.env` says, and a
-setup step resets it through the reset route before any spec. Start Supabase
-first (`pnpm db:start`). `PLAYWRIGHT_DATABASE_URL` points the run at another
-local database. When it reuses a `pnpm dev` you started, that one must use a
-local database too, or the reset step fails with 403. Uploads go to local
-Supabase's Storage, so `.env` needs the local `SUPABASE_SECRET_KEY`.
+1. **Live, on the hosted project** (`.env` as `.env.example` describes):
+   once the runbook's steps 6 to 8 are done (the first Owner, Google, and
+   `http://localhost:3000/**` in the redirect URLs), `pnpm dev`, open
+   http://localhost:3000/admin, and "Continue with Google" signs you in. Every
+   save is a real edit to the hosted data.
+2. **Sample, in memory:** comment out `DATABASE_URL` and the three Supabase
+   lines in `.env`, then restart `pnpm dev`. "Sign in as" comes back, on an
+   in-memory copy of the seed that a restart throws away. Uploaded photos
+   stay in the dev server's memory too, served from `/api/dev/uploads/`, and
+   never reach Storage.
 
-**Sign in as a sample User.** On the sign-in screen, "Continue with Google"
-opens a development-only **Sign in as** list:
+Locally, `DATABASE_URL` must be the **Session pooler** string (Dashboard →
+Connect → Session pooler, IPv4). The direct connection (`db.<ref>.supabase.co`)
+is IPv6-only, which many home networks can't reach. Vercel uses the
+Transaction pooler on port 6543 (the runbook, step 9).
+
+**The first Owner.** `pnpm staff:add-owner <email>` makes the email an
+active Owner on `DATABASE_URL`'s staff list, from nothing, an Editor or an
+Invite, recorded in Staff Activity by `deployment`. Running it again changes
+nothing. It prints the staff counts as `pnpm db:check` does, and never the
+connection string. Type the email at the terminal; it never goes in the repo.
+Production does this at the runbook's step 6.
+
+**Sample mode's "Sign in as".** On the sign-in screen, "Continue with
+Google" opens a development-only **Sign in as** list:
 
 | User                 | Email                        | What happens                                     |
 | -------------------- | ---------------------------- | ------------------------------------------------ |
@@ -188,28 +210,37 @@ opens a development-only **Sign in as** list:
 | Juan Dela Cruz       | `juan.delacruz@gmail.com`    | 403: not on the staff list                       |
 
 The list's "Other email" field signs in with any address, such as one you've
-just invited from Settings.
+just invited from Settings. Sample mode runs on the local database instead
+when `DATABASE_URL` points at one with no Supabase set; `pnpm db:reset` puts
+these Users on its staff list. "Sign in as" asks for no real sign-in, so it
+never reaches a database off this machine.
 
-**Reset.** The header's **Reset** button (beside SAMPLE DATA) starts the
-sample data again from the seed, for every screen and the Website. Tests do
-the same with `POST /api/dev/sample-data/reset`. On the database, both re-seed
-it as `pnpm db:reset` does (the catalogue, the sample Staff, no Staff
-Activity), and refuse with 403 unless `DATABASE_URL` points at this machine
-(`localhost` or `127.0.0.1`).
+**Reset.** In sample mode, the header's **Reset** button (beside SAMPLE
+DATA) starts the sample data again from the seed, for every screen and the
+Website. Tests do the same with `POST /api/dev/sample-data/reset`. On the
+database, both re-seed it as `pnpm db:reset` does (the catalogue, the sample
+Staff, no Staff Activity), and refuse unless `DATABASE_URL` points at this
+machine (`localhost` or `127.0.0.1`). Live, the route works only on a local
+database outside production, for a signed-in Staff User (CI's e2e), and is
+404 everywhere else.
 
 **Restarts.** Without a database, the sample data lives only in the dev
 server's memory, so stopping `pnpm dev` loses every change: it starts again
-from the seed. On the database, changes stay until a reset, and uploaded
-photos go to local Supabase's Storage; without one, they stay in the dev
-server's memory. The Reset button re-seeds without uploading: the seed's
-photos load from `public/products/` until the next `pnpm db:reset`.
+from the seed.
 
-**Production keeps the Admin closed.** In a production build (`pnpm build`,
-`pnpm start`), every `/admin` page and the development-only routes under
-`/api/dev/` answer 404, and every Admin action is refused. The Admin opens in
-production only in Stage B, with the database and Google sign-in.
-
----
+**End-to-end tests.** `pnpm test:e2e` runs every Website and Admin journey
+on the **in-memory sample data**, with no Docker. Its server gets the
+database, Supabase and secret-key variables set to empty, so `.env`'s hosted
+values never reach it (Next never replaces a variable that is set). When it
+reuses a `pnpm dev` you started, that one must be in sample mode too, or the
+setup step's reset fails with 404. In CI, the `PLAYWRIGHT_DATABASE_URL`,
+`PLAYWRIGHT_SUPABASE_URL`, `PLAYWRIGHT_SUPABASE_PUBLISHABLE_KEY` and
+`PLAYWRIGHT_SUPABASE_SECRET_KEY` variables point the run at the runner's
+local Supabase instead, and the Admin journeys run live: a global setup loads
+the seed and makes the sample Staff password Users with the secret key, and
+each spec signs in with a password and writes the session cookie into the
+browser. The config refuses any of those that names a host off this machine.
+CI runs both: every journey on the sample data, then the Admin ones live.
 
 ## Environment variables
 
@@ -221,10 +252,10 @@ Secrets are server-only, and never get a `NEXT_PUBLIC_` name.
 | Variable                               | Local (`.env`)                            | Production (Vercel)                       | Secret  |
 | -------------------------------------- | ----------------------------------------- | ----------------------------------------- | ------- |
 | `NEXT_PUBLIC_SITE_URL`                 | `http://localhost:3000`                   | the site URL                              | no      |
-| `NEXT_PUBLIC_SUPABASE_URL`             | `http://127.0.0.1:54321`                  | `https://<ref>.supabase.co`               | no      |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | local `sb_publishable_…`                  | the project's `sb_publishable_…`          | no      |
-| `SUPABASE_SECRET_KEY`                  | local `sb_secret_…` (Storage)             | the project's `sb_secret_…`               | **yes** |
-| `DATABASE_URL`                         | the local database, or unset for the mock | the transaction pooler, port 6543         | **yes** |
+| `NEXT_PUBLIC_SUPABASE_URL`             | `https://<ref>.supabase.co`               | `https://<ref>.supabase.co`               | no      |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | the project's `sb_publishable_…`          | the project's `sb_publishable_…`          | no      |
+| `SUPABASE_SECRET_KEY`                  | the project's `sb_secret_…` (Storage)     | the project's `sb_secret_…`               | **yes** |
+| `DATABASE_URL`                         | the Session pooler, or unset for the mock | the transaction pooler, port 6543         | **yes** |
 | `MEMBER_APP_LIVE`                      | `false`                                   | unset (off) until the Member App launches | no      |
 | `NEXT_PUBLIC_LOG_LEVEL`                | `ALL`                                     | `WARN`                                    | no      |
 | `NEXT_PUBLIC_AUTH_STRATEGY`            | `SUPABASE`, the only one                  | unset (`SUPABASE`)                        | no      |
@@ -232,9 +263,12 @@ Secrets are server-only, and never get a `NEXT_PUBLIC_` name.
 | `NEXT_PUBLIC_POSTHOG_KEY`              | unset (analytics off)                     | the PostHog project token, when live      | no      |
 | `NEXT_PUBLIC_POSTHOG_HOST`             | unset                                     | the PostHog ingestion host, with the key  | no      |
 
-Vercel sets `NEXT_PUBLIC_VERCEL_URL` itself. The tests' variables
-(`TEST_DATABASE_URL`, `TEST_SUPABASE_SECRET_KEY`, `PLAYWRIGHT_DATABASE_URL`)
-are local only and never go in Vercel. A test (`src/env-names.test.ts`)
+Locally, `DATABASE_URL` is the hosted project's **Session pooler** (IPv4),
+not the IPv6-only direct connection; with a local Supabase, its values from
+`supabase status` go in the same places. Vercel sets `NEXT_PUBLIC_VERCEL_URL`
+itself. The tests' variables (`TEST_DATABASE_URL`, `TEST_SUPABASE_SECRET_KEY`,
+and the `PLAYWRIGHT_*` ones) name a local Supabase only, and never go in
+Vercel. A test (`src/env-names.test.ts`)
 checks this table, `.env.example` and the runbook list every variable, and
 another (`src/repo-secrets.test.ts`) that no file in the repo holds a
 secret key, a Google client secret or a connection string with a real
@@ -256,6 +290,7 @@ password.
 | `pnpm db:reset`                  | Rebuild the local database, load the seed   |
 | `pnpm catalogue:seed`            | Load the seed into the catalogue tables     |
 | `pnpm db:check`                  | Read-only health check of `DATABASE_URL`    |
+| `pnpm staff:add-owner <email>`   | Make the email an Owner on `DATABASE_URL`   |
 | `pnpm db:generate`               | Generate a Drizzle migration (no DB needed) |
 | `pnpm format`                    | Prettier                                    |
 

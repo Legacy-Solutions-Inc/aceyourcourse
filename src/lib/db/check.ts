@@ -284,8 +284,13 @@ function describeCounts(counts: CatalogueCounts): string[] {
         plural(counts.examPages, "Exam page"),
         plural(counts.websiteSettings, "Website settings row"),
       ].join(", "),
-    `  Staff: ${plural(counts.owners, "Owner")}, ${plural(counts.editors, "Editor")}, ${plural(counts.invites, "Invite")}`,
+    describeStaff(counts),
   ];
+}
+
+/** The staff list's line, as db:check and `pnpm staff:add-owner` both print it. */
+export function describeStaff(counts: Pick<CatalogueCounts, "owners" | "editors" | "invites">) {
+  return `  Staff: ${plural(counts.owners, "Owner")}, ${plural(counts.editors, "Editor")}, ${plural(counts.invites, "Invite")}`;
 }
 
 /** Pure: db:check's lines for what it read, and whether every check passed. */

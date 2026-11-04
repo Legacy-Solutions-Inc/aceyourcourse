@@ -33,14 +33,17 @@ jobs:
 
       - run: pnpm test:coverage
 
-      # The database tests run against a local Supabase (spec Phase 2:
-      # Environments). Only Postgres is needed, so every other service stays
-      # off. `supabase start` applies supabase/migrations.
+      # The database tests, and the Admin e2e in live mode, run against a
+      # throwaway local Supabase on the runner (spec Phase 2: Environments);
+      # no test touches the hosted project. Postgres, auth (gotrue), Storage
+      # and the API gateway (kong) start; every other service stays off.
+      # `supabase start` applies supabase/migrations. Google's client id and
+      # secret are unset here: the CLI warns and starts anyway.
       - uses: supabase/setup-cli@v1
         with:
           version: 2.104.0
 
-      - run: supabase start -x gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - run: supabase start -x realtime,imgproxy,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
 
       - run: pnpm test:db
         env:
@@ -51,7 +54,26 @@ jobs:
 
       - run: pnpm exec playwright install --with-deps chromium
 
+      # Every Website and Admin journey on the in-memory sample data, as on a
+      # developer's machine. The placeholders above never make a run live:
+      # playwright.config.ts blanks the app's Supabase and database values.
       - run: pnpm test:e2e
+
+      # The Admin journeys again, live on the runner's local Supabase (ticket
+      # 16): Staff are password Users there, and the Guard reads them through
+      # Supabase. Its URL and keys come from `supabase status`, for this step
+      # only, with the secret key masked. playwright.config.ts refuses any
+      # PLAYWRIGHT_* value that isn't local.
+      - name: pnpm test:e2e --project admin (live on the local Supabase)
+        run: |
+          eval "$(supabase status -o env)"
+          secret="${SECRET_KEY:-$SERVICE_ROLE_KEY}"
+          echo "::add-mask::$secret"
+          export PLAYWRIGHT_DATABASE_URL="$DB_URL"
+          export PLAYWRIGHT_SUPABASE_URL="$API_URL"
+          export PLAYWRIGHT_SUPABASE_PUBLISHABLE_KEY="${PUBLISHABLE_KEY:-$ANON_KEY}"
+          export PLAYWRIGHT_SUPABASE_SECRET_KEY="$secret"
+          pnpm test:e2e --project admin --no-deps
 
       - run: pnpm build
 
