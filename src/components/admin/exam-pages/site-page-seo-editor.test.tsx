@@ -115,6 +115,9 @@ describe("a Site page's Search & AI visibility", () => {
     expect(within(form()).getByRole("figure")).toHaveTextContent(
       `${DEFAULTS.title} · Ace Your Course${DEFAULTS.description}`,
     );
+    expect(
+      within(form()).getByText("Summary for AI assistants").nextElementSibling,
+    ).toHaveTextContent("ON");
     expect(within(form()).getByText("Sitemap")).toBeInTheDocument();
   });
 

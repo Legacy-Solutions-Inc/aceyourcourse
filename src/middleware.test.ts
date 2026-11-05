@@ -70,6 +70,8 @@ describe("middleware", () => {
     "/exams/ce",
     "/application",
     "/apple-icon",
+    // The summary for AI assistants (ticket 22).
+    "/llms.txt",
     // The template dashboard is gone: it is a plain (404) Website path now.
     "/dashboard",
     "/dashboard/customers",

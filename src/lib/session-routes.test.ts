@@ -21,6 +21,7 @@ describe("needsSession", () => {
     "/administrator",
     "/apple-icon",
     "/authors",
+    "/llms.txt",
     // The template dashboard is gone, so it is just another (404) Website path.
     "/dashboard",
     "/dashboard/x",

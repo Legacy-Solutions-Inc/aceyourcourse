@@ -45,12 +45,13 @@ import { SAVED, useExamPartForm } from "./exam-page-editors";
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * What the Website sets up by itself for an Exam page. The mockup's "Product
- * data" and "Summary for AI assistants" aren't on the Exam page, so they're
- * left out rather than shown as ON.
+ * What the Website sets up by itself for an Exam page, the summary for AI
+ * assistants being /llms.txt (ticket 22). The mockup's "Product data" isn't
+ * on the Exam page, so it's left out rather than shown as ON.
  */
 const EXAM_SET_UP_AUTOMATICALLY = [
   ["Breadcrumbs", "ON"],
+  ["Summary for AI assistants", "ON"],
   ["Sitemap", "AUTO"],
 ] as const;
 

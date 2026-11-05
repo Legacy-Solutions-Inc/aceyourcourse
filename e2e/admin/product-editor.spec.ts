@@ -62,7 +62,7 @@ test.afterAll(async ({ request }) => {
   await resetSampleData(request);
 });
 
-test("a new price is live on the Product page, Products, its Exam page and Home", async ({
+test("a new price is live on the Product page, Products, its Exam page, Home and the summary for AI assistants", async ({
   page,
 }) => {
   await openEditor(page, CARDS.id);
@@ -98,6 +98,9 @@ test("a new price is live on the Product page, Products, its Exam page and Home"
   await page.goto(paths.home);
   const bestSellers = page.getByRole("region", { name: "Best sellers" });
   await expect(bestSellers.getByRole("listitem").first()).toContainText("₱1,250");
+  // And the summary for AI assistants (ticket 22), on its next request.
+  const summary = await (await page.request.get("/llms.txt")).text();
+  expect(summary).toContain(`/products/${CARDS.slug}): ₱1,250.`);
 });
 
 test("variations save in order, one added and one removed, and the Product page's picker shows them", async ({

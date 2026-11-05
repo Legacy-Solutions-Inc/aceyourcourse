@@ -83,6 +83,14 @@ describe("buildRobots", () => {
     });
   });
 
+  it("leaves the summary for AI assistants, /llms.txt, crawlable", () => {
+    const { rules } = buildRobots("https://example.com");
+    const disallow = [rules].flat().flatMap((rule) => [rule.disallow ?? []].flat());
+    expect(disallow.some((pattern) => "/llms.txt".startsWith(pattern.replace(/\$$/, "")))).toBe(
+      false,
+    );
+  });
+
   it("has no rule for the removed template dashboard", () => {
     const robots = buildRobots("https://example.com");
     expect(JSON.stringify(robots.rules)).not.toContain("/dashboard");

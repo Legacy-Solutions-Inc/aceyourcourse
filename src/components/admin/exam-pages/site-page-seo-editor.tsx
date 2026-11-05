@@ -21,10 +21,12 @@ import { SeoFields } from "./exam-seo-editor";
 
 /**
  * What the Website sets up by itself on a Site page: the Exam page's list,
- * less Breadcrumbs, which no Site page has. Ticket 22 adds "Summary for AI
- * assistants".
+ * less Breadcrumbs, which no Site page has.
  */
-const SET_UP_AUTOMATICALLY = [["Sitemap", "AUTO"]] as const;
+const SET_UP_AUTOMATICALLY = [
+  ["Summary for AI assistants", "ON"],
+  ["Sitemap", "AUTO"],
+] as const;
 
 interface SitePageSeoEditorProps {
   opened: AdminSitePage;

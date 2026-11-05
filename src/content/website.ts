@@ -81,4 +81,11 @@ export const websiteCopy = {
       cardBadge: "In app",
     },
   },
+  // The summary for AI assistants at /llms.txt (ticket 22). It never mentions
+  // the Member App.
+  llmsTxt: {
+    /** After the site name; followed by where AYC sells and ships from. */
+    whoWeAre:
+      "makes formula flash cards, notebooks and posters for Philippine licensure board exams, made by board passers.",
+  },
 } as const;

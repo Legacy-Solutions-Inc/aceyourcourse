@@ -5,7 +5,8 @@ import { buildSitemap } from "@/lib/seo";
 import { listExams, listProducts } from "@/services/catalogue";
 
 // Built on every request, so the sitemap always lists the catalogue as it is.
-// The one route that opts in to force-dynamic; pages never use force-static.
+// It and /llms.txt are the routes that opt in to force-dynamic; pages never
+// use force-static.
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

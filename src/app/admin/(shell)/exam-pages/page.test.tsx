@@ -43,6 +43,11 @@ const sectionRows = (code: string) =>
     .filter((item) =>
       within(item).queryByRole("link", { name: /^(Header|Subjects|Reviewers|Bundle|Reviews)/ }),
     );
+/** An SEO panel's "Set up automatically" list, each thing with how it's set up. */
+const setUpAutomatically = (panel: HTMLElement) =>
+  within(panel)
+    .getAllByRole("term")
+    .map((term) => [term.textContent, term.nextElementSibling?.textContent]);
 
 describe("Pages & promo", () => {
   beforeEach(() => {
@@ -162,7 +167,11 @@ describe("Pages & promo", () => {
     expect(title).toHaveAttribute("placeholder", "CELE Reviewer · Civil Engineering");
     // "CELE Reviewer · Civil Engineering · Ace Your Course"
     expect(title).toHaveAccessibleDescription("51 / 60 characters, with the site name");
-    expect(within(editor()).getByText("Breadcrumbs")).toBeInTheDocument();
+    expect(setUpAutomatically(editor())).toEqual([
+      ["Breadcrumbs", "ON"],
+      ["Summary for AI assistants", "ON"],
+      ["Sitemap", "AUTO"],
+    ]);
     expect(within(editor()).getByLabelText("SHARE IMAGE · 1200 × 630")).toHaveAccessibleDescription(
       "Uses the site’s share image",
     );
@@ -361,10 +370,12 @@ describe("Pages & promo", () => {
       });
     });
 
-    it("lists what's set up automatically: the sitemap, with no breadcrumbs on a Site page", async () => {
+    it("lists what's set up automatically: the summary for AI assistants and the sitemap, with no breadcrumbs on a Site page", async () => {
       await renderPage({ page: "site", site: "faq" });
-      expect(within(siteEditor()).getByText("Sitemap")).toBeInTheDocument();
-      expect(within(siteEditor()).queryByText("Breadcrumbs")).not.toBeInTheDocument();
+      expect(setUpAutomatically(siteEditor())).toEqual([
+        ["Summary for AI assistants", "ON"],
+        ["Sitemap", "AUTO"],
+      ]);
     });
   });
 

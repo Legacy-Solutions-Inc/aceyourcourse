@@ -164,6 +164,22 @@ test("the sitemap lists the static pages and every Exam and Product the Website 
   expect(xml).not.toContain("/auth/");
 });
 
+test("the summary for AI assistants is plain-text Markdown, naming the catalogue", async ({
+  request,
+}) => {
+  const response = await request.get("/llms.txt");
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toBe("text/plain; charset=utf-8");
+  const text = await response.text();
+  expect(text.startsWith("# Ace Your Course\n\n> ")).toBe(true);
+  expect(text).toMatch(
+    /^- \[Civil Engineering Formula Flash Cards\]\(https?:\/\/\S+\/products\/ce-formula-flash-cards\): ₱1,200\. Buy on \[Shopee\]/m,
+  );
+  expect(text).toContain("## FAQ");
+  // No Review text or Shopee figures, and no Member App with its switch off.
+  expect(text).not.toMatch(/★|\brating|member app/i);
+});
+
 test("robots keeps the signed-in areas out and links the sitemap", async ({ request }) => {
   const response = await request.get("/robots.txt");
   expect(response.status()).toBe(200);
