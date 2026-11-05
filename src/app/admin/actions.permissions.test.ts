@@ -17,9 +17,16 @@ import { productFormValues } from "@/lib/admin/product-form";
 import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
 import { reviewFormValues } from "@/lib/admin/review-form";
 import { getExamPageForAdmin } from "@/services/admin";
-import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
+import { getSampleStore } from "@/services/mock/sample-store";
 
-import { SAVES, sampleActor, sampleEmail } from "../../../test/admin-inputs";
+import {
+  SAVES,
+  sampleActor,
+  sampleEmail,
+  UNUSED_EXAM,
+  withUnusedExam,
+} from "../../../test/admin-inputs";
+import { editSampleCatalogue } from "../../../test/catalogue-seed";
 
 import * as examPages from "./(shell)/exam-pages/actions";
 import * as products from "./(shell)/products/actions";
@@ -224,6 +231,16 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     removeFaq: staff(() => reviews.removeFaq(IDLE, { input: { id: "faq-001" } })),
   },
   "./(shell)/exam-pages/actions.ts": {
+    addExam: owner(() =>
+      examPages.addExam(IDLE, { input: { ...UNUSED_EXAM, code: "NUR", board: "NLE" } }),
+    ),
+    addExamSubject: owner(() =>
+      examPages.addExamSubject(IDLE, { input: { exam: "ce", code: "THERMO", name: "Thermo" } }),
+    ),
+    removeExamSubject: owner(() =>
+      examPages.removeExamSubject(IDLE, { input: { exam: "che", code: "THERMO" } }),
+    ),
+    removeExam: owner(() => examPages.removeExam(IDLE, { input: { code: "che" } })),
     setExamPageSection: staff(() =>
       examPages.setExamPageSection(IDLE, { input: { code: "me", section: "reviews", on: false } }),
     ),
@@ -309,7 +326,8 @@ const snapshot = () => JSON.stringify(getSampleStore());
 beforeEach(() => {
   jar.clear();
   mode.current = "sample";
-  resetSampleStore();
+  // The seed, with an Exam nothing uses yet, which the Exam and Subject deletes can delete.
+  editSampleCatalogue(withUnusedExam);
   vi.mocked(revalidateTag).mockClear();
 });
 

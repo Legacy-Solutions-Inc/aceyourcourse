@@ -139,4 +139,21 @@ describe("MobileNav", () => {
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
+
+  // Ticket 23: Owners add Exams, up to 12.
+  it.each([6, 12])("lists %i Exams in order, every code on its own tile", async (count) => {
+    const exams = Array.from({ length: count }, (_, i) => ({
+      code: `CHE${String.fromCharCode(65 + i)}`,
+      name: `Exam ${i + 1}`,
+    }));
+    const { drawer } = await openDrawer({ exams });
+
+    const links = within(drawer).getAllByRole("link", { name: /^CHE[A-L] Exam/ });
+    expect(links.map((link) => link.textContent)).toEqual(
+      exams.map((exam) => `${exam.code} ${exam.name}`),
+    );
+    // Never narrower than a 6-letter code: fewer columns on a narrow screen.
+    const [examGrid] = within(drawer).getAllByRole("list");
+    expect(examGrid?.style.gridTemplateColumns).toContain("max(3.5rem");
+  });
 });

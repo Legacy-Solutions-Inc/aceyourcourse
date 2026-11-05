@@ -9,7 +9,7 @@ import { getWebsiteSettings } from "@/services/catalogue";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 
 import { DATABASE_ARM } from "../../test/admin-database";
-import { sampleActor } from "../../test/admin-inputs";
+import { sampleActor, UNUSED_EXAM, withUnusedExam } from "../../test/admin-inputs";
 
 // What only the database arm can get wrong (ticket 15): each write and its
 // Staff Activity commit together or not at all, the conflict check holds in
@@ -307,6 +307,112 @@ describeWithDatabase("Admin seam on the database: deletes", database, () => {
       ok: false,
       error: { kind: "not-found" },
     });
+    expect(await activityRows()).toEqual([]);
+  });
+});
+
+// Ticket 23: Exams and Subjects are added and deleted as rows, with no
+// migration. The database's keys back up the seam's own checks.
+describeWithDatabase("Admin seam on the database: Exams and Subjects", database, () => {
+  beforeEach(async () => {
+    await DATABASE_ARM.reset();
+  });
+
+  afterEach(async () => {
+    await DATABASE_ARM.reset();
+  });
+
+  const examRow = (code: string) =>
+    db().select().from(schema.exams).where(eq(schema.exams.code, code));
+  const subjectRows = (code: string) =>
+    db().select().from(schema.subjects).where(eq(schema.subjects.examCode, code));
+
+  it("adds an Exam last, with its Subjects, and deletes it with its Subjects and page record", async () => {
+    expect(await seam.createExam(OWNER, UNUSED_EXAM)).toMatchObject({ ok: true });
+    const [added] = await examRow("CHE");
+    expect(added).toMatchObject({
+      code: "CHE",
+      board: "CHELE",
+      position: CATALOGUE_SEED.exams.length,
+    });
+    expect((await subjectRows("CHE")).map((row) => row.code).sort()).toEqual(["PCHEM", "THERMO"]);
+    expect(await seam.setExamSection(EDITOR, "che", "reviews", false)).toMatchObject({ ok: true });
+
+    expect(await seam.deleteExam(OWNER, "che")).toMatchObject({ ok: true });
+
+    expect(await examRow("CHE")).toEqual([]);
+    expect(await subjectRows("CHE")).toEqual([]);
+    expect(
+      await db().select().from(schema.examPages).where(eq(schema.examPages.examCode, "CHE")),
+    ).toEqual([]);
+  });
+
+  it("refuses an Exam the exams table's key refuses, as the code field's message", async () => {
+    // A save that skipped the write lock adds the same code just before.
+    await db().execute(sql`
+      create function admin_db_test_same_exam() returns trigger language plpgsql
+      as $$ begin
+        if pg_trigger_depth() = 1 then
+          insert into exams (code, position, board, name, long_name, blurb, made_for)
+          values (new.code, 99, 'X', 'X', 'X', 'X', 'X');
+        end if;
+        return new;
+      end $$`);
+    await db().execute(sql`
+      create trigger admin_db_test_same_exam before insert on exams
+      for each row execute function admin_db_test_same_exam()`);
+    let result;
+    try {
+      result = await seam.createExam(OWNER, UNUSED_EXAM);
+    } finally {
+      await db().execute(sql`drop trigger admin_db_test_same_exam on exams`);
+      await db().execute(sql`drop function admin_db_test_same_exam()`);
+    }
+
+    expect(result).toEqual({
+      ok: false,
+      error: { kind: "invalid", fieldErrors: { code: ["CHE IS ALREADY AN EXAM"] } },
+    });
+    expect(await examRow("CHE")).toEqual([]);
+    expect(await activityRows()).toEqual([]);
+  });
+
+  it("leaves everything as it was when a Product's key refuses the Exam's delete", async () => {
+    await DATABASE_ARM.reset(withUnusedExam);
+    // A save that skipped the write lock adds a CHE Product just before.
+    await db().execute(sql`
+      create function admin_db_test_new_product() returns trigger language plpgsql
+      as $$ begin
+        insert into products (id, position, slug, exam_code, title, short_name, format, size,
+          state, deal, available_in_app, show_on_website)
+        values ('prd-test', 99, 'che-test', old.code, 'ChE cards', 'ChE cards', 'flash-cards',
+          'A6', 'coming-soon', false, false, false);
+        return old;
+      end $$`);
+    await db().execute(sql`
+      create trigger admin_db_test_new_product before delete on exams
+      for each row execute function admin_db_test_new_product()`);
+    let result;
+    try {
+      result = await seam.deleteExam(OWNER, "che");
+    } finally {
+      await db().execute(sql`drop trigger admin_db_test_new_product on exams`);
+      await db().execute(sql`drop function admin_db_test_new_product()`);
+    }
+
+    expect(result).toEqual({
+      ok: false,
+      error: {
+        kind: "invalid",
+        fieldErrors: {},
+        formError: "A Product now belongs to CHE. Reload the page to see it.",
+      },
+    });
+    expect(await examRow("CHE")).toHaveLength(1);
+    expect(await subjectRows("CHE")).toHaveLength(2);
+    expect(
+      await db().select().from(schema.products).where(eq(schema.products.id, "prd-test")),
+    ).toEqual([]);
     expect(await activityRows()).toEqual([]);
   });
 });

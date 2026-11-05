@@ -66,6 +66,8 @@ function ce(): AdminExamPage {
       { id: "prd-001", shortName: "CE Formula Flash Cards", state: "live", showOnWebsite: true },
       { id: "prd-008", shortName: "CE Review Bundle 3-in-1", state: "live", showOnWebsite: true },
     ],
+    subjectProducts: { MSTC: 2, HPGE: 2, PSAD: 2 },
+    examsOnWebsite: ["CE", "ME", "EE", "MT", "CPA"],
   });
 }
 

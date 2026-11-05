@@ -10,6 +10,7 @@ import { NavLink } from "@/components/website/nav-link";
 import { SITE_LINKS } from "@/components/website/site-links";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { marketplaceShops, websiteCopy } from "@/content/website";
+import { examGridTemplate } from "@/lib/catalogue/exam-grid";
 import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
 import type { Exam, Marketplace } from "@/services/catalogue.types";
@@ -21,6 +22,9 @@ interface MobileNavProps {
 }
 
 const label = "font-mono text-[11px] font-bold tracking-[0.08em] uppercase";
+
+/** The Exam tiles' grid: built for 1–12 Exams (ticket 23), never narrower than a tile. */
+const MENU_GRID = { min: "3.5rem", gap: "0.375rem" };
 
 /** The burger and drawer used below the 760 px breakpoint. */
 export function MobileNav({ exams, shopLinks, memberAppLive }: MobileNavProps) {
@@ -62,7 +66,10 @@ export function MobileNav({ exams, shopLinks, memberAppLive }: MobileNavProps) {
         <div className="flex flex-col gap-4.5 px-5 pt-4 pb-6">
           <section className="flex flex-col gap-2">
             <h2 className={cn(label, "text-ayc-blue")}>Exams</h2>
-            <ul className="grid grid-cols-5 gap-1.5">
+            <ul
+              className="grid gap-1.5"
+              style={{ gridTemplateColumns: examGridTemplate(exams.length, MENU_GRID) }}
+            >
               {exams.map((exam) => (
                 <li key={exam.code} className="flex">
                   <SheetClose asChild>

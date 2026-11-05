@@ -369,8 +369,19 @@ export interface AdminExamPage {
   /** Its record, or the defaults while it has none. */
   page: ExamPage;
   stamps: Record<ExamPagePart, RecordStamp>;
-  /** The Exam's Products, in the catalogue's order, for the bundle offer. */
+  /**
+   * The Exam's Products, in the catalogue's order, Live, Coming Soon or
+   * hidden: for the bundle offer, and while there's any, why "Delete exam"
+   * is refused.
+   */
   products: BundleProductOption[];
+  /** How many Products are tagged with each of the Exam's Subjects, for its remove button. */
+  subjectProducts: Record<string, number>;
+  /**
+   * The codes of the Exams the Website shows, those with a Product on it, for
+   * the chips' "NOT ON SITE" (ticket 23).
+   */
+  examsOnWebsite: string[];
 }
 
 // ── Site pages ──────────────────────────────────────────────────────────────

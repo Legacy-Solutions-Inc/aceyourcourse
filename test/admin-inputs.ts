@@ -1,8 +1,9 @@
 import { newFaqForm } from "@/lib/admin/faq-form";
 import { newProductForm } from "@/lib/admin/product-form";
 import { newReviewForm } from "@/lib/admin/review-form";
-import type { InviteStaffInput } from "@/services/admin.schema";
+import type { InviteStaffInput, NewExamForm } from "@/services/admin.schema";
 import type { StaffActor } from "@/services/admin.types";
+import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { SAMPLE_USERS, type SampleUserKey } from "@/services/mock/staff";
 
 // The sample Users (CONVENTIONS §5), and inputs the sample data saves, shared
@@ -48,3 +49,25 @@ export const SAVES = {
   officialExamDate: "2027-04-24",
   bannerButtonLabel: "Shop now",
 };
+
+/**
+ * An Exam with two Subjects that no Product uses yet, as "+ Add exam" sends
+ * it. The seed's every Exam and Subject has Products, so the deletes need one.
+ */
+export const UNUSED_EXAM = {
+  code: "CHE",
+  board: "CHELE",
+  name: "Chemical Engineering",
+  longName: "Chemical Engineer Licensure Exam",
+  blurb: "Every ChE formula.",
+  madeFor: "ChE reviewees",
+  subjects: [
+    { code: "PCHEM", name: "Physical Chemistry" },
+    { code: "THERMO", name: "Thermodynamics" },
+  ],
+} satisfies NewExamForm;
+
+/** Adds UNUSED_EXAM to an edited seed, for editSampleCatalogue or an arm's reset. */
+export function withUnusedExam(seed: CatalogueSeed): void {
+  seed.exams.push(structuredClone(UNUSED_EXAM));
+}

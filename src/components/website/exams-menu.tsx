@@ -7,6 +7,7 @@ import { useEffect, useId, useRef, useState } from "react";
 
 import { isCurrentPath } from "@/components/website/site-links";
 import { websiteCopy } from "@/content/website";
+import { examGridTemplate } from "@/lib/catalogue/exam-grid";
 import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
 import type { Exam } from "@/services/catalogue.types";
@@ -14,6 +15,9 @@ import type { Exam } from "@/services/catalogue.types";
 interface ExamsMenuProps {
   exams: ReadonlyArray<Pick<Exam, "code" | "name" | "board">>;
 }
+
+/** The Exam tiles' grid: built for 1–12 Exams (ticket 23), never narrower than a tile. */
+const MENU_GRID = { min: "9.5rem", gap: "0.625rem" };
 
 /**
  * The desktop nav's Exams menu: a disclosure button with a full-width panel
@@ -82,7 +86,10 @@ export function ExamsMenu({ exams }: ExamsMenuProps) {
           <p className="font-mono text-[11px] font-bold tracking-[0.08em] text-ayc-blue uppercase">
             {websiteCopy.nav.examsMenuLabel}
           </p>
-          <ul className="grid grid-cols-5 gap-2.5">
+          <ul
+            className="grid gap-2.5"
+            style={{ gridTemplateColumns: examGridTemplate(exams.length, MENU_GRID) }}
+          >
             {exams.map((exam) => (
               <li key={exam.code} className="flex">
                 <Link

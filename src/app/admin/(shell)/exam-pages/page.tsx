@@ -5,8 +5,10 @@ import { AdminScreen } from "@/components/admin/admin-screen";
 import {
   ExamPageColumn,
   ExamPagesNav,
+  NewExamColumn,
   SitePageColumn,
 } from "@/components/admin/exam-pages/exam-pages-columns";
+import { AddExamForm } from "@/components/admin/exam-pages/exam-manage";
 import { AboutSectionEditor } from "@/components/admin/exam-pages/about-editors";
 import { AnnouncementEditor } from "@/components/admin/exam-pages/announcement-editor";
 import { ExamPagePanel } from "@/components/admin/exam-pages/exam-page-panel";
@@ -15,6 +17,7 @@ import { SitePageSeoEditor } from "@/components/admin/exam-pages/site-page-seo-e
 import {
   ABOUT_SECTION_TITLES,
   type AboutEditorKey,
+  addingExam,
   parseExamPagesParams,
 } from "@/lib/admin/exam-pages-view";
 import { requireStaff } from "@/lib/admin/guard";
@@ -36,9 +39,13 @@ import type { StaffActor } from "@/services/admin.types";
 import type { SitePageKey } from "@/services/catalogue.types";
 
 import {
+  addExam,
+  addExamSubject,
   createAboutPhotoUpload,
   createShareImageUpload,
   createSitePageShareImageUpload,
+  removeExam,
+  removeExamSubject,
   saveAboutSection,
   saveAnnouncement,
   saveBundleOffer,
@@ -72,20 +79,19 @@ const COLUMNS =
  * the selected part's editor; a Site page's chips, search check and its
  * Search & AI visibility, and for About its sections and the selected one's
  * editor (ticket 21); or the Home promo banner's or the announcement bar's
- * editor. The page, the Exam or Site page, and the section live in the URL;
+ * editor. An Owner also adds Exams (?page=exam&add=exam) and Subjects, and
+ * deletes those nothing uses (ticket 23). The page, the Exam or Site page, and the section live in the URL;
  * an unknown Exam shows the first, an unknown Site page Home, and an unknown
  * About section its Header. Everything is read fresh on every request.
  */
 export default async function ExamPagesPage({ searchParams }: ExamPagesPageProps) {
   const actor = await requireStaff(paths.admin.examPages);
-  const {
-    page,
-    exam: wanted,
-    section,
-    site,
-    aboutSection,
-  } = parseExamPagesParams(await searchParams);
+  const params = await searchParams;
+  const { page, exam: wanted, section, site, aboutSection } = parseExamPagesParams(params);
   const exams = await listExamsForAdmin(actor);
+  // Adding and deleting Exams and Subjects is for Owners (ticket 23): an
+  // Editor sees none of it, and the actions and the seam refuse one anyway.
+  const isOwner = actor.role === "owner";
 
   if (page === "site") {
     return (
@@ -120,6 +126,30 @@ export default async function ExamPagesPage({ searchParams }: ExamPagesPageProps
 
   const exam = exams.find((e) => e.code === wanted?.toUpperCase()) ?? exams[0];
   const opened = exam ? await getExamPageForAdmin(actor, exam.code) : null;
+
+  if (isOwner && (addingExam(params) || !opened)) {
+    return (
+      <AdminScreen screen="exam-pages">
+        <div className={COLUMNS}>
+          <ExamPagesNav current="exam" examCount={exams.length} />
+          <NewExamColumn
+            examCodes={exams.map((e) => e.code)}
+            onWebsite={opened?.examsOnWebsite ?? []}
+          />
+          <aside
+            aria-label="Exam page editor"
+            className="flex min-w-0 flex-col gap-3.5 border-[1.5px] bg-ayc-paper p-4.5 lg:col-span-2 xl:col-span-1"
+          >
+            <h2 className="font-mono text-[11px] font-bold tracking-[0.06em] text-ayc-blue">
+              ADD EXAM
+            </h2>
+            <AddExamForm action={addExam} />
+          </aside>
+        </div>
+      </AdminScreen>
+    );
+  }
+
   if (!opened) {
     return (
       <AdminScreen screen="exam-pages">
@@ -138,6 +168,7 @@ export default async function ExamPagesPage({ searchParams }: ExamPagesPageProps
           selected={section}
           seoState={seoCheck(examPageSeo(opened.exam, opened.page))}
           setSection={setExamPageSection}
+          canAddExam={isOwner}
         />
         <div className="lg:col-span-2 xl:col-span-1">
           <ExamPagePanel
@@ -153,6 +184,15 @@ export default async function ExamPagesPage({ searchParams }: ExamPagesPageProps
               saveDate: saveOfficialExamDate,
               createShareImageUpload,
             }}
+            manage={
+              isOwner
+                ? {
+                    addSubject: addExamSubject,
+                    removeSubject: removeExamSubject,
+                    removeExam,
+                  }
+                : undefined
+            }
           />
         </div>
       </div>

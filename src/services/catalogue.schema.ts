@@ -112,15 +112,24 @@ const examSchema = z
     );
   });
 
-const examsSchema = z.array(examSchema).superRefine((exams, ctx) => {
-  // Codes are looked up case-insensitively, so "CE" and "Ce" collide.
-  flagDuplicates(
-    ctx,
-    exams,
-    (exam) => exam.code.toUpperCase(),
-    (exam, index) => ({ path: [index, "code"], message: `duplicate Exam code "${exam.code}"` }),
-  );
-});
+/**
+ * The most Exams the catalogue holds (ticket 23). The Website's Exam lists are
+ * built and tested for 1–12; the Admin refuses a 13th.
+ */
+export const MAX_EXAMS = 12;
+
+const examsSchema = z
+  .array(examSchema)
+  .max(MAX_EXAMS, `at most ${MAX_EXAMS} Exams`)
+  .superRefine((exams, ctx) => {
+    // Codes are looked up case-insensitively, so "CE" and "Ce" collide.
+    flagDuplicates(
+      ctx,
+      exams,
+      (exam) => exam.code.toUpperCase(),
+      (exam, index) => ({ path: [index, "code"], message: `duplicate Exam code "${exam.code}"` }),
+    );
+  });
 
 /** Money in integer centavos. */
 const centavos = z.number().int("must be whole centavos");

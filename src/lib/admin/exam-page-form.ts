@@ -2,6 +2,8 @@ import type {
   BundleOfferForm,
   ExamHeaderForm,
   ExamSeoForm,
+  NewExamForm,
+  NewSubjectForm,
   OfficialExamDateForm,
   SubjectNamesForm,
 } from "@/services/admin.schema";
@@ -47,4 +49,18 @@ export const seoFormValues = (
 /** Pure: the Official Exam Date editor's value. */
 export const dateFormValues = (page: ExamPage): OfficialExamDateForm => ({
   officialExamDate: page.officialExamDate ?? "",
+});
+
+/** Pure: a blank Subject row, for "+ Add exam" and "+ Add subject". */
+export const blankSubject = (): NewSubjectForm => ({ code: "", name: "" });
+
+/** Pure: "+ Add exam"'s values as it opens: every field blank, and one Subject row. */
+export const newExamFormValues = (): NewExamForm => ({
+  code: "",
+  board: "",
+  name: "",
+  longName: "",
+  blurb: "",
+  madeFor: "",
+  subjects: [blankSubject()],
 });

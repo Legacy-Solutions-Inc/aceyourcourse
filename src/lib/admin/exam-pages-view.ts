@@ -8,8 +8,8 @@ import type { AboutSectionKey, ExamPageSection, SitePageKey } from "@/services/c
 // Pages & promo's URL, its SECTIONS · SHOW OR HIDE list and its warnings
 // (BUILD-MAP §3.2). The page, the Exam or Site page, and the section live in
 // the URL, so a reload keeps them: ?exam=ce&section=header,
-// ?page=site&site=faq, ?page=site&site=about&section=story, ?page=promo or
-// ?page=announcement (CONVENTIONS §2). The page checks the Exam; any other
+// ?page=site&site=faq, ?page=site&site=about&section=story, ?page=promo,
+// ?page=announcement, or ?page=exam&add=exam for "+ Add exam" (CONVENTIONS §2). The page checks the Exam; any other
 // Site page opens Home, and any other About section its Header.
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -65,6 +65,16 @@ export function parseExamPagesParams(params: SearchParams): {
   };
 }
 
+/** Pure: whether the URL opens "+ Add exam"'s form: ?page=exam&add=exam (ticket 23, Owners only). */
+export function addingExam(params: SearchParams): boolean {
+  const value = (key: string) => {
+    const raw = params[key];
+    return (Array.isArray(raw) ? raw[0] : raw)?.trim();
+  };
+  const page = value("page");
+  return (page === undefined || page === "exam") && value("add") === "exam";
+}
+
 /**
  * Pure: the screen's URL for a page, for an Exam and its section (the Header
  * by default), or for a Site page (Home by default) and, for About, its
@@ -76,13 +86,17 @@ export function examPagesHref({
   section = "header",
   site = "home",
   aboutSection = "header",
+  add = false,
 }: {
+  /** "+ Add exam"'s form, for Owners. */
+  add?: boolean;
   page?: ExamPagesPage;
   exam?: string;
   section?: ExamPageEditorKey;
   site?: SitePageKey;
   aboutSection?: AboutEditorKey;
 }): string {
+  if (add) return `${paths.admin.examPages}?page=exam&add=exam`;
   const params = new URLSearchParams();
   if (page !== "exam") {
     params.set("page", page);

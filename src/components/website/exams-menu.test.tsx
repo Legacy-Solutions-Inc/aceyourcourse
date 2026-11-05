@@ -108,4 +108,33 @@ describe("ExamsMenu", () => {
 
     expect(examsButton()).toHaveAttribute("aria-expanded", "false");
   });
+
+  // Ticket 23: Owners add Exams, up to 12.
+  it.each([6, 12])("lists %i Exams in order, in rows of at most 6", async (count) => {
+    const user = userEvent.setup();
+    const exams = Array.from({ length: count }, (_, i) => ({
+      code: `X${String.fromCharCode(65 + i)}`,
+      name: `Exam ${i + 1}`,
+      board: `B${i}`,
+    }));
+    render(<ExamsMenu exams={exams} />);
+    await user.click(examsButton());
+
+    const links = screen.getAllByRole("link", { name: /^X[A-L] Exam/ });
+    expect(links.map((link) => link.getAttribute("href"))).toEqual(
+      exams.map((exam) => `/exams/${exam.code.toLowerCase()}`),
+    );
+    expect(screen.getByRole("list").style.gridTemplateColumns).toContain(" / 6)");
+  });
+
+  it("shows markup typed into an Exam's name as plain text", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <ExamsMenu exams={[{ code: "CHE", name: "<b>CHE</b>", board: "CHELE" }]} />,
+    );
+    await user.click(examsButton());
+
+    expect(screen.getByRole("link", { name: /<b>CHE<\/b>/ })).toBeInTheDocument();
+    expect(container.querySelector("b")).toBeNull();
+  });
 });

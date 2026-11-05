@@ -23,6 +23,8 @@ import { reviewListHref } from "@/lib/admin/review-list";
 import { listNumber } from "@/lib/text";
 import type { AdminExamPage, BundleProductOption, ExamPagePart } from "@/services/admin.types";
 
+import { RemoveSubject } from "./exam-manage";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Pages & promo's column 3 for an Exam page (mockup 103–145; BUILD-MAP §3.2): each
 // section's editor. Every part saves on its own, with the conflict check
@@ -148,8 +150,15 @@ export function HeaderEditor({ opened, action }: EditorProps) {
   );
 }
 
-/** Subjects covered (mockup 984): each Subject's name; its code is fixed. */
-export function SubjectsEditor({ opened, action }: EditorProps) {
+/**
+ * Subjects covered (mockup 984): each Subject's name; its code is fixed. For
+ * an Owner, each Subject has its remove button, or why it can't be removed.
+ */
+export function SubjectsEditor({
+  opened,
+  action,
+  removeSubject,
+}: EditorProps & { removeSubject?: AdminAction<AdminExamPage> }) {
   const form = useExamPartForm(opened, "subjects", {
     action,
     valuesOf: ({ exam }) => subjectFormValues(exam),
@@ -163,18 +172,22 @@ export function SubjectsEditor({ opened, action }: EditorProps) {
         are fixed.
       </p>
       {values.subjects.map((subject, index) => (
-        <TextField
-          key={subject.code}
-          label={`${listNumber(index)} · ${subject.code}`}
-          value={subject.name}
-          onChange={(name) =>
-            change(
-              `subjects`,
-              values.subjects.map((s, i) => (i === index ? { ...s, name } : s)),
-            )
-          }
-          error={fieldError(`subjects.${index}.name`)}
-        />
+        <div key={subject.code} className="flex flex-col gap-1">
+          <TextField
+            label={`${listNumber(index)} · ${subject.code}`}
+            value={subject.name}
+            onChange={(name) =>
+              change(
+                `subjects`,
+                values.subjects.map((s, i) => (i === index ? { ...s, name } : s)),
+              )
+            }
+            error={fieldError(`subjects.${index}.name`)}
+          />
+          {removeSubject ? (
+            <RemoveSubject opened={opened} subject={subject.code} action={removeSubject} />
+          ) : null}
+        </div>
       ))}
       {form.conflict ? <ConflictNotice {...form.conflict} what="these Subjects" /> : null}
       <EditorSaveRow saveLabel="Save" savedMessage={SAVED} form={form} />

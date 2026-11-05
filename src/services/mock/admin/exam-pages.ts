@@ -1,6 +1,10 @@
 import {
+  alreadyAnExam,
+  alreadyASubject,
   type BundleOfferForm,
   bundleOfferFormSchema,
+  deleteExamInputSchema,
+  examDeleteBlocker,
   type ExamHeaderForm,
   examHeaderFormSchema,
   examSectionSchema,
@@ -8,18 +12,30 @@ import {
   examSeoFormSchema,
   type OfficialExamDateForm,
   officialExamDateFormSchema,
+  EXAMS_LIMIT,
+  MAX_SUBJECTS,
+  newExamCodeOf,
+  type NewExamForm,
+  newExamFormSchema,
+  type NewSubjectForm,
+  newSubjectFormSchema,
+  subjectCodeInputSchema,
+  subjectDeleteBlocker,
   type SubjectNamesForm,
   subjectNamesFormSchema,
+  SUBJECTS_LIMIT,
+  typedCode,
 } from "@/services/admin.schema";
 import type {
   AdminError,
   AdminExamPage,
   AdminResult,
   ExamPagePart,
+  RequiredRole,
   StaffActor,
 } from "@/services/admin.types";
-import { type CatalogueSeed, examPageDefaults } from "@/services/catalogue.schema";
-import type { ExamPage, ExamPageSection } from "@/services/catalogue.types";
+import { type CatalogueSeed, examPageDefaults, MAX_EXAMS } from "@/services/catalogue.schema";
+import type { Exam, ExamPage, ExamPageSection } from "@/services/catalogue.types";
 import { CATALOGUE_TAGS } from "@/services/catalogue.tags";
 import { getSampleStore, stampOf } from "@/services/mock/sample-store";
 
@@ -78,8 +94,18 @@ function adminExamPageOf(catalogue: CatalogueSeed, code: string): AdminExamPage 
     products: catalogue.products
       .filter((product) => product.examCode === code)
       .map(({ id, shortName, state, showOnWebsite }) => ({ id, shortName, state, showOnWebsite })),
+    subjectProducts: Object.fromEntries(
+      exam.subjects.map((subject) => [subject.code, taggedWith(catalogue, code, subject.code)]),
+    ),
+    examsOnWebsite: catalogue.exams
+      .filter((e) => catalogue.products.some((p) => p.examCode === e.code && p.showOnWebsite))
+      .map((e) => e.code),
   });
 }
+
+/** How many Products are tagged with the Exam's Subject. */
+const taggedWith = (catalogue: CatalogueSeed, code: string, subject: string) =>
+  catalogue.products.filter((p) => p.examCode === code && p.subjectCodes.includes(subject)).length;
 
 /** The saved page, read after the write committed. */
 function savedPage(catalogue: CatalogueSeed, code: string): AdminExamPage {
@@ -100,10 +126,10 @@ const invalid = (field: string, message: string): AdminError => ({
   fieldErrors: { [field]: [message] },
 });
 
-/** The write's settings every part shares. */
-function partWrite(code: string, part: ExamPagePart) {
+/** The write's settings every part shares; any Staff User's, unless `role` says Owners. */
+function partWrite(code: string, part: ExamPagePart, role: RequiredRole = "staff") {
   return {
-    role: "staff" as const,
+    role,
     record: recordOf(code, part),
     exists: exists(code),
     result: (catalogue: CatalogueSeed) => savedPage(catalogue, code),
@@ -150,8 +176,8 @@ export async function updateSubjectNames(
   return writeCatalogue(actor, input, expected, {
     ...partWrite(examCode, "subjects"),
     schema: subjectNamesFormSchema,
-    // The codes are fixed (adding Subjects comes in Phase 3), so the list must
-    // name the Exam's Subjects, in its order.
+    // The codes are fixed (Owners add and delete Subjects on their own), so
+    // the list must name the Exam's Subjects, in its order.
     check: (catalogue, { subjects }) => {
       const codes = subjectsOf(catalogue)?.map((subject) => subject.code) ?? [];
       const sent = subjects.map((subject) => subject.code);
@@ -271,5 +297,137 @@ export async function updateOfficialExamDate(
       draftPage(draft, examCode).officialExamDate = officialExamDate;
     },
     tags: [CATALOGUE_TAGS.examPages],
+  });
+}
+
+// ── Adding and deleting Exams and Subjects (ticket 23) ──────────────────────
+// Owners only (spec, Phase 2 → "Adding Exams and Subjects"), checked here as
+// well as in the Server Action. Codes are fixed once saved. A new Exam goes
+// last, with no page record, so its page has every section shown, no bundle
+// offer and no Official Exam Date. It stays off the Website until one of its
+// Products is on the Website (listExams). An Exam is deleted only while no
+// Product belongs to it, and a Subject only while no Product is tagged with
+// it; the reason is the refusal's message.
+
+const refusal = (message: string): AdminError => ({
+  kind: "invalid",
+  fieldErrors: {},
+  formError: message,
+});
+
+export async function createExam(
+  actor: StaffActor,
+  input: NewExamForm,
+): Promise<AdminResult<AdminExamPage>> {
+  // The Exam's code keys its stamp; one the form gets wrong is refused anyway.
+  const examCode = newExamCodeOf(input);
+  return writeCatalogue(actor, input, undefined, {
+    role: "owner",
+    record: recordOf(examCode, "header"),
+    schema: newExamFormSchema,
+    check: (catalogue, exam) => {
+      if (catalogue.exams.length >= MAX_EXAMS) return refusal(EXAMS_LIMIT);
+      return findExam(catalogue, exam.code) ? invalid("code", alreadyAnExam(exam.code)) : null;
+    },
+    activity: { entity: "exam", entityId: examCode, action: "add" },
+    snapshot: (catalogue) => findExam(catalogue, examCode) ?? null,
+    apply: (draft, exam) => {
+      draft.exams.push(exam);
+    },
+    result: (catalogue) => savedPage(catalogue, examCode),
+    // Every Website list of Exams reads the exams tag, though CHE shows on
+    // none until one of its Products is on the Website.
+    tags: [CATALOGUE_TAGS.exams],
+  });
+}
+
+export async function addSubject(
+  actor: StaffActor,
+  code: string,
+  input: NewSubjectForm,
+): Promise<AdminResult<AdminExamPage>> {
+  const examCode = examCodeOf(code);
+  const subjectsOf = (catalogue: CatalogueSeed) => findExam(catalogue, examCode)?.subjects ?? null;
+  return writeCatalogue(actor, input, undefined, {
+    ...partWrite(examCode, "subjects", "owner"),
+    schema: newSubjectFormSchema,
+    check: (catalogue, subject) => {
+      const subjects = subjectsOf(catalogue) ?? [];
+      if (subjects.some((s) => s.code === subject.code)) {
+        return invalid("code", alreadyASubject(subject.code, examCode));
+      }
+      return subjects.length >= MAX_SUBJECTS ? refusal(SUBJECTS_LIMIT) : null;
+    },
+    activity: { entity: "exam", entityId: examCode, action: "add-subject" },
+    snapshot: subjectsOf,
+    apply: (draft, subject) => {
+      findExam(draft, examCode)?.subjects.push(subject);
+    },
+    // Products and the FAQ coverage table name the Subjects through their Exam.
+    tags: [CATALOGUE_TAGS.exams],
+  });
+}
+
+export async function deleteSubject(
+  actor: StaffActor,
+  code: string,
+  subjectCode: string,
+): Promise<AdminResult<AdminExamPage>> {
+  const examCode = examCodeOf(code);
+  const subject = typedCode(subjectCode);
+  const subjectsOf = (catalogue: CatalogueSeed) => findExam(catalogue, examCode)?.subjects ?? null;
+  return writeCatalogue(actor, { code: subjectCode }, undefined, {
+    ...partWrite(examCode, "subjects", "owner"),
+    schema: subjectCodeInputSchema,
+    exists: (catalogue) => subjectsOf(catalogue)?.some((s) => s.code === subject) ?? false,
+    check: (catalogue) => {
+      const reason = subjectDeleteBlocker({
+        exam: examCode,
+        subject,
+        products: taggedWith(catalogue, examCode, subject),
+        subjects: subjectsOf(catalogue)?.length ?? 0,
+      });
+      return reason ? refusal(reason) : null;
+    },
+    activity: { entity: "exam", entityId: examCode, action: "delete-subject" },
+    snapshot: subjectsOf,
+    apply: (draft) => {
+      const exam = findExam(draft, examCode);
+      if (exam) exam.subjects = exam.subjects.filter((s) => s.code !== subject);
+    },
+    tags: [CATALOGUE_TAGS.exams],
+  });
+}
+
+export async function deleteExam(actor: StaffActor, code: string): Promise<AdminResult<Exam>> {
+  const examCode = examCodeOf(code);
+  let deleted: Exam | undefined;
+  return writeCatalogue(actor, { code }, undefined, {
+    role: "owner",
+    record: recordOf(examCode, "header"),
+    exists: exists(examCode),
+    schema: deleteExamInputSchema,
+    check: (catalogue) => {
+      const products = catalogue.products.filter((p) => p.examCode === examCode).length;
+      const reason = examDeleteBlocker(examCode, products);
+      return reason ? refusal(reason) : null;
+    },
+    activity: { entity: "exam", entityId: examCode, action: "delete" },
+    // Its Subjects and its page record go with it.
+    snapshot: (catalogue) => {
+      const exam = findExam(catalogue, examCode);
+      if (!exam) return null;
+      return { exam, page: catalogue.examPages.find((p) => p.examCode === examCode) ?? null };
+    },
+    apply: (draft) => {
+      deleted = findExam(draft, examCode);
+      draft.exams = draft.exams.filter((exam) => exam.code !== examCode);
+      draft.examPages = draft.examPages.filter((page) => page.examCode !== examCode);
+    },
+    result: () => {
+      if (!deleted) throw new Error(`Exam ${examCode} wasn't there to delete`);
+      return structuredClone(deleted);
+    },
+    tags: [CATALOGUE_TAGS.exams, CATALOGUE_TAGS.examPages],
   });
 }

@@ -8,8 +8,15 @@ import { reviewFormValues } from "@/lib/admin/review-form";
 import * as adminSeam from "@/services/admin";
 import type { AdminService } from "@/services/admin";
 import type { AdminResult, StaffActor } from "@/services/admin.types";
+import type { CatalogueSeed } from "@/services/catalogue.schema";
 
-import { SAVES, sampleActor, sampleEmail } from "../../test/admin-inputs";
+import {
+  SAVES,
+  sampleActor,
+  sampleEmail,
+  UNUSED_EXAM,
+  withUnusedExam,
+} from "../../test/admin-inputs";
 import { ADMIN_ARMS } from "../../test/admin-arms";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -69,6 +76,8 @@ interface Write {
   /** An input it refuses, and why. */
   refused: (seam: AdminService, actor: StaffActor) => Promise<AdminResult<unknown>>;
   refusal: "invalid" | "not-found";
+  /** The data it saves on, when the seed has nothing it can save: an edited copy of the seed. */
+  seed?: (seed: CatalogueSeed) => void;
 }
 
 /** The stamp every record has before anyone saves it. */
@@ -467,6 +476,40 @@ const WRITES: Record<string, Write> = {
       ),
     refusal: "invalid",
   },
+  createExam: {
+    actor: OWNER,
+    entity: "exam",
+    entityId: "CHE",
+    saves: (seam, actor) => seam.createExam(actor, UNUSED_EXAM),
+    refused: (seam, actor) => seam.createExam(actor, { ...UNUSED_EXAM, code: "C" }),
+    refusal: "invalid",
+  },
+  addSubject: {
+    actor: OWNER,
+    entity: "exam",
+    entityId: "CE",
+    saves: (seam, actor) => seam.addSubject(actor, "ce", { code: "THERMO", name: "Thermo" }),
+    refused: (seam, actor) => seam.addSubject(actor, "ce", { code: "MSTC", name: "Maths" }),
+    refusal: "invalid",
+  },
+  deleteSubject: {
+    actor: OWNER,
+    entity: "exam",
+    entityId: "CHE",
+    seed: withUnusedExam,
+    saves: (seam, actor) => seam.deleteSubject(actor, "che", "THERMO"),
+    refused: (seam, actor) => seam.deleteSubject(actor, "che", "GEO"),
+    refusal: "not-found",
+  },
+  deleteExam: {
+    actor: OWNER,
+    entity: "exam",
+    entityId: "CHE",
+    seed: withUnusedExam,
+    saves: (seam, actor) => seam.deleteExam(actor, "che"),
+    refused: (seam, actor) => seam.deleteExam(actor, "zz"),
+    refusal: "not-found",
+  },
   updatePromoBanner: {
     actor: EDITOR,
     entity: "promo-banner",
@@ -544,6 +587,7 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
   it.each(writes)(
     "%s appends exactly one record, with the values before and after",
     async (_name, write) => {
+      if (write.seed) await arm.reset(write.seed);
       const { result, appended } = await appendedBy(() => write.saves(seam, write.actor));
 
       expect(result).toMatchObject({ ok: true });
@@ -567,6 +611,7 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
   );
 
   it.each(writes)("%s appends nothing when it's refused", async (_name, write) => {
+    if (write.seed) await arm.reset(write.seed);
     const { result, appended } = await appendedBy(() => write.refused(seam, write.actor));
 
     expect(result).toMatchObject({ ok: false, error: { kind: write.refusal } });
@@ -576,6 +621,7 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
   it.each(writes.filter(([, write]) => write.actor.role === "owner"))(
     "%s appends nothing for an Editor, who isn't allowed it",
     async (_name, write) => {
+      if (write.seed) await arm.reset(write.seed);
       const { result, appended } = await appendedBy(() => write.saves(seam, EDITOR));
 
       expect(result).toMatchObject({ ok: false, error: { kind: "forbidden" } });

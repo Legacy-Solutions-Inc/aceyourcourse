@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { emptyAbout } from "@/lib/catalogue/about-content";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
+import { withUnusedExam } from "../../../../../test/admin-inputs";
+import { editSampleCatalogue } from "../../../../../test/catalogue-seed";
 import ExamPagesPage from "./page";
 
 // Pages & promo, rendered from the sample data with its page, Exam or Site
@@ -31,7 +33,7 @@ vi.mock("next/navigation", () => ({
 type Params = Record<string, string | string[] | undefined>;
 
 async function renderPage(params: Params = {}) {
-  render(await ExamPagesPage({ searchParams: Promise.resolve(params) }));
+  return render(await ExamPagesPage({ searchParams: Promise.resolve(params) }));
 }
 
 const pages = () => screen.getByRole("navigation", { name: "Pages" });
@@ -440,5 +442,125 @@ describe("Pages & promo", () => {
   it("sends a signed-out visitor to sign in from the promo page", async () => {
     jar.clear();
     await expect(renderPage({ page: "promo" })).rejects.toThrow(/^NEXT_REDIRECT \/admin\/sign-in/);
+  });
+
+  describe("adding and deleting Exams and Subjects (ticket 23)", () => {
+    const OWNER = "angel@aceyourcourse.ph";
+    const chipTexts = (region: HTMLElement) =>
+      within(within(region).getByRole("list", { name: "Exam" }))
+        .getAllByRole("link")
+        .map((link) => link.textContent);
+    const addCHE = () =>
+      editSampleCatalogue((seed) => {
+        withUnusedExam(seed);
+      });
+
+    it('shows an Owner "+ Add exam" after the last Exam chip', async () => {
+      jar.set("ayc_admin_sample", OWNER);
+      await renderPage();
+      expect(chipTexts(column("CE"))).toEqual(["CE", "ME", "EE", "MT", "CPA", "+ Add exam"]);
+      expect(within(column("CE")).getByRole("link", { name: "+ Add exam" })).toHaveAttribute(
+        "href",
+        "/admin/exam-pages?page=exam&add=exam",
+      );
+    });
+
+    it('shows an Editor no "+ Add exam", "+ Add subject", Subject remove or "Delete exam"', async () => {
+      addCHE();
+      const { unmount } = await renderPage({ exam: "che" });
+      expect(chipTexts(column("CHE"))).not.toContain("+ Add exam");
+      expect(within(editor()).queryByRole("button", { name: "Delete exam" })).toBeNull();
+      expect(within(editor()).queryByRole("region", { name: "Delete exam" })).toBeNull();
+      unmount();
+
+      await renderPage({ exam: "che", section: "subjects" });
+      expect(within(editor()).queryByRole("form", { name: "Add subject" })).toBeNull();
+      expect(within(editor()).queryByRole("button", { name: /^Remove/ })).toBeNull();
+      // Editors still rename Subjects.
+      expect(within(editor()).getByLabelText("01 · PCHEM")).toHaveValue("Physical Chemistry");
+    });
+
+    it("opens an Editor's ?page=exam&add=exam at the first Exam instead of the form", async () => {
+      await renderPage({ page: "exam", add: "exam" });
+      expect(column("CE")).toBeInTheDocument();
+      expect(screen.queryByRole("form", { name: "New exam" })).toBeNull();
+    });
+
+    it('opens the "+ Add exam" form for an Owner at ?page=exam&add=exam', async () => {
+      jar.set("ayc_admin_sample", OWNER);
+      await renderPage({ page: "exam", add: "exam" });
+      const column = screen.getByRole("region", { name: "New Exam page" });
+      expect(within(column).getByRole("link", { name: "+ Add exam" })).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
+      const form = within(editor()).getByRole("form", { name: "New exam" });
+      expect(within(editor()).getByRole("heading", { name: "ADD EXAM" })).toBeInTheDocument();
+      for (const label of [
+        "EXAM CODE",
+        "BOARD ACRONYM",
+        "EXAM NAME",
+        "LONG NAME",
+        "TEXT",
+        "MADE FOR",
+      ]) {
+        expect(within(form).getByLabelText(label)).toHaveValue("");
+      }
+      expect(within(form).getByLabelText("01 · CODE")).toBeInTheDocument();
+      expect(within(form).getByRole("button", { name: "Add exam" })).toBeInTheDocument();
+    });
+
+    it("marks an Exam with no Product on the Website NOT ON SITE, with the note for View page ↗", async () => {
+      addCHE();
+      jar.set("ayc_admin_sample", OWNER);
+      await renderPage({ exam: "che" });
+      const che = column("CHE");
+      expect(chipTexts(che)).toEqual([
+        "CE",
+        "ME",
+        "EE",
+        "MT",
+        "CPA",
+        "CHE NOT ON SITE",
+        "+ Add exam",
+      ]);
+      expect(within(che).queryByRole("link", { name: /^View page/ })).toBeNull();
+      expect(
+        within(che).getByText(
+          "CHE isn’t on the Website yet. It shows once one of its Products is on the Website.",
+        ),
+      ).toBeInTheDocument();
+      expect(within(pages()).getByRole("link", { name: /^Exam pages/ })).toHaveTextContent("× 6");
+    });
+
+    it('shows an Owner "Delete exam" for an Exam nothing uses, and the reason for one with Products', async () => {
+      addCHE();
+      jar.set("ayc_admin_sample", OWNER);
+      const { unmount } = await renderPage({ exam: "che" });
+      expect(within(editor()).getByRole("button", { name: "Delete exam" })).toBeInTheDocument();
+      unmount();
+
+      // The seed's one CPA Product.
+      await renderPage({ exam: "cpa" });
+      expect(within(editor()).queryByRole("button", { name: "Delete exam" })).toBeNull();
+      expect(
+        within(editor()).getByText("1 Product belongs to CPA. Move or delete it first."),
+      ).toBeInTheDocument();
+    });
+
+    it('shows an Owner each Subject\'s remove button or the reason, and "+ Add subject"', async () => {
+      jar.set("ayc_admin_sample", OWNER);
+      editSampleCatalogue((seed) => {
+        seed.exams[0]?.subjects.push({ code: "THERMO", name: "Thermodynamics" });
+      });
+      await renderPage({ exam: "ce", section: "subjects" });
+      expect(within(editor()).getByRole("button", { name: "Remove THERMO" })).toBeInTheDocument();
+      expect(within(editor()).queryByRole("button", { name: "Remove MSTC" })).toBeNull();
+      expect(
+        within(editor()).getAllByText(/^\d+ Products? uses? MSTC\. Remove it from th/),
+      ).toHaveLength(1);
+      const add = within(editor()).getByRole("form", { name: "Add subject" });
+      expect(within(add).getByLabelText("CODE")).toHaveValue("");
+    });
   });
 });

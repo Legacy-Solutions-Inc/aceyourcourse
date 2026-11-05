@@ -301,6 +301,9 @@ for (const size of SIZES) {
       for (const path of [
         "/admin",
         "/admin/exam-pages",
+        // The Owner's "+ Add exam" form, and Subjects covered with its remove buttons (ticket 23).
+        "/admin/exam-pages?page=exam&add=exam",
+        "/admin/exam-pages?exam=ce&section=subjects",
         "/admin/exam-pages?page=site&site=about",
         "/admin/exam-pages?page=site&site=about&section=story",
         "/admin/exam-pages?page=site&site=about&section=seo",

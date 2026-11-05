@@ -11,8 +11,10 @@ import type {
   FaqForm,
   FaqMove,
   InviteStaffInput,
+  NewExamForm,
   NewProductForm,
   NewReviewForm,
+  NewSubjectForm,
   OfficialExamDateForm,
   ProductFlags,
   ProductForm,
@@ -414,6 +416,45 @@ export interface AdminService {
     expected?: { savedAt: string },
   ): Promise<AdminResult<AdminExamPage>>;
 
+  // Adding and deleting Exams and Subjects (Owners only; ticket 23; spec,
+  // Phase 2 → "Adding Exams and Subjects"). Codes are saved in capitals and
+  // fixed once saved. Each write appends one Staff Activity record, entity
+  // "exam", and records no conflict check: there's no form to go stale.
+
+  /**
+   * Adds an Exam, last, with its Subjects: a code of 2–6 letters that isn't
+   * already an Exam's, a board of 2–10 letters, the Header's fields with
+   * their limits, and at least one Subject. At most 12 Exams. Its page
+   * starts with every section shown, no bundle offer and no Official Exam
+   * Date. It's listed for the Product editor at once, and reaches the Website
+   * once one of its Products is on the Website. Clears the exams tag.
+   */
+  createExam(actor: StaffActor, input: NewExamForm): Promise<AdminResult<AdminExamPage>>;
+  /**
+   * Adds a Subject, last, to an Exam: a code of 1–20 letters, digits, spaces
+   * or "&" that the Exam doesn't have, and a name. Clears the exams tag.
+   */
+  addSubject(
+    actor: StaffActor,
+    code: string,
+    input: NewSubjectForm,
+  ): Promise<AdminResult<AdminExamPage>>;
+  /**
+   * Deletes a Subject no Product is tagged with. The Exam's last Subject
+   * stays. Otherwise the refusal's message is the reason. Clears the exams tag.
+   */
+  deleteSubject(
+    actor: StaffActor,
+    code: string,
+    subjectCode: string,
+  ): Promise<AdminResult<AdminExamPage>>;
+  /**
+   * Deletes an Exam no Product belongs to, Live, Coming Soon or hidden, with
+   * its Subjects and its page record. Otherwise the refusal's message is the
+   * reason. Gives the deleted Exam, and clears the exams and exam-pages tags.
+   */
+  deleteExam(actor: StaffActor, code: string): Promise<AdminResult<Exam>>;
+
   // Site pages (any Staff User; ticket 20; spec, Phase 2 → Site pages). Each
   // of the Website's five Site pages: its SEO title and description (blank
   // uses the text in code) and its share image, with an Exam page's rules.
@@ -546,6 +587,10 @@ export const setExamSection = impl.setExamSection;
 export const updateBundleOffer = impl.updateBundleOffer;
 export const updateExamSeo = impl.updateExamSeo;
 export const updateOfficialExamDate = impl.updateOfficialExamDate;
+export const createExam = impl.createExam;
+export const addSubject = impl.addSubject;
+export const deleteSubject = impl.deleteSubject;
+export const deleteExam = impl.deleteExam;
 export const getSitePageForAdmin = impl.getSitePageForAdmin;
 export const updateSitePageSeo = impl.updateSitePageSeo;
 export const getAboutForAdmin = impl.getAboutForAdmin;

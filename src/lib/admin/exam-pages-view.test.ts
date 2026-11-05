@@ -6,6 +6,7 @@ import { examPageDefaults } from "@/services/catalogue.schema";
 import { testExam } from "../../../test/fixtures/catalogue";
 import {
   aboutPhotoWarnings,
+  addingExam,
   aboutSectionRows,
   examDateWarning,
   examPageAddress,
@@ -36,6 +37,8 @@ function adminPage(changes: Partial<AdminExamPage["page"]> = {}): AdminExamPage 
     products: [
       { id: "prd-008", shortName: "CE Review Bundle 3-in-1", state: "live", showOnWebsite: true },
     ],
+    subjectProducts: {},
+    examsOnWebsite: ["CE"],
   };
 }
 
@@ -121,7 +124,24 @@ describe("parseExamPagesParams", () => {
   });
 });
 
+describe("addingExam", () => {
+  it('opens "+ Add exam" at ?page=exam&add=exam, and at ?add=exam', () => {
+    expect(addingExam({ page: "exam", add: "exam" })).toBe(true);
+    expect(addingExam({ add: "exam" })).toBe(true);
+  });
+
+  it("doesn't for any other page or value", () => {
+    expect(addingExam({})).toBe(false);
+    expect(addingExam({ page: "site", add: "exam" })).toBe(false);
+    expect(addingExam({ page: "exam", add: "subject" })).toBe(false);
+  });
+});
+
 describe("examPagesHref", () => {
+  it('links to "+ Add exam"', () => {
+    expect(examPagesHref({ add: true })).toBe("/admin/exam-pages?page=exam&add=exam");
+  });
+
   it("links to an Exam's section with the code lowercased", () => {
     expect(examPagesHref({ exam: "CE", section: "subjects" })).toBe(
       "/admin/exam-pages?exam=ce&section=subjects",

@@ -2,6 +2,10 @@
 
 import { adminAction } from "@/lib/admin/action";
 import {
+  addSubject,
+  createExam,
+  deleteExam,
+  deleteSubject,
   getExamPageForAdmin,
   setExamSection,
   setPromoBannerVisible,
@@ -17,6 +21,10 @@ import {
 } from "@/services/admin";
 import {
   aboutPhotoUploadInputSchema,
+  addSubjectInputSchema,
+  createExamInputSchema,
+  deleteExamInputSchema,
+  deleteSubjectInputSchema,
   examSectionInputSchema,
   promoBannerVisibleSchema,
   saveAboutSectionInputSchema,
@@ -33,7 +41,8 @@ import {
 import { createUpload } from "@/services/uploads";
 import { uploadFileSchema, uploadOwnerSchema } from "@/services/uploads.types";
 
-// Pages & promo's Server Actions, for any Staff User. Each one checks the
+// Pages & promo's Server Actions, for any Staff User but those for adding and
+// deleting Exams and Subjects, which are for Owners. Each one checks the
 // input's shape; the seam checks every rule, so the form is told each field's
 // message. Each part of an Exam page, each Site page, each of About's
 // sections, the Home promo banner and the announcement bar saves on its own,
@@ -74,6 +83,34 @@ export const saveExamSeo = adminAction(
 export const saveOfficialExamDate = adminAction(
   { role: "staff", schema: saveOfficialExamDateInputSchema, requiresStamp: true },
   async (actor, { code, ...form }, expected) => updateOfficialExamDate(actor, code, form, expected),
+);
+
+// Adding and deleting Exams and Subjects (ticket 23): Owners only, checked
+// here by the Guard and again in the seam. None has a form that can go stale,
+// so none sends a stamp.
+
+/** "+ Add exam"'s Save: the codes, the Header's fields and the Subjects. */
+export const addExam = adminAction(
+  { role: "owner", schema: createExamInputSchema },
+  async (actor, form) => createExam(actor, form),
+);
+
+/** "+ Add subject": a new Subject's code and name, on the Exam. */
+export const addExamSubject = adminAction(
+  { role: "owner", schema: addSubjectInputSchema },
+  async (actor, { exam, ...subject }) => addSubject(actor, exam, subject),
+);
+
+/** A Subject's remove button, once it's confirmed. */
+export const removeExamSubject = adminAction(
+  { role: "owner", schema: deleteSubjectInputSchema },
+  async (actor, { exam, code }) => deleteSubject(actor, exam, code),
+);
+
+/** "Delete exam", once it's confirmed. */
+export const removeExam = adminAction(
+  { role: "owner", schema: deleteExamInputSchema },
+  async (actor, { code }) => deleteExam(actor, code),
 );
 
 /**

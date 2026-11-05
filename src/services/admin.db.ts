@@ -10,7 +10,7 @@ import { diffRows } from "@/lib/db/row-diff";
 import * as schema from "@/lib/db/schema";
 import { isStorageConfigured } from "@/lib/supabase/admin";
 import type { AdminService } from "@/services/admin";
-import { staffEmailSchema } from "@/services/admin.schema";
+import { alreadyAnExam, newExamCodeOf, staffEmailSchema, typedCode } from "@/services/admin.schema";
 import {
   deniedSignInFromRow,
   deniedSignInToRow,
@@ -78,6 +78,8 @@ const writeLock = (part: Part) =>
 
 /** Postgres's SQLSTATE for a unique key refusing a row. */
 const UNIQUE_VIOLATION = "23505";
+/** Postgres's SQLSTATE for a foreign key refusing a change, such as deleting a row still referenced. */
+const FOREIGN_KEY_VIOLATION = "23503";
 
 /** A stamp changed in the database after the call read it. */
 class StaleStampError extends Error {
@@ -471,6 +473,40 @@ const inviteStaff: AdminService["inviteStaff"] = async (actor, input) => {
   }
 };
 
+/**
+ * A new Exam. The seam's own check refuses a code that's already an Exam's;
+ * should one be added by a save that skipped the lock, the exams table's
+ * primary key refuses it too, and that says the same, on the code field.
+ */
+const createExam: AdminService["createExam"] = async (actor, input) => {
+  try {
+    return await stampedWrite(sampleArm.createExam)(actor, input);
+  } catch (error) {
+    if (postgresErrorCode(error) !== UNIQUE_VIOLATION) throw error;
+    const code = newExamCodeOf(input);
+    return { ok: false, error: { kind: "invalid", fieldErrors: { code: [alreadyAnExam(code)] } } };
+  }
+};
+
+/**
+ * A delete the seam's check allowed, which a Product's foreign key still
+ * refuses: one added by a save that skipped the lock. Nothing changes, and
+ * the refusal says so.
+ */
+function refusedByForeignKey<Args extends unknown[], Value>(
+  call: Call<Args, AdminResult<Value>>,
+  reason: (...args: Args) => string,
+): Call<Args, AdminResult<Value>> {
+  return async (...args) => {
+    try {
+      return await stampedWrite(call)(...args);
+    } catch (error) {
+      if (postgresErrorCode(error) !== FOREIGN_KEY_VIOLATION) throw error;
+      return { ok: false, error: { kind: "invalid", fieldErrors: {}, formError: reason(...args) } };
+    }
+  };
+}
+
 export const databaseArm: AdminService = {
   // Sign-in, and Staff and Invites.
   resolveSignIn: write(STAFF, sampleArm.resolveSignIn),
@@ -522,6 +558,17 @@ export const databaseArm: AdminService = {
   updateBundleOffer: stampedWrite(sampleArm.updateBundleOffer),
   updateExamSeo: stampedWrite(sampleArm.updateExamSeo),
   updateOfficialExamDate: stampedWrite(sampleArm.updateOfficialExamDate),
+  createExam,
+  addSubject: stampedWrite(sampleArm.addSubject),
+  deleteSubject: refusedByForeignKey(
+    sampleArm.deleteSubject,
+    (_actor, _code, subject) =>
+      `A Product now uses ${typedCode(subject)}. Reload the page to see it.`,
+  ),
+  deleteExam: refusedByForeignKey(
+    sampleArm.deleteExam,
+    (_actor, code) => `A Product now belongs to ${typedCode(code)}. Reload the page to see it.`,
+  ),
 
   getSitePageForAdmin: read(CATALOGUE, sampleArm.getSitePageForAdmin),
   updateSitePageSeo: stampedWrite(sampleArm.updateSitePageSeo),

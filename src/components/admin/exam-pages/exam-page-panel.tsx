@@ -11,6 +11,7 @@ import {
   ReviewsNote,
   SubjectsEditor,
 } from "./exam-page-editors";
+import { AddSubjectForm, DeleteExam, type ExamManageActions } from "./exam-manage";
 import { SeoEditor } from "./exam-seo-editor";
 
 export interface ExamPageActions {
@@ -29,6 +30,11 @@ interface ExamPagePanelProps {
   actions: ExamPageActions;
   /** Today in Manila, for the past-date warning. */
   today: string;
+  /**
+   * For an Owner: "+ Add subject", each Subject's remove button and "Delete
+   * exam" (ticket 23). An Editor's panel has none of them.
+   */
+  manage?: ExamManageActions;
 }
 
 const LABELS: Record<ExamPageEditorKey, string> = {
@@ -46,7 +52,7 @@ const LABELS: Record<ExamPageEditorKey, string> = {
  * visibility, or the Official Exam Date. Each editor is keyed by its Exam, so
  * another Exam opens its own values.
  */
-export function ExamPagePanel({ opened, selected, actions, today }: ExamPagePanelProps) {
+export function ExamPagePanel({ opened, selected, actions, today, manage }: ExamPagePanelProps) {
   const key = `${opened.exam.code}-${selected}`;
   // A section that can be hidden says so over its editor.
   const toggle = examSectionRows(opened).find((row) => row.key === selected)?.toggle;
@@ -55,10 +61,26 @@ export function ExamPagePanel({ opened, selected, actions, today }: ExamPagePane
   let editor: React.ReactNode;
   switch (selected) {
     case "header":
-      editor = <HeaderEditor key={key} opened={opened} action={actions.saveHeader} />;
+      editor = (
+        <>
+          <HeaderEditor key={key} opened={opened} action={actions.saveHeader} />
+          {manage ? <DeleteExam opened={opened} action={manage.removeExam} /> : null}
+        </>
+      );
       break;
     case "subjects":
-      editor = <SubjectsEditor key={key} opened={opened} action={actions.saveSubjects} />;
+      editor = (
+        <>
+          <SubjectsEditor
+            // A Subject added or removed opens the editor again, with the new list and stamp.
+            key={`${key}-${opened.exam.subjects.map((subject) => subject.code).join("|")}`}
+            opened={opened}
+            action={actions.saveSubjects}
+            removeSubject={manage?.removeSubject}
+          />
+          {manage ? <AddSubjectForm key={key} opened={opened} action={manage.addSubject} /> : null}
+        </>
+      );
       break;
     case "reviewers":
       editor = <ReviewersNote opened={opened} />;

@@ -18,6 +18,7 @@ import {
   FAQ_GROUPS,
   httpsUrl,
   isSiteHref,
+  MAX_EXAMS,
   PRODUCT_FORMATS,
   SITE_PAGES,
 } from "@/services/catalogue.schema";
@@ -780,12 +781,18 @@ function checkRequiredText(
   else if (longerThan(text, max)) issue(`KEEP IT TO ${max} CHARACTERS`);
 }
 
-const examHeaderFormFields = z.object({
-  name: formText(500),
-  longName: formText(500),
-  blurb: formText(5000),
-  madeFor: formText(500),
-});
+/** What a request that tries to change a fixed code is told: an Exam's code and board are fixed. */
+export const CODES_FIXED = "THE CODES CAN’T BE CHANGED · RELOAD THE PAGE";
+
+const examHeaderFormFields = z
+  .object({
+    name: formText(500),
+    longName: formText(500),
+    blurb: formText(5000),
+    madeFor: formText(500),
+  })
+  // Strict, so a request carrying a code or board to change is refused.
+  .strict(CODES_FIXED);
 
 /** The Header editor's values: EXAM NAME, LONG NAME, TEXT and MADE FOR. */
 export type ExamHeaderForm = z.infer<typeof examHeaderFormFields>;
@@ -816,11 +823,14 @@ export const saveExamHeaderInputSchema = examHeaderFormFields.extend({ code: exa
 
 const SUBJECT_NAME: RequiredText = { max: 120, blank: "ADD THE SUBJECT’S NAME" };
 
+/** The most Subjects an Exam has: the Subjects covered editor's limit. */
+export const MAX_SUBJECTS = 30;
+
 const subjectNamesFormFields = z.object({
   subjects: z
     .array(z.object({ code: formText(40), name: formText(1000) }))
     .min(1)
-    .max(30),
+    .max(MAX_SUBJECTS),
 });
 
 /** The Subjects covered editor's values: each Subject's fixed code and its name. */
@@ -839,6 +849,156 @@ export const subjectNamesFormSchema = subjectNamesFormFields
 
 /** "Save subjects": the Exam and its Subject names, their shape checked. */
 export const saveSubjectNamesInputSchema = subjectNamesFormFields.extend({ code: examCode });
+
+// ── Adding and deleting Exams and Subjects (ticket 23) ──────────────────────
+// Owners only (spec, Phase 2 → "Adding Exams and Subjects"). The codes and
+// board are saved in capitals and fixed once saved: an Exam's code becomes
+// its page's address, /exams/<code in lower case>. The rules that need the
+// catalogue (a code already taken, the 12-Exam limit, what still uses an Exam
+// or Subject) are the seam's, with the messages below.
+
+export const EXAMS_LIMIT = `UP TO ${MAX_EXAMS} EXAMS. Ask the developer to raise the limit.`;
+export const SUBJECTS_LIMIT = `UP TO ${MAX_SUBJECTS} SUBJECTS ON AN EXAM`;
+
+const EXAM_CODE = "USE 2–6 LETTERS";
+const BOARD = "USE 2–10 LETTERS";
+const SUBJECT_CODE = "USE 1–20 LETTERS, DIGITS, SPACES OR &";
+
+/** Pure: a typed code as saved: trimmed, in capitals, with single spaces. */
+export const typedCode = (text: string) => text.trim().replace(/\s+/g, " ").toUpperCase();
+
+/** "<CODE> IS ALREADY AN EXAM", on the code field. */
+export const alreadyAnExam = (code: string) => `${code} IS ALREADY AN EXAM`;
+
+/** "<CODE> IS ALREADY A <EXAM> SUBJECT", on the new Subject's code field. */
+export const alreadyASubject = (subject: string, exam: string) =>
+  `${subject} IS ALREADY A ${exam} SUBJECT`;
+
+const newSubjectFormFields = z.object({ code: formText(40), name: formText(1000) });
+
+/** "+ Add subject"'s values: the new Subject's code and name, as typed. */
+export type NewSubjectForm = z.infer<typeof newSubjectFormFields>;
+
+/** Adds a Subject's messages, on `path`: its code and its name. */
+function checkSubject(
+  ctx: z.RefinementCtx,
+  path: (string | number)[],
+  { code, name }: NewSubjectForm,
+) {
+  if (!/^[A-Z0-9 &]{1,20}$/.test(typedCode(code))) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: [...path, "code"], message: SUBJECT_CODE });
+  }
+  checkRequiredText(ctx, [...path, "name"], name, SUBJECT_NAME);
+}
+
+const savedSubject = ({ code, name }: NewSubjectForm) => ({
+  code: typedCode(code),
+  name: name.trim(),
+});
+
+/** "+ Add subject"'s form, checked: the code in capitals, the name trimmed. */
+export const newSubjectFormSchema = newSubjectFormFields
+  .superRefine((form, ctx) => checkSubject(ctx, [], form))
+  .transform(savedSubject);
+
+/** "+ Add subject": the Exam, and its new Subject's code and name, their shape checked. */
+export const addSubjectInputSchema = newSubjectFormFields.extend({ exam: examCode });
+
+const newExamFormFields = examHeaderFormFields.extend({
+  code: formText(40),
+  board: formText(40),
+  subjects: z.array(newSubjectFormFields).max(MAX_SUBJECTS, SUBJECTS_LIMIT),
+});
+
+/** "+ Add exam"'s values: the codes, the Header's fields and the Subjects, as typed. */
+export type NewExamForm = z.infer<typeof newExamFormFields>;
+
+/** "+ Add exam"'s form, checked: the codes and board in capitals, the text trimmed. */
+export const newExamFormSchema = newExamFormFields
+  .superRefine((form, ctx) => {
+    const issue = (path: (string | number)[], message: string) =>
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
+    if (!/^[A-Z]{2,6}$/.test(typedCode(form.code))) issue(["code"], EXAM_CODE);
+    if (!/^[A-Z]{2,10}$/.test(typedCode(form.board))) issue(["board"], BOARD);
+    for (const field of ["name", "longName", "blurb", "madeFor"] as const) {
+      checkRequiredText(ctx, [field], form[field], HEADER_FIELDS[field]);
+    }
+    if (form.subjects.length === 0) issue(["subjects"], "ADD AT LEAST ONE SUBJECT");
+    const seen = new Set<string>();
+    form.subjects.forEach((subject, index) => {
+      checkSubject(ctx, ["subjects", index], subject);
+      const code = typedCode(subject.code);
+      if (code && seen.has(code)) issue(["subjects", index, "code"], `${code} IS LISTED TWICE`);
+      seen.add(code);
+    });
+  })
+  .transform((form) => ({
+    code: typedCode(form.code),
+    board: typedCode(form.board),
+    name: form.name.trim(),
+    longName: form.longName.trim(),
+    blurb: savedText(form.blurb),
+    madeFor: form.madeFor.trim(),
+    subjects: form.subjects.map(savedSubject),
+  }));
+
+/** "+ Add exam"'s Save: its values, their shape checked. */
+export const createExamInputSchema = newExamFormFields;
+
+/** Pure: the Exam code a "+ Add exam" form names, as it would be saved, or "" when it names none. */
+export const newExamCodeOf = (input: unknown) =>
+  newExamFormSchema.safeParse(input).data?.code ?? "";
+
+/** "Delete exam": the Exam. */
+export const deleteExamInputSchema = z.object({ code: examCode });
+
+/** A Subject's remove button: the Subject's code, matched as saved. */
+export const subjectCodeInputSchema = z.object({
+  code: z.string().trim().min(1).max(40).transform(typedCode),
+});
+
+/** A Subject's remove button, as its Server Action takes it: the Exam and the Subject's code. */
+export const deleteSubjectInputSchema = subjectCodeInputSchema.extend({ exam: examCode });
+
+const productCount = (count: number) => `${count} ${count === 1 ? "Product" : "Products"}`;
+
+/**
+ * Pure: why the Exam can't be deleted, or null when it can: while any Product
+ * belongs to it, Live, Coming Soon or hidden.
+ */
+export function examDeleteBlocker(exam: string, count: number): string | null {
+  if (count === 0) return null;
+  const belong = count === 1 ? "belongs" : "belong";
+  const them = count === 1 ? "it" : "them";
+  return `${productCount(count)} ${belong} to ${exam}. Move or delete ${them} first.`;
+}
+
+/**
+ * Pure: why the Subject can't be deleted, or null when it can: while a
+ * Product is tagged with it, or while it's its Exam's only Subject.
+ */
+export function subjectDeleteBlocker({
+  exam,
+  subject,
+  products: count,
+  subjects,
+}: {
+  exam: string;
+  subject: string;
+  /** How many Products are tagged with the Subject. */
+  products: number;
+  /** How many Subjects the Exam has. */
+  subjects: number;
+}): string | null {
+  if (count > 0) {
+    const use = count === 1 ? "uses" : "use";
+    const those = count === 1 ? "that Product" : "those Products";
+    return `${productCount(count)} ${use} ${subject}. Remove it from ${those} first.`;
+  }
+  return subjects <= 1
+    ? `${exam} needs at least one Subject. Add another before deleting this one.`
+    : null;
+}
 
 /** A section toggle: Subjects covered, Bundle offer or Reviews, shown or hidden. */
 export const examSectionSchema = z.object({
