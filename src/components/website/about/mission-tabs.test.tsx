@@ -2,6 +2,8 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
+import { ABOUT_DEFAULTS } from "@/lib/catalogue/about-content";
+
 import { MissionTabs } from "./mission-tabs";
 
 // "The mission" (docs/mockup/website/About_v2.dc.html L89–112, L163–167): four
@@ -12,7 +14,7 @@ const panel = () => within(screen.getByRole("tabpanel"));
 
 describe("MissionTabs", () => {
   it("is a section headed “The mission”, with the four principles as tabs", () => {
-    render(<MissionTabs />);
+    render(<MissionTabs copy={ABOUT_DEFAULTS.mission} />);
     expect(screen.getByRole("region", { name: "The mission" })).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -32,7 +34,7 @@ describe("MissionTabs", () => {
   });
 
   it("opens on the first principle", () => {
-    render(<MissionTabs />);
+    render(<MissionTabs copy={ABOUT_DEFAULTS.mission} />);
     expect(tabs()[0]).toHaveAttribute("aria-selected", "true");
     expect(
       panel().getByRole("heading", { level: 3, name: "Board-focused, nothing extra" }),
@@ -43,7 +45,7 @@ describe("MissionTabs", () => {
 
   it("moves through the principles with the arrow keys, showing each one's copy", async () => {
     const user = userEvent.setup();
-    render(<MissionTabs />);
+    render(<MissionTabs copy={ABOUT_DEFAULTS.mission} />);
     await user.tab();
     expect(tabs()[0]).toHaveFocus();
 
@@ -70,7 +72,7 @@ describe("MissionTabs", () => {
 
   it("switches on a click", async () => {
     const user = userEvent.setup();
-    render(<MissionTabs />);
+    render(<MissionTabs copy={ABOUT_DEFAULTS.mission} />);
     await user.click(screen.getByRole("tab", { name: "Original, and protected" }));
     expect(panel().getByText(/^Every reviewer is registered with IPOPHIL\./)).toBeVisible();
     expect(screen.getAllByRole("tabpanel")).toHaveLength(1);

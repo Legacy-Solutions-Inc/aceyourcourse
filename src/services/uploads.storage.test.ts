@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { emptyAbout } from "@/lib/catalogue/about-content";
 import type { StaffActor } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
@@ -77,6 +78,11 @@ describe("the Storage arm's createUpload", () => {
       { ...PHOTO, purpose: "site-page-share-image", owner: "faq" },
       `^site-pages/faq/share-${UUID}\\.png$`,
     ],
+    [{ ...PHOTO, purpose: "about-photo", owner: "team" }, `^site-pages/about/team-${UUID}\\.png$`],
+    [
+      { ...PHOTO, purpose: "about-photo", owner: "story-2", contentType: "image/jpeg" },
+      `^site-pages/about/story-2-${UUID}\\.jpg$`,
+    ],
   ] as const)("files %o at its own path", async (request, pattern) => {
     const { arm } = fakeBucket();
     const result = await arm.createUpload(EDITOR, request);
@@ -119,6 +125,30 @@ describe("the Storage arm's createUpload", () => {
       { kind: "invalid", fieldErrors: { owner: ["UNKNOWN UPLOAD"] } },
     ],
     [
+      "an About photo with no slot",
+      EDITOR,
+      { ...PHOTO, purpose: "about-photo" },
+      { kind: "invalid", fieldErrors: { owner: ["UNKNOWN UPLOAD"] } },
+    ],
+    [
+      "an About photo for a slot About doesn't have",
+      EDITOR,
+      { ...PHOTO, purpose: "about-photo", owner: "story-4" },
+      { kind: "invalid", fieldErrors: { owner: ["UNKNOWN UPLOAD"] } },
+    ],
+    [
+      "an About photo that's a GIF",
+      EDITOR,
+      { ...PHOTO, purpose: "about-photo", owner: "team", contentType: "image/gif" },
+      { kind: "invalid", fieldErrors: { contentType: ["USE A JPEG, PNG OR WEBP IMAGE"] } },
+    ],
+    [
+      "an About photo over 10 MB",
+      EDITOR,
+      { ...PHOTO, purpose: "about-photo", owner: "team", size: 11 * 1024 * 1024 },
+      { kind: "invalid", fieldErrors: { size: ["KEEP EACH PHOTO TO 10 MB"] } },
+    ],
+    [
       "an owner that would climb out of its folder",
       EDITOR,
       { ...PHOTO, owner: "../settings" },
@@ -157,6 +187,16 @@ describe("what a save finds at an upload's path", () => {
   const unsent = `products/new/5b0a2c9e-1d3f-4e5a-8b7c-6d5e4f3a2b1c.webp`;
   const share = `exam-pages/CE/share-7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f.jpg`;
   const siteShare = `site-pages/about/share-2e3f4a5b-6c7d-4e8f-9a0b-1c2d3e4f5a6b.png`;
+
+  it("is the public URL of an About photo once it's in the bucket", async () => {
+    const aboutPhoto = `site-pages/about/story-2-3f4a5b6c-7d8e-4f9a-8b1c-2d3e4f5a6b7c.jpg`;
+    const { arm } = fakeBucket();
+    const uploadAt = await arm.lookupUploads([aboutPhoto]);
+
+    expect(uploadAt(aboutPhoto, "about-photo")).toEqual({ publicUrl: `${PUBLIC}${aboutPhoto}` });
+    expect(uploadAt(aboutPhoto, "site-page-share-image")).toBeNull();
+    expect(uploadAt(siteShare, "about-photo")).toBeNull();
+  });
 
   it("is the public URL of a Site page's share image once it's in the bucket", async () => {
     const { arm } = fakeBucket();
@@ -284,6 +324,27 @@ describe("imagesRemoved", () => {
     expect(imagesRemoved(before, after)).toEqual([first.shareImage, second.shareImage]);
   });
 
+  it("is an About photo the save replaced or put back to today's", () => {
+    const before = seed();
+    const about = emptyAbout();
+    about.header.teamPhoto = { src: `${PUBLIC}site-pages/about/team-old.png`, alt: "The team" };
+    about.story.photos[1] = { src: `${PUBLIC}site-pages/about/story-2-old.png`, alt: "A hug" };
+    about.story.photos[2] = { src: `${PUBLIC}site-pages/about/story-3-kept.png`, alt: "Kept" };
+    before.sitePages = [
+      { page: "about", seoTitle: null, seoDescription: null, shareImage: null, about },
+    ];
+    const after = structuredClone(before);
+    const saved = after.sitePages[0]?.about;
+    if (!saved) throw new Error("unreachable");
+    saved.header.teamPhoto = { src: `${PUBLIC}site-pages/about/team-new.png`, alt: "The team" };
+    saved.story.photos[1] = null;
+
+    expect(imagesRemoved(before, after)).toEqual([
+      `${PUBLIC}site-pages/about/team-old.png`,
+      `${PUBLIC}site-pages/about/story-2-old.png`,
+    ]);
+  });
+
   it("is a Site page's share image the save replaced or cleared", () => {
     const before = seed();
     before.sitePages = [
@@ -292,12 +353,14 @@ describe("imagesRemoved", () => {
         seoTitle: null,
         seoDescription: null,
         shareImage: `${PUBLIC}site-pages/faq/share-old.png`,
+        about: null,
       },
       {
         page: "home",
         seoTitle: null,
         seoDescription: null,
         shareImage: `${PUBLIC}site-pages/home/share-old.png`,
+        about: null,
       },
     ];
     const after = structuredClone(before);

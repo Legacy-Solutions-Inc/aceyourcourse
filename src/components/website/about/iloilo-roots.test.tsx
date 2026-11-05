@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { trackMarketplaceClick } from "@/lib/analytics/events";
+import { ABOUT_DEFAULTS } from "@/lib/catalogue/about-content";
 import type { WebsiteSettings } from "@/services/catalogue.types";
 
 import { IloiloRoots } from "./iloilo-roots";
@@ -37,13 +38,13 @@ describe("IloiloRoots", () => {
   });
 
   it("tells where orders ship from", () => {
-    render(<IloiloRoots shopLinks={SHOP_LINKS} />);
+    render(<IloiloRoots copy={ABOUT_DEFAULTS.roots} shopLinks={SHOP_LINKS} />);
     expect(section().getByText("Iloilo City roots")).toBeInTheDocument();
     expect(section().getByText(/^We’re a small Visayas shop/)).toBeVisible();
   });
 
   it("has a button to each Marketplace's shop page, in a new tab", () => {
-    render(<IloiloRoots shopLinks={SHOP_LINKS} />);
+    render(<IloiloRoots copy={ABOUT_DEFAULTS.roots} shopLinks={SHOP_LINKS} />);
     expect(shopButtons()).toEqual([
       ["Buy on Shopee (opens in a new tab)", SHOP_LINKS.shopee],
       ["Buy on Lazada (opens in a new tab)", SHOP_LINKS.lazada],
@@ -57,7 +58,7 @@ describe("IloiloRoots", () => {
 
   it("records a marketplace_click for the shop page, about no Product", async () => {
     const user = userEvent.setup();
-    render(<IloiloRoots shopLinks={SHOP_LINKS} />);
+    render(<IloiloRoots copy={ABOUT_DEFAULTS.roots} shopLinks={SHOP_LINKS} />);
     document.addEventListener("click", (event) => event.preventDefault(), { once: true });
     await user.click(section().getByRole("link", { name: /Lazada/ }));
     expect(trackMarketplaceClick).toHaveBeenCalledWith({
@@ -69,7 +70,7 @@ describe("IloiloRoots", () => {
   });
 
   it("hides the button of a Marketplace with no shop link", () => {
-    render(<IloiloRoots shopLinks={{ ...SHOP_LINKS, lazada: null }} />);
+    render(<IloiloRoots copy={ABOUT_DEFAULTS.roots} shopLinks={{ ...SHOP_LINKS, lazada: null }} />);
     expect(shopButtons()).toEqual([
       ["Buy on Shopee (opens in a new tab)", SHOP_LINKS.shopee],
       ["Buy on TikTok Shop (opens in a new tab)", SHOP_LINKS.tiktok],
@@ -77,13 +78,18 @@ describe("IloiloRoots", () => {
   });
 
   it("renders no empty list of stores with no shop links", () => {
-    render(<IloiloRoots shopLinks={{ shopee: null, lazada: null, tiktok: null }} />);
+    render(
+      <IloiloRoots
+        copy={ABOUT_DEFAULTS.roots}
+        shopLinks={{ shopee: null, lazada: null, tiktok: null }}
+      />,
+    );
     expect(shopButtons()).toEqual([]);
     expect(stores()).toBeNull();
   });
 
   it("shows the mock shipping label from Iloilo City", () => {
-    render(<IloiloRoots shopLinks={SHOP_LINKS} />);
+    render(<IloiloRoots copy={ABOUT_DEFAULTS.roots} shopLinks={SHOP_LINKS} />);
     const label = within(section().getByRole("figure", { name: "Shipping label" }));
     expect(label.getByText("AceYourCourse")).toBeInTheDocument();
     expect(label.getByText("Iloilo City, Iloilo")).toBeInTheDocument();

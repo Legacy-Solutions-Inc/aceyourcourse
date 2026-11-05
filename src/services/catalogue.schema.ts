@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { ABOUT_ALT_MAX, ABOUT_SPEC_MAX } from "@/lib/catalogue/about-content";
 import { isMarketplaceUrl, MARKETPLACE_HOSTS } from "@/lib/catalogue/store-links";
 import { isBucketImageUrl } from "@/lib/catalogue-bucket";
 import { isCalendarDate } from "@/lib/manila-time";
@@ -328,15 +329,76 @@ export const isSitePageKey = (value: unknown): value is SitePageKey =>
 
 /** Pure: the record of a Site page with none: nothing set, so it uses its text in code. */
 export function sitePageDefaults(page: SitePageKey): SitePage {
-  return { page, seoTitle: null, seoDescription: null, shareImage: null };
+  return { page, seoTitle: null, seoDescription: null, shareImage: null, about: null };
 }
 
-const sitePageSchema = z.object({
-  page: z.enum(SITE_PAGES),
-  seoTitle: nonBlank("SEO title").nullable(),
-  seoDescription: nonBlank("SEO description").nullable(),
-  shareImage: selfHostedPath.nullable(),
+// About's text and photos (ticket 21) as saved: each field null for today's
+// text, never blank. Only the shape is checked here. The length limits,
+// worked out from today's text, are the editor's (admin.schema.ts), so a
+// change to today's text can never make a saved catalogue invalid.
+const aboutText = (label: string) => nonBlank(label).nullable();
+const aboutPhoto = z
+  .object({
+    src: selfHostedPath,
+    alt: nonBlank("Photo alt text").pipe(
+      z.string().max(ABOUT_ALT_MAX, `Photo alt text must be at most ${ABOUT_ALT_MAX} characters`),
+    ),
+  })
+  .nullable();
+const aboutContentSchema = z.object({
+  header: z.object({ intro: aboutText("Intro"), teamPhoto: aboutPhoto }),
+  story: z.object({
+    heading: aboutText("Story heading"),
+    paragraphs: z.array(nonBlank("Paragraph")).min(1).max(3).nullable(),
+    beforeTitle: aboutText("Before title"),
+    beforeBody: aboutText("Before text"),
+    afterTitle: aboutText("After title"),
+    afterSpecs: z
+      .array(
+        nonBlank("Spec chip").pipe(
+          z.string().max(ABOUT_SPEC_MAX, `Spec chip must be at most ${ABOUT_SPEC_MAX} characters`),
+        ),
+      )
+      .min(1)
+      .max(5)
+      .nullable(),
+    photos: z.tuple([aboutPhoto, aboutPhoto, aboutPhoto]),
+  }),
+  growth: z.object({
+    firstTitle: aboutText("First title"),
+    nowLead: aboutText("Now text"),
+    todayBody: aboutText("Today text"),
+    beginning: aboutText("Closing line"),
+  }),
+  mission: z.object({
+    heading: aboutText("Mission heading"),
+    intro: aboutText("Mission intro"),
+    tabs: z.tuple([missionTab(), missionTab(), missionTab(), missionTab()]),
+  }),
+  roots: z.object({
+    heading: aboutText("Roots heading"),
+    body: aboutText("Roots text"),
+    recipient: aboutText("Shipping label To line"),
+  }),
+  closing: z.object({ heading: aboutText("Closing heading") }),
 });
+
+function missionTab() {
+  return z.object({ title: aboutText("Tab title"), body: aboutText("Tab text") });
+}
+
+const sitePageSchema = z
+  .object({
+    page: z.enum(SITE_PAGES),
+    seoTitle: nonBlank("SEO title").nullable(),
+    seoDescription: nonBlank("SEO description").nullable(),
+    shareImage: selfHostedPath.nullable(),
+    about: aboutContentSchema.nullable(),
+  })
+  .refine((page) => page.page === "about" || page.about === null, {
+    path: ["about"],
+    message: "only About has text and photos to save",
+  });
 
 const promoBannerSchema = z
   .object({

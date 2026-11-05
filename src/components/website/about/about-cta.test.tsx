@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import { ABOUT_DEFAULTS } from "@/lib/catalogue/about-content";
 import { testExam } from "../../../../test/fixtures/catalogue";
 import { AboutCta } from "./about-cta";
 
@@ -25,7 +26,7 @@ const tiles = () =>
 
 describe("AboutCta", () => {
   it("has a tile for every Exam, CPA included, each going to its Exam page", () => {
-    render(<AboutCta exams={EXAMS} />);
+    render(<AboutCta heading={ABOUT_DEFAULTS.closing.heading} exams={EXAMS} />);
     expect(tiles()).toEqual([
       ["CE Civil Engineering Reviewers →", "/exams/ce"],
       ["ME Mechanical Engineering Reviewers →", "/exams/me"],
@@ -38,7 +39,7 @@ describe("AboutCta", () => {
   });
 
   it("ends with All reviewers, in place of the mockup's Other courses", () => {
-    render(<AboutCta exams={EXAMS} />);
+    render(<AboutCta heading={ABOUT_DEFAULTS.closing.heading} exams={EXAMS} />);
     expect(section().getByRole("link", { name: "All reviewers" })).toHaveAttribute(
       "href",
       "/products",
@@ -47,7 +48,7 @@ describe("AboutCta", () => {
   });
 
   it("has only All reviewers with no Exams", () => {
-    render(<AboutCta exams={[]} />);
+    render(<AboutCta heading={ABOUT_DEFAULTS.closing.heading} exams={[]} />);
     expect(tiles()).toEqual([["+ All reviewers →", "/products"]]);
   });
 });

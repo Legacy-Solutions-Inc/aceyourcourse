@@ -1,7 +1,9 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 
+import { emptyAbout } from "@/lib/catalogue/about-content";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
+import type { AboutContent, SitePageKey } from "@/services/catalogue.types";
 import { resetSampleStore } from "@/services/mock/sample-store";
 
 import { editSampleCatalogue } from "../../../../test/catalogue-seed";
@@ -11,6 +13,17 @@ import { editSampleCatalogue } from "../../../../test/catalogue-seed";
 // shop's figures are 4.8 from 874 ratings and 3.7K followers, as of 29 Oct 2026.
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/about" }));
+
+// A read that fails, as an unreachable database's does.
+const reads = vi.hoisted(() => ({ failure: null as Error | null }));
+vi.mock("@/services/catalogue", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/services/catalogue")>();
+  return {
+    ...actual,
+    getSitePage: (page: SitePageKey) =>
+      reads.failure ? Promise.reject(reads.failure) : actual.getSitePage(page),
+  };
+});
 
 type PageModule = typeof import("./page");
 
@@ -69,8 +82,21 @@ const hide = (seed: CatalogueSeed, keep: (examCode: string) => boolean) => {
   }
 };
 
+/** About with these fields saved in Pages & promo (ticket 21), over today's text. */
+async function renderAboutSaved(edit: (about: AboutContent) => void) {
+  const about = emptyAbout();
+  edit(about);
+  return renderAboutFromSeed((seed) => {
+    seed.sitePages = [
+      { page: "about", seoTitle: null, seoDescription: null, shareImage: null, about },
+    ];
+  });
+}
+
 // Every test starts from the seed, whatever the one before it edited.
 afterEach(() => {
+  reads.failure = null;
+  vi.restoreAllMocks();
   resetSampleStore();
 });
 
@@ -78,6 +104,13 @@ describe("About", () => {
   afterAll(() => {
     vi.unstubAllEnvs();
     vi.resetModules();
+  });
+
+  // Taken before ticket 21 made About editable: with nothing saved in Pages &
+  // promo, the page must stay exactly this.
+  it("with nothing saved, renders today's About exactly", async () => {
+    const { container } = await renderAbout();
+    expect(container).toMatchSnapshot();
   });
 
   it("is titled and described, with /about as the canonical URL", async () => {
@@ -237,5 +270,126 @@ describe("About", () => {
       "https://shopee.ph/aceyourcourse",
       "https://vt.tiktok.com/ZS49ve6cu/?page=TikTokShop",
     ]);
+  });
+});
+
+describe("About, with text and photos saved in Pages & promo", () => {
+  afterAll(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  const HEADING = "We passed the boards. Then we built the reviewers.";
+
+  it("shows a saved story heading, and today's text everywhere else", async () => {
+    await renderAboutSaved((about) => {
+      about.story.heading = HEADING;
+    });
+    const story = screen.getByRole("region", { name: HEADING });
+    expect(story).toHaveAttribute("id", "story");
+    expect(within(story).getByRole("heading", { level: 2, name: HEADING })).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "We passed. Then we made what we wished we had." }),
+    ).toBeNull();
+    // Every other field is today's.
+    expect(screen.getByText(/^Everyone behind AceYourCourse has taken a board exam/)).toBeVisible();
+    expect(within(story).getByText(/^During review season/)).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: "The mission" })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: /^Packed in Iloilo\./ })).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Your turn. Find the reviewer for your board." }),
+    ).toBeVisible();
+  });
+
+  it("keeps the Exams after a saved Now text", async () => {
+    await renderAboutSaved((about) => {
+      about.growth.nowLead = "Then the other boards asked for theirs.";
+    });
+    expect(screen.getByText(/^Then the other boards asked for theirs\./).textContent).toBe(
+      "Then the other boards asked for theirs. We now make reviewers for Civil Engineering, Mechanical Engineering, Electrical Engineering, Medical Technology, and Accountancy.",
+    );
+  });
+
+  it("shows the saved paragraphs, chips, header, roots and closing", async () => {
+    await renderAboutSaved((about) => {
+      about.header.intro = "Board passers, in Iloilo City.";
+      about.story.paragraphs = ["The first.", "The second.", "The third."];
+      about.story.afterSpecs = ["A6", "Spiral"];
+      about.story.beforeTitle = "Index cards";
+      about.roots = {
+        heading: "Shipped from Iloilo.",
+        body: "Every order.",
+        recipient: "Future CPAs",
+      };
+      about.closing.heading = "Your turn.";
+    });
+    expect(screen.getByText("Board passers, in Iloilo City.")).toBeVisible();
+    for (const paragraph of ["The first.", "The second.", "The third."]) {
+      expect(screen.getByText(paragraph)).toBeVisible();
+    }
+    expect(screen.queryByText(/^During review season/)).toBeNull();
+    expect(screen.getByText("A6")).toBeVisible();
+    expect(screen.queryByText("160 gsm")).toBeNull();
+    expect(screen.getByText("Index cards")).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: "Shipped from Iloilo." })).toBeVisible();
+    expect(screen.getByText("Future CPAs")).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: "Your turn." })).toBeVisible();
+  });
+
+  it("changes only mission tab 02", async () => {
+    await renderAboutSaved((about) => {
+      about.mission.tabs[1] = { title: "Always current", body: "Each edition follows the exams." };
+    });
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+      "01Board-focused, nothing extra→",
+      "02Always current→",
+      "03Made for tight budgets→",
+      "04Original, and protected→",
+    ]);
+  });
+
+  it("shows a replaced story photo through next/image, with its alt text", async () => {
+    await renderAboutSaved((about) => {
+      about.story.photos[1] = { src: "/api/dev/uploads/1", alt: "A reviewee and her mother" };
+    });
+    const photos = within(screen.getByRole("region", { name: /^We passed\./ })).getAllByRole("img");
+    expect(photos.map((img) => img.getAttribute("alt"))).toEqual([
+      "A team member handing a reviewee her package",
+      "A reviewee and her mother",
+      "A reviewee hugging her mother, package in hand",
+    ]);
+    expect(photos[1]).toHaveAttribute(
+      "src",
+      expect.stringContaining("/_next/image?url=%2Fapi%2Fdev%2Fuploads%2F1"),
+    );
+  });
+
+  it("shows markup typed into a field as plain text, never as HTML", async () => {
+    await renderAboutSaved((about) => {
+      about.roots.heading = "<b>hi</b>";
+      about.closing.heading = "<script>alert(1)</script>";
+    });
+    expect(screen.getByRole("heading", { level: 2, name: "<b>hi</b>" })).toBeVisible();
+    expect(screen.getByText("<script>alert(1)</script>")).toBeVisible();
+    expect(document.querySelector("main b, b")).toBeNull();
+    expect(document.querySelector("script")).toBeNull();
+  });
+
+  it("shows today's About when the read fails, and logs it once", async () => {
+    const failure = new Error("The database didn't answer (CONNECT_TIMEOUT).");
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    reads.failure = failure;
+    // React's generated ids count on from one render to the next, so they're left out.
+    const html = (rendered: { container: HTMLElement }) =>
+      rendered.container.innerHTML.replace(/«r[0-9a-z]+»/g, "«id»");
+    const first = await renderAboutFromSeed(() => {});
+    const failed = html(first);
+    expect(log).toHaveBeenCalledTimes(1);
+    expect(log).toHaveBeenCalledWith(expect.stringContaining("About"), failure);
+
+    first.unmount();
+    reads.failure = null;
+    const today = html(await renderAboutFromSeed(() => {}));
+    expect(failed).toBe(today);
   });
 });

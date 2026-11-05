@@ -15,7 +15,8 @@ import { aboutCopy, missionTabs, storyPhotos, teamPhoto } from "./about";
 const file = (publicPath: string) => join(process.cwd(), "public", publicPath);
 
 describe("the About photos", () => {
-  it("ships each one as a self-hosted WebP of at most 250 KB, with alt text", () => {
+  // Today's photos only: a photo Staff upload in its place is in Storage, under the upload seam's rules.
+  it("ships each default photo as a self-hosted WebP of at most 250 KB, with alt text", () => {
     const photos = [teamPhoto, ...storyPhotos];
     expect(photos).toHaveLength(4);
     for (const photo of photos) {
@@ -51,20 +52,25 @@ describe("the mission tabs", () => {
     ]);
   });
 
-  // Tab 03 quotes prices as fixed copy. This guards the Phase 1 seed only: when
-  // a seed price changes (or the client's spreadsheet replaces the seed), it
-  // fails so the copy is checked too. Prices edited in the Admin from Phase 2
-  // won't trip it, so the copy still needs the client's review.
+  // Tab 03's default text quotes prices. This guards that default only, against
+  // the Phase 1 seed: when a seed price changes (or the client's spreadsheet
+  // replaces the seed), it fails so the default is checked too. Text Staff save
+  // over it in Pages & promo (ticket 21), and prices edited in the Admin, never
+  // trip it: the editor carries "This text names prices. Update it when prices
+  // change." instead.
   it.each<[string, string, ProductFormat]>([
     ["CE posters from", "CE", "posters"],
     ["EE cards at", "EE", "flash-cards"],
     ["MedTech cards at", "MT", "flash-cards"],
-  ])("quotes “%s” the seed's lowest Live price", async (phrase, examCode, format) => {
-    const { items } = await listProducts({ examCode, format });
-    const prices = items.flatMap((product) =>
-      product.priceFrom === null ? [] : [product.priceFrom],
-    );
-    expect(prices.length, `${examCode} ${format}`).toBeGreaterThan(0);
-    expect(missionTabs[2]?.body).toContain(`${phrase} ${formatPeso(Math.min(...prices))}`);
-  });
+  ])(
+    "quotes “%s” the seed's lowest Live price in tab 03's default text",
+    async (phrase, examCode, format) => {
+      const { items } = await listProducts({ examCode, format });
+      const prices = items.flatMap((product) =>
+        product.priceFrom === null ? [] : [product.priceFrom],
+      );
+      expect(prices.length, `${examCode} ${format}`).toBeGreaterThan(0);
+      expect(missionTabs[2]?.body).toContain(`${phrase} ${formatPeso(Math.min(...prices))}`);
+    },
+  );
 });

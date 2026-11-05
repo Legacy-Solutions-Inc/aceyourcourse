@@ -33,6 +33,7 @@ describe("Site pages' metadata", () => {
             seoTitle: `Saved ${page} title`,
             seoDescription: `Saved ${page} description.`,
             shareImage: `/api/dev/uploads/share-${page}`,
+            about: null,
           },
         ];
       });

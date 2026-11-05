@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { ABOUT_SECTION_IDS } from "@/components/website/about/section-ids";
-import { aboutCopy, teamPhoto } from "@/content/about";
+import { aboutCopy } from "@/content/about";
+import type { AboutCopy } from "@/lib/catalogue/about-content";
 import type { AboutStat } from "@/lib/catalogue/about-stats";
 import { formatAsOf } from "@/lib/manila-time";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,8 @@ const cta =
   "flex min-h-13.5 items-center border-[1.5px] border-ayc-cream text-base no-underline focus-visible:outline-ayc-cream motion-reduce:transition-none";
 
 interface AboutHeroProps {
+  /** The intro and the team photo: Staff's, or today's. */
+  copy: AboutCopy["header"];
   /** From aboutStats: only the tiles with a figure. */
   stats: AboutStat[];
   /** ISO date the shop's Shopee figures were copied. */
@@ -23,8 +26,9 @@ interface AboutHeroProps {
  * The About hero: the brand line, "Read our story" and "See the reviewers",
  * the team photo with its IPOPHIL sticker, and the stat tiles. The shop's
  * Shopee figures are dated once, under the tiles, while any of them shows.
+ * The labels and the brand line (shared with the footer) stay in code.
  */
-export function AboutHero({ stats, shopFiguresAsOf }: AboutHeroProps) {
+export function AboutHero({ copy: { intro, teamPhoto }, stats, shopFiguresAsOf }: AboutHeroProps) {
   const showsShopFigures = stats.some((stat) => stat.id === "rating" || stat.id === "followers");
 
   return (
@@ -39,7 +43,7 @@ export function AboutHero({ stats, shopFiguresAsOf }: AboutHeroProps) {
             {copy.headingLead} <span className="text-ayc-orange">{copy.headingHighlight}</span>
           </h1>
           <p className="max-w-[32em] text-[clamp(17px,1.5vw,20px)] leading-normal text-pretty text-ayc-on-navy-soft">
-            {copy.intro}
+            {intro}
           </p>
           <div className="flex flex-wrap gap-2.5">
             <Link

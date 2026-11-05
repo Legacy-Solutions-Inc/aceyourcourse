@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { emptyAbout } from "@/lib/catalogue/about-content";
+
 import {
   catalogueFromRows,
   catalogueToRows,
@@ -65,12 +67,27 @@ describe("catalogue rows: the seed round trip", () => {
     expect(all.websiteSettings).toHaveLength(1);
   });
 
-  it("gives back Site page records unchanged, in seed order, and writes none while there are none", () => {
+  it("gives back Site page records unchanged, About's text and photos too, in seed order, and writes none while there are none", () => {
     expect(rows().sitePages).toEqual([]);
     const seed = structuredClone(CATALOGUE_SEED);
+    const about = emptyAbout();
+    about.roots.heading = "Packed in Iloilo.";
+    about.story.photos[1] = { src: "/api/dev/uploads/1", alt: "A reviewee and her package" };
     seed.sitePages = [
-      { page: "faq", seoTitle: null, seoDescription: null, shareImage: "/share/faq.png" },
-      { page: "about", seoTitle: "About us", seoDescription: "Who we are.", shareImage: null },
+      {
+        page: "faq",
+        seoTitle: null,
+        seoDescription: null,
+        shareImage: "/share/faq.png",
+        about: null,
+      },
+      {
+        page: "about",
+        seoTitle: "About us",
+        seoDescription: "Who we are.",
+        shareImage: null,
+        about,
+      },
     ];
     const written = catalogueToRows(seed);
     expect(written.sitePages).toEqual([
@@ -80,6 +97,7 @@ describe("catalogue rows: the seed round trip", () => {
         seoTitle: null,
         seoDescription: null,
         shareImage: "/share/faq.png",
+        about: null,
       },
       {
         page: "about",
@@ -87,6 +105,8 @@ describe("catalogue rows: the seed round trip", () => {
         seoTitle: "About us",
         seoDescription: "Who we are.",
         shareImage: null,
+        // About's text and photos, as one record.
+        about,
       },
     ]);
     expect(sitePagesFromRows([...written.sitePages].reverse())).toEqual(seed.sitePages);

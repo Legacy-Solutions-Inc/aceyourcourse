@@ -111,6 +111,9 @@ interface CountedFieldProps {
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  /** A textarea, for paragraphs. */
+  multiline?: boolean;
+  inputClassName?: string;
 }
 
 /** A field with its limit, counted as it's saved, trimmed (spec, Phase 2 → Exam pages & promo). */

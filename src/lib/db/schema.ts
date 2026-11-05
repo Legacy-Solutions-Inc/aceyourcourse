@@ -20,7 +20,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { FAQ_GROUPS, PRODUCT_FORMATS, SITE_PAGES } from "@/services/catalogue.schema";
-import type { Marketplace } from "@/services/catalogue.types";
+import type { AboutContent, Marketplace } from "@/services/catalogue.types";
 
 /**
  * Drizzle schema, the typed data layer behind the service seams
@@ -255,8 +255,8 @@ export const examPages = pgTable("exam_pages", {
 
 /**
  * What Staff edit about each Site page (ticket 20): its SEO overrides and
- * share image. A page with no row uses its text in code, so the table starts
- * empty and nothing needs loading.
+ * share image, and About's text and photos (ticket 21). A page with no row
+ * uses its text in code, so the table starts empty and nothing needs loading.
  */
 export const sitePages = pgTable("site_pages", {
   page: sitePage("page").primaryKey(),
@@ -264,6 +264,12 @@ export const sitePages = pgTable("site_pages", {
   seoTitle: text("seo_title"),
   seoDescription: text("seo_description"),
   shareImage: text("share_image"),
+  /**
+   * About's saved fields, each null for today's text. Null until About's
+   * first save, and on every other Site page. Checked by validateCatalogueSeed
+   * on every save; a whole fixed-shape record, so it's one column.
+   */
+  about: jsonb("about").$type<AboutContent>(),
 }).enableRLS();
 
 // ── Website settings ────────────────────────────────────────────────────────

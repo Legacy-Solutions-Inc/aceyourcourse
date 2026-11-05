@@ -74,8 +74,8 @@ export type SitePageKey = "home" | "about" | "products" | "faq" | "reviews";
 
 /**
  * What Staff edit about a Site page: its search title, description and share
- * image. A Site page with no record uses its text in code and the site's
- * share image.
+ * image, and About's text and photos. A Site page with no record uses its
+ * text in code and the site's share image.
  */
 export interface SitePage {
   page: SitePageKey;
@@ -85,6 +85,64 @@ export interface SitePage {
   seoDescription: string | null;
   /** A self-hosted 1200 × 630 image. Null uses the site's share image. */
   shareImage: string | null;
+  /** About's text and photos (ticket 21). Null on every other Site page, and on About until a save. */
+  about: AboutContent | null;
+}
+
+/** About's sections, each saved on its own, in page order (ticket 21). */
+export type AboutSectionKey = "header" | "story" | "growth" | "mission" | "roots" | "closing";
+
+/** A photo Staff put in place of one of About's: a self-hosted file, and its alt text. */
+export interface AboutPhotoSaved {
+  src: string;
+  alt: string;
+}
+
+/** A mission tab's saved title and text, each null for today's. */
+export interface AboutMissionTabSaved {
+  title: string | null;
+  body: string | null;
+}
+
+type Three<T> = [T, T, T];
+type Four<T> = [T, T, T, T];
+
+/**
+ * About's text and photos as Staff saved them (ticket 21; spec, Phase 2 →
+ * Site pages). Every field is null until it's saved, and null shows today's
+ * text or photo, kept in src/content/about.ts. A list is null, never empty.
+ */
+export interface AboutContent {
+  header: { intro: string | null; teamPhoto: AboutPhotoSaved | null };
+  story: {
+    heading: string | null;
+    /** 1–3 paragraphs. */
+    paragraphs: string[] | null;
+    beforeTitle: string | null;
+    beforeBody: string | null;
+    afterTitle: string | null;
+    /** 1–5 spec chips. */
+    afterSpecs: string[] | null;
+    /** The three photos under the timeline, in order. */
+    photos: Three<AboutPhotoSaved | null>;
+  };
+  growth: {
+    /** The First item's title. */
+    firstTitle: string | null;
+    /** The Now item's lead sentence; the Website adds the Exams after it. */
+    nowLead: string | null;
+    todayBody: string | null;
+    /** The line under the timeline. */
+    beginning: string | null;
+  };
+  mission: { heading: string | null; intro: string | null; tabs: Four<AboutMissionTabSaved> };
+  roots: {
+    heading: string | null;
+    body: string | null;
+    /** The shipping label's "To" line. */
+    recipient: string | null;
+  };
+  closing: { heading: string | null };
 }
 
 export interface AnnouncementMessage {

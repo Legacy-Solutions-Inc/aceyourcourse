@@ -1,14 +1,16 @@
+import { ABOUT_SECTIONS, isAboutSection } from "@/lib/catalogue/about-content";
 import { isCalendarDate } from "@/lib/manila-time";
 import { paths } from "@/paths";
 import type { AdminExamPage } from "@/services/admin.types";
 import { isSitePageKey } from "@/services/catalogue.schema";
-import type { ExamPageSection, SitePageKey } from "@/services/catalogue.types";
+import type { AboutSectionKey, ExamPageSection, SitePageKey } from "@/services/catalogue.types";
 
 // Pages & promo's URL, its SECTIONS · SHOW OR HIDE list and its warnings
 // (BUILD-MAP §3.2). The page, the Exam or Site page, and the section live in
 // the URL, so a reload keeps them: ?exam=ce&section=header,
-// ?page=site&site=about, ?page=promo or ?page=announcement (CONVENTIONS §2).
-// The page checks the Exam; any other Site page opens Home.
+// ?page=site&site=faq, ?page=site&site=about&section=story, ?page=promo or
+// ?page=announcement (CONVENTIONS §2). The page checks the Exam; any other
+// Site page opens Home, and any other About section its Header.
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -30,12 +32,22 @@ const isPage = (value: string | undefined): value is ExamPagesPage =>
 const isEditor = (value: string | undefined): value is ExamPageEditorKey =>
   EDITORS.some((key) => key === value);
 
-/** Pure: the page, the Exam (as given, or null), its section, and the Site page (Home by default) in the URL. */
+/** What column 3 edits for About (ticket 21): one of its sections, or Search & AI visibility. */
+export type AboutEditorKey = AboutSectionKey | "seo";
+
+const isAboutEditor = (value: string | undefined): value is AboutEditorKey =>
+  value === "seo" || isAboutSection(value);
+
+/**
+ * Pure: the page, the Exam (as given, or null), its section, the Site page
+ * (Home by default), and About's section (its Header by default) in the URL.
+ */
 export function parseExamPagesParams(params: SearchParams): {
   page: ExamPagesPage;
   exam: string | null;
   section: ExamPageEditorKey;
   site: SitePageKey;
+  aboutSection: AboutEditorKey;
 } {
   const value = (key: string) => {
     const raw = params[key];
@@ -49,28 +61,35 @@ export function parseExamPagesParams(params: SearchParams): {
     exam: value("exam")?.slice(0, 20) ?? null,
     section: isEditor(section) ? section : "header",
     site: isSitePageKey(site) ? site : "home",
+    aboutSection: isAboutEditor(section) ? section : "header",
   };
 }
 
 /**
  * Pure: the screen's URL for a page, for an Exam and its section (the Header
- * by default), or for a Site page (Home by default).
+ * by default), or for a Site page (Home by default) and, for About, its
+ * section (its Header by default).
  */
 export function examPagesHref({
   page = "exam",
   exam,
   section = "header",
   site = "home",
+  aboutSection = "header",
 }: {
   page?: ExamPagesPage;
   exam?: string;
   section?: ExamPageEditorKey;
   site?: SitePageKey;
+  aboutSection?: AboutEditorKey;
 }): string {
   const params = new URLSearchParams();
   if (page !== "exam") {
     params.set("page", page);
     if (page === "site") params.set("site", site);
+    if (page === "site" && site === "about" && aboutSection !== "header") {
+      params.set("section", aboutSection);
+    }
   } else {
     if (exam) params.set("exam", exam.toLowerCase());
     if (section !== "header") params.set("section", section);
@@ -125,6 +144,41 @@ export function examSectionRows({ exam, page, products }: AdminExamPage): ExamSe
   ];
 }
 
+/** One row of About's SECTIONS: each is always on, since About's shape is fixed. */
+export interface AboutSectionRow {
+  key: AboutSectionKey;
+  title: string;
+  description: string;
+}
+
+/** About's sections' names, as the SECTIONS list, the editor column and the forms show them. */
+export const ABOUT_SECTION_TITLES: Record<AboutSectionKey, string> = {
+  header: "Header",
+  story: "Our story",
+  growth: "How it grew",
+  mission: "The mission",
+  roots: "Iloilo City roots",
+  closing: "Closing",
+};
+
+const ABOUT_SECTION_DESCRIPTIONS: Record<AboutSectionKey, string> = {
+  header: "Intro, team photo",
+  story: "Heading, story, before and after, photos",
+  growth: "First, Now, Today, closing line",
+  mission: "Heading, intro, 4 tabs",
+  roots: "Heading, text, shipping label",
+  closing: "Heading",
+};
+
+/** Pure: About's sections in page order (ticket 21; spec, Phase 2 → Site pages), for column 2. */
+export function aboutSectionRows(): AboutSectionRow[] {
+  return ABOUT_SECTIONS.map((key) => ({
+    key,
+    title: ABOUT_SECTION_TITLES[key],
+    description: ABOUT_SECTION_DESCRIPTIONS[key],
+  }));
+}
+
 /** Pure: the warning for an Official Exam Date before today (Manila), or null. It still saves. */
 export function examDateWarning(date: string, today: string): string | null {
   return isCalendarDate(date) && date < today
@@ -141,4 +195,27 @@ export function shareImageWarning({ width, height }: { width: number; height: nu
   return width === SHARE_WIDTH && height === SHARE_HEIGHT
     ? null
     : `${width} × ${height} · NOT ${SHARE_WIDTH} × ${SHARE_HEIGHT}, SO IT MAY BE CROPPED`;
+}
+
+/** The ratio About's photo frames show without cropping much: about 4:3. */
+const ABOUT_RATIO = { min: 1.27, max: 1.4 };
+
+/** The smallest About photo that looks sharp in its largest frame (560 px wide, at 2×). */
+const ABOUT_WIDTH = 1200;
+const ABOUT_HEIGHT = 900;
+
+/**
+ * Pure: the warnings for a photo put in one of About's 4:3 frames: one that
+ * isn't about 4:3, and one under 1200 × 900. It still saves.
+ */
+export function aboutPhotoWarnings({ width, height }: { width: number; height: number }) {
+  const ratio = width / height;
+  return [
+    ...(ratio < ABOUT_RATIO.min || ratio > ABOUT_RATIO.max
+      ? ["This photo isn't 4:3, so its edges will be cropped."]
+      : []),
+    ...(width < ABOUT_WIDTH || height < ABOUT_HEIGHT
+      ? [`This photo is smaller than ${ABOUT_WIDTH} × ${ABOUT_HEIGHT}, so it may look soft.`]
+      : []),
+  ];
 }

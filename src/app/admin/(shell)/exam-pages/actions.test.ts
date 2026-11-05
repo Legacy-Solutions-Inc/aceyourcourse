@@ -8,8 +8,10 @@ import {
   seoFormValues,
   subjectFormValues,
 } from "@/lib/admin/exam-page-form";
+import { aboutSectionFormValues } from "@/lib/admin/about-form";
 import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
 import {
+  getAboutForAdmin,
   getAnnouncementForAdmin,
   getExamPageForAdmin,
   getPromoForAdmin,
@@ -19,8 +21,10 @@ import { getSitePage } from "@/services/catalogue";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import {
+  createAboutPhotoUpload,
   createShareImageUpload,
   createSitePageShareImageUpload,
+  saveAboutSection,
   saveAnnouncement,
   saveBundleOffer,
   saveExamHeader,
@@ -392,6 +396,118 @@ describe("Site pages actions", () => {
   });
 });
 
+describe("About actions", () => {
+  const ELEVEN_MB = 11 * 1024 * 1024;
+  const HEADING = "We passed the boards. Then we built the reviewers.";
+
+  it("saves an Editor's section, live on the About page, clearing only the site-pages tag", async () => {
+    signInAs(EDITOR.email);
+    const { about, stamps } = await getAboutForAdmin(EDITOR);
+    const state = await saveAboutSection(IDLE, {
+      input: { ...aboutSectionFormValues(about, "story"), heading: HEADING },
+      expected: stamps.story,
+    });
+
+    expect(state).toMatchObject({
+      status: "saved",
+      value: { about: { story: { heading: HEADING } } },
+    });
+    expect(vi.mocked(revalidateTag).mock.calls).toEqual([["catalogue:site-pages"]]);
+    expect((await getSitePage("about")).about?.story.heading).toBe(HEADING);
+  });
+
+  it("saves an Owner's section too", async () => {
+    signInAs("angel@aceyourcourse.ph");
+    const { about, stamps } = await getAboutForAdmin(EDITOR);
+    expect(
+      await saveAboutSection(IDLE, {
+        input: { ...aboutSectionFormValues(about, "closing"), heading: "Your turn." },
+        expected: stamps.closing,
+      }),
+    ).toMatchObject({ status: "saved" });
+  });
+
+  it("refuses a stale save with who saved first, and saves nothing", async () => {
+    signInAs(EDITOR.email);
+    const { about, stamps } = await getAboutForAdmin(EDITOR);
+    const input = { ...aboutSectionFormValues(about, "roots"), heading: "Packed in Iloilo." };
+    expect(await saveAboutSection(IDLE, { input, expected: stamps.roots })).toMatchObject({
+      status: "saved",
+    });
+
+    signInAs("angel@aceyourcourse.ph");
+    expect(
+      await saveAboutSection(IDLE, {
+        input: { ...input, heading: "Ours" },
+        expected: stamps.roots,
+      }),
+    ).toMatchObject({ status: "refused", error: { kind: "conflict", savedBy: EDITOR.name } });
+    expect((await getSitePage("about")).about?.roots.heading).toBe("Packed in Iloilo.");
+  });
+
+  it("must send the stamp its editor opened with", async () => {
+    signInAs(EDITOR.email);
+    const { about } = await getAboutForAdmin(EDITOR);
+    expect(
+      await saveAboutSection(IDLE, { input: aboutSectionFormValues(about, "header") }),
+    ).toMatchObject({ status: "refused", error: { kind: "invalid" } });
+    expect(getSampleStore().staffActivity).toEqual([]);
+  });
+
+  it("refuses a section About doesn't have before the seam sees it", async () => {
+    signInAs(EDITOR.email);
+    const { stamps } = await getAboutForAdmin(EDITOR);
+    expect(
+      await saveAboutSection(IDLE, {
+        input: { section: "team", heading: "x" },
+        expected: stamps.header,
+      }),
+    ).toMatchObject({ status: "refused", error: { kind: "invalid" } });
+    expect(getSampleStore().staffActivity).toEqual([]);
+  });
+
+  it("gives an Editor a one-time URL for one of About's photos", async () => {
+    signInAs(EDITOR.email);
+    const state = await createAboutPhotoUpload(IDLE, {
+      input: { slot: "story-2", contentType: "image/jpeg", size: 2048 },
+    });
+    expect(state).toMatchObject({ status: "saved", value: { path: expect.any(String) } });
+    expect(Object.values(getSampleStore().uploads)).toEqual([
+      expect.objectContaining({ purpose: "about-photo", contentType: "image/jpeg" }),
+    ]);
+  });
+
+  it.each([
+    [
+      "a GIF",
+      { contentType: "image/gif", size: 2048 },
+      { contentType: ["USE A JPEG, PNG OR WEBP IMAGE"] },
+    ],
+    [
+      "an 11 MB file",
+      { contentType: "image/png", size: ELEVEN_MB },
+      { size: ["KEEP EACH PHOTO TO 10 MB"] },
+    ],
+  ])("refuses %s as one of About's photos, making no upload", async (_case, file, fieldErrors) => {
+    signInAs(EDITOR.email);
+    expect(await createAboutPhotoUpload(IDLE, { input: { slot: "team", ...file } })).toMatchObject({
+      status: "refused",
+      error: { kind: "invalid", fieldErrors },
+    });
+    expect(getSampleStore().uploads).toEqual({});
+  });
+
+  it("refuses a photo for a slot About doesn't have, making no upload", async () => {
+    signInAs(EDITOR.email);
+    expect(
+      await createAboutPhotoUpload(IDLE, {
+        input: { slot: "story-4", contentType: "image/png", size: 2048 },
+      }),
+    ).toMatchObject({ status: "refused", error: { kind: "invalid" } });
+    expect(getSampleStore().uploads).toEqual({});
+  });
+});
+
 describe("Exam pages actions: the Staff Guard", () => {
   const calls = [
     () => setExamPageSection(IDLE, { input: { code: "ce", section: "reviews", on: false } }),
@@ -412,6 +528,15 @@ describe("Exam pages actions: the Staff Guard", () => {
     () =>
       createSitePageShareImageUpload(IDLE, {
         input: { site: "faq", contentType: "image/png", size: 10 },
+      }),
+    () =>
+      saveAboutSection(IDLE, {
+        input: { section: "closing", heading: "Your turn." },
+        expected: { savedAt: new Date().toISOString() },
+      }),
+    () =>
+      createAboutPhotoUpload(IDLE, {
+        input: { slot: "team", contentType: "image/png", size: 10 },
       }),
   ];
 

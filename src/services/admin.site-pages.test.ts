@@ -75,7 +75,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Site pages ($name)", (arm) => {
   describe("getSitePageForAdmin", () => {
     it.each(SITE_PAGES)("opens %s with nothing set and never saved", async (page) => {
       expect(await seam.getSitePageForAdmin(EDITOR, page)).toEqual({
-        page: { page, seoTitle: null, seoDescription: null, shareImage: null },
+        page: { page, seoTitle: null, seoDescription: null, shareImage: null, about: null },
         stamps: { seo: NEVER_SAVED },
       });
     });
@@ -97,6 +97,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Site pages ($name)", (arm) => {
         seoTitle: ABOUT_TITLE,
         seoDescription: description,
         shareImage: null,
+        about: null,
       });
       // The other Site pages are untouched.
       expect((await getSitePage("home")).seoTitle).toBeNull();

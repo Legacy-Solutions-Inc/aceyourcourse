@@ -2,6 +2,12 @@ import { z } from "zod";
 
 import { parsePeso } from "@/lib/admin/peso";
 import { fullTitle, WHOLE_TITLE_MAX } from "@/lib/admin/seo-check";
+import {
+  ABOUT_ALT_MAX,
+  ABOUT_LIMITS,
+  ABOUT_PHOTO_SLOTS,
+  ABOUT_SPEC_MAX,
+} from "@/lib/catalogue/about-content";
 import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
 import { isCalendarDate } from "@/lib/manila-time";
 import { variationLabel } from "@/lib/catalogue/price";
@@ -15,7 +21,12 @@ import {
   PRODUCT_FORMATS,
   SITE_PAGES,
 } from "@/services/catalogue.schema";
-import type { Marketplace, Review } from "@/services/catalogue.types";
+import type {
+  AboutContent,
+  AboutSectionKey,
+  Marketplace,
+  Review,
+} from "@/services/catalogue.types";
 
 // The Admin seam's zod input schemas (CONVENTIONS §3), shared by the seam's
 // arms, the Staff Guard and the forms.
@@ -914,6 +925,198 @@ export const saveSitePageSeoInputSchema = examSeoFormFields.extend({ site: z.enu
 
 /** A Site page's share image upload: the file and its Site page. */
 export const sitePageUploadInputSchema = z.object({ site: z.enum(SITE_PAGES) });
+
+// ── About ───────────────────────────────────────────────────────────────────
+// About's six sections (ticket 21; spec, Phase 2 → Site pages), each its own
+// form and its own save. Every field takes the editor's text: blank saves as
+// none, which shows today's text. Each text field's limit is about 1.5×
+// today's text (about-content.ts), a spec chip's 20 and a replaced photo's
+// alt text 150; over is refused with the limit. The paragraphs and chips are
+// fixed inputs, so there are never more than 3 or 5 of them.
+
+/** What a replaced photo with no alt text is told. */
+export const ABOUT_ALT_MISSING = "Describe the photo for screen readers.";
+
+// Longer than any limit, so an over-long field is told its limit by the rules below.
+const aboutText = formText(5000);
+/** A photo as its editor holds it: "" for today's, its src, or a new upload's path; and its alt text. */
+const aboutPhotoField = z.object({ src: formText(300), alt: formText(5000) });
+
+const aboutSectionFields = z.discriminatedUnion("section", [
+  z.object({ section: z.literal("header"), intro: aboutText, teamPhoto: aboutPhotoField }),
+  z.object({
+    section: z.literal("story"),
+    heading: aboutText,
+    paragraphs: z.array(aboutText).max(3, "KEEP IT TO 3 PARAGRAPHS"),
+    beforeTitle: aboutText,
+    beforeBody: aboutText,
+    afterTitle: aboutText,
+    afterSpecs: z.array(aboutText).max(5, "KEEP IT TO 5 CHIPS"),
+    photos: z.array(aboutPhotoField).length(3),
+  }),
+  z.object({
+    section: z.literal("growth"),
+    firstTitle: aboutText,
+    nowLead: aboutText,
+    todayBody: aboutText,
+    beginning: aboutText,
+  }),
+  z.object({
+    section: z.literal("mission"),
+    heading: aboutText,
+    intro: aboutText,
+    tabs: z.array(z.object({ title: aboutText, body: aboutText })).length(4),
+  }),
+  z.object({
+    section: z.literal("roots"),
+    heading: aboutText,
+    body: aboutText,
+    recipient: aboutText,
+  }),
+  z.object({ section: z.literal("closing"), heading: aboutText }),
+]);
+
+/** One About section's editor values: its section, and each field's text. */
+export type AboutSectionForm = z.infer<typeof aboutSectionFields>;
+
+/** "Save" on an About section: the section and its fields, their shape checked. */
+export const saveAboutSectionInputSchema = aboutSectionFields;
+
+/** Every rule on one section's typed values, each on its own field. */
+function checkAboutSection(form: AboutSectionForm, ctx: z.RefinementCtx) {
+  const issue = (path: (string | number)[], message: string) =>
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
+  const fit = (path: (string | number)[], text: string, max: number) => {
+    if (savedText(text).length > max) issue(path, `KEEP IT TO ${max} CHARACTERS`);
+  };
+  const photo = (path: (string | number)[], { src, alt }: { src: string; alt: string }) => {
+    if (blank(src)) return;
+    if (blank(alt)) issue([...path, "alt"], ABOUT_ALT_MISSING);
+    else fit([...path, "alt"], alt, ABOUT_ALT_MAX);
+  };
+  const L = ABOUT_LIMITS;
+  switch (form.section) {
+    case "header":
+      fit(["intro"], form.intro, L.header.intro);
+      photo(["teamPhoto"], form.teamPhoto);
+      return;
+    case "story":
+      fit(["heading"], form.heading, L.story.heading);
+      form.paragraphs.forEach((text, index) => fit(["paragraphs", index], text, L.story.paragraph));
+      fit(["beforeTitle"], form.beforeTitle, L.story.beforeTitle);
+      fit(["beforeBody"], form.beforeBody, L.story.beforeBody);
+      fit(["afterTitle"], form.afterTitle, L.story.afterTitle);
+      form.afterSpecs.forEach((text, index) => fit(["afterSpecs", index], text, ABOUT_SPEC_MAX));
+      form.photos.forEach((one, index) => photo(["photos", index], one));
+      return;
+    case "growth":
+      for (const field of ["firstTitle", "nowLead", "todayBody", "beginning"] as const) {
+        fit([field], form[field], L.growth[field]);
+      }
+      return;
+    case "mission":
+      fit(["heading"], form.heading, L.mission.heading);
+      fit(["intro"], form.intro, L.mission.intro);
+      form.tabs.forEach((tab, index) => {
+        const limits = L.mission.tabs[index];
+        if (!limits) return;
+        fit(["tabs", index, "title"], tab.title, limits.title);
+        fit(["tabs", index, "body"], tab.body, limits.body);
+      });
+      return;
+    case "roots":
+      for (const field of ["heading", "body", "recipient"] as const) {
+        fit([field], form[field], L.roots[field]);
+      }
+      return;
+    case "closing":
+      fit(["heading"], form.heading, L.closing.heading);
+      return;
+  }
+}
+
+const savedOrNull = (text: string) => textOrNull(savedText(text));
+/** A list as saved: its typed items, blanks dropped, or none when all are blank. */
+const listOrNull = (items: readonly string[]) => {
+  const kept = items.map(savedText).filter((item) => item !== "");
+  return kept.length > 0 ? kept : null;
+};
+/** A photo as saved: today's (null), or its src or upload path, still to resolve, with its alt text. */
+const photoOrNull = ({ src, alt }: { src: string; alt: string }) =>
+  blank(src) ? null : { src: src.trim(), alt: savedText(alt) };
+
+/** What one About section saves: its section, and its value with every blank as none. */
+export type AboutSectionUpdate = {
+  [Section in AboutSectionKey]: { section: Section; value: AboutContent[Section] };
+}[AboutSectionKey];
+
+function aboutSectionUpdate(form: AboutSectionForm): AboutSectionUpdate {
+  switch (form.section) {
+    case "header":
+      return {
+        section: "header",
+        value: { intro: savedOrNull(form.intro), teamPhoto: photoOrNull(form.teamPhoto) },
+      };
+    case "story": {
+      const [one, two, three] = form.photos.map(photoOrNull);
+      return {
+        section: "story",
+        value: {
+          heading: savedOrNull(form.heading),
+          paragraphs: listOrNull(form.paragraphs),
+          beforeTitle: savedOrNull(form.beforeTitle),
+          beforeBody: savedOrNull(form.beforeBody),
+          afterTitle: savedOrNull(form.afterTitle),
+          afterSpecs: listOrNull(form.afterSpecs),
+          photos: [one ?? null, two ?? null, three ?? null],
+        },
+      };
+    }
+    case "growth":
+      return {
+        section: "growth",
+        value: {
+          firstTitle: savedOrNull(form.firstTitle),
+          nowLead: savedOrNull(form.nowLead),
+          todayBody: savedOrNull(form.todayBody),
+          beginning: savedOrNull(form.beginning),
+        },
+      };
+    case "mission": {
+      const tab = (index: number) => {
+        const typed = form.tabs[index];
+        return { title: savedOrNull(typed?.title ?? ""), body: savedOrNull(typed?.body ?? "") };
+      };
+      return {
+        section: "mission",
+        value: {
+          heading: savedOrNull(form.heading),
+          intro: savedOrNull(form.intro),
+          tabs: [tab(0), tab(1), tab(2), tab(3)],
+        },
+      };
+    }
+    case "roots":
+      return {
+        section: "roots",
+        value: {
+          heading: savedOrNull(form.heading),
+          body: savedOrNull(form.body),
+          recipient: savedOrNull(form.recipient),
+        },
+      };
+    case "closing":
+      return { section: "closing", value: { heading: savedOrNull(form.heading) } };
+  }
+}
+
+/** One of About's photo uploads: the file and its slot (team, story-1, story-2 or story-3). */
+export const aboutPhotoUploadInputSchema = z.object({ slot: z.enum(ABOUT_PHOTO_SLOTS) });
+
+/** One About section's form, checked: what it saves, every blank field as none. */
+export const aboutSectionFormSchema = aboutSectionFields
+  .superRefine(checkAboutSection)
+  .transform(aboutSectionUpdate);
 
 /** What a share image that's neither the page's nor a finished upload is told. */
 export const SHARE_IMAGE_NOT_UPLOADED = "THE IMAGE ISN’T UPLOADED · ADD IT AGAIN";

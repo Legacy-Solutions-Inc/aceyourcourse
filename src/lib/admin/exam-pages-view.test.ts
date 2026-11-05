@@ -5,6 +5,8 @@ import { examPageDefaults } from "@/services/catalogue.schema";
 
 import { testExam } from "../../../test/fixtures/catalogue";
 import {
+  aboutPhotoWarnings,
+  aboutSectionRows,
   examDateWarning,
   examPageAddress,
   examPagesHref,
@@ -44,6 +46,7 @@ describe("parseExamPagesParams", () => {
       exam: null,
       section: "header",
       site: "home",
+      aboutSection: "header",
     });
   });
 
@@ -53,6 +56,7 @@ describe("parseExamPagesParams", () => {
       exam: "me",
       section: "seo",
       site: "home",
+      aboutSection: "seo",
     });
   });
 
@@ -66,6 +70,7 @@ describe("parseExamPagesParams", () => {
       exam: null,
       section: "header",
       site: "home",
+      aboutSection: "header",
     });
   });
 
@@ -82,6 +87,27 @@ describe("parseExamPagesParams", () => {
       expect(parseExamPagesParams({ page: "site", site })).toMatchObject({
         page: "site",
         site: "home",
+      });
+    },
+  );
+
+  it.each(["header", "story", "growth", "mission", "roots", "closing", "seo"] as const)(
+    "reads About's ?section=%s",
+    (section) => {
+      expect(parseExamPagesParams({ page: "site", site: "about", section })).toMatchObject({
+        page: "site",
+        site: "about",
+        aboutSection: section,
+      });
+    },
+  );
+
+  it.each([["team"], ["subjects"], [""], [undefined]])(
+    "opens About's Header for ?section=%j, which isn't one of its sections",
+    (section) => {
+      expect(parseExamPagesParams({ page: "site", site: "about", section })).toMatchObject({
+        site: "about",
+        aboutSection: "header",
       });
     },
   );
@@ -113,9 +139,38 @@ describe("examPagesHref", () => {
     expect(examPagesHref({ page: "site" })).toBe("/admin/exam-pages?page=site&site=home");
   });
 
+  it("links to each of About's sections, and its Header without naming it", () => {
+    expect(examPagesHref({ page: "site", site: "about", aboutSection: "story" })).toBe(
+      "/admin/exam-pages?page=site&site=about&section=story",
+    );
+    expect(examPagesHref({ page: "site", site: "about", aboutSection: "seo" })).toBe(
+      "/admin/exam-pages?page=site&site=about&section=seo",
+    );
+    expect(examPagesHref({ page: "site", site: "about", aboutSection: "header" })).toBe(
+      "/admin/exam-pages?page=site&site=about",
+    );
+    // The other Site pages have only their search settings.
+    expect(examPagesHref({ page: "site", site: "faq", aboutSection: "story" })).toBe(
+      "/admin/exam-pages?page=site&site=faq",
+    );
+  });
+
   it("links to the promo banner and announcement bar pages", () => {
     expect(examPagesHref({ page: "promo" })).toBe("/admin/exam-pages?page=promo");
     expect(examPagesHref({ page: "announcement" })).toBe("/admin/exam-pages?page=announcement");
+  });
+});
+
+describe("aboutSectionRows", () => {
+  it("lists About's six sections in page order, each always on", () => {
+    expect(aboutSectionRows()).toEqual([
+      { key: "header", title: "Header", description: "Intro, team photo" },
+      { key: "story", title: "Our story", description: "Heading, story, before and after, photos" },
+      { key: "growth", title: "How it grew", description: "First, Now, Today, closing line" },
+      { key: "mission", title: "The mission", description: "Heading, intro, 4 tabs" },
+      { key: "roots", title: "Iloilo City roots", description: "Heading, text, shipping label" },
+      { key: "closing", title: "Closing", description: "Heading" },
+    ]);
   });
 });
 
@@ -174,5 +229,28 @@ describe("shareImageWarning", () => {
     [{ width: 2400, height: 1260 }, "2400 × 1260 · NOT 1200 × 630, SO IT MAY BE CROPPED"],
   ])("warns about %o", (size, warning) => {
     expect(shareImageWarning(size)).toBe(warning);
+  });
+});
+
+describe("aboutPhotoWarnings", () => {
+  const FOUR_THREE = "This photo isn't 4:3, so its edges will be cropped.";
+  const SOFT = "This photo is smaller than 1200 × 900, so it may look soft.";
+
+  it("has none for a 4:3 photo of at least 1200 × 900", () => {
+    expect(aboutPhotoWarnings({ width: 1600, height: 1200 })).toEqual([]);
+    expect(aboutPhotoWarnings({ width: 1200, height: 900 })).toEqual([]);
+  });
+
+  it("warns about a photo that isn't about 4:3", () => {
+    expect(aboutPhotoWarnings({ width: 2000, height: 2000 })).toEqual([FOUR_THREE]);
+    expect(aboutPhotoWarnings({ width: 1920, height: 1080 })).toEqual([FOUR_THREE]);
+    // 1.27 and 1.40 are close enough.
+    expect(aboutPhotoWarnings({ width: 1270, height: 1000 })).toEqual([]);
+    expect(aboutPhotoWarnings({ width: 1400, height: 1000 })).toEqual([]);
+  });
+
+  it("warns about a photo under 1200 × 900 on either side", () => {
+    expect(aboutPhotoWarnings({ width: 800, height: 600 })).toEqual([SOFT]);
+    expect(aboutPhotoWarnings({ width: 1000, height: 1000 })).toEqual([FOUR_THREE, SOFT]);
   });
 });

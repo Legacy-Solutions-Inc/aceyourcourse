@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { emptyAbout } from "@/lib/catalogue/about-content";
 import { type CatalogueSeed, SITE_PAGES } from "@/services/catalogue.schema";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 
@@ -270,6 +271,7 @@ export function describeCatalogueContract(arm: CatalogueArm) {
             seoTitle: null,
             seoDescription: null,
             shareImage: null,
+            about: null,
           });
         }
       });
@@ -280,12 +282,28 @@ export function describeCatalogueContract(arm: CatalogueArm) {
           seoTitle: "About us · board passers from Iloilo",
           seoDescription: "Made by board passers in Iloilo City, for the next batch of reviewees.",
           shareImage: "/images/share/about.png",
+          about: null,
         };
         const seam = await seamWith((seed) => {
           seed.sitePages = [about];
         });
         expect(await seam.getSitePage("about")).toEqual(about);
         expect(await seam.getSitePage("faq")).toMatchObject({ seoTitle: null, shareImage: null });
+      });
+
+      it("gives About its saved text and photos, every unsaved field still none (ticket 21)", async () => {
+        const about = emptyAbout();
+        about.story.heading = "We passed the boards. Then we built the reviewers.";
+        about.story.paragraphs = ["One.", "Two."];
+        about.story.photos[1] = { src: "/api/dev/uploads/1", alt: "A reviewee and her package" };
+        about.mission.tabs[1] = { title: "Always current", body: null };
+        const seam = await seamWith((seed) => {
+          seed.sitePages = [
+            { page: "about", seoTitle: null, seoDescription: null, shareImage: null, about },
+          ];
+        });
+        expect((await seam.getSitePage("about")).about).toEqual(about);
+        expect((await seam.getSitePage("home")).about).toBeNull();
       });
 
       it("hands out copies, so a caller's change never leaks into the next read", async () => {

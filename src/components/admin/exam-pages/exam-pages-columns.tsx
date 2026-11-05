@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import type { AdminAction } from "@/lib/admin/action";
 import {
+  type AboutEditorKey,
+  aboutSectionRows,
   examPagesHref,
   type ExamPageEditorKey,
   type ExamPagesPage,
@@ -20,8 +22,9 @@ import { ExamSectionSwitch } from "./exam-section-switch";
 // Pages & promo's first two columns (mockup 84–108; BUILD-MAP §3.2): PAGES,
 // then the selected page's Exam chips, "View page ↗", the Search & AI
 // visibility card and SECTIONS · SHOW OR HIDE; or a Site page's chips, "View
-// page ↗" and its Search & AI visibility card (ticket 20). Selecting goes
-// through the URL, so a reload keeps it.
+// page ↗" and its Search & AI visibility card (ticket 20), with About's
+// SECTIONS under it (ticket 21). Selecting goes through the URL, so a reload
+// keeps it.
 
 const LABEL = "font-mono text-[11px] font-medium tracking-[0.06em] text-muted-foreground";
 
@@ -197,11 +200,23 @@ interface SitePageColumnProps {
   path: string;
   /** Search & AI visibility, from the title and description the page shows now. */
   seoState: SeoState;
+  /** What column 3 edits for About: one of its sections, or its search settings. */
+  aboutSection?: AboutEditorKey;
 }
 
-/** Column 2 for a Site page: the Site page chips, View page ↗ and Search & AI visibility. */
-export function SitePageColumn({ site, path, seoState }: SitePageColumnProps) {
+/**
+ * Column 2 for a Site page: the Site page chips, View page ↗ and Search & AI
+ * visibility; and for About, its SECTIONS, each always on, since About's
+ * shape is fixed.
+ */
+export function SitePageColumn({
+  site,
+  path,
+  seoState,
+  aboutSection = "header",
+}: SitePageColumnProps) {
   const label = site.toUpperCase();
+  const isAbout = site === "about";
   return (
     <section aria-label={`${label} Site page`} className="flex min-w-0 flex-col gap-2">
       <div className="flex items-baseline justify-between gap-2">
@@ -234,12 +249,41 @@ export function SitePageColumn({ site, path, seoState }: SitePageColumnProps) {
         ))}
       </ul>
       <Card
-        href={examPagesHref({ page: "site", site })}
-        current
+        href={examPagesHref({ page: "site", site, aboutSection: "seo" })}
+        current={!isAbout || aboutSection === "seo"}
         title="Search & AI visibility"
         description="Page title, description, preview"
         state={<SeoStateLabel state={seoState} />}
       />
+      {isAbout ? (
+        <>
+          <h3 className={cn(LABEL, "pt-1.5 text-[10px] tracking-[0.08em]")}>SECTIONS</h3>
+          <ul aria-label="Sections" className="flex flex-col gap-2">
+            {aboutSectionRows().map((row) => (
+              <li
+                key={row.key}
+                className={cn(
+                  "flex items-center gap-2.5 bg-ayc-paper px-3 py-2.5",
+                  row.key === aboutSection ? "border-2 border-ayc-blue" : "border-[1.5px]",
+                )}
+              >
+                <Link
+                  href={examPagesHref({ page: "site", site, aboutSection: row.key })}
+                  scroll={false}
+                  aria-current={row.key === aboutSection ? "true" : undefined}
+                  className="flex min-w-0 flex-1 flex-col gap-0.5"
+                >
+                  <span className="text-[15px] font-bold">{row.title}</span>
+                  <span className="text-xs text-muted-foreground">{row.description}</span>
+                </Link>
+                <span className="flex-none font-mono text-[9px] font-medium text-muted-foreground">
+                  ALWAYS ON
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
     </section>
   );
 }

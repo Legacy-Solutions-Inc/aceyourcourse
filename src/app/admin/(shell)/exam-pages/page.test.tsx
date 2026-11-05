@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { emptyAbout } from "@/lib/catalogue/about-content";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import ExamPagesPage from "./page";
@@ -225,8 +226,8 @@ describe("Pages & promo", () => {
       expect(within(siteEditor()).getAllByText("aceyourcourse.ph/")).toHaveLength(2);
     });
 
-    it("opens ABOUT with today's text as the placeholders, the counters and the share image", async () => {
-      await renderPage({ page: "site", site: "about" });
+    it("opens ABOUT's search settings with today's text as the placeholders, the counters and the share image", async () => {
+      await renderPage({ page: "site", site: "about", section: "seo" });
       const title = within(siteEditor()).getByLabelText("PAGE TITLE");
       expect(title).toHaveValue("");
       expect(title).toHaveAttribute("placeholder", "About · made by board passers in Iloilo");
@@ -266,13 +267,98 @@ describe("Pages & promo", () => {
           seoTitle: "About us · board passers from Iloilo",
           seoDescription: "d".repeat(120),
           shareImage: null,
+          about: null,
         },
       ];
-      await renderPage({ page: "site", site: "about" });
+      await renderPage({ page: "site", site: "about", section: "seo" });
       expect(aboutCard()).toHaveTextContent("GOOD");
       expect(within(siteEditor()).getByLabelText("PAGE TITLE")).toHaveValue(
         "About us · board passers from Iloilo",
       );
+    });
+
+    describe("ABOUT's sections (ticket 21)", () => {
+      const aboutRows = () =>
+        within(within(siteColumn("ABOUT")).getByRole("list", { name: "Sections" })).getAllByRole(
+          "listitem",
+        );
+
+      it("lists About's six sections beside its search card, each always on, and opens the Header", async () => {
+        await renderPage({ page: "site", site: "about" });
+        expect(aboutRows().map((row) => row.textContent)).toEqual([
+          "HeaderIntro, team photoALWAYS ON",
+          "Our storyHeading, story, before and after, photosALWAYS ON",
+          "How it grewFirst, Now, Today, closing lineALWAYS ON",
+          "The missionHeading, intro, 4 tabsALWAYS ON",
+          "Iloilo City rootsHeading, text, shipping labelALWAYS ON",
+          "ClosingHeadingALWAYS ON",
+        ]);
+        const header = within(aboutRows()[0] ?? document.body).getByRole("link");
+        expect(header).toHaveAttribute("href", "/admin/exam-pages?page=site&site=about");
+        expect(header).toHaveAttribute("aria-current", "true");
+        expect(within(aboutRows()[1] ?? document.body).getByRole("link")).toHaveAttribute(
+          "href",
+          "/admin/exam-pages?page=site&site=about&section=story",
+        );
+        expect(aboutCard()).toHaveAttribute(
+          "href",
+          "/admin/exam-pages?page=site&site=about&section=seo",
+        );
+        expect(aboutCard()).not.toHaveAttribute("aria-current");
+        expect(within(siteEditor()).getByText("EDIT · HEADER · ABOUT")).toBeVisible();
+        expect(within(siteEditor()).getByRole("form", { name: "Header" })).toBeVisible();
+      });
+
+      it.each([
+        ["story", "EDIT · OUR STORY · ABOUT", "Our story"],
+        ["growth", "EDIT · HOW IT GREW · ABOUT", "How it grew"],
+        ["mission", "EDIT · THE MISSION · ABOUT", "The mission"],
+        ["roots", "EDIT · ILOILO CITY ROOTS · ABOUT", "Iloilo City roots"],
+        ["closing", "EDIT · CLOSING · ABOUT", "Closing"],
+      ])("opens ?section=%s in the editor column", async (section, heading, form) => {
+        await renderPage({ page: "site", site: "about", section });
+        expect(within(siteEditor()).getByText(heading)).toBeVisible();
+        expect(within(siteEditor()).getByRole("form", { name: form })).toBeVisible();
+        expect(
+          aboutRows()
+            .map((row) => within(row).getByRole("link"))
+            .filter((link) => link.getAttribute("aria-current") === "true")
+            .map((link) => link.textContent),
+        ).toEqual([expect.stringMatching(new RegExp(`^${form}`))]);
+      });
+
+      it("opens the Header for a section About doesn't have", async () => {
+        await renderPage({ page: "site", site: "about", section: "team" });
+        expect(within(siteEditor()).getByRole("form", { name: "Header" })).toBeVisible();
+      });
+
+      it("opens the search settings with ?section=seo, the card selected", async () => {
+        await renderPage({ page: "site", site: "about", section: "seo" });
+        expect(aboutCard()).toHaveAttribute("aria-current", "true");
+        expect(
+          within(siteEditor()).getByText("SEARCH & AI VISIBILITY · SITE PAGES · ABOUT"),
+        ).toBeVisible();
+      });
+
+      it("opens a section with what's saved", async () => {
+        const about = emptyAbout();
+        about.story.heading = "We passed the boards. Then we built the reviewers.";
+        getSampleStore().catalogue.sitePages = [
+          { page: "about", seoTitle: null, seoDescription: null, shareImage: null, about },
+        ];
+        await renderPage({ page: "site", site: "about", section: "story" });
+        expect(within(siteEditor()).getByLabelText("HEADING")).toHaveValue(
+          "We passed the boards. Then we built the reviewers.",
+        );
+      });
+
+      it("lists no sections on the other Site pages, which have only their search settings", async () => {
+        await renderPage({ page: "site", site: "faq", section: "story" });
+        expect(within(siteColumn("FAQ")).queryByRole("list", { name: "Sections" })).toBeNull();
+        expect(
+          within(siteEditor()).getByText("SEARCH & AI VISIBILITY · SITE PAGES · FAQ"),
+        ).toBeVisible();
+      });
     });
 
     it("lists what's set up automatically: the sitemap, with no breadcrumbs on a Site page", async () => {

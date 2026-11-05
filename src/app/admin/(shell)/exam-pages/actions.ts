@@ -5,6 +5,7 @@ import {
   getExamPageForAdmin,
   setExamSection,
   setPromoBannerVisible,
+  updateAboutSection,
   updateAnnouncement,
   updateBundleOffer,
   updateExamHeader,
@@ -15,8 +16,10 @@ import {
   updateSubjectNames,
 } from "@/services/admin";
 import {
+  aboutPhotoUploadInputSchema,
   examSectionInputSchema,
   promoBannerVisibleSchema,
+  saveAboutSectionInputSchema,
   saveAnnouncementInputSchema,
   saveBundleOfferInputSchema,
   saveExamHeaderInputSchema,
@@ -32,10 +35,10 @@ import { uploadFileSchema, uploadOwnerSchema } from "@/services/uploads.types";
 
 // Pages & promo's Server Actions, for any Staff User. Each one checks the
 // input's shape; the seam checks every rule, so the form is told each field's
-// message. Each part of an Exam page, each Site page, the Home promo banner
-// and the announcement bar saves on its own, with the conflict check against
-// the stamp its editor opened with; the section toggles and the banner's
-// switch always save.
+// message. Each part of an Exam page, each Site page, each of About's
+// sections, the Home promo banner and the announcement bar saves on its own,
+// with the conflict check against the stamp its editor opened with; the
+// section toggles and the banner's switch always save.
 
 /** A section toggle: Subjects covered, Bundle offer or Reviews, shown or hidden. */
 export const setExamPageSection = adminAction(
@@ -101,6 +104,22 @@ export const createSitePageShareImageUpload = adminAction(
   { role: "staff", schema: uploadFileSchema.merge(sitePageUploadInputSchema) },
   async (actor, { site, ...file }) =>
     createUpload(actor, { purpose: "site-page-share-image", owner: site, ...file }),
+);
+
+/** An About section's Save (ticket 21): its text, and the Header's and Our story's photos. */
+export const saveAboutSection = adminAction(
+  { role: "staff", schema: saveAboutSectionInputSchema, requiresStamp: true },
+  async (actor, form, expected) => updateAboutSection(actor, form, expected),
+);
+
+/**
+ * A one-time upload URL for one of About's photos: a JPEG, PNG or WebP of up
+ * to 10 MB. Storage files it as site-pages/about/{slot}-…; Save records its path.
+ */
+export const createAboutPhotoUpload = adminAction(
+  { role: "staff", schema: uploadFileSchema.merge(aboutPhotoUploadInputSchema) },
+  async (actor, { slot, ...file }) =>
+    createUpload(actor, { purpose: "about-photo", owner: slot, ...file }),
 );
 
 /** The Home promo banner's Save: its text, button label, link and dates. */

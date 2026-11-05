@@ -59,7 +59,14 @@ const TICKET: AdminActionState<UploadTicket> = {
 
 function faq(changes: Partial<AdminSitePage["page"]> = {}): AdminSitePage {
   return {
-    page: { page: "faq", seoTitle: null, seoDescription: null, shareImage: null, ...changes },
+    page: {
+      page: "faq",
+      seoTitle: null,
+      seoDescription: null,
+      shareImage: null,
+      about: null,
+      ...changes,
+    },
     stamps: { seo: STAMP },
   };
 }

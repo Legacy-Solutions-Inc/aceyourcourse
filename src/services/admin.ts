@@ -2,6 +2,7 @@ import { isDatabaseConfigured } from "@/env.server";
 import { databaseArm } from "@/services/admin.db";
 import * as mockImpl from "@/services/admin.mock";
 import type {
+  AboutSectionForm,
   AnnouncementForm,
   BundleOfferForm,
   ChangeStaffRoleInput,
@@ -22,6 +23,7 @@ import type {
   WebsiteSettingsUpdate,
 } from "@/services/admin.schema";
 import type {
+  AdminAbout,
   AdminAnnouncement,
   AdminExamPage,
   AdminSitePage,
@@ -435,6 +437,29 @@ export interface AdminService {
     expected?: { savedAt: string },
   ): Promise<AdminResult<AdminSitePage>>;
 
+  // About's text and photos (any Staff User; ticket 21; spec, Phase 2 → Site
+  // pages): six sections, each saved on its own with its own stamp, over
+  // today's text in src/content/about.ts. Blank saves as none, which shows
+  // today's text again. Each write appends one Staff Activity record with the
+  // section before and after, and clears only the site-pages tag; a photo it
+  // replaced is deleted from Storage once it commits.
+
+  /** About's saved text and photos, every field null until it's saved, and each section's stamp. */
+  getAboutForAdmin(actor: StaffActor): Promise<AdminAbout>;
+  /**
+   * Saves one About section. Text over its limit (about 1.5× today's), a spec
+   * chip over 20 characters, a fourth paragraph or a sixth chip is refused.
+   * Each photo is today's (""), the one it has, or a finished "about-photo"
+   * upload's path, with alt text of 1–150 characters; any other is refused,
+   * and an upload whose file hasn't arrived is told "Wait for uploads to
+   * finish."
+   */
+  updateAboutSection(
+    actor: StaffActor,
+    input: AboutSectionForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminAbout>>;
+
   // The Home promo banner and the announcement bar (any Staff User; spec,
   // Phase 2 → Exam pages & promo). Both are part of the Website's settings,
   // so every write clears the settings tag and appends one Staff Activity
@@ -523,6 +548,8 @@ export const updateExamSeo = impl.updateExamSeo;
 export const updateOfficialExamDate = impl.updateOfficialExamDate;
 export const getSitePageForAdmin = impl.getSitePageForAdmin;
 export const updateSitePageSeo = impl.updateSitePageSeo;
+export const getAboutForAdmin = impl.getAboutForAdmin;
+export const updateAboutSection = impl.updateAboutSection;
 export const getPromoForAdmin = impl.getPromoForAdmin;
 export const updatePromoBanner = impl.updatePromoBanner;
 export const setPromoBannerVisible = impl.setPromoBannerVisible;

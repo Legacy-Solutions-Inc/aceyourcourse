@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { CATALOGUE_BUCKET } from "@/lib/catalogue-bucket";
+import { aboutSectionFormValues } from "@/lib/admin/about-form";
 import { seoFormValues } from "@/lib/admin/exam-page-form";
 import { productFormValues } from "@/lib/admin/product-form";
 import { openTestDatabase } from "@/lib/db/test-database";
@@ -14,10 +15,11 @@ import { describeWithStorage, openTestStorage } from "../../test/storage-databas
 
 // The Admin's database arm with Storage (ticket 17): once a save commits, the
 // files of the images it stopped using are deleted from the bucket, a removed
-// photo, a deleted Product's photos and a replaced share image, and a delete
-// Storage refuses is logged without failing the save. Runs in the database
-// project when it has both TEST_DATABASE_URL and TEST_SUPABASE_SECRET_KEY
-// (vitest.config.ts then gives the seams Storage); skips, saying why, without.
+// photo, a deleted Product's photos, a replaced share image and a replaced
+// About photo (ticket 21), and a delete Storage refuses is logged without
+// failing the save. Runs in the database project when it has both
+// TEST_DATABASE_URL and TEST_SUPABASE_SECRET_KEY (vitest.config.ts then gives
+// the seams Storage); skips, saying why, without.
 
 const database = await openTestDatabase();
 const storage = await openTestStorage();
@@ -112,6 +114,26 @@ describeWithStorage(
       expect(first.path).toMatch(/^site-pages\/faq\/share-/);
       expect(await save(first.path)).toMatchObject({ ok: true });
       const second = await DATABASE_ARM.uploadPhoto({ purpose: "site-page-share-image" });
+
+      expect(await save(second.path)).toMatchObject({ ok: true });
+      expect(await inBucket(first.path)).toBe(false);
+      expect(await inBucket(second.path)).toBe(true);
+
+      expect(await save("")).toMatchObject({ ok: true });
+      expect(await inBucket(second.path)).toBe(false);
+    });
+
+    it("deletes an About photo's file once a save replaces it, and once one puts today's back", async () => {
+      const save = async (src: string) => {
+        const opened = await seam.getAboutForAdmin(EDITOR);
+        const form = aboutSectionFormValues(opened.about, "story");
+        form.photos[1] = { src, alt: src ? "A reviewee opening her package" : "" };
+        return seam.updateAboutSection(EDITOR, form, opened.stamps.story);
+      };
+      const first = await DATABASE_ARM.uploadPhoto({ purpose: "about-photo" });
+      expect(first.path).toMatch(/^site-pages\/about\/story-2-/);
+      expect(await save(first.path)).toMatchObject({ ok: true });
+      const second = await DATABASE_ARM.uploadPhoto({ purpose: "about-photo" });
 
       expect(await save(second.path)).toMatchObject({ ok: true });
       expect(await inBucket(first.path)).toBe(false);

@@ -1,17 +1,23 @@
 import { useId } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { aboutCopy, missionTabs } from "@/content/about";
+import { aboutCopy } from "@/content/about";
+import type { AboutCopy } from "@/lib/catalogue/about-content";
 import { listNumber } from "@/lib/text";
 
-const copy = aboutCopy.mission;
+const { eyebrow } = aboutCopy.mission;
+
+interface MissionTabsProps {
+  /** The heading, the intro and the four tabs: Staff's, or today's. */
+  copy: AboutCopy["mission"];
+}
 
 /**
  * "The mission": the four principles as tabs down the side, operable with the
  * arrow keys, and the chosen one's copy beside them. The first is chosen at
- * first. On a phone the panel sits under the tabs.
+ * first. On a phone the panel sits under the tabs. Always four, numbered here.
  */
-export function MissionTabs() {
+export function MissionTabs({ copy }: MissionTabsProps) {
   const headingId = useId();
   const eyebrowId = useId();
 
@@ -27,7 +33,7 @@ export function MissionTabs() {
               id={eyebrowId}
               className="font-mono text-xs font-bold tracking-[0.08em] text-ayc-blue uppercase"
             >
-              {copy.eyebrow}
+              {eyebrow}
             </p>
             <h2
               id={headingId}
@@ -48,9 +54,9 @@ export function MissionTabs() {
             aria-labelledby={eyebrowId}
             className="flex h-auto w-auto flex-col items-stretch rounded-none border-b-[1.5px] border-ayc-navy bg-transparent p-0 text-ayc-navy group-data-[orientation=vertical]/tabs:h-auto wide:border-r-[1.5px] wide:border-b-0"
           >
-            {missionTabs.map((tab, index) => (
+            {copy.tabs.map((tab, index) => (
               <TabsTrigger
-                key={tab.title}
+                key={index}
                 value={String(index)}
                 className="group/tab h-auto min-h-19 flex-1 justify-start gap-4.5 rounded-none border-0 border-b-[1.5px] border-ayc-navy px-[clamp(18px,2.4vw,28px)] py-4 text-left whitespace-normal text-ayc-navy transition-colors last:border-b-0 hover:bg-ayc-sand hover:text-ayc-navy focus-visible:ring-0 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ayc-blue data-[state=active]:bg-ayc-navy data-[state=active]:text-ayc-cream data-[state=active]:shadow-none data-[state=active]:focus-visible:outline-ayc-orange motion-reduce:transition-none"
               >
@@ -72,9 +78,9 @@ export function MissionTabs() {
               </TabsTrigger>
             ))}
           </TabsList>
-          {missionTabs.map((tab, index) => (
+          {copy.tabs.map((tab, index) => (
             <TabsContent
-              key={tab.title}
+              key={index}
               value={String(index)}
               className="flex animate-in flex-col justify-center gap-4.5 p-[clamp(24px,3.4vw,48px)] duration-300 fade-in slide-in-from-right-4 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ayc-blue focus-visible:outline-solid motion-reduce:animate-none"
             >

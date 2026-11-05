@@ -302,6 +302,8 @@ for (const size of SIZES) {
         "/admin",
         "/admin/exam-pages",
         "/admin/exam-pages?page=site&site=about",
+        "/admin/exam-pages?page=site&site=about&section=story",
+        "/admin/exam-pages?page=site&site=about&section=seo",
         "/admin/products",
         "/admin/reviews",
         "/admin/settings",

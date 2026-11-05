@@ -2,6 +2,8 @@
 // through src/services/admin.ts; these are its inputs and outputs.
 
 import type {
+  AboutContent,
+  AboutSectionKey,
   Exam,
   ExamPage,
   Faq,
@@ -380,6 +382,15 @@ export type SitePagePart = "seo";
 export interface AdminSitePage {
   page: SitePage;
   stamps: Record<SitePagePart, RecordStamp>;
+}
+
+/**
+ * About's text and photos as their editors open them (ticket 21): what's
+ * saved, every field null until then, and each section's own stamp.
+ */
+export interface AdminAbout {
+  about: AboutContent;
+  stamps: Record<AboutSectionKey, RecordStamp>;
 }
 
 // ── Home promo banner and announcement bar ──────────────────────────────────

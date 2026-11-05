@@ -69,6 +69,9 @@ export const missionTabs: ReadonlyArray<MissionTab> = [
 
 const plural = (count: number, one: string, many: string) => (count === 1 ? one : many);
 
+/** The timeline's Now line before the catalogue's Exams. */
+const NOW_LEAD = "Then came updated editions and reviewers for more courses.";
+
 export const aboutCopy = {
   metaTitle: "About · made by board passers in Iloilo",
   metaDescription:
@@ -115,11 +118,11 @@ export const aboutCopy = {
     first: { label: "First", title: "Civil Engineering flash cards" },
     now: {
       label: "Now",
+      /** The sentence before the Exams, which Staff can change in the Admin. */
+      lead: NOW_LEAD,
       /** The mockup's hardcoded course list (L174) is the catalogue's Exams instead. */
-      body: (examNames: string[]) =>
-        examNames.length > 0
-          ? `Then came updated editions and reviewers for more courses. We now make reviewers for ${formatList(examNames)}.`
-          : "Then came updated editions and reviewers for more courses.",
+      body: (examNames: string[], lead: string = NOW_LEAD) =>
+        examNames.length > 0 ? `${lead} We now make reviewers for ${formatList(examNames)}.` : lead,
     },
     today: {
       label: "Today",

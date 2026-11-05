@@ -223,11 +223,12 @@ export function examPagesFromRows(rows: readonly ExamPageRow[]): ExamPage[] {
 }
 
 export function sitePagesFromRows(rows: readonly SitePageRow[]): SitePage[] {
-  return byPosition(rows).map(({ page, seoTitle, seoDescription, shareImage }) => ({
+  return byPosition(rows).map(({ page, seoTitle, seoDescription, shareImage, about }) => ({
     page,
     seoTitle,
     seoDescription,
     shareImage,
+    about: about ?? null,
   }));
 }
 

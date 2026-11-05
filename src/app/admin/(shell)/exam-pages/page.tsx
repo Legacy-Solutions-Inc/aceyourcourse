@@ -7,11 +7,16 @@ import {
   ExamPagesNav,
   SitePageColumn,
 } from "@/components/admin/exam-pages/exam-pages-columns";
+import { AboutSectionEditor } from "@/components/admin/exam-pages/about-editors";
 import { AnnouncementEditor } from "@/components/admin/exam-pages/announcement-editor";
 import { ExamPagePanel } from "@/components/admin/exam-pages/exam-page-panel";
 import { PromoBannerEditor } from "@/components/admin/exam-pages/promo-banner-editor";
 import { SitePageSeoEditor } from "@/components/admin/exam-pages/site-page-seo-editor";
-import { parseExamPagesParams } from "@/lib/admin/exam-pages-view";
+import {
+  ABOUT_SECTION_TITLES,
+  type AboutEditorKey,
+  parseExamPagesParams,
+} from "@/lib/admin/exam-pages-view";
 import { requireStaff } from "@/lib/admin/guard";
 import { promoStatus } from "@/lib/admin/promo-status";
 import { seoCheck } from "@/lib/admin/seo-check";
@@ -20,6 +25,7 @@ import { SITE_PAGE_DEFAULTS, sitePageAddress, sitePageSeo } from "@/lib/catalogu
 import { manilaDate } from "@/lib/manila-time";
 import { paths } from "@/paths";
 import {
+  getAboutForAdmin,
   getAnnouncementForAdmin,
   getExamPageForAdmin,
   getPromoForAdmin,
@@ -30,8 +36,10 @@ import type { StaffActor } from "@/services/admin.types";
 import type { SitePageKey } from "@/services/catalogue.types";
 
 import {
+  createAboutPhotoUpload,
   createShareImageUpload,
   createSitePageShareImageUpload,
+  saveAboutSection,
   saveAnnouncement,
   saveBundleOffer,
   saveExamHeader,
@@ -62,14 +70,21 @@ const COLUMNS =
  * Pages & promo (BUILD-MAP §3.2; renamed from "Exam pages & promo" in ticket
  * 20): PAGES, the selected Exam page's chips, search check and sections, and
  * the selected part's editor; a Site page's chips, search check and its
- * Search & AI visibility; or the Home promo banner's or the announcement
- * bar's editor. The page, the Exam or Site page, and the section live in the
- * URL; an unknown Exam shows the first, and an unknown Site page Home.
- * Everything is read fresh on every request.
+ * Search & AI visibility, and for About its sections and the selected one's
+ * editor (ticket 21); or the Home promo banner's or the announcement bar's
+ * editor. The page, the Exam or Site page, and the section live in the URL;
+ * an unknown Exam shows the first, an unknown Site page Home, and an unknown
+ * About section its Header. Everything is read fresh on every request.
  */
 export default async function ExamPagesPage({ searchParams }: ExamPagesPageProps) {
   const actor = await requireStaff(paths.admin.examPages);
-  const { page, exam: wanted, section, site } = parseExamPagesParams(await searchParams);
+  const {
+    page,
+    exam: wanted,
+    section,
+    site,
+    aboutSection,
+  } = parseExamPagesParams(await searchParams);
   const exams = await listExamsForAdmin(actor);
 
   if (page === "site") {
@@ -77,7 +92,7 @@ export default async function ExamPagesPage({ searchParams }: ExamPagesPageProps
       <AdminScreen screen="exam-pages">
         <div className={COLUMNS}>
           <ExamPagesNav current="site" examCount={exams.length} />
-          {await sitePage(actor, site)}
+          {await sitePage(actor, site, aboutSection)}
         </div>
       </AdminScreen>
     );
@@ -145,13 +160,48 @@ export default async function ExamPagesPage({ searchParams }: ExamPagesPageProps
   );
 }
 
-/** Columns 2 and 3 for a Site page: its chips and search check, and its Search & AI visibility. */
-async function sitePage(actor: StaffActor, site: SitePageKey) {
+/**
+ * Columns 2 and 3 for a Site page: its chips and search check, and its
+ * Search & AI visibility; for About, its sections too, and the selected
+ * one's editor.
+ */
+async function sitePage(actor: StaffActor, site: SitePageKey, aboutSection: AboutEditorKey) {
   const opened = await getSitePageForAdmin(actor, site);
   const { path, title, description } = SITE_PAGE_DEFAULTS[site];
+  const column = (
+    <SitePageColumn
+      site={site}
+      path={path}
+      seoState={seoCheck(sitePageSeo(opened.page))}
+      aboutSection={aboutSection}
+    />
+  );
+  if (site === "about" && aboutSection !== "seo") {
+    const about = await getAboutForAdmin(actor);
+    return (
+      <>
+        {column}
+        <aside
+          aria-label="Site page editor"
+          className="flex min-w-0 flex-col gap-3.5 border-[1.5px] bg-ayc-paper p-4.5 lg:col-span-2 xl:col-span-1"
+        >
+          <h2 className="font-mono text-[11px] font-bold tracking-[0.06em] text-ayc-blue">
+            EDIT · {ABOUT_SECTION_TITLES[aboutSection].toUpperCase()} · ABOUT
+          </h2>
+          <AboutSectionEditor
+            key={aboutSection}
+            section={aboutSection}
+            opened={about}
+            action={saveAboutSection}
+            createUpload={createAboutPhotoUpload}
+          />
+        </aside>
+      </>
+    );
+  }
   return (
     <>
-      <SitePageColumn site={site} path={path} seoState={seoCheck(sitePageSeo(opened.page))} />
+      {column}
       <aside
         aria-label="Site page editor"
         className="flex min-w-0 flex-col gap-3.5 border-[1.5px] bg-ayc-paper p-4.5 lg:col-span-2 xl:col-span-1"

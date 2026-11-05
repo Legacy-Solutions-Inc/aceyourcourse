@@ -1,0 +1,991 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`About > with nothing saved, renders today's About exactly 1`] = `
+<div>
+  <section
+    class="bg-ayc-navy text-ayc-cream"
+  >
+    <div
+      class="mx-auto flex max-w-324 flex-wrap items-center gap-[clamp(36px,5vw,72px)] px-[clamp(20px,5vw,72px)] py-[clamp(48px,6vw,96px)]"
+    >
+      <div
+        class="flex min-w-0 flex-[1.2_1_380px] flex-col gap-5.5"
+      >
+        <p
+          class="flex items-center gap-2.5 self-start rounded-full border-[1.5px] border-ayc-cream/50 px-3 py-2.25 font-mono text-xs leading-none font-bold tracking-[0.08em] uppercase"
+        >
+          <span
+            aria-hidden="true"
+            class="size-2 rounded-full bg-ayc-orange"
+          />
+          About AceYourCourse
+        </p>
+        <h1
+          class="text-[clamp(46px,6.8vw,96px)] leading-[0.94] font-extrabold tracking-[-0.045em] text-balance"
+        >
+          Built by board passers. Designed for
+           
+          <span
+            class="text-ayc-orange"
+          >
+            dreamers.
+          </span>
+        </h1>
+        <p
+          class="max-w-[32em] text-[clamp(17px,1.5vw,20px)] leading-normal text-pretty text-ayc-on-navy-soft"
+        >
+          Everyone behind AceYourCourse has taken a board exam and passed. We make the reviewers we wish we’d had, then pack and ship every order ourselves from Iloilo City.
+        </p>
+        <div
+          class="flex flex-wrap gap-2.5"
+        >
+          <a
+            class="flex min-h-13.5 items-center border-[1.5px] border-ayc-cream text-base no-underline focus-visible:outline-ayc-cream motion-reduce:transition-none gap-2 bg-ayc-orange px-5.5 font-extrabold text-ayc-navy shadow-hard-md shadow-ayc-cream transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:text-ayc-navy hover:shadow-[7px_7px_0_var(--ayc-cream)]"
+            href="#story"
+          >
+            Read our story
+             
+            <span
+              aria-hidden="true"
+            >
+              ↓
+            </span>
+          </a>
+          <a
+            class="flex min-h-13.5 items-center border-[1.5px] border-ayc-cream text-base no-underline focus-visible:outline-ayc-cream motion-reduce:transition-none px-5 font-bold text-ayc-cream transition-colors hover:bg-ayc-cream/12 hover:text-ayc-cream"
+            href="/products"
+          >
+            See the reviewers
+          </a>
+        </div>
+      </div>
+      <div
+        class="relative min-w-0 flex-[1_1_340px] pr-3.5 pb-3.5"
+      >
+        <div
+          aria-hidden="true"
+          class="absolute inset-[14px_0_0_14px] border-[1.5px] border-ayc-cream bg-ayc-orange"
+        />
+        <div
+          class="relative aspect-4/3 overflow-hidden border-[1.5px] border-ayc-cream bg-ayc-navy-rule"
+        >
+          <img
+            alt="Two of the team going through flash cards and a notebook at a desk"
+            class="object-cover object-[center_30%]"
+            data-nimg="fill"
+            decoding="async"
+            sizes="(min-width: 81rem) 560px, (min-width: 47.5rem) 45vw, 100vw"
+            src="/_next/image?url=%2Fabout%2Fabout-team-studying.webp&w=3840&q=75"
+            srcset="/_next/image?url=%2Fabout%2Fabout-team-studying.webp&w=384&q=75 384w, /_next/image?url=%2Fabout%2Fabout-team-studying.webp&w=640&q=75 640w, /_next/image?url=%2Fabout%2Fabout-team-studying.webp&w=750&q=75 750w, /_next/image?url=%2Fabout%2Fabout-team-studying.webp&w=828&q=75 828w, /_next/image?url=%2Fabout%2Fabout-team-studying.webp&w=1080&q=75 1080w, /_next/image?url=%2Fabout%2Fabout-team-studying.webp&w=1200&q=75 1200w, /_next/image?url=%2Fabout%2Fabout-team-studying.webp&w=1920&q=75 1920w, /_next/image?url=%2Fabout%2Fabout-team-studying.webp&w=2048&q=75 2048w, /_next/image?url=%2Fabout%2Fabout-team-studying.webp&w=3840&q=75 3840w"
+            style="position: absolute; height: 100%; width: 100%; left: 0px; top: 0px; right: 0px; bottom: 0px; color: transparent;"
+          />
+        </div>
+        <p
+          class="absolute bottom-8.5 -left-2.5 -rotate-4 border-[1.5px] border-ayc-navy bg-ayc-cream px-3 py-2 font-mono text-xs font-bold tracking-[0.04em] text-ayc-navy uppercase shadow-hard-sm"
+        >
+          IPOPHIL registered
+        </p>
+      </div>
+    </div>
+    <div
+      class="overflow-hidden border-t-[1.5px] border-ayc-cream/30"
+    >
+      <ul
+        aria-label="AceYourCourse in numbers"
+        class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))]"
+      >
+        <li
+          class="-mr-[1.5px] flex flex-col gap-1.5 border-r-[1.5px] border-ayc-cream/30 px-[clamp(20px,3vw,40px)] py-[clamp(20px,2.6vw,32px)]"
+        >
+          <span
+            class="text-[clamp(40px,4.6vw,60px)] leading-none font-black tracking-[-0.04em]"
+          >
+            8
+          </span>
+           
+          <span
+            class="font-mono text-xs font-medium tracking-[0.06em] text-ayc-on-navy-muted uppercase"
+          >
+            reviewers
+          </span>
+        </li>
+        <li
+          class="-mr-[1.5px] flex flex-col gap-1.5 border-r-[1.5px] border-ayc-cream/30 px-[clamp(20px,3vw,40px)] py-[clamp(20px,2.6vw,32px)]"
+        >
+          <span
+            class="text-[clamp(40px,4.6vw,60px)] leading-none font-black tracking-[-0.04em]"
+          >
+            5
+          </span>
+           
+          <span
+            class="font-mono text-xs font-medium tracking-[0.06em] text-ayc-on-navy-muted uppercase"
+          >
+            board exams
+          </span>
+        </li>
+        <li
+          class="-mr-[1.5px] flex flex-col gap-1.5 border-r-[1.5px] border-ayc-cream/30 px-[clamp(20px,3vw,40px)] py-[clamp(20px,2.6vw,32px)]"
+        >
+          <span
+            class="text-[clamp(40px,4.6vw,60px)] leading-none font-black tracking-[-0.04em] text-ayc-orange"
+          >
+            4.8
+            <span
+              aria-hidden="true"
+            >
+              ★
+            </span>
+          </span>
+           
+          <span
+            class="font-mono text-xs font-medium tracking-[0.06em] text-ayc-on-navy-muted uppercase"
+          >
+            874 shop ratings
+          </span>
+        </li>
+        <li
+          class="-mr-[1.5px] flex flex-col gap-1.5 border-r-[1.5px] border-ayc-cream/30 px-[clamp(20px,3vw,40px)] py-[clamp(20px,2.6vw,32px)]"
+        >
+          <span
+            class="text-[clamp(40px,4.6vw,60px)] leading-none font-black tracking-[-0.04em]"
+          >
+            3.7K
+          </span>
+           
+          <span
+            class="font-mono text-xs font-medium tracking-[0.06em] text-ayc-on-navy-muted uppercase"
+          >
+            Shopee followers
+          </span>
+        </li>
+      </ul>
+      <p
+        class="border-t-[1.5px] border-ayc-cream/30 px-[clamp(20px,3vw,40px)] py-3 font-mono text-xs text-ayc-on-navy-muted"
+      >
+        Shop figures from Shopee
+         
+        as of Oct 2026
+      </p>
+    </div>
+  </section>
+  <section
+    aria-labelledby="«r0»"
+    class="mx-auto flex max-w-324 scroll-mt-24 flex-col gap-[clamp(40px,5vw,64px)] px-[clamp(20px,5vw,72px)] py-[clamp(64px,8vw,120px)]"
+    id="story"
+  >
+    <div
+      class="flex flex-wrap gap-[clamp(28px,5vw,80px)]"
+    >
+      <div
+        class="flex flex-[1_1_300px] flex-col gap-3.5"
+      >
+        <p
+          class="font-mono text-xs font-bold tracking-[0.08em] text-ayc-blue uppercase"
+        >
+          Our story
+        </p>
+        <h2
+          class="max-w-[12ch] text-[clamp(34px,4.4vw,60px)] leading-none font-extrabold tracking-[-0.035em]"
+          id="«r0»"
+        >
+          We passed. Then we made what we wished we had.
+        </h2>
+      </div>
+      <div
+        class="flex min-w-0 flex-[1.6_1_360px] flex-col gap-4.5 text-lg leading-relaxed text-ayc-slate"
+      >
+        <p
+          class="text-pretty"
+        >
+          During review season, almost every reviewee does the same thing: copies formulas onto index cards and manila paper, page by page, the night before. It works, but it eats hours you could spend solving.
+        </p>
+        <p
+          class="text-pretty"
+        >
+          So we printed those cards properly. Organized by the exam’s actual subjects, sized at 4 × 6 in to fit in a bag, on 160 gsm paper that survives a whole review season. Posters for the wall you stare at while solving. Notebooks for practice problems.
+        </p>
+      </div>
+    </div>
+    <div
+      class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] border-[1.5px] border-ayc-navy shadow-hard-lg"
+    >
+      <div
+        class="-mr-[1.5px] flex flex-col gap-3.5 border-r-[1.5px] border-ayc-navy bg-ayc-sand p-[clamp(22px,3vw,36px)]"
+      >
+        <p
+          class="font-mono text-[11px] font-bold tracking-[0.08em] uppercase text-ayc-slate"
+        >
+          Before · the night before
+        </p>
+        <p
+          class="text-[clamp(22px,2.4vw,30px)] leading-[1.1] font-extrabold tracking-[-0.02em] line-through decoration-ayc-star decoration-3 [text-decoration-skip-ink:none]"
+        >
+          Hand-copied index cards and manila paper
+        </p>
+        <p
+          class="text-base leading-normal text-ayc-slate"
+        >
+          Page by page, hours away from solving.
+        </p>
+      </div>
+      <div
+        class="flex flex-col gap-3.5 bg-ayc-paper p-[clamp(22px,3vw,36px)]"
+      >
+        <p
+          class="font-mono text-[11px] font-bold tracking-[0.08em] uppercase text-ayc-blue"
+        >
+          After · AYC reviewers
+        </p>
+        <p
+          class="text-[clamp(22px,2.4vw,30px)] leading-[1.1] font-extrabold tracking-[-0.02em]"
+        >
+          Made properly, by the exam’s subjects
+        </p>
+        <ul
+          class="flex flex-wrap gap-1.5"
+        >
+          <li
+            class="border-[1.5px] border-ayc-navy bg-ayc-cream px-2.25 py-1.75 font-mono text-xs leading-none font-bold uppercase"
+          >
+            4 × 6 in
+          </li>
+          <li
+            class="border-[1.5px] border-ayc-navy bg-ayc-cream px-2.25 py-1.75 font-mono text-xs leading-none font-bold uppercase"
+          >
+            160 gsm
+          </li>
+          <li
+            class="border-[1.5px] border-ayc-navy bg-ayc-cream px-2.25 py-1.75 font-mono text-xs leading-none font-bold uppercase"
+          >
+            By subject
+          </li>
+          <li
+            class="border-[1.5px] border-ayc-navy bg-ayc-cream px-2.25 py-1.75 font-mono text-xs leading-none font-bold uppercase"
+          >
+            Posters
+          </li>
+          <li
+            class="border-[1.5px] border-ayc-navy bg-ayc-cream px-2.25 py-1.75 font-mono text-xs leading-none font-bold uppercase"
+          >
+            Notebooks
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div
+      class="flex flex-col gap-4.5"
+    >
+      <h3
+        class="font-mono text-xs font-bold tracking-[0.08em] text-ayc-blue uppercase"
+        id="«r1»"
+      >
+        How it grew
+      </h3>
+      <ol
+        aria-labelledby="«r1»"
+        class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-4.5"
+      >
+        <li
+          class="relative flex flex-col gap-2.5 border-t-[3px] border-ayc-navy pt-5.5"
+        >
+          <span
+            aria-hidden="true"
+            class="absolute -top-2.25 left-0 size-3.75 rounded-full border-2 border-ayc-navy bg-ayc-cream"
+          />
+          <span
+            class="font-mono text-xs font-bold tracking-[0.06em] text-ayc-slate uppercase"
+          >
+            First
+          </span>
+           
+          <span
+            class="text-[clamp(20px,2vw,24px)] leading-[1.15] font-extrabold tracking-[-0.02em]"
+          >
+            Civil Engineering flash cards
+          </span>
+        </li>
+        <li
+          class="relative flex flex-col gap-2.5 border-t-[3px] border-ayc-navy pt-5.5"
+        >
+          <span
+            aria-hidden="true"
+            class="absolute -top-2.25 left-0 size-3.75 rounded-full border-2 border-ayc-navy bg-ayc-orange"
+          />
+          <span
+            class="font-mono text-xs font-bold tracking-[0.06em] text-ayc-slate uppercase"
+          >
+            Now
+          </span>
+           
+          <span
+            class="text-[17px] leading-relaxed text-pretty text-ayc-slate"
+          >
+            Then came updated editions and reviewers for more courses. We now make reviewers for Civil Engineering, Mechanical Engineering, Electrical Engineering, Medical Technology, and Accountancy.
+          </span>
+        </li>
+        <li
+          class="relative flex flex-col gap-2.5 border-t-[3px] border-ayc-navy pt-5.5"
+        >
+          <span
+            aria-hidden="true"
+            class="absolute -top-2.25 left-0 size-3.75 rounded-full border-2 border-ayc-navy bg-ayc-blue"
+          />
+          <span
+            class="font-mono text-xs font-bold tracking-[0.06em] text-ayc-slate uppercase"
+          >
+            Today
+          </span>
+           
+          <span
+            class="text-[17px] leading-relaxed text-pretty text-ayc-slate"
+          >
+            We’re still growing. Reaching out to more courses so we can help even more students on their journey. From one set of flash cards to a growing community of learners, our goal has always been the same: to make studying a little easier and help thousands of students move closer to their dreams.
+          </span>
+        </li>
+      </ol>
+      <p
+        class="text-[clamp(22px,2.4vw,30px)] leading-tight font-extrabold tracking-[-0.02em]"
+      >
+        And this is only the beginning.
+      </p>
+      <div
+        class="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-5"
+      >
+        <div
+          class="relative aspect-4/3 overflow-hidden border-[1.5px] border-ayc-navy bg-ayc-sand -rotate-1 shadow-[6px_6px_0_var(--ayc-navy)]"
+        >
+          <img
+            alt="A team member handing a reviewee her package"
+            class="object-cover"
+            data-nimg="fill"
+            decoding="async"
+            loading="lazy"
+            sizes="(min-width: 81rem) 390px, (min-width: 47.5rem) 33vw, 100vw"
+            src="/_next/image?url=%2Fabout%2Fabout-handover.webp&w=3840&q=75"
+            srcset="/_next/image?url=%2Fabout%2Fabout-handover.webp&w=256&q=75 256w, /_next/image?url=%2Fabout%2Fabout-handover.webp&w=384&q=75 384w, /_next/image?url=%2Fabout%2Fabout-handover.webp&w=640&q=75 640w, /_next/image?url=%2Fabout%2Fabout-handover.webp&w=750&q=75 750w, /_next/image?url=%2Fabout%2Fabout-handover.webp&w=828&q=75 828w, /_next/image?url=%2Fabout%2Fabout-handover.webp&w=1080&q=75 1080w, /_next/image?url=%2Fabout%2Fabout-handover.webp&w=1200&q=75 1200w, /_next/image?url=%2Fabout%2Fabout-handover.webp&w=1920&q=75 1920w, /_next/image?url=%2Fabout%2Fabout-handover.webp&w=2048&q=75 2048w, /_next/image?url=%2Fabout%2Fabout-handover.webp&w=3840&q=75 3840w"
+            style="position: absolute; height: 100%; width: 100%; left: 0px; top: 0px; right: 0px; bottom: 0px; color: transparent;"
+          />
+        </div>
+        <div
+          class="relative aspect-4/3 overflow-hidden border-[1.5px] border-ayc-navy bg-ayc-sand rotate-[0.8deg] shadow-[6px_6px_0_var(--ayc-orange)]"
+        >
+          <img
+            alt="A reviewee opening her package while her mother looks on"
+            class="object-cover"
+            data-nimg="fill"
+            decoding="async"
+            loading="lazy"
+            sizes="(min-width: 81rem) 390px, (min-width: 47.5rem) 33vw, 100vw"
+            src="/_next/image?url=%2Fabout%2Fabout-mother-daughter.webp&w=3840&q=75"
+            srcset="/_next/image?url=%2Fabout%2Fabout-mother-daughter.webp&w=256&q=75 256w, /_next/image?url=%2Fabout%2Fabout-mother-daughter.webp&w=384&q=75 384w, /_next/image?url=%2Fabout%2Fabout-mother-daughter.webp&w=640&q=75 640w, /_next/image?url=%2Fabout%2Fabout-mother-daughter.webp&w=750&q=75 750w, /_next/image?url=%2Fabout%2Fabout-mother-daughter.webp&w=828&q=75 828w, /_next/image?url=%2Fabout%2Fabout-mother-daughter.webp&w=1080&q=75 1080w, /_next/image?url=%2Fabout%2Fabout-mother-daughter.webp&w=1200&q=75 1200w, /_next/image?url=%2Fabout%2Fabout-mother-daughter.webp&w=1920&q=75 1920w, /_next/image?url=%2Fabout%2Fabout-mother-daughter.webp&w=2048&q=75 2048w, /_next/image?url=%2Fabout%2Fabout-mother-daughter.webp&w=3840&q=75 3840w"
+            style="position: absolute; height: 100%; width: 100%; left: 0px; top: 0px; right: 0px; bottom: 0px; color: transparent;"
+          />
+        </div>
+        <div
+          class="relative aspect-4/3 overflow-hidden border-[1.5px] border-ayc-navy bg-ayc-sand -rotate-[0.6deg] shadow-[6px_6px_0_var(--ayc-blue)]"
+        >
+          <img
+            alt="A reviewee hugging her mother, package in hand"
+            class="object-cover object-[center_30%]"
+            data-nimg="fill"
+            decoding="async"
+            loading="lazy"
+            sizes="(min-width: 81rem) 390px, (min-width: 47.5rem) 33vw, 100vw"
+            src="/_next/image?url=%2Fabout%2Fabout-hug.webp&w=3840&q=75"
+            srcset="/_next/image?url=%2Fabout%2Fabout-hug.webp&w=256&q=75 256w, /_next/image?url=%2Fabout%2Fabout-hug.webp&w=384&q=75 384w, /_next/image?url=%2Fabout%2Fabout-hug.webp&w=640&q=75 640w, /_next/image?url=%2Fabout%2Fabout-hug.webp&w=750&q=75 750w, /_next/image?url=%2Fabout%2Fabout-hug.webp&w=828&q=75 828w, /_next/image?url=%2Fabout%2Fabout-hug.webp&w=1080&q=75 1080w, /_next/image?url=%2Fabout%2Fabout-hug.webp&w=1200&q=75 1200w, /_next/image?url=%2Fabout%2Fabout-hug.webp&w=1920&q=75 1920w, /_next/image?url=%2Fabout%2Fabout-hug.webp&w=2048&q=75 2048w, /_next/image?url=%2Fabout%2Fabout-hug.webp&w=3840&q=75 3840w"
+            style="position: absolute; height: 100%; width: 100%; left: 0px; top: 0px; right: 0px; bottom: 0px; color: transparent;"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+  <section
+    aria-labelledby="«r2»"
+    class="border-t-[1.5px] border-ayc-navy bg-ayc-cream bg-[linear-gradient(color-mix(in_srgb,var(--ayc-blue)_9%,transparent)_1px,transparent_1px),linear-gradient(90deg,color-mix(in_srgb,var(--ayc-blue)_9%,transparent)_1px,transparent_1px)] bg-size-[24px_24px]"
+  >
+    <div
+      class="mx-auto flex max-w-324 flex-col gap-[clamp(28px,4vw,48px)] px-[clamp(20px,5vw,72px)] py-[clamp(64px,8vw,112px)]"
+    >
+      <div
+        class="flex flex-wrap items-end justify-between gap-x-10 gap-y-3"
+      >
+        <div
+          class="flex flex-col gap-3"
+        >
+          <p
+            class="font-mono text-xs font-bold tracking-[0.08em] text-ayc-blue uppercase"
+            id="«r3»"
+          >
+            What we stand for
+          </p>
+          <h2
+            class="text-[clamp(34px,4.4vw,60px)] leading-none font-extrabold tracking-[-0.035em]"
+            id="«r2»"
+          >
+            The mission
+          </h2>
+        </div>
+        <p
+          class="max-w-[30em] text-[17px] leading-normal text-ayc-slate"
+        >
+          Help more reviewees walk out of the exam room as registered professionals, without spending more than they have.
+        </p>
+      </div>
+      <div
+        class="group/tabs data-[orientation=horizontal]:flex-col grid gap-0 border-[1.5px] border-ayc-navy bg-ayc-paper shadow-hard-lg wide:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]"
+        data-orientation="vertical"
+        data-slot="tabs"
+        dir="ltr"
+      >
+        <div
+          aria-labelledby="«r3»"
+          aria-orientation="vertical"
+          class="group/tabs-list justify-center group-data-[orientation=horizontal]/tabs:h-9 group-data-[orientation=vertical]/tabs:flex-col data-[variant=line]:rounded-none flex h-auto w-auto flex-col items-stretch rounded-none border-b-[1.5px] border-ayc-navy bg-transparent p-0 text-ayc-navy group-data-[orientation=vertical]/tabs:h-auto wide:border-r-[1.5px] wide:border-b-0"
+          data-orientation="vertical"
+          data-slot="tabs-list"
+          data-variant="default"
+          role="tablist"
+          style="outline: none;"
+          tabindex="0"
+        >
+          <button
+            aria-controls="radix-«r4»-content-0"
+            aria-selected="true"
+            class="relative inline-flex items-center text-sm font-medium group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start focus-visible:border-ring focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 group-data-[variant=default]/tabs-list:data-[state=active]:shadow-sm group-data-[variant=line]/tabs-list:data-[state=active]:shadow-none dark:text-muted-foreground dark:hover:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:border-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 dark:data-[state=active]:text-foreground after:absolute after:bg-foreground after:opacity-0 after:transition-opacity group-data-[orientation=horizontal]/tabs:after:inset-x-0 group-data-[orientation=horizontal]/tabs:after:bottom-[-5px] group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100 group/tab h-auto min-h-19 flex-1 justify-start gap-4.5 rounded-none border-0 border-b-[1.5px] border-ayc-navy px-[clamp(18px,2.4vw,28px)] py-4 text-left whitespace-normal text-ayc-navy transition-colors last:border-b-0 hover:bg-ayc-sand hover:text-ayc-navy focus-visible:ring-0 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ayc-blue data-[state=active]:bg-ayc-navy data-[state=active]:text-ayc-cream data-[state=active]:shadow-none data-[state=active]:focus-visible:outline-ayc-orange motion-reduce:transition-none"
+            data-orientation="vertical"
+            data-radix-collection-item=""
+            data-slot="tabs-trigger"
+            data-state="active"
+            id="radix-«r4»-trigger-0"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <span
+              aria-hidden="true"
+              class="font-mono text-[clamp(20px,2vw,26px)] leading-none font-bold text-ayc-slate group-data-[state=active]/tab:text-ayc-orange"
+            >
+              01
+            </span>
+            <span
+              class="flex-1 text-[clamp(18px,1.8vw,22px)] leading-[1.15] font-extrabold tracking-[-0.015em]"
+            >
+              Board-focused, nothing extra
+            </span>
+            <span
+              aria-hidden="true"
+              class="text-lg font-extrabold opacity-0 transition-opacity group-data-[state=active]/tab:opacity-100 motion-reduce:transition-none"
+            >
+              →
+            </span>
+          </button>
+          <button
+            aria-controls="radix-«r4»-content-1"
+            aria-selected="false"
+            class="relative inline-flex items-center text-sm font-medium group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start focus-visible:border-ring focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 group-data-[variant=default]/tabs-list:data-[state=active]:shadow-sm group-data-[variant=line]/tabs-list:data-[state=active]:shadow-none dark:text-muted-foreground dark:hover:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:border-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 dark:data-[state=active]:text-foreground after:absolute after:bg-foreground after:opacity-0 after:transition-opacity group-data-[orientation=horizontal]/tabs:after:inset-x-0 group-data-[orientation=horizontal]/tabs:after:bottom-[-5px] group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100 group/tab h-auto min-h-19 flex-1 justify-start gap-4.5 rounded-none border-0 border-b-[1.5px] border-ayc-navy px-[clamp(18px,2.4vw,28px)] py-4 text-left whitespace-normal text-ayc-navy transition-colors last:border-b-0 hover:bg-ayc-sand hover:text-ayc-navy focus-visible:ring-0 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ayc-blue data-[state=active]:bg-ayc-navy data-[state=active]:text-ayc-cream data-[state=active]:shadow-none data-[state=active]:focus-visible:outline-ayc-orange motion-reduce:transition-none"
+            data-orientation="vertical"
+            data-radix-collection-item=""
+            data-slot="tabs-trigger"
+            data-state="inactive"
+            id="radix-«r4»-trigger-1"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <span
+              aria-hidden="true"
+              class="font-mono text-[clamp(20px,2vw,26px)] leading-none font-bold text-ayc-slate group-data-[state=active]/tab:text-ayc-orange"
+            >
+              02
+            </span>
+            <span
+              class="flex-1 text-[clamp(18px,1.8vw,22px)] leading-[1.15] font-extrabold tracking-[-0.015em]"
+            >
+              Updated to the trend
+            </span>
+            <span
+              aria-hidden="true"
+              class="text-lg font-extrabold opacity-0 transition-opacity group-data-[state=active]/tab:opacity-100 motion-reduce:transition-none"
+            >
+              →
+            </span>
+          </button>
+          <button
+            aria-controls="radix-«r4»-content-2"
+            aria-selected="false"
+            class="relative inline-flex items-center text-sm font-medium group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start focus-visible:border-ring focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 group-data-[variant=default]/tabs-list:data-[state=active]:shadow-sm group-data-[variant=line]/tabs-list:data-[state=active]:shadow-none dark:text-muted-foreground dark:hover:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:border-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 dark:data-[state=active]:text-foreground after:absolute after:bg-foreground after:opacity-0 after:transition-opacity group-data-[orientation=horizontal]/tabs:after:inset-x-0 group-data-[orientation=horizontal]/tabs:after:bottom-[-5px] group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100 group/tab h-auto min-h-19 flex-1 justify-start gap-4.5 rounded-none border-0 border-b-[1.5px] border-ayc-navy px-[clamp(18px,2.4vw,28px)] py-4 text-left whitespace-normal text-ayc-navy transition-colors last:border-b-0 hover:bg-ayc-sand hover:text-ayc-navy focus-visible:ring-0 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ayc-blue data-[state=active]:bg-ayc-navy data-[state=active]:text-ayc-cream data-[state=active]:shadow-none data-[state=active]:focus-visible:outline-ayc-orange motion-reduce:transition-none"
+            data-orientation="vertical"
+            data-radix-collection-item=""
+            data-slot="tabs-trigger"
+            data-state="inactive"
+            id="radix-«r4»-trigger-2"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <span
+              aria-hidden="true"
+              class="font-mono text-[clamp(20px,2vw,26px)] leading-none font-bold text-ayc-slate group-data-[state=active]/tab:text-ayc-orange"
+            >
+              03
+            </span>
+            <span
+              class="flex-1 text-[clamp(18px,1.8vw,22px)] leading-[1.15] font-extrabold tracking-[-0.015em]"
+            >
+              Made for tight budgets
+            </span>
+            <span
+              aria-hidden="true"
+              class="text-lg font-extrabold opacity-0 transition-opacity group-data-[state=active]/tab:opacity-100 motion-reduce:transition-none"
+            >
+              →
+            </span>
+          </button>
+          <button
+            aria-controls="radix-«r4»-content-3"
+            aria-selected="false"
+            class="relative inline-flex items-center text-sm font-medium group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start focus-visible:border-ring focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 group-data-[variant=default]/tabs-list:data-[state=active]:shadow-sm group-data-[variant=line]/tabs-list:data-[state=active]:shadow-none dark:text-muted-foreground dark:hover:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:border-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 dark:data-[state=active]:text-foreground after:absolute after:bg-foreground after:opacity-0 after:transition-opacity group-data-[orientation=horizontal]/tabs:after:inset-x-0 group-data-[orientation=horizontal]/tabs:after:bottom-[-5px] group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100 group/tab h-auto min-h-19 flex-1 justify-start gap-4.5 rounded-none border-0 border-b-[1.5px] border-ayc-navy px-[clamp(18px,2.4vw,28px)] py-4 text-left whitespace-normal text-ayc-navy transition-colors last:border-b-0 hover:bg-ayc-sand hover:text-ayc-navy focus-visible:ring-0 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ayc-blue data-[state=active]:bg-ayc-navy data-[state=active]:text-ayc-cream data-[state=active]:shadow-none data-[state=active]:focus-visible:outline-ayc-orange motion-reduce:transition-none"
+            data-orientation="vertical"
+            data-radix-collection-item=""
+            data-slot="tabs-trigger"
+            data-state="inactive"
+            id="radix-«r4»-trigger-3"
+            role="tab"
+            tabindex="-1"
+            type="button"
+          >
+            <span
+              aria-hidden="true"
+              class="font-mono text-[clamp(20px,2vw,26px)] leading-none font-bold text-ayc-slate group-data-[state=active]/tab:text-ayc-orange"
+            >
+              04
+            </span>
+            <span
+              class="flex-1 text-[clamp(18px,1.8vw,22px)] leading-[1.15] font-extrabold tracking-[-0.015em]"
+            >
+              Original, and protected
+            </span>
+            <span
+              aria-hidden="true"
+              class="text-lg font-extrabold opacity-0 transition-opacity group-data-[state=active]/tab:opacity-100 motion-reduce:transition-none"
+            >
+              →
+            </span>
+          </button>
+        </div>
+        <div
+          aria-labelledby="radix-«r4»-trigger-0"
+          class="flex-1 outline-none flex animate-in flex-col justify-center gap-4.5 p-[clamp(24px,3.4vw,48px)] duration-300 fade-in slide-in-from-right-4 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ayc-blue focus-visible:outline-solid motion-reduce:animate-none"
+          data-orientation="vertical"
+          data-slot="tabs-content"
+          data-state="active"
+          id="radix-«r4»-content-0"
+          role="tabpanel"
+          style="animation-duration: 0s;"
+          tabindex="0"
+        >
+          <span
+            aria-hidden="true"
+            class="text-[clamp(72px,10vw,140px)] leading-[0.85] font-black tracking-[-0.05em] text-ayc-blue"
+          >
+            01
+          </span>
+          <h3
+            class="text-[clamp(26px,3vw,40px)] leading-[1.05] font-extrabold tracking-[-0.03em] text-balance"
+          >
+            Board-focused, nothing extra
+          </h3>
+          <p
+            class="max-w-[34em] text-lg leading-relaxed text-pretty text-ayc-slate"
+          >
+            High-yield formulas and concepts, organized around each exam’s own subjects, so every card earns its place in your bag.
+          </p>
+        </div>
+        <div
+          aria-labelledby="radix-«r4»-trigger-1"
+          class="flex-1 outline-none flex animate-in flex-col justify-center gap-4.5 p-[clamp(24px,3.4vw,48px)] duration-300 fade-in slide-in-from-right-4 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ayc-blue focus-visible:outline-solid motion-reduce:animate-none"
+          data-orientation="vertical"
+          data-slot="tabs-content"
+          data-state="inactive"
+          hidden=""
+          id="radix-«r4»-content-1"
+          role="tabpanel"
+          tabindex="0"
+        />
+        <div
+          aria-labelledby="radix-«r4»-trigger-2"
+          class="flex-1 outline-none flex animate-in flex-col justify-center gap-4.5 p-[clamp(24px,3.4vw,48px)] duration-300 fade-in slide-in-from-right-4 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ayc-blue focus-visible:outline-solid motion-reduce:animate-none"
+          data-orientation="vertical"
+          data-slot="tabs-content"
+          data-state="inactive"
+          hidden=""
+          id="radix-«r4»-content-2"
+          role="tabpanel"
+          tabindex="0"
+        />
+        <div
+          aria-labelledby="radix-«r4»-trigger-3"
+          class="flex-1 outline-none flex animate-in flex-col justify-center gap-4.5 p-[clamp(24px,3.4vw,48px)] duration-300 fade-in slide-in-from-right-4 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ayc-blue focus-visible:outline-solid motion-reduce:animate-none"
+          data-orientation="vertical"
+          data-slot="tabs-content"
+          data-state="inactive"
+          hidden=""
+          id="radix-«r4»-content-3"
+          role="tabpanel"
+          tabindex="0"
+        />
+      </div>
+    </div>
+  </section>
+  <section
+    aria-labelledby="«r9»"
+    class="border-y-[1.5px] border-ayc-navy bg-ayc-blue text-ayc-cream"
+  >
+    <div
+      class="mx-auto flex max-w-324 flex-wrap items-center gap-[clamp(36px,6vw,96px)] px-[clamp(20px,5vw,72px)] py-[clamp(64px,8vw,112px)]"
+    >
+      <div
+        class="flex min-w-0 flex-[1.2_1_320px] flex-col gap-5"
+      >
+        <p
+          class="font-mono text-xs font-bold tracking-[0.08em] uppercase"
+        >
+          Iloilo City roots
+        </p>
+        <h2
+          class="text-[clamp(34px,4.4vw,60px)] leading-none font-extrabold tracking-[-0.035em] text-balance"
+          id="«r9»"
+        >
+          Packed in Iloilo. Shipped to wherever you’re reviewing.
+        </h2>
+        <p
+          class="max-w-[34em] text-[17px] leading-normal text-ayc-on-navy-soft"
+        >
+          We’re a small Visayas shop, and every order still goes out from Iloilo City, through Shopee, TikTok Shop, and Lazada, to reviewees all over the Philippines.
+        </p>
+        <ul
+          aria-label="Our official stores"
+          class="flex flex-wrap gap-2.5"
+        >
+          <li>
+            <a
+              aria-label="Buy on Shopee (opens in a new tab)"
+              class="flex items-center justify-center gap-1.5 border-[1.5px] border-ayc-navy text-ayc-navy no-underline transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 motion-reduce:transition-none min-h-13.5 px-4 text-base font-extrabold shadow-hard hover:shadow-hard-md bg-ayc-cream hover:bg-ayc-orange focus-visible:outline-ayc-cream"
+              href="https://shopee.ph/aceyourcourse"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Shopee
+              <span
+                aria-hidden="true"
+              >
+                ↗
+              </span>
+              <span
+                class="sr-only"
+              >
+                 (opens in a new tab)
+              </span>
+            </a>
+          </li>
+          <li>
+            <a
+              aria-label="Buy on Lazada (opens in a new tab)"
+              class="flex items-center justify-center gap-1.5 border-[1.5px] no-underline transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 motion-reduce:transition-none min-h-13.5 px-4 text-base font-extrabold shadow-hard hover:shadow-hard-md border-ayc-cream bg-transparent text-ayc-cream hover:bg-ayc-cream/12 hover:text-ayc-cream focus-visible:outline-ayc-cream"
+              href="https://www.lazada.com.ph/shop/aceyourcourse"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Lazada
+              <span
+                aria-hidden="true"
+              >
+                ↗
+              </span>
+              <span
+                class="sr-only"
+              >
+                 (opens in a new tab)
+              </span>
+            </a>
+          </li>
+          <li>
+            <a
+              aria-label="Buy on TikTok Shop (opens in a new tab)"
+              class="flex items-center justify-center gap-1.5 border-[1.5px] no-underline transition-[transform,box-shadow] hover:-translate-x-0.5 hover:-translate-y-0.5 motion-reduce:transition-none min-h-13.5 px-4 text-base font-extrabold shadow-hard hover:shadow-hard-md border-ayc-cream bg-transparent text-ayc-cream hover:bg-ayc-cream/12 hover:text-ayc-cream focus-visible:outline-ayc-cream"
+              href="https://vt.tiktok.com/ZS49ve6cu/?page=TikTokShop"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              TikTok Shop
+              <span
+                aria-hidden="true"
+              >
+                ↗
+              </span>
+              <span
+                class="sr-only"
+              >
+                 (opens in a new tab)
+              </span>
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div
+        class="flex min-w-0 flex-[1_1_300px] justify-center"
+      >
+        <figure
+          aria-labelledby="«ra»"
+          class="w-full max-w-100 -rotate-2 border-[1.5px] border-ayc-navy bg-ayc-paper font-mono text-ayc-navy shadow-hard-lg transition-transform duration-300 hover:-translate-y-1 hover:rotate-0 motion-reduce:transition-none"
+        >
+          <p
+            class="flex items-center justify-between border-b-[1.5px] border-ayc-navy bg-ayc-orange px-4 py-3 text-xs font-bold tracking-[0.08em] uppercase"
+          >
+            <span
+              id="«ra»"
+            >
+              Shipping label
+            </span>
+             
+            <span>
+              Via Shopee
+            </span>
+          </p>
+          <p
+            class="flex flex-col gap-1 border-b-[1.5px] border-dashed border-ayc-navy p-4"
+          >
+            <span
+              class="text-[11px] text-ayc-slate uppercase"
+            >
+              From
+            </span>
+             
+            <span
+              class="text-base font-bold"
+            >
+              AceYourCourse
+            </span>
+             
+            <span
+              class="text-sm"
+            >
+              Iloilo City, Iloilo
+            </span>
+          </p>
+          <p
+            class="flex flex-col gap-1 p-4"
+          >
+            <span
+              class="text-[11px] text-ayc-slate uppercase"
+            >
+              To
+            </span>
+             
+            <span
+              class="font-sans text-[28px] leading-[1.1] font-extrabold tracking-[-0.02em]"
+            >
+              Future RCE, RME, REE, RMT, CPA
+            </span>
+          </p>
+          <div
+            aria-hidden="true"
+            class="mx-4 mb-4 h-9 bg-[repeating-linear-gradient(90deg,var(--ayc-navy)_0_3px,transparent_3px_5px,var(--ayc-navy)_5px_6px,transparent_6px_9px,var(--ayc-navy)_9px_13px,transparent_13px_15px)]"
+          />
+        </figure>
+      </div>
+    </div>
+  </section>
+  <section
+    aria-labelledby="«rb»"
+    class="mx-auto flex max-w-324 flex-col gap-6 px-[clamp(20px,5vw,72px)] py-[clamp(64px,8vw,112px)]"
+  >
+    <h2
+      class="max-w-[16ch] text-[clamp(36px,5vw,68px)] leading-none font-extrabold tracking-[-0.04em] text-balance"
+      id="«rb»"
+    >
+      Your turn. Find the reviewer for your board.
+    </h2>
+    <ul
+      class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,140px),1fr))] gap-3"
+    >
+      <li>
+        <a
+          class="flex h-full flex-col gap-2 border-[1.5px] border-ayc-navy bg-ayc-paper p-4.5 text-ayc-navy no-underline shadow-hard transition-[transform,box-shadow] hover:-translate-x-0.75 hover:-translate-y-0.75 hover:text-ayc-navy hover:shadow-[7px_7px_0_var(--ayc-orange)] motion-reduce:transition-none"
+          href="/exams/ce"
+        >
+          <span
+            class="font-mono text-[26px] leading-none font-bold tracking-[-0.02em]"
+          >
+            CE
+          </span>
+           
+          <span
+            class="text-sm leading-snug text-ayc-slate"
+          >
+            Civil Engineering
+          </span>
+           
+          <span
+            class="mt-auto text-[15px] font-extrabold text-ayc-blue"
+          >
+            Reviewers
+             
+            <span
+              aria-hidden="true"
+            >
+              →
+            </span>
+          </span>
+        </a>
+      </li>
+      <li>
+        <a
+          class="flex h-full flex-col gap-2 border-[1.5px] border-ayc-navy bg-ayc-paper p-4.5 text-ayc-navy no-underline shadow-hard transition-[transform,box-shadow] hover:-translate-x-0.75 hover:-translate-y-0.75 hover:text-ayc-navy hover:shadow-[7px_7px_0_var(--ayc-orange)] motion-reduce:transition-none"
+          href="/exams/me"
+        >
+          <span
+            class="font-mono text-[26px] leading-none font-bold tracking-[-0.02em]"
+          >
+            ME
+          </span>
+           
+          <span
+            class="text-sm leading-snug text-ayc-slate"
+          >
+            Mechanical Engineering
+          </span>
+           
+          <span
+            class="mt-auto text-[15px] font-extrabold text-ayc-blue"
+          >
+            Reviewers
+             
+            <span
+              aria-hidden="true"
+            >
+              →
+            </span>
+          </span>
+        </a>
+      </li>
+      <li>
+        <a
+          class="flex h-full flex-col gap-2 border-[1.5px] border-ayc-navy bg-ayc-paper p-4.5 text-ayc-navy no-underline shadow-hard transition-[transform,box-shadow] hover:-translate-x-0.75 hover:-translate-y-0.75 hover:text-ayc-navy hover:shadow-[7px_7px_0_var(--ayc-orange)] motion-reduce:transition-none"
+          href="/exams/ee"
+        >
+          <span
+            class="font-mono text-[26px] leading-none font-bold tracking-[-0.02em]"
+          >
+            EE
+          </span>
+           
+          <span
+            class="text-sm leading-snug text-ayc-slate"
+          >
+            Electrical Engineering
+          </span>
+           
+          <span
+            class="mt-auto text-[15px] font-extrabold text-ayc-blue"
+          >
+            Reviewers
+             
+            <span
+              aria-hidden="true"
+            >
+              →
+            </span>
+          </span>
+        </a>
+      </li>
+      <li>
+        <a
+          class="flex h-full flex-col gap-2 border-[1.5px] border-ayc-navy bg-ayc-paper p-4.5 text-ayc-navy no-underline shadow-hard transition-[transform,box-shadow] hover:-translate-x-0.75 hover:-translate-y-0.75 hover:text-ayc-navy hover:shadow-[7px_7px_0_var(--ayc-orange)] motion-reduce:transition-none"
+          href="/exams/mt"
+        >
+          <span
+            class="font-mono text-[26px] leading-none font-bold tracking-[-0.02em]"
+          >
+            MT
+          </span>
+           
+          <span
+            class="text-sm leading-snug text-ayc-slate"
+          >
+            Medical Technology
+          </span>
+           
+          <span
+            class="mt-auto text-[15px] font-extrabold text-ayc-blue"
+          >
+            Reviewers
+             
+            <span
+              aria-hidden="true"
+            >
+              →
+            </span>
+          </span>
+        </a>
+      </li>
+      <li>
+        <a
+          class="flex h-full flex-col gap-2 border-[1.5px] border-ayc-navy bg-ayc-paper p-4.5 text-ayc-navy no-underline shadow-hard transition-[transform,box-shadow] hover:-translate-x-0.75 hover:-translate-y-0.75 hover:text-ayc-navy hover:shadow-[7px_7px_0_var(--ayc-orange)] motion-reduce:transition-none"
+          href="/exams/cpa"
+        >
+          <span
+            class="font-mono text-[26px] leading-none font-bold tracking-[-0.02em]"
+          >
+            CPA
+          </span>
+           
+          <span
+            class="text-sm leading-snug text-ayc-slate"
+          >
+            Accountancy
+          </span>
+           
+          <span
+            class="mt-auto text-[15px] font-extrabold text-ayc-blue"
+          >
+            Reviewers
+             
+            <span
+              aria-hidden="true"
+            >
+              →
+            </span>
+          </span>
+        </a>
+      </li>
+      <li>
+        <a
+          class="flex h-full flex-col gap-2 border-[1.5px] border-ayc-navy bg-ayc-paper p-4.5 text-ayc-navy no-underline shadow-hard transition-[transform,box-shadow] hover:-translate-x-0.75 hover:-translate-y-0.75 hover:text-ayc-navy hover:shadow-[7px_7px_0_var(--ayc-orange)] motion-reduce:transition-none"
+          href="/products"
+        >
+          <span
+            aria-hidden="true"
+            class="font-mono text-[26px] leading-none font-bold tracking-[-0.02em]"
+          >
+            +
+          </span>
+           
+          <span
+            class="mt-auto text-[15px] font-extrabold text-ayc-blue"
+          >
+            All reviewers
+             
+            <span
+              aria-hidden="true"
+            >
+              →
+            </span>
+          </span>
+        </a>
+      </li>
+    </ul>
+  </section>
+</div>
+`;

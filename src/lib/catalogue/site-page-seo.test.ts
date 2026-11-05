@@ -38,6 +38,7 @@ const savedAbout: SitePage = {
   seoTitle: "About us · board passers from Iloilo",
   seoDescription: "d".repeat(120),
   shareImage: null,
+  about: null,
 };
 
 afterEach(() => {
@@ -132,7 +133,9 @@ describe("sitePageMetadata", () => {
 
   it("shares the page's own image, named by its title", async () => {
     editSampleCatalogue((seed) => {
-      seed.sitePages = [{ page: "faq", seoTitle: null, seoDescription: null, shareImage: SHARE }];
+      seed.sitePages = [
+        { page: "faq", seoTitle: null, seoDescription: null, shareImage: SHARE, about: null },
+      ];
     });
     const metadata = await sitePageMetadata("faq");
     const images = [{ url: SHARE, alt: faqPageCopy.metaTitle }];

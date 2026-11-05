@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { emptyAbout } from "@/lib/catalogue/about-content";
+
 import { type CatalogueSeed, validateCatalogueSeed } from "./catalogue.schema";
 
 // The fixture always has these; fail loudly if an edit ever drops one.
@@ -224,6 +226,7 @@ function validSeed(): CatalogueSeed {
         seoTitle: "About Ace Your Course",
         seoDescription: null,
         shareImage: "/api/dev/uploads/share-2",
+        about: null,
       },
     ],
   };
@@ -873,5 +876,92 @@ describe("validateCatalogueSeed: Site pages", () => {
     const seed = validSeed();
     page(seed).shareImage = "https://example.com/share.jpg";
     expect(errorsFor(seed)).toEqual([expect.stringMatching(/^sitePages\.0\.shareImage: /)]);
+  });
+});
+
+describe("validateCatalogueSeed: About's text and photos", () => {
+  const page = (seed: CatalogueSeed) => at(seed.sitePages, 0);
+  const withAbout = (edit: (about: ReturnType<typeof emptyAbout>) => void) => {
+    const seed = validSeed();
+    const about = emptyAbout();
+    edit(about);
+    page(seed).about = about;
+    return seed;
+  };
+  const BUCKET =
+    "http://127.0.0.1:54321/storage/v1/object/public/catalogue/site-pages/about/story-2-a.jpg";
+
+  it("accepts About with nothing saved, and with saved text, lists and photos", () => {
+    expect(validateCatalogueSeed(withAbout(() => {})).success).toBe(true);
+    const saved = withAbout((about) => {
+      about.story.heading = "We passed the boards. Then we built the reviewers.";
+      about.story.paragraphs = ["One.", "Two.", "Three."];
+      about.story.afterSpecs = ["A", "B", "C", "D", "E"];
+      about.story.photos[1] = { src: BUCKET, alt: "A reviewee opening her package" };
+      about.header.teamPhoto = { src: "/api/dev/uploads/1", alt: "The team" };
+      about.mission.tabs[1] = { title: "Always current", body: null };
+    });
+    expect(validateCatalogueSeed(saved).success).toBe(true);
+  });
+
+  it("rejects About's text on another Site page", () => {
+    const seed = validSeed();
+    seed.sitePages.push({
+      page: "faq",
+      seoTitle: null,
+      seoDescription: null,
+      shareImage: null,
+      about: emptyAbout(),
+    });
+    expect(errorsFor(seed)).toEqual([expect.stringMatching(/^sitePages\.1\.about: .*only About/)]);
+  });
+
+  it("rejects a blank field, which must be null instead", () => {
+    expect(errorsFor(withAbout((about) => (about.roots.heading = " ")))).toEqual([
+      expect.stringMatching(/^sitePages\.0\.about\.roots\.heading: /),
+    ]);
+  });
+
+  it("rejects an empty list, a fourth paragraph and a sixth chip", () => {
+    expect(errorsFor(withAbout((about) => (about.story.paragraphs = [])))).toEqual([
+      expect.stringMatching(/^sitePages\.0\.about\.story\.paragraphs: /),
+    ]);
+    expect(
+      errorsFor(withAbout((about) => (about.story.paragraphs = ["1", "2", "3", "4"]))),
+    ).toEqual([expect.stringMatching(/^sitePages\.0\.about\.story\.paragraphs: /)]);
+    expect(
+      errorsFor(withAbout((about) => (about.story.afterSpecs = ["1", "2", "3", "4", "5", "6"]))),
+    ).toEqual([expect.stringMatching(/^sitePages\.0\.about\.story\.afterSpecs: /)]);
+  });
+
+  it("rejects a chip over 20 characters, and alt text that's blank or over 150", () => {
+    expect(errorsFor(withAbout((about) => (about.story.afterSpecs = ["x".repeat(21)])))).toEqual([
+      expect.stringMatching(/^sitePages\.0\.about\.story\.afterSpecs\.0: /),
+    ]);
+    expect(
+      errorsFor(withAbout((about) => (about.header.teamPhoto = { src: BUCKET, alt: " " }))),
+    ).toEqual([expect.stringMatching(/^sitePages\.0\.about\.header\.teamPhoto\.alt: /)]);
+    expect(
+      errorsFor(
+        withAbout((about) => (about.header.teamPhoto = { src: BUCKET, alt: "x".repeat(151) })),
+      ),
+    ).toEqual([expect.stringMatching(/^sitePages\.0\.about\.header\.teamPhoto\.alt: /)]);
+  });
+
+  it("rejects a photo hot-linked from another site, and a fourth story photo", () => {
+    expect(
+      errorsFor(
+        withAbout(
+          (about) => (about.story.photos[0] = { src: "https://example.com/a.jpg", alt: "A" }),
+        ),
+      ),
+    ).toEqual([expect.stringMatching(/^sitePages\.0\.about\.story\.photos\.0\.src: /)]);
+    expect(
+      errorsFor(
+        withAbout((about) => {
+          (about.story.photos as unknown[]).push(null);
+        }),
+      ),
+    ).toEqual([expect.stringMatching(/^sitePages\.0\.about\.story\.photos: /)]);
   });
 });

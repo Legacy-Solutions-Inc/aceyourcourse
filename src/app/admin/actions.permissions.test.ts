@@ -269,6 +269,15 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
         input: { site: "faq", contentType: "image/png", size: 2048 },
       }),
     ),
+    saveAboutSection: editorSave("staff", examPages.saveAboutSection, () => ({
+      section: "closing",
+      heading: "Your turn.",
+    })),
+    createAboutPhotoUpload: staff(() =>
+      examPages.createAboutPhotoUpload(IDLE, {
+        input: { slot: "story-2", contentType: "image/png", size: 2048 },
+      }),
+    ),
     savePromoBanner: editorSave("staff", examPages.savePromoBanner, () => ({
       ...promoBannerFormValues(getSampleStore().catalogue.settings.promoBanner),
       buttonLabel: SAVES.bannerButtonLabel,

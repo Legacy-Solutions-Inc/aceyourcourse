@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { ABOUT_PHOTO_SLOTS } from "@/lib/catalogue/about-content";
 import { isSitePageKey } from "@/services/catalogue.schema";
 
 // The upload seam's inputs and outputs (CONVENTIONS §3; spec, Phase 2 → Seams:
@@ -18,9 +19,17 @@ export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 /**
  * What an upload is for: a Product photo, an Exam page's share image (ticket
- * 09), or a Site page's share image (ticket 20).
+ * 09), a Site page's share image (ticket 20), or one of About's four photos
+ * (ticket 21).
  */
-export const UPLOAD_PURPOSES = ["product-photo", "share-image", "site-page-share-image"] as const;
+export const UPLOAD_PURPOSES = [
+  "product-photo",
+  "share-image",
+  "site-page-share-image",
+  "about-photo",
+] as const;
+
+const isAboutPhotoSlot = (value: unknown) => ABOUT_PHOTO_SLOTS.some((slot) => slot === value);
 
 export const WRONG_UPLOAD_TYPE = "USE A JPEG, PNG OR WEBP IMAGE";
 export const UPLOAD_TOO_BIG = "KEEP EACH PHOTO TO 10 MB";
@@ -41,9 +50,10 @@ export const uploadFileSchema = z.object({
 export const UPLOAD_OWNER = /^[A-Za-z0-9][A-Za-z0-9-]{0,63}$/;
 
 /**
- * What a file is for: a Product (its id), an Exam (its code) or a Site page
- * ("about"). Storage files it in that folder (ticket 17), so it's one plain
- * path segment.
+ * What a file is for: a Product (its id), an Exam (its code), a Site page
+ * ("about") or one of About's photos ("story-2"). Storage files it in that
+ * folder (ticket 17), or names the file after it, so it's one plain path
+ * segment.
  */
 export const uploadOwnerSchema = z
   .string({ invalid_type_error: UNKNOWN_UPLOAD })
@@ -52,8 +62,9 @@ export const uploadOwnerSchema = z
 /**
  * An upload as the browser asks for it, before it sends the file. A Product
  * photo names its Product once it has one (a new Product has no id until its
- * first save); a share image always names its Exam, and a Site page's share
- * image its Site page.
+ * first save); a share image always names its Exam, a Site page's share
+ * image its Site page, and an About photo its slot (team, story-1, story-2
+ * or story-3).
  */
 export const uploadRequestSchema = uploadFileSchema
   .extend({
@@ -61,9 +72,18 @@ export const uploadRequestSchema = uploadFileSchema
     owner: uploadOwnerSchema.optional(),
   })
   .refine(
-    ({ purpose, owner }) =>
-      purpose === "product-photo" ||
-      (purpose === "share-image" ? owner !== undefined : isSitePageKey(owner)),
+    ({ purpose, owner }) => {
+      switch (purpose) {
+        case "product-photo":
+          return true;
+        case "share-image":
+          return owner !== undefined;
+        case "site-page-share-image":
+          return isSitePageKey(owner);
+        case "about-photo":
+          return isAboutPhotoSlot(owner);
+      }
+    },
     { path: ["owner"], message: UNKNOWN_UPLOAD },
   );
 

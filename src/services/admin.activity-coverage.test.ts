@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { aboutSectionFormValues } from "@/lib/admin/about-form";
 import { faqFormValues } from "@/lib/admin/faq-form";
 import { productFormValues } from "@/lib/admin/product-form";
 import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
@@ -44,6 +45,7 @@ const READS = [
   "getFaqForAdmin",
   "getExamPageForAdmin",
   "getSitePageForAdmin",
+  "getAboutForAdmin",
   "getPromoForAdmin",
   "getAnnouncementForAdmin",
 ] as const satisfies readonly (keyof AdminService)[];
@@ -419,6 +421,28 @@ const WRITES: Record<string, Write> = {
         "about",
         { seoTitle: "T".repeat(80), seoDescription: "", shareImage: "" },
         stamps.seo,
+      );
+    },
+    refusal: "invalid",
+  },
+  updateAboutSection: {
+    actor: EDITOR,
+    entity: "site-page",
+    entityId: "about",
+    saves: async (seam, actor) => {
+      const { about, stamps } = await seam.getAboutForAdmin(actor);
+      return seam.updateAboutSection(
+        actor,
+        { ...aboutSectionFormValues(about, "roots"), heading: "Packed in Iloilo." },
+        stamps.roots,
+      );
+    },
+    refused: async (seam, actor) => {
+      const { about, stamps } = await seam.getAboutForAdmin(actor);
+      return seam.updateAboutSection(
+        actor,
+        { ...aboutSectionFormValues(about, "roots"), heading: "R".repeat(500) },
+        stamps.roots,
       );
     },
     refusal: "invalid",

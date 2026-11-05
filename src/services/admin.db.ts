@@ -525,6 +525,8 @@ export const databaseArm: AdminService = {
 
   getSitePageForAdmin: read(CATALOGUE, sampleArm.getSitePageForAdmin),
   updateSitePageSeo: stampedWrite(sampleArm.updateSitePageSeo),
+  getAboutForAdmin: read(CATALOGUE, sampleArm.getAboutForAdmin),
+  updateAboutSection: stampedWrite(sampleArm.updateAboutSection),
 
   getPromoForAdmin: read(CATALOGUE, sampleArm.getPromoForAdmin),
   updatePromoBanner: stampedWrite(sampleArm.updatePromoBanner),
