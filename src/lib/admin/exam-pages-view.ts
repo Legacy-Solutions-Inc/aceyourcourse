@@ -1,35 +1,41 @@
 import { isCalendarDate } from "@/lib/manila-time";
 import { paths } from "@/paths";
 import type { AdminExamPage } from "@/services/admin.types";
-import type { ExamPageSection } from "@/services/catalogue.types";
+import { isSitePageKey } from "@/services/catalogue.schema";
+import type { ExamPageSection, SitePageKey } from "@/services/catalogue.types";
 
-// Exam pages & promo's URL, its SECTIONS · SHOW OR HIDE list and its
-// warnings (BUILD-MAP §3.2). The page, the Exam and the section live in the
-// URL, so a reload keeps them: ?exam=ce&section=header, ?page=promo or
-// ?page=announcement (CONVENTIONS §2). The page checks the Exam.
+// Pages & promo's URL, its SECTIONS · SHOW OR HIDE list and its warnings
+// (BUILD-MAP §3.2). The page, the Exam or Site page, and the section live in
+// the URL, so a reload keeps them: ?exam=ce&section=header,
+// ?page=site&site=about, ?page=promo or ?page=announcement (CONVENTIONS §2).
+// The page checks the Exam; any other Site page opens Home.
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
-/** The PAGES column's pages. The promo banner and the announcement bar are ticket 10's. */
-export type ExamPagesPage = "exam" | "promo" | "announcement";
+/**
+ * The PAGES column's pages. The promo banner and the announcement bar are
+ * ticket 10's, and the Site pages ticket 20's.
+ */
+export type ExamPagesPage = "exam" | "site" | "promo" | "announcement";
 
 /** What column 3 edits for an Exam page: a section, Search & AI visibility, or the date. */
 const EDITORS = ["header", "subjects", "reviewers", "bundle", "reviews", "seo", "date"] as const;
 
 export type ExamPageEditorKey = (typeof EDITORS)[number];
 
-const PAGES: readonly ExamPagesPage[] = ["exam", "promo", "announcement"];
+const PAGES: readonly ExamPagesPage[] = ["exam", "site", "promo", "announcement"];
 
 const isPage = (value: string | undefined): value is ExamPagesPage =>
   PAGES.some((page) => page === value);
 const isEditor = (value: string | undefined): value is ExamPageEditorKey =>
   EDITORS.some((key) => key === value);
 
-/** Pure: the page, the Exam (as given, or null) and the section in the URL. */
+/** Pure: the page, the Exam (as given, or null), its section, and the Site page (Home by default) in the URL. */
 export function parseExamPagesParams(params: SearchParams): {
   page: ExamPagesPage;
   exam: string | null;
   section: ExamPageEditorKey;
+  site: SitePageKey;
 } {
   const value = (key: string) => {
     const raw = params[key];
@@ -37,26 +43,35 @@ export function parseExamPagesParams(params: SearchParams): {
   };
   const page = value("page");
   const section = value("section");
+  const site = value("site");
   return {
     page: isPage(page) ? page : "exam",
     exam: value("exam")?.slice(0, 20) ?? null,
     section: isEditor(section) ? section : "header",
+    site: isSitePageKey(site) ? site : "home",
   };
 }
 
-/** Pure: the screen's URL for a page, or for an Exam and its section (the Header by default). */
+/**
+ * Pure: the screen's URL for a page, for an Exam and its section (the Header
+ * by default), or for a Site page (Home by default).
+ */
 export function examPagesHref({
   page = "exam",
   exam,
   section = "header",
+  site = "home",
 }: {
   page?: ExamPagesPage;
   exam?: string;
   section?: ExamPageEditorKey;
+  site?: SitePageKey;
 }): string {
   const params = new URLSearchParams();
-  if (page !== "exam") params.set("page", page);
-  else {
+  if (page !== "exam") {
+    params.set("page", page);
+    if (page === "site") params.set("site", site);
+  } else {
     if (exam) params.set("exam", exam.toLowerCase());
     if (section !== "header") params.set("section", section);
   }

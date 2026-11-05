@@ -13,13 +13,15 @@ import type {
   ProductFilters,
   ReviewFilters,
   ReviewWithProduct,
+  SitePage,
+  SitePageKey,
   WebsiteSettings,
 } from "@/services/catalogue.types";
 import { getSampleStore } from "@/services/mock/sample-store";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Catalogue Service Seam. Every Website page and component reads Exams,
-// Products, Reviews, FAQs and Website settings from here, and never imports
+// Products, Reviews, FAQs, Site pages and Website settings from here, and never imports
 // the seed. This module is a thin SELECTOR, the pattern every seam copies:
 // with DATABASE_URL set it reads Postgres through the Drizzle arm
 // (catalogue.db.ts), otherwise the in-memory sample data (catalogue.mock.ts).
@@ -51,6 +53,11 @@ interface CatalogueService {
    * section and sets nothing. Case-insensitive; null like getExamByCode.
    */
   getExamPage(code: string): Promise<ExamPageContent | null>;
+  /**
+   * A Site page's SEO overrides and share image. A page with no record has
+   * nothing set, so the Website uses its text in code and the site's image.
+   */
+  getSitePage(page: SitePageKey): Promise<SitePage>;
 
   /**
    * Products shown on the Website. `state` defaults to "live" and `sort` to
@@ -124,7 +131,7 @@ function cached<Args extends unknown[], Result>(
   return (...args) => cachedRead(dataVersion(), ...args);
 }
 
-const { exams, products, reviews, faqs, settings, examPages } = CATALOGUE_TAGS;
+const { exams, products, reviews, faqs, settings, examPages, sitePages } = CATALOGUE_TAGS;
 
 // Each read is tagged with every area its answer depends on: listExams, for
 // example, lists only the Exams with a Product on the Website.
@@ -132,6 +139,7 @@ export const listExams = cached("listExams", impl.listExams, [exams, products]);
 export const getExamByCode = cached("getExamByCode", impl.getExamByCode, [exams]);
 // The page record's Exam is only matched by its fixed code, so the exams tag isn't needed.
 export const getExamPage = cached("getExamPage", impl.getExamPage, [examPages, products]);
+export const getSitePage = cached("getSitePage", impl.getSitePage, [sitePages]);
 export const listProducts = cached("listProducts", impl.listProducts, [products, exams]);
 export const getProductBySlug = cached("getProductBySlug", impl.getProductBySlug, [products]);
 export const listRelatedProducts = cached("listRelatedProducts", impl.listRelatedProducts, [

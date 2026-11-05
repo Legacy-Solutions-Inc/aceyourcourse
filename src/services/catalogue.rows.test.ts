@@ -9,6 +9,7 @@ import {
   productsFromRows,
   reviewsFromRows,
   settingsFromRows,
+  sitePagesFromRows,
   type CatalogueRows,
 } from "./catalogue.rows";
 import { CATALOGUE_SEED } from "./mock/catalogue";
@@ -62,6 +63,34 @@ describe("catalogue rows: the seed round trip", () => {
     );
     expect(all.promoBanner).toHaveLength(1);
     expect(all.websiteSettings).toHaveLength(1);
+  });
+
+  it("gives back Site page records unchanged, in seed order, and writes none while there are none", () => {
+    expect(rows().sitePages).toEqual([]);
+    const seed = structuredClone(CATALOGUE_SEED);
+    seed.sitePages = [
+      { page: "faq", seoTitle: null, seoDescription: null, shareImage: "/share/faq.png" },
+      { page: "about", seoTitle: "About us", seoDescription: "Who we are.", shareImage: null },
+    ];
+    const written = catalogueToRows(seed);
+    expect(written.sitePages).toEqual([
+      {
+        page: "faq",
+        position: 0,
+        seoTitle: null,
+        seoDescription: null,
+        shareImage: "/share/faq.png",
+      },
+      {
+        page: "about",
+        position: 1,
+        seoTitle: "About us",
+        seoDescription: "Who we are.",
+        shareImage: null,
+      },
+    ]);
+    expect(sitePagesFromRows([...written.sitePages].reverse())).toEqual(seed.sitePages);
+    expect(catalogueFromRows(written)).toEqual(seed);
   });
 
   it("writes no promo banner row when the seed has none, and reads none back", () => {

@@ -21,15 +21,15 @@ Every Phase 2 executer prompt points here. These names and rules are decided, so
 
 All routes go in `src/paths.ts` under `paths.admin`. Never hard-code a path.
 
-| Screen                 | Path                | Selection (search params)                                        |
-| ---------------------- | ------------------- | ---------------------------------------------------------------- |
-| Overview               | `/admin`            |                                                                  |
-| Sign-in                | `/admin/sign-in`    | `?next=` (an `/admin` path only)                                 |
-| 403                    | `/admin/denied`     | `?reason=not-staff \| invite-expired \| owners-only`             |
-| Exam pages & promo     | `/admin/exam-pages` | `?exam=ce&section=header`, `?page=promo`, `?page=announcement`   |
-| Products & store links | `/admin/products`   | `?product=<id> \| new`                                           |
-| Reviews & FAQs         | `/admin/reviews`    | `?review=<id> \| new`; `?tab=faqs&group=<group>&faq=<id> \| new` |
-| Settings (Owner)       | `/admin/settings`   |                                                                  |
+| Screen                                                       | Path                       | Selection (search params)                                                                                                                                                                             |
+| ------------------------------------------------------------ | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Overview                                                     | `/admin`                   |                                                                                                                                                                                                       |
+| Sign-in                                                      | `/admin/sign-in`           | `?next=` (an `/admin` path only)                                                                                                                                                                      |
+| 403                                                          | `/admin/denied`            | `?reason=not-staff \| invite-expired \| owners-only`                                                                                                                                                  |
+| Pages & promo (was Exam pages & promo; renamed in ticket 20) | `/admin/exam-pages` (kept) | `?exam=ce&section=header`, `?page=promo`, `?page=announcement`; from ticket 20 `?page=site&site=home` (home, about, products, faq, reviews), and from ticket 21 `?page=site&site=about&section=story` |
+| Products & store links                                       | `/admin/products`          | `?product=<id> \| new`                                                                                                                                                                                |
+| Reviews & FAQs                                               | `/admin/reviews`           | `?review=<id> \| new`; `?tab=faqs&group=<group>&faq=<id> \| new`                                                                                                                                      |
+| Settings (Owner)                                             | `/admin/settings`          |                                                                                                                                                                                                       |
 
 - **Folders.**
   - `src/app/admin/(shell)/…` holds the signed-in screens, with the sidebar, header and drawer in `(shell)/layout.tsx`.
@@ -59,7 +59,7 @@ All routes go in `src/paths.ts` under `paths.admin`. Never hard-code a path.
 - **The mock arm reads the sample store,** never the static seed. That way an Admin save shows up on the Website.
 - **Cache tags** live in `src/services/catalogue.tags.ts`:
   - `CATALOGUE_TAG = "catalogue"` goes on every read.
-  - Each read also gets one or more of `catalogue:exams`, `catalogue:products`, `catalogue:reviews`, `catalogue:faqs`, `catalogue:settings` and `catalogue:exam-pages`.
+  - Each read also gets one or more of `catalogue:exams`, `catalogue:products`, `catalogue:reviews`, `catalogue:faqs`, `catalogue:settings`, `catalogue:exam-pages` and, from ticket 20, `catalogue:site-pages`.
 - **Wrapping.** The selector `src/services/catalogue.ts` wraps each read once with `unstable_cache` from `next/cache`. Don't use `"use cache"`, which is experimental in Next 15.
   - In sample mode, the key parts include the store `generation`, so a restart never serves cached data from before the restart.
 - **Vitest.** `vitest.setup.ts` mocks `next/cache`: `unstable_cache` passes through, and `revalidateTag` and `revalidatePath` are spies.
@@ -71,7 +71,7 @@ All routes go in `src/paths.ts` under `paths.admin`. Never hard-code a path.
   - `admin.types.ts`
   - `admin.schema.ts`: zod input schemas, shared with the forms
   - `admin.mock.ts`: re-exports the area files in `src/services/mock/admin/<area>.ts`
-- **Areas.** Each ticket adds its own: `settings`, `staff`, `products`, `photos`, `reviews`, `faqs`, `examPages`, `promo`, `overview` and `activity`.
+- **Areas.** Each ticket adds its own: `settings`, `staff`, `products`, `photos`, `reviews`, `faqs`, `examPages`, `promo`, `overview` and `activity`. Ticket 20 adds `sitePages`, and ticket 21 extends it with About.
 - **Reads** return fresh data, are never cached, and carry each record's stamp.
 - **Writes** have the form `(actor: StaffActor, input, expected?: { savedAt: string }) => Promise<AdminResult<T>>`, where:
 
@@ -114,7 +114,7 @@ All routes go in `src/paths.ts` under `paths.admin`. Never hard-code a path.
 
 ### The upload seam (`src/services/uploads.ts`, with `.mock.ts` and `.types.ts`; ticket 06)
 
-- `createUpload(actor, { purpose: "product-photo" | "share-image", contentType, size })` returns `{ uploadUrl, path, publicUrl }`.
+- `createUpload(actor, { purpose: "product-photo" | "share-image" | "site-page-share-image", owner, contentType, size })` returns `{ uploadUrl, path, publicUrl }`. Ticket 20 added `site-page-share-image`, whose `owner` is the Site page (`home`, `about`, `products`, `faq`, `reviews`); Storage files it at `site-pages/{page}/share-{uuid}.{ext}`.
 - It accepts JPEG, PNG or WebP, up to 10 MB.
 - The browser `PUT`s the file to `uploadUrl`. The save then records `path`.
 

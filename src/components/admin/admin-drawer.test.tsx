@@ -36,7 +36,7 @@ describe("AdminSidebar", () => {
   it("names each group of screens", () => {
     render(<AdminSidebar menu={adminMenu("owner")} actor={OWNER} signOutAction={signOut} />);
     expect(screen.getByRole("list", { name: "WEBSITE" })).toHaveTextContent(
-      "02Exam pages & promo03Products & store links04Reviews & FAQs",
+      "02Pages & promo03Products & store links04Reviews & FAQs",
     );
     expect(screen.getByRole("list", { name: "SETTINGS" })).toHaveTextContent("05Settings");
   });

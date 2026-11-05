@@ -34,7 +34,15 @@ function db(): Database {
   return testDb;
 }
 
-const ALL_PARTS = ["exams", "settings", "products", "reviews", "faqs", "examPages"] as const;
+const ALL_PARTS = [
+  "exams",
+  "settings",
+  "products",
+  "reviews",
+  "faqs",
+  "examPages",
+  "sitePages",
+] as const;
 const MARKER = "marker@example.test";
 
 /** The catalogue in the test database, as the seed holds it. */

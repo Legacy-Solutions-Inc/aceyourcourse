@@ -37,8 +37,8 @@ import {
 /** The part of the seed the spreadsheet holds. */
 export type GeneratedCatalogue = Pick<CatalogueSeed, "exams" | "products" | "reviews">;
 
-/** The part kept by hand in code: Website settings, FAQs and Exam pages. */
-export type HandMaintained = Pick<CatalogueSeed, "settings" | "faqs" | "examPages">;
+/** The part kept by hand in code: Website settings, FAQs, Exam pages and Site pages. */
+export type HandMaintained = Pick<CatalogueSeed, "settings" | "faqs" | "examPages" | "sitePages">;
 
 export interface Conversion {
   catalogue: GeneratedCatalogue;

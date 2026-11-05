@@ -301,6 +301,7 @@ for (const size of SIZES) {
       for (const path of [
         "/admin",
         "/admin/exam-pages",
+        "/admin/exam-pages?page=site&site=about",
         "/admin/products",
         "/admin/reviews",
         "/admin/settings",

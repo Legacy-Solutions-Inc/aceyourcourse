@@ -43,6 +43,7 @@ const READS = [
   "listFaqsForAdmin",
   "getFaqForAdmin",
   "getExamPageForAdmin",
+  "getSitePageForAdmin",
   "getPromoForAdmin",
   "getAnnouncementForAdmin",
 ] as const satisfies readonly (keyof AdminService)[];
@@ -392,6 +393,30 @@ const WRITES: Record<string, Write> = {
       return seam.updateExamSeo(
         actor,
         "ce",
+        { seoTitle: "T".repeat(80), seoDescription: "", shareImage: "" },
+        stamps.seo,
+      );
+    },
+    refusal: "invalid",
+  },
+  updateSitePageSeo: {
+    actor: EDITOR,
+    entity: "site-page",
+    entityId: "about",
+    saves: async (seam, actor) => {
+      const { stamps } = await seam.getSitePageForAdmin(actor, "about");
+      return seam.updateSitePageSeo(
+        actor,
+        "about",
+        { seoTitle: SAVES.seoTitle, seoDescription: "", shareImage: "" },
+        stamps.seo,
+      );
+    },
+    refused: async (seam, actor) => {
+      const { stamps } = await seam.getSitePageForAdmin(actor, "about");
+      return seam.updateSitePageSeo(
+        actor,
+        "about",
         { seoTitle: "T".repeat(80), seoDescription: "", shareImage: "" },
         stamps.seo,
       );

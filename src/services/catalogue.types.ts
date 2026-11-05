@@ -66,6 +66,27 @@ export interface ExamPageContent extends Omit<ExamPage, "bundleOffer"> {
   bundleOffer: (Omit<ExamBundleOffer, "productId"> & { product: Product }) | null;
 }
 
+/**
+ * One of the Website's five standalone pages (CONTEXT.md: Site page), set
+ * apart from an Exam page and from the Legal pages.
+ */
+export type SitePageKey = "home" | "about" | "products" | "faq" | "reviews";
+
+/**
+ * What Staff edit about a Site page: its search title, description and share
+ * image. A Site page with no record uses its text in code and the site's
+ * share image.
+ */
+export interface SitePage {
+  page: SitePageKey;
+  /** The page's own title, before the site name. Null uses the text in code. */
+  seoTitle: string | null;
+  /** Null uses the text in code. */
+  seoDescription: string | null;
+  /** A self-hosted 1200 × 630 image. Null uses the site's share image. */
+  shareImage: string | null;
+}
+
 export interface AnnouncementMessage {
   text: string;
   href: string;

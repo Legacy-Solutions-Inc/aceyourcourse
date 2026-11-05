@@ -37,7 +37,7 @@ const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
 const SCREENS = [
   ["Overview", OverviewPage, "/admin", "HOME"],
   [
-    "Exam pages & promo",
+    "Pages & promo",
     () => ExamPagesPage({ searchParams: Promise.resolve({}) }),
     "/admin/exam-pages",
     "WEBSITE",
@@ -165,7 +165,7 @@ describe("Admin shell layout", () => {
         .map((link) => link.textContent),
     ).toEqual([
       "01Overview",
-      "02Exam pages & promo",
+      "02Pages & promo",
       "03Products & store links",
       "04Reviews & FAQs",
       "05Settings",

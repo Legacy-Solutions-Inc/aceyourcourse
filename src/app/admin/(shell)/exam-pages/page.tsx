@@ -2,33 +2,43 @@ import type { Metadata } from "next";
 
 import { adminScreen } from "@/components/admin/admin-menu";
 import { AdminScreen } from "@/components/admin/admin-screen";
-import { ExamPageColumn, ExamPagesNav } from "@/components/admin/exam-pages/exam-pages-columns";
+import {
+  ExamPageColumn,
+  ExamPagesNav,
+  SitePageColumn,
+} from "@/components/admin/exam-pages/exam-pages-columns";
 import { AnnouncementEditor } from "@/components/admin/exam-pages/announcement-editor";
 import { ExamPagePanel } from "@/components/admin/exam-pages/exam-page-panel";
 import { PromoBannerEditor } from "@/components/admin/exam-pages/promo-banner-editor";
+import { SitePageSeoEditor } from "@/components/admin/exam-pages/site-page-seo-editor";
 import { parseExamPagesParams } from "@/lib/admin/exam-pages-view";
 import { requireStaff } from "@/lib/admin/guard";
 import { promoStatus } from "@/lib/admin/promo-status";
 import { seoCheck } from "@/lib/admin/seo-check";
 import { examPageSeo } from "@/lib/catalogue/exam-copy";
+import { SITE_PAGE_DEFAULTS, sitePageAddress, sitePageSeo } from "@/lib/catalogue/site-page-seo";
 import { manilaDate } from "@/lib/manila-time";
 import { paths } from "@/paths";
 import {
   getAnnouncementForAdmin,
   getExamPageForAdmin,
   getPromoForAdmin,
+  getSitePageForAdmin,
   listExamsForAdmin,
 } from "@/services/admin";
 import type { StaffActor } from "@/services/admin.types";
+import type { SitePageKey } from "@/services/catalogue.types";
 
 import {
   createShareImageUpload,
+  createSitePageShareImageUpload,
   saveAnnouncement,
   saveBundleOffer,
   saveExamHeader,
   saveExamSeo,
   saveOfficialExamDate,
   savePromoBanner,
+  saveSitePageSeo,
   saveSubjectNames,
   setExamPageSection,
   setPromoBanner,
@@ -49,16 +59,29 @@ const COLUMNS =
   "grid grid-cols-1 items-start gap-4.5 lg:grid-cols-[190px_minmax(0,1fr)] xl:grid-cols-[190px_290px_minmax(0,1fr)]";
 
 /**
- * Exam pages & promo (BUILD-MAP §3.2): PAGES, the selected Exam page's chips,
- * search check and sections, and the selected part's editor; or the Home
- * promo banner's or the announcement bar's editor. The page, the
- * Exam and the section live in the URL; an unknown Exam shows the first.
+ * Pages & promo (BUILD-MAP §3.2; renamed from "Exam pages & promo" in ticket
+ * 20): PAGES, the selected Exam page's chips, search check and sections, and
+ * the selected part's editor; a Site page's chips, search check and its
+ * Search & AI visibility; or the Home promo banner's or the announcement
+ * bar's editor. The page, the Exam or Site page, and the section live in the
+ * URL; an unknown Exam shows the first, and an unknown Site page Home.
  * Everything is read fresh on every request.
  */
 export default async function ExamPagesPage({ searchParams }: ExamPagesPageProps) {
   const actor = await requireStaff(paths.admin.examPages);
-  const { page, exam: wanted, section } = parseExamPagesParams(await searchParams);
+  const { page, exam: wanted, section, site } = parseExamPagesParams(await searchParams);
   const exams = await listExamsForAdmin(actor);
+
+  if (page === "site") {
+    return (
+      <AdminScreen screen="exam-pages">
+        <div className={COLUMNS}>
+          <ExamPagesNav current="site" examCount={exams.length} />
+          {await sitePage(actor, site)}
+        </div>
+      </AdminScreen>
+    );
+  }
 
   if (page !== "exam") {
     const editor = page === "promo" ? await promoEditor(actor) : await announcementEditor(actor);
@@ -119,6 +142,32 @@ export default async function ExamPagesPage({ searchParams }: ExamPagesPageProps
         </div>
       </div>
     </AdminScreen>
+  );
+}
+
+/** Columns 2 and 3 for a Site page: its chips and search check, and its Search & AI visibility. */
+async function sitePage(actor: StaffActor, site: SitePageKey) {
+  const opened = await getSitePageForAdmin(actor, site);
+  const { path, title, description } = SITE_PAGE_DEFAULTS[site];
+  return (
+    <>
+      <SitePageColumn site={site} path={path} seoState={seoCheck(sitePageSeo(opened.page))} />
+      <aside
+        aria-label="Site page editor"
+        className="flex min-w-0 flex-col gap-3.5 border-[1.5px] bg-ayc-paper p-4.5 lg:col-span-2 xl:col-span-1"
+      >
+        <h2 className="font-mono text-[11px] font-bold tracking-[0.06em] text-ayc-blue">
+          SEARCH &amp; AI VISIBILITY · SITE PAGES · {site.toUpperCase()}
+        </h2>
+        <SitePageSeoEditor
+          key={site}
+          opened={opened}
+          defaults={{ address: sitePageAddress(site), title, description }}
+          action={saveSitePageSeo}
+          createUpload={createSitePageShareImageUpload}
+        />
+      </aside>
+    </>
   );
 }
 

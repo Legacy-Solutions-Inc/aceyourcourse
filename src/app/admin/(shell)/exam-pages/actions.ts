@@ -11,6 +11,7 @@ import {
   updateExamSeo,
   updateOfficialExamDate,
   updatePromoBanner,
+  updateSitePageSeo,
   updateSubjectNames,
 } from "@/services/admin";
 import {
@@ -22,17 +23,19 @@ import {
   saveExamSeoInputSchema,
   saveOfficialExamDateInputSchema,
   savePromoBannerInputSchema,
+  saveSitePageSeoInputSchema,
   saveSubjectNamesInputSchema,
+  sitePageUploadInputSchema,
 } from "@/services/admin.schema";
 import { createUpload } from "@/services/uploads";
 import { uploadFileSchema, uploadOwnerSchema } from "@/services/uploads.types";
 
-// Exam pages & promo's Server Actions, for any Staff User. Each one checks the
+// Pages & promo's Server Actions, for any Staff User. Each one checks the
 // input's shape; the seam checks every rule, so the form is told each field's
-// message. Each part of an Exam page, the Home promo banner and the
-// announcement bar saves on its own, with the conflict check against the stamp
-// its editor opened with; the section toggles and the banner's switch always
-// save.
+// message. Each part of an Exam page, each Site page, the Home promo banner
+// and the announcement bar saves on its own, with the conflict check against
+// the stamp its editor opened with; the section toggles and the banner's
+// switch always save.
 
 /** A section toggle: Subjects covered, Bundle offer or Reviews, shown or hidden. */
 export const setExamPageSection = adminAction(
@@ -82,6 +85,22 @@ export const createShareImageUpload = adminAction(
     if (!page) return { ok: false as const, error: { kind: "not-found" as const } };
     return createUpload(actor, { purpose: "share-image", owner: page.exam.code, ...file });
   },
+);
+
+/** A Site page's Search & AI visibility Save: the title, the description and the share image. */
+export const saveSitePageSeo = adminAction(
+  { role: "staff", schema: saveSitePageSeoInputSchema, requiresStamp: true },
+  async (actor, { site, ...form }, expected) => updateSitePageSeo(actor, site, form, expected),
+);
+
+/**
+ * A one-time upload URL for a Site page's share image: a JPEG, PNG or WebP of
+ * up to 10 MB. Storage files it under the Site page; Save records its path.
+ */
+export const createSitePageShareImageUpload = adminAction(
+  { role: "staff", schema: uploadFileSchema.merge(sitePageUploadInputSchema) },
+  async (actor, { site, ...file }) =>
+    createUpload(actor, { purpose: "site-page-share-image", owner: site, ...file }),
 );
 
 /** The Home promo banner's Save: its text, button label, link and dates. */

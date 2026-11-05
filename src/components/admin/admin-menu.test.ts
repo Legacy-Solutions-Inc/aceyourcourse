@@ -13,7 +13,7 @@ describe("adminMenu", () => {
   it("gives an Owner all five screens, numbered 01 to 05", () => {
     expect(flat("owner")).toEqual([
       ["HOME", "01", "Overview", "/admin"],
-      ["WEBSITE", "02", "Exam pages & promo", "/admin/exam-pages"],
+      ["WEBSITE", "02", "Pages & promo", "/admin/exam-pages"],
       ["WEBSITE", "03", "Products & store links", "/admin/products"],
       ["WEBSITE", "04", "Reviews & FAQs", "/admin/reviews"],
       ["SETTINGS", "05", "Settings", "/admin/settings"],
@@ -23,7 +23,7 @@ describe("adminMenu", () => {
   it("leaves Settings, and its empty group, out of an Editor's menu", () => {
     expect(flat("editor")).toEqual([
       ["HOME", "01", "Overview", "/admin"],
-      ["WEBSITE", "02", "Exam pages & promo", "/admin/exam-pages"],
+      ["WEBSITE", "02", "Pages & promo", "/admin/exam-pages"],
       ["WEBSITE", "03", "Products & store links", "/admin/products"],
       ["WEBSITE", "04", "Reviews & FAQs", "/admin/reviews"],
     ]);

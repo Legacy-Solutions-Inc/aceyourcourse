@@ -235,4 +235,7 @@ export const CATALOGUE_SEED: CatalogueSeed = {
     examPage("MT"),
     examPage("CPA"),
   ],
+  // None: every Site page uses its text in code and the site's share image
+  // until an Editor saves it, as on a database loaded before ticket 20.
+  sitePages: [],
 };

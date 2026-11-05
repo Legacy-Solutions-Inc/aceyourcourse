@@ -8,10 +8,8 @@ import {
   examSeoFormSchema,
   type OfficialExamDateForm,
   officialExamDateFormSchema,
-  SHARE_IMAGE_NOT_UPLOADED,
   type SubjectNamesForm,
   subjectNamesFormSchema,
-  WAIT_FOR_UPLOADS,
 } from "@/services/admin.schema";
 import type {
   AdminError,
@@ -25,7 +23,7 @@ import type { ExamPage, ExamPageSection } from "@/services/catalogue.types";
 import { CATALOGUE_TAGS } from "@/services/catalogue.tags";
 import { getSampleStore, stampOf } from "@/services/mock/sample-store";
 
-import { uploadAt } from "./photos";
+import { shareImageAsSaved } from "./photos";
 import { writeCatalogue } from "./write";
 
 // The sample arm of the Admin seam's Exam pages area: each Exam page's
@@ -222,24 +220,6 @@ export async function updateBundleOffer(
   });
 }
 
-/**
- * The share image a save gives the page: the one it has, a finished
- * "share-image" upload at its public URL, or none. Refused when it's neither,
- * or when the upload's file hasn't arrived yet.
- */
-function shareImageAsSaved(
-  ref: string | null,
-  current: string | null,
-): { ok: true; src: string | null } | { ok: false; error: AdminError } {
-  if (ref === null || ref === current) return { ok: true, src: ref };
-  const upload = uploadAt(ref, "share-image");
-  if (upload === null) return { ok: false, error: invalid("shareImage", SHARE_IMAGE_NOT_UPLOADED) };
-  if (upload === "waiting") {
-    return { ok: false, error: { kind: "invalid", fieldErrors: {}, formError: WAIT_FOR_UPLOADS } };
-  }
-  return { ok: true, src: upload.publicUrl };
-}
-
 export async function updateExamSeo(
   actor: StaffActor,
   code: string,
@@ -255,7 +235,11 @@ export async function updateExamSeo(
     ...partWrite(examCode, "seo"),
     schema: examSeoFormSchema,
     check: (catalogue, fields) => {
-      const image = shareImageAsSaved(fields.shareImage, pageOf(catalogue, examCode).shareImage);
+      const image = shareImageAsSaved(
+        fields.shareImage,
+        pageOf(catalogue, examCode).shareImage,
+        "share-image",
+      );
       return image.ok ? null : image.error;
     },
     activity: { entity: "exam-page", entityId: examCode, action: "update-seo" },
@@ -263,7 +247,7 @@ export async function updateExamSeo(
     apply: (draft, fields) => {
       const page = draftPage(draft, examCode);
       // Called once the check has passed, so the image resolves.
-      const image = shareImageAsSaved(fields.shareImage, page.shareImage);
+      const image = shareImageAsSaved(fields.shareImage, page.shareImage, "share-image");
       if (!image.ok) throw new Error(`Exam ${examCode}'s share image changed during its own save`);
       Object.assign(page, { ...fields, shareImage: image.src });
     },

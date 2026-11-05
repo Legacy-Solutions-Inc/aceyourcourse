@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { isSitePageKey } from "@/services/catalogue.schema";
+
 // The upload seam's inputs and outputs (CONVENTIONS §3; spec, Phase 2 → Seams:
 // Image upload). A Staff-checked Server Action hands the browser a one-time
 // upload URL, the browser PUTs the file to it, and the save records the
@@ -14,8 +16,11 @@ export type UploadContentType = (typeof UPLOAD_CONTENT_TYPES)[number];
 /** The largest file an upload accepts: 10 MB. */
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
-/** What an upload is for: a Product photo, or a share image (ticket 09). */
-export const UPLOAD_PURPOSES = ["product-photo", "share-image"] as const;
+/**
+ * What an upload is for: a Product photo, an Exam page's share image (ticket
+ * 09), or a Site page's share image (ticket 20).
+ */
+export const UPLOAD_PURPOSES = ["product-photo", "share-image", "site-page-share-image"] as const;
 
 export const WRONG_UPLOAD_TYPE = "USE A JPEG, PNG OR WEBP IMAGE";
 export const UPLOAD_TOO_BIG = "KEEP EACH PHOTO TO 10 MB";
@@ -36,8 +41,9 @@ export const uploadFileSchema = z.object({
 export const UPLOAD_OWNER = /^[A-Za-z0-9][A-Za-z0-9-]{0,63}$/;
 
 /**
- * What a file is for: a Product (its id) or an Exam (its code). Storage files
- * it in that folder (ticket 17), so it's one plain path segment.
+ * What a file is for: a Product (its id), an Exam (its code) or a Site page
+ * ("about"). Storage files it in that folder (ticket 17), so it's one plain
+ * path segment.
  */
 export const uploadOwnerSchema = z
   .string({ invalid_type_error: UNKNOWN_UPLOAD })
@@ -46,17 +52,20 @@ export const uploadOwnerSchema = z
 /**
  * An upload as the browser asks for it, before it sends the file. A Product
  * photo names its Product once it has one (a new Product has no id until its
- * first save); a share image always names its Exam.
+ * first save); a share image always names its Exam, and a Site page's share
+ * image its Site page.
  */
 export const uploadRequestSchema = uploadFileSchema
   .extend({
     purpose: z.enum(UPLOAD_PURPOSES, { errorMap: () => ({ message: UNKNOWN_UPLOAD }) }),
     owner: uploadOwnerSchema.optional(),
   })
-  .refine((request) => request.purpose !== "share-image" || request.owner !== undefined, {
-    path: ["owner"],
-    message: UNKNOWN_UPLOAD,
-  });
+  .refine(
+    ({ purpose, owner }) =>
+      purpose === "product-photo" ||
+      (purpose === "share-image" ? owner !== undefined : isSitePageKey(owner)),
+    { path: ["owner"], message: UNKNOWN_UPLOAD },
+  );
 
 export type UploadRequest = z.input<typeof uploadRequestSchema>;
 

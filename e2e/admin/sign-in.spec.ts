@@ -158,7 +158,7 @@ test.describe("the Owner", () => {
     const nav = adminNav(page);
     await expect(nav.getByRole("link")).toHaveText([
       "01Overview",
-      "02Exam pages & promo",
+      "02Pages & promo",
       "03Products & store links",
       "04Reviews & FAQs",
       "05Settings",
@@ -167,7 +167,7 @@ test.describe("the Owner", () => {
     await expect(nav.getByRole("link", { name: "View site" })).toHaveAttribute("href", "/");
 
     for (const [group, title, path] of [
-      ["WEBSITE", "Exam pages & promo", "/admin/exam-pages"],
+      ["WEBSITE", "Pages & promo", "/admin/exam-pages"],
       ["WEBSITE", "Products & store links", "/admin/products"],
       ["WEBSITE", "Reviews & FAQs", "/admin/reviews"],
       ["SETTINGS", "Settings", "/admin/settings"],

@@ -12,6 +12,8 @@ import type {
   Marketplace,
   Product,
   Review,
+  SitePage,
+  SitePageKey,
   WebsiteSettings,
 } from "@/services/catalogue.types";
 
@@ -36,6 +38,8 @@ export interface CatalogueSeed {
   faqs: Faq[];
   /** At most one per Exam. An Exam without one gets examPageDefaults. */
   examPages: ExamPage[];
+  /** At most one per Site page. A Site page without one gets sitePageDefaults. */
+  sitePages: SitePage[];
 }
 
 const nonBlank = (label: string) => z.string().trim().min(1, `${label} must not be blank`);
@@ -309,6 +313,31 @@ const examPageSchema = z.object({
   officialExamDate: isoDate.nullable(),
 });
 
+/** The five Site pages, in the Admin's chip order. */
+export const SITE_PAGES = [
+  "home",
+  "about",
+  "products",
+  "faq",
+  "reviews",
+] as const satisfies readonly SitePageKey[];
+
+/** Pure: whether a value names one of the five Site pages. */
+export const isSitePageKey = (value: unknown): value is SitePageKey =>
+  SITE_PAGES.some((page) => page === value);
+
+/** Pure: the record of a Site page with none: nothing set, so it uses its text in code. */
+export function sitePageDefaults(page: SitePageKey): SitePage {
+  return { page, seoTitle: null, seoDescription: null, shareImage: null };
+}
+
+const sitePageSchema = z.object({
+  page: z.enum(SITE_PAGES),
+  seoTitle: nonBlank("SEO title").nullable(),
+  seoDescription: nonBlank("SEO description").nullable(),
+  shareImage: selfHostedPath.nullable(),
+});
+
 const promoBannerSchema = z
   .object({
     visible: z.boolean(),
@@ -366,8 +395,9 @@ export const catalogueSeedSchema: z.ZodType<CatalogueSeed> = z
     reviews: z.array(reviewSchema),
     faqs: z.array(faqSchema),
     examPages: z.array(examPageSchema),
+    sitePages: z.array(sitePageSchema),
   })
-  .superRefine(({ exams, products, reviews, faqs, examPages }, ctx) => {
+  .superRefine(({ exams, products, reviews, faqs, examPages, sitePages }, ctx) => {
     const issue = (path: (string | number)[], message: string) =>
       ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
 
@@ -506,6 +536,16 @@ export const catalogueSeedSchema: z.ZodType<CatalogueSeed> = z
         );
       }
     });
+
+    flagDuplicates(
+      ctx,
+      sitePages,
+      (page) => page.page,
+      (page, index) => ({
+        path: ["sitePages", index, "page"],
+        message: `a second Site page record for "${page.page}"`,
+      }),
+    );
   });
 
 export type CatalogueSeedValidation =

@@ -7,6 +7,7 @@ import type {
   Faq,
   Product,
   Review,
+  SitePage,
   WebsiteSettings,
 } from "@/services/catalogue.types";
 
@@ -29,6 +30,7 @@ export type ProductListingRow = typeof schema.productListings.$inferSelect;
 export type ReviewRow = typeof schema.reviews.$inferSelect;
 export type FaqRow = typeof schema.faqs.$inferSelect;
 export type ExamPageRow = typeof schema.examPages.$inferSelect;
+export type SitePageRow = typeof schema.sitePages.$inferSelect;
 export type WebsiteSettingsRow = typeof schema.websiteSettings.$inferSelect;
 export type AnnouncementMessageRow = typeof schema.announcementMessages.$inferSelect;
 export type PromoBannerRow = typeof schema.promoBanner.$inferSelect;
@@ -45,6 +47,7 @@ export interface CatalogueRows {
   reviews: ReviewRow[];
   faqs: FaqRow[];
   examPages: ExamPageRow[];
+  sitePages: SitePageRow[];
   websiteSettings: WebsiteSettingsRow[];
   announcementMessages: AnnouncementMessageRow[];
   promoBanner: PromoBannerRow[];
@@ -219,6 +222,15 @@ export function examPagesFromRows(rows: readonly ExamPageRow[]): ExamPage[] {
   });
 }
 
+export function sitePagesFromRows(rows: readonly SitePageRow[]): SitePage[] {
+  return byPosition(rows).map(({ page, seoTitle, seoDescription, shareImage }) => ({
+    page,
+    seoTitle,
+    seoDescription,
+    shareImage,
+  }));
+}
+
 /** The Website settings. Throws when the catalogue has none, as before it is seeded. */
 export function settingsFromRows(
   rows: Pick<CatalogueRows, "websiteSettings" | "announcementMessages" | "promoBanner">,
@@ -386,6 +398,7 @@ export function catalogueToRows(seed: CatalogueSeed): CatalogueRows {
       shareImage: page.shareImage,
       officialExamDate: page.officialExamDate,
     })),
+    sitePages: seed.sitePages.map((page, position) => ({ ...page, position })),
     websiteSettings: [
       {
         id: SINGLE_ROW_ID,
@@ -422,5 +435,6 @@ export function catalogueFromRows(rows: CatalogueRows): CatalogueSeed {
     reviews: reviewsFromRows(rows.reviews),
     faqs: faqsFromRows(rows.faqs),
     examPages: examPagesFromRows(rows.examPages),
+    sitePages: sitePagesFromRows(rows.sitePages),
   };
 }

@@ -9,23 +9,31 @@ import {
   subjectFormValues,
 } from "@/lib/admin/exam-page-form";
 import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
-import { getAnnouncementForAdmin, getExamPageForAdmin, getPromoForAdmin } from "@/services/admin";
+import {
+  getAnnouncementForAdmin,
+  getExamPageForAdmin,
+  getPromoForAdmin,
+  getSitePageForAdmin,
+} from "@/services/admin";
+import { getSitePage } from "@/services/catalogue";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import {
   createShareImageUpload,
+  createSitePageShareImageUpload,
   saveAnnouncement,
   saveBundleOffer,
   saveExamHeader,
   saveExamSeo,
   saveOfficialExamDate,
   savePromoBanner,
+  saveSitePageSeo,
   saveSubjectNames,
   setExamPageSection,
   setPromoBanner,
 } from "./actions";
 
-// Exam pages & promo's Server Actions, called as a browser would call them:
+// Pages & promo's Server Actions, called as a browser would call them:
 // each one is a public endpoint, so the Staff Guard and the input are checked
 // here on the server, and every save clears the tags that make it live.
 const { jar } = vi.hoisted(() => ({ jar: new Map<string, string>() }));
@@ -282,6 +290,108 @@ describe("Promo actions", () => {
   });
 });
 
+describe("Site pages actions", () => {
+  const ELEVEN_MB = 11 * 1024 * 1024;
+
+  it("lets an Editor save a Site page's SEO, clearing only the site-pages tag", async () => {
+    signInAs(EDITOR.email);
+    const { page, stamps } = await getSitePageForAdmin(EDITOR, "products");
+    const state = await saveSitePageSeo(IDLE, {
+      input: { site: "products", ...seoFormValues(page), seoTitle: "Every reviewer" },
+      expected: stamps.seo,
+    });
+
+    expect(state).toMatchObject({
+      status: "saved",
+      value: { page: { seoTitle: "Every reviewer" } },
+    });
+    expect(vi.mocked(revalidateTag).mock.calls).toEqual([["catalogue:site-pages"]]);
+    expect((await getSitePage("products")).seoTitle).toBe("Every reviewer");
+  });
+
+  it("refuses a stale save with who saved first, and saves nothing", async () => {
+    signInAs(EDITOR.email);
+    const { page, stamps } = await getSitePageForAdmin(EDITOR, "about");
+    const input = { site: "about", ...seoFormValues(page), seoTitle: "About us" };
+    expect(await saveSitePageSeo(IDLE, { input, expected: stamps.seo })).toMatchObject({
+      status: "saved",
+    });
+
+    signInAs("angel@aceyourcourse.ph");
+    expect(
+      await saveSitePageSeo(IDLE, { input: { ...input, seoTitle: "Ours" }, expected: stamps.seo }),
+    ).toMatchObject({ status: "refused", error: { kind: "conflict", savedBy: EDITOR.name } });
+    expect((await getSitePage("about")).seoTitle).toBe("About us");
+  });
+
+  it("must send the stamp its editor opened with", async () => {
+    signInAs(EDITOR.email);
+    const { page } = await getSitePageForAdmin(EDITOR, "faq");
+    expect(
+      await saveSitePageSeo(IDLE, { input: { site: "faq", ...seoFormValues(page) } }),
+    ).toMatchObject({ status: "refused", error: { kind: "invalid" } });
+    expect(getSampleStore().staffActivity).toEqual([]);
+  });
+
+  it("refuses a page that isn't a Site page before the seam sees it", async () => {
+    signInAs(EDITOR.email);
+    const { page, stamps } = await getSitePageForAdmin(EDITOR, "home");
+    expect(
+      await saveSitePageSeo(IDLE, {
+        input: { site: "legal", ...seoFormValues(page) },
+        expected: stamps.seo,
+      }),
+    ).toMatchObject({ status: "refused", error: { kind: "invalid" } });
+    expect(getSampleStore().staffActivity).toEqual([]);
+  });
+
+  it("gives an Editor a one-time URL for a Site page's share image", async () => {
+    signInAs(EDITOR.email);
+    const state = await createSitePageShareImageUpload(IDLE, {
+      input: { site: "faq", contentType: "image/png", size: 2048 },
+    });
+    expect(state).toMatchObject({
+      status: "saved",
+      value: { path: expect.stringMatching(/^uploads\//) },
+    });
+    expect(Object.values(getSampleStore().uploads)).toEqual([
+      expect.objectContaining({ purpose: "site-page-share-image", contentType: "image/png" }),
+    ]);
+  });
+
+  it.each([
+    [
+      "a GIF",
+      { contentType: "image/gif", size: 2048 },
+      { contentType: ["USE A JPEG, PNG OR WEBP IMAGE"] },
+    ],
+    [
+      "an 11 MB file",
+      { contentType: "image/png", size: ELEVEN_MB },
+      { size: ["KEEP EACH PHOTO TO 10 MB"] },
+    ],
+  ])(
+    "refuses %s as a Site page's share image, making no upload",
+    async (_case, file, fieldErrors) => {
+      signInAs(EDITOR.email);
+      expect(
+        await createSitePageShareImageUpload(IDLE, { input: { site: "faq", ...file } }),
+      ).toMatchObject({ status: "refused", error: { kind: "invalid", fieldErrors } });
+      expect(getSampleStore().uploads).toEqual({});
+    },
+  );
+
+  it("refuses a share image for a page that isn't a Site page, making no upload", async () => {
+    signInAs(EDITOR.email);
+    expect(
+      await createSitePageShareImageUpload(IDLE, {
+        input: { site: "legal", contentType: "image/png", size: 2048 },
+      }),
+    ).toMatchObject({ status: "refused", error: { kind: "invalid" } });
+    expect(getSampleStore().uploads).toEqual({});
+  });
+});
+
 describe("Exam pages actions: the Staff Guard", () => {
   const calls = [
     () => setExamPageSection(IDLE, { input: { code: "ce", section: "reviews", on: false } }),
@@ -294,6 +404,15 @@ describe("Exam pages actions: the Staff Guard", () => {
         expected: { savedAt: new Date().toISOString() },
       }),
     () => saveAnnouncement(IDLE, { input: { messages: [] } }),
+    () =>
+      saveSitePageSeo(IDLE, {
+        input: { site: "about", seoTitle: "About us", seoDescription: "", shareImage: "" },
+        expected: { savedAt: new Date().toISOString() },
+      }),
+    () =>
+      createSitePageShareImageUpload(IDLE, {
+        input: { site: "faq", contentType: "image/png", size: 10 },
+      }),
   ];
 
   it.each(calls.map((call, index) => [index, call] as const))(

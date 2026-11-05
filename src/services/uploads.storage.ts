@@ -48,6 +48,17 @@ const EXTENSION = `(?:${Object.values(EXTENSIONS).join("|")})`;
 const UPLOAD_PATHS: Record<UploadRequest["purpose"], RegExp> = {
   "product-photo": new RegExp(`^products/${OWNER}/${UPLOAD_ID}\\.${EXTENSION}$`),
   "share-image": new RegExp(`^exam-pages/${OWNER}/share-${UPLOAD_ID}\\.${EXTENSION}$`),
+  "site-page-share-image": new RegExp(`^site-pages/${OWNER}/share-${UPLOAD_ID}\\.${EXTENSION}$`),
+};
+
+/** Where an upload is filed: under its Product, its Exam or its Site page. */
+const FOLDERS: Record<
+  UploadRequest["purpose"],
+  (owner: string | undefined, file: string) => string
+> = {
+  "product-photo": (owner, file) => `products/${owner ?? NEW_PRODUCT}/${file}`,
+  "share-image": (owner, file) => `exam-pages/${owner}/share-${file}`,
+  "site-page-share-image": (owner, file) => `site-pages/${owner}/share-${file}`,
 };
 
 /** Pure: the purpose of the upload filed at this path, or null when no upload is. */
@@ -71,11 +82,13 @@ export function uploadPathsIn(value: unknown): string[] {
   return [...found];
 }
 
-/** Every image the catalogue uses: its Products' photos and its Exams' share images. */
+/** Every image the catalogue uses: its Products' photos, and its Exam and Site pages' share images. */
 function imagesOf(catalogue: CatalogueSeed): string[] {
   return [
     ...catalogue.products.flatMap((product) => product.photos.map((photo) => photo.src)),
-    ...catalogue.examPages.flatMap((page) => (page.shareImage ? [page.shareImage] : [])),
+    ...[...catalogue.examPages, ...catalogue.sitePages].flatMap((page) =>
+      page.shareImage ? [page.shareImage] : [],
+    ),
   ];
 }
 
@@ -119,10 +132,7 @@ export function createStorageArm(connect: () => StorageConnection): StorageArm {
 
     const { purpose, owner, contentType } = parsed.data;
     const file = `${crypto.randomUUID()}.${EXTENSIONS[contentType]}`;
-    const path =
-      purpose === "product-photo"
-        ? `products/${owner ?? NEW_PRODUCT}/${file}`
-        : `exam-pages/${owner}/share-${file}`;
+    const path = FOLDERS[purpose](owner, file);
     const files = bucket();
     const { data, error } = await files.createSignedUploadUrl(path);
     if (error) throw new Error(`Storage couldn't make an upload URL: ${error.message}`);

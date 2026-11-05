@@ -24,6 +24,7 @@ import type {
 import type {
   AdminAnnouncement,
   AdminExamPage,
+  AdminSitePage,
   AdminFaq,
   AdminFaqList,
   AdminOverview,
@@ -52,7 +53,7 @@ import type {
   StaffList,
   StaffMember,
 } from "@/services/admin.types";
-import type { Exam, ExamPageSection } from "@/services/catalogue.types";
+import type { Exam, ExamPageSection, SitePageKey } from "@/services/catalogue.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Admin Service Seam (CONVENTIONS §3). Every Admin read and write goes through
@@ -411,6 +412,29 @@ export interface AdminService {
     expected?: { savedAt: string },
   ): Promise<AdminResult<AdminExamPage>>;
 
+  // Site pages (any Staff User; ticket 20; spec, Phase 2 → Site pages). Each
+  // of the Website's five Site pages: its SEO title and description (blank
+  // uses the text in code) and its share image, with an Exam page's rules.
+  // Each page saves on its own, with its own stamp, and each write appends
+  // one Staff Activity record and clears only the site-pages tag.
+
+  /** A Site page as its editor opens it: its record, or nothing set while it has none. */
+  getSitePageForAdmin(actor: StaffActor, page: SitePageKey): Promise<AdminSitePage>;
+  /**
+   * Saves a Site page's SEO title and description and its share image: the
+   * page's own, a finished "site-page-share-image" upload's path, or none for
+   * the site's. The same rules as updateExamSeo: a whole title over 60
+   * characters with the site name, a description over 160, or a share image
+   * that's neither is refused; an upload whose file hasn't arrived is told
+   * "Wait for uploads to finish."
+   */
+  updateSitePageSeo(
+    actor: StaffActor,
+    page: SitePageKey,
+    input: ExamSeoForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminSitePage>>;
+
   // The Home promo banner and the announcement bar (any Staff User; spec,
   // Phase 2 → Exam pages & promo). Both are part of the Website's settings,
   // so every write clears the settings tag and appends one Staff Activity
@@ -497,6 +521,8 @@ export const setExamSection = impl.setExamSection;
 export const updateBundleOffer = impl.updateBundleOffer;
 export const updateExamSeo = impl.updateExamSeo;
 export const updateOfficialExamDate = impl.updateOfficialExamDate;
+export const getSitePageForAdmin = impl.getSitePageForAdmin;
+export const updateSitePageSeo = impl.updateSitePageSeo;
 export const getPromoForAdmin = impl.getPromoForAdmin;
 export const updatePromoBanner = impl.updatePromoBanner;
 export const setPromoBannerVisible = impl.setPromoBannerVisible;

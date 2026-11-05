@@ -19,7 +19,7 @@ export interface ImportOptions {
   dir: string;
   /** Only check: report what would be imported, and write nothing. */
   check: boolean;
-  /** The Website settings, FAQs and Exam pages, kept by hand in code and checked with the rest. */
+  /** The Website settings, FAQs, Exam pages and Site pages, kept by hand in code and checked with the rest. */
   handMaintained: HandMaintained;
   publicDir: string;
   seedModulePath?: string;
@@ -98,7 +98,7 @@ export async function runImport({
 /** Pure: one error as the command prints it, e.g. `products.csv row 7, column exam_code: unknown Exam "XX"`. */
 export function formatImportError({ sheet, row, column, message }: ImportError): string {
   if (sheet === null)
-    return `settings, FAQs and Exam pages (src/services/mock/catalogue.ts): ${message}`;
+    return `settings, FAQs, Exam pages and Site pages (src/services/mock/catalogue.ts): ${message}`;
   const where = [row === null ? null : `row ${row}`, column === null ? null : `column ${column}`]
     .filter((part) => part !== null)
     .join(", ");

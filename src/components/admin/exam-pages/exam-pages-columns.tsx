@@ -12,17 +12,20 @@ import { formatDate } from "@/lib/manila-time";
 import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
 import type { AdminExamPage } from "@/services/admin.types";
+import { SITE_PAGES } from "@/services/catalogue.schema";
+import type { SitePageKey } from "@/services/catalogue.types";
 
 import { ExamSectionSwitch } from "./exam-section-switch";
 
-// Exam pages & promo's first two columns (mockup 84–108; BUILD-MAP §3.2):
-// PAGES, then the selected page's Exam chips, "View page ↗", the Search & AI
-// visibility card and SECTIONS · SHOW OR HIDE. Selecting goes through the
-// URL, so a reload keeps it.
+// Pages & promo's first two columns (mockup 84–108; BUILD-MAP §3.2): PAGES,
+// then the selected page's Exam chips, "View page ↗", the Search & AI
+// visibility card and SECTIONS · SHOW OR HIDE; or a Site page's chips, "View
+// page ↗" and its Search & AI visibility card (ticket 20). Selecting goes
+// through the URL, so a reload keeps it.
 
 const LABEL = "font-mono text-[11px] font-medium tracking-[0.06em] text-muted-foreground";
 
-/** Column 1, PAGES: the Exam pages, the Home promo banner and the announcement bar. */
+/** Column 1, PAGES: the Exam pages, the Site pages, the Home promo banner and the announcement bar. */
 export function ExamPagesNav({
   current,
   examCount,
@@ -32,6 +35,7 @@ export function ExamPagesNav({
 }) {
   const pages: { page: ExamPagesPage; title: string; note?: string }[] = [
     { page: "exam", title: "Exam pages", note: `× ${examCount}` },
+    { page: "site", title: "Site pages", note: `× ${SITE_PAGES.length}` },
     { page: "promo", title: "Home promo banner" },
     { page: "announcement", title: "Announcement bar" },
   ];
@@ -62,9 +66,9 @@ export function ExamPagesNav({
           </li>
         ))}
       </ul>
+      {/* The spec's note (2026-11-05), over the mockup's: the Site pages are editable now. */}
       <p className="px-3 py-2.5 text-xs leading-[1.45] text-muted-foreground">
-        Home, About, Products, menu, footer, and legal pages are fixed. Changes to those go through
-        the developer.
+        Menu, footer, and legal pages are fixed. Changes to those go through the developer.
       </p>
     </nav>
   );
@@ -126,11 +130,7 @@ export function ExamPageColumn({
         current={selected === "seo"}
         title="Search & AI visibility"
         description="Page title, description, preview"
-        state={
-          <span className={seoState === "good" ? "text-ayc-success" : "text-ayc-warning"}>
-            {seoState === "good" ? "GOOD" : "CHECK"}
-          </span>
-        }
+        state={<SeoStateLabel state={seoState} />}
       />
       <Card
         href={examPagesHref({ exam: exam.code, section: "date" })}
@@ -188,6 +188,68 @@ export function ExamPageColumn({
         })}
       </ul>
     </section>
+  );
+}
+
+interface SitePageColumnProps {
+  site: SitePageKey;
+  /** Where the page is on the Website, for "View page ↗". */
+  path: string;
+  /** Search & AI visibility, from the title and description the page shows now. */
+  seoState: SeoState;
+}
+
+/** Column 2 for a Site page: the Site page chips, View page ↗ and Search & AI visibility. */
+export function SitePageColumn({ site, path, seoState }: SitePageColumnProps) {
+  const label = site.toUpperCase();
+  return (
+    <section aria-label={`${label} Site page`} className="flex min-w-0 flex-col gap-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className={LABEL}>SITE PAGES · {label}</h2>
+        <a
+          href={path}
+          target="_blank"
+          rel="noreferrer"
+          className="text-xs font-semibold whitespace-nowrap text-ayc-blue hover:underline"
+        >
+          View page <span aria-hidden="true">↗</span>
+          <span className="sr-only"> (opens in a new tab)</span>
+        </a>
+      </div>
+      <ul aria-label="Site page" className="flex flex-wrap gap-1">
+        {SITE_PAGES.map((page) => (
+          <li key={page}>
+            <Link
+              href={examPagesHref({ page: "site", site: page })}
+              scroll={false}
+              aria-current={page === site ? "page" : undefined}
+              className={cn(
+                "flex min-h-8.5 items-center border-[1.5px] px-2.5 font-mono text-xs font-bold",
+                page === site ? "bg-primary text-primary-foreground" : "bg-ayc-paper",
+              )}
+            >
+              {page.toUpperCase()}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <Card
+        href={examPagesHref({ page: "site", site })}
+        current
+        title="Search & AI visibility"
+        description="Page title, description, preview"
+        state={<SeoStateLabel state={seoState} />}
+      />
+    </section>
+  );
+}
+
+/** GOOD or CHECK, as the Search & AI visibility card shows it. */
+function SeoStateLabel({ state }: { state: SeoState }) {
+  return (
+    <span className={state === "good" ? "text-ayc-success" : "text-ayc-warning"}>
+      {state === "good" ? "GOOD" : "CHECK"}
+    </span>
   );
 }
 

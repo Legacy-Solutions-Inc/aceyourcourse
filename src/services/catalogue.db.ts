@@ -11,6 +11,7 @@ import {
   productsFromRows,
   reviewsFromRows,
   settingsFromRows,
+  sitePagesFromRows,
   type CataloguePart,
 } from "@/services/catalogue.rows";
 import { catalogueReads, type LoadCatalogue } from "@/services/catalogue.rules";
@@ -44,6 +45,7 @@ const PART_READERS: { [Part in CataloguePart]: (db: Reader) => Promise<Catalogue
   reviews: async (db) => reviewsFromRows(await db.select().from(schema.reviews)),
   faqs: async (db) => faqsFromRows(await db.select().from(schema.faqs)),
   examPages: async (db) => examPagesFromRows(await db.select().from(schema.examPages)),
+  sitePages: async (db) => sitePagesFromRows(await db.select().from(schema.sitePages)),
   settings: async (db) =>
     settingsFromRows({
       websiteSettings: await db.select().from(schema.websiteSettings),
@@ -86,6 +88,7 @@ export const {
   listExams,
   getExamByCode,
   getExamPage,
+  getSitePage,
   listProducts,
   getProductBySlug,
   listRelatedProducts,

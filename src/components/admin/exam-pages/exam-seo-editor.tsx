@@ -8,6 +8,7 @@ import { ConflictNotice } from "@/components/admin/conflict-notice";
 import { EditorSaveRow } from "@/components/admin/editor-save-row";
 import { measureImage, putFile } from "@/components/admin/products/put-file";
 import { TextField } from "@/components/admin/products/product-fields";
+import { useAdminForm } from "@/components/admin/use-admin-form";
 import type { AdminAction } from "@/lib/admin/action";
 import { seoFormValues } from "@/lib/admin/exam-page-form";
 import { examPageAddress, shareImageWarning } from "@/lib/admin/exam-pages-view";
@@ -27,6 +28,7 @@ import {
 } from "@/lib/admin/seo-check";
 import { examPageSeo } from "@/lib/catalogue/exam-copy";
 import { cn } from "@/lib/utils";
+import type { ExamSeoForm } from "@/services/admin.schema";
 import type { AdminExamPage } from "@/services/admin.types";
 import type { UploadTicket } from "@/services/uploads.types";
 
@@ -34,11 +36,12 @@ import { SAVED, useExamPartForm } from "./exam-page-editors";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SEARCH & AI VISIBILITY (mockup 110–124, 1045–1048; spec, Phase 2 → Exam
-// pages & promo: SEO per Exam page). PAGE TITLE and META DESCRIPTION are
-// overrides: blank uses the generated text, shown as the placeholder, and the
-// counters, the search preview and GOOD or CHECK follow what the page will
-// show. The share image is uploaded through the upload seam and saved with
-// the rest; one that isn't 1200 × 630 is warned about, not refused.
+// pages & promo: SEO per Exam page, and Site pages). PAGE TITLE and META
+// DESCRIPTION are overrides: blank uses the generated text (an Exam page) or
+// the text in code (a Site page), shown as the placeholder, and the counters,
+// the search preview and GOOD or CHECK follow what the page will show. The
+// share image is uploaded through the upload seam and saved with the rest;
+// one that isn't 1200 × 630 is warned about, not refused.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -46,7 +49,7 @@ import { SAVED, useExamPartForm } from "./exam-page-editors";
  * data" and "Summary for AI assistants" aren't on the Exam page, so they're
  * left out rather than shown as ON.
  */
-const SET_UP_AUTOMATICALLY = [
+const EXAM_SET_UP_AUTOMATICALLY = [
   ["Breadcrumbs", "ON"],
   ["Sitemap", "AUTO"],
 ] as const;
@@ -57,27 +60,54 @@ function counterTone(length: number, max: number, min = 0) {
   return length < min ? "text-ayc-warning" : "text-ayc-success";
 }
 
-interface SeoEditorProps {
-  opened: AdminExamPage;
-  action: AdminAction<AdminExamPage>;
+/** The parts of an editor's form (useAdminForm) the search fields use. */
+type SeoForm = Pick<
+  ReturnType<typeof useAdminForm<ExamSeoForm, unknown>>,
+  | "change"
+  | "changeWith"
+  | "fieldError"
+  | "formProps"
+  | "conflict"
+  | "status"
+  | "errorMessage"
+  | "canSave"
+> & { values: ExamSeoForm };
+
+export interface SeoFieldsProps {
+  form: SeoForm;
+  /** PAGE ADDRESS, e.g. "aceyourcourse.ph/exams/ce". */
+  address: string;
+  /** What the page shows for a blank field, shown as its placeholder. */
+  defaults: { title: string; description: string };
+  /** The line that says where blank fields' text comes from. */
+  blankNote: string;
+  /** SET UP AUTOMATICALLY: what the Website does by itself for the page. */
+  setUp: readonly (readonly [string, string])[];
   createUpload: AdminAction<UploadTicket>;
+  /** What the share image's upload is for, besides the file: its Exam or its Site page. */
+  uploadFor: Record<string, string>;
 }
 
-export function SeoEditor({ opened, action, createUpload }: SeoEditorProps) {
-  const form = useExamPartForm(opened, "seo", {
-    action,
-    valuesOf: ({ page }) => seoFormValues(page),
-    title: `The ${opened.exam.code} search settings`,
-    blocker: (values) => photoUploadBlocker([values.shareImage]),
-  });
+/**
+ * The Search & AI visibility form, for an Exam page or a Site page: the
+ * address, the title and description with their counters, GOOD or CHECK, the
+ * search preview, the share image, and what's set up automatically.
+ */
+export function SeoFields({
+  form,
+  address,
+  defaults,
+  blankNote,
+  setUp,
+  createUpload,
+  uploadFor,
+}: SeoFieldsProps) {
   const { values, change, changeWith, fieldError } = form;
   const titleCounter = useId();
   const descriptionCounter = useId();
 
-  // What the page shows for blank fields: the text generated from the Exam as saved.
-  const generated = examPageSeo(opened.exam, { seoTitle: null, seoDescription: null });
-  const title = values.seoTitle.trim() || generated.title;
-  const description = values.seoDescription.trim() || generated.description;
+  const title = values.seoTitle.trim() || defaults.title;
+  const description = values.seoDescription.trim() || defaults.description;
   const whole = fullTitle(title);
   const state = seoCheck({ title, description });
 
@@ -86,16 +116,14 @@ export function SeoEditor({ opened, action, createUpload }: SeoEditorProps) {
       <div className="flex flex-col gap-1.5">
         <span className="font-mono text-xs font-medium text-muted-foreground">PAGE ADDRESS</span>
         <p className="border-[1.5px] bg-ayc-sand px-2.5 py-2.25 font-mono text-[13px] text-muted-foreground">
-          {examPageAddress(opened.exam.code)}
+          {address}
         </p>
       </div>
-      <p className="text-[13px] leading-[1.45] text-muted-foreground">
-        Leave a field blank to use the text made from the Exam, shown in grey.
-      </p>
+      <p className="text-[13px] leading-[1.45] text-muted-foreground">{blankNote}</p>
       <TextField
         label="PAGE TITLE"
         value={values.seoTitle}
-        placeholder={generated.title}
+        placeholder={defaults.title}
         onChange={(seoTitle) => change("seoTitle", seoTitle)}
         error={fieldError("seoTitle")}
         describedBy={titleCounter}
@@ -116,7 +144,7 @@ export function SeoEditor({ opened, action, createUpload }: SeoEditorProps) {
         label="META DESCRIPTION"
         multiline
         value={values.seoDescription}
-        placeholder={generated.description}
+        placeholder={defaults.description}
         onChange={(seoDescription) => change("seoDescription", seoDescription)}
         error={fieldError("seoDescription")}
         describedBy={descriptionCounter}
@@ -147,7 +175,7 @@ export function SeoEditor({ opened, action, createUpload }: SeoEditorProps) {
           SEARCH PREVIEW
         </figcaption>
         <div className="flex flex-col gap-1 border border-ayc-rule bg-white px-4 py-3.5">
-          <span className="text-xs text-ayc-slate">{examPageAddress(opened.exam.code)}</span>
+          <span className="text-xs text-ayc-slate">{address}</span>
           <span className="line-clamp-1 text-lg leading-[1.3] font-medium text-ayc-blue-dark">
             {whole}
           </span>
@@ -160,7 +188,7 @@ export function SeoEditor({ opened, action, createUpload }: SeoEditorProps) {
         value={values.shareImage}
         onChange={(next) => changeWith("shareImage", (current) => next(String(current ?? "")))}
         createUpload={createUpload}
-        examCode={opened.exam.code}
+        uploadFor={uploadFor}
         error={fieldError("shareImage")}
       />
       <div className="flex flex-col gap-2 border-t border-dashed border-ayc-rule pt-3">
@@ -168,7 +196,7 @@ export function SeoEditor({ opened, action, createUpload }: SeoEditorProps) {
           SET UP AUTOMATICALLY
         </span>
         <dl className="flex flex-col gap-2">
-          {SET_UP_AUTOMATICALLY.map(([what, how]) => (
+          {setUp.map(([what, how]) => (
             <div key={what} className="flex justify-between gap-2 text-[13px]">
               <dt>{what}</dt>
               <dd className="font-mono text-[11px] font-bold text-ayc-success">{how}</dd>
@@ -182,19 +210,54 @@ export function SeoEditor({ opened, action, createUpload }: SeoEditorProps) {
   );
 }
 
+interface SeoEditorProps {
+  opened: AdminExamPage;
+  action: AdminAction<AdminExamPage>;
+  createUpload: AdminAction<UploadTicket>;
+}
+
+/** An Exam page's Search & AI visibility, its blank fields generated from the Exam. */
+export function SeoEditor({ opened, action, createUpload }: SeoEditorProps) {
+  const form = useExamPartForm(opened, "seo", {
+    action,
+    valuesOf: ({ page }) => seoFormValues(page),
+    title: `The ${opened.exam.code} search settings`,
+    blocker: (values) => photoUploadBlocker([values.shareImage]),
+  });
+  // What the page shows for blank fields: the text generated from the Exam as saved.
+  const generated = examPageSeo(opened.exam, { seoTitle: null, seoDescription: null });
+  return (
+    <SeoFields
+      form={form}
+      address={examPageAddress(opened.exam.code)}
+      defaults={generated}
+      blankNote="Leave a field blank to use the text made from the Exam, shown in grey."
+      setUp={EXAM_SET_UP_AUTOMATICALLY}
+      createUpload={createUpload}
+      uploadFor={{ code: opened.exam.code }}
+    />
+  );
+}
+
 interface ShareImageFieldProps {
   /** The page's image (its src), a finished upload's path, an upload on its way, or "". */
   value: string;
   /** Changes the value from its current one: an upload finishes after other edits. */
   onChange: (next: (current: string) => string) => void;
   createUpload: AdminAction<UploadTicket>;
-  /** The Exam, for Storage to file the image under. */
-  examCode: string;
+  /** Its Exam or its Site page, for Storage to file the image under. */
+  uploadFor: Record<string, string>;
   error?: string;
 }
 
 /** SHARE IMAGE · 1200 × 630 (mockup 120): the image link previews show, or the site's. */
-function ShareImageField({ value, onChange, createUpload, examCode, error }: ShareImageFieldProps) {
+function ShareImageField({
+  value,
+  onChange,
+  createUpload,
+  uploadFor,
+  error,
+}: ShareImageFieldProps) {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
   const [chosen, setChosen] = useState<{ name: string; preview: string } | null>(null);
@@ -222,7 +285,7 @@ function ShareImageField({ value, onChange, createUpload, examCode, error }: Sha
     void measureImage(file).then((size) => setWarning(size ? shareImageWarning(size) : null));
 
     const ticket = await callAdminAction(createUpload, {
-      input: { code: examCode, contentType: file.type, size: file.size },
+      input: { ...uploadFor, contentType: file.type, size: file.size },
     });
     let sent = ticket.status === "saved";
     if (ticket.status === "saved") {

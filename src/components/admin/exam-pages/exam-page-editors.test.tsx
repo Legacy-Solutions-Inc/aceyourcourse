@@ -12,7 +12,7 @@ import type { UploadTicket } from "@/services/uploads.types";
 import { type ExamPageActions, ExamPagePanel } from "./exam-page-panel";
 import { ExamSectionSwitch } from "./exam-section-switch";
 
-// Exam pages & promo's editors (BUILD-MAP §3.2, column 3) and a section
+// Pages & promo's Exam page editors (BUILD-MAP §3.2, column 3) and a section
 // switch, saving through stub Server Actions that answer as adminAction
 // would. The router and the browser's PUT to the upload URL are the
 // framework and network boundaries, so they're replaced.

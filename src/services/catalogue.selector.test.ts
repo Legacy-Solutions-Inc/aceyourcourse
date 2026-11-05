@@ -19,6 +19,7 @@ const READS: [string, (seam: Seam) => Promise<unknown>][] = [
   ["listExams", (seam) => seam.listExams()],
   ["getExamByCode", (seam) => seam.getExamByCode("ce")],
   ["getExamPage", (seam) => seam.getExamPage("ce")],
+  ["getSitePage", (seam) => seam.getSitePage("about")],
   ["listProducts", (seam) => seam.listProducts()],
   ["getProductBySlug", (seam) => seam.getProductBySlug(aProduct.slug)],
   ["listRelatedProducts", (seam) => seam.listRelatedProducts(aProduct)],

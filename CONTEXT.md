@@ -19,6 +19,11 @@ Ace Your Course is one application with three Surfaces.
   nothing directly. It sends visitors to the Marketplaces or to the Member App.
   _Avoid_: marketing site, landing, storefront.
 
+- **Site page** — one of the Website's five standalone pages: Home, Products,
+  Reviews, About and FAQ. It is set apart from an Exam page, which each Exam
+  has, and from the Legal pages.
+  _Avoid_: static page, fixed page, CMS page.
+
 - **Member App** — the signed-in Surface where Members study digital content
   and buy access.
   _Avoid_: dashboard, portal, the app (when ambiguous).

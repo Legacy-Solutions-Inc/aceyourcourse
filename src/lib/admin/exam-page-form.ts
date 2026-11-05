@@ -32,8 +32,13 @@ export const bundleFormValues = ({ bundleOffer }: ExamPage): BundleOfferForm => 
   buttonLabel: bundleOffer?.buttonLabel ?? "",
 });
 
-/** Pure: the Search & AI visibility editor's values; blank uses the generated text. */
-export const seoFormValues = (page: ExamPage): ExamSeoForm => ({
+/**
+ * Pure: the Search & AI visibility editor's values, for an Exam page or a
+ * Site page; blank uses the generated text, or a Site page's text in code.
+ */
+export const seoFormValues = (
+  page: Pick<ExamPage, "seoTitle" | "seoDescription" | "shareImage">,
+): ExamSeoForm => ({
   seoTitle: page.seoTitle ?? "",
   seoDescription: page.seoDescription ?? "",
   shareImage: page.shareImage ?? "",

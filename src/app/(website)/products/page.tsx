@@ -7,12 +7,11 @@ import { PhysicalOrApp } from "@/components/website/products/physical-or-app";
 import { ProductPicker } from "@/components/website/products/product-picker";
 import { ProductsGrid } from "@/components/website/products/products-grid";
 import { PRODUCTS_SECTION_IDS } from "@/components/website/products/section-ids";
-import { config } from "@/config";
 import { productsPageCopy } from "@/content/products-page";
 import { facetCounts, priceBoundsOf } from "@/lib/catalogue/product-filters";
 import { parseProductSearchParams, productsQueryOf } from "@/lib/catalogue/product-search-params";
 import { cn } from "@/lib/utils";
-import { paths } from "@/paths";
+import { sitePageMetadata } from "@/lib/catalogue/site-page-seo";
 import { getWebsiteSettings, listExams, listProducts } from "@/services/catalogue";
 
 interface ProductsPageProps {
@@ -26,27 +25,10 @@ const heroLink =
   "flex min-h-13.5 items-center gap-1.5 border-[1.5px] border-ayc-cream text-base no-underline focus-visible:outline-ayc-cream";
 
 // Every filtered view is one page to search engines: /products.
+// The title, description and share image Staff set in Pages & promo, or
+// today's text (src/content) and the site's image.
 export async function generateMetadata(): Promise<Metadata> {
-  const title = copy.metaTitle;
-  const description = copy.metaDescription;
-  const shareTitle = `${title} · ${config.site.name}`;
-  // Setting openGraph here replaces the root's, so the share image is repeated.
-  const images = [{ url: paths.shareImage, alt: config.site.name }];
-  return {
-    title,
-    description,
-    alternates: { canonical: paths.products.list },
-    openGraph: {
-      type: "website",
-      siteName: config.site.name,
-      locale: "en_PH",
-      title: shareTitle,
-      description,
-      url: paths.products.list,
-      images,
-    },
-    twitter: { card: "summary_large_image", title: shareTitle, description, images },
-  };
+  return sitePageMetadata("products");
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {

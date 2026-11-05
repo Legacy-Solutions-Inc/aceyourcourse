@@ -14,6 +14,7 @@ import type {
   PromoBanner,
   Review,
   ShopStats,
+  SitePage,
   SocialLinks,
   WebsiteSettings,
 } from "@/services/catalogue.types";
@@ -368,6 +369,17 @@ export interface AdminExamPage {
   stamps: Record<ExamPagePart, RecordStamp>;
   /** The Exam's Products, in the catalogue's order, for the bundle offer. */
   products: BundleProductOption[];
+}
+
+// ── Site pages ──────────────────────────────────────────────────────────────
+
+/** The parts of a Site page that save on their own, each with its own stamp. */
+export type SitePagePart = "seo";
+
+/** One Site page as its editors open it: its record (or nothing set) and each part's stamp. */
+export interface AdminSitePage {
+  page: SitePage;
+  stamps: Record<SitePagePart, RecordStamp>;
 }
 
 // ── Home promo banner and announcement bar ──────────────────────────────────

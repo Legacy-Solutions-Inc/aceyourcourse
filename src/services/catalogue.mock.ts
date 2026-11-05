@@ -35,6 +35,7 @@ export const {
   listExams,
   getExamByCode,
   getExamPage,
+  getSitePage,
   listProducts,
   getProductBySlug,
   listRelatedProducts,

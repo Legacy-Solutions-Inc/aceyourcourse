@@ -1,6 +1,11 @@
 import { serverEnv } from "@/env.server";
 import { productFormatLabel } from "@/lib/catalogue/format";
-import { examPageDefaults, FAQ_GROUP_TITLES, FAQ_GROUPS } from "@/services/catalogue.schema";
+import {
+  examPageDefaults,
+  FAQ_GROUP_TITLES,
+  FAQ_GROUPS,
+  sitePageDefaults,
+} from "@/services/catalogue.schema";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import type {
   Exam,
@@ -15,6 +20,8 @@ import type {
   ReviewFilters,
   ReviewSort,
   ReviewWithProduct,
+  SitePage,
+  SitePageKey,
   WebsiteSettings,
 } from "@/services/catalogue.types";
 
@@ -276,6 +283,12 @@ export function catalogueReads(load: LoadCatalogue) {
     return { ...rest, bundleOffer: offer };
   }
 
+  /** A Site page's record, or nothing set while it has none. */
+  async function getSitePage(page: SitePageKey): Promise<SitePage> {
+    const { sitePages } = await load(["sitePages"]);
+    return sitePages.find((record) => record.page === page) ?? sitePageDefaults(page);
+  }
+
   async function listReviews(
     filters: ReviewFilters = {},
   ): Promise<{ items: ReviewWithProduct[]; total: number }> {
@@ -332,6 +345,7 @@ export function catalogueReads(load: LoadCatalogue) {
     listExams,
     getExamByCode,
     getExamPage,
+    getSitePage,
     listProducts,
     getProductBySlug,
     listRelatedProducts,

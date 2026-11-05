@@ -128,7 +128,7 @@ export default async function ExamPage({ params }: ExamPageProps) {
         liveProducts={live}
         showAppLink={showAppLinks}
       />
-      {/* Staff can hide these three sections (Exam pages & promo); the rest are always on. */}
+      {/* Staff can hide these three sections (Pages & promo); the rest are always on. */}
       {sections.subjects ? <SubjectsCovered exam={exam} /> : null}
       {/* Keyed by Exam, so a chosen format or card doesn't carry over to another Exam's page. */}
       <ExamProducts

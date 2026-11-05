@@ -98,6 +98,29 @@ describeWithStorage(
       expect(await inBucket(second.path)).toBe(true);
     });
 
+    it("deletes a Site page's share image file once a save replaces it, and once one clears it", async () => {
+      const save = async (shareImage: string) => {
+        const opened = await seam.getSitePageForAdmin(EDITOR, "faq");
+        return seam.updateSitePageSeo(
+          EDITOR,
+          "faq",
+          { ...seoFormValues(opened.page), shareImage },
+          opened.stamps.seo,
+        );
+      };
+      const first = await DATABASE_ARM.uploadPhoto({ purpose: "site-page-share-image" });
+      expect(first.path).toMatch(/^site-pages\/faq\/share-/);
+      expect(await save(first.path)).toMatchObject({ ok: true });
+      const second = await DATABASE_ARM.uploadPhoto({ purpose: "site-page-share-image" });
+
+      expect(await save(second.path)).toMatchObject({ ok: true });
+      expect(await inBucket(first.path)).toBe(false);
+      expect(await inBucket(second.path)).toBe(true);
+
+      expect(await save("")).toMatchObject({ ok: true });
+      expect(await inBucket(second.path)).toBe(false);
+    });
+
     it("keeps the save when Storage refuses the delete, and logs it", async () => {
       const upload = await DATABASE_ARM.uploadPhoto();
       await saveProduct("prd-001", (srcs) => [upload.path, ...srcs]);

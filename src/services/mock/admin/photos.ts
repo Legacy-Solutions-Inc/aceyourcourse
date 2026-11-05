@@ -1,12 +1,17 @@
-import { PHOTO_NOT_UPLOADED, WAIT_FOR_UPLOADS } from "@/services/admin.schema";
+import {
+  PHOTO_NOT_UPLOADED,
+  SHARE_IMAGE_NOT_UPLOADED,
+  WAIT_FOR_UPLOADS,
+} from "@/services/admin.schema";
 import type { AdminError } from "@/services/admin.types";
 import type { ProductPhoto } from "@/services/catalogue.types";
 import { getSampleStore } from "@/services/mock/sample-store";
 import { sampleUploadAt } from "@/services/uploads.mock";
-import type { UploadLookup } from "@/services/uploads.types";
+import type { UploadLookup, UploadRequest } from "@/services/uploads.types";
 
 // The sample arm's Photos area: a Product's photos as its editor saves them
-// (spec, Phase 2 → Products: Photos). The editor sends them in order, the
+// (spec, Phase 2 → Products: Photos), and the share image an Exam page or a
+// Site page saves. The editor sends them in order, the
 // first the cover, each one a photo the Product already has (its src) or a
 // new upload (the path the upload seam gave it). Alt text is generated on
 // every save, so it follows the name and the order.
@@ -19,6 +24,30 @@ export const uploadAt: UploadLookup = (path, purpose) => {
   const { uploadAt: lookup } = getSampleStore();
   return lookup ? lookup(path, purpose) : sampleUploadAt(path, purpose);
 };
+
+/**
+ * The share image a save gives an Exam page or a Site page: the one it has, a
+ * finished upload of this purpose at its public URL, or none. Refused when
+ * it's neither, or when the upload's file hasn't arrived yet.
+ */
+export function shareImageAsSaved(
+  ref: string | null,
+  current: string | null,
+  purpose: Exclude<UploadRequest["purpose"], "product-photo">,
+): { ok: true; src: string | null } | { ok: false; error: AdminError } {
+  if (ref === null || ref === current) return { ok: true, src: ref };
+  const upload = uploadAt(ref, purpose);
+  if (upload === null) {
+    return {
+      ok: false,
+      error: { kind: "invalid", fieldErrors: { shareImage: [SHARE_IMAGE_NOT_UPLOADED] } },
+    };
+  }
+  if (upload === "waiting") {
+    return { ok: false, error: { kind: "invalid", fieldErrors: {}, formError: WAIT_FOR_UPLOADS } };
+  }
+  return { ok: true, src: upload.publicUrl };
+}
 
 /** Pure: a photo's alt text, as the seed has it: "{full name}, photo 2 of 8". */
 export function photoAlt(title: string, index: number, count: number): string {

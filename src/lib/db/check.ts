@@ -99,6 +99,7 @@ export interface CatalogueCounts {
   reviews: number;
   faqs: number;
   examPages: number;
+  sitePages: number;
   websiteSettings: number;
   owners: number;
   editors: number;
@@ -157,6 +158,7 @@ async function catalogueCounts(tx: TransactionSql): Promise<CatalogueCounts | nu
           (select count(*) from reviews)::int as reviews,
           (select count(*) from faqs)::int as faqs,
           (select count(*) from exam_pages)::int as "examPages",
+          (select count(*) from site_pages)::int as "sitePages",
           (select count(*) from website_settings)::int as "websiteSettings",
           (select count(*) from staff where status = 'active' and role = 'owner')::int as owners,
           (select count(*) from staff where status = 'active' and role = 'editor')::int as editors,
@@ -282,6 +284,7 @@ function describeCounts(counts: CatalogueCounts): string[] {
         plural(counts.reviews, "Review"),
         plural(counts.faqs, "FAQ"),
         plural(counts.examPages, "Exam page"),
+        plural(counts.sitePages, "Site page"),
         plural(counts.websiteSettings, "Website settings row"),
       ].join(", "),
     describeStaff(counts),

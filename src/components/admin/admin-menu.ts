@@ -38,7 +38,7 @@ const MENU: readonly AdminMenuGroup[] = [
       {
         key: "exam-pages",
         code: "02",
-        label: "Exam pages & promo",
+        label: "Pages & promo",
         href: paths.admin.examPages,
         ownerOnly: false,
       },

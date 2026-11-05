@@ -5,6 +5,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Database } from "@/lib/db/connect";
 import * as schema from "@/lib/db/schema";
 import { describeWithDatabase, openTestDatabase } from "@/lib/db/test-database";
+import { SITE_PAGES } from "@/services/catalogue.schema";
 import type { Product, ProductFilters, ReviewFilters } from "@/services/catalogue.types";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { resetSampleStore } from "@/services/mock/sample-store";
@@ -45,6 +46,38 @@ function db(): Database {
 describeWithDatabase("catalogue seam on the database", database, () => {
   describeCatalogueContract(databaseArm(db));
 
+  // The hosted project as it is before ticket 20's first save: its migration
+  // adds site_pages with nothing in it, and nothing needs loading.
+  describe("Site pages on a database with no Site page rows", () => {
+    beforeAll(async () => {
+      await loadTestCatalogue(db());
+      await db().delete(schema.sitePages);
+    });
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    });
+
+    it("gives every Site page today's title, description, address and the site's share image", async () => {
+      expect(await db().select().from(schema.sitePages)).toEqual([]);
+      vi.stubEnv("DATABASE_URL", process.env.TEST_DATABASE_URL);
+      vi.resetModules();
+      const { SITE_PAGE_DEFAULTS, sitePageMetadata } =
+        await import("@/lib/catalogue/site-page-seo");
+
+      for (const page of SITE_PAGES) {
+        const { path, title, description } = SITE_PAGE_DEFAULTS[page];
+        expect(await sitePageMetadata(page), page).toMatchObject({
+          title,
+          description,
+          alternates: { canonical: path },
+          openGraph: { images: [{ url: "/opengraph-image", alt: "Ace Your Course" }] },
+        });
+      }
+    });
+  });
+
   describe("the tables", () => {
     beforeAll(async () => {
       await loadTestCatalogue(db());
@@ -57,7 +90,15 @@ describeWithDatabase("catalogue seam on the database", database, () => {
 
     it("hold the whole seed, read back unchanged", async () => {
       const { readCatalogue } = await import("./catalogue.db");
-      const parts = ["exams", "settings", "products", "reviews", "faqs", "examPages"] as const;
+      const parts = [
+        "exams",
+        "settings",
+        "products",
+        "reviews",
+        "faqs",
+        "examPages",
+        "sitePages",
+      ] as const;
       expect(await readCatalogue(db(), parts)).toEqual(CATALOGUE_SEED);
     });
 

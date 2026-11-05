@@ -218,6 +218,14 @@ function validSeed(): CatalogueSeed {
         officialExamDate: "2027-04-24",
       },
     ],
+    sitePages: [
+      {
+        page: "about",
+        seoTitle: "About Ace Your Course",
+        seoDescription: null,
+        shareImage: "/api/dev/uploads/share-2",
+      },
+    ],
   };
 }
 
@@ -822,5 +830,48 @@ describe("validateCatalogueSeed: Exam pages", () => {
     const seed = validSeed();
     page(seed).shareImage = "https://example.com/share.jpg";
     expect(errorsFor(seed)).toEqual([expect.stringMatching(/^examPages\.0\.shareImage: /)]);
+  });
+});
+
+describe("validateCatalogueSeed: Site pages", () => {
+  const page = (seed: CatalogueSeed) => at(seed.sitePages, 0);
+
+  it("accepts a catalogue with no Site page records: every page uses its defaults", () => {
+    const seed = validSeed();
+    seed.sitePages = [];
+    expect(validateCatalogueSeed(seed).success).toBe(true);
+  });
+
+  it("rejects a page that isn't one of the five Site pages", () => {
+    const seed = validSeed();
+    seed.sitePages.push({ ...page(seed), page: "legal" as never });
+    expect(errorsFor(seed)).toEqual([expect.stringMatching(/^sitePages\.1\.page: /)]);
+  });
+
+  it("rejects a second record for the same Site page", () => {
+    const seed = validSeed();
+    seed.sitePages.push({ ...page(seed) });
+    expect(errorsFor(seed)).toEqual([
+      expect.stringMatching(/^sitePages\.1\.page: .*second Site page record for "about"/),
+    ]);
+  });
+
+  it("rejects a blank title, which must be null instead", () => {
+    const seed = validSeed();
+    page(seed).seoTitle = "  ";
+    expect(errorsFor(seed)).toEqual([expect.stringMatching(/^sitePages\.0\.seoTitle: /)]);
+  });
+
+  it("accepts a share image in the Storage bucket", () => {
+    const seed = validSeed();
+    page(seed).shareImage =
+      "http://127.0.0.1:54321/storage/v1/object/public/catalogue/site-pages/about/share-a.png";
+    expect(validateCatalogueSeed(seed).success).toBe(true);
+  });
+
+  it("rejects a share image hot-linked from another site", () => {
+    const seed = validSeed();
+    page(seed).shareImage = "https://example.com/share.jpg";
+    expect(errorsFor(seed)).toEqual([expect.stringMatching(/^sitePages\.0\.shareImage: /)]);
   });
 });

@@ -5,7 +5,7 @@ import { expect as baseExpect, type Page, test } from "@playwright/test";
 import { paths } from "../../src/paths";
 import { LIVE, resetSampleData, signInAs } from "./helpers";
 
-// Exam pages & promo on sample data (ticket 09): an Editor hides a section of
+// Pages & promo's Exam pages on sample data (ticket 09): an Editor hides a section of
 // an Exam page and sees it gone from the Website; sets the CE page's search
 // title and sees it in <title>; edits the Header and renames a Subject,
 // seen on the Exam page, a Product page and the FAQ page; offers another

@@ -24,7 +24,7 @@ import { listNumber } from "@/lib/text";
 import type { AdminExamPage, BundleProductOption, ExamPagePart } from "@/services/admin.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Exam pages & promo's column 3 (mockup 103–145; BUILD-MAP §3.2): each
+// Pages & promo's column 3 for an Exam page (mockup 103–145; BUILD-MAP §3.2): each
 // section's editor. Every part saves on its own, with the conflict check
 // against the stamp it opened with, and is live on its Save. The section
 // headings, the compare table, "Try a card" and the store band are fixed in

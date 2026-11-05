@@ -39,9 +39,10 @@
 
 Run them one at a time:
 
-01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18 → 19
+01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18 → 19 → 20 → 21 → 22
 
-Ticket 19 was added on 2026-11-04, after 01–18 were done. It needs only 16.
+- Ticket 19 was added on 2026-11-04, after 01–18 were done. It needs only 16.
+- Tickets 20–22 were added on 2026-11-05. They close the contract's Milestone 2 wording, "allowing you to edit all content yourself", and its GEO/AEO setup.
 
 | #   | Ticket                                      | Blocked by             |
 | --- | ------------------------------------------- | ---------------------- |
@@ -64,6 +65,9 @@ Ticket 19 was added on 2026-11-04, after 01–18 were done. It needs only 16.
 | 17  | Photo storage                               | 15                     |
 | 18  | Production go-live                          | 16, 17                 |
 | 19  | Development password sign-in                | 16                     |
+| 20  | Site page SEO                               | — (16, 17 done)        |
+| 21  | About page editor                           | 20                     |
+| 22  | Summary for AI assistants                   | 20                     |
 
 **Merge-conflict hotspots** (expected, and small when the tickets run in order):
 
@@ -92,7 +96,8 @@ Ticket 19 was added on 2026-11-04, after 01–18 were done. It needs only 16.
 
   Google (runbook steps 7–8) can wait until go-live. ~~After ticket 16: runbook steps 6–8 before signing in on localhost~~ was superseded on 2026-11-04 by ticket 19.
 
-- [ ] **After ticket 19:** open a PR so CI runs the database tests and the live-mode Admin e2e, including ticket 19's CI-only checks.
+- [ ] **After tickets 20 and 21:** apply their migrations to the hosted project with runbook step 3 (`supabase db push`), then run `pnpm db:check`. Until then, the Website shows the defaults, and Site page and About saves on the hosted project fail.
+- [ ] **After ticket 22:** open a PR so CI runs the database tests and the live-mode Admin e2e, including the CI-only checks from tickets 19–21.
 
 - [ ] **Before production (ticket 18's runbook):**
   - the Google Auth Platform client and the Supabase Google provider

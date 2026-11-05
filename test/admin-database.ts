@@ -13,7 +13,7 @@ import type { UploadRequest } from "@/services/uploads.types";
 import type { AdminArm } from "./admin-arms";
 import { loadTestCatalogue } from "./catalogue-database";
 import { imageBytes } from "./image-bytes";
-import { uploadSamplePhoto } from "./sample-photo";
+import { SHARE_IMAGE_OWNERS, uploadSamplePhoto } from "./sample-photo";
 import { putFile } from "./storage-database";
 
 /**
@@ -29,7 +29,7 @@ async function uploadStoragePhoto({
     { email: "content@aceyourcourse.ph", name: "AYC Content Team", role: "editor" },
     {
       purpose,
-      owner: purpose === "share-image" ? "CE" : "prd-001",
+      owner: SHARE_IMAGE_OWNERS[purpose] ?? "prd-001",
       contentType: "image/png",
       size: bytes.byteLength,
     },

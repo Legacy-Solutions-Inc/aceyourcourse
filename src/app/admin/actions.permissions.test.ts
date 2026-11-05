@@ -258,6 +258,17 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
         input: { code: "CE", contentType: "image/png", size: 2048 },
       }),
     ),
+    saveSitePageSeo: editorSave("staff", examPages.saveSitePageSeo, () => ({
+      site: "about",
+      seoTitle: SAVES.seoTitle,
+      seoDescription: "",
+      shareImage: "",
+    })),
+    createSitePageShareImageUpload: staff(() =>
+      examPages.createSitePageShareImageUpload(IDLE, {
+        input: { site: "faq", contentType: "image/png", size: 2048 },
+      }),
+    ),
     savePromoBanner: editorSave("staff", examPages.savePromoBanner, () => ({
       ...promoBannerFormValues(getSampleStore().catalogue.settings.promoBanner),
       buttonLabel: SAVES.bannerButtonLabel,

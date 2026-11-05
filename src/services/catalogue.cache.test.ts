@@ -48,6 +48,7 @@ describe("catalogue seam: cache tags", () => {
     ],
     ["getWebsiteSettings", () => seam.getWebsiteSettings(), ["catalogue:settings"]],
     ["getExamPage", () => seam.getExamPage("ce"), ["catalogue:exam-pages", "catalogue:products"]],
+    ["getSitePage", () => seam.getSitePage("about"), ["catalogue:site-pages"]],
   ];
 
   it.each(READS)("tags %s with catalogue and the areas it reads", async (_name, read, tags) => {

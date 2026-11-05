@@ -78,7 +78,7 @@ describe("Overview page", () => {
         "/admin/products?missing=1",
       ],
       [
-        "Promo banner is offTurn it on in Exam pages & promo when the next sale starts.Open →",
+        "Promo banner is offTurn it on in Pages & promo when the next sale starts.Open →",
         "/admin/exam-pages?page=promo",
       ],
       [

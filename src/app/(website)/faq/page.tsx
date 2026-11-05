@@ -4,35 +4,17 @@ import { CoverageTable } from "@/components/website/faq/coverage-table";
 import { FaqExplorer } from "@/components/website/faq/faq-explorer";
 import { StillHaveAQuestion } from "@/components/website/faq/still-have-a-question";
 import { JsonLd } from "@/components/website/json-ld";
-import { config } from "@/config";
 import { faqPageCopy } from "@/content/faq-page";
 import { faqPageJsonLd } from "@/lib/faq/faq-json-ld";
-import { paths } from "@/paths";
+import { sitePageMetadata } from "@/lib/catalogue/site-page-seo";
 import { getWebsiteSettings, listExams, listFaqs } from "@/services/catalogue";
 
 const copy = faqPageCopy;
 
+// The title, description and share image Staff set in Pages & promo, or
+// today's text (src/content) and the site's image.
 export async function generateMetadata(): Promise<Metadata> {
-  const title = copy.metaTitle;
-  const description = copy.metaDescription;
-  const shareTitle = `${title} · ${config.site.name}`;
-  // Setting openGraph here replaces the root's, so the share image is repeated.
-  const images = [{ url: paths.shareImage, alt: config.site.name }];
-  return {
-    title,
-    description,
-    alternates: { canonical: paths.faq },
-    openGraph: {
-      type: "website",
-      siteName: config.site.name,
-      locale: "en_PH",
-      title: shareTitle,
-      description,
-      url: paths.faq,
-      images,
-    },
-    twitter: { card: "summary_large_image", title: shareTitle, description, images },
-  };
+  return sitePageMetadata("faq");
 }
 
 export default async function FaqPage() {

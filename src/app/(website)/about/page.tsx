@@ -5,35 +5,14 @@ import { AboutHero } from "@/components/website/about/about-hero";
 import { IloiloRoots } from "@/components/website/about/iloilo-roots";
 import { MissionTabs } from "@/components/website/about/mission-tabs";
 import { OurStory } from "@/components/website/about/our-story";
-import { config } from "@/config";
-import { aboutCopy } from "@/content/about";
 import { aboutStats } from "@/lib/catalogue/about-stats";
-import { paths } from "@/paths";
+import { sitePageMetadata } from "@/lib/catalogue/site-page-seo";
 import { getWebsiteSettings, listExams, listProducts } from "@/services/catalogue";
 
-const copy = aboutCopy;
-
+// The title, description and share image Staff set in Pages & promo, or
+// today's text (src/content) and the site's image.
 export async function generateMetadata(): Promise<Metadata> {
-  const title = copy.metaTitle;
-  const description = copy.metaDescription;
-  const shareTitle = `${title} · ${config.site.name}`;
-  // Setting openGraph here replaces the root's, so the share image is repeated.
-  const images = [{ url: paths.shareImage, alt: config.site.name }];
-  return {
-    title,
-    description,
-    alternates: { canonical: paths.about },
-    openGraph: {
-      type: "website",
-      siteName: config.site.name,
-      locale: "en_PH",
-      title: shareTitle,
-      description,
-      url: paths.about,
-      images,
-    },
-    twitter: { card: "summary_large_image", title: shareTitle, description, images },
-  };
+  return sitePageMetadata("about");
 }
 
 export default async function AboutPage() {

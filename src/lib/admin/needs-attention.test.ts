@@ -139,7 +139,7 @@ describe("needsAttention", () => {
         {
           kind: "promo",
           title: "Promo banner is off",
-          detail: "Turn it on in Exam pages & promo when the next sale starts.",
+          detail: "Turn it on in Pages & promo when the next sale starts.",
           action: "Open",
           href: "/admin/exam-pages?page=promo",
           tone: "quiet",
@@ -154,7 +154,7 @@ describe("needsAttention", () => {
         {
           kind: "promo",
           title: "Promo banner ends 6 Nov",
-          detail: "It turns itself off after that day. Set the next sale in Exam pages & promo.",
+          detail: "It turns itself off after that day. Set the next sale in Pages & promo.",
           action: "Open",
           href: "/admin/exam-pages?page=promo",
           tone: "warning",

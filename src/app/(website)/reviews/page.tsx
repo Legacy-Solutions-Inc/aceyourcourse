@@ -4,14 +4,13 @@ import { PassedWithOurCards } from "@/components/website/reviews/passed-with-our
 import { RatingsTable } from "@/components/website/reviews/ratings-table";
 import { ReviewWall } from "@/components/website/reviews/review-wall";
 import { ReviewWallFilters } from "@/components/website/reviews/review-wall-filters";
-import { config } from "@/config";
 import { reviewsPageCopy } from "@/content/reviews-page";
 import { formatCount, formatRating } from "@/lib/catalogue/figures";
 import { reviewFacetCounts } from "@/lib/catalogue/review-filters";
 import { parseReviewSearchParams } from "@/lib/catalogue/review-search-params";
 import { formatAsOf } from "@/lib/manila-time";
 import { cn } from "@/lib/utils";
-import { paths } from "@/paths";
+import { sitePageMetadata } from "@/lib/catalogue/site-page-seo";
 import { getWebsiteSettings, listExams, listProducts, listReviews } from "@/services/catalogue";
 
 interface ReviewsPageProps {
@@ -23,27 +22,10 @@ const container = "mx-auto max-w-324 px-[clamp(20px,5vw,72px)]";
 
 // Every filtered view is one page to search engines: /reviews. The Reviews are
 // shown but never emitted as Review or AggregateRating structured data.
+// The title, description and share image Staff set in Pages & promo, or
+// today's text (src/content) and the site's image.
 export async function generateMetadata(): Promise<Metadata> {
-  const title = copy.metaTitle;
-  const description = copy.metaDescription;
-  const shareTitle = `${title} · ${config.site.name}`;
-  // Setting openGraph here replaces the root's, so the share image is repeated.
-  const images = [{ url: paths.shareImage, alt: config.site.name }];
-  return {
-    title,
-    description,
-    alternates: { canonical: paths.reviews },
-    openGraph: {
-      type: "website",
-      siteName: config.site.name,
-      locale: "en_PH",
-      title: shareTitle,
-      description,
-      url: paths.reviews,
-      images,
-    },
-    twitter: { card: "summary_large_image", title: shareTitle, description, images },
-  };
+  return sitePageMetadata("reviews");
 }
 
 export default async function ReviewsPage({ searchParams }: ReviewsPageProps) {

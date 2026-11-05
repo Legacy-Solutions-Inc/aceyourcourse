@@ -13,7 +13,7 @@ import {
   shareImageWarning,
 } from "./exam-pages-view";
 
-// Exam pages & promo's URL, its SECTIONS · SHOW OR HIDE list and its
+// Pages & promo's URL, its SECTIONS · SHOW OR HIDE list and its
 // warnings (BUILD-MAP §3.2; CONVENTIONS §2: ?exam=ce&section=header,
 // ?page=promo, ?page=announcement).
 
@@ -39,7 +39,12 @@ function adminPage(changes: Partial<AdminExamPage["page"]> = {}): AdminExamPage 
 
 describe("parseExamPagesParams", () => {
   it("opens the Exam pages at the first Exam's Header with no selection", () => {
-    expect(parseExamPagesParams({})).toEqual({ page: "exam", exam: null, section: "header" });
+    expect(parseExamPagesParams({})).toEqual({
+      page: "exam",
+      exam: null,
+      section: "header",
+      site: "home",
+    });
   });
 
   it("reads the Exam and the section", () => {
@@ -47,6 +52,7 @@ describe("parseExamPagesParams", () => {
       page: "exam",
       exam: "me",
       section: "seo",
+      site: "home",
     });
   });
 
@@ -59,7 +65,29 @@ describe("parseExamPagesParams", () => {
       page: "exam",
       exam: null,
       section: "header",
+      site: "home",
     });
+  });
+
+  it.each(["home", "about", "products", "faq", "reviews"] as const)(
+    "reads ?page=site&site=%s",
+    (site) => {
+      expect(parseExamPagesParams({ page: "site", site })).toMatchObject({ page: "site", site });
+    },
+  );
+
+  it.each([["legal"], ["ABOUT "], [""], [["menu", "about"]]])(
+    "opens Home for ?page=site&site=%j, which isn't a Site page",
+    (site) => {
+      expect(parseExamPagesParams({ page: "site", site })).toMatchObject({
+        page: "site",
+        site: "home",
+      });
+    },
+  );
+
+  it("opens Home when ?page=site names no Site page", () => {
+    expect(parseExamPagesParams({ page: "site" })).toMatchObject({ page: "site", site: "home" });
   });
 
   it("takes the first of a repeated parameter", () => {
@@ -76,6 +104,13 @@ describe("examPagesHref", () => {
 
   it("links to an Exam's Header without naming it", () => {
     expect(examPagesHref({ exam: "ME" })).toBe("/admin/exam-pages?exam=me");
+  });
+
+  it("links to each Site page, Home included", () => {
+    expect(examPagesHref({ page: "site", site: "about" })).toBe(
+      "/admin/exam-pages?page=site&site=about",
+    );
+    expect(examPagesHref({ page: "site" })).toBe("/admin/exam-pages?page=site&site=home");
   });
 
   it("links to the promo banner and announcement bar pages", () => {

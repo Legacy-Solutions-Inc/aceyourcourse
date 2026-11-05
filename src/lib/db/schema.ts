@@ -19,7 +19,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { FAQ_GROUPS, PRODUCT_FORMATS } from "@/services/catalogue.schema";
+import { FAQ_GROUPS, PRODUCT_FORMATS, SITE_PAGES } from "@/services/catalogue.schema";
 import type { Marketplace } from "@/services/catalogue.types";
 
 /**
@@ -51,6 +51,7 @@ export const marketplace = pgEnum("marketplace", MARKETPLACES);
 export const productFormat = pgEnum("product_format", PRODUCT_FORMATS);
 export const productState = pgEnum("product_state", ["live", "coming-soon"]);
 export const faqGroup = pgEnum("faq_group", FAQ_GROUPS);
+export const sitePage = pgEnum("site_page", SITE_PAGES);
 
 // ── Exams ───────────────────────────────────────────────────────────────────
 
@@ -250,6 +251,19 @@ export const examPages = pgTable("exam_pages", {
   seoDescription: text("seo_description"),
   shareImage: text("share_image"),
   officialExamDate: date("official_exam_date"),
+}).enableRLS();
+
+/**
+ * What Staff edit about each Site page (ticket 20): its SEO overrides and
+ * share image. A page with no row uses its text in code, so the table starts
+ * empty and nothing needs loading.
+ */
+export const sitePages = pgTable("site_pages", {
+  page: sitePage("page").primaryKey(),
+  position: integer("position").notNull(),
+  seoTitle: text("seo_title"),
+  seoDescription: text("seo_description"),
+  shareImage: text("share_image"),
 }).enableRLS();
 
 // ── Website settings ────────────────────────────────────────────────────────

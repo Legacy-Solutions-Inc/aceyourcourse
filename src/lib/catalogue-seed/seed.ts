@@ -94,6 +94,7 @@ const TABLES = [
   schema.reviews,
   schema.faqs,
   schema.examPages,
+  schema.sitePages,
   schema.websiteSettings,
   schema.announcementMessages,
   schema.promoBanner,
@@ -165,6 +166,7 @@ async function writeCatalogue(tx: Transaction, seed: CatalogueSeed): Promise<voi
   if (rows.reviews.length) await tx.insert(schema.reviews).values(rows.reviews);
   if (rows.faqs.length) await tx.insert(schema.faqs).values(rows.faqs);
   if (rows.examPages.length) await tx.insert(schema.examPages).values(rows.examPages);
+  if (rows.sitePages.length) await tx.insert(schema.sitePages).values(rows.sitePages);
   await tx.insert(schema.websiteSettings).values(rows.websiteSettings);
   if (rows.announcementMessages.length) {
     await tx.insert(schema.announcementMessages).values(rows.announcementMessages);

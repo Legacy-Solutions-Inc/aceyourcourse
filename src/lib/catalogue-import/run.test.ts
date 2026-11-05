@@ -218,7 +218,7 @@ describe("formatImportError", () => {
         column: null,
         message: "faqs.4.reviewQuote.reviewId: unknown Review",
       },
-      "settings, FAQs and Exam pages (src/services/mock/catalogue.ts): faqs.4.reviewQuote.reviewId: unknown Review",
+      "settings, FAQs, Exam pages and Site pages (src/services/mock/catalogue.ts): faqs.4.reviewQuote.reviewId: unknown Review",
     ],
   ] as const)("prints %o as %j", (error, line) => {
     expect(formatImportError(error)).toBe(line);

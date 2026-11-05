@@ -131,7 +131,12 @@ export function spreadsheet(edit?: (sheets: SheetRecords) => void): Record<Sheet
  * The hand-maintained part of the seed, with no FAQs or Exam pages, so the
  * fixture's Reviews and Products needn't match them.
  */
-export const HAND_MAINTAINED = { settings: CATALOGUE_SEED.settings, faqs: [], examPages: [] };
+export const HAND_MAINTAINED = {
+  settings: CATALOGUE_SEED.settings,
+  faqs: [],
+  examPages: [],
+  sitePages: [],
+};
 
 /** A Product row of the fixture, by slug, for editing. */
 export function productRow(sheets: SheetRecords, slug: string): Record<string, string> {

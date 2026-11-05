@@ -5,8 +5,8 @@ import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import ExamPagesPage from "./page";
 
-// Exam pages & promo, rendered from the sample data with its page, Exam and
-// section read from the URL. The cookie jar and the router are the framework
+// Pages & promo, rendered from the sample data with its page, Exam or Site
+// page, and section read from the URL. The cookie jar and the router are the framework
 // boundary, so they are replaced.
 const { jar } = vi.hoisted(() => ({ jar: new Map<string, string>() }));
 
@@ -43,7 +43,7 @@ const sectionRows = (code: string) =>
       within(item).queryByRole("link", { name: /^(Header|Subjects|Reviewers|Bundle|Reviews)/ }),
     );
 
-describe("Exam pages & promo", () => {
+describe("Pages & promo", () => {
   beforeEach(() => {
     jar.clear();
     resetSampleStore();
@@ -56,14 +56,14 @@ describe("Exam pages & promo", () => {
       within(pages())
         .getAllByRole("link")
         .map((link) => link.textContent),
-    ).toEqual(["Exam pages× 5", "Home promo banner", "Announcement bar"]);
+    ).toEqual(["Exam pages× 5", "Site pages× 5", "Home promo banner", "Announcement bar"]);
     expect(within(pages()).getByRole("link", { name: /^Exam pages/ })).toHaveAttribute(
       "aria-current",
       "page",
     );
     expect(
       within(pages()).getByText(
-        "Home, About, Products, menu, footer, and legal pages are fixed. Changes to those go through the developer.",
+        "Menu, footer, and legal pages are fixed. Changes to those go through the developer.",
       ),
     ).toBeInTheDocument();
   });
@@ -187,6 +187,99 @@ describe("Exam pages & promo", () => {
     expect(
       within(column("CE")).getByRole("link", { name: /^Search & AI visibility/ }),
     ).toHaveTextContent("CHECK");
+  });
+
+  describe("Site pages", () => {
+    const siteColumn = (label: string) =>
+      screen.getByRole("region", { name: `${label} Site page` });
+    const siteEditor = () => screen.getByRole("complementary", { name: "Site page editor" });
+
+    it("opens Home by default, with the chips, View page ↗ and Search & AI visibility", async () => {
+      await renderPage({ page: "site" });
+      expect(within(pages()).getByRole("link", { current: "page" })).toHaveTextContent(
+        "Site pages",
+      );
+      expect(within(pages()).getByRole("link", { name: /^Site pages/ })).toHaveAttribute(
+        "href",
+        "/admin/exam-pages?page=site&site=home",
+      );
+      const home = siteColumn("HOME");
+      const chips = within(within(home).getByRole("list", { name: "Site page" }));
+      expect(chips.getAllByRole("link").map((link) => link.textContent)).toEqual([
+        "HOME",
+        "ABOUT",
+        "PRODUCTS",
+        "FAQ",
+        "REVIEWS",
+      ]);
+      expect(chips.getByRole("link", { name: "HOME" })).toHaveAttribute("aria-current", "page");
+      expect(chips.getByRole("link", { name: "FAQ" })).toHaveAttribute(
+        "href",
+        "/admin/exam-pages?page=site&site=faq",
+      );
+      expect(within(home).getByRole("link", { name: /^View page/ })).toHaveAttribute("href", "/");
+      expect(
+        within(siteEditor()).getByText("SEARCH & AI VISIBILITY · SITE PAGES · HOME"),
+      ).toBeVisible();
+      // Home's address is the site root, in the field and in the preview.
+      expect(within(siteEditor()).getAllByText("aceyourcourse.ph/")).toHaveLength(2);
+    });
+
+    it("opens ABOUT with today's text as the placeholders, the counters and the share image", async () => {
+      await renderPage({ page: "site", site: "about" });
+      const title = within(siteEditor()).getByLabelText("PAGE TITLE");
+      expect(title).toHaveValue("");
+      expect(title).toHaveAttribute("placeholder", "About · made by board passers in Iloilo");
+      // "About · made by board passers in Iloilo · Ace Your Course"
+      expect(title).toHaveAccessibleDescription("57 / 60 characters, with the site name");
+      expect(within(siteEditor()).getByLabelText("META DESCRIPTION")).toHaveAttribute(
+        "placeholder",
+        expect.stringMatching(/^Ace Your Course is run by board passers in Iloilo City/),
+      );
+      expect(
+        within(siteEditor()).getByLabelText("SHARE IMAGE · 1200 × 630"),
+      ).toHaveAccessibleDescription("Uses the site’s share image");
+      expect(
+        within(siteEditor()).getByText(
+          "Leave a field blank to use the page’s text today, shown in grey.",
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it("opens HOME for a page that isn't a Site page", async () => {
+      await renderPage({ page: "site", site: "legal" });
+      expect(siteColumn("HOME")).toBeInTheDocument();
+    });
+
+    const aboutCard = () =>
+      within(siteColumn("ABOUT")).getByRole("link", { name: /^Search & AI visibility/ });
+
+    it("shows CHECK while today's text doesn't fit: About's description is over 160", async () => {
+      await renderPage({ page: "site", site: "about" });
+      expect(aboutCard()).toHaveTextContent("CHECK");
+    });
+
+    it("shows GOOD, and the saved values, once the saved title and description fit", async () => {
+      getSampleStore().catalogue.sitePages = [
+        {
+          page: "about",
+          seoTitle: "About us · board passers from Iloilo",
+          seoDescription: "d".repeat(120),
+          shareImage: null,
+        },
+      ];
+      await renderPage({ page: "site", site: "about" });
+      expect(aboutCard()).toHaveTextContent("GOOD");
+      expect(within(siteEditor()).getByLabelText("PAGE TITLE")).toHaveValue(
+        "About us · board passers from Iloilo",
+      );
+    });
+
+    it("lists what's set up automatically: the sitemap, with no breadcrumbs on a Site page", async () => {
+      await renderPage({ page: "site", site: "faq" });
+      expect(within(siteEditor()).getByText("Sitemap")).toBeInTheDocument();
+      expect(within(siteEditor()).queryByText("Breadcrumbs")).not.toBeInTheDocument();
+    });
   });
 
   it("shows ?page=promo: the Home promo banner's editor with its status, for an Editor", async () => {

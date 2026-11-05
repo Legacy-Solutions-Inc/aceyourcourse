@@ -2,7 +2,7 @@ import { isPromoActive } from "@/lib/catalogue/promo";
 import { isCalendarDate, manilaDayStart } from "@/lib/manila-time";
 import type { PromoBanner } from "@/services/catalogue.types";
 
-// The Home promo banner's status line in Exam pages & promo (spec, Phase 2 →
+// The Home promo banner's status line in Pages & promo (spec, Phase 2 →
 // Exam pages & promo). Whether it's on is the Website's own rule,
 // isPromoActive, so the Admin never says ON while Home shows no strip.
 

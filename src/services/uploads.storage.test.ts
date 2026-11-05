@@ -73,6 +73,10 @@ describe("the Storage arm's createUpload", () => {
     [{ ...PHOTO, contentType: "image/jpeg" }, `^products/new/${UUID}\\.jpg$`],
     [{ ...PHOTO, contentType: "image/webp" }, `^products/new/${UUID}\\.webp$`],
     [{ ...PHOTO, purpose: "share-image", owner: "CE" }, `^exam-pages/CE/share-${UUID}\\.png$`],
+    [
+      { ...PHOTO, purpose: "site-page-share-image", owner: "faq" },
+      `^site-pages/faq/share-${UUID}\\.png$`,
+    ],
   ] as const)("files %o at its own path", async (request, pattern) => {
     const { arm } = fakeBucket();
     const result = await arm.createUpload(EDITOR, request);
@@ -100,6 +104,18 @@ describe("the Storage arm's createUpload", () => {
       "a share image with no Exam",
       EDITOR,
       { ...PHOTO, purpose: "share-image" },
+      { kind: "invalid", fieldErrors: { owner: ["UNKNOWN UPLOAD"] } },
+    ],
+    [
+      "a Site page share image with no Site page",
+      EDITOR,
+      { ...PHOTO, purpose: "site-page-share-image" },
+      { kind: "invalid", fieldErrors: { owner: ["UNKNOWN UPLOAD"] } },
+    ],
+    [
+      "a Site page share image for a page that isn't a Site page",
+      EDITOR,
+      { ...PHOTO, purpose: "site-page-share-image", owner: "legal" },
       { kind: "invalid", fieldErrors: { owner: ["UNKNOWN UPLOAD"] } },
     ],
     [
@@ -140,6 +156,17 @@ describe("what a save finds at an upload's path", () => {
   const sent = `products/prd-001/0d6c1e0a-6f0e-4f43-9b8a-1f2a3b4c5d6e.png`;
   const unsent = `products/new/5b0a2c9e-1d3f-4e5a-8b7c-6d5e4f3a2b1c.webp`;
   const share = `exam-pages/CE/share-7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f.jpg`;
+  const siteShare = `site-pages/about/share-2e3f4a5b-6c7d-4e8f-9a0b-1c2d3e4f5a6b.png`;
+
+  it("is the public URL of a Site page's share image once it's in the bucket", async () => {
+    const { arm } = fakeBucket();
+    const uploadAt = await arm.lookupUploads([siteShare]);
+
+    expect(uploadAt(siteShare, "site-page-share-image")).toEqual({
+      publicUrl: `${PUBLIC}${siteShare}`,
+    });
+    expect(uploadAt(siteShare, "share-image")).toBeNull();
+  });
 
   it("is the public URL once the file is in the bucket, and waiting until then", async () => {
     // As storage-js answers for a file that isn't there: false, with the 404 as its error.
@@ -255,6 +282,31 @@ describe("imagesRemoved", () => {
     cleared.shareImage = null;
 
     expect(imagesRemoved(before, after)).toEqual([first.shareImage, second.shareImage]);
+  });
+
+  it("is a Site page's share image the save replaced or cleared", () => {
+    const before = seed();
+    before.sitePages = [
+      {
+        page: "faq",
+        seoTitle: null,
+        seoDescription: null,
+        shareImage: `${PUBLIC}site-pages/faq/share-old.png`,
+      },
+      {
+        page: "home",
+        seoTitle: null,
+        seoDescription: null,
+        shareImage: `${PUBLIC}site-pages/home/share-old.png`,
+      },
+    ];
+    const after = structuredClone(before);
+    const [replaced, cleared] = after.sitePages;
+    if (!replaced || !cleared) throw new Error("unreachable");
+    replaced.shareImage = `${PUBLIC}site-pages/faq/share-new.png`;
+    cleared.shareImage = null;
+
+    expect(imagesRemoved(before, after)).toEqual(before.sitePages.map((page) => page.shareImage));
   });
 
   it("isn't a photo that moved to another place in the catalogue", () => {

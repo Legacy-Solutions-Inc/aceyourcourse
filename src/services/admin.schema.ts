@@ -13,6 +13,7 @@ import {
   httpsUrl,
   isSiteHref,
   PRODUCT_FORMATS,
+  SITE_PAGES,
 } from "@/services/catalogue.schema";
 import type { Marketplace, Review } from "@/services/catalogue.types";
 
@@ -907,6 +908,12 @@ export const examSeoFormSchema = examSeoFormFields
 
 /** "Save": the Exam and its SEO fields, their shape checked. */
 export const saveExamSeoInputSchema = examSeoFormFields.extend({ code: examCode });
+
+/** "Save" on a Site page's Search & AI visibility: the page and its SEO fields, their shape checked. */
+export const saveSitePageSeoInputSchema = examSeoFormFields.extend({ site: z.enum(SITE_PAGES) });
+
+/** A Site page's share image upload: the file and its Site page. */
+export const sitePageUploadInputSchema = z.object({ site: z.enum(SITE_PAGES) });
 
 /** What a share image that's neither the page's nor a finished upload is told. */
 export const SHARE_IMAGE_NOT_UPLOADED = "THE IMAGE ISN’T UPLOADED · ADD IT AGAIN";

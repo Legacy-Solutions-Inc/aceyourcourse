@@ -26,6 +26,7 @@ const COUNTS = {
   reviews: 30,
   faqs: 10,
   examPages: 3,
+  sitePages: 0,
   websiteSettings: 1,
   owners: 1,
   editors: 0,
@@ -75,7 +76,7 @@ describe("db:check's report", () => {
       "✓ Migrations: all 2 in supabase/migrations are applied",
       "✓ Deny-all: 18 tables in public, each with RLS on and no policy or grant for the browser roles",
       '✓ Storage bucket "catalogue": public, 10 MB limit, image/jpeg, image/png, image/webp',
-      "  Catalogue: 3 Exams, 12 Subjects, 9 Products (7 Live, 2 Coming Soon), 20 photos, 15 Listings, 30 Reviews, 10 FAQs, 3 Exam pages, 1 Website settings row",
+      "  Catalogue: 3 Exams, 12 Subjects, 9 Products (7 Live, 2 Coming Soon), 20 photos, 15 Listings, 30 Reviews, 10 FAQs, 3 Exam pages, 0 Site pages, 1 Website settings row",
       "  Staff: 1 Owner, 0 Editors, 0 Invites",
       "All checks passed. Nothing was written.",
     ]);

@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { CatalogueSeed } from "@/services/catalogue.schema";
+import { type CatalogueSeed, SITE_PAGES } from "@/services/catalogue.schema";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 
 /** The Catalogue seam as the Website imports it. */
@@ -258,6 +258,40 @@ export function describeCatalogueContract(arm: CatalogueArm) {
         const again = await seam.getExamPage("CE");
         expect(again?.sections.reviews).toBe(true);
         expect(again?.bundleOffer?.headline).toBe("CE Review Bundle 3-in-1");
+      });
+    });
+
+    describe("catalogue seam: Site pages", () => {
+      it("gives every Site page nothing set while the catalogue has no Site page records", async () => {
+        // The seed has none, as a database loaded before ticket 20 has none.
+        for (const page of SITE_PAGES) {
+          expect(await seam.getSitePage(page), page).toEqual({
+            page,
+            seoTitle: null,
+            seoDescription: null,
+            shareImage: null,
+          });
+        }
+      });
+
+      it("gives a Site page its saved title, description and share image, and the others nothing", async () => {
+        const about = {
+          page: "about" as const,
+          seoTitle: "About us · board passers from Iloilo",
+          seoDescription: "Made by board passers in Iloilo City, for the next batch of reviewees.",
+          shareImage: "/images/share/about.png",
+        };
+        const seam = await seamWith((seed) => {
+          seed.sitePages = [about];
+        });
+        expect(await seam.getSitePage("about")).toEqual(about);
+        expect(await seam.getSitePage("faq")).toMatchObject({ seoTitle: null, shareImage: null });
+      });
+
+      it("hands out copies, so a caller's change never leaks into the next read", async () => {
+        const page = await seam.getSitePage("home");
+        page.seoTitle = "Changed";
+        expect((await seam.getSitePage("home")).seoTitle).toBeNull();
       });
     });
 

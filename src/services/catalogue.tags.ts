@@ -18,6 +18,7 @@ export const CATALOGUE_TAGS = {
   faqs: "catalogue:faqs",
   settings: "catalogue:settings",
   examPages: "catalogue:exam-pages",
+  sitePages: "catalogue:site-pages",
 } as const;
 
 export type CatalogueAreaTag = (typeof CATALOGUE_TAGS)[keyof typeof CATALOGUE_TAGS];

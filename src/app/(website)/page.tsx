@@ -11,9 +11,8 @@ import { HomeStoreBand } from "@/components/website/home/home-store-band";
 import { HomeTicker } from "@/components/website/home/home-ticker";
 import { PromoStrip } from "@/components/website/home/promo-strip";
 import { VideoSection } from "@/components/website/home/video-section";
-import { config } from "@/config";
-import { homeCopy, tryCards } from "@/content/home";
-import { paths } from "@/paths";
+import { tryCards } from "@/content/home";
+import { sitePageMetadata } from "@/lib/catalogue/site-page-seo";
 import {
   getWebsiteSettings,
   listBestSellers,
@@ -25,27 +24,10 @@ import {
 /** The mockup's Best sellers row shows the top 6 (L341). */
 const BEST_SELLER_COUNT = 6;
 
+// The title, description and share image Staff set in Pages & promo, or
+// today's text (src/content) and the site's image.
 export async function generateMetadata(): Promise<Metadata> {
-  const title = homeCopy.metaTitle;
-  const description = homeCopy.metaDescription;
-  const shareTitle = `${title} · ${config.site.name}`;
-  // Setting openGraph here replaces the root's, so the share image is repeated.
-  const images = [{ url: paths.shareImage, alt: config.site.name }];
-  return {
-    title,
-    description,
-    alternates: { canonical: paths.home },
-    openGraph: {
-      type: "website",
-      siteName: config.site.name,
-      locale: "en_PH",
-      title: shareTitle,
-      description,
-      url: paths.home,
-      images,
-    },
-    twitter: { card: "summary_large_image", title: shareTitle, description, images },
-  };
+  return sitePageMetadata("home");
 }
 
 // Home (docs/mockup/website/Home_v2.dc.html items 1–9), under the promo strip

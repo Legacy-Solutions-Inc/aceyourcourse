@@ -100,6 +100,7 @@ async function readCatalogueRows(tx: Transaction): Promise<CatalogueRows> {
     reviews: await tx.select().from(schema.reviews),
     faqs: await tx.select().from(schema.faqs),
     examPages: await tx.select().from(schema.examPages),
+    sitePages: await tx.select().from(schema.sitePages),
     websiteSettings: await tx.select().from(schema.websiteSettings),
     announcementMessages: await tx.select().from(schema.announcementMessages),
     promoBanner: await tx.select().from(schema.promoBanner),
@@ -211,6 +212,7 @@ const CATALOGUE_TABLES: readonly (Synced & { rows: keyof CatalogueRows })[] = [
   { rows: "reviews", table: schema.reviews, key: ["id"] },
   { rows: "faqs", table: schema.faqs, key: ["id"] },
   { rows: "examPages", table: schema.examPages, key: ["examCode"] },
+  { rows: "sitePages", table: schema.sitePages, key: ["page"] },
   { rows: "websiteSettings", table: schema.websiteSettings, key: ["id"] },
   { rows: "announcementMessages", table: schema.announcementMessages, key: ["position"] },
   { rows: "promoBanner", table: schema.promoBanner, key: ["id"] },
@@ -520,6 +522,9 @@ export const databaseArm: AdminService = {
   updateBundleOffer: stampedWrite(sampleArm.updateBundleOffer),
   updateExamSeo: stampedWrite(sampleArm.updateExamSeo),
   updateOfficialExamDate: stampedWrite(sampleArm.updateOfficialExamDate),
+
+  getSitePageForAdmin: read(CATALOGUE, sampleArm.getSitePageForAdmin),
+  updateSitePageSeo: stampedWrite(sampleArm.updateSitePageSeo),
 
   getPromoForAdmin: read(CATALOGUE, sampleArm.getPromoForAdmin),
   updatePromoBanner: stampedWrite(sampleArm.updatePromoBanner),
