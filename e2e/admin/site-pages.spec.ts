@@ -23,8 +23,11 @@ const column = (page: Page, label: string) =>
   page.getByRole("region", { name: `${label} Site page` });
 const saveState = (page: Page) => editor(page).getByRole("status");
 
+// Not `head meta[...]`: metadata that resolves after the page's first flush
+// (a database read, live) is streamed into <body> and stays there. Share
+// crawlers get it in <head>; a browser has it in the document either way.
 const metaContent = (page: Page, selector: string) =>
-  page.locator(`head meta[${selector}]`).getAttribute("content");
+  page.locator(`meta[${selector}]`).getAttribute("content");
 
 test.beforeEach(async ({ request }) => {
   await resetSampleData(request);
@@ -91,7 +94,7 @@ test("uploads the FAQ page's 1200 × 630 share image: its og:image", async ({ pa
   expect(served.headers()["content-type"]).toBe("image/png");
   // Home keeps the site's share image.
   await page.goto(paths.home);
-  await expect(page.locator('head meta[property="og:image"]')).toHaveAttribute(
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
     "content",
     /\/opengraph-image/,
   );

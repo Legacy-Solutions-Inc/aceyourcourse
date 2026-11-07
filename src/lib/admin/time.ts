@@ -57,12 +57,14 @@ function parseInstant(iso: string): Date {
 /**
  * Pure: the Overview greeting, "Good morning, Angel.", by the hour in Manila:
  * morning before 12:00, afternoon before 18:00, then evening. It greets by the
- * first word of the Staff User's name.
+ * first word of the Staff User's name, and leaves the name out when there is
+ * none: a User with no profile name has their email address here.
  */
 export function greeting(now: Date, name: string): string {
   const { hour } = manilaParts(now);
   const partOfDay = hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
-  const [firstName = name] = name.trim().split(/\s+/);
+  const [firstName = ""] = name.trim().split(/\s+/);
+  if (!firstName || firstName.includes("@")) return `Good ${partOfDay}.`;
   return `Good ${partOfDay}, ${firstName}.`;
 }
 

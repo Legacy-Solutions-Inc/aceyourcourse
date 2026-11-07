@@ -254,7 +254,10 @@ local Supabase instead, and the Admin journeys run live: a global setup loads
 the seed and makes the sample Staff password Users with the secret key, and
 each spec signs in with a password and writes the session cookie into the
 browser. The config refuses any of those that names a host off this machine.
-CI runs both: every journey on the sample data, then the Admin ones live.
+CI runs both, as parallel jobs: the Website journeys, the Admin ones on the
+sample data (two shards) and the Admin ones live (three shards, each on its
+own local Supabase). A failed job keeps its `test-results` (traces and page
+snapshots) as an artifact for a week.
 
 ## Environment variables
 

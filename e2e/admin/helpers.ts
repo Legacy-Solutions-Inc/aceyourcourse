@@ -52,6 +52,24 @@ export async function signInAs(page: Page, who: SampleUserKey, next?: string) {
     .click();
 }
 
+/**
+ * Waits until React has hydrated every control on the page. Until then a
+ * field takes typing, but hydration puts React's own value back, so a spec's
+ * `fill` is lost (a Save then sends the unchanged text) or lands beside the
+ * old text. Sample mode signs in by clicking inside the already hydrated app,
+ * so its next page never meets this; live mode arrives by a fresh page load,
+ * where the server-rendered HTML shows well before hydration (the same wait
+ * as openProducts in e2e/products.spec.ts). Hidden inputs are left out: React
+ * adds the Server Actions' `$ACTION_ID_…` field itself, and it never gets props.
+ */
+export async function waitForHydration(page: Page): Promise<void> {
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll('button, input:not([type="hidden"]), textarea, select')]
+      .filter((control) => !control.closest("nextjs-portal"))
+      .every((control) => Object.keys(control).some((key) => key.startsWith("__reactProps$"))),
+  );
+}
+
 /** Signs in with any email: the list's "Other email" field, or a password User live. */
 export async function signInWithEmail(page: Page, email: string, next?: string) {
   if (LIVE) {
@@ -62,6 +80,7 @@ export async function signInWithEmail(page: Page, email: string, next?: string) 
     if (new URL(page.url()).pathname === paths.admin.signIn()) {
       await page.goto(paths.admin.overview);
     }
+    await waitForHydration(page);
     return;
   }
   const list = await openSignInAs(page, next);

@@ -217,13 +217,13 @@ describe("Home", () => {
       .map((h) => h.textContent);
     expect(titles).toEqual(["Flash cards", "Notebook", "Posters", "Bundle"]);
     // The mockup hardcoded ₱550 for CE · ME · EE · MT · CPA, ₱699 for CE · ME
-    // · EE · MT, ₱400 for CE · ME · EE · MT and ₱3,499: only MT's notebook and
-    // CE's posters are Live, and the bundle's options start at ₱1,200.
+    // · EE · MT and ₱400 for CE · ME · EE · MT: only MT's notebook and CE's
+    // posters are Live. The bundle shows its whole set, ₱3,499, not a part.
     for (const [title, exams, from] of [
       ["Flash cards", "For CE · ME · EE · MT · CPA", "₱550"],
       ["Notebook", "For MT", "₱699"],
       ["Posters", "For CE", "₱400"],
-      ["Bundle", "For CE", "₱1,200"],
+      ["Bundle", "For CE", "₱3,499"],
     ] as const) {
       expect(formatCard(title).getByText(exams), title).toBeInTheDocument();
       expect(formatCard(title).getByText(from), title).toBeInTheDocument();

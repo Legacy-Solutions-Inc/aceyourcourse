@@ -5,27 +5,28 @@ on:
     branches: [main, dev]
   pull_request:
 
+# A newer push to the same branch or pull request makes the older run
+# pointless, so it stops. Runs on main always finish.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 env:
   NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: placeholder
 
+# The jobs run side by side, so a run takes as long as its slowest job instead
+# of all of them added up. The Admin e2e is the slow part, and it is single-
+# worker by design (its specs change one shared data set), so it is split into
+# shards: each shard is its own job, with its own server and its own data, and
+# every Admin spec resets that data before each test (CONVENTIONS §6).
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-
-      # pnpm version comes from the `packageManager` field in package.json — do
-      # NOT also set `version:` here (pnpm/action-setup errors on a duplicate).
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          # Match the Volta pin / .nvmrc — posthog-node requires node >=22.22.0.
-          node-version: 22.23.1
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
 
       - run: pnpm lint
 
@@ -33,12 +34,21 @@ jobs:
 
       - run: pnpm test:coverage
 
-      # The database tests, and the Admin e2e in live mode, run against a
-      # throwaway local Supabase on the runner (spec Phase 2: Environments);
-      # no test touches the hosted project. Postgres, auth (gotrue), Storage
-      # and the API gateway (kong) start; every other service stays off.
-      # `supabase start` applies supabase/migrations. Google's client id and
-      # secret are unset here: the CLI warns and starts anyway.
+      - run: pnpm build
+
+  # The database tests run against a throwaway local Supabase on the runner
+  # (spec Phase 2: Environments); no test touches the hosted project.
+  # Postgres, auth (gotrue), Storage and the API gateway (kong) start; every
+  # other service stays off. `supabase start` applies supabase/migrations.
+  # Google's client id and secret are unset here: the CLI warns and starts
+  # anyway.
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
       - uses: supabase/setup-cli@v1
         with:
           version: 2.104.0
@@ -48,7 +58,7 @@ jobs:
       # The Storage suites (ticket 17, and ticket 19's refreshed password
       # session) need the runner's secret key: with TEST_DATABASE_REQUIRED a
       # missing one fails the run instead of skipping them. It comes from
-      # `supabase status`, for this step only, masked, as in the live e2e step.
+      # `supabase status`, for this step only, masked, as in the live e2e job.
       - name: pnpm test:db
         env:
           # The CLI's documented local default, not a secret.
@@ -63,19 +73,80 @@ jobs:
           export TEST_SUPABASE_SECRET_KEY="$secret"
           pnpm test:db
 
+  # The e2e jobs run on the in-memory sample data, as on a developer's
+  # machine, or live on a local Supabase (e2e-admin-live). The placeholders
+  # above never make a run live: playwright.config.ts blanks the app's
+  # Supabase and database values. A failed job keeps its test-results folder
+  # (traces and page snapshots) for a week.
+  e2e-website:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
       - run: pnpm exec playwright install --with-deps chromium
 
-      # Every Website and Admin journey on the in-memory sample data, as on a
-      # developer's machine. The placeholders above never make a run live:
-      # playwright.config.ts blanks the app's Supabase and database values.
-      - run: pnpm test:e2e
+      - run: pnpm test:e2e --project chromium
 
-      # The Admin journeys again, live on the runner's local Supabase (ticket
-      # 16): Staff are password Users there, and the Guard reads them through
-      # Supabase. Its URL and keys come from `supabase status`, for this step
-      # only, with the secret key masked. playwright.config.ts refuses any
-      # PLAYWRIGHT_* value that isn't local.
-      - name: pnpm test:e2e --project admin (live on the local Supabase)
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results-e2e-website
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+  e2e-admin:
+    name: e2e-admin (sample data, shard ${{ matrix.shard }} of 2)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - run: pnpm test:e2e --project admin --no-deps --shard=${{ matrix.shard }}/2
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results-e2e-admin-${{ matrix.shard }}
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # The Admin journeys again, live on the runner's local Supabase (ticket 16):
+  # Staff are password Users there, and the Guard reads them through
+  # Supabase. Each shard starts its own Supabase. Its URL and keys come from
+  # `supabase status`, for the test step only, with the secret key masked.
+  # playwright.config.ts refuses any PLAYWRIGHT_* value that isn't local.
+  e2e-admin-live:
+    name: e2e-admin (live on the local Supabase, shard ${{ matrix.shard }} of 3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.104.0
+
+      - run: supabase start -x realtime,imgproxy,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - name: pnpm test:e2e --project admin (live)
         run: |
           eval "$(supabase status -o env)"
           secret="${SECRET_KEY:-$SERVICE_ROLE_KEY}"
@@ -84,9 +155,15 @@ jobs:
           export PLAYWRIGHT_SUPABASE_URL="$API_URL"
           export PLAYWRIGHT_SUPABASE_PUBLISHABLE_KEY="${PUBLISHABLE_KEY:-$ANON_KEY}"
           export PLAYWRIGHT_SUPABASE_SECRET_KEY="$secret"
-          pnpm test:e2e --project admin --no-deps
+          pnpm test:e2e --project admin --no-deps --shard=${{ matrix.shard }}/3
 
-      - run: pnpm build
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results-e2e-admin-live-${{ matrix.shard }}
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 7
 
   # Dependency review runs only on pull requests (it diffs the base vs head
   # dependency manifests) and fails the PR on high-severity vulnerable deps.

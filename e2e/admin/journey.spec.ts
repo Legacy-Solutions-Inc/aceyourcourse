@@ -1,7 +1,7 @@
 import { expect as baseExpect, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
-import { resetSampleData, sampleEmail, signInAs } from "./helpers";
+import { LIVE, resetSampleData, sampleEmail, signInAs } from "./helpers";
 
 // The Admin journey on sample data (ticket 12; spec, Testing Decisions → Seam
 // 5, Admin): an Editor changes a Product's price and the Website shows it;
@@ -88,7 +88,14 @@ test("an Editor's price goes live, Settings stays Owners-only, an Invite activat
     await expect(page).toHaveURL(/\/admin\/settings$/);
     await expect(kimsRow(page)).not.toContainText("INVITED");
 
-    await page.getByRole("banner").getByRole("button", { name: "Reset" }).click();
+    if (LIVE) {
+      // The header's Reset exists on the sample data only: live, the same
+      // restore is the route the specs call before each test.
+      await resetSampleData(page.request);
+      await page.reload();
+    } else {
+      await page.getByRole("banner").getByRole("button", { name: "Reset" }).click();
+    }
     await expect(kimsRow(page)).toContainText("INVITED");
 
     await page.goto(paths.products.details(CARDS.slug));

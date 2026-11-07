@@ -69,7 +69,25 @@ describe("formatCardStats", () => {
 
   it("gives the bundles' saving: the whole set against its parts bought one by one", () => {
     const stats = formatCardStats([ceCards, ceBundle], exams);
-    expect(stats.bundle).toMatchObject({ examCodes: ["CE"], priceFrom: 120000, saving: 20000 });
+    expect(stats.bundle).toMatchObject({ examCodes: ["CE"], saving: 20000 });
+  });
+
+  it("prices the bundle card at the whole set, not its cheapest part", () => {
+    expect(formatCardStats([ceCards, ceBundle], exams).bundle?.priceFrom).toBe(349900);
+  });
+
+  it("gives the lowest whole-set price across bundles", () => {
+    const meBundle = bundle("me-bundle", "ME", [60000, 60000, 110000]);
+    expect(formatCardStats([ceBundle, meBundle], exams).bundle?.priceFrom).toBe(110000);
+  });
+
+  it("prices a bundle with a single price at that price", () => {
+    const oneOption = live("one-option", { format: "bundle", priceFrom: 250000, priceTo: null });
+    expect(formatCardStats([oneOption], exams).bundle?.priceFrom).toBe(250000);
+  });
+
+  it("keeps the lowest price for every other format, even one priced as a range", () => {
+    expect(formatCardStats([mtCards], exams)["flash-cards"]?.priceFrom).toBe(55000);
   });
 
   it("gives the least saving across bundles, so the card never claims more than any one saves", () => {

@@ -34,6 +34,14 @@ describe("greeting", () => {
     expect(greeting(manila("2026-10-22T09:00:00"), "  Kim   Reyes ")).toBe("Good morning, Kim.");
     expect(greeting(manila("2026-10-22T09:00:00"), "AYC Content Team")).toBe("Good morning, AYC.");
   });
+
+  it("leaves the name out when all it has is an email address", () => {
+    expect(greeting(manila("2026-10-22T18:30:00"), "kim@example.com")).toBe("Good evening.");
+  });
+
+  it("leaves the name out when it is blank", () => {
+    expect(greeting(manila("2026-10-22T09:00:00"), "   ")).toBe("Good morning.");
+  });
 });
 
 describe("overviewDateLine", () => {

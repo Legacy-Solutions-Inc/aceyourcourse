@@ -1,4 +1,8 @@
+import type { Metadata } from "next";
+
 import { StatusPage } from "@/components/website/status-page";
+
+export const metadata: Metadata = { title: "Page not found" };
 
 // A notFound() from a Website page (an unknown or hidden Product) renders this
 // inside the Website shell, with HTTP status 404. Unmatched URLs use the root

@@ -5,7 +5,10 @@ import type { Exam, Product, ProductFormat, ProductPhoto } from "@/services/cata
 export interface FormatCardStats {
   /** "For": the Exams with Live Products in this format, in Exam order. */
   examCodes: string[];
-  /** "From": the lowest Live price, in centavos. */
+  /**
+   * "From": the lowest Live price, in centavos. For bundles it is the whole
+   * set's price, because the card sells the set, not one of its parts.
+   */
   priceFrom: number;
   /** The best-selling Product's cover. */
   coverPhoto: ProductPhoto | null;
@@ -39,7 +42,11 @@ export function formatCardStats(
       examCodes: exams
         .map((exam) => exam.code)
         .filter((code) => ofFormat.some((product) => product.examCode === code)),
-      priceFrom: Math.min(...ofFormat.map((product) => product.priceFrom)),
+      priceFrom: Math.min(
+        ...ofFormat.map((product) =>
+          format === "bundle" ? (product.priceTo ?? product.priceFrom) : product.priceFrom,
+        ),
+      ),
       coverPhoto: ofFormat[0]?.photos[0] ?? null,
       saving: savings.length === ofFormat.length ? Math.min(...savings) : null,
     };
