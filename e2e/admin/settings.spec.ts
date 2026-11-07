@@ -1,7 +1,7 @@
 import { expect as baseExpect, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
-import { resetSampleData, signInAs } from "./helpers";
+import { LIVE, resetSampleData, signInAs } from "./helpers";
 
 // Settings on sample data (ticket 02): an Owner edits the contact email, the
 // store and social links and the trust figures, and each save is live on the
@@ -221,6 +221,7 @@ test("when two Owners edit, the second save is refused, naming the first, and ke
 test("the header's Reset starts the sample data again, and the Website shows the seed", async ({
   page,
 }) => {
+  test.skip(LIVE, "The header's Reset exists on the sample data only.");
   await openSettings(page);
   await saveContactEmail(page, NEW_EMAIL);
   await expect(contactPart(page).getByRole("status")).toHaveText("✓ SAVED · LIVE ON THE SITE");

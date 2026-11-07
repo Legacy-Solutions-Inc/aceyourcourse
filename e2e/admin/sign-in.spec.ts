@@ -108,7 +108,10 @@ test.describe("signed out", () => {
     await expect(page).toHaveURL(
       /\/admin\/sign-in\?next=%2Fadmin%2Fproducts&error=google-not-set-up$/,
     );
-    await expect(page.getByRole("alert")).toHaveText("Google sign-in isn't set up on this server");
+    // Not the bare role: Next's route announcer is a second role="alert".
+    await expect(page.getByRole("alert").filter({ hasText: /\S/ })).toHaveText(
+      "Google sign-in isn't set up on this server",
+    );
   });
 
   test("a callback with no code, or a bad one, returns to sign-in saying so", async ({ page }) => {
@@ -116,7 +119,9 @@ test.describe("signed out", () => {
     for (const query of ["", "?code=not-a-real-code"]) {
       await page.goto(`/auth/callback${query}`);
       await expect(page).toHaveURL(/\/admin\/sign-in\?next=%2Fadmin&error=callback$/);
-      await expect(page.getByRole("alert")).toHaveText("Sign-in didn't finish. Try again.");
+      await expect(page.getByRole("alert").filter({ hasText: /\S/ })).toHaveText(
+        "Sign-in didn't finish. Try again.",
+      );
     }
   });
 
