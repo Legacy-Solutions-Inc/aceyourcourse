@@ -146,7 +146,11 @@ describeWithStorage(
     it("keeps the save when Storage refuses the delete, and logs it", async () => {
       const upload = await DATABASE_ARM.uploadPhoto();
       await saveProduct("prd-001", (srcs) => [upload.path, ...srcs]);
-      const { storage: files } = getStorage().client;
+      // supabase-js builds a new StorageClient on every `client.storage`, so
+      // pin one patched instance for the seam's own reads of it.
+      const { client } = getStorage();
+      const files = client.storage;
+      vi.spyOn(client, "storage", "get").mockReturnValue(files);
       const from = files.from.bind(files);
       vi.spyOn(files, "from").mockImplementation((id: string) => {
         const real = from(id);
