@@ -10,8 +10,8 @@ on. Distilled from the official React 19 release notes — cite, don't copy.
   run inside a transition automatically, tracking pending/error/result.
 - **`useActionState(action, initialState)`** → `[state, dispatchAction, isPending]`.
   The action receives `(previousState, formData)` and returns the next state.
-  This is exactly the shape of `CustomerFormState` in
-  `src/app/dashboard/customers/actions.ts`.
+  This is exactly the shape of `CustomerFormState` in the template's Customers
+  actions (git history, commit `aea34ea`).
 - **`useFormStatus()`** (from `react-dom`) reads the enclosing form's `pending`
   without prop-drilling — ideal for a shared submit button.
 - **`useOptimistic(current)`** shows an optimistic value during an async action

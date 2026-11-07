@@ -29,19 +29,20 @@ Drivers_. Inner layers know nothing of outer ones.
 **Dependency Inversion at the boundary.** Cross a boundary through an abstraction
 the inner layer owns, not a concrete outer detail (DIP).
 
-- Realized by the seam selector: `src/services/customers.ts` defines the
-  `CustomersService` contract; `customers.mock.ts` and `customers.db.ts` are
-  swappable implementations chosen at runtime. Callers depend on the contract,
-  so mock ↔ Drizzle is a one-file change (ADR 0003).
+- Realized by the seam selector: `src/services/catalogue.ts` defines the
+  `CatalogueService` contract; `catalogue.mock.ts` (and, from Phase 2,
+  `catalogue.db.ts`) are swappable implementations chosen at runtime. Callers
+  depend on the contract, so mock ↔ Drizzle is a one-file change (ADR 0003).
 
 **DTOs at the boundary, not raw rows.** Actions/RSCs return domain DTOs
-(`Customer`), never Drizzle/Supabase records — the pure `rowToCustomer` mapper is
-the translation point. Keep secrets and `process.env` inside the seam
+(`Product`, `Exam`), never Drizzle/Supabase records — a pure row mapper (like the
+template's `rowToCustomer`, in git history at commit `aea34ea`) is the
+translation point. Keep secrets and `process.env` inside the seam
 (server-only) — only the DAL reads env.
 
 **SOLID, briefly:** single responsibility per module; open for extension via the
-seam contract; Liskov-safe implementations (both impls satisfy `CustomersService`
-identically); interface segregation (narrow seam signatures); DIP as above.
+seam contract; Liskov-safe implementations (every impl satisfies
+`CatalogueService` identically); interface segregation (narrow seam signatures); DIP as above.
 
 **Refactoring (Kent Beck).** Make the change easy, then make the easy change.
 Watch for smells — long functions, feature envy, primitive obsession, shotgun
@@ -56,7 +57,7 @@ Do **not** "correct" these — they are decisions (ADR 0003), not gaps:
 - **No separate Entities / Use-Case interactor layers.** The **service seam IS
   our single boundary**; a full four-ring structure is overkill for this
   template's scope. Domain "entities" are plain typed interfaces
-  (`src/services/types.ts`), not a ceremony layer.
+  (`src/services/catalogue.types.ts`), not a ceremony layer.
 - **Pragmatic over dogmatic.** Reads happen directly in Server Components through
   the seam (not funneled through interactor objects); writes are thin Server
   Actions delegating to the seam. That satisfies the Dependency Rule without the
@@ -66,9 +67,11 @@ Do **not** "correct" these — they are decisions (ADR 0003), not gaps:
 
 ## In this template
 
-- `src/services/*` — the seam (the boundary); `customers.ts` (contract +
-  selector), `customers.mock.ts` / `customers.db.ts` (swappable impls),
-  `types.ts` (domain DTOs), `customers.db.ts#rowToCustomer` (boundary mapper).
+- `src/services/*` — the seam (the boundary); `catalogue.ts` (contract +
+  selector), `catalogue.mock.ts` (and, from Phase 2, `catalogue.db.ts`) as
+  swappable impls, `catalogue.types.ts` (domain DTOs), `catalogue.schema.ts`
+  (seed validation). The template's boundary mapper (`rowToCustomer`) is in git
+  history at commit `aea34ea`.
 - `src/env.server.ts` / `src/lib/db/*` — outer "Frameworks & Drivers"; reached
   only via the seam.
 - `src/app/**` (RSC + Server Actions) — outer "Interface Adapters"; depend inward

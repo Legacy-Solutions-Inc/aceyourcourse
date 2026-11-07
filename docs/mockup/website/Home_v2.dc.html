@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><script src="motion.js?v=3"></script><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap"><style>@keyframes aycMqL{from{transform:translateX(0)}to{transform:translateX(-50%)}}@keyframes aycMqR{from{transform:translateX(-50%)}to{transform:translateX(0)}}@media (prefers-reduced-motion:reduce){[style*="aycMq"]{animation:none!important}}body{margin:0}a{color:#005AA5}a:hover{color:#003F73}</style></helmet>
+<div style="container-type:inline-size;width:100%;background:#F6F1E7;color:#0E1A2E;font-family:'Schibsted Grotesk',sans-serif;overflow-x:clip">
+  <dc-import name="SiteNav" style="position:sticky;top:0;z-index:50" mobile="{{ m }}" active="home" hint-size="100%,100px"></dc-import>
+
+  <section data-screen-label="Hero" style="position:relative;overflow:hidden;background:#0E1A2E;color:#F6F1E7">
+    <video src="assets/ayc-main-ad.mp4" poster="assets/ayc-main-ad-poster.png" autoPlay="{{ true }}" muted="{{ true }}" loop="{{ true }}" playsInline="{{ true }}" preload="auto" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0"></video>
+    <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(100deg,rgba(14,26,46,.96) 0%,rgba(14,26,46,.88) 42%,rgba(14,26,46,.55) 75%,rgba(14,26,46,.4) 100%)"></div>
+    <div style="position:relative;z-index:2;max-width:1296px;margin:0 auto;box-sizing:border-box;min-height:clamp(600px,58cqi,780px);padding:clamp(48px,6cqi,96px) clamp(20px,5cqi,72px) clamp(56px,6cqi,96px);display:flex;flex-wrap:wrap;align-items:center;gap:clamp(48px,6cqi,96px)">
+      <div style="flex:1.25 1 420px;min-width:0;display:flex;flex-direction:column;gap:26px">
+        <span data-m="drop" style="align-self:flex-start;display:flex;align-items:center;gap:10px;font:700 12px/1 'JetBrains Mono',monospace;letter-spacing:.08em;border:1.5px solid rgba(246,241,231,.5);padding:9px 12px;border-radius:999px"><span data-m="pulse" style="width:8px;height:8px;border-radius:50%;background:#FF881F"></span>LICENSURE EXAM REVIEWERS · MADE BY PASSERS</span>
+        <h1 data-m="reveal" style="margin:0;max-width:13ch;font-weight:800;font-size:clamp(46px,7.2cqi,108px);line-height:.92;letter-spacing:-.045em;text-wrap:balance">Remember every formula on <span data-m="marker" style="background:linear-gradient(transparent 60%,rgba(255,136,31,.9) 60%,rgba(255,136,31,.9) 90%,transparent 90%);padding:0 .06em;margin:0 -.06em">board day.</span></h1>
+        <p data-m="up" data-m-delay="180" style="margin:0;font-size:clamp(17px,1.5cqi,21px);line-height:1.5;max-width:31em;color:#DCE3EC;text-wrap:pretty">Flash cards, notebooks, and posters for board exam review in various courses. Shipped nationwide, and also available in the app.</p>
+        <div data-m="up" data-m-delay="300" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+          <a href="#exams" style="display:flex;align-items:center;gap:10px;min-height:56px;padding:0 24px;background:#FF881F;color:#0E1A2E;font-weight:800;font-size:17px;text-decoration:none;border:1.5px solid #F6F1E7;box-shadow:5px 5px 0 #F6F1E7;transition:transform .18s,box-shadow .18s" style-hover="transform:translate(-2px,-2px);box-shadow:7px 7px 0 #F6F1E7;color:#0E1A2E">Find your exam ↓</a>
+          <a href="MemberApp.dc.html" style="display:flex;align-items:center;min-height:56px;padding:0 22px;color:#F6F1E7;font-weight:700;font-size:16px;text-decoration:none;border:1.5px solid #F6F1E7;transition:background .18s" style-hover="background:rgba(246,241,231,.12);color:#F6F1E7">Try the app free</a>
+          <a href="#video" style="display:flex;align-items:center;gap:10px;min-height:56px;padding:0 6px;color:#F6F1E7;font-weight:700;font-size:15px;text-decoration:none"><span style="width:34px;height:34px;border-radius:50%;border:1.5px solid #F6F1E7;display:flex;align-items:center;justify-content:center;font-size:11px;padding-left:2px;box-sizing:border-box">▶</span>Watch 1 min</a>
+        </div>
+        <div data-m="fade" data-m-delay="450" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;font:500 12px/1.4 'JetBrains Mono',monospace;letter-spacing:.04em;color:#C9D3E1">
+          <span style="display:flex;align-items:center;gap:8px"><span style="color:#FF881F;font-size:14px;letter-spacing:1px">★★★★★</span>4.8 FROM 874 RATINGS</span>
+          <span>IPOPHIL REGISTERED</span>
+        </div>
+      </div>
+
+      <div data-m="pop" data-m-delay="250" style="flex:1 1 320px;min-width:0;max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:18px">
+        <span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#FF881F">TRY A CARD · TAP TO FLIP</span>
+        <div style="position:relative;aspect-ratio:3/2;perspective:1400px">
+          <span style="position:absolute;inset:0;background:#005AA5;border:1.5px solid #F6F1E7;transform:rotate(5deg) translate(16px,10px)"></span>
+          <span style="position:absolute;inset:0;background:#FF881F;border:1.5px solid #0E1A2E;transform:rotate(-3deg) translate(-8px,6px)"></span>
+          <button onClick="{{ fc.flip }}" aria-label="Flip card" style="all:unset;cursor:pointer;position:absolute;inset:0;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.7,.2,1);transform:{{ fc.rot }}">
+            <span style="position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:#FBF8F1;color:#0E1A2E;border:1.5px solid #0E1A2E;padding:clamp(18px,2cqi,26px);box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between">
+              <span style="display:flex;justify-content:space-between;gap:10px;font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em"><span style="background:#0E1A2E;color:#F6F1E7;padding:5px 7px">{{ fc.exam }} · {{ fc.subj }}</span><span style="color:#8E97A6">FRONT</span></span>
+              <span style="display:flex;flex-direction:column;gap:8px"><span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#005AA5">TOPIC</span><span style="font-weight:800;font-size:clamp(24px,2.6cqi,34px);line-height:1.1;letter-spacing:-.02em;text-wrap:balance">{{ fc.front }}</span></span>
+              <span style="font:500 12px 'JetBrains Mono',monospace;color:#4A5568">Tap to see the card ↻</span>
+            </span>
+            <span style="position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:rotateY(180deg);background:#FFFFFF;color:#0E1A2E;border:1.5px solid #0E1A2E;padding:clamp(14px,1.6cqi,20px);box-sizing:border-box;display:flex;flex-direction:column;gap:8px">
+              <span style="display:flex;justify-content:space-between;gap:10px;font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em"><span style="background:#0E1A2E;color:#F6F1E7;padding:5px 7px">{{ fc.exam }} · {{ fc.subj }}</span><span style="color:#8E97A6">ACTUAL CARD</span></span>
+              <img src="{{ fc.img }}" alt="{{ fc.front }} flash card" style="flex:1;min-height:0;width:100%;object-fit:contain;display:block">
+            </span>
+          </button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px">
+          <div style="display:flex;gap:6px">
+            <sc-for list="{{ fc.dots }}" as="d" hint-placeholder-count="3"><button onClick="{{ d.go }}" aria-label="{{ d.label }}" style="all:unset;cursor:pointer;min-width:38px;height:30px;display:flex;align-items:center;justify-content:center;font:700 11px 'JetBrains Mono',monospace;border:1.5px solid #F6F1E7;background:{{ d.bg }};color:{{ d.fg }};transition:background .2s">{{ d.label }}</button></sc-for>
+            <a href="#exams" onClick="{{ toOther }}" style="height:30px;padding:0 10px;display:flex;align-items:center;font:700 11px 'JetBrains Mono',monospace;border:1.5px dashed #F6F1E7;color:#F6F1E7;text-decoration:none" style-hover="background:rgba(246,241,231,.14);color:#F6F1E7">OTHER COURSES →</a>
+          </div>
+          <button onClick="{{ fc.next }}" style="all:unset;cursor:pointer;font:700 14px 'Schibsted Grotesk',sans-serif;color:#F6F1E7;border-bottom:2px solid #FF881F;padding-bottom:2px">Next card →</button>
+        </div>
+      </div>
+    </div>
+    <div style="position:relative;z-index:2;background:#FF881F;color:#0E1A2E;border-top:1.5px solid #0E1A2E;overflow:hidden">
+      <div style="animation:aycMqL 38s linear infinite;display:flex;width:max-content;padding:13px 0;font:700 13px/1 'JetBrains Mono',monospace;letter-spacing:.06em;white-space:nowrap">
+        <sc-for list="{{ ticker }}" as="t" hint-placeholder-count="14"><span style="display:flex;align-items:center;gap:28px;padding-right:28px"><span>{{ t }}</span><span>✦</span></span></sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section data-screen-label="How it works" style="max-width:1296px;margin:0 auto;padding:clamp(64px,8cqi,120px) clamp(20px,5cqi,72px) clamp(40px,5cqi,72px);display:flex;flex-direction:column;gap:clamp(32px,4cqi,56px)">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px 40px">
+      <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(36px,4.6cqi,64px);line-height:1;letter-spacing:-.035em;max-width:14ch;text-wrap:balance">Four steps to your reviewer</h2>
+      <p style="margin:0;max-width:28em;font-size:17px;line-height:1.5;color:#2B3649">Every reviewer is built around your board’s subjects, so you only study what shows up.</p>
+    </div>
+    <div style="position:relative">
+      <span data-m="grow" style="position:absolute;left:0;right:0;top:34px;height:2px;background:repeating-linear-gradient(90deg,#0E1A2E 0 8px,transparent 8px 14px)"></span>
+      <ol data-m-stagger="" style="position:relative;list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:20px">
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
+          <li style="display:flex;flex-direction:column;gap:14px">
+            <span style="width:68px;height:68px;border-radius:50%;background:{{ s.bg }};color:{{ s.fg }};border:1.5px solid #0E1A2E;display:flex;align-items:center;justify-content:center;font:700 22px 'JetBrains Mono',monospace">{{ s.n }}</span>
+            <span style="font-weight:800;font-size:clamp(22px,2.2cqi,28px);letter-spacing:-.02em;line-height:1.1">{{ s.t }}</span>
+            <span style="font-size:16px;line-height:1.5;color:#2B3649;max-width:30ch;text-wrap:pretty">{{ s.d }}</span>
+            <a href="{{ s.href }}" style="align-self:flex-start;font:700 14px 'Schibsted Grotesk',sans-serif;color:#005AA5;text-decoration:none;border-bottom:2px solid #005AA5;padding-bottom:1px">{{ s.cta }}</a>
+          </li>
+        </sc-for>
+      </ol>
+    </div>
+  </section>
+
+  <section id="exams" data-screen-label="Find your exam" style="max-width:1296px;margin:0 auto;padding:clamp(40px,5cqi,72px) clamp(20px,5cqi,72px) clamp(64px,8cqi,120px);display:flex;flex-direction:column;gap:24px">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#005AA5">STEP 1 · PICK YOUR BOARD</span>
+      <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(36px,4.6cqi,64px);line-height:1;letter-spacing:-.035em">Find your exam</h2>
+    </div>
+    <div role="tablist" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+        <button role="tab" onClick="{{ t.go }}" style="all:unset;cursor:pointer;box-sizing:border-box;display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1.5px solid #0E1A2E;background:{{ t.bg }};color:{{ t.fg }};box-shadow:{{ t.sh }};transform:{{ t.tr }};transition:transform .18s,box-shadow .18s,background .18s">
+          <span style="font:700 clamp(22px,2.4cqi,30px)/1 'JetBrains Mono',monospace">{{ t.code }}</span>
+          <span style="font-size:13px;font-weight:600;line-height:1.25">{{ t.name }}</span>
+        </button>
+      </sc-for>
+    </div>
+    <div ref="{{ panelRef }}" style="display:flex;flex-wrap:wrap;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:8px 8px 0 #0E1A2E">
+      <div style="flex:1 1 340px;min-width:0;padding:clamp(22px,3cqi,40px);display:flex;flex-direction:column;gap:18px;border-right:1.5px solid #0E1A2E;margin-right:-1.5px">
+        <div style="display:flex;align-items:flex-end;gap:14px">
+          <span style="background:#005AA5;color:#F6F1E7;font:700 clamp(40px,5cqi,64px)/.85 'JetBrains Mono',monospace;padding:14px 16px 10px;border:1.5px solid #0E1A2E">{{ ex.code }}</span>
+          <span style="display:flex;flex-direction:column;gap:3px;padding-bottom:4px"><span style="font-weight:800;font-size:clamp(22px,2.4cqi,30px);letter-spacing:-.02em;line-height:1.05">{{ ex.name }}</span><span style="font:500 12px 'JetBrains Mono',monospace;color:#4A5568;text-transform:uppercase">{{ ex.board }} · {{ ex.long }}</span></span>
+        </div>
+        <p style="margin:0;font-size:16px;line-height:1.55;color:#2B3649;text-wrap:pretty">{{ ex.blurb }}</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <span style="font:500 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#4A5568">SUBJECTS COVERED</span>
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ ex.subjects }}" as="s" hint-placeholder-count="3"><span title="{{ s.name }}" style="font:700 12px/1 'JetBrains Mono',monospace;padding:7px 9px;border:1.5px solid #0E1A2E;background:#F6F1E7">{{ s.code }}</span></sc-for></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:auto;padding-top:6px">
+          <sc-if value="{{ notOther }}" hint-placeholder-val="{{ true }}"><a href="{{ ex.href }}" style="display:flex;align-items:center;min-height:50px;padding:0 20px;background:#0E1A2E;color:#F6F1E7;font-weight:700;font-size:15px;text-decoration:none;border:1.5px solid #0E1A2E;transition:background .18s" style-hover="background:#005AA5;color:#F6F1E7"><span>All {{ ex.code }} reviewers →</span></a></sc-if><sc-if value="{{ other }}"><a href="https://shopee.ph/aceyourcourse" target="_blank" style="display:flex;align-items:center;min-height:50px;padding:0 20px;background:#0E1A2E;color:#F6F1E7;font-weight:700;font-size:15px;text-decoration:none;border:1.5px solid #0E1A2E" style-hover="background:#005AA5;color:#F6F1E7"><span>Browse on Shopee ↗</span></a></sc-if>
+          <sc-if value="{{ ex.app }}"><a href="MemberApp.dc.html" style="display:flex;align-items:center;min-height:50px;padding:0 18px;color:#0E1A2E;font-weight:700;font-size:15px;text-decoration:none;border:1.5px solid #0E1A2E" style-hover="background:#EDE6D6;color:#0E1A2E"><span>Review {{ ex.code }} in the app</span></a></sc-if>
+        </div>
+      </div>
+      <div style="flex:1.2 1 360px;min-width:0;padding:clamp(18px,2.4cqi,28px);display:flex;flex-direction:column;gap:6px">
+        <span style="font:500 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#4A5568;padding:0 4px 6px">STEP 2 · CHOOSE A FORMAT · {{ ex.countLabel }}</span>
+        <sc-for list="{{ otherList }}" as="o" hint-placeholder-count="0">
+          <a href="{{ o.url }}" target="_blank" style="display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:52px;padding:8px 12px;text-decoration:none;color:#0E1A2E;border-bottom:1px solid #D5CCB8" style-hover="background:#F6F1E7;color:#0E1A2E"><span style="display:flex;align-items:center;gap:10px"><span style="font:700 11px/1 'JetBrains Mono',monospace;padding:6px 7px;border:1.5px solid #0E1A2E">{{ o.board }}</span><span style="font-weight:700;font-size:16px">{{ o.name }}</span></span><span style="font:700 12px 'JetBrains Mono',monospace;color:#005AA5">COMING SOON · SHOPEE ↗</span></a>
+        </sc-for>
+        <sc-for list="{{ ex.products }}" as="p" hint-placeholder-count="3">
+          <a href="{{ p.href }}" style="display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:14px;align-items:center;padding:10px;text-decoration:none;color:#0E1A2E;border:1.5px solid transparent;transition:background .15s,border-color .15s" style-hover="background:#F6F1E7;border-color:#0E1A2E;color:#0E1A2E">
+            <span style="position:relative;width:76px;height:76px;border:1.5px solid #0E1A2E;overflow:hidden;background:repeating-linear-gradient(135deg,#F6F1E7 0 6px,#E6DECB 6px 12px)"><img data-src="{{ p.img }}" alt="{{ p.short }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></span>
+            <span style="display:flex;flex-direction:column;gap:5px;min-width:0">
+              <span style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span style="font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.04em;padding:4px 6px;background:#0E1A2E;color:#F6F1E7;text-transform:uppercase">{{ p.format }}</span><sc-if value="{{ p.digital }}"><span style="font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.04em;padding:3px 5px;border:1.5px solid #005AA5;color:#005AA5">ALSO IN APP</span></sc-if></span>
+              <span style="font-weight:700;font-size:17px;line-height:1.2">{{ p.short }}</span>
+              <span style="font:500 12px 'JetBrains Mono',monospace;color:#4A5568"><span style="color:#E07400">★</span> {{ p.ratingLabel }} · {{ p.soldLabel }}</span>
+            </span>
+            <span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="font-weight:800;font-size:18px;white-space:nowrap">{{ p.priceLabel }}</span><span style="font-size:18px;color:#005AA5">→</span></span>
+          </a>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;font:500 12px 'JetBrains Mono',monospace;color:#4A5568">
+      <span style="letter-spacing:.06em">COMING TO THE SITE:</span>
+      <sc-for list="{{ soon }}" as="x" hint-placeholder-count="6"><span title="{{ x.name }}" style="padding:5px 8px;border:1px dashed #8E97A6">{{ x.board }}</span></sc-for>
+      <a href="https://shopee.ph/aceyourcourse" target="_blank" style="color:#005AA5;font-weight:700">Already on Shopee ↗</a>
+    </div>
+  </section>
+
+  <section data-screen-label="Best sellers" style="background:#0E1A2E;color:#F6F1E7">
+    <div style="max-width:1296px;margin:0 auto;padding:clamp(64px,8cqi,112px) clamp(20px,5cqi,72px);display:flex;flex-direction:column;gap:clamp(28px,3.5cqi,44px)">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px 40px">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#FF881F">RANKED BY UNITS SOLD ON SHOPEE</span>
+          <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(36px,4.6cqi,64px);line-height:1;letter-spacing:-.035em">Best sellers</h2>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onClick="{{ scrollPrev }}" aria-label="Previous" style="width:52px;height:52px;border:1.5px solid #F6F1E7;background:transparent;color:#F6F1E7;font:700 18px 'Schibsted Grotesk',sans-serif;cursor:pointer;transition:background .15s" style-hover="background:rgba(246,241,231,.14)">←</button>
+          <button onClick="{{ scrollNext }}" aria-label="Next" style="width:52px;height:52px;border:1.5px solid #F6F1E7;background:#FF881F;color:#0E1A2E;font:700 18px 'Schibsted Grotesk',sans-serif;cursor:pointer">→</button>
+        </div>
+      </div>
+      <div ref="{{ trackRef }}" data-m-stagger="" style="display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:4px 12px 16px 4px;margin:0 -12px 0 -4px">
+        <sc-for list="{{ best }}" as="p" hint-placeholder-count="4">
+          <a href="{{ p.href }}" style="flex:0 0 clamp(250px,28cqi,320px);scroll-snap-align:start;display:flex;flex-direction:column;background:#F6F1E7;color:#0E1A2E;border:1.5px solid #F6F1E7;text-decoration:none;transition:transform .2s,box-shadow .2s" style-hover="transform:translate(-4px,-4px);box-shadow:8px 8px 0 #FF881F;color:#0E1A2E">
+            <span style="position:relative;aspect-ratio:1/1;overflow:hidden;border-bottom:1.5px solid #0E1A2E;background:repeating-linear-gradient(135deg,#EDE6D6 0 8px,#E6DECB 8px 16px)">
+              <img data-src="{{ p.img }}" alt="{{ p.short }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+              <span style="position:absolute;top:0;left:0;background:{{ p.rankBg }};color:#0E1A2E;font:700 22px/1 'JetBrains Mono',monospace;padding:10px 13px;border-right:1.5px solid #0E1A2E;border-bottom:1.5px solid #0E1A2E">#{{ p.rank }}</span>
+              <span style="position:absolute;right:10px;bottom:10px;font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.04em;background:#0E1A2E;color:#F6F1E7;padding:5px 7px">{{ p.exam }} · {{ p.format }}</span>
+            </span>
+            <span style="padding:16px 18px 18px;display:flex;flex-direction:column;gap:10px;flex:1">
+              <span style="font-weight:800;font-size:19px;line-height:1.15;letter-spacing:-.01em">{{ p.short }}</span>
+              <span style="display:flex;justify-content:space-between;gap:10px;font:500 12px 'JetBrains Mono',monospace;color:#4A5568"><span><span style="color:#E07400">★</span> {{ p.ratingLabel }} · {{ p.ratingCount }}</span><span style="font:800 16px 'Schibsted Grotesk',sans-serif;color:#0E1A2E">{{ p.priceLabel }}</span></span>
+              <span style="margin-top:auto;display:flex;flex-direction:column;gap:6px">
+                <span style="display:block;height:6px;background:#D6CDB9;position:relative"><span data-m="grow" style="position:absolute;left:0;top:0;bottom:0;width:{{ p.pct }};background:#005AA5"></span></span>
+                <span style="font:700 12px 'JetBrains Mono',monospace">{{ p.soldLabel }}</span>
+              </span>
+            </span>
+          </a>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section id="formats" data-screen-label="Formats" style="max-width:1296px;margin:0 auto;padding:clamp(64px,8cqi,120px) clamp(20px,5cqi,72px);display:flex;flex-direction:column;gap:clamp(28px,3.5cqi,48px)">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px 40px">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#005AA5">STEP 2 · CHOOSE YOUR FORMAT</span>
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(36px,4.6cqi,64px);line-height:1;letter-spacing:-.035em;max-width:16ch;text-wrap:balance">Which format fits how you study?</h2>
+      </div>
+      <p style="margin:0;max-width:26em;font-size:17px;line-height:1.5;color:#2B3649">Most passers mix two: cards for recall on the go, posters for the wall you stare at while solving.</p>
+    </div>
+    <div data-m-stagger="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:22px">
+      <sc-for list="{{ formats }}" as="f" hint-placeholder-count="4">
+        <a href="Products.dc.html" style="display:flex;flex-direction:column;background:#FBF8F1;color:#0E1A2E;border:1.5px solid #0E1A2E;text-decoration:none;box-shadow:4px 4px 0 #0E1A2E;transition:transform .2s,box-shadow .2s" style-hover="transform:translate(-3px,-3px);box-shadow:8px 8px 0 #005AA5;color:#0E1A2E">
+          <span style="position:relative;aspect-ratio:4/3;overflow:hidden;border-bottom:1.5px solid #0E1A2E;background:repeating-linear-gradient(135deg,#EDE6D6 0 8px,#E6DECB 8px 16px)"><img data-src="{{ f.img }}" alt="{{ f.name }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></span>
+          <span style="padding:18px;display:flex;flex-direction:column;gap:8px;flex:1">
+            <span style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-weight:800;font-size:22px;letter-spacing:-.02em">{{ f.name }}</span><span style="font:500 11px 'JetBrains Mono',monospace;color:#005AA5;text-align:right">{{ f.size }}</span></span>
+            <span style="font-size:15px;line-height:1.5;color:#2B3649;text-wrap:pretty">{{ f.good }}</span>
+            <span style="margin-top:auto;padding-top:12px;border-top:1px dashed #C9BFA8;display:flex;justify-content:space-between;align-items:flex-end;gap:8px"><span style="font:500 11px 'JetBrains Mono',monospace;color:#4A5568">FOR {{ f.exams }}</span><span style="display:flex;flex-direction:column;align-items:flex-end"><span style="font:500 10px 'JetBrains Mono',monospace;color:#4A5568">FROM</span><span style="font-weight:800;font-size:20px">{{ f.price }}</span></span></span>
+          </span>
+        </a>
+      </sc-for>
+    </div>
+    <a href="MemberApp.dc.html" data-m="up" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 28px;padding:clamp(18px,2.4cqi,26px) clamp(20px,2.8cqi,32px);background:#005AA5;color:#F6F1E7;border:1.5px solid #0E1A2E;text-decoration:none;transition:background .2s" style-hover="background:#004C8C;color:#F6F1E7">
+      <span style="display:flex;flex-direction:column;gap:6px"><span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#FF881F">PREFER YOUR PHONE?</span><span style="font-weight:800;font-size:clamp(20px,2.2cqi,26px);letter-spacing:-.02em">Flashcards, scored quizzes, reviewers, and video lessons in the app, with a countdown to your exam.</span></span>
+      <span style="font-weight:700;font-size:16px;white-space:nowrap">See app plans →</span>
+    </a>
+  </section>
+
+  <section id="video" data-screen-label="Brand video" style="background:#EDE6D6;border-top:1.5px solid #0E1A2E;border-bottom:1.5px solid #0E1A2E">
+    <div style="max-width:1296px;margin:0 auto;padding:clamp(56px,7cqi,104px) clamp(20px,5cqi,72px);display:flex;flex-wrap:wrap;gap:clamp(28px,4cqi,64px);align-items:center">
+      <div style="flex:1 1 280px;max-width:420px;display:flex;flex-direction:column;gap:16px">
+        <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#005AA5">WATCH · 1 MIN</span>
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(34px,4.2cqi,56px);line-height:1;letter-spacing:-.035em;text-wrap:balance">See what’s inside before you order.</h2>
+        <p style="margin:0;font-size:17px;line-height:1.55;color:#2B3649">A minute with the cards, notebooks, and posters, from the people who made them.</p>
+      </div>
+      <div data-m="pop" style="flex:2 1 360px;min-width:0;position:relative;padding:0 14px 14px 0">
+        <div style="position:absolute;inset:14px 0 0 14px;background:#FF881F;border:1.5px solid #0E1A2E"></div>
+        <video src="assets/ayc-main-ad.mp4" poster="assets/ayc-main-ad-poster.png" controls="{{ true }}" playsInline="{{ true }}" preload="metadata" style="position:relative;display:block;width:100%;aspect-ratio:16/9;background:#000;border:1.5px solid #0E1A2E"></video>
+      </div>
+    </div>
+  </section>
+
+  <section id="reviews" data-screen-label="Reviews" style="padding:clamp(64px,8cqi,120px) 0;display:flex;flex-direction:column;gap:clamp(32px,4cqi,52px)">
+    <div style="max-width:1296px;width:100%;margin:0 auto;padding:0 clamp(20px,5cqi,72px);box-sizing:border-box;display:flex;flex-wrap:wrap;gap:20px 48px;align-items:flex-end;justify-content:space-between">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:560px">
+        <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#005AA5">COPIED WORD FOR WORD FROM SHOPEE</span>
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(36px,4.6cqi,64px);line-height:1;letter-spacing:-.035em">Pinned by reviewees</h2>
+        <p style="margin:0;font-size:17px;line-height:1.5;color:#2B3649">Most are five stars. Not all of them, and we leave those up too.</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:4px 4px 0 #0E1A2E;padding:14px 20px">
+        <span data-m="count" style="font-weight:900;font-size:52px;line-height:1;letter-spacing:-.03em">4.8</span>
+        <span style="display:flex;flex-direction:column;gap:4px"><span style="color:#E07400;letter-spacing:2px">★★★★★</span><span style="font:500 12px 'JetBrains Mono',monospace">874 shop ratings</span></span>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:20px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)">
+      <div style="animation:aycMqL 60s linear infinite;display:flex;gap:24px;width:max-content;align-items:flex-start;padding:10px 0" style-hover="animation-play-state:paused">
+        <sc-for list="{{ row1 }}" as="w" hint-placeholder-count="5"><div style="width:330px;flex:none;max-height:300px;overflow:hidden;-webkit-mask-image:linear-gradient(180deg,#000 80%,transparent);mask-image:linear-gradient(180deg,#000 80%,transparent)"><dc-import name="ReviewCard" r="{{ w.r }}" tilt="{{ w.tilt }}" hint-size="330px,230px"></dc-import></div></sc-for>
+      </div>
+      <div style="animation:aycMqR 70s linear infinite;display:flex;gap:24px;width:max-content;align-items:flex-start;padding:10px 0" style-hover="animation-play-state:paused">
+        <sc-for list="{{ row2 }}" as="w" hint-placeholder-count="5"><div style="width:330px;flex:none;max-height:300px;overflow:hidden;-webkit-mask-image:linear-gradient(180deg,#000 80%,transparent);mask-image:linear-gradient(180deg,#000 80%,transparent)"><dc-import name="ReviewCard" r="{{ w.r }}" tilt="{{ w.tilt }}" hint-size="330px,230px"></dc-import></div></sc-for>
+      </div>
+    </div>
+    <a href="https://shopee.ph/aceyourcourse" target="_blank" style="align-self:center;font-weight:700;font-size:16px;color:#0E1A2E;text-decoration:none;border-bottom:2px solid #FF881F;padding-bottom:2px">Read every review on Shopee ↗</a>
+  </section>
+
+  <section id="authenticity" data-screen-label="Authenticity" style="background:#005AA5;color:#F6F1E7;border-top:1.5px solid #0E1A2E">
+    <div style="max-width:1296px;margin:0 auto;padding:clamp(64px,8cqi,112px) clamp(20px,5cqi,72px);display:flex;flex-wrap:wrap;gap:clamp(36px,6cqi,96px);align-items:center">
+      <div style="flex:1 1 260px;display:flex;justify-content:center;min-width:0">
+        <div data-m="pop" style="transform:rotate(-7deg);border:3px solid #F6F1E7;outline:1.5px solid #F6F1E7;outline-offset:6px;padding:24px 28px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;font-family:'JetBrains Mono',monospace">
+          <span style="font-weight:700;font-size:12px;letter-spacing:.2em">REGISTERED WITH</span>
+          <span style="font-weight:700;font-size:clamp(42px,5.2cqi,68px);letter-spacing:.04em;line-height:1;color:#FF881F">IPOPHIL</span>
+          <span style="font-weight:500;font-size:11px;letter-spacing:.14em">ORIGINAL · ACEYOURCOURSE</span>
+        </div>
+      </div>
+      <div style="flex:1.6 1 340px;min-width:0;display:flex;flex-direction:column;gap:22px">
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(34px,4.4cqi,60px);line-height:1;letter-spacing:-.035em;text-wrap:balance">Copies are going around. Make sure yours is the real one.</h2>
+        <p style="margin:0;font-size:17px;line-height:1.55;max-width:36em;color:#DCE7F4">Our reviewers are registered with IPOPHIL and protected by copyright law. Photocopies and PDFs sold elsewhere aren’t ours, and you can’t tell if what’s inside is updated or correct.</p>
+        <ol data-m-stagger="" style="list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px">
+          <li style="display:flex;flex-direction:column;gap:10px;padding:16px;border:1.5px solid rgba(246,241,231,.5)"><span style="font:700 14px 'JetBrains Mono',monospace;color:#FF881F">01</span><span style="font-size:15px;line-height:1.45">Buy only from the official AceYourCourse stores on Shopee, Lazada, or TikTok Shop.</span></li>
+          <li style="display:flex;flex-direction:column;gap:10px;padding:16px;border:1.5px solid rgba(246,241,231,.5)"><span style="font:700 14px 'JetBrains Mono',monospace;color:#FF881F">02</span><span style="font-size:15px;line-height:1.45">Check the listing says <span style="font-family:'JetBrains Mono',monospace;font-size:13px;background:rgba(246,241,231,.14);padding:1px 5px">Ships from Iloilo City</span>.</span></li>
+          <li style="display:flex;flex-direction:column;gap:10px;padding:16px;border:1.5px solid rgba(246,241,231,.5)"><span style="font:700 14px 'JetBrains Mono',monospace;color:#FF881F">03</span><span style="font-size:15px;line-height:1.45">Look for the established reviews by our dear future board passers. A new shop with our photos is a red flag.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section data-screen-label="Store band" style="background:#FF881F;border-top:1.5px solid #0E1A2E;border-bottom:1.5px solid #0E1A2E">
+    <div style="max-width:1296px;margin:0 auto;padding:clamp(40px,5cqi,64px) clamp(20px,5cqi,72px);display:flex;flex-wrap:wrap;gap:24px 40px;align-items:center;justify-content:space-between">
+      <p data-m="up" style="margin:0;font-weight:800;font-size:clamp(28px,3.4cqi,44px);line-height:1.05;letter-spacing:-.03em;max-width:20ch">Physical copies from our official stores. Digital in the app.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        <a href="https://shopee.ph/aceyourcourse" target="_blank" style="display:flex;align-items:center;min-height:52px;padding:0 18px;background:#0E1A2E;color:#F6F1E7;font-weight:700;font-size:15px;text-decoration:none;border:1.5px solid #0E1A2E;box-shadow:3px 3px 0 #F6F1E7;transition:transform .15s" style-hover="transform:translate(-2px,-2px);color:#F6F1E7">Shopee ↗</a>
+        <a href="https://www.lazada.com.ph/shop/aceyourcourse" target="_blank" style="display:flex;align-items:center;min-height:52px;padding:0 18px;background:#F6F1E7;color:#0E1A2E;font-weight:700;font-size:15px;text-decoration:none;border:1.5px solid #0E1A2E;box-shadow:3px 3px 0 #0E1A2E;transition:transform .15s" style-hover="transform:translate(-2px,-2px);color:#0E1A2E">Lazada ↗</a>
+        <a href="https://vt.tiktok.com/ZS49ve6cu/?page=TikTokShop" target="_blank" style="display:flex;align-items:center;min-height:52px;padding:0 18px;background:#F6F1E7;color:#0E1A2E;font-weight:700;font-size:15px;text-decoration:none;border:1.5px solid #0E1A2E;box-shadow:3px 3px 0 #0E1A2E;transition:transform .15s" style-hover="transform:translate(-2px,-2px);color:#0E1A2E">TikTok Shop ↗</a>
+        <a href="MemberApp.dc.html" style="display:flex;align-items:center;min-height:52px;padding:0 18px;background:#005AA5;color:#F6F1E7;font-weight:700;font-size:15px;text-decoration:none;border:1.5px solid #0E1A2E;box-shadow:3px 3px 0 #0E1A2E;transition:transform .15s" style-hover="transform:translate(-2px,-2px);color:#F6F1E7">Open the app →</a>
+      </div>
+    </div>
+  </section>
+
+  <dc-import name="SiteFooter" hint-size="100%,420px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;mobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  static CARDS = [
+    { exam: 'CE', subj: 'HPGE', front: 'Major head loss', img: 'assets/card-ce-major-head-loss.png' },
+    { exam: 'ME', subj: 'MATH', front: 'Potential energy', img: 'assets/card-me-potential-energy.png' },
+    { exam: 'EE', subj: 'ESAS', front: 'Wave motion', img: 'assets/card-ee-wave-motion.png' }
+  ];
+  state = { ci: 0, flipped: false, ex: 'CE', touched: false };
+  reduce = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  loop = (dir, dur, key) => el => {
+    if (!el || el.__mq || this.reduce) return;
+    el.__mq = el.animate([{ transform: 'translateX(' + (dir > 0 ? '0' : '-50%') + ')' }, { transform: 'translateX(' + (dir > 0 ? '-50%' : '0') + ')' }], { duration: dur, iterations: Infinity });
+    this[key] = el.__mq;
+  };
+  tickerRef = this.loop(1, 38000, '_tk');
+  rev1Ref = this.loop(1, 70000, '_r1');
+  rev2Ref = this.loop(-1, 80000, '_r2');
+  trackRef = el => { this.trackEl = el; };
+  panelRef = el => { this.panelEl = el; };
+  componentDidMount() {
+    (window.__ayc ||= import(new URL('ayc-data.js', document.baseURI).href)).then(d => { this.d = d; this.forceUpdate(); });
+    if (!this.reduce) this._auto = setInterval(() => {
+      if (this.state.touched) return clearInterval(this._auto);
+      if (this.state.flipped) this.goCard((this.state.ci + 1) % Component.CARDS.length);
+      else this.setState({ flipped: true });
+    }, 3200);
+  }
+  componentWillUnmount() { clearInterval(this._auto); clearTimeout(this._cardT); }
+  componentDidUpdate() { const prev = this._prevState || this.state; this._prevState = this.state;
+    if (prev.ex !== this.state.ex && this.panelEl && !this.reduce) this.panelEl.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 360, easing: 'cubic-bezier(.2,.7,.2,1)' });
+  }
+  goCard(i) {
+    clearTimeout(this._cardT);
+    if (this.state.flipped) { this.setState({ flipped: false }); this._cardT = setTimeout(() => this.setState({ ci: i }), 320); }
+    else this.setState({ ci: i });
+  }
+  renderVals() {
+    const m = !!this.props.mobile, D = this.d, st = this.state;
+    const C = Component.CARDS, c = C[st.ci];
+    const fc = { ...c, rot: st.flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+      flip: () => this.setState({ flipped: !st.flipped, touched: true }),
+      next: () => { this.setState({ touched: true }); this.goCard((st.ci + 1) % C.length); },
+      dots: C.map((x, i) => ({ label: x.exam, go: () => { this.setState({ touched: true }); this.goCard(i); }, bg: i === st.ci ? '#F6F1E7' : 'transparent', fg: i === st.ci ? '#0E1A2E' : '#F6F1E7' })) };
+    const tick = ['Licensure exam reviewers', '★ 4.8 shop rating', 'Updated & high yield', '874 ratings', 'Trusted by students', 'IPOPHIL registered', 'Made by board passers', 'Ships nationwide', 'CE · ME · EE · MT · CPA'];
+    const steps = [
+      { n: '01', t: 'Pick your board exam', d: 'Select the licensure exam you want to review.', cta: 'Find your exam', href: '#exams', bg: '#FF881F', fg: '#0E1A2E' },
+      { n: '02', t: 'Choose physical, app, or both', d: 'Physical copies shipped nationwide. The app includes other features including quizzes and reviewers.', cta: 'Compare formats', href: '#formats', bg: '#005AA5', fg: '#F6F1E7' },
+      { n: '03', t: 'Review anywhere', d: 'Cards in your bag, posters on your wall, and a countdown to your exam date in the app.', cta: 'See reviews', href: '#reviews', bg: '#0E1A2E', fg: '#F6F1E7' },
+      { n: '04', t: 'Watch anywhere', d: 'Access video lessons and courses for every topic, anytime, right in the app.', cta: 'See app plans', href: 'MemberApp.dc.html', bg: '#F6F1E7', fg: '#0E1A2E' }];
+    const scroll = dx => () => this.trackEl && this.trackEl.scrollBy({ left: dx * Math.min(680, this.trackEl.clientWidth * 0.8), behavior: 'smooth' });
+    const base = { m, fc, ticker: [...tick, ...tick], steps, toOther: () => this.setState({ ex: 'OTHER' }), scrollPrev: scroll(-1), scrollNext: scroll(1),
+      pauseRev: () => { this._r1 && this._r1.pause(); this._r2 && this._r2.pause(); },
+      playRev: () => { this._r1 && this._r1.play(); this._r2 && this._r2.play(); } };
+    if (!D) return { ...base, tabs: [], ex: { code: 'CE', name: 'Civil Engineering', board: 'CELE', long: '', blurb: '', countLabel: '', href: '#', subjects: [], products: [] }, soon: [], best: [], formats: [], row1: [], row2: [] };
+    const active = D.EXAMS.filter(e => !e.soon);
+    const tabs = active.map(e => { const on = e.code === st.ex; return { code: e.code, name: e.name, go: () => this.setState({ ex: e.code }), bg: on ? '#0E1A2E' : '#FBF8F1', fg: on ? '#F6F1E7' : '#0E1A2E', sh: on ? '5px 5px 0 #FF881F' : '0 0 0 transparent', tr: on ? 'translate(-2px,-2px)' : 'none' }; });
+    const soon = D.EXAMS.filter(e => e.soon), isOther = st.ex === 'OTHER';
+    const otab = { code: '+', name: 'Other courses', go: () => this.setState({ ex: 'OTHER' }), bg: isOther ? '#0E1A2E' : '#FBF8F1', fg: isOther ? '#F6F1E7' : '#0E1A2E', sh: isOther ? '5px 5px 0 #FF881F' : '0 0 0 transparent', tr: isOther ? 'translate(-2px,-2px)' : 'none' };
+    if (isOther) return { ...base, tabs: [...tabs, otab], other: true, notOther: false, otherList: soon.map(e => ({ ...e, url: D.STORES.shopee })), soon, best: [], formats: [], row1: [], row2: [], ...this.restVals(D),
+      ex: { code: '+', name: 'Other courses', board: 'MORE', long: 'Licensure exam reviewers', blurb: 'More courses are coming soon. Reviewers for these exams are already on our official stores.', href: '#exams', subjects: soon.map(e => ({ code: e.board, name: e.name })), products: [], app: false, countLabel: soon.length + ' COURSES' } };
+    const E = active.find(e => e.code === st.ex), info = D.EXAM_INFO[E.code];
+    const prods = D.bySold().filter(p => p.exam === E.code);
+    const ex = { code: E.code, name: info.name, board: E.board, long: info.long, blurb: info.blurb, href: 'Exam.dc.html?exam=' + E.code,
+      subjects: info.subjects.map(([code, name]) => ({ code, name })), products: prods, app: prods.some(p => p.digital),
+      countLabel: prods.length + (prods.length === 1 ? ' REVIEWER' : ' REVIEWERS') };
+    return { ...base, tabs: [...tabs, otab], other: false, notOther: true, otherList: [], ex, soon, ...this.restVals(D) };
+  }
+  restVals(D) {
+    const all = D.bySold(), top = all[0].sold;
+    const best = all.slice(0, 6).map((p, i) => ({ ...p, rank: i + 1, rankBg: i === 0 ? '#FF881F' : '#F6F1E7', pct: Math.max(4, Math.round(p.sold / top * 100)) + '%' }));
+    const g = id => D.byId(id);
+    const formats = [
+      { name: 'Flash cards', size: '4 × 6 in · 160 gsm', img: g('24292303887').img, price: '₱550', exams: 'CE · ME · EE · MT · CPA', good: 'Formulas and high-yield concepts grouped by subject, small enough for your bag or pocket.' },
+      { name: 'Notebook', size: 'A5', img: g('28792067103').img, price: '₱699', exams: 'CE · ME · EE · MT', good: 'Practice solving board problems, with a study schedule and blank pages for concepts.' },
+      { name: 'Posters', size: 'A3', img: g('27980584601').img, price: '₱400', exams: 'CE · ME · EE · MT', good: 'For your study wall. One reviewer says you can read them from 6 ft away.' },
+      { name: 'Bundle', size: 'Cards + notebook + posters', img: g('55314794259').img, price: '₱3,499', exams: 'CE', good: 'All three CE formats in one order, ₱200 less than buying each separately.' }];
+    const R = (id, i) => g(id).reviews[i];
+    const w1 = [[R('27980584601', 0), -1.2], [R('43951361927', 0), 1], [R('24292303887', 0), -0.5], [R('47253400621', 0), 0.8], [R('28792067103', 0), -1]].map(([r, tilt]) => ({ r, tilt }));
+    const w2 = [[R('27980584601', 1), 1.2], [R('29289640595', 0), -0.8], [R('43951361927', 1), 0.6], [R('24292303887', 3), -1.1], [R('24292303887', 1), 0.9]].map(([r, tilt]) => ({ r, tilt }));
+    return { best, formats, row1: [...w1, ...w1], row2: [...w2, ...w2] };
+  }
+}
+</script>
+</body>
+</html>

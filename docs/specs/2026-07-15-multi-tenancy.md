@@ -1,3 +1,5 @@
+Status: superseded by ADR 0008 (no tenancy). Not built.
+
 # Spec: Multi-tenant foundation (organizations, memberships, RLS)
 
 Status: ready-for-agent · Source of truth: this spec + [ADR 0005](../adr/0005-multi-tenancy.md) + [CONTEXT.md](../../CONTEXT.md)

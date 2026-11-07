@@ -4,12 +4,11 @@ import { z } from "zod";
 
 /**
  * Server-only environment. The companion to `src/env.ts`, which validates the
- * PUBLIC (`NEXT_PUBLIC_*`) vars. This module holds the first server secret —
- * `DATABASE_URL` — and is split out exactly as `src/env.ts` anticipated:
- * server secrets are validated apart and, thanks to the `import "server-only"`
- * marker above, can never be referenced from — and thus never inlined into —
- * the client bundle. Do NOT reference `DATABASE_URL` from `src/env.ts`,
- * `src/config.ts`, or any client component.
+ * PUBLIC (`NEXT_PUBLIC_*`) vars. This module holds the server secrets —
+ * `DATABASE_URL` and `SUPABASE_SECRET_KEY` — validated apart so that, thanks
+ * to the `import "server-only"` marker above, they can never be referenced
+ * from — and thus never inlined into — the client bundle. Do NOT reference
+ * either from `src/env.ts`, `src/config.ts`, or any client component.
  */
 
 /**
@@ -27,6 +26,14 @@ const serverEnvSchema = z.object({
   // Optional so the template still runs with no database configured (the
   // in-memory mock is the default). When set, it must be a valid URL.
   DATABASE_URL: optionalEnv(z.string().url().optional()),
+  // The Member App switch. Unset or "false" (the launch default) hides every
+  // Member App button, link and message on the Website; "true" shows them. A
+  // deploy-time setting, so it flips with no code change. Read through the
+  // Catalogue seam's `getWebsiteSettings().memberAppLive`, never directly.
+  MEMBER_APP_LIVE: optionalEnv(z.enum(["true", "false"]).optional()),
+  // Supabase's secret key (sb_secret_…), which bypasses RLS. Used for Storage
+  // only (ticket 17). Optional, and never NEXT_PUBLIC_.
+  SUPABASE_SECRET_KEY: optionalEnv(z.string().min(1).optional()),
 });
 
 /** The validated, typed server environment. */
@@ -51,10 +58,13 @@ export function parseServerEnv(raw: Record<string, unknown>): ServerEnv {
 // validate at import — a misconfiguration then fails loudly, not later.
 export const serverEnv = parseServerEnv({
   DATABASE_URL: process.env.DATABASE_URL,
+  MEMBER_APP_LIVE: process.env.MEMBER_APP_LIVE,
+  SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
 });
 
 /**
  * Fact: is a database connection string configured? When false, the service
- * seam resolves to the in-memory mock (see `src/services/customers.ts`).
+ * seams resolve to their in-memory mocks. Phase 2's database arms select on it
+ * (see `src/services/catalogue.ts`).
  */
 export const isDatabaseConfigured = Boolean(serverEnv.DATABASE_URL);

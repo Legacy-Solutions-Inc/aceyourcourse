@@ -19,12 +19,13 @@ Sources). Some carry a load-on-demand `references/` folder.
 | [`nextjs-app-router`](nextjs-app-router/SKILL.md) | App Router routing, Server/Client Components, Server Actions, middleware, metadata (Next 15 async APIs, React 19) | Working under `src/app/**` or `src/middleware.ts` — routes, pages, layouts, actions, rendering |
 | [`tailwind-v4`](tailwind-v4/SKILL.md)             | Tailwind v4 CSS-first config, `@theme` tokens, semantic colors, class-based dark mode                             | Writing/changing styles, theme tokens, colors, dark mode, or `src/app/globals.css`             |
 | [`shadcn-ui`](shadcn-ui/SKILL.md)                 | shadcn/ui CLI + copy-in primitives, `components.json`, `cn()`/`cva`, lucide icons                                 | Adding/updating/composing UI primitives or editing `src/components/ui/*`                       |
-| [`supabase-auth`](supabase-auth/SKILL.md)         | `@supabase/ssr` clients, session refresh, route protection, `app_metadata` roles, auth-disabled mode              | Auth, sessions, cookies, gating, roles — `src/lib/supabase/*`, `src/lib/auth/*`, `authz*.ts`   |
+| [`supabase-auth`](supabase-auth/SKILL.md)         | `@supabase/ssr` clients, session refresh, route protection, server-side authorization, auth-disabled mode         | Auth, sessions, cookies, gating — `src/lib/supabase/*`, `src/lib/auth/*`, `session-routes.ts`  |
 | [`drizzle-data`](drizzle-data/SKILL.md)           | Drizzle behind the seam, mock-default selector, lazy client, `prepare:false` pooler, migrations                   | Data layer — `src/services/*`, `src/lib/db/*`, schema/migrations, `DATABASE_URL`               |
 
 Sub-references: `nextjs-app-router/references/{react-19,server-actions}.md`,
 `tailwind-v4/references/theming.md`,
-`drizzle-data/references/drizzle-rls.md` (reference-only; future tenancy track).
+`drizzle-data/references/drizzle-rls.md` (reference-only; written for the retired
+tenancy track).
 
 ## Skills (batch 2B)
 

@@ -5,6 +5,8 @@ import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { config } from "@/config";
+import { env } from "@/env";
+import { SESSION_COOKIE } from "@/lib/supabase/cookie-options";
 
 type ResponseCookie = Pick<CookieOptions, "httpOnly" | "maxAge" | "priority">;
 
@@ -35,7 +37,9 @@ export function createClient(
 
   let res = buildResponse();
 
-  const supabaseClient = createServerClient(config.supabase.url!, config.supabase.anonKey!, {
+  const supabaseClient = createServerClient(config.supabase.url!, config.supabase.publishableKey!, {
+    // The server client's cookie: the refresh must update the session it reads.
+    cookieOptions: { ...SESSION_COOKIE, secure: env.NODE_ENV === "production" },
     cookies: {
       getAll() {
         return req.cookies.getAll();

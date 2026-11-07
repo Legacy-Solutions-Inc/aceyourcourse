@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793682153530,
+      "tag": "20261103050233_revoke_default_privileges",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793694302041,
+      "tag": "20261103082502_catalogue",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793704141263,
+      "tag": "20261103110901_admin",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793711055872,
+      "tag": "20261103130415_catalogue_bucket",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793846258139,
+      "tag": "20261105023738_site_pages",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793852907754,
+      "tag": "20261105042827_about_page",
+      "breakpoints": true
+    }
+  ]
+}

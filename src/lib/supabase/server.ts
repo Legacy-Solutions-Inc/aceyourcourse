@@ -4,16 +4,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { config } from "@/config";
 import { env } from "@/env";
+import { SESSION_COOKIE } from "@/lib/supabase/cookie-options";
 
 export function createClient(cookieStore: ReturnType<typeof cookies>): SupabaseClient {
-  return createServerClient(config.supabase.url!, config.supabase.anonKey!, {
-    cookieOptions: {
-      name: "sb",
-      path: "/",
-      sameSite: "lax",
-      secure: env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24 * 7,
-    },
+  return createServerClient(config.supabase.url!, config.supabase.publishableKey!, {
+    cookieOptions: { ...SESSION_COOKIE, secure: env.NODE_ENV === "production" },
     cookies: {
       async getAll() {
         const store = await cookieStore;

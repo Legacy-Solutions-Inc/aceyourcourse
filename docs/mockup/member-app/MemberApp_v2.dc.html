@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><script src="motion.js?v=3"></script><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap"><style>a{color:#005AA5}a:hover{color:#003F73}</style></helmet>
+<div style="position:relative;container-type:inline-size;width:100%;min-height:{{ minH }};background:#F6F1E7;color:#0E1A2E;font-family:'Schibsted Grotesk',sans-serif;display:flex;flex-direction:column">
+
+<sc-if value="{{ is.signin }}">
+  <div data-screen-label="Sign in" style="flex:1;display:flex;flex-wrap:wrap">
+    <div style="flex:1 1 360px;background:#005AA5;color:#F6F1E7;padding:clamp(28px,5cqi,64px);display:flex;flex-direction:column;gap:clamp(20px,3cqi,36px);justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px"><span style="background:#F6F1E7;display:flex;padding:4px"><img src="assets/brand-mark.svg" alt="" style="height:32px;width:auto;display:block"></span><span style="font-weight:800;font-size:19px;letter-spacing:-.02em">aceyourcourse</span></div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <h1 style="margin:0;font-weight:800;font-size:clamp(34px,4.6cqi,60px);line-height:1;letter-spacing:-.03em;text-wrap:balance">Your reviewer, one card at a time.</h1>
+        <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:16px;line-height:1.4;color:#DCE7F4">
+          <li style="display:flex;gap:10px"><span style="color:#FF881F">✓</span>Flashcards, quizzes, and reviewers by subject and topic</li>
+          <li style="display:flex;gap:10px"><span style="color:#FF881F">✓</span>Video courses that resume where you left off</li>
+          <li style="display:flex;gap:10px"><span style="color:#FF881F">✓</span>A countdown to your board exam date</li>
+        </ul>
+      </div>
+      <span style="font:500 11px/1.4 'JetBrains Mono',monospace;letter-spacing:.06em;color:#9FC1E3">BUILT BY BOARD PASSERS · ILOILO CITY</span>
+    </div>
+    <div style="flex:1 1 360px;display:flex;align-items:center;justify-content:center;padding:clamp(28px,5cqi,64px)">
+      <div style="width:100%;max-width:400px;display:flex;flex-direction:column;gap:20px">
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:32px;letter-spacing:-.025em">Sign in</h2>
+        <p style="margin:0;font-size:16px;line-height:1.5;color:#2B3649">Use your Google account. No separate username or password.</p>
+        <button onClick="{{ nav.consent }}" style="min-height:56px;display:flex;align-items:center;justify-content:center;gap:12px;background:#FFFFFF;color:#0E1A2E;font:700 17px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E;box-shadow:4px 4px 0 #0E1A2E;cursor:pointer"><span style="width:24px;height:24px;border:1.5px solid #0E1A2E;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px">G</span>Continue with Google</button>
+        <div style="display:flex;gap:12px;padding:14px;border:1px dashed #C9BFA8;font-size:14px;line-height:1.45;color:#2B3649"><span style="font:700 12px 'JetBrains Mono',monospace;color:#005AA5">i</span><span>One device at a time. Signing in here signs out any other device on your account.</span></div>
+        <span style="font-size:13px;color:#4A5568">By continuing you agree to the <a href="Legal.dc.html?doc=terms" style="color:#005AA5">Terms</a> and <a href="Legal.dc.html?doc=privacy" style="color:#005AA5">Privacy Policy</a>.</span>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ is.consent }}">
+  <div data-screen-label="Consent" style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px;background-color:#EDE6D6">
+    <div style="width:100%;max-width:520px;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:8px 8px 0 #0E1A2E;display:flex;flex-direction:column">
+      <div style="background:#005AA5;color:#F6F1E7;border-bottom:1.5px solid #0E1A2E;padding:12px 18px;font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em">BEFORE YOU START</div>
+      <div style="padding:22px;display:flex;flex-direction:column;gap:14px">
+        <span style="font-weight:800;font-size:26px;line-height:1.1;letter-spacing:-.02em">What we keep, and why</span>
+        <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:15px;line-height:1.45;color:#2B3649">
+          <li style="display:flex;gap:10px"><span style="color:#E07400;font-weight:700">1</span>Your Google name and email, to sign you in and show your watermark.</li>
+          <li style="display:flex;gap:10px"><span style="color:#E07400;font-weight:700">2</span>Your exam, exam date, and study progress, to run your countdown and dashboard.</li>
+          <li style="display:flex;gap:10px"><span style="color:#E07400;font-weight:700">3</span>Your payment history. Card details stay with PayMongo; we never see them.</li>
+          <li style="display:flex;gap:10px"><span style="color:#E07400;font-weight:700">4</span>Which device is signed in, so only one device is active at a time.</li>
+        </ul>
+        <span style="font-size:14px;color:#2B3649">We don’t sell your data. You can ask for a copy or delete your account anytime.</span>
+        <label style="display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.4;cursor:pointer"><span style="width:22px;height:22px;flex:none;border:1.5px solid #0E1A2E;background:#005AA5;color:#F6F1E7;display:flex;align-items:center;justify-content:center;font-size:13px">✓</span><span>I agree to the <a href="Legal.dc.html?doc=terms">Terms of Use</a>.</span></label>
+        <label style="display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.4;cursor:pointer"><span style="width:22px;height:22px;flex:none;border:1.5px solid #0E1A2E;background:#005AA5;color:#F6F1E7;display:flex;align-items:center;justify-content:center;font-size:13px">✓</span><span>I’ve read the <a href="Legal.dc.html?doc=privacy">Privacy Policy</a> and agree to the processing described above.</span></label>
+        <button onClick="{{ nav.newUser }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:#FF881F;color:#0E1A2E;font:700 15px 'Schibsted Grotesk',sans-serif;box-shadow:3px 3px 0 #0E1A2E;cursor:pointer;min-height:54px;font-size:16px">Agree and continue</button>
+        <span style="font:400 11px 'JetBrains Mono',monospace;color:#4A5568">WE SAVE THE DATE AND VERSION YOU AGREED TO.</span>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ examMenuDesk }}">
+  <div data-m="drop" style="position:absolute;top:124px;left:14px;width:300px;z-index:4;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:6px 6px 0 #0E1A2E;display:flex;flex-direction:column">
+    <sc-for list="{{ examOpts }}" as="e" hint-placeholder-count="2"><button onClick="{{ e.pick }}" style="all:unset;cursor:pointer;display:flex;gap:10px;align-items:center;padding:12px 14px;border-bottom:1px solid #D5E2F0;background:{{ e.bg }}"><span style="font:700 12px/1 'JetBrains Mono',monospace;background:#005AA5;color:#F6F1E7;padding:6px 7px">{{ e.code }}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-weight:700;font-size:14px">{{ e.name }}</span><span style="font-size:12px;color:#2B3649">{{ e.meta }}</span></span><span style="font-weight:700;color:#005AA5">{{ e.check }}</span></button></sc-for>
+    <button onClick="{{ nav.plans }}" style="all:unset;cursor:pointer;padding:12px 14px;font:700 14px 'Schibsted Grotesk',sans-serif;color:#005AA5">+ Add an exam</button>
+  </div>
+</sc-if>
+<sc-if value="{{ examMenuMob }}">
+  <div data-m="drop" style="position:absolute;top:16px;left:12px;right:12px;z-index:9;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:6px 6px 0 #0E1A2E;display:flex;flex-direction:column">
+    <sc-for list="{{ examOpts }}" as="e" hint-placeholder-count="2"><button onClick="{{ e.pick }}" style="all:unset;cursor:pointer;display:flex;gap:10px;align-items:center;min-height:56px;padding:0 14px;border-bottom:1px solid #D5E2F0;background:{{ e.bg }}"><span style="font:700 12px/1 'JetBrains Mono',monospace;background:#005AA5;color:#F6F1E7;padding:6px 7px">{{ e.code }}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-weight:700;font-size:15px">{{ e.name }}</span><span style="font-size:12px;color:#2B3649">{{ e.meta }}</span></span><span style="font-weight:700;color:#005AA5">{{ e.check }}</span></button></sc-for>
+    <button onClick="{{ nav.plans }}" style="all:unset;cursor:pointer;min-height:52px;padding:0 14px;font:700 15px 'Schibsted Grotesk',sans-serif;color:#005AA5">+ Add an exam</button>
+  </div>
+</sc-if>
+
+<sc-if value="{{ is.session }}">
+  <div data-screen-label="Signed out elsewhere" style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px;background-color:#EDE6D6;background-image:linear-gradient(rgba(14,26,46,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(14,26,46,.06) 1px,transparent 1px);background-size:24px 24px">
+    <div style="width:100%;max-width:440px;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:8px 8px 0 #0E1A2E">
+      <div style="background:#FF881F;border-bottom:1.5px solid #0E1A2E;padding:12px 18px;font:700 12px 'JetBrains Mono',monospace;letter-spacing:.06em">SESSION ENDED</div>
+      <div style="padding:22px 22px 24px;display:flex;flex-direction:column;gap:16px">
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:28px;line-height:1.1;letter-spacing:-.02em">You were signed in on another device</h2>
+        <p style="margin:0;font-size:16px;line-height:1.5;color:#2B3649">Your account <b>{{ email }}</b> was just opened on another device, so this one was signed out. Only one device can be active at a time.</p>
+        <div style="font:400 12px/1.6 'JetBrains Mono',monospace;color:#4A5568;border-top:1px dashed #C9BFA8;padding-top:12px">NEW DEVICE · Chrome on Android · Today, 9:42 PM</div>
+        <button onClick="{{ nav.dashboard }}" style="min-height:52px;background:#0E1A2E;color:#F6F1E7;font:700 16px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E;cursor:pointer">Sign in on this device</button>
+        <button onClick="{{ nav.support }}" style="min-height:44px;background:transparent;color:#005AA5;font:600 15px 'Schibsted Grotesk',sans-serif;border:none;cursor:pointer">Wasn’t you? Email support</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ drawer }}">
+  <div style="position:absolute;inset:0;z-index:8;display:flex">
+    <div ref="{{ drawerRef }}" style="flex:none;width:min(86%,330px);background:#EDE6D6;border-right:1.5px solid #0E1A2E;box-shadow:6px 0 0 #0E1A2E">
+      <div style="position:sticky;top:0;display:flex;flex-direction:column;gap:18px;padding:16px 14px 22px;box-sizing:border-box;min-height:min(100%,100vh)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><img src="assets/brand-horizontal.svg" alt="AceYourCourse" style="height:22px;width:auto;display:block"><button onClick="{{ closeDrawer }}" aria-label="Close menu" style="all:unset;cursor:pointer;width:44px;height:44px;box-sizing:border-box;border:1.5px solid #0E1A2E;display:flex;align-items:center;justify-content:center;font-size:16px;background:#F6F1E7">✕</button></div>
+        <button onClick="{{ toggleExam }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;gap:6px;padding:14px;background:#0E1A2E;color:#F6F1E7;border:1.5px solid #0E1A2E;box-shadow:4px 4px 0 #FF881F">
+          <span style="display:flex;justify-content:space-between;font:500 10px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#9FB3CF"><span>STUDYING FOR</span><span>SWITCH ▾</span></span>
+          <span style="font:700 16px 'JetBrains Mono',monospace">{{ exam.code }} · {{ exam.board }}</span>
+          <span style="font-size:13px;color:#DCE3EC">{{ days }} days to the exam</span>
+        </button>
+        <nav style="display:flex;flex-direction:column;gap:2px">
+          <sc-for list="{{ sideNav }}" as="n" hint-placeholder-count="6">
+            <button onClick="{{ n.go }}" style="all:unset;cursor:pointer;box-sizing:border-box;display:flex;align-items:center;gap:12px;min-height:54px;padding:6px 10px;background:{{ n.bg }};color:{{ n.fg }};transition:background .15s"><span style="font:700 11px 'JetBrains Mono',monospace;width:22px;color:{{ n.ic }}">{{ n.code }}</span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:700;font-size:16px">{{ n.label }}</span><span style="font-size:12px;opacity:.75">{{ n.hint }}</span></span></button>
+          </sc-for>
+        </nav>
+        <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:14px;border-top:1.5px solid #0E1A2E">
+          <span style="font-weight:700;font-size:15px">Juan Dela Cruz</span>
+          <span style="font:400 11px 'JetBrains Mono',monospace;color:#4A5568;word-break:break-all">{{ email }}</span>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font:700 10px/1 'JetBrains Mono',monospace;background:#005AA5;color:#F6F1E7;padding:5px 6px">CE ALL-ACCESS</span><button onClick="{{ nav.signin }}" style="all:unset;cursor:pointer;font:700 13px 'Schibsted Grotesk',sans-serif;color:#B3261E;min-height:44px;display:flex;align-items:center">Sign out</button></div>
+        </div>
+      </div>
+    </div>
+    <button ref="{{ scrimRef }}" onClick="{{ closeDrawer }}" aria-label="Close menu" style="all:unset;cursor:pointer;flex:1;background:rgba(14,26,46,.45)"></button>
+  </div>
+</sc-if>
+
+<sc-if value="{{ shell }}">
+<div style="flex:1;display:flex;flex-wrap:wrap;align-items:flex-start">
+
+  <sc-if value="{{ desk }}">
+    <aside style="flex:0 0 272px;background:#EDE6D6;border-right:1.5px solid #0E1A2E;align-self:stretch">
+      <div style="position:sticky;top:0;display:flex;flex-direction:column;gap:18px;padding:16px 14px 22px;box-sizing:border-box;min-height:min(100vh,820px)">
+        <div style="display:flex;align-items:center;padding:4px 6px"><img src="assets/brand-horizontal.svg" alt="AceYourCourse" style="height:24px;width:auto;display:block"></div>
+        <button onClick="{{ toggleExam }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;gap:6px;padding:14px;background:#0E1A2E;color:#F6F1E7;border:1.5px solid #0E1A2E;box-shadow:4px 4px 0 #FF881F">
+          <span style="display:flex;justify-content:space-between;font:500 10px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#9FB3CF"><span>STUDYING FOR</span><span>SWITCH ▾</span></span>
+          <span style="font:700 16px 'JetBrains Mono',monospace">{{ exam.code }} · {{ exam.board }}</span>
+          <span style="font-size:13px;color:#DCE3EC">{{ days }} days to the exam</span>
+        </button>
+        <nav style="display:flex;flex-direction:column;gap:2px">
+          <sc-for list="{{ sideNav }}" as="n" hint-placeholder-count="6">
+            <button onClick="{{ n.go }}" style="all:unset;cursor:pointer;box-sizing:border-box;display:flex;align-items:center;gap:12px;min-height:54px;padding:6px 10px;background:{{ n.bg }};color:{{ n.fg }};transition:background .15s"><span style="font:700 11px 'JetBrains Mono',monospace;width:22px;color:{{ n.ic }}">{{ n.code }}</span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:700;font-size:16px">{{ n.label }}</span><span style="font-size:12px;opacity:.75">{{ n.hint }}</span></span></button>
+          </sc-for>
+        </nav>
+        <button onClick="{{ nav.dashboard }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid #0E1A2E;background:#FF881F;font:700 12px 'JetBrains Mono',monospace;letter-spacing:.04em"><span aria-hidden="true">▲</span>6-DAY STREAK<span style="margin-left:auto;font-weight:500;font-size:11px">STUDY TODAY</span></button>
+        <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:14px;border-top:1.5px solid #0E1A2E">
+          <span style="font-weight:700;font-size:15px">Juan Dela Cruz</span>
+          <span style="font:400 11px 'JetBrains Mono',monospace;color:#4A5568;word-break:break-all">{{ email }}</span>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font:700 10px/1 'JetBrains Mono',monospace;background:#005AA5;color:#F6F1E7;padding:5px 6px">CE ALL-ACCESS</span><button onClick="{{ nav.signin }}" style="all:unset;cursor:pointer;font:700 13px 'Schibsted Grotesk',sans-serif;color:#B3261E;min-height:44px;display:flex;align-items:center">Sign out</button></div>
+        </div>
+      </div>
+    </aside>
+  </sc-if>
+
+  <sc-if value="{{ mBack }}">
+    <div style="flex:0 0 100%;display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1.5px solid #0E1A2E;box-sizing:border-box;background:#F6F1E7">
+      <button onClick="{{ back }}" aria-label="Back" style="width:44px;height:44px;border:1.5px solid #0E1A2E;background:transparent;font:700 18px 'Schibsted Grotesk',sans-serif;cursor:pointer">←</button>
+      <span style="display:flex;flex-direction:column;min-width:0"><span style="font:500 10px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">{{ crumbTop }}</span><span style="font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ crumbTitle }}</span></span>
+    </div>
+  </sc-if>
+
+  <main data-m="screen" style="flex:1 1 0;max-width:1240px;margin:0 auto;min-width:min(100%,320px);box-sizing:border-box;padding:clamp(16px,3cqi,40px);display:flex;flex-direction:column;gap:clamp(18px,2.4cqi,28px)">
+
+    <sc-if value="{{ dCrumb }}">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font:500 12px 'JetBrains Mono',monospace;letter-spacing:.04em;color:#4A5568"><button onClick="{{ back }}" style="all:unset;cursor:pointer;color:#4A5568">{{ crumbParent }}</button><span>/</span><span style="color:#0E1A2E">{{ crumbTop }}</span></div>
+    </sc-if>
+
+    <sc-if value="{{ is.dashboard }}">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:10px 24px">
+        <div style="display:flex;flex-direction:column;gap:4px"><span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">DASHBOARD</span><h1 style="margin:0;font-weight:800;font-size:clamp(28px,3.4cqi,40px);letter-spacing:-.03em">Hi, Juan. Kaya mo ’to.</h1></div>
+        <span style="font:500 12px 'JetBrains Mono',monospace;color:#2B3649">CE ALL-ACCESS · ACTIVE UNTIL 12 JAN 2027</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:18px">
+        <div style="flex:1.2 1 300px;background:#0E1A2E;color:#F6F1E7;border:1.5px solid #0E1A2E;box-shadow:6px 6px 0 #FF881F;padding:clamp(18px,2.4cqi,28px);display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;gap:12px;font:700 12px 'JetBrains Mono',monospace;letter-spacing:.06em"><span style="color:#FF881F">CELE BOARD EXAM</span><button onClick="{{ nav.account }}" style="all:unset;cursor:pointer;color:#9FB3CF;text-decoration:underline">Change date</button></div>
+          <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap"><span style="font-weight:900;font-size:clamp(72px,9cqi,120px);line-height:.85;letter-spacing:-.05em" data-m="count">{{ days }}</span><span style="font-weight:700;font-size:22px">days to go</span></div>
+          <div style="display:flex;gap:3px;height:10px"><sc-for list="{{ weeks }}" as="w" hint-placeholder-count="12"><span style="flex:1;background:{{ w.c }}"></span></sc-for></div>
+          <span style="font:400 12px 'JetBrains Mono',monospace;color:#9FB3CF">{{ examDate }} · DATE SET BY YOU</span>
+          <sc-if value="{{ endingSoon }}">
+            <div style="display:flex;flex-direction:column;gap:10px;border-top:1.5px dashed rgba(246,241,231,.35);padding-top:14px">
+              <div style="display:flex;gap:3px;height:10px"><sc-for list="{{ accessWeeks }}" as="w" hint-placeholder-count="12"><span style="flex:1;background:{{ w.c }}"></span></sc-for></div>
+              <span style="display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px"><span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#FF881F">ACCESS ENDS IN 5 DAYS</span><span style="font-size:14px;color:#D9DEE6">Your plan ends 25 Oct, {{ gapDays }} days before your exam.</span></span>
+              <button onClick="{{ nav.plans }}" style="align-self:flex-start;min-height:44px;padding:0 16px;background:#FF881F;color:#0E1A2E;font:700 14px 'Schibsted Grotesk',sans-serif;border:1.5px solid #F6F1E7;cursor:pointer">Renew to cover your exam</button>
+            </div>
+          </sc-if>
+        </div>
+        <div style="flex:1 1 260px;display:flex;flex-direction:column;gap:12px;background:#FBF8F1;border:1.5px solid #0E1A2E;padding:clamp(16px,2cqi,24px)">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em"><span style="color:#E07400">STUDY STREAK</span><span style="color:#4A5568">LAST 7 DAYS</span></div>
+          <div style="display:flex;align-items:baseline;gap:10px"><span data-m="count" style="font-weight:900;font-size:clamp(48px,5cqi,64px);line-height:.9;letter-spacing:-.04em">6</span><span style="font-weight:700;font-size:18px">days in a row</span></div>
+          <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px">
+            <sc-for list="{{ streakDays }}" as="d" hint-placeholder-count="7"><div style="display:flex;flex-direction:column;align-items:center;gap:5px"><span style="width:100%;aspect-ratio:1/1;box-sizing:border-box;border:1.5px {{ d.bs }} #0E1A2E;background:{{ d.bg }};display:flex;align-items:center;justify-content:center;font:700 13px 'JetBrains Mono',monospace">{{ d.mark }}</span><span style="font:500 9px 'JetBrains Mono',monospace;color:#4A5568">{{ d.l }}</span></div></sc-for>
+          </div>
+          <span style="margin-top:auto;font-size:14px;line-height:1.45;color:#2B3649">Study anything today to make it 7. Your best is 11 days.</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(20px,2.2cqi,26px);letter-spacing:-.02em">Continue where you left off</h2>
+        <div data-m-stagger="" style="display:flex;flex-wrap:wrap;gap:14px">
+          <button onClick="{{ hero.go }}" style="all:unset;cursor:pointer;box-sizing:border-box;flex:2 1 360px;display:flex;flex-direction:column;gap:12px;padding:clamp(18px,2.2cqi,26px);background:#005AA5;color:#F6F1E7;border:1.5px solid #0E1A2E;box-shadow:5px 5px 0 #0E1A2E;transition:transform .18s,box-shadow .18s" style-hover="transform:translate(-2px,-2px);box-shadow:7px 7px 0 #0E1A2E">
+            <span style="display:flex;justify-content:space-between;gap:8px;font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em"><span style="color:#FFD2A8">{{ hero.kind }} · LAST OPENED 2H AGO</span><span>{{ hero.subj }}</span></span>
+            <span style="font-weight:800;font-size:clamp(24px,2.8cqi,34px);line-height:1.05;letter-spacing:-.025em">{{ hero.title }}</span>
+            <span style="display:flex;align-items:center;gap:10px"><span style="flex:1;height:8px;background:rgba(246,241,231,.25)"><span data-m="grow" style="display:block;height:100%;width:{{ hero.w }};background:#FF881F"></span></span><span style="font:700 12px 'JetBrains Mono',monospace">{{ hero.meta }}</span></span>
+            <span style="align-self:flex-start;display:flex;align-items:center;min-height:44px;padding:0 18px;background:#FF881F;color:#0E1A2E;font-weight:800;font-size:15px;border:1.5px solid #0E1A2E">{{ hero.cta }} →</span>
+          </button>
+          <sc-for list="{{ resumeRest }}" as="r" hint-placeholder-count="2">
+            <button onClick="{{ r.go }}" style="all:unset;cursor:pointer;box-sizing:border-box;flex:1 1 220px;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:4px 4px 0 #0E1A2E;padding:16px;display:flex;flex-direction:column;gap:8px;transition:transform .18s,box-shadow .18s" style-hover="transform:translate(-2px,-2px);box-shadow:6px 6px 0 #0E1A2E">
+              <span style="display:flex;justify-content:space-between;gap:8px;font:700 11px 'JetBrains Mono',monospace;letter-spacing:.05em"><span style="color:#005AA5">{{ r.kind }}</span><span style="color:#4A5568">{{ r.subj }}</span></span>
+              <span style="font-weight:700;font-size:18px;line-height:1.2">{{ r.title }}</span>
+              <span style="font:400 12px 'JetBrains Mono',monospace;color:#2B3649">{{ r.meta }}</span>
+              <span style="margin-top:auto;font-weight:700;font-size:14px;color:#E07400">{{ r.cta }} →</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 20px"><h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(20px,2.2cqi,26px);letter-spacing:-.02em">Progress by subject</h2><span style="font:500 12px 'JetBrains Mono',monospace;color:#4A5568">312 / 1,040 CARDS · 76% QUIZ AVG · 9 / 32 LESSONS</span></div>
+        <div data-m-stagger="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:14px">
+          <sc-for list="{{ rings }}" as="r" hint-placeholder-count="3">
+            <button onClick="{{ r.go }}" style="all:unset;cursor:pointer;box-sizing:border-box;display:flex;align-items:center;gap:16px;padding:16px 18px;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:4px 4px 0 #0E1A2E;transition:transform .18s,box-shadow .18s" style-hover="transform:translate(-2px,-2px);box-shadow:6px 6px 0 #0E1A2E">
+              <span style="flex:none;width:84px;height:84px;box-sizing:border-box;border-radius:50%;border:1.5px solid #0E1A2E;background:conic-gradient(#005AA5 {{ r.deg }}, #E6DECB 0);display:flex;align-items:center;justify-content:center"><span style="width:60px;height:60px;box-sizing:border-box;border-radius:50%;background:#FBF8F1;border:1.5px solid #0E1A2E;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;letter-spacing:-.02em">{{ r.pct }}</span></span>
+              <span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font:700 13px 'JetBrains Mono',monospace">{{ r.code }}</span><span style="font-weight:600;font-size:14px;line-height:1.25">{{ r.name }}</span><span style="font:400 11px/1.4 'JetBrains Mono',monospace;color:#4A5568">{{ r.detail }}</span></span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 20px"><h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(20px,2.2cqi,26px);letter-spacing:-.02em">Weak topics to review</h2><span style="font:500 12px 'JetBrains Mono',monospace;color:#4A5568">BASED ON YOUR QUIZ SCORES</span></div>
+        <div style="display:flex;flex-direction:column;background:#FBF8F1;border:1.5px solid #0E1A2E">
+          <sc-for list="{{ weak }}" as="w" hint-placeholder-count="3">
+            <div style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding:14px 16px;border-bottom:1px solid #D5CCB8">
+              <span style="font:700 12px/1 'JetBrains Mono',monospace;background:#0E1A2E;color:#F6F1E7;padding:6px 7px">{{ w.subj }}</span>
+              <span style="flex:1 1 200px;display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-weight:700;font-size:16px">{{ w.topic }}</span><span style="font:500 11px 'JetBrains Mono',monospace;color:#4A5568">{{ w.meta }}</span></span>
+              <span style="font:700 15px 'JetBrains Mono',monospace;color:#B3261E;min-width:44px">{{ w.score }}</span>
+              <div style="display:flex;gap:8px"><button onClick="{{ w.cards }}" style="all:unset;cursor:pointer;min-height:44px;padding:0 14px;display:flex;align-items:center;border:1.5px solid #0E1A2E;font:700 14px 'Schibsted Grotesk',sans-serif" style-hover="background:#EDE6D6">Review cards</button><button onClick="{{ w.quiz }}" style="all:unset;cursor:pointer;min-height:44px;padding:0 14px;display:flex;align-items:center;border:1.5px solid #0E1A2E;background:#0E1A2E;color:#F6F1E7;font:700 14px 'Schibsted Grotesk',sans-serif" style-hover="background:#005AA5">Retake quiz</button></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.library }}">
+      <div style="display:flex;flex-direction:column;gap:4px"><span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">LIBRARY · CE · CELE</span><h1 style="margin:0;font-weight:800;font-size:clamp(28px,3.4cqi,40px);letter-spacing:-.03em">Subjects and topics</h1></div>
+      <div style="display:flex;gap:0;border-bottom:1.5px solid #0E1A2E;overflow-x:auto">
+        <sc-for list="{{ subjTabs }}" as="t" hint-placeholder-count="3">
+          <button onClick="{{ t.go }}" style="all:unset;cursor:pointer;min-height:44px;padding:0 18px;display:flex;align-items:center;font:700 14px 'JetBrains Mono',monospace;letter-spacing:.04em;background:{{ t.bg }};color:{{ t.fg }};border:1.5px solid #0E1A2E;border-bottom:none;margin-right:-1.5px;border-radius:6px 6px 0 0">{{ t.code }}</button>
+        </sc-for>
+      </div>
+      <span style="font-size:15px;color:#2B3649;margin-top:-8px">{{ subjName }}</span>
+      <div style="display:flex;flex-direction:column;background:#FBF8F1;border:1.5px solid #0E1A2E">
+        <sc-for list="{{ topics }}" as="t" hint-placeholder-count="6">
+          <div style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:14px 16px;border-bottom:1px solid #D5E2F0">
+            <div style="flex:1 1 200px;display:flex;flex-direction:column;gap:6px;min-width:0">
+              <span style="display:flex;gap:10px;align-items:baseline"><span style="font:700 12px 'JetBrains Mono',monospace;color:#005AA5">{{ t.n }}</span><span style="font-weight:700;font-size:17px">{{ t.name }}</span></span>
+              <span style="display:flex;gap:10px;align-items:center"><span style="flex:1;max-width:220px;height:6px;background:#E6DECB"><span data-m="grow" style="display:block;height:100%;width:{{ t.w }};background:#005AA5"></span></span><span style="font:500 11px 'JetBrains Mono',monospace;color:#4A5568">{{ t.w }} DONE</span></span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <button onClick="{{ nav.flashcards }}" style="min-height:40px;padding:0 12px;font:600 13px 'Schibsted Grotesk',sans-serif;background:#F6F1E7;border:1.5px solid #0E1A2E;cursor:pointer">Flashcards · {{ t.cards }}</button>
+              <button onClick="{{ nav.quizStart }}" style="min-height:40px;padding:0 12px;font:600 13px 'Schibsted Grotesk',sans-serif;background:#F6F1E7;border:1.5px solid #0E1A2E;cursor:pointer">Quiz · {{ t.qs }}</button>
+              <button onClick="{{ nav.reviewer }}" style="min-height:40px;padding:0 12px;font:600 13px 'Schibsted Grotesk',sans-serif;background:#F6F1E7;border:1.5px solid #0E1A2E;cursor:pointer">Reviewer · {{ t.pages }}p</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#4A5568">NOT IN YOUR PLAN</span>
+        <div data-m-stagger="" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));gap:10px">
+          <sc-for list="{{ locked }}" as="l" hint-placeholder-count="4">
+            <button onClick="{{ nav.plans }}" style="all:unset;cursor:pointer;border:1.5px dashed #8E97A6;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;color:#3A4558">
+              <span style="display:flex;flex-direction:column;gap:3px"><span style="font:700 13px 'JetBrains Mono',monospace">🔒 {{ l.code }}</span><span style="font-size:14px">{{ l.name }}</span></span><span style="font-weight:700;font-size:13px;color:#005AA5">Unlock</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.flashcards }}">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px">
+        <h1 style="margin:0;font-weight:800;font-size:clamp(22px,2.6cqi,30px);letter-spacing:-.02em">Simple Curves</h1>
+        <span style="font:700 13px 'JetBrains Mono',monospace">{{ cardPos }}</span>
+      </div>
+      <div style="display:flex;gap:3px;height:6px"><sc-for list="{{ cardTicks }}" as="c" hint-placeholder-count="24"><span style="flex:1;background:{{ c.c }}"></span></sc-for></div>
+      <div style="display:flex;justify-content:center">
+        <button data-m="flip" ref="{{ cardRef }}" onClick="{{ flip }}" style="all:unset;cursor:grab;touch-action:pan-y;position:relative;width:100%;max-width:640px;aspect-ratio:3/2;background:#FFFDF8;border:1.5px solid #0E1A2E;box-shadow:8px 8px 0 -1.5px #EDE6D6,8px 8px 0 0 #0E1A2E;overflow:hidden;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column">
+          <span style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:2px solid #FF881F;font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em"><span style="color:#005AA5">MSTC · TRANSPORTATION</span><span style="color:#4A5568">{{ side }}</span></span>
+          <span style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;text-align:center">
+            <span style="font-weight:800;font-size:clamp(22px,3cqi,34px);line-height:1.15;letter-spacing:-.02em;max-width:18ch">{{ cardMain }}</span>
+            <span style="font:400 13px/1.5 'JetBrains Mono',monospace;color:#4A5568;max-width:34ch">{{ cardSub }}</span>
+          </span>
+          <span style="padding:10px 16px;font:500 11px 'JetBrains Mono',monospace;color:#4A5568;text-align:center">TAP TO FLIP · SWIPE → GOT IT · ← REVIEW AGAIN</span>
+          <span data-hint="got" style="position:absolute;top:52px;right:16px;z-index:2;opacity:0;transform:rotate(8deg);font:800 16px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#F6F1E7;background:#005AA5;padding:8px 12px;border:1.5px solid #0E1A2E;pointer-events:none">GOT IT ✓</span>
+          <span data-hint="again" style="position:absolute;top:52px;left:16px;z-index:2;opacity:0;transform:rotate(-8deg);font:800 16px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#0E1A2E;background:#FF881F;padding:8px 12px;border:1.5px solid #0E1A2E;pointer-events:none">REVIEW AGAIN ↺</span>
+          <span style="position:absolute;inset:-40%;display:grid;grid-template-columns:repeat(3,1fr);align-content:space-around;justify-items:center;transform:rotate(-22deg);pointer-events:none">
+            <sc-for list="{{ wm }}" as="w" hint-placeholder-count="18"><span style="font:500 13px 'JetBrains Mono',monospace;color:rgba(14,26,46,.10);white-space:nowrap;padding:22px 0">{{ w.t }}</span></sc-for>
+          </span>
+        </button>
+      </div>
+      <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap">
+        <button onClick="{{ fc.prev }}" style="min-height:52px;min-width:52px;border:1.5px solid #0E1A2E;background:transparent;font:700 18px 'Schibsted Grotesk',sans-serif;cursor:pointer">←</button>
+        <button onClick="{{ fc.again }}" style="min-height:52px;padding:0 20px;border:1.5px solid #0E1A2E;background:#FF881F;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">Review again</button>
+        <button onClick="{{ fc.got }}" style="min-height:52px;padding:0 20px;border:1.5px solid #0E1A2E;background:#005AA5;color:#F6F1E7;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">Got it</button>
+        <button onClick="{{ fc.next }}" style="min-height:52px;min-width:52px;border:1.5px solid #0E1A2E;background:transparent;font:700 18px 'Schibsted Grotesk',sans-serif;cursor:pointer">→</button>
+      </div>
+      <button onClick="{{ nav.deckDone }}" style="all:unset;cursor:pointer;align-self:center;font:600 14px 'Schibsted Grotesk',sans-serif;color:#005AA5">Finish deck →</button>
+      <p style="margin:0;text-align:center;font:400 12px 'JetBrains Mono',monospace;color:#4A5568">Keyboard: ← review again · → got it · space flips. Marked cards count toward your progress.</p>
+    </sc-if>
+
+    <sc-if value="{{ is.quiz }}">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px">
+        <h1 style="margin:0;font-weight:800;font-size:clamp(22px,2.6cqi,30px);letter-spacing:-.02em">Simple Curves · Practice quiz</h1>
+        <span style="font:700 13px 'JetBrains Mono',monospace">{{ qz.pos }}</span>
+      </div>
+      <div style="display:flex;gap:3px;height:6px"><sc-for list="{{ qz.ticks }}" as="c" hint-placeholder-count="10"><span style="flex:1;background:{{ c.c }}"></span></sc-for></div>
+      <div style="max-width:760px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:16px;user-select:none;-webkit-user-select:none">
+        <p style="margin:0;font-weight:700;font-size:clamp(19px,2cqi,24px);line-height:1.35">{{ qz.text }}</p>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ qz.opts }}" as="o" hint-placeholder-count="4">
+            <button onClick="{{ o.pick }}" style="all:unset;cursor:pointer;display:flex;gap:14px;align-items:center;min-height:56px;padding:0 16px;background:{{ o.bg }};border:{{ o.bd }}">
+              <span style="width:32px;height:32px;flex:none;display:flex;align-items:center;justify-content:center;font:700 14px 'JetBrains Mono',monospace;border:1.5px solid #0E1A2E;background:{{ o.kb }};color:{{ o.kf }}">{{ o.k }}</span>
+              <span style="font-size:17px;font-weight:600">{{ o.t }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <button onClick="{{ qz.prev }}" style="min-height:52px;padding:0 18px;border:1.5px solid #0E1A2E;background:transparent;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">← Previous</button>
+          <button onClick="{{ qz.next }}" style="min-height:52px;padding:0 22px;border:1.5px solid #0E1A2E;background:#0E1A2E;color:#F6F1E7;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">{{ qz.nextLabel }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.score }}">
+      <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:stretch">
+        <div style="flex:1 1 280px;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:6px 6px 0 #0E1A2E;padding:clamp(20px,2.6cqi,32px);display:flex;flex-direction:column;gap:12px">
+          <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">QUIZ COMPLETE · SIMPLE CURVES</span>
+          <div style="display:flex;align-items:baseline;gap:10px"><span style="font-weight:900;font-size:clamp(80px,10cqi,128px);line-height:.85;letter-spacing:-.05em">{{ scoreN }}</span><span style="font-weight:800;font-size:32px;color:#4A5568">/ 10</span></div>
+          <span style="align-self:flex-start;font:700 13px/1 'JetBrains Mono',monospace;background:#FF881F;padding:7px 9px;border:1.5px solid #0E1A2E">{{ scorePct }}</span>
+          <span style="font-size:15px;color:#2B3649">Previous attempts: 60% · 70%</span>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:auto">
+            <button onClick="{{ retake }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:#0E1A2E;color:#F6F1E7;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">Retake quiz</button>
+            <button onClick="{{ nav.flashcards }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:transparent;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">Review flashcards</button>
+          </div>
+        </div>
+        <div style="flex:1.4 1 320px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;border-bottom:1.5px solid #0E1A2E"><sc-for list="{{ revTabs }}" as="t" hint-placeholder-count="2"><button onClick="{{ t.go }}" style="all:unset;cursor:pointer;min-height:40px;padding:0 14px;display:flex;align-items:center;font:700 12px 'JetBrains Mono',monospace;letter-spacing:.04em;background:{{ t.bg }};color:{{ t.fg }};border:1.5px solid #0E1A2E;border-bottom:none;margin-right:-1.5px;border-radius:6px 6px 0 0">{{ t.t }}</button></sc-for></div>
+          <sc-if value="{{ showMissed }}" hint-placeholder-val="{{ true }}"><sc-for list="{{ missed }}" as="x" hint-placeholder-count="2">
+            <div style="background:#FBF8F1;border:1.5px solid #0E1A2E;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+              <span style="font:700 11px 'JetBrains Mono',monospace;color:#B3261E">Q{{ x.n }} · INCORRECT</span>
+              <span style="font-weight:600;font-size:16px;line-height:1.4">{{ x.q }}</span>
+              <span style="font-size:14px;color:#2B3649">Your answer: {{ x.yours }}</span>
+              <span style="font-size:14px;font-weight:700;color:#2E7D4F">Correct: {{ x.right }}</span>
+            </div>
+          </sc-for></sc-if>
+          <sc-if value="{{ showAll }}"><div style="background:#FBF8F1;border:1.5px solid #0E1A2E"><sc-for list="{{ allAns }}" as="a" hint-placeholder-count="10"><div style="display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:10px;padding:10px 14px;border-bottom:1px solid #D5E2F0;align-items:center"><span style="font:700 11px 'JetBrains Mono',monospace;color:{{ a.c }}">Q{{ a.n }}</span><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:14px;font-weight:600">{{ a.q }}</span><span style="font-size:12px;color:#2B3649">{{ a.note }}</span></span><span style="font:700 12px 'JetBrains Mono',monospace;color:{{ a.c }}">{{ a.mark }}</span></div></sc-for></div></sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.reviewer }}">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px">
+        <h1 style="margin:0;font-weight:800;font-size:clamp(22px,2.6cqi,30px);letter-spacing:-.02em">MSTC Reviewer · Simple Curves</h1>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button onClick="{{ rv.zoomOut }}" style="width:44px;height:44px;border:1.5px solid #0E1A2E;background:transparent;font:700 16px 'JetBrains Mono',monospace;cursor:pointer">−</button>
+          <span style="font:700 13px 'JetBrains Mono',monospace;min-width:52px;text-align:center">{{ rv.zoom }}</span>
+          <button onClick="{{ rv.zoomIn }}" style="width:44px;height:44px;border:1.5px solid #0E1A2E;background:transparent;font:700 16px 'JetBrains Mono',monospace;cursor:pointer">+</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;background:#EDE6D6;border:1.5px solid #0E1A2E;padding:clamp(14px,3cqi,36px)">
+        <div style="transform:scale({{ rv.scale }});transform-origin:top center;transition:transform .2s;position:relative;width:100%;max-width:560px;aspect-ratio:8.5/11;background:#FFFFFF;box-shadow:0 10px 24px -14px rgba(14,26,46,.5);overflow:hidden;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column;gap:12px;padding:8%;box-sizing:border-box">
+          <span style="font:700 11px 'JetBrains Mono',monospace;color:#005AA5;letter-spacing:.06em">PAGE IMAGE · CLIENT PDF</span>
+          <span style="height:14px;width:62%;background:#0E1A2E"></span>
+          <span style="height:8px;width:100%;background:#D6CDB9"></span><span style="height:8px;width:94%;background:#D6CDB9"></span><span style="height:8px;width:88%;background:#D6CDB9"></span>
+          <span style="height:90px;width:100%;border:1.5px solid #D6CDB9;margin:6px 0"></span>
+          <span style="height:8px;width:100%;background:#D6CDB9"></span><span style="height:8px;width:76%;background:#D6CDB9"></span><span style="height:8px;width:90%;background:#D6CDB9"></span><span style="height:8px;width:58%;background:#D6CDB9"></span>
+          <span style="position:absolute;inset:-40%;display:grid;grid-template-columns:repeat(3,1fr);align-content:space-around;justify-items:center;transform:rotate(-22deg);pointer-events:none">
+            <sc-for list="{{ wm }}" as="w" hint-placeholder-count="18"><span style="font:500 12px 'JetBrains Mono',monospace;color:rgba(14,26,46,.12);white-space:nowrap;padding:24px 0">{{ w.t }}</span></sc-for>
+          </span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;align-items:center;gap:10px">
+        <button onClick="{{ rv.prev }}" style="min-height:48px;padding:0 16px;border:1.5px solid #0E1A2E;background:transparent;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">← Prev</button>
+        <span style="font:700 13px 'JetBrains Mono',monospace;padding:0 10px">{{ rv.pos }}</span>
+        <button onClick="{{ rv.next }}" style="min-height:48px;padding:0 16px;border:1.5px solid #0E1A2E;background:#0E1A2E;color:#F6F1E7;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">Next →</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.course }}">
+      <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+        <div style="flex:2 1 340px;min-width:0;display:flex;flex-direction:column;gap:14px">
+          <div style="position:relative;aspect-ratio:16/9;background:#0E1A2E;border:1.5px solid #0E1A2E;overflow:hidden;display:flex;align-items:center;justify-content:center">
+            <span onClick="{{ cl.toggle }}" style="width:72px;height:72px;border-radius:50%;background:#FF881F;display:flex;align-items:center;justify-content:center;font-size:26px;color:#0E1A2E;padding-left:4px;box-sizing:border-box;cursor:pointer">{{ cl.icon }}</span>
+            <span style="position:absolute;top:12px;left:12px;font:700 11px/1 'JetBrains Mono',monospace;background:#FF881F;color:#0E1A2E;padding:6px 8px">{{ cl.playLabel }}</span>
+            <span style="position:absolute;inset:-40%;display:grid;grid-template-columns:repeat(3,1fr);align-content:space-around;justify-items:center;transform:rotate(-22deg);pointer-events:none">
+              <sc-for list="{{ wm }}" as="w" hint-placeholder-count="18"><span style="font:500 12px 'JetBrains Mono',monospace;color:rgba(246,241,231,.14);white-space:nowrap;padding:20px 0">{{ w.t }}</span></sc-for>
+            </span>
+            <div style="position:absolute;left:0;right:0;bottom:0;padding:10px 14px;display:flex;align-items:center;gap:12px;background:linear-gradient(transparent,rgba(14,26,46,.9));color:#F6F1E7;font:500 12px 'JetBrains Mono',monospace">
+              <span>{{ cl.time }}</span><span style="flex:1;height:4px;background:rgba(246,241,231,.3)"><span style="display:block;height:100%;width:52%;background:#FF881F"></span></span><span>{{ cl.dur }}</span><span>1×</span><span>⛶</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">{{ cl.crumb }}</span>
+            <h1 style="margin:0;font-weight:800;font-size:clamp(24px,2.8cqi,32px);line-height:1.1;letter-spacing:-.02em">{{ cl.title }}</h1>
+            <span style="font-size:15px;color:#2B3649">{{ cl.note }}</span>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button onClick="{{ cl.prev }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:transparent;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">{{ cl.prevLabel }}</button>
+            <button onClick="{{ cl.next }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:#005AA5;color:#F6F1E7;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">{{ cl.nextLabel }}</button>
+          </div>
+        </div>
+        <div style="flex:1 1 260px;min-width:0;background:#FBF8F1;border:1.5px solid #0E1A2E">
+          <div style="padding:14px 16px;border-bottom:1.5px solid #0E1A2E;display:flex;flex-direction:column;gap:8px"><span style="font-weight:800;font-size:17px">PSAD Masterclass</span><span style="display:flex;gap:10px;align-items:center"><span style="flex:1;height:6px;background:#E6DECB"><span style="display:block;height:100%;width:28%;background:#005AA5"></span></span><span style="font:500 11px 'JetBrains Mono',monospace">{{ cl.done }}</span></span></div>
+          <sc-for list="{{ cl.modules }}" as="md" hint-placeholder-count="3">
+            <div style="border-bottom:1px solid #D5E2F0">
+              <div style="padding:12px 16px 6px;font:700 11px 'JetBrains Mono',monospace;letter-spacing:.05em;color:#4A5568">{{ md.title }}</div>
+              <sc-for list="{{ md.lessons }}" as="l" hint-placeholder-count="3">
+                <div onClick="{{ l.go }}" style="display:flex;gap:10px;align-items:center;padding:9px 16px;background:{{ l.bg }};font-size:14px;cursor:pointer">
+                  <span style="width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center;font:700 11px 'JetBrains Mono',monospace;border:1.5px solid {{ l.bd }};background:{{ l.ib }};color:{{ l.ic }}">{{ l.icon }}</span>
+                  <span style="flex:1;min-width:0;font-weight:{{ l.fw }}">{{ l.t }}</span><span style="font:400 11px 'JetBrains Mono',monospace;color:#4A5568">{{ l.dur }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.plans }}">
+      <div style="display:flex;flex-direction:column;gap:4px"><span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">PLANS</span><h1 style="margin:0;font-weight:800;font-size:clamp(28px,3.4cqi,40px);letter-spacing:-.03em">Choose your access</h1><span style="font-size:15px;color:#2B3649">Pay once for a fixed period. Nothing renews automatically.</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <sc-for list="{{ examPills }}" as="x" hint-placeholder-count="5"><button onClick="{{ x.go }}" style="min-height:40px;display:flex;align-items:center;padding:0 14px;font:700 13px 'JetBrains Mono',monospace;border:1.5px solid #0E1A2E;background:{{ x.bg }};color:{{ x.fg }};cursor:pointer">{{ x.code }}</button></sc-for>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+        <div style="flex:1.4 1 320px;min-width:0;display:flex;flex-direction:column;gap:10px">
+          <span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#4A5568">{{ planHead }}</span>
+          <sc-for list="{{ plans }}" as="p" hint-placeholder-count="3">
+            <button onClick="{{ p.pick }}" style="all:unset;cursor:pointer;display:flex;gap:14px;align-items:center;padding:16px;background:#FBF8F1;border:{{ p.bd }};box-shadow:{{ p.sh }}">
+              <span style="width:20px;height:20px;flex:none;border-radius:50%;border:2px solid #005AA5;display:flex;align-items:center;justify-content:center"><span style="width:10px;height:10px;border-radius:50%;background:{{ p.dot }}"></span></span>
+              <span style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-weight:800;font-size:18px">{{ p.name }}</span><span style="font-size:13px;color:#2B3649">{{ p.note }}</span></span>
+              <span style="font-weight:900;font-size:22px;letter-spacing:-.02em">{{ p.price }}</span>
+            </button>
+          </sc-for>
+          <sc-if value="{{ showOne }}"><span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#4A5568;margin-top:10px">ONE-TIME PURCHASE</span>
+          <button onClick="{{ pickOne }}" style="all:unset;cursor:pointer;display:flex;gap:14px;align-items:center;padding:16px;background:#FBF8F1;border:{{ one.bd }};box-shadow:{{ one.sh }}">
+            <span style="width:20px;height:20px;flex:none;border-radius:50%;border:2px solid #005AA5;display:flex;align-items:center;justify-content:center"><span style="width:10px;height:10px;border-radius:50%;background:{{ one.dot }}"></span></span>
+            <span style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-weight:800;font-size:18px">PSAD Masterclass</span><span style="font-size:13px;color:#2B3649">Video course only · yours to keep</span></span>
+            <span style="font-weight:900;font-size:22px;letter-spacing:-.02em">₱1,499</span>
+          </button></sc-if>
+        </div>
+        <div style="flex:1 1 280px;min-width:0;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:6px 6px 0 #0E1A2E">
+          <div style="padding:14px 18px;border-bottom:1.5px dashed #0E1A2E;font:700 12px 'JetBrains Mono',monospace;letter-spacing:.06em">ORDER SUMMARY</div>
+          <div style="padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;gap:10px;font-size:16px"><span>{{ sel.name }}</span><span style="font-weight:700">{{ sel.price }}</span></div>
+            <span style="font:400 12px 'JetBrains Mono',monospace;color:#4A5568">{{ sel.until }}</span>
+            <span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#4A5568;margin-top:4px">PAY WITH</span>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <sc-for list="{{ methods }}" as="x" hint-placeholder-count="4">
+                <button onClick="{{ x.pick }}" style="min-height:48px;font:700 14px 'Schibsted Grotesk',sans-serif;border:{{ x.bd }};background:{{ x.bg }};cursor:pointer">{{ x.t }}</button>
+              </sc-for>
+            </div>
+            <button onClick="{{ pay }}" style="min-height:56px;margin-top:4px;background:#FF881F;color:#0E1A2E;font:800 17px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E;box-shadow:4px 4px 0 #0E1A2E;cursor:pointer">Pay {{ sel.price }} with PayMongo</button>
+            <span style="font-size:13px;line-height:1.45;color:#2B3649">You’ll finish payment on PayMongo’s secure page. We never see or store your card details.</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.billing }}">
+      <div style="display:flex;flex-direction:column;gap:4px"><span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">BILLING</span><h1 style="margin:0;font-weight:800;font-size:clamp(28px,3.4cqi,40px);letter-spacing:-.03em">Plans and purchases</h1></div>
+      <div data-m-stagger="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px">
+        <sc-for list="{{ active }}" as="a" hint-placeholder-count="2">
+          <div style="background:#FBF8F1;border:1.5px solid #0E1A2E;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+            <span style="display:flex;justify-content:space-between;gap:10px;align-items:center"><span style="font-weight:800;font-size:18px">{{ a.name }}</span><span style="font:700 10px/1 'JetBrains Mono',monospace;padding:5px 6px;background:{{ a.tagBg }};color:{{ a.tagFg }}">{{ a.tag }}</span></span>
+            <span style="font-size:14px;color:#2B3649">{{ a.until }}</span>
+            <span style="display:block;height:6px;background:#E6DECB"><span data-m="grow" style="display:block;height:100%;width:{{ a.w }};background:#005AA5"></span></span>
+            <sc-if value="{{ a.renew }}"><button onClick="{{ nav.plans }}" style="align-self:flex-start;min-height:44px;padding:0 16px;border:1.5px solid #0E1A2E;background:#0E1A2E;color:#F6F1E7;font:700 14px 'Schibsted Grotesk',sans-serif;cursor:pointer">Renew now</button></sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:22px;letter-spacing:-.02em">Purchase history</h2>
+        <div style="background:#FBF8F1;border:1.5px solid #0E1A2E">
+          <sc-for list="{{ history }}" as="r" hint-placeholder-count="4">
+            <div style="display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center;padding:12px 16px;border-bottom:1px solid #D5E2F0">
+              <span style="flex:1 1 200px;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:700;font-size:15px">{{ r.item }}</span><span style="font:400 11px 'JetBrains Mono',monospace;color:#4A5568">{{ r.date }} · {{ r.method }} · {{ r.ref }}</span></span>
+              <span style="font:700 10px/1 'JetBrains Mono',monospace;padding:5px 6px;border:1.5px solid {{ r.c }};color:{{ r.c }}">{{ r.status }}</span>
+              <span style="font-weight:800;font-size:16px;min-width:72px;text-align:right">{{ r.amt }}</span>
+              <sc-if value="{{ r.paid }}"><button onClick="{{ nav.receipt }}" style="min-height:36px;padding:0 10px;border:1.5px solid #0E1A2E;background:transparent;font:600 13px 'Schibsted Grotesk',sans-serif;cursor:pointer">Receipt</button></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.support }}">
+      <div style="display:flex;flex-direction:column;gap:4px"><span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">SUPPORT</span><h1 style="margin:0;font-weight:800;font-size:clamp(28px,3.4cqi,40px);letter-spacing:-.03em">Need help?</h1></div>
+      <div style="max-width:620px;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:6px 6px 0 #0E1A2E;padding:clamp(18px,2.6cqi,28px);display:flex;flex-direction:column;gap:14px">
+        <p style="margin:0;font-size:17px;line-height:1.5">Email us about payments, access, or your account. Include the email you sign in with so we can find you.</p>
+        <a href="mailto:{{ supportEmail }}?subject=AceYourCourse%20support" style="align-self:flex-start;min-height:56px;display:flex;align-items:center;gap:10px;padding:0 22px;background:#FF881F;color:#0E1A2E;font-weight:800;font-size:17px;text-decoration:none;border:1.5px solid #0E1A2E;box-shadow:4px 4px 0 #0E1A2E">Email Support</a>
+        <span style="font:400 12px 'JetBrains Mono',monospace;color:#4A5568">Opens your email app, addressed to {{ supportEmail }}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;max-width:620px">
+        <span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#4A5568">COMMON QUESTIONS</span>
+        <a href="FAQ.dc.html" style="padding:14px 0;border-bottom:1.5px solid #0E1A2E;color:#0E1A2E;text-decoration:none;font-weight:600;font-size:16px">Does my subscription renew automatically? →</a>
+        <a href="FAQ.dc.html" style="padding:14px 0;border-bottom:1.5px solid #0E1A2E;color:#0E1A2E;text-decoration:none;font-weight:600;font-size:16px">Why was I signed out on my other device? →</a>
+        <a href="FAQ.dc.html" style="padding:14px 0;border-bottom:1.5px solid #0E1A2E;color:#0E1A2E;text-decoration:none;font-weight:600;font-size:16px">My payment went through but I don’t have access →</a>
+      </div>
+    </sc-if>
+    <sc-if value="{{ is.loading }}">
+      <div style="display:flex;flex-direction:column;gap:8px"><span data-m="pulse" style="height:12px;width:120px;background:#E6DECB"></span><span style="height:34px;width:min(360px,80%);background:#E6DECB"></span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:18px">
+        <div style="flex:1.2 1 300px;height:220px;background:#E6DECB;border:1.5px solid #D6CDB9"></div>
+        <div style="flex:1 1 280px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px"><span data-m="pulse" style="height:120px;background:#E6DECB;border:1.5px solid #D6CDB9"></span><span data-m="pulse" style="height:120px;background:#E6DECB;border:1.5px solid #D6CDB9"></span><span data-m="pulse" style="height:120px;background:#E6DECB;border:1.5px solid #D6CDB9"></span></div>
+      </div>
+      <div data-m-stagger="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px"><span data-m="pulse" style="height:120px;background:#E6DECB;border:1.5px solid #D6CDB9"></span><span data-m="pulse" style="height:120px;background:#E6DECB;border:1.5px solid #D6CDB9"></span><span data-m="pulse" style="height:120px;background:#E6DECB;border:1.5px solid #D6CDB9"></span></div>
+      <span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#4A5568;text-align:center">LOADING YOUR DASHBOARD…</span>
+    </sc-if>
+
+    <sc-if value="{{ is.newUser }}">
+      <div style="display:flex;flex-direction:column;gap:4px"><span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">WELCOME</span><h1 style="margin:0;font-weight:800;font-size:clamp(28px,3.4cqi,40px);letter-spacing:-.03em">Hi, Juan. Let’s set you up.</h1></div>
+      <div style="display:flex;flex-wrap:wrap;gap:18px">
+        <div style="flex:1 1 300px;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:6px 6px 0 #FF881F;padding:clamp(18px,2.4cqi,28px);display:flex;flex-direction:column;gap:14px">
+          <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">STEP 1 · YOUR EXAM</span>
+          <span style="font-weight:800;font-size:22px;line-height:1.2">When is your board exam?</span>
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ examPills }}" as="x" hint-placeholder-count="5"><span style="min-height:40px;display:flex;align-items:center;padding:0 14px;font:700 13px 'JetBrains Mono',monospace;border:1.5px solid #0E1A2E;background:{{ x.bg }};color:{{ x.fg }}">{{ x.code }}</span></sc-for></div>
+          <input type="date" value="2026-11-21" style="min-height:48px;font:600 16px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E;background:#FFFFFF;padding:0 12px;box-sizing:border-box;width:100%;min-width:0">
+          <button onClick="{{ nav.dashboard }}" style="align-self:flex-start;min-height:48px;padding:0 18px;background:#0E1A2E;color:#F6F1E7;font:700 15px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E;cursor:pointer">Start my countdown</button>
+        </div>
+        <div style="flex:1 1 300px;border:1.5px dashed #8E97A6;padding:clamp(18px,2.4cqi,28px);display:flex;flex-direction:column;gap:12px">
+          <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#4A5568">STEP 2 · ACCESS</span>
+          <span style="font-weight:800;font-size:22px;line-height:1.2">You don’t have a plan yet</span>
+          <span style="font-size:15px;line-height:1.5;color:#2B3649">Your flashcards, quizzes, reviewers, and courses unlock as soon as you buy a plan. Progress starts counting from your first card.</span>
+          <button onClick="{{ nav.plans }}" style="align-self:flex-start;min-height:48px;padding:0 18px;background:#FF881F;color:#0E1A2E;font:700 15px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E;box-shadow:3px 3px 0 #0E1A2E;cursor:pointer">See plans</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.emptyTopic }}">
+      <div style="display:flex;flex-direction:column;gap:4px"><span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">PSAD · TOPIC 06</span><h1 style="margin:0;font-weight:800;font-size:clamp(26px,3cqi,36px);letter-spacing:-.03em">Timber Design</h1></div>
+      <div style="max-width:620px;margin:clamp(12px,4cqi,48px) auto;width:100%;border:1.5px dashed #8E97A6;padding:clamp(22px,3cqi,36px);display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;box-sizing:border-box">
+        <span style="font:700 40px/1 'JetBrains Mono',monospace;color:#C9BFA8">∅</span>
+        <span style="font-weight:800;font-size:22px">Nothing here yet</span>
+        <span style="font-size:15px;line-height:1.5;color:#2B3649;max-width:36ch">Flashcards, the quiz, and the reviewer for this topic are still being prepared. They’ll show up here automatically.</span>
+        <button onClick="{{ nav.library }}" style="min-height:48px;padding:0 18px;background:#0E1A2E;color:#F6F1E7;font:700 15px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E;cursor:pointer">Back to PSAD topics</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.expired }}">
+      <div style="display:flex;justify-content:center;padding-top:clamp(0px,2cqi,24px)">
+        <div style="position:relative;width:100%;max-width:640px;aspect-ratio:3/2;background:#FFFDF8;border:1.5px solid #0E1A2E;overflow:hidden;display:flex;align-items:center;justify-content:center">
+          <div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,#F6F1E7 0 10px,#EDE6D6 10px 20px)"></div>
+          <div style="position:relative;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:6px 6px 0 #0E1A2E;padding:clamp(16px,2.6cqi,26px);margin:16px;display:flex;flex-direction:column;gap:10px;max-width:400px">
+            <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#B3261E">🔒 PLAN ENDED</span>
+            <span style="font-weight:800;font-size:clamp(20px,2.4cqi,26px);line-height:1.15">Your CE All-Access ended on 12 Jan 2027</span>
+            <span style="font-size:15px;line-height:1.5;color:#2B3649">Renew to keep reviewing. Your progress is saved: 312 cards marked, 14 quizzes taken.</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap"><button onClick="{{ nav.plans }}" style="min-height:48px;padding:0 18px;background:#FF881F;color:#0E1A2E;font:700 15px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E;box-shadow:3px 3px 0 #0E1A2E;cursor:pointer">Renew access</button><button onClick="{{ nav.billing }}" style="min-height:48px;padding:0 16px;background:transparent;font:700 15px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E;cursor:pointer">View billing</button></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.payPending }}">
+      <div style="max-width:520px;width:100%;margin:clamp(12px,5cqi,64px) auto;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:6px 6px 0 #0E1A2E;padding:clamp(20px,3cqi,32px);display:flex;flex-direction:column;gap:14px;box-sizing:border-box">
+        <div style="display:flex;gap:4px;height:6px"><span style="flex:1;background:#005AA5"></span><span style="flex:1;background:#005AA5"></span><span style="flex:1;background:#FF881F"></span><span style="flex:1;background:#E6DECB"></span></div>
+        <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">CONFIRMING PAYMENT</span>
+        <span style="font-weight:800;font-size:26px;line-height:1.15;letter-spacing:-.02em">Waiting for PayMongo to confirm your {{ pay2.method }} payment</span>
+        <span style="font-size:15px;line-height:1.5;color:#2B3649">This usually takes under a minute. Keep this page open. Your access starts as soon as the payment is confirmed.</span>
+        <div style="font:400 12px/1.7 'JetBrains Mono',monospace;color:#4A5568;border-top:1px dashed #C9BFA8;padding-top:12px">{{ pay2.line }}<br>REF AYC-10483</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.payFailed }}">
+      <div style="max-width:520px;width:100%;margin:clamp(12px,5cqi,64px) auto;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:6px 6px 0 #B3261E;padding:clamp(20px,3cqi,32px);display:flex;flex-direction:column;gap:14px;box-sizing:border-box">
+        <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#B3261E">PAYMENT DIDN’T GO THROUGH</span>
+        <span style="font-weight:800;font-size:26px;line-height:1.15;letter-spacing:-.02em">Your card was declined</span>
+        <span style="font-size:15px;line-height:1.5;color:#2B3649">You weren’t charged. Try again, or pay with QR Ph, GCash, or Maya instead.</span>
+        <div style="font:400 12px/1.7 'JetBrains Mono',monospace;color:#4A5568;border-top:1px dashed #C9BFA8;padding-top:12px">{{ pay2.line }} · {{ pay2.methodU }}<br>REF AYC-10483</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button onClick="{{ nav.plans }}" style="min-height:48px;padding:0 18px;background:#0E1A2E;color:#F6F1E7;font:700 15px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E;cursor:pointer">Try another method</button><button onClick="{{ nav.support }}" style="min-height:48px;padding:0 16px;background:transparent;font:700 15px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E;cursor:pointer">Email support</button></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.paySuccess }}">
+      <div style="max-width:520px;width:100%;margin:clamp(12px,5cqi,64px) auto;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:6px 6px 0 #2E7D4F;padding:clamp(20px,3cqi,32px);display:flex;flex-direction:column;gap:14px;box-sizing:border-box">
+        <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#2E7D4F">✓ PAYMENT CONFIRMED</span>
+        <span style="font-weight:800;font-size:30px;line-height:1.1;letter-spacing:-.02em">You’re in. Kaya mo ’to.</span>
+        <span style="font-size:15px;line-height:1.5;color:#2B3649">{{ pay2.name }}: {{ pay2.until }}</span>
+        <div style="font:400 12px/1.7 'JetBrains Mono',monospace;color:#4A5568;border-top:1px dashed #C9BFA8;padding-top:12px">{{ sel.price }} · {{ pay2.methodU }} · REF AYC-10483 · RECEIPT IN BILLING</div>
+        <button onClick="{{ nav.library }}" style="align-self:flex-start;min-height:52px;padding:0 20px;background:#FF881F;color:#0E1A2E;font:800 16px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E;box-shadow:3px 3px 0 #0E1A2E;cursor:pointer">Start reviewing</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ is.courses }}">
+      <div style="display:flex;flex-direction:column;gap:4px"><span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">COURSES</span><h1 style="margin:0;font-weight:800;font-size:clamp(28px,3.4cqi,40px);letter-spacing:-.03em">Your {{ exam.code }} courses</h1></div>
+      <div data-m-stagger="" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:20px">
+        <sc-for list="{{ courseList }}" as="c" hint-placeholder-count="3">
+          <button onClick="{{ c.go }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;background:#FBF8F1;border:{{ c.bd }};box-shadow:{{ c.sh }};opacity:{{ c.op }}">
+            <span style="position:relative;aspect-ratio:16/9;background:{{ c.bg }};border-bottom:1.5px solid #0E1A2E;display:flex;align-items:flex-end;padding:12px;box-sizing:border-box;overflow:hidden">
+              <span style="font:700 40px/1 'JetBrains Mono',monospace;color:{{ c.fg }};letter-spacing:-.02em">{{ c.subj }}</span>
+              <span style="position:absolute;top:10px;right:10px;font:700 10px/1 'JetBrains Mono',monospace;padding:5px 6px;background:{{ c.tagBg }};color:{{ c.tagFg }}">{{ c.tag }}</span>
+            </span>
+            <span style="padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px">
+              <span style="font-weight:800;font-size:18px;line-height:1.2">{{ c.title }}</span>
+              <span style="font:400 12px 'JetBrains Mono',monospace;color:#4A5568">{{ c.meta }}</span>
+              <span style="display:flex;align-items:center;gap:10px"><span style="flex:1;height:6px;background:#E6DECB"><span data-m="grow" style="display:block;height:100%;width:{{ c.w }};background:#005AA5"></span></span><span style="font:500 11px 'JetBrains Mono',monospace">{{ c.prog }}</span></span>
+              <span style="font-weight:700;font-size:14px;color:{{ c.ctaC }}">{{ c.cta }}</span>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.account }}">
+      <div style="display:flex;flex-direction:column;gap:4px"><span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">ACCOUNT</span><h1 style="margin:0;font-weight:800;font-size:clamp(28px,3.4cqi,40px);letter-spacing:-.03em">Account</h1></div>
+      <div data-m-stagger="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:18px;align-items:start">
+        <div style="background:#FBF8F1;border:1.5px solid #0E1A2E;padding:18px;display:flex;flex-direction:column;gap:12px">
+          <span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">PROFILE</span>
+          <div style="display:flex;gap:12px;align-items:center"><span style="width:48px;height:48px;border-radius:50%;background:#005AA5;color:#F6F1E7;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;flex:none">JD</span><span style="display:flex;flex-direction:column;min-width:0"><span style="font-weight:800;font-size:17px">Juan Dela Cruz</span><span style="font:400 12px 'JetBrains Mono',monospace;color:#4A5568;overflow:hidden;text-overflow:ellipsis">{{ email }} · Google</span></span></div>
+          <span style="font-size:13px;color:#2B3649">Signed in on this device only · Chrome on Android</span>
+          <button onClick="{{ nav.signin }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:transparent;color:#0E1A2E;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer;align-self:flex-start;border-color:#B3261E;color:#B3261E">Sign out</button>
+        </div>
+        <div style="background:#FBF8F1;border:1.5px solid #0E1A2E;padding:18px;display:flex;flex-direction:column;gap:12px">
+          <span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">YOUR EXAMS</span>
+          <sc-for list="{{ myExams }}" as="e" hint-placeholder-count="2">
+            <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #D5E2F0">
+              <span style="font:700 13px/1 'JetBrains Mono',monospace;background:{{ e.bg }};color:#F6F1E7;padding:7px 8px;flex:none">{{ e.code }}</span>
+              <span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-weight:700;font-size:15px">{{ e.name }}</span><span style="font-size:13px;color:#2B3649">Exam date: {{ e.date }}</span></span>
+              <sc-if value="{{ e.editing }}"><span style="display:flex;gap:6px;align-items:center"><input type="date" value="{{ e.iso }}" onChange="{{ e.setDate }}" style="font:600 14px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E;background:#FFFFFF;padding:6px 8px;min-height:40px;box-sizing:border-box"><button onClick="{{ e.done }}" style="min-height:40px;padding:0 12px;border:1.5px solid #0E1A2E;background:transparent;font:600 13px 'Schibsted Grotesk',sans-serif;cursor:pointer">Save</button></span></sc-if><sc-if value="{{ e.notEditing }}"><button onClick="{{ e.edit }}" style="min-height:40px;padding:0 12px;border:1.5px solid #0E1A2E;background:transparent;font:600 13px 'Schibsted Grotesk',sans-serif;cursor:pointer">Edit</button></sc-if>
+            </div>
+          </sc-for>
+          <button onClick="{{ nav.plans }}" style="all:unset;cursor:pointer;font:700 14px 'Schibsted Grotesk',sans-serif;color:#005AA5">+ Add another exam</button>
+        </div>
+        <div style="background:#FBF8F1;border:1.5px solid #0E1A2E;padding:18px;display:flex;flex-direction:column;gap:10px">
+          <span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">PLANS &amp; RECEIPTS</span>
+          <sc-for list="{{ active }}" as="a" hint-placeholder-count="2"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #D5E2F0"><span style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:700;font-size:15px">{{ a.name }}</span><span style="font-size:12px;color:#2B3649">{{ a.until }}</span></span><span style="font:700 10px/1 'JetBrains Mono',monospace;padding:5px 6px;background:{{ a.tagBg }};color:{{ a.tagFg }}">{{ a.tag }}</span></div></sc-for>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button onClick="{{ nav.plans }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:#0E1A2E;color:#F6F1E7;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">Renew or buy</button><button onClick="{{ nav.billing }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:transparent;color:#0E1A2E;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">Billing &amp; receipts</button></div>
+        </div>
+        <div style="background:#FBF8F1;border:1.5px solid #0E1A2E;padding:18px;display:flex;flex-direction:column;gap:10px">
+          <span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">PRIVACY</span>
+          <span style="font-size:14px;line-height:1.5;color:#2B3649">You agreed to the Terms and Privacy Policy on 12 Aug 2026.</span>
+          <div style="display:flex;flex-direction:column;border-top:1.5px solid #0E1A2E">
+            <a href="Legal.dc.html?doc=privacy" style="padding:12px 0;border-bottom:1px solid #D5E2F0;color:#0E1A2E;text-decoration:none;font-weight:600;font-size:15px">Privacy Policy →</a>
+            <a href="Legal.dc.html?doc=terms" style="padding:12px 0;border-bottom:1px solid #D5E2F0;color:#0E1A2E;text-decoration:none;font-weight:600;font-size:15px">Terms of Use →</a>
+            <button onClick="{{ acct.reqData }}" style="all:unset;cursor:pointer;padding:12px 0;border-bottom:1px solid #D5E2F0;font-weight:600;font-size:15px">Request a copy of my data</button>
+            <button onClick="{{ acct.askDelete }}" style="all:unset;cursor:pointer;padding:12px 0;font-weight:600;font-size:15px;color:#B3261E">Delete my account</button>
+          </div>
+      <sc-if value="{{ acct.hasMsg }}"><span style="font:500 12px 'JetBrains Mono',monospace;color:#2E7D4F">{{ acct.msg }}</span></sc-if>
+      <sc-if value="{{ acct.confirming }}"><div style="border:1.5px solid #B3261E;background:#FFF4F2;padding:14px;display:flex;flex-direction:column;gap:10px"><span style="font-weight:800;font-size:16px;color:#B3261E">Delete your account?</span><span style="font-size:14px;line-height:1.5;color:#2B3649">Your progress, plans, and receipts are removed within 30 days. Plans you paid for aren’t refunded. This can’t be undone.</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button onClick="{{ acct.doDelete }}" style="min-height:44px;padding:0 16px;border:1.5px solid #B3261E;background:#B3261E;color:#FFFFFF;font:700 14px 'Schibsted Grotesk',sans-serif;cursor:pointer">Delete my account</button><button onClick="{{ acct.cancel }}" style="min-height:44px;padding:0 16px;border:1.5px solid #0E1A2E;background:transparent;font:700 14px 'Schibsted Grotesk',sans-serif;cursor:pointer">Keep my account</button></div></div></sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.quizStart }}">
+      <div style="max-width:620px;width:100%;margin:clamp(0px,3cqi,32px) auto;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:6px 6px 0 #0E1A2E;padding:clamp(20px,3cqi,32px);display:flex;flex-direction:column;gap:16px;box-sizing:border-box">
+        <span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">MSTC · PRACTICE QUIZ</span>
+        <span style="font-weight:800;font-size:clamp(26px,3cqi,34px);line-height:1.1;letter-spacing:-.02em">Simple Curves</span>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+          <sc-for list="{{ quizFacts }}" as="f" hint-placeholder-count="3"><div style="border:1.5px solid #0E1A2E;padding:12px;display:flex;flex-direction:column;gap:4px;background:#F6F1E7"><span style="font:500 10px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#4A5568">{{ f.k }}</span><span style="font-weight:900;font-size:24px">{{ f.v }}</span></div></sc-for>
+        </div>
+        <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:15px;line-height:1.45;color:#2B3649">
+          <li style="display:flex;gap:10px"><span style="color:#E07400">•</span>One question at a time. You can go back before you submit.</li>
+          <li style="display:flex;gap:10px"><span style="color:#E07400">•</span>No time limit. Your best score counts toward your progress.</li>
+          <li style="display:flex;gap:10px"><span style="color:#E07400">•</span>Previous attempts: 60% · 70% · 80%</li>
+        </ul>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button onClick="{{ startQuiz }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:#FF881F;color:#0E1A2E;font:700 15px 'Schibsted Grotesk',sans-serif;box-shadow:3px 3px 0 #0E1A2E;cursor:pointer">Start quiz</button><button onClick="{{ nav.flashcards }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:transparent;color:#0E1A2E;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">Review flashcards first</button></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.deckDone }}">
+      <div style="max-width:640px;width:100%;margin:clamp(0px,3cqi,32px) auto;background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:6px 6px 0 #005AA5;padding:clamp(20px,3cqi,32px);display:flex;flex-direction:column;gap:16px;box-sizing:border-box">
+        <span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#005AA5">DECK FINISHED · SIMPLE CURVES</span>
+        <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span style="font-weight:900;font-size:clamp(56px,7cqi,80px);line-height:.9;letter-spacing:-.04em">41</span><span style="font-weight:700;font-size:20px">of 48 cards: got it</span></div>
+        <div style="display:flex;height:12px;border:1.5px solid #0E1A2E"><span style="width:85%;background:#005AA5"></span><span style="flex:1;background:#FF881F"></span></div>
+        <span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#4A5568">7 TO REVIEW AGAIN</span>
+        <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ toReview }}" as="t" hint-placeholder-count="7"><span style="font-size:13px;font-weight:600;padding:6px 9px;border:1.5px solid #0E1A2E;background:#FFFDF8">{{ t }}</span></sc-for></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px"><button onClick="{{ nav.flashcards }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:#0E1A2E;color:#F6F1E7;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">Review the 7</button><button onClick="{{ nav.quizStart }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:#FF881F;color:#0E1A2E;font:700 15px 'Schibsted Grotesk',sans-serif;box-shadow:3px 3px 0 #0E1A2E;cursor:pointer">Take the quiz</button><button onClick="{{ nav.library }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:transparent;color:#0E1A2E;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">Back to topics</button></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.receipt }}">
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button onClick="{{ nav.billing }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:transparent;color:#0E1A2E;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">← Billing</button><button onClick="{{ printIt }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:#0E1A2E;color:#F6F1E7;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">Print or save as PDF</button></div>
+      <div style="max-width:620px;width:100%;background:#FFFFFF;border:1.5px solid #0E1A2E;padding:clamp(20px,4cqi,40px);display:flex;flex-direction:column;gap:18px;box-sizing:border-box">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap"><img src="assets/brand-horizontal.svg" alt="AceYourCourse" style="height:28px;width:auto"><span style="display:flex;flex-direction:column;align-items:flex-end;font:400 12px/1.5 'JetBrains Mono',monospace;color:#4A5568"><span style="font-weight:700;color:#0E1A2E">PAYMENT RECEIPT</span><span>AYC-10482</span><span>14 OCT 2026</span></span></div>
+        <div data-m-stagger="" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;font-size:14px;line-height:1.5"><div><span style="display:block;font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#4A5568">BILLED TO</span>Juan Dela Cruz<br>{{ email }}</div><div><span style="display:block;font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#4A5568">FROM</span>AceYourCourse<br>Iloilo City, Iloilo</div></div>
+        <div style="border-top:1.5px solid #0E1A2E;border-bottom:1.5px solid #0E1A2E">
+          <div style="display:flex;justify-content:space-between;gap:10px;padding:12px 0;font-size:15px"><span><b>CE All-Access · 3 months</b><br><span style="font-size:13px;color:#4A5568">Access 14 Oct 2026 – 12 Jan 2027 · no auto-renewal</span></span><span style="font-weight:700">₱1,299.00</span></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em">TOTAL PAID</span><span style="font-weight:900;font-size:30px;letter-spacing:-.02em">₱1,299.00</span></div>
+        <dl style="margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font:400 12px 'JetBrains Mono',monospace;color:#2B3649"><dt>METHOD</dt><dd style="margin:0">QR Ph via PayMongo</dd><dt>PAYMONGO REF</dt><dd style="margin:0">pi_3VbN8sQ1kLx7MwR2pT5e</dd><dt>STATUS</dt><dd style="margin:0;color:#2E7D4F;font-weight:700">PAID</dd></dl>
+        <span style="font-size:12px;line-height:1.5;color:#4A5568">This is a payment receipt for your records. Questions? Email support@aceyourcourse.ph.</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is.loadError }}">
+      <div style="display:flex;justify-content:center;background:#EDE6D6;border:1.5px solid #0E1A2E;padding:clamp(14px,3cqi,36px)">
+        <div style="position:relative;width:100%;max-width:560px;aspect-ratio:8.5/11;background:#FFFFFF;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box">
+          <span style="position:absolute;inset:-40%;display:grid;grid-template-columns:repeat(3,1fr);align-content:space-around;justify-items:center;transform:rotate(-22deg);pointer-events:none"><sc-for list="{{ wm }}" as="w" hint-placeholder-count="18"><span style="font:500 12px 'JetBrains Mono',monospace;color:rgba(14,26,46,.12);white-space:nowrap;padding:24px 0">{{ w.t }}</span></sc-for></span>
+          <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;max-width:320px">
+            <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#B3261E">PAGE 5 DIDN’T LOAD</span>
+            <span style="font-weight:800;font-size:22px;line-height:1.2">Looks like your connection dropped</span>
+            <span style="font-size:15px;line-height:1.5;color:#2B3649">Pages load one at a time and aren’t saved on your device, so you need a connection to keep going.</span>
+            <button onClick="{{ rv.retry }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:#0E1A2E;color:#F6F1E7;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">Try again</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;align-items:center;gap:10px"><button onClick="{{ rv.lePrev }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:transparent;color:#0E1A2E;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer">← Prev</button><span style="font:700 13px 'JetBrains Mono',monospace;padding:0 10px">PAGE 5 / 36</span><button onClick="{{ rv.leNext }}" style="min-height:48px;padding:0 18px;border:1.5px solid #0E1A2E;background:transparent;color:#0E1A2E;font:700 15px 'Schibsted Grotesk',sans-serif;cursor:pointer;opacity:.4">Next →</button></div>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{ fab }}">
+    <button onClick="{{ openDrawer }}" aria-label="Open menu" style="all:unset;cursor:pointer;position:sticky;bottom:16px;margin:0 16px 16px auto;z-index:5;display:flex;align-items:center;gap:10px;height:52px;padding:0 18px 0 16px;box-sizing:border-box;background:#0E1A2E;color:#F6F1E7;border:1.5px solid #0E1A2E;box-shadow:4px 4px 0 #FF881F;font:700 14px 'Schibsted Grotesk',sans-serif"><span style="display:flex;flex-direction:column;gap:4px"><span style="width:16px;height:2px;background:#F6F1E7"></span><span style="width:16px;height:2px;background:#F6F1E7"></span><span style="width:16px;height:2px;background:#F6F1E7"></span></span>Menu</button>
+  </sc-if>
+
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:820},&quot;mobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;signin&quot;,&quot;consent&quot;,&quot;newUser&quot;,&quot;dashboard&quot;,&quot;endingSoon&quot;,&quot;switchExam&quot;,&quot;library&quot;,&quot;flashcards&quot;,&quot;deckDone&quot;,&quot;quizStart&quot;,&quot;quiz&quot;,&quot;score&quot;,&quot;reviewer&quot;,&quot;loadError&quot;,&quot;courses&quot;,&quot;course&quot;,&quot;plans&quot;,&quot;account&quot;,&quot;billing&quot;,&quot;receipt&quot;,&quot;support&quot;,&quot;session&quot;,&quot;loading&quot;,&quot;emptyTopic&quot;,&quot;expired&quot;,&quot;payPending&quot;,&quot;payFailed&quot;,&quot;paySuccess&quot;],&quot;default&quot;:&quot;signin&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { s: null, menu: null, exam: 0, rev: 0, flipped: false, opt: 0, plan: 1, one: false, method: 0, subj: 0 };
+  componentDidMount() {
+    this.reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this._key = e => { const st = this.state; if (e.key === 'Escape' && st.drawer) return this.setState({ drawer: false });
+      if ((st.s || this.props.screen) !== 'flashcards' || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); this._fc && this._fc.got(); } else if (e.key === 'ArrowLeft') { e.preventDefault(); this._fc && this._fc.again(); } else if (e.key === ' ') { e.preventDefault(); this.setState({ flipped: !st.flipped }); } };
+    window.addEventListener('keydown', this._key);
+  }
+  componentWillUnmount() { clearTimeout(this._payT); clearInterval(this._playT); window.removeEventListener('keydown', this._key); }
+  drawerRef = el => { el && !this.reduce && el.animate([{ transform: 'translateX(-100%)' }, { transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.2,.7,.2,1)' }); };
+  scrimRef = el => { el && !this.reduce && el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220 }); };
+  cardRef = el => {
+    if (this._card === el) return; this._card = el; if (!el) return;
+    let x0 = null, dx = 0, moved = false;
+    const hint = v => { const g = el.querySelector('[data-hint=got]'), a = el.querySelector('[data-hint=again]'); if (g) g.style.opacity = Math.max(0, Math.min(1, v / 90)); if (a) a.style.opacity = Math.max(0, Math.min(1, -v / 90)); };
+    el.addEventListener('pointerdown', e => { x0 = e.clientX; dx = 0; moved = false; el.style.transition = 'none'; });
+    el.addEventListener('pointermove', e => { if (x0 === null) return; dx = e.clientX - x0; if (Math.abs(dx) > 6 && !moved) { moved = true; try { el.setPointerCapture(e.pointerId); } catch (_) {} } if (moved) { el.style.transform = 'translateX(' + dx + 'px) rotate(' + (dx / 28) + 'deg)'; hint(dx); } });
+    const end = () => { if (x0 === null) return; x0 = null; this._suppress = moved; setTimeout(() => { this._suppress = false; }, 60);
+      el.style.transition = 'transform .24s cubic-bezier(.2,.7,.2,1)';
+      if (Math.abs(dx) > 90) { const d = dx > 0 ? 1 : -1; el.style.transform = 'translateX(' + (d * 120) + '%) rotate(' + (d * 10) + 'deg)';
+        setTimeout(() => { el.style.transition = 'none'; el.style.transform = ''; hint(0); (d > 0 ? this._fc.got : this._fc.again)(); if (!this.reduce) el.animate([{ opacity: 0, transform: 'translateY(10px) scale(.98)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'ease-out' }); }, 200);
+      } else { el.style.transform = ''; hint(0); } };
+    el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+  };
+  liveVals(go, s) {
+    const st = this.state;
+    // flashcards
+    const CARDS = [['Length of curve, arc basis', 'L = 20I / D', 'I in degrees, 20 m station'], ['Tangent distance', 'T = R tan(I/2)', ''], ['External distance', 'E = R[sec(I/2) − 1]', ''], ['Middle ordinate', 'M = R[1 − cos(I/2)]', ''], ['Long chord', 'C = 2R sin(I/2)', ''], ['Degree of curve, arc basis', 'D = 1145.916 / R', 'D in degrees, R in metres. 20 m station.'], ['Degree of curve, chord basis', 'sin(D/2) = 10 / R', '20 m chord'], ['Sub-chord deflection', 'd = cD / 40', 'c = sub-chord length'], ['Stationing of PC', 'Sta PC = Sta PI − T', ''], ['Stationing of PT', 'Sta PT = Sta PC + L', '']];
+    const ci = st.ci ?? 5, marks = st.marks || {}, fl = st.flipped;
+    const card = CARDS[ci];
+    const mark = (v) => { const nm = { ...marks, [ci]: v }; if (ci >= CARDS.length - 1) this.setState({ marks: nm, flipped: false, s: 'deckDone' }); else this.setState({ marks: nm, ci: ci + 1, flipped: false }); };
+    const fc = { prev: () => this.setState({ ci: Math.max(0, ci - 1), flipped: false }), next: () => ci >= CARDS.length - 1 ? this.setState({ s: 'deckDone', flipped: false }) : this.setState({ ci: ci + 1, flipped: false }), again: () => mark('again'), got: () => mark('got') };
+    const cardTicks = CARDS.map((_, i) => ({ c: i === ci ? '#FF881F' : marks[i] === 'got' ? '#005AA5' : marks[i] === 'again' ? '#B3261E' : i < 5 && !Object.keys(marks).length ? '#005AA5' : '#E6DECB' }));
+    // quiz
+    const rad = d => d * Math.PI / 180, f2 = n => n.toFixed(2);
+    const QS = [[200, 30], [180, 52], [250, 0], [300, 40], [220, 36], [150, 24], [320, 18], [275, 44], [400, 12], [240, 60]].map(([R, I], i) => {
+      const kinds = [['tangent distance', R * Math.tan(rad(I / 2)), 'm'], ['long chord', 2 * R * Math.sin(rad(I / 2)), 'm'], ['degree of curve (arc basis, 20 m station)', 1145.916 / R, '°'], ['tangent distance', R * Math.tan(rad(I / 2)), 'm'], ['external distance', R * (1 / Math.cos(rad(I / 2)) - 1), 'm'], ['middle ordinate', R * (1 - Math.cos(rad(I / 2))), 'm'], ['length of curve (arc basis, 20 m station)', 20 * I / (1145.916 / R), 'm'], ['long chord', 2 * R * Math.sin(rad(I / 2)), 'm'], ['external distance', R * (1 / Math.cos(rad(I / 2)) - 1), 'm'], ['tangent distance', R * Math.tan(rad(I / 2)), 'm']];
+      const [what, v, u] = kinds[i];
+      const vals = [v, v * 0.92, v * 1.11, v * 0.85]; const order = [[0, 1, 2, 3], [1, 0, 3, 2], [2, 1, 0, 3], [3, 2, 1, 0]][i % 4];
+      const o = order.map(j => f2(vals[j]) + (u === '°' ? '°' : ' m'));
+      return { t: 'A simple curve has R = ' + R + ' m' + (I ? ' and I = ' + I + '°' : '') + '. What is its ' + what + '?', o, c: order.indexOf(0) };
+    });
+    const qi = st.qi ?? 2, qa = st.qa || {};
+    const picked = qa[qi] ?? (st.qa ? undefined : (qi === 2 ? 0 : undefined));
+    const qz = { pos: 'QUESTION ' + (qi + 1) + ' / ' + QS.length, text: QS[qi].t,
+      opts: QS[qi].o.map((t, i) => { const a = i === picked; return { k: 'ABCD'[i], t, pick: () => this.setState({ qa: { ...qa, [qi]: i } }), bg: a ? '#FFFDF8' : '#FBF8F1', bd: a ? '2px solid #005AA5' : '1.5px solid #0E1A2E', kb: a ? '#005AA5' : 'transparent', kf: a ? '#F6F1E7' : '#0E1A2E' }; }),
+      ticks: QS.map((_, i) => ({ c: i === qi ? '#FF881F' : qa[i] !== undefined ? '#005AA5' : '#E6DECB' })),
+      prev: () => this.setState({ qi: Math.max(0, qi - 1) }),
+      next: () => { if (picked === undefined) return; const nqa = { ...qa, [qi]: picked }; if (qi >= QS.length - 1) this.setState({ qa: nqa, s: 'score', qDone: true }); else this.setState({ qa: nqa, qi: qi + 1 }); },
+      nextLabel: picked === undefined ? 'Pick an answer' : qi >= QS.length - 1 ? 'Finish quiz' : 'Next question →' };
+    // reviewer
+    const rp = st.rp ?? 4, zoom = st.zoom ?? 100;
+    const rv = { pos: 'PAGE ' + rp + ' / 36', zoom: zoom + '%', scale: String(zoom / 100),
+      zoomOut: () => this.setState({ zoom: Math.max(75, zoom - 25) }), zoomIn: () => this.setState({ zoom: Math.min(150, zoom + 25) }),
+      prev: () => this.setState({ rp: Math.max(1, rp - 1) }), next: () => { const n = Math.min(36, rp + 1); if (n === 5 && !st.rpOk) this.setState({ rp: n, s: 'loadError' }); else this.setState({ rp: n }); },
+      retry: () => this.setState({ rpOk: true, rp: 5, s: 'reviewer' }), lePrev: () => this.setState({ rp: 4, s: 'reviewer' }), leNext: () => this.setState({ rp: 6, s: 'reviewer' }) };
+    // course
+    const MODS = [['MODULE 1 · STATICS REFRESHER', [['Equilibrium of rigid bodies', '18:22'], ['Trusses: method of joints', '21:05']]], ['MODULE 2 · REINFORCED CONCRETE', [['Whitney stress block', '16:48'], ['Singly reinforced beams', '22:30'], ['Balanced steel ratio', '24:10'], ['Doubly reinforced beams', '26:02']]], ['MODULE 3 · STEEL DESIGN', [['Tension members', '19:40'], ['Compression members', '23:15']]]];
+    const flat = MODS.flatMap(([mt, ls], mi) => ls.map(([t, d], li) => ({ t, d, mi, li })));
+    const cur = st.lsn ?? 4, done = st.lDone || { 0: 1, 1: 1, 2: 1, 3: 1 };
+    const L = flat[cur], playing = !!st.playing, tsec = st.tsec ?? 760;
+    const mmss = x => Math.floor(x / 60) + ':' + String(x % 60).padStart(2, '0');
+    const toLesson = i => { clearInterval(this._playT); this.setState({ lsn: i, playing: false, tsec: done[i] ? 0 : 0 }); };
+    const cl = { title: L.t, dur: L.d, crumb: 'PSAD MASTERCLASS · MODULE ' + (L.mi + 1) + ' · LESSON ' + (L.li + 1), time: mmss(tsec),
+      note: cur === 4 && st.lsn === undefined ? 'You stopped here 2 days ago. The video picks up at 12:40.' : done[cur] ? 'You finished this lesson. Watch it again anytime.' : 'Starts from the beginning.',
+      playLabel: playing ? 'PLAYING · ' + mmss(tsec) : tsec > 0 ? 'RESUMING AT ' + mmss(tsec) : 'TAP TO PLAY', icon: playing ? '❚❚' : '▶',
+      toggle: () => { if (playing) { clearInterval(this._playT); this.setState({ playing: false }); } else { this.setState({ playing: true }); this._playT = setInterval(() => this.setState({ tsec: (this.state.tsec ?? 760) + 1 }), 1000); } },
+      prevLabel: cur > 0 ? '← ' + flat[cur - 1].t : '← Course start', nextLabel: cur < flat.length - 1 ? 'Mark complete · next lesson →' : 'Mark complete · finish course',
+      prev: () => cur > 0 && toLesson(cur - 1), next: () => { const nd = { ...done, [cur]: 1 }; this.setState({ lDone: nd }); if (cur < flat.length - 1) toLesson(cur + 1); else this.setState({ s: 'courses' }); },
+      done: Object.keys(done).length + ' / ' + flat.length + ' IN THIS PREVIEW',
+      modules: MODS.map(([title, ls], mi) => ({ title, lessons: ls.map(([t, d], li) => { const idx = flat.findIndex(f => f.mi === mi && f.li === li); const now = idx === cur, dn = done[idx]; return { t, dur: d, go: () => toLesson(idx), icon: now ? '▶' : dn ? '✓' : '○', ...(now ? { ib: '#FF881F', ic: '#0E1A2E', bg: '#FFF1E2', fw: 700 } : dn ? { ib: '#005AA5', ic: '#F6F1E7', bg: 'transparent', fw: 500 } : { ib: 'transparent', ic: '#0E1A2E', bg: 'transparent', fw: 500 }) }; }) })) };
+    // score from live answers
+    let score = null;
+    if (st.qDone) { const right = QS.filter((q, i) => qa[i] === q.c).length; score = { right, missed: QS.map((q, i) => ({ q, i })).filter(({ q, i }) => qa[i] !== q.c).map(({ q, i }) => ({ n: i + 1, q: q.t, yours: q.o[qa[i]] ?? '—', right: q.o[q.c] })) }; }
+    const allLive = st.qDone ? QS.map((q, i) => { const ok = qa[i] === q.c; return { n: i + 1, q: q.t, mark: ok ? '✓' : '✗', c: ok ? '#2E7D4F' : '#B3261E', note: ok ? 'Correct · ' + q.o[q.c] : 'You: ' + (q.o[qa[i]] ?? '—') + ' · Correct: ' + q.o[q.c] }; }) : null;
+    this._fc = fc;
+    return { allLive, fc, qz, rv, cl, score, flip: () => { if (!this._suppress) this.setState({ flipped: !fl }); }, side: fl ? 'BACK' : 'FRONT', cardPos: 'CARD ' + (ci + 1) + ' / ' + CARDS.length, cardMain: fl ? card[1] : card[0], cardSub: fl ? card[2] : 'Tap to see the formula', cardTicks };
+  }
+  renderVals() {
+    const m = !!this.props.mobile;
+    const s = this.state.s || this.props.screen || 'signin';
+    const go = k => () => this.setState({ s: k, drawer: false });
+    const keys = ['signin','dashboard','library','flashcards','quiz','score','reviewer','course','plans','billing','support','session','loading','newUser','emptyTopic','expired','payPending','payFailed','paySuccess','courses','account','consent','quizStart','deckDone','receipt','loadError','endingSoon','switchExam'];
+    const is = {}, nav = {}; keys.forEach(k => { is[k] = k === s; nav[k] = go(k); });
+    is.dashboard = ['dashboard','endingSoon','switchExam'].includes(s);
+    const email = 'juan.delacruz@gmail.com';
+    const live = this.liveVals(go, s);
+    const focus = ['flashcards','quiz','score','reviewer','course','emptyTopic','expired','quizStart','deckDone','loadError','receipt'].includes(s);
+    const shell = !is.signin && !is.session && !is.consent;
+    const crumbs = { flashcards: ['MSTC · FLASHCARDS', 'Simple Curves'], quiz: ['MSTC · QUIZ', 'Simple Curves'], score: ['MSTC · QUIZ RESULT', 'Simple Curves'], reviewer: ['MSTC · REVIEWER', 'Simple Curves'], course: ['COURSE · PSAD', 'Balanced steel ratio'], emptyTopic: ['PSAD · TOPIC', 'Timber Design'], quizStart: ['MSTC · QUIZ', 'Simple Curves'], deckDone: ['MSTC · FLASHCARDS', 'Simple Curves'], loadError: ['MSTC · REVIEWER', 'Simple Curves'], receipt: ['RECEIPT', 'AYC-10482'], expired: ['MSTC · FLASHCARDS', 'Simple Curves'] };
+    if (s === 'course') crumbs.course = ['COURSE · PSAD', live.cl.title];
+    const cr = crumbs[s] || ['', ''];
+    const sideKeys = [['dashboard','Home','01','Countdown, streak and progress'],['library','Library','02','Flash cards, quizzes, reviewers'],['courses','Courses','03','Video lessons'],['plans','Plans','04','Buy or renew access'],['billing','Billing','05','Payments and receipts'],['account','Account','06','Exam date and privacy'],['support','Support','07','Contact us']];
+    const activeOf = k => k === s || (k === 'courses' && s === 'course') || (k === 'account' && ['billing','receipt'].includes(s)) || (k === 'library' && ['flashcards','quiz','score','reviewer','emptyTopic','expired','quizStart','deckDone','loadError'].includes(s)) || (k === 'dashboard' && ['endingSoon','switchExam'].includes(s)) || (k === 'dashboard' && ['loading','newUser'].includes(s)) || (k === 'plans' && ['payPending','payFailed','paySuccess'].includes(s));
+    const activeOf2 = k => k === 'billing' ? ['billing','receipt'].includes(s) : k === 'account' ? s === 'account' : activeOf(k);
+    const sideNav = sideKeys.map(([k, label, code, hint]) => { const a = activeOf2(k); return { go: go(k), label, code, hint, bg: a ? '#0E1A2E' : 'transparent', fg: a ? '#F6F1E7' : '#0E1A2E', ic: a ? '#FF881F' : '#005AA5' }; });
+    const topNav = [['dashboard','Home'],['library','Library'],['courses','Courses'],['plans','Plans']].map(([k, label]) => ({ go: go(k), label, line: activeOf(k) ? 1 : 0 }));
+    const tabNav = [['dashboard','Home','01'],['library','Library','02'],['courses','Courses','03'],['account','Account','04']].map(([k, label, code]) => { const a = activeOf(k) || (k === 'account' && (s === 'plans' || s === 'support')); return { go: go(k), label, code, bg: a ? '#0E1A2E' : 'transparent', fg: a ? '#F6F1E7' : '#0E1A2E' }; });
+    const exam = new Date(2026, 10, 21); const days = Math.max(0, Math.ceil((exam - new Date()) / 864e5));
+    const weeks = Array.from({ length: 12 }, (_, i) => ({ c: i < 7 ? '#FF881F' : 'rgba(246,241,231,.2)' }));
+    const stats = [
+      { k: 'FLASHCARDS', v: '312', sub: 'of 1,040 marked “got it”', w: '30%' },
+      { k: 'QUIZZES', v: '76%', sub: 'average across 14 quizzes', w: '76%' },
+      { k: 'LESSONS', v: '9', sub: 'of 32 completed', w: '28%' }];
+    const resume = [
+      { kind: 'FLASHCARDS', subj: 'MSTC', title: 'Simple Curves', meta: 'CARD 12 OF 48', cta: 'Continue', go: go('flashcards') },
+      { kind: 'VIDEO LESSON', subj: 'PSAD', title: 'Balanced steel ratio', meta: '12:40 OF 24:10', cta: 'Resume', go: go('course') },
+      { kind: 'REVIEWER', subj: 'MSTC', title: 'Simple Curves reviewer', meta: 'PAGE 4 OF 36', cta: 'Open', go: go('reviewer') }];
+    const subjProg = [
+      { code: 'MSTC', detail: '148 cards · 6 quizzes · 2 reviewers', w: '42%' },
+      { code: 'HPGE', detail: '96 cards · 4 quizzes · 1 reviewer', w: '27%' },
+      { code: 'PSAD', detail: '68 cards · 4 quizzes · 9 lessons', w: '21%' }];
+    const SUBJ = [
+      ['MSTC', 'Mathematics, Surveying & Transportation Engineering', ['Algebra','Trigonometry','Analytic Geometry','Calculus','Surveying','Simple Curves']],
+      ['HPGE', 'Hydraulics & Geotechnical Engineering', ['Fluid Properties','Hydrostatics','Hydrodynamics','Soil Properties','Shear Strength','Consolidation']],
+      ['PSAD', 'Principles of Structural Analysis & Design', ['Statics','Strength of Materials','Structural Analysis','Reinforced Concrete','Steel Design','Timber Design']]];
+    const si = this.state.subj;
+    const subjTabs = SUBJ.map((x, i) => ({ code: x[0], go: () => this.setState({ subj: i }), bg: i === si ? '#0E1A2E' : '#FBF8F1', fg: i === si ? '#F6F1E7' : '#0E1A2E' }));
+    const pcts = [[80,64,55,30,12,25],[45,38,20,10,0,0],[60,35,15,8,0,0]];
+    const topics = SUBJ[si][2].map((name, i) => ({ n: String(i + 1).padStart(2, '0'), name, cards: 32 + ((i * 7 + si * 5) % 30), qs: 10, pages: 18 + ((i * 5 + si) % 24), w: pcts[si][i] + '%' }));
+    const locked = [['ME','Mechanical Engineering'],['EE','Electrical Engineering'],['MT','Medical Technology'],['CPA','Accountancy']].map(([code, name]) => ({ code, name }));
+    const fl = this.state.flipped;
+    const cardTicks = Array.from({ length: 24 }, (_, i) => ({ c: i < 5 ? '#005AA5' : i === 5 ? '#FF881F' : '#E6DECB' }));
+    const opts = [['A','4.58°'],['B','4.21°'],['C','5.12°'],['D','3.98°']].map(([k, t], i) => { const a = i === this.state.opt; return { k, t, pick: () => this.setState({ opt: i }), bg: a ? '#FFFDF8' : '#FBF8F1', bd: a ? '2px solid #005AA5' : '1.5px solid #0E1A2E', kb: a ? '#005AA5' : 'transparent', kf: a ? '#F6F1E7' : '#0E1A2E' }; });
+    const qTicks = Array.from({ length: 10 }, (_, i) => ({ c: i < 2 ? '#005AA5' : i === 2 ? '#FF881F' : '#E6DECB' }));
+    const missedSample = [
+      { n: 4, q: 'The tangent distance of a simple curve with R = 300 m and I = 40° is closest to:', yours: '102.5 m', right: '109.2 m' },
+      { n: 9, q: 'Which expression gives the length of curve for a 20 m station, arc basis?', yours: 'L = 20D / I', right: 'L = 20I / D' }];
+    const missed = live.score ? live.score.missed : missedSample;
+    const scoreN = live.score ? String(live.score.right) : '8', scorePct = live.score ? Math.round(live.score.right * 10) + '%' + (live.score.right >= 8 ? ' · BEST SO FAR' : ' · BEST IS 80%') : '80% · BEST SO FAR';
+    const st = (state) => state === 'done' ? { icon: '✓', bd: '#005AA5', ib: '#005AA5', ic: '#F6F1E7', bg: 'transparent', fw: 500 } : state === 'now' ? { icon: '▶', bd: '#0E1A2E', ib: '#FF881F', ic: '#0E1A2E', bg: '#FFF1E2', fw: 700 } : { icon: '', bd: '#8E97A6', ib: 'transparent', ic: '#0E1A2E', bg: 'transparent', fw: 500 };
+    const modules = [
+      { title: 'MODULE 1 · STATICS REFRESHER', lessons: [['Equilibrium of rigid bodies','18:22','done'],['Trusses: method of joints','21:05','done']] },
+      { title: 'MODULE 2 · REINFORCED CONCRETE', lessons: [['Whitney stress block','16:48','done'],['Singly reinforced beams','22:30','done'],['Balanced steel ratio','24:10','now'],['Doubly reinforced beams','26:02','todo']] },
+      { title: 'MODULE 3 · STEEL DESIGN', lessons: [['Tension members','19:40','todo'],['Compression members','23:15','todo']] }
+    ].map(md => ({ title: md.title, lessons: md.lessons.map(([t, dur, x]) => ({ t, dur, ...st(x) })) }));
+    const pex = this.state.pex || 'CE';
+    const P = pex === 'CE' ? [['1 month','₱499','Until 18 Nov 2026'],['3 months','₱1,299','Until 18 Jan 2027 · covers the November CELE'],['6 months','₱2,299','Until 18 Apr 2027']] : [['1 month','₱449','Until 18 Nov 2026']];
+    const pi = Math.min(this.state.plan, P.length - 1), one = this.state.one && pex === 'CE';
+    const sel1 = (a) => ({ bd: a ? '2px solid #005AA5' : '1.5px solid #0E1A2E', sh: a ? '4px 4px 0 #005AA5' : 'none', dot: a ? '#005AA5' : 'transparent' });
+    const plans = P.map(([name, price, note], i) => ({ name, price, note, pick: () => this.setState({ plan: i, one: false }), ...sel1(!one && i === pi) }));
+    const sel = one ? { name: 'PSAD Masterclass', price: '₱1,499', until: 'ONE-TIME · NO EXPIRY' } : { name: pex + ' All-Access · ' + P[pi][0], price: P[pi][1], until: P[pi][2].split(' · ')[0].toUpperCase() + ' · NO AUTO-RENEWAL', untilD: P[pi][2].split(' · ')[0].replace('Until ', '') };
+    const mName = ['QR Ph', 'GCash', 'Maya', 'Card'][this.state.method] || 'QR Ph';
+    const pay2 = { line: sel.name.toUpperCase() + ' · ' + sel.price, method: mName, methodU: mName.toUpperCase(), name: sel.name.split(' · ')[0], until: one ? 'You own it for good. It never expires.' : 'It’s active until ' + sel.untilD + '. It won’t renew on its own. We’ll remind you a week before it ends.' };
+    const methods = ['QR Ph', 'GCash', 'Maya', 'Card'].map((t, i) => ({ t, pick: () => this.setState({ method: i }), bd: i === this.state.method ? '2px solid #005AA5' : '1.5px solid #0E1A2E', bg: i === this.state.method ? '#FFFDF8' : 'transparent' }));
+    const examPills = ['CE','ME','EE','MT','CPA'].map(code => ({ code, go: () => this.setState({ pex: code, one: false }), bg: code === pex ? '#0E1A2E' : 'transparent', fg: code === pex ? '#F6F1E7' : '#0E1A2E' }));
+    const active = [
+      { name: 'CE All-Access · 3 months', tag: 'ACTIVE', tagBg: '#2E7D4F', tagFg: '#FFFFFF', until: 'Until 12 Jan 2027 · 86 days left · renews only if you renew', w: '6%', renew: true },
+      { name: 'PSAD Masterclass', tag: 'OWNED', tagBg: '#005AA5', tagFg: '#F6F1E7', until: 'One-time purchase · no expiry', w: '100%', renew: false }];
+    const history = [
+      { item: 'CE All-Access · 3 months', date: '14 OCT 2026', method: 'QR Ph', ref: 'AYC-10482', status: 'PAID', c: '#2E7D4F', amt: '₱1,299', paid: true },
+      { item: 'PSAD Masterclass', date: '02 SEP 2026', method: 'GCash', ref: 'AYC-09917', status: 'PAID', c: '#2E7D4F', amt: '₱1,499', paid: true },
+      { item: 'CE All-Access · 1 month', date: '01 SEP 2026', method: 'Card', ref: 'AYC-09903', status: 'FAILED', c: '#B3261E', amt: '₱499' },
+      { item: 'CE All-Access · 1 month', date: '12 AUG 2026', method: 'Maya', ref: 'AYC-09311', status: 'PAID', c: '#2E7D4F', amt: '₱499', paid: true }];
+    const EX = [{ code: 'CE', board: 'CELE', name: 'Civil Engineering', meta: 'All-Access until 12 Jan 2027 · exam 21 Nov' }, { code: 'ME', board: 'MELE', name: 'Mechanical Engineering', meta: 'All-Access until 9 Nov 2026 · exam 8 Feb 2027' }];
+    const ei = this.state.exam;
+    const menuOpen = this.state.menu === null ? s === 'switchExam' : this.state.menu;
+    const examOpts = EX.map((e, i) => ({ ...e, bg: i === ei ? '#FFF1E2' : 'transparent', check: i === ei ? '✓' : '', pick: () => this.setState({ exam: i, menu: false }) }));
+    const CL = { CE: [
+      { subj: 'PSAD', title: 'PSAD Masterclass', meta: '3 MODULES · 32 LESSONS · OWNED', w: '28%', prog: '9 / 32', cta: 'Continue: Balanced steel ratio →', ctaC: '#E07400', tag: 'OWNED', tagBg: '#2E7D4F', tagFg: '#FFFFFF', bg: '#0E1A2E', fg: '#F6F1E7', bd: '1.5px solid #0E1A2E', sh: '4px 4px 0 #0E1A2E', op: 1, go: go('course') },
+      { subj: 'MSTC', title: 'Surveying & Curves Lectures', meta: '2 MODULES · 18 LESSONS · IN CE ALL-ACCESS', w: '0%', prog: '0 / 18', cta: 'Start course →', ctaC: '#005AA5', tag: 'IN YOUR PLAN', tagBg: '#005AA5', tagFg: '#F6F1E7', bg: '#005AA5', fg: '#F6F1E7', bd: '1.5px solid #0E1A2E', sh: '4px 4px 0 #0E1A2E', op: 1, go: go('course') },
+      { subj: 'HPGE', title: 'HPGE Crash Course', meta: '4 MODULES · 26 LESSONS', w: '0%', prog: 'LOCKED', cta: '🔒 Unlock for ₱1,299 →', ctaC: '#3A4558', tag: 'NOT OWNED', tagBg: '#EDE6D6', tagFg: '#3A4558', bg: 'repeating-linear-gradient(135deg,#EDE6D6 0 8px,#E6DECB 8px 16px)', fg: '#8E97A6', bd: '1.5px dashed #8E97A6', sh: 'none', op: 0.9, go: go('plans') }],
+      ME: [
+      { subj: 'PIP', title: 'Power & Industrial Plant Lectures', meta: '3 MODULES · 24 LESSONS · IN ME ALL-ACCESS', w: '12%', prog: '3 / 24', cta: 'Continue: Rankine cycle →', ctaC: '#E07400', tag: 'IN YOUR PLAN', tagBg: '#005AA5', tagFg: '#F6F1E7', bg: '#0E1A2E', fg: '#F6F1E7', bd: '1.5px solid #0E1A2E', sh: '4px 4px 0 #0E1A2E', op: 1, go: go('course') },
+      { subj: 'MATH', title: 'Engineering Mathematics for MELE', meta: '2 MODULES · 20 LESSONS · IN ME ALL-ACCESS', w: '0%', prog: '0 / 20', cta: 'Start course →', ctaC: '#005AA5', tag: 'IN YOUR PLAN', tagBg: '#005AA5', tagFg: '#F6F1E7', bg: '#005AA5', fg: '#F6F1E7', bd: '1.5px solid #0E1A2E', sh: '4px 4px 0 #0E1A2E', op: 1, go: go('course') },
+      { subj: 'MD', title: 'Machine Design Crash Course', meta: '4 MODULES · 28 LESSONS', w: '0%', prog: 'LOCKED', cta: '🔒 Unlock for ₱1,299 →', ctaC: '#3A4558', tag: 'NOT OWNED', tagBg: '#EDE6D6', tagFg: '#3A4558', bg: 'repeating-linear-gradient(135deg,#EDE6D6 0 8px,#E6DECB 8px 16px)', fg: '#8E97A6', bd: '1.5px dashed #8E97A6', sh: 'none', op: 0.9, go: go('plans') }] };
+    const courseList = CL[EX[ei].code] || CL.CE;
+    const exDates = this.state.exDates || { CE: '2026-11-21', ME: '2027-02-08' };
+    const fmtD = iso => { const d = new Date(iso + 'T00:00:00'); return isNaN(d) ? iso : d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).replace(',', ''); };
+    const myExams = [['CE', 'Civil Engineering · CELE', '#005AA5'], ['ME', 'Mechanical Engineering · MELE', '#0E1A2E']].map(([code, name, bg]) => { const ed = this.state.exEdit === code; return { code, name, bg, date: fmtD(exDates[code]), iso: exDates[code], editing: ed, notEditing: !ed, edit: () => this.setState({ exEdit: code }), done: () => this.setState({ exEdit: null }), setDate: e => this.setState({ exDates: { ...exDates, [code]: e.target.value } }) }; });
+    const quizFacts = [{ k: 'QUESTIONS', v: '10' }, { k: 'ABOUT', v: '15 min' }, { k: 'YOUR BEST', v: '80%' }];
+    const toReview = ['Tangent distance','External distance','Middle ordinate','Long chord','Sub-chord','Deflection angle','Chord definition'];
+    const rv = this.state.rev;
+    const revTabs = ['MISSED · ' + (live.score ? live.score.missed.length : 2), 'ALL ANSWERS · 10'].map((t, i) => ({ t, go: () => this.setState({ rev: i }), bg: i === rv ? '#0E1A2E' : '#FBF8F1', fg: i === rv ? '#F6F1E7' : '#0E1A2E' }));
+    const QS = ['Tangent distance, R = 200 m, I = 30°','Long chord, R = 180 m, I = 52°','Degree of curve, R = 250 m','Tangent distance, R = 300 m, I = 40°','External distance, R = 220 m, I = 36°','Middle ordinate, R = 150 m, I = 44°','Length of curve, D = 4°, I = 32°','Radius from D = 5° (arc basis)','Deflection to first full station','Length of curve formula, 20 m station'];
+    const allAns = QS.map((q, i) => { const bad = i === 3 || i === 8; return { n: i + 1, q, mark: bad ? '✗' : '✓', c: bad ? '#B3261E' : '#2E7D4F', note: bad ? (i === 3 ? 'You: 102.5 m · Correct: 109.2 m' : 'You: L = 20D / I · Correct: L = 20I / D') : 'Correct' }; });
+    const ending = s === 'endingSoon';
+    return {
+      examOpts, exam: EX[ei], toggleExam: () => this.setState({ menu: !menuOpen, drawer: false }), menuOpenA: String(!!menuOpen),
+      topNav, fab: shell && m && !focus, drawer: shell && m && !!this.state.drawer, openDrawer: () => this.setState({ drawer: true, menu: false }), closeDrawer: () => this.setState({ drawer: false }),
+      drawerRef: this.drawerRef, scrimRef: this.scrimRef, cardRef: this.cardRef,
+      streakLabel: m ? '6' : '6-DAY STREAK', examChip: m ? EX[ei].code : EX[ei].code + ' · ' + EX[ei].board,
+      streakDays: ['FRI','SAT','SUN','MON','TUE','WED','TODAY'].map((l, i) => ({ l, mark: i < 6 ? '✓' : '', bg: i < 6 ? '#FF881F' : 'transparent', bs: i < 6 ? 'solid' : 'dashed' })),
+      hero: { ...resume[0], w: '25%' }, resumeRest: resume.slice(1),
+      rings: [['MSTC','Math, Surveying & Transportation',42],['HPGE','Hydraulics & Geotechnical',27],['PSAD','Structural Analysis & Design',21]].map(([code, name, p], i) => ({ code, name, pct: p + '%', deg: (p * 3.6) + 'deg', detail: subjProg[i].detail, go: () => this.setState({ s: 'library', subj: i, drawer: false }) })),
+      weak: [['MSTC','Sub-chord deflection','LAST QUIZ 4 / 10 · 7 CARDS MARKED REVIEW AGAIN','40%'],['HPGE','Shear strength','LAST QUIZ 5 / 10 · 5 CARDS TO REVIEW','50%'],['PSAD','Steel design','LAST QUIZ 6 / 10 · LESSON NOT STARTED','60%']].map(([subj, topic, meta, score]) => ({ subj, topic, meta, score, cards: go('flashcards'), quiz: go('quizStart') })), examMenuDesk: shell && !m && menuOpen, examMenuMob: shell && m && menuOpen,
+      courseList, myExams, quizFacts, toReview, revTabs, showMissed: rv === 0, showAll: rv === 1, allAns: live.allLive || allAns,
+      endingSoon: ending, gapDays: 27, accessWeeks: Array.from({ length: 12 }, (_, i) => ({ c: i < 11 ? '#FF881F' : 'rgba(246,241,231,.2)' })),
+      back: s === 'receipt' ? go('billing') : s === 'course' ? go('courses') : go('library'), crumbParent: s === 'receipt' ? 'BILLING' : s === 'course' ? 'COURSES' : 'LIBRARY',
+      is, nav, email, shell, desk: !m, mTop: m && !focus, mBack: m && focus, mTabs: m && !focus, dCrumb: !m && focus,
+      minH: m ? '844px' : '820px', crumbTop: cr[0], crumbTitle: cr[1], sideNav, tabNav,
+      days, weeks, examDate: 'SAT · 21 NOV 2026', stats, resume, subjProg,
+      subjTabs, subjName: SUBJ[si][1], topics, locked,
+      wm: Array.from({ length: 18 }, () => ({ t: email })),
+      ...live, opts, qTicks, missed, modules, scoreN, scorePct,
+      retake: () => this.setState({ s: 'quiz', qi: 0, qa: {}, qDone: false }),
+      startQuiz: () => this.setState({ s: 'quiz', qi: 0, qa: {}, qDone: false }),
+      planHead: (this.state.pex || 'CE') + ' ALL-ACCESS · FLASHCARDS, QUIZZES, REVIEWERS' + ((this.state.pex || 'CE') === 'CE' ? ', COURSES' : ''),
+      pay: () => { clearTimeout(this._payT); this.setState({ s: 'payPending' }); this._payT = setTimeout(() => { if (this.state.s === 'payPending') this.setState({ s: this.state.method === 3 ? 'payFailed' : 'paySuccess' }); }, 2600); },
+      printIt: () => window.print(),
+      acct: { reqData: () => this.setState({ acMsg: '✓ REQUEST SENT · WE’LL EMAIL A COPY TO ' + email.toUpperCase() + ' WITHIN 7 DAYS', acDel: false }), askDelete: () => this.setState({ acDel: true, acMsg: '' }), cancel: () => this.setState({ acDel: false }), doDelete: () => this.setState({ acDel: false, s: 'signin' }), hasMsg: !!this.state.acMsg, msg: this.state.acMsg || '', confirming: !!this.state.acDel },
+      plans, pickOne: () => this.setState({ one: true }), one: sel1(one), showOne: pex === 'CE', pay2, sel, methods, examPills,
+      active, history, supportEmail: 'support@aceyourcourse.ph'
+    };
+  }
+}
+</script>
+</body>
+</html>

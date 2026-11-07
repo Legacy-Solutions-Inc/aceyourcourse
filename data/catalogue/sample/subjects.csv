@@ -1,0 +1,22 @@
+exam_code,code,name,order
+CE,MSTC,"Mathematics, Surveying & Transportation Engineering",1
+CE,HPGE,Hydraulics & Geotechnical Engineering,2
+CE,PSAD,Principles of Structural Analysis & Design,3
+ME,PIP,Power & Industrial Plant Engineering,1
+ME,MATH,Mathematics,2
+ME,MD,"Machine Design, Materials & Shop Practice",3
+EE,MATH,Mathematics,1
+EE,ESAS,Engineering Sciences & Allied Subjects,2
+EE,EE PROF,Electrical Engineering Professional Subjects,3
+MT,CLIN CHEM,Clinical Chemistry,1
+MT,HEMA,Hematology,2
+MT,CLIN MIC & PARA,Clinical Microscopy & Parasitology,3
+MT,ISBB,Immunology-Serology & Blood Banking,4
+MT,HISTOPATH,Histopathologic & Cytologic Techniques,5
+MT,MICRO,Microbiology,6
+CPA,FAR,Financial Accounting & Reporting,1
+CPA,AUD,Auditing,2
+CPA,AFAR,Advanced Financial Accounting & Reporting,3
+CPA,TAX,Taxation,4
+CPA,RFBT,Regulatory Framework for Business Transactions,5
+CPA,MS,Management Services,6

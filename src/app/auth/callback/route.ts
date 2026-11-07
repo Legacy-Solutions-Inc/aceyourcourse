@@ -1,22 +1,32 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
-import { createClient } from "@/lib/supabase/server";
+import { continueSignIn } from "@/lib/admin/guard";
+import { finishGoogleSignIn } from "@/lib/admin/identity";
+import { safeAdminNext } from "@/lib/admin/safe-next";
 import { paths } from "@/paths";
 
-// Exchanges the OAuth / email-link PKCE `code` for a session, then redirects.
+const codeSchema = z.string().min(1);
+
+/**
+ * GET /auth/callback: where Google sign-in comes back (ticket 16). It
+ * exchanges the PKCE `code` for a Supabase session, signs in through the Staff
+ * Guard (Staff go on; anyone else is recorded and goes to the 403 screen), and
+ * lands on `next`, sanitised to an Admin path. Without a code, with one
+ * Supabase refuses, or for an email Google didn't verify, it goes back to
+ * sign-in saying why. Only the Admin signs in for now; the Member App
+ * (Phase 3) will widen `next`.
+ */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? paths.dashboard.overview;
+  const next = safeAdminNext(searchParams.get("next"));
+  const back = (problem: "callback" | "unverified") =>
+    NextResponse.redirect(`${origin}${paths.admin.signIn(next, problem)}`);
 
-  if (code) {
-    const supabase = createClient(cookies());
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
-    }
-  }
+  const code = codeSchema.safeParse(searchParams.get("code"));
+  if (!code.success || !(await finishGoogleSignIn(code.data))) return back("callback");
 
-  return NextResponse.redirect(`${origin}${paths.auth.signIn}?error=auth_callback`);
+  const step = await continueSignIn();
+  if (step.status === "staff") return NextResponse.redirect(`${origin}${next}`);
+  return back(step.status === "unverified" ? "unverified" : "callback");
 }

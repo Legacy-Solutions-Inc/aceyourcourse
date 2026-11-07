@@ -4,7 +4,8 @@ Date: 2026-07-31
 
 ## Status
 
-Accepted
+Accepted. Amended by [ADR 0009](0009-cookieless-website-analytics.md): the
+Website runs cookieless and anonymous, with no consent gating or banner.
 
 ## Context
 

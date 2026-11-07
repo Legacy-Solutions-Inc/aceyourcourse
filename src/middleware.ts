@@ -1,13 +1,12 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import type { User } from "@supabase/supabase-js";
 
 import { analyticsSessionReplay, authDisabled, isSupabaseConfigured } from "@/config";
 import { env } from "@/env";
-import { hasRole } from "@/lib/authz";
+import { adminMode } from "@/lib/admin/mode";
 import { buildCsp } from "@/lib/csp";
+import { isAdminPath, needsSession } from "@/lib/session-routes";
 import { createClient } from "@/lib/supabase/middleware";
-import { paths } from "@/paths";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -34,62 +33,40 @@ export async function middleware(req: NextRequest) {
     return response;
   };
 
-  const redirectTo = (path: string, cookieSource?: NextResponse) => {
-    const url = req.nextUrl.clone();
-    url.pathname = path;
-    url.search = "";
-    const redirect = NextResponse.redirect(url);
-    redirect.headers.set("Content-Security-Policy", csp);
-    // Preserve refreshed auth cookies on the redirect when a source is given.
-    if (cookieSource) {
-      cookieSource.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
-    }
-    return redirect;
-  };
+  // The public Website needs no session: set the CSP and return before any
+  // Supabase client exists, so public pages make no Supabase round trip. Only
+  // the Member App, the Admin and the OAuth callback go on (see needsSession).
+  if (!needsSession(pathname)) {
+    return passThrough();
+  }
+
+  // Only the Admin's live mode signs Staff in through Supabase (ticket 16).
+  // Sample mode has its own cookie (CONVENTIONS §1), and closed mode answers
+  // 404: no round trip for /admin there.
+  if (adminMode !== "live" && isAdminPath(pathname)) {
+    return passThrough();
+  }
 
   // Dev-only: no Supabase configured → auth disabled, let every request through.
   if (authDisabled) {
     return passThrough();
   }
 
-  // Production without Supabase config → fail CLOSED. There is no client to
-  // create, so gate protected routes directly and leave the auth screens
-  // reachable (the sign-in page must still render).
+  // Production without Supabase config: there is no client to create, so pass
+  // through. Nothing is gated yet; Phase 2's Member App and Admin gates must
+  // fail CLOSED here (see computeAuthDisabled in src/config.ts).
   if (!isSupabaseConfigured) {
-    if (pathname.startsWith("/dashboard")) {
-      return redirectTo(paths.auth.signIn);
-    }
     return passThrough();
   }
 
   const { supabaseClient, res } = createClient(req, nonce, csp);
 
-  // Refreshes the session cookie on every matched request. If Supabase is
-  // unreachable, treat the request as unauthenticated rather than erroring.
-  let user: User | null = null;
+  // Refreshes the session cookie on every session route. If Supabase is
+  // unreachable, carry on unauthenticated rather than erroring.
   try {
-    const result = await supabaseClient.auth.getUser();
-    user = result.data.user;
+    await supabaseClient.auth.getUser();
   } catch {
-    user = null;
-  }
-
-  const isAuthed = Boolean(user);
-
-  // Protect the dashboard, and gate admin-only areas by role.
-  if (pathname.startsWith("/dashboard")) {
-    if (!isAuthed) return redirectTo(paths.auth.signIn, res);
-    if (
-      pathname.startsWith(paths.dashboard.roleSettings) &&
-      !hasRole(user, "admin", "superadmin")
-    ) {
-      return redirectTo(paths.dashboard.overview, res);
-    }
-  }
-
-  // Keep signed-in users out of the auth screens (except the OAuth callback).
-  if (pathname.startsWith("/auth") && pathname !== paths.auth.callback && isAuthed) {
-    return redirectTo(paths.dashboard.overview, res);
+    // Treated as signed out; nothing is gated on the result yet.
   }
 
   // res already carries the nonce request headers + CSP response header.

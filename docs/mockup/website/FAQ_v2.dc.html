@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><script src="motion.js?v=3"></script><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap"><style>body{margin:0}a{color:#005AA5}a:hover{color:#003F73}</style></helmet>
+<div style="container-type:inline-size;width:100%;background:#F6F1E7;color:#0E1A2E;font-family:'Schibsted Grotesk',sans-serif;overflow-x:clip">
+  <dc-import name="SiteNav" style="position:sticky;top:0;z-index:50" mobile="{{ m }}" active="faq" hint-size="100%,100px"></dc-import>
+
+  <section data-screen-label="FAQ hero" style="background:#0E1A2E;color:#F6F1E7">
+    <div style="max-width:1296px;margin:0 auto;box-sizing:border-box;padding:clamp(48px,6cqi,96px) clamp(20px,5cqi,72px) clamp(40px,5cqi,64px);display:flex;flex-direction:column;gap:22px">
+      <span data-m="drop" style="align-self:flex-start;display:flex;align-items:center;gap:10px;font:700 12px/1 'JetBrains Mono',monospace;letter-spacing:.08em;border:1.5px solid rgba(246,241,231,.5);padding:9px 12px;border-radius:999px"><span data-m="pulse" style="width:8px;height:8px;border-radius:50%;background:#FF881F"></span>FAQ · {{ total }} ANSWERS</span>
+      <h1 data-m="reveal" style="margin:0;font-weight:800;font-size:clamp(46px,6.8cqi,96px);line-height:.94;letter-spacing:-.045em;max-width:13ch;text-wrap:balance">Questions reviewees <span style="color:#FF881F">always ask</span></h1>
+      <p data-m="up" data-m-delay="150" style="margin:0;font-size:clamp(17px,1.5cqi,20px);line-height:1.5;max-width:32em;color:#DCE3EC">Shipping, paper, what’s covered, and how to make sure you’re getting the original. If yours isn’t here, email customer support at <a href="mailto:aceyourcourseinc@gmail.com" style="color:#FF881F;font-weight:700">aceyourcourseinc@gmail.com</a>.</p>
+      <label data-m="up" data-m-delay="250" style="display:flex;align-items:center;gap:12px;max-width:720px;min-height:64px;padding:0 10px 0 20px;background:#F6F1E7;color:#0E1A2E;border:1.5px solid #F6F1E7;box-shadow:6px 6px 0 #FF881F">
+        <span aria-hidden="true" style="font-size:22px">⌕</span>
+        <input value="{{ q }}" onInput="{{ onQ }}" placeholder="Search: shipping, SPayLater, two devices…" style="all:unset;flex:1;min-width:0;font:500 18px 'Schibsted Grotesk',sans-serif">
+        <sc-if value="{{ searching }}"><button onClick="{{ clearQ }}" style="all:unset;cursor:pointer;min-height:44px;padding:0 14px;display:flex;align-items:center;font:700 13px 'JetBrains Mono',monospace;border:1.5px solid #0E1A2E">CLEAR</button></sc-if>
+      </label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <span style="font:500 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#9FB3CF;margin-right:4px">POPULAR</span>
+        <sc-for list="{{ popular }}" as="p" hint-placeholder-count="4"><button onClick="{{ p.go }}" style="all:unset;cursor:pointer;min-height:40px;padding:0 14px;display:flex;align-items:center;border:1.5px solid rgba(246,241,231,.5);border-radius:999px;font:600 14px 'Schibsted Grotesk',sans-serif;transition:background .15s,border-color .15s" style-hover="background:rgba(246,241,231,.12);border-color:#F6F1E7">{{ p.t }}</button></sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section data-screen-label="FAQ list" style="max-width:1296px;margin:0 auto;padding:clamp(40px,5cqi,72px) clamp(20px,5cqi,72px) clamp(64px,8cqi,112px);display:flex;flex-wrap:wrap;gap:28px clamp(32px,5cqi,72px);align-items:flex-start">
+    <nav style="flex:1 1 240px;max-width:300px;position:sticky;top:92px;display:flex;flex-direction:column;gap:12px">
+      <span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#4A5568">TOPICS</span>
+      <div style="display:flex;flex-direction:column;border:1.5px solid #0E1A2E;background:#FBF8F1;box-shadow:4px 4px 0 #0E1A2E">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="6">
+          <button onClick="{{ t.go }}" style="all:unset;cursor:pointer;box-sizing:border-box;display:flex;align-items:center;gap:12px;min-height:52px;padding:0 16px;border-bottom:1.5px solid #0E1A2E;margin-bottom:-1.5px;background:{{ t.bg }};color:{{ t.fg }};font:700 15px 'Schibsted Grotesk',sans-serif;transition:background .15s,color .15s">
+            <span style="font:700 11px 'JetBrains Mono',monospace;color:{{ t.nc }};min-width:18px">{{ t.n }}</span><span style="flex:1">{{ t.title }}</span><span style="font:500 12px 'JetBrains Mono',monospace;opacity:.7">{{ t.count }}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onClick="{{ expandAll }}" style="all:unset;cursor:pointer;flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;font:700 13px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E" style-hover="background:#EDE6D6">Expand all</button>
+        <button onClick="{{ collapseAll }}" style="all:unset;cursor:pointer;flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;font:700 13px 'Schibsted Grotesk',sans-serif;border:1.5px solid #0E1A2E" style-hover="background:#EDE6D6">Collapse all</button>
+      </div>
+    </nav>
+
+    <div style="flex:3 1 420px;min-width:0;display:flex;flex-direction:column;gap:clamp(36px,4cqi,56px)">
+      <sc-if value="{{ searching }}"><span style="font:700 13px 'JetBrains Mono',monospace;letter-spacing:.04em">{{ resultLabel }}</span></sc-if>
+      <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+        <div id="faq-{{ g.key }}" style="display:flex;flex-direction:column;gap:14px;scroll-margin-top:20px">
+          <div style="display:flex;align-items:baseline;gap:14px">
+            <span style="font:700 clamp(22px,2.4cqi,30px)/1 'JetBrains Mono',monospace;color:#FF881F">{{ g.n }}</span>
+            <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(26px,3cqi,40px);line-height:1;letter-spacing:-.03em">{{ g.title }}</h2>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ g.items }}" as="q" hint-placeholder-count="3">
+              <div style="background:{{ q.cardBg }};border:1.5px solid #0E1A2E;box-shadow:{{ q.sh }};transition:box-shadow .2s,background .2s">
+                <button onClick="{{ q.toggle }}" aria-expanded="{{ q.open }}" style="all:unset;box-sizing:border-box;width:100%;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:18px clamp(16px,2cqi,24px);cursor:pointer;min-height:64px;font-family:'Schibsted Grotesk',sans-serif;font-weight:700;font-size:clamp(17px,1.6cqi,20px);line-height:1.3;color:#0E1A2E" style-hover="color:#005AA5">
+                  <span>{{ q.q }}</span>
+                  <span style="flex:none;width:34px;height:34px;border:1.5px solid #0E1A2E;display:flex;align-items:center;justify-content:center;font:700 18px/1 'JetBrains Mono',monospace;background:{{ q.btnBg }};transform:rotate({{ q.rot }});transition:transform .25s,background .2s">+</span>
+                </button>
+                <sc-if value="{{ q.open }}">
+                  <div data-m="drop" style="padding:0 clamp(16px,2cqi,24px) 22px;display:flex;flex-direction:column;gap:14px;max-width:46em">
+                    <p style="margin:0;font-size:17px;line-height:1.6;color:#2B3649;text-wrap:pretty;white-space:pre-line">{{ q.a }}</p>
+                    <sc-if value="{{ q.quote }}">
+                      <figure style="margin:0;display:flex;flex-direction:column;gap:6px;padding:14px 16px;background:#F6F1E7;border:1.5px dashed #0E1A2E"><span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.06em;color:#E07400">FROM A REVIEW</span><blockquote style="margin:0;font-size:16px;line-height:1.5">“{{ q.quote }}”</blockquote><figcaption style="font:400 11px 'JetBrains Mono',monospace;color:#4A5568">{{ q.quoteBy }}</figcaption></figure>
+                    </sc-if>
+                    <sc-if value="{{ q.table }}">
+                      <div style="display:flex;flex-direction:column;border:1.5px solid #0E1A2E;background:#F6F1E7">
+                        <sc-for list="{{ coverage }}" as="c" hint-placeholder-count="5">
+                          <a href="{{ c.href }}" style="display:flex;flex-wrap:wrap;gap:8px 16px;padding:12px 14px;border-bottom:1px solid #D5E2F0;align-items:center;text-decoration:none;color:#0E1A2E" style-hover="background:#EDE6D6;color:#0E1A2E">
+                            <span style="flex:0 0 100px;display:flex;gap:6px;align-items:center"><span style="font:700 12px/1 'JetBrains Mono',monospace;background:#005AA5;color:#F6F1E7;padding:6px 7px">{{ c.code }}</span><span style="font:500 11px 'JetBrains Mono',monospace;color:#4A5568">{{ c.board }}</span></span>
+                            <span style="flex:1 1 220px;display:flex;flex-wrap:wrap;gap:5px"><sc-for list="{{ c.subjects }}" as="s" hint-placeholder-count="3"><span style="font:700 11px/1 'JetBrains Mono',monospace;border:1.5px solid #0E1A2E;padding:5px 6px">{{ s }}</span></sc-for></span>
+                            <span style="font-weight:800;font-size:14px;color:#005AA5">→</span>
+                          </a>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ none }}">
+        <div style="display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:32px;border:1.5px dashed #0E1A2E;background:#FBF8F1">
+          <span style="font-weight:800;font-size:24px;letter-spacing:-.02em">No answers for “{{ q }}” yet.</span>
+          <span style="font-size:16px;line-height:1.5;color:#2B3649">Try a shorter word, or ask us directly on Shopee chat.</span>
+          <div style="display:flex;gap:10px;flex-wrap:wrap"><button onClick="{{ clearQ }}" style="all:unset;cursor:pointer;min-height:46px;padding:0 18px;display:flex;align-items:center;background:#0E1A2E;color:#F6F1E7;font-weight:700;font-size:15px">Clear search</button><a href="https://shopee.ph/aceyourcourse" target="_blank" style="display:flex;align-items:center;min-height:46px;padding:0 16px;border:1.5px solid #0E1A2E;color:#0E1A2E;font-weight:700;font-size:15px;text-decoration:none">Chat us on Shopee ↗</a></div>
+        </div>
+      </sc-if>
+    </div>
+  </section>
+
+  <section data-screen-label="Still asking" style="background:#005AA5;color:#F6F1E7;border-top:1.5px solid #0E1A2E;border-bottom:1.5px solid #0E1A2E">
+    <div style="max-width:1296px;margin:0 auto;padding:clamp(48px,6cqi,88px) clamp(20px,5cqi,72px);display:flex;flex-wrap:wrap;gap:24px 40px;align-items:center;justify-content:space-between">
+      <div style="display:flex;flex-direction:column;gap:10px;max-width:560px">
+        <h2 data-m="up" style="margin:0;font-weight:800;font-size:clamp(32px,4cqi,56px);line-height:1;letter-spacing:-.035em">Still have a question?</h2>
+        <p style="margin:0;font-size:17px;line-height:1.5;color:#DCE7F4">Customer support: email us at aceyourcourseinc@gmail.com, or chat us on Shopee.</p>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px"><a href="mailto:aceyourcourseinc@gmail.com" style="display:flex;align-items:center;min-height:56px;padding:0 22px;color:#F6F1E7;font-weight:700;font-size:16px;text-decoration:none;border:1.5px solid #F6F1E7" style-hover="background:rgba(246,241,231,.12);color:#F6F1E7">Email us</a><a href="https://shopee.ph/aceyourcourse" target="_blank" style="display:flex;align-items:center;min-height:56px;padding:0 24px;background:#FF881F;color:#0E1A2E;font-weight:800;font-size:16px;text-decoration:none;border:1.5px solid #0E1A2E;box-shadow:5px 5px 0 #0E1A2E;transition:transform .18s,box-shadow .18s" style-hover="transform:translate(-2px,-2px);box-shadow:7px 7px 0 #0E1A2E;color:#0E1A2E">Chat us on Shopee ↗</a></div>
+    </div>
+  </section>
+
+  <dc-import name="SiteFooter" hint-size="100%,420px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;mobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  static G = [
+    { key: 'ship', title: 'Shipping', items: [
+      { q: 'Where do orders ship from?', a: 'Every order ships from Iloilo via Shopee, TikTok, and Lazada. We ship daily to ensure the reviewers reach students faster.', quote: 'Ang bilis din na deliver! Jan. 20 ako nag place order, dumating din ng Jan. 24.', quoteBy: '★★★★★ · MedTech Essential Notebook' },
+      { q: 'Do you deliver nationwide?', a: 'Yes, we ship nationwide! Order through Shopee, TikTok Shop, or Lazada.' },
+      { q: 'How do I track my order?', a: 'In the Shopee, TikTok, or Lazada app under My Purchases. Tracking updates come from the courier.' }] },
+    { key: 'paper', title: 'Paper & print', items: [
+      { q: 'How thick are the flash cards?', a: 'Flash cards are 4 × 6 in, printed on 160 gsm board paper. Sturdy enough to shuffle through all review season, light enough to carry a full deck.', quote: 'Board paper pero not too thick. Useful for review.', quoteBy: '★★★★★ · CPA Flash Cards' },
+      { q: 'What are the posters like?', a: 'A3 size, printed big enough to read from your desk while you solve.', quote: 'Glossy type yung paper, makapal sya. Malalaki printing ng formulas kaya mababasa mo mga 6ft away hahaha.', quoteBy: '★★★★★ · Ultimate CE Posters 2.0 · MSTC, HPGE, PSAD' },
+      { q: 'What size is the notebook?', a: 'Our notebook is in A5 size.' }] },
+    { key: 'cover', title: 'What’s covered', items: [
+      { q: 'What subjects does each exam’s reviewer cover?', a: 'Each reviewer follows that exam’s board subjects. Topics are updated and based on recent exam trends.', table: true },
+      { q: 'Can I buy just one subject?', a: 'For some reviewers, yes:\nCE posters per subject: MSTC ₱400 · HPGE ₱470 · PSAD ₱700\nEE flash cards per subject: ₱600 each, or ₱1,550 for all three\nMedTech flash cards per module: ₱550 each, or ₱2,750 for all six' },
+      { q: 'Is it enough on its own?', a: 'Think of it as your recall and practice kit. It works alongside a review center or self-review, so you spend less time copying formulas and more time solving.' },
+      { q: 'My exam isn’t on the site yet.', a: 'More courses are coming soon.' }] },
+    { key: 'shopee', title: 'Buying & the app', items: [
+      { q: 'Where can I buy?', a: 'Physical copies are sold through our official stores on Shopee, Lazada, and TikTok Shop. Digital access to flashcards, quizzes, reviewers, and video courses is available here in the app and paid through PayMongo, including QR payments.' },
+      { q: 'Does my subscription renew automatically?', a: 'No. A subscription gives you access for a fixed period, like one month. When it ends, you renew it yourself from the Billing page. We never charge you automatically.' },
+      { q: 'Can I use my account on two devices?', a: 'You can sign in with Google on any device, but only one at a time. Signing in on a new device signs out the old one.' },
+      { q: 'Are there discounts?', a: 'On Shopee, most listings have “Any 2 enjoy 4% off” when you add two items to the same order. The CE Review Bundle 3-in-1 is ₱3,499, which is ₱200 less than buying the cards, notebook, and posters separately.' },
+      { q: 'Can I pay in installments?', a: 'For physical copies on Shopee, every listing supports SPayLater at 0% interest.' }] },
+    { key: 'auth', title: 'Authenticity', items: [
+      { q: 'How do I know I’m buying the original?', a: '1. Buy from the official AceYourCourse stores on Shopee, Lazada, or TikTok Shop. Every store link on this site goes there.\n2. Check that the listing says “Ships from Iloilo City, Iloilo.”\n3. Look for the established reviews by our dear future board passers. A new shop with our photos is a red flag.' },
+      { q: 'Someone is selling PDFs or photocopies. Are those yours?', a: 'No. AceYourCourse products are registered with IPOPHIL and protected by copyright law. Unauthorized reproduction, distribution, or use is prohibited. Copies may be outdated or incomplete. If you see one, send us the link through Shopee chat.' }] }];
+  state = { open: { 'ship-0': true }, q: '', tab: 'all' };
+  toggle(k) { this.setState(s => ({ open: { ...s.open, [k]: !s.open[k] } })); }
+  setAll(v) { const o = {}; Component.G.forEach(g => g.items.forEach((_, i) => o[g.key + '-' + i] = v)); this.setState({ open: o }); }
+  jump(key, k) {
+    this.setState(s => ({ q: '', tab: 'all', open: k ? { ...s.open, [k]: true } : s.open }), () => {
+      const el = document.getElementById('faq-' + key); el && window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 16, behavior: 'smooth' });
+    });
+  }
+  renderVals() {
+    const { open, q, tab } = this.state, G = Component.G, term = q.trim().toLowerCase(), searching = !!term;
+    const hit = it => !term || (it.q + ' ' + it.a).toLowerCase().includes(term);
+    const total = G.reduce((n, g) => n + g.items.length, 0);
+    const groups = G.map((g, gi) => ({ ...g, n: '0' + (gi + 1), items: g.items.map((it, i) => ({ it, k: g.key + '-' + i })).filter(x => hit(x.it)).map(({ it, k }) => {
+      const o = searching || !!open[k];
+      return { ...it, quote: it.quote || '', table: !!it.table, open: o, rot: o ? '45deg' : '0deg', btnBg: o ? '#FF881F' : 'transparent', cardBg: o ? '#FBF8F1' : 'transparent', sh: o ? '5px 5px 0 #0E1A2E' : '0 0 0 #0E1A2E', toggle: () => this.toggle(k) };
+    }) })).filter(g => g.items.length && (searching || tab === 'all' || g.key === tab));
+    const found = groups.reduce((n, g) => n + g.items.length, 0);
+    const tabs = [{ key: 'all', title: 'All topics', n: '', count: total }, ...G.map((g, gi) => ({ key: g.key, title: g.title, n: '0' + (gi + 1), count: g.items.length }))]
+      .map(t => { const on = !searching && t.key === tab; return { ...t, bg: on ? '#0E1A2E' : 'transparent', fg: on ? '#F6F1E7' : '#0E1A2E', nc: on ? '#FF881F' : '#005AA5', go: () => this.setState({ tab: t.key, q: '' }) }; });
+    const popular = [['Where do orders ship from?', 'ship', 'ship-0'], ['Does my subscription renew automatically?', 'shopee', 'shopee-1'], ['Can I use my account on two devices?', 'shopee', 'shopee-2'], ['How do I know I’m buying the original?', 'auth', 'auth-0']]
+      .map(([t, key, k]) => ({ t, go: () => this.jump(key, k) }));
+    const coverage = [
+      { code: 'CE', board: 'CELE', subjects: ['MSTC', 'HPGE', 'PSAD'] },
+      { code: 'ME', board: 'MELE', subjects: ['POWER & IND. PLANT', 'MATHEMATICS', 'MACHINE DESIGN'] },
+      { code: 'EE', board: 'REE', subjects: ['MATH', 'ESAS', 'EE PROF. SUB.'] },
+      { code: 'MT', board: 'MTLE', subjects: ['CLIN CHEM', 'HEMA', 'CLIN MIC & PARA', 'ISBB', 'HISTOPATH', 'MICRO'] },
+      { code: 'CPA', board: 'CPALE', subjects: ['FAR', 'AUD THEORY', 'AFAR', 'TAX', 'RFBT', 'MS'] }].map(c => ({ ...c, href: 'Exam v2.dc.html?exam=' + c.code }));
+    return { m: !!this.props.mobile, q, searching, total, groups, tabs, popular, coverage, none: searching && !found,
+      resultLabel: found + (found === 1 ? ' ANSWER' : ' ANSWERS') + ' FOR “' + q.trim().toUpperCase() + '”',
+      onQ: e => this.setState({ q: e.target.value }), clearQ: () => this.setState({ q: '' }),
+      expandAll: () => this.setAll(true), collapseAll: () => this.setAll(false) };
+  }
+}
+</script>
+</body>
+</html>

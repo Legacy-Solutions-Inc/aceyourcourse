@@ -1,0 +1,110 @@
+import { z } from "zod";
+
+import { ABOUT_PHOTO_SLOTS } from "@/lib/catalogue/about-content";
+import { isSitePageKey } from "@/services/catalogue.schema";
+
+// The upload seam's inputs and outputs (CONVENTIONS §3; spec, Phase 2 → Seams:
+// Image upload). A Staff-checked Server Action hands the browser a one-time
+// upload URL, the browser PUTs the file to it, and the save records the
+// file's path. The rules here are shared with the browser, which checks a
+// file before uploading it.
+
+/** The image types an upload accepts: JPEG, PNG or WebP. */
+export const UPLOAD_CONTENT_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+
+export type UploadContentType = (typeof UPLOAD_CONTENT_TYPES)[number];
+
+/** The largest file an upload accepts: 10 MB. */
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+/**
+ * What an upload is for: a Product photo, an Exam page's share image (ticket
+ * 09), a Site page's share image (ticket 20), or one of About's four photos
+ * (ticket 21).
+ */
+export const UPLOAD_PURPOSES = [
+  "product-photo",
+  "share-image",
+  "site-page-share-image",
+  "about-photo",
+] as const;
+
+const isAboutPhotoSlot = (value: unknown) => ABOUT_PHOTO_SLOTS.some((slot) => slot === value);
+
+export const WRONG_UPLOAD_TYPE = "USE A JPEG, PNG OR WEBP IMAGE";
+export const UPLOAD_TOO_BIG = "KEEP EACH PHOTO TO 10 MB";
+
+const UNKNOWN_UPLOAD = "UNKNOWN UPLOAD";
+
+/** The file the browser is about to send: its type and size. */
+export const uploadFileSchema = z.object({
+  contentType: z.enum(UPLOAD_CONTENT_TYPES, { errorMap: () => ({ message: WRONG_UPLOAD_TYPE }) }),
+  size: z
+    .number({ invalid_type_error: UPLOAD_TOO_BIG, required_error: UPLOAD_TOO_BIG })
+    .int(UPLOAD_TOO_BIG)
+    .positive("THE FILE IS EMPTY")
+    .max(MAX_UPLOAD_BYTES, UPLOAD_TOO_BIG),
+});
+
+/** One plain path segment: a Product's id or an Exam's code. */
+export const UPLOAD_OWNER = /^[A-Za-z0-9][A-Za-z0-9-]{0,63}$/;
+
+/**
+ * What a file is for: a Product (its id), an Exam (its code), a Site page
+ * ("about") or one of About's photos ("story-2"). Storage files it in that
+ * folder (ticket 17), or names the file after it, so it's one plain path
+ * segment.
+ */
+export const uploadOwnerSchema = z
+  .string({ invalid_type_error: UNKNOWN_UPLOAD })
+  .regex(UPLOAD_OWNER, UNKNOWN_UPLOAD);
+
+/**
+ * An upload as the browser asks for it, before it sends the file. A Product
+ * photo names its Product once it has one (a new Product has no id until its
+ * first save); a share image always names its Exam, a Site page's share
+ * image its Site page, and an About photo its slot (team, story-1, story-2
+ * or story-3).
+ */
+export const uploadRequestSchema = uploadFileSchema
+  .extend({
+    purpose: z.enum(UPLOAD_PURPOSES, { errorMap: () => ({ message: UNKNOWN_UPLOAD }) }),
+    owner: uploadOwnerSchema.optional(),
+  })
+  .refine(
+    ({ purpose, owner }) => {
+      switch (purpose) {
+        case "product-photo":
+          return true;
+        case "share-image":
+          return owner !== undefined;
+        case "site-page-share-image":
+          return isSitePageKey(owner);
+        case "about-photo":
+          return isAboutPhotoSlot(owner);
+      }
+    },
+    { path: ["owner"], message: UNKNOWN_UPLOAD },
+  );
+
+export type UploadRequest = z.input<typeof uploadRequestSchema>;
+
+/** Where the browser sends one file, and where it will be once sent. */
+export interface UploadTicket {
+  /** One-time: the browser PUTs the file here, once. */
+  uploadUrl: string;
+  /** What a save records, e.g. a Product photo's. */
+  path: string;
+  /** Where the Website loads the file from once it's uploaded. */
+  publicUrl: string;
+}
+
+/**
+ * What a save finds at an upload's path: the file's public URL once it's
+ * uploaded, "waiting" while the browser hasn't sent it, or null for a path
+ * that isn't an upload of this purpose.
+ */
+export type UploadLookup = (
+  path: string,
+  purpose: UploadRequest["purpose"],
+) => { publicUrl: string } | "waiting" | null;

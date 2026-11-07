@@ -38,27 +38,36 @@ including **per-glob** thresholds) sit just BELOW the measured baseline so a
 regression fails CI — raise tests, don't lower thresholds. Some code is
 deliberately **excluded**: vendored `src/components/ui/**`, generated
 `database.types.ts`, and the **offline-unverifiable Drizzle DB layer**
-(`src/services/customers.db.ts`, `src/lib/db/client.ts`) — its query bodies need
-a live Postgres (see **drizzle-data** KNOWN GAP); its pure mapper is tested
-separately.
+(`src/lib/db/client.ts`, and Phase 2's `*.db.ts` seam arms) — its query bodies
+need a live Postgres, so they're checked by the database tests instead; pure row
+mappers are tested separately.
+
+**Database tests** are `*.db.test.ts`, in the `db` project (node env). They
+connect through `src/lib/db/test-database.ts` with `TEST_DATABASE_URL` (never
+`DATABASE_URL`) and skip with the reason when it's unset or unreachable, so
+`pnpm test` needs no Docker. See **drizzle-data**.
 
 ## 4. In this template
 
-- `vitest.config.ts` — `environment: "jsdom"`, `globals: true`,
-  `setupFiles: ["./vitest.setup.ts"]`, the `@` alias, a `server-only` test alias,
+- `vitest.config.ts` — two `projects`: `unit` (`environment: "jsdom"`,
+  `setupFiles: ["./vitest.setup.ts"]`, every test but `*.db.test.ts`) and `db`
+  (node, `*.db.test.ts`); `globals: true`, the `@` alias, a `server-only` test alias,
   and the `coverage` block (v8; `text`+`lcov`; `include: src/**`; excludes above;
   global + `src/lib/**` + `src/services/**` thresholds).
 - `vitest.setup.ts` — `import "@testing-library/jest-dom/vitest";`.
 - `test/stubs/server-only.ts` — empty stub the config aliases `server-only` to, so
   server modules (e.g. `src/env.server.ts`) can be imported under Vitest.
 - Example tests to copy:
-  - Pure units — `src/lib/authz.test.ts`, `src/lib/csp.test.ts`,
-    `src/lib/seo.test.ts`.
-  - Seam (mock path) — `src/services/customers.test.ts`.
-  - Pure mapper — `src/services/customers.db.test.ts` (`rowToCustomer`).
-  - Env-driven selection — `src/services/customers.selector.test.ts`.
-  - Component (RTL) — `src/components/dashboard/customer/customers-table.test.tsx`.
-- Scripts: `test` (`vitest run`), `test:coverage`, `test:watch`.
+  - Pure units — `src/lib/csp.test.ts`, `src/lib/seo.test.ts`,
+    `src/lib/session-routes.test.ts`.
+  - Seam (mock path) — `src/services/catalogue.test.ts`.
+  - Seed validation — `src/services/catalogue.schema.test.ts`.
+  - Component (RTL) — `src/components/website/product-card.test.tsx`.
+  - Pure row mapper and env-driven seam selection — the template's Customers
+    tests in git history at commit `aea34ea` (list them with
+    `git ls-tree -r --name-only aea34ea | grep -i customer`).
+- Scripts: `test` (`vitest run`, both projects), `test:db` (`vitest run --project
+db`), `test:coverage`, `test:watch`.
 
 ## 5. Red flags
 

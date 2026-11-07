@@ -45,17 +45,18 @@ and render the field's error — accessibility comes for free.
 - `src/components/ui/form.tsx` — the shadcn Form layer over RHF: `Form =
 FormProvider`, `FormField = Controller`, and `useFormField()` wires field
   state + a11y ids into `FormControl`/`FormMessage`.
-- `src/components/dashboard/settings/profile-form.tsx` — reference client form:
-  `useForm({ resolver: zodResolver(schema), defaultValues })`, `FormField` +
-  `render`, `form.handleSubmit(onSubmit)`, toast on result.
-- `src/components/auth/sign-in-form.tsx` — two-field form (email/password) with a
-  `z.object` schema + `zodResolver`; same pattern.
-- `src/app/dashboard/customers/actions.ts` — the SERVER half: `"use server"` +
-  `customerSchema.safeParse(Object.fromEntries(formData))` returning
-  `error.flatten().fieldErrors` — the two-boundary rule in action.
-- More forms follow the same shape: `password-form.tsx`, `sign-up-form.tsx`,
-  `reset-password-form.tsx`, `update-password-form.tsx`,
-  `src/components/dashboard/customer/customer-form.tsx`.
+- The reference forms were retired with the template and live in git history at
+  commit `aea34ea` (list them with
+  `git ls-tree -r --name-only aea34ea | grep -E "form|actions"`). The Admin
+  (Phase 2) brings the first live forms; until then, copy these from that
+  commit:
+  - `profile-form.tsx` is the reference client form:
+    `useForm({ resolver: zodResolver(schema), defaultValues })`, `FormField` +
+    `render`, `form.handleSubmit(onSubmit)`, toast on result.
+  - the Customers `actions.ts` is the SERVER half: `"use server"` +
+    `customerSchema.safeParse(Object.fromEntries(formData))` returning
+    `error.flatten().fieldErrors` — the two-boundary rule in action.
+  - `customer-form.tsx` wires a client form to those actions.
 
 ## 5. Red flags
 

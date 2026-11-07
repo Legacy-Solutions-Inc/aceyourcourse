@@ -1,18 +1,14 @@
 import "server-only";
 
-import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
-
 import { serverEnv } from "@/env.server";
-import * as schema from "@/lib/db/schema";
+import { connectDatabase, type Database } from "@/lib/db/connect";
 
 /**
  * Lazy Drizzle client. The connection is built on first `getDb()` call, never
  * at import/module-eval time, so `next build` (which runs with no database)
- * never opens a socket. postgres.js itself also connects lazily on first query.
+ * never opens a socket. postgres.js itself also connects lazily on first query,
+ * and gives up after CONNECT_TIMEOUT_SECONDS when the database doesn't answer.
  */
-
-type Database = PostgresJsDatabase<typeof schema>;
 
 let db: Database | undefined;
 
@@ -28,9 +24,6 @@ export function getDb(): Database {
     );
   }
 
-  // `prepare: false` is REQUIRED for the Supabase transaction pooler (port
-  // 6543), which does not support prepared statements.
-  const client = postgres(url, { prepare: false });
-  db = drizzle(client, { schema });
+  db = connectDatabase(url).db;
   return db;
 }

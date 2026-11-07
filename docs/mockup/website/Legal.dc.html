@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><script src="motion.js?v=3"></script><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap"><style>a{color:#005AA5}a:hover{color:#003F73}</style></helmet>
+<div style="container-type:inline-size;width:100%;background:#F6F1E7;color:#0E1A2E;font-family:'Schibsted Grotesk',sans-serif;overflow:hidden">
+  <dc-import name="SiteNav" mobile="{{ m }}" active="legal" hint-size="100%,100px"></dc-import>
+  <section data-screen-label="Legal header" style="border-bottom:1.5px solid #0E1A2E">
+    <div style="max-width:1040px;margin:0 auto;padding:clamp(36px,5cqi,72px) clamp(20px,5cqi,48px) clamp(28px,4cqi,48px);display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;gap:6px">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2"><a href="{{ t.href }}" style="min-height:44px;display:flex;align-items:center;padding:0 16px;font:700 13px 'JetBrains Mono',monospace;letter-spacing:.04em;text-decoration:none;border:1.5px solid #0E1A2E;background:{{ t.bg }};color:{{ t.fg }}">{{ t.t }}</a></sc-for>
+      </div>
+      <h1 style="margin:0;font-weight:800;font-size:clamp(40px,5.6cqi,72px);line-height:1;letter-spacing:-.035em">{{ d.title }}</h1>
+      <span style="font:500 12px 'JetBrains Mono',monospace;letter-spacing:.04em;color:#4A5568">VERSION 1.0 · EFFECTIVE {{ d.date }} · DRAFT FOR LEGAL REVIEW</span>
+    </div>
+  </section>
+  <section data-screen-label="Summary" style="max-width:1040px;margin:0 auto;padding:clamp(28px,4cqi,48px) clamp(20px,5cqi,48px) 0">
+    <div style="background:#FBF8F1;border:1.5px solid #0E1A2E;box-shadow:6px 6px 0 #005AA5;padding:clamp(18px,3cqi,32px);display:flex;flex-direction:column;gap:14px">
+      <span style="font:700 12px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#005AA5">IN SHORT</span>
+      <ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px">
+        <sc-for list="{{ d.summary }}" as="x" hint-placeholder-count="5"><li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;font-size:17px;line-height:1.5"><span style="font:700 14px 'JetBrains Mono',monospace;color:#FF881F">{{ x.n }}</span><span>{{ x.t }}</span></li></sc-for>
+      </ol>
+      <span style="font-size:14px;color:#2B3649">This summary isn’t a replacement for the full text below.</span>
+    </div>
+  </section>
+  <section data-screen-label="Full text" style="max-width:1040px;margin:0 auto;padding:clamp(36px,5cqi,64px) clamp(20px,5cqi,48px) clamp(56px,7cqi,96px);display:flex;flex-wrap:wrap;gap:clamp(24px,4cqi,56px)">
+    <nav style="flex:0 1 220px;display:flex;flex-direction:column;gap:2px;font-size:14px">
+      <span style="font:700 11px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#4A5568;padding-bottom:8px">CONTENTS</span>
+      <sc-for list="{{ d.sections }}" as="x" hint-placeholder-count="8"><a href="#{{ x.id }}" style="padding:6px 0;color:#0E1A2E;text-decoration:none;border-bottom:1px solid #D5E2F0">{{ x.n }}. {{ x.h }}</a></sc-for>
+    </nav>
+    <div style="flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:28px">
+      <sc-for list="{{ d.sections }}" as="x" hint-placeholder-count="8">
+        <div id="{{ x.id }}" style="display:flex;flex-direction:column;gap:10px;scroll-margin-top:20px">
+          <h2 data-m="up" style="margin:0;font-weight:800;font-size:22px;letter-spacing:-.02em"><span style="font:700 14px 'JetBrains Mono',monospace;color:#005AA5;margin-right:10px">{{ x.n }}</span>{{ x.h }}</h2>
+          <p style="margin:0;font-size:16px;line-height:1.65;color:#2B3649;white-space:pre-line;text-wrap:pretty">{{ x.b }}</p>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+  <dc-import name="SiteFooter" hint-size="100%,420px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;mobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;doc&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;privacy&quot;,&quot;terms&quot;],&quot;default&quot;:&quot;privacy&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const doc = this.props.doc || new URLSearchParams(location.search).get('doc') || 'privacy';
+    const P = {
+      title: 'Privacy Policy', date: '1 DEC 2026',
+      summary: [
+        'We collect your Google name and email, your exam and exam date, your study progress, your payment history, and which device you’re signed in on.',
+        'We use it to sign you in, run your countdown and progress, show your email as a watermark, keep one device active at a time, and give you receipts.',
+        'Payments go through PayMongo. We never see or store your card details.',
+        'We don’t sell your data or use it for ads.',
+        'You can ask for a copy, a correction, or deletion of your data anytime by emailing privacy@aceyourcourse.ph.'
+      ],
+      sections: [
+        ['Who we are', 'AceYourCourse is a review materials business based in Iloilo City, Philippines. We process personal information in line with the Data Privacy Act of 2012 (Republic Act No. 10173) and the rules of the National Privacy Commission.'],
+        ['What we collect', 'Account details from Google: name, email address, and profile photo.\nStudy details you give us: the exam you’re taking and your exam date.\nActivity in the app: flashcards marked, quiz scores, lessons watched, and where you left off.\nPayment records: what you bought, amount, date, method, and PayMongo reference. We do not receive card numbers.\nDevice and session: browser, device type, and sign-in time, used to keep one active session per account.'],
+        ['Why we use it', 'To create and secure your account, to give you the content you paid for, to track and show your progress, to watermark protected content with your email, to send receipts and access reminders, and to answer support requests.'],
+        ['Who we share it with', 'PayMongo, to process payments. Google, for sign-in. Our hosting and video providers, only as needed to run the service. We don’t sell or rent your data.'],
+        ['How long we keep it', 'While your account is active, and for a reasonable period after, to meet tax and legal requirements. Payment records may be kept longer where the law requires.'],
+        ['Your rights', 'Under the Data Privacy Act you may access, correct, object to processing of, or ask us to delete your personal information, and request a copy in a portable format. You may also file a complaint with the National Privacy Commission.'],
+        ['Security', 'Data is sent over HTTPS, access to the database is restricted, and only authorised staff can open the admin dashboard.'],
+        ['Contact', 'Data Protection Officer · privacy@aceyourcourse.ph · Iloilo City, Iloilo, Philippines.']
+      ]
+    };
+    const T = {
+      title: 'Terms of Use', date: '1 DEC 2026',
+      summary: [
+        'Your account is for you only. One device can be signed in at a time.',
+        'Plans give access for a fixed period and never renew automatically.',
+        'Our reviewers are registered with IPOPHIL. Copying, sharing, recording, or reselling them isn’t allowed.',
+        'Printed copies are sold through our official Shopee, Lazada, and TikTok Shop stores, under those platforms’ terms.',
+        'Breaking these terms can lead to your account being suspended without a refund.'
+      ],
+      sections: [
+        ['About these terms', 'These terms apply to the AceYourCourse website and member app. By signing in, you agree to them.'],
+        ['Your account', 'Sign in with your own Google account. Don’t share it. Only one device can be active at a time; signing in elsewhere signs out the other device.'],
+        ['Plans and payments', 'Subscriptions give access for the period shown at checkout and end automatically. One-time purchases give access as described on the product. Payments are processed by PayMongo.'],
+        ['Refunds', 'Because digital content is available right after payment, purchases are generally non-refundable, except where required by law or when access fails because of a problem on our side.'],
+        ['Content and copyright', 'All flashcards, reviewers, quizzes, posters, notebooks, and videos are owned by AceYourCourse, registered with IPOPHIL, and protected by copyright law. You may use them for your own review only.'],
+        ['What you may not do', 'Screenshot, record, download, print, copy, share, or resell content; try to get around watermarks or access controls; or use the service for anything unlawful.'],
+        ['Changes and availability', 'We may update content, plans, prices, or these terms. We’ll tell you about important changes before they take effect.'],
+        ['Contact', 'support@aceyourcourse.ph · Iloilo City, Iloilo, Philippines.']
+      ]
+    };
+    const d0 = doc === 'terms' ? T : P;
+    const d = { ...d0, summary: d0.summary.map((t, i) => ({ n: String(i + 1).padStart(2, '0'), t })), sections: d0.sections.map(([h, b], i) => ({ id: 's' + (i + 1), n: i + 1, h, b })) };
+    const tabs = [['privacy', 'PRIVACY POLICY'], ['terms', 'TERMS OF USE']].map(([k, t]) => ({ t, href: 'Legal.dc.html?doc=' + k, bg: k === doc ? '#0E1A2E' : 'transparent', fg: k === doc ? '#F6F1E7' : '#0E1A2E' }));
+    return { m: !!this.props.mobile, d, tabs };
+  }
+}
+</script>
+</body>
+</html>

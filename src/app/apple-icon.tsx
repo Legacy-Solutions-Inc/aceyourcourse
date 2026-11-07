@@ -1,8 +1,11 @@
 import { ImageResponse } from "next/og";
 
+import { BRAND_COLORS, brandMark } from "./brand";
+
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
+// iOS adds its own rounded corners, so this is a plain square.
 export default function AppleIcon() {
   return new ImageResponse(
     <div
@@ -12,13 +15,10 @@ export default function AppleIcon() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#0a0a0a",
-        color: "#ffffff",
-        fontSize: 120,
-        fontWeight: 700,
+        background: BRAND_COLORS.cream,
       }}
     >
-      W
+      {brandMark(124)}
     </div>,
     { ...size },
   );

@@ -1,31 +1,32 @@
 ---
 name: supabase-auth
-description: Use when working on authentication, sessions, cookies, route protection, or roles — touching src/lib/supabase/*, src/lib/auth/*, src/lib/authz*.ts, the auth routes, or the auth gating in src/middleware.ts.
+description: Use when working on authentication, sessions, cookies, route protection, or authorization — touching src/lib/supabase/*, src/lib/auth/*, src/lib/session-routes.ts, the OAuth callback, or the session refresh in src/middleware.ts.
 ---
 
 # Supabase auth (this repo)
 
 ## 1. When to use
 
-Anything auth: sign-in/up flows, session refresh, protecting routes, reading the
-current user, or role checks. Auth is the ONE thing wired directly to Supabase
+Anything auth: Google sign-in (from Phase 2), session refresh, protecting
+routes, reading the current user, or authorization checks. Auth is the ONE thing wired directly to Supabase
 (ADR 0002); everything else goes through the service seam (see **drizzle-data**).
 
 ## 2. Version
 
 - `@supabase/ssr` **0.6.1**, `@supabase/supabase-js` **2.49.4** (from
   `package.json` / installed).
-- Env vars used here: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- Env vars used here: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
   (validated in `src/env.ts`; both `.optional()` so the app runs with auth
-  disabled).
+  disabled). There is no fallback to the old anon key name. The server-only
+  `SUPABASE_SECRET_KEY` (`src/env.server.ts`) is for Storage only.
 
 ## 3. Core standards
 
 **Three client-creation contexts** with `@supabase/ssr`:
 
-- **Browser** (Client Components) → `createBrowserClient(url, anonKey)`.
+- **Browser** (Client Components) → `createBrowserClient(url, publishableKey)`.
 - **Server** (Server Components, Server Actions, Route Handlers) →
-  `createServerClient(url, anonKey, { cookies })` bound to Next's `cookies()`.
+  `createServerClient(url, publishableKey, { cookies })` bound to Next's `cookies()`.
 - **Middleware** → `createServerClient` bound to `req`/`res` cookies, so it can
   refresh the session and write cookies back.
 
@@ -41,17 +42,21 @@ gate pages/actions/middleware. (Newer setups may use `getClaims()` for local JWT
 verification; this repo standardizes on `getUser()`.)
 
 **Session refresh in middleware.** Server Components can't write cookies, so
-middleware refreshes the token on every matched request and must persist the
-refreshed cookies onto BOTH the request (for downstream reads) and the response
-(back to the browser).
+middleware refreshes the token on every session route (`needsSession`) and must
+persist the refreshed cookies onto BOTH the request (for downstream reads) and
+the response (back to the browser).
 
-**Roles come from server-set metadata.** Read the role from the user's
-`app_metadata.role` — set via the service-role key or a SQL trigger. **Never
-trust client-supplied metadata** (`user_metadata` is user-editable).
+**Authorization comes from the server, never client-settable metadata.** From
+Phase 2, Staff access is decided on the server from the staff list (a table keyed
+by email with Staff Role `owner` or `editor`), not auth `app_metadata` (ADR
+0008). **Never trust client-supplied metadata** (`user_metadata` is
+user-editable). The template's `app_metadata.role` helpers (`authz.ts`,
+`RoleGuard`) are retired; they live in git history at commit `aea34ea`.
 
 **Configured-or-disabled.** When Supabase env vars are absent the app runs with
 auth **disabled in development** (browsable) but **fails closed in production**
-(protected routes redirect to sign-in). This policy lives in `src/config.ts`.
+(Phase 2's Member App and Admin gates must keep their routes shut). This policy
+lives in `src/config.ts`.
 
 ## 4. In this template
 
@@ -64,23 +69,23 @@ auth **disabled in development** (browsable) but **fails closed in production**
   threads the CSP nonce (see **nextjs-app-router**).
 - `src/lib/auth/session.ts` — `getSession()` returns the `User` via
   `supabase.auth.getUser()`, or `null` when Supabase isn't configured.
-- `src/lib/authz.ts` — pure, **edge-safe** primitives: `ROLES`, `DEFAULT_ROLE`
-  (`member`), `roleFromUser` (reads `app_metadata.role`), `hasRole`.
-- `src/lib/authz.server.ts` — server-only `getRole()` / `requireRole(...)` that
-  redirect; honors `authDisabled`.
 - `src/config.ts` — `isSupabaseConfigured`, `computeAuthDisabled`, `authDisabled`
   (dev bypass; prod fail-closed with a loud warning).
-- `src/middleware.ts` — refreshes the session, protects `/dashboard`, gates
-  role-restricted areas, and keeps signed-in users off the auth screens.
-- `src/app/auth/callback/route.ts` — OAuth/code-exchange callback; other auth
-  screens live under `src/app/auth/*`, actions in `src/lib/auth/actions.ts`.
+- `src/lib/session-routes.ts` — `needsSession()`: only `/app`, `/admin` and
+  `/auth` need a session; every other route is the public Website.
+- `src/middleware.ts` — sets the CSP everywhere and refreshes the session on the
+  session routes only. It gates nothing yet; Phase 2 adds the Member App and
+  Admin gates.
+- `src/app/auth/callback/route.ts` — OAuth code-exchange callback; honours a
+  same-origin `next` only, otherwise lands on Home. The sign-out action is in
+  `src/lib/auth/actions.ts`. There are no email/password screens (ADR 0008).
 
 ## 5. Red flags
 
 - Using `getSession()` (or trusting a decoded cookie) for authorization in server
   code — use `getUser()`.
-- Reading a role from `user_metadata` or any client-supplied value — use
-  server-set `app_metadata.role`.
+- Authorizing from `user_metadata`, `app_metadata` or any client-settable value —
+  authorize on the server from the staff list (ADR 0008).
 - Creating a server/middleware Supabase client without the cookie adapter, or
   failing to write refreshed cookies back to the response — sessions won't
   refresh.

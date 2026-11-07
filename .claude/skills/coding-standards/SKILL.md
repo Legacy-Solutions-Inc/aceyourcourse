@@ -44,7 +44,8 @@ Report findings by category with `[tooling]`/`[review]` tags; cite files by path
   thin Server Actions delegating to the seam.
 - Actions return DTOs, not raw DB rows; model expected errors as return values
   (`useActionState`), `throw` only for the exceptional → `error.js`.
-- New feature copies the `customers` slice; seam signatures stay stable.
+- New feature copies the Catalogue seam (`src/services/catalogue.ts` and the
+  Website pages that read it); seam signatures stay stable.
 
 ### 2. Auth & authorization [review] — highest stakes
 
@@ -54,7 +55,8 @@ Report findings by category with `[tooling]`/`[review]` tags; cite files by path
   layout / middleware gating is optimistic only. → **supabase-auth**,
   **forms-validation**.
 - Authorize with a **revalidating** check — `getUser()` today, **never
-  `getSession()`** or decoded cookies. Roles from **`app_metadata.role`** only.
+  `getSession()`** or decoded cookies. Staff access comes from the **staff list**
+  on the server, never client-settable metadata (ADR 0008).
 - `authDisabled` is dev-only and **fails closed in production**; never widen it or
   gate real authz on `isSupabaseConfigured`.
 - Rate-limit abusable actions (auth, email, expensive writes). [review]
@@ -65,9 +67,10 @@ Report findings by category with `[tooling]`/`[review]` tags; cite files by path
   `TO authenticated`/`anon`, fail closed (`auth.uid() IS NOT NULL`),
   `auth.uid()`/subqueries wrapped `(select …)`, policy columns indexed.
 - **Drizzle/postgres.js bypasses RLS** (direct pooler = table owner): scope
-  tenancy in app-layer `WHERE`, or `SET LOCAL request.jwt.claims` + `SET ROLE`
-  per txn. Decide before multi-tenancy ships. → **drizzle-data**.
-- Every RLS'd table gets a **cross-tenant denial test** [tooling] (A cannot
+  by owning User / Staff Role in app-layer `WHERE`, or
+  `SET LOCAL request.jwt.claims` + `SET ROLE` per txn. Decide before Phase 2's
+  first table ships. There is no tenancy (ADR 0008). → **drizzle-data**.
+- Every RLS'd table gets a **cross-user denial test** [tooling] (A cannot
   read/write B's rows). Prefer `SECURITY DEFINER` helpers (not in an exposed schema).
 
 ### 4. Web security: headers, CSP, cookies [tooling] + [review]
@@ -179,8 +182,8 @@ Report findings by category with `[tooling]`/`[review]` tags; cite files by path
 - Weakening the CSP — any `unsafe-inline`/`unsafe-eval` in `script-src`, or
   removing the nonce / dynamic rendering that protects the non-`HttpOnly` session.
 - Secrets in a Client Component, a `NEXT_PUBLIC_*` var, or a URL/query string.
-- **RLS off** on an exposed table, or Drizzle reading/writing tenant data without
-  scoping (it bypasses RLS).
+- **RLS off** on an exposed table, or Drizzle reading/writing User-owned data
+  without scoping (it bypasses RLS).
 - Trusting client-set metadata for roles; widening `authDisabled` or gating real
   authz on `isSupabaseConfigured`.
 - `any`/`!`/`as`-to-silence, or `process.env.X!` instead of typed `env`.

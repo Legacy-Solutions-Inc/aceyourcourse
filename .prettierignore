@@ -7,3 +7,6 @@ playwright-report
 test-results
 pnpm-lock.yaml
 next-env.d.ts
+
+# design reference, kept verbatim
+docs/mockup

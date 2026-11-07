@@ -4,7 +4,8 @@ Date: 2026-07-15
 
 ## Status
 
-Accepted. Amends [ADR 0003](0003-mock-first-service-seam.md) (mock-first,
+Superseded by [ADR 0008](0008-single-brand-members-and-staff.md): Ace Your
+Course is single-brand and has no tenants. The original status was: Accepted. Amends [ADR 0003](0003-mock-first-service-seam.md) (mock-first,
 frontend-only) and builds on [ADR 0002](0002-supabase-only-auth.md)
 (Supabase-only auth). ADR 0003's seam pattern is retained; its "everything is
 mock" stance is relaxed for one real vertical slice.
