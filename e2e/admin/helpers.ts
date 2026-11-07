@@ -48,7 +48,7 @@ export async function signInAs(page: Page, who: SampleUserKey, next?: string) {
   if (LIVE) return signInWithEmail(page, sampleEmail(who), next);
   const list = await openSignInAs(page, next);
   await list
-    .getByRole("button", { name: new RegExp(sampleEmail(who).replace(/\./g, "\\.")) })
+    .getByRole("button", { name: new RegExp(sampleEmail(who).replace(/[.\\]/g, "\\$&")) })
     .click();
 }
 

@@ -66,7 +66,7 @@ const nextUpload = (page: Page) => page.waitForRequest(isUploadPut);
 /** The Website's image src for an upload: its public URL, through the image optimizer. */
 const optimized = (uploadUrl: string) =>
   new RegExp(
-    `^/_next/image\\?url=${encodeURIComponent(publicUrlOf(uploadUrl)).replace(/[.]/g, "\\.")}&`,
+    `^/_next/image\\?url=${encodeURIComponent(publicUrlOf(uploadUrl)).replace(/[.\\]/g, "\\$&")}&`,
   );
 
 /** A second Staff User, signed in in a browser of their own. */
