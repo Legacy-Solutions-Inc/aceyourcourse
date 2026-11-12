@@ -6,7 +6,8 @@ import type { PasswordSignInState } from "@/app/admin/sign-in/actions";
 
 import { PasswordSignInForm } from "./password-sign-in-form";
 
-// The "Development only" password box (ticket 19). The Server Action is the
+// The password box (ticket 19), headed "DEVELOPMENT ONLY" under `pnpm dev`
+// and "TESTING ONLY" on a deployment being tested (ticket 24). The Server Action is the
 // boundary, so it is a stub here; its own tests are in
 // src/app/admin/sign-in/live.test.tsx.
 
@@ -15,7 +16,7 @@ type Action = (previous: PasswordSignInState, formData: FormData) => Promise<Pas
 function renderBox(answer: PasswordSignInState = { error: null, fieldErrors: {}, email: "" }) {
   const action = vi.fn<Action>(async () => answer);
   const user = userEvent.setup();
-  render(<PasswordSignInForm next="/admin/products" action={action} />);
+  render(<PasswordSignInForm next="/admin/products" purpose="development" action={action} />);
   const box = screen.getByRole("region", { name: "Development only" });
   return { user, action, box };
 }
@@ -34,6 +35,19 @@ describe("PasswordSignInForm", () => {
     expect(password).toHaveAttribute("autocomplete", "current-password");
     expect(within(box).getByRole("button", { name: "Sign in" })).toBeEnabled();
     expect(within(box).queryByRole("link")).not.toBeInTheDocument();
+    expect(within(box).queryByText(/forgot|sign up|create/i)).not.toBeInTheDocument();
+  });
+
+  it("is headed TESTING ONLY, with the same fields, on a deployment being tested", () => {
+    const action = vi.fn<Action>();
+    render(<PasswordSignInForm next="/admin" purpose="testing" action={action} />);
+
+    const box = screen.getByRole("region", { name: "Testing only" });
+    expect(within(box).getByText("TESTING ONLY")).toBeVisible();
+    expect(within(box).queryByText("DEVELOPMENT ONLY")).not.toBeInTheDocument();
+    expect(within(box).getByRole("heading", { name: "Sign in with a password" })).toBeVisible();
+    expect(within(box).getByLabelText("Email")).toBeInTheDocument();
+    expect(within(box).getByLabelText("Password")).toHaveAttribute("type", "password");
     expect(within(box).queryByText(/forgot|sign up|create/i)).not.toBeInTheDocument();
   });
 
@@ -88,7 +102,7 @@ describe("PasswordSignInForm", () => {
     // A sign-in that never answers: the button stays disabled.
     const action = vi.fn<Action>(() => new Promise(() => {}));
     const user = userEvent.setup();
-    render(<PasswordSignInForm next="/admin" action={action} />);
+    render(<PasswordSignInForm next="/admin" purpose="development" action={action} />);
     const button = screen.getByRole("button", { name: "Sign in" });
 
     await user.click(button);

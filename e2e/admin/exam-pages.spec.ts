@@ -193,3 +193,52 @@ test("sets CE's Official Exam Date, and warns about a past one", async ({ page }
     "24 APR 2030",
   );
 });
+
+test("tells an Editor how to put EE back on the Website: its Products, then Show on website (ticket 25)", async ({
+  page,
+}) => {
+  const EE = ["EE Flash Cards", "EE Notebook", "EE Posters"];
+  const products = page.getByRole("region", { name: "Products" });
+  const siteSwitch = (shortName: string) =>
+    page.getByRole("switch", { name: `Show ${shortName} on the website` });
+  const hiddenLabel = (shortName: string) =>
+    products
+      .getByRole("row")
+      .filter({ has: page.getByRole("link", { name: new RegExp(`^${shortName}`) }) })
+      .getByText("Hidden from the website");
+
+  // Hide every EE Product, so the Website stops showing EE.
+  await signInAs(page, "editor", `${paths.admin.products}?exam=ee`);
+  await expect(products.getByRole("columnheader", { name: "PRODUCT · 3" })).toBeVisible();
+  for (const shortName of EE) {
+    await siteSwitch(shortName).click();
+    await expect(siteSwitch(shortName)).toHaveAttribute("aria-checked", "false");
+    await expect(hiddenLabel(shortName)).toBeAttached();
+  }
+  // Saved, not just flipped: a fresh read still has them off.
+  await page.reload();
+  for (const shortName of EE) {
+    await expect(siteSwitch(shortName)).toHaveAttribute("aria-checked", "false");
+  }
+
+  await page.goto(`${paths.admin.examPages}?exam=ee`);
+  const ee = column(page, "EE");
+  await expect(ee.getByRole("link", { name: "EE NOT ON SITE" })).toBeVisible();
+  await expect(ee.getByText(/isn’t on the Website yet\./)).toHaveText(
+    "EE isn’t on the Website yet. To show it, turn on Show on website for one of its 3 Products. Open EE’s Products →",
+  );
+
+  await ee.getByRole("link", { name: "Open EE’s Products" }).click();
+  await expect(page).toHaveURL(/\/admin\/products\?exam=ee$/);
+  await expect(products.getByRole("columnheader", { name: "PRODUCT · 3" })).toBeVisible();
+  for (const shortName of EE) await expect(siteSwitch(shortName)).toBeVisible();
+
+  await siteSwitch("EE Notebook").click();
+  await expect(siteSwitch("EE Notebook")).toHaveAttribute("aria-checked", "true");
+  await expect(hiddenLabel("EE Notebook")).toHaveCount(0);
+
+  await page.goto(`${paths.admin.examPages}?exam=ee`);
+  await expect(column(page, "EE").getByRole("link", { name: "EE", exact: true })).toBeVisible();
+  await expect(column(page, "EE").getByText(/isn’t on the Website yet/)).toHaveCount(0);
+  await expect(column(page, "EE").getByText("NOT ON SITE")).toHaveCount(0);
+});

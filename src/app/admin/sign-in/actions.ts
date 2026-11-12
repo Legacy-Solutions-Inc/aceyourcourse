@@ -68,8 +68,9 @@ export interface PasswordSignInState {
 }
 
 /**
- * The "Development only" password box (ticket 19): under `pnpm dev` in live
- * mode only; anywhere else it answers 404, whatever is posted. It signs in to
+ * The password box (ticket 19): in live mode under `pnpm dev`, or with
+ * ADMIN_PASSWORD_SIGN_IN "true" (ticket 24, temporary); anywhere else it
+ * answers 404, whatever is posted. It signs in to
  * Supabase with the email and password, then through the Staff Guard exactly
  * as /auth/callback does after Google: Staff go to `next`; anyone else is
  * recorded and goes to the 403 screen. It never makes a User.

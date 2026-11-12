@@ -1,7 +1,9 @@
 import { ABOUT_SECTIONS, isAboutSection } from "@/lib/catalogue/about-content";
+import { productListHref } from "@/lib/admin/product-list";
 import { isCalendarDate } from "@/lib/manila-time";
 import { paths } from "@/paths";
-import type { AdminExamPage } from "@/services/admin.types";
+import { productCount } from "@/services/admin.schema";
+import type { AdminExamPage, BundleProductOption } from "@/services/admin.types";
 import { isSitePageKey } from "@/services/catalogue.schema";
 import type { AboutSectionKey, ExamPageSection, SitePageKey } from "@/services/catalogue.types";
 
@@ -114,6 +116,47 @@ export function examPagesHref({
 
 /** Pure: PAGE ADDRESS, as the mockup shows it: "aceyourcourse.ph/exams/ce". */
 export const examPageAddress = (code: string) => `aceyourcourse.ph${paths.exams.details(code)}`;
+
+/**
+ * The note over a NOT ON SITE Exam's chips (ticket 25): what Staff turn on,
+ * split around the bold "Show on website", with a link to the Exam's Products;
+ * or, while the count can't be read, the plain note from before.
+ */
+export type NotOnSiteNote =
+  | { kind: "steps"; before: string; after: string; link: { label: string; href: string } }
+  | { kind: "plain"; text: string };
+
+/**
+ * Pure: the note for an Exam the Website doesn't show, from the Products that
+ * belong to it, all hidden while it's off the Website. An Exam shows once one
+ * of its Products is on the Website, Live or Coming Soon, so a shown Product
+ * here means the Products don't add up: the count isn't trusted, and the plain
+ * note shows.
+ */
+export function notOnSiteNote(
+  code: string,
+  products: readonly Pick<BundleProductOption, "showOnWebsite">[],
+): NotOnSiteNote {
+  const lead = `${code} isn’t on the Website yet.`;
+  if (products.some((product) => product.showOnWebsite)) {
+    return { kind: "plain", text: `${lead} It shows once one of its Products is on the Website.` };
+  }
+  const href = productListHref({ q: null, exam: code, missing: false });
+  const count = products.length;
+  return count === 0
+    ? {
+        kind: "steps",
+        before: `${lead} Add a Product for ${code}, then turn on `,
+        after: ".",
+        link: { label: "Add a Product", href },
+      }
+    : {
+        kind: "steps",
+        before: `${lead} To show it, turn on `,
+        after: ` for one of its ${productCount(count)}.`,
+        link: { label: `Open ${code}’s Products`, href },
+      };
+}
 
 /** One row of SECTIONS · SHOW OR HIDE. `toggle` is null for a section that's always on. */
 export interface ExamSectionRow {

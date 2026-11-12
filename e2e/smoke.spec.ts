@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("Website Home renders", async ({ page }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { level: 1, name: "Remember every formula on board day." }),
+    page.getByRole("heading", { level: 1, name: "Remember every topic on board day." }),
   ).toBeVisible();
 });
 

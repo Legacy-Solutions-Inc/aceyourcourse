@@ -53,6 +53,21 @@ describe("sign-in screen", () => {
     expect(screen.queryByLabelText("Password")).not.toBeInTheDocument();
   });
 
+  it("offers no password box with sample data, even with ADMIN_PASSWORD_SIGN_IN true (ticket 24)", async () => {
+    vi.stubEnv("ADMIN_PASSWORD_SIGN_IN", "true");
+    vi.resetModules();
+    try {
+      const { default: Page } = await import("./page");
+      render(await Page(props()));
+      expect(screen.getByRole("button", { name: "Continue with Google" })).toBeInTheDocument();
+      expect(screen.queryByRole("region", { name: "Testing only" })).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Password")).not.toBeInTheDocument();
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
+  });
+
   it("sends back an unsafe next as the Overview", async () => {
     render(await SignInPage(props("https://evil.example")));
     for (const input of document.querySelectorAll<HTMLInputElement>('input[name="next"]')) {
@@ -91,5 +106,17 @@ describe("sign-in screen (closed mode)", () => {
 
     await expect(ClosedSignInPage(props())).rejects.toThrow("NEXT_NOT_FOUND");
     expect(listSampleUsers()).toEqual([]);
+  });
+
+  it("answers 404 with ADMIN_PASSWORD_SIGN_IN true too (ticket 24)", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("ADMIN_PASSWORD_SIGN_IN", "true");
+    vi.resetModules();
+    const { default: ClosedSignInPage } = await import("./page");
+    const { passwordSignInAllowed } = await import("@/lib/admin/identity");
+
+    await expect(ClosedSignInPage(props())).rejects.toThrow("NEXT_NOT_FOUND");
+    expect(passwordSignInAllowed()).toBe(false);
   });
 });

@@ -54,8 +54,9 @@ describeWithStorage("a password session's sign-in method", [opened], () => {
       const after = await auth.getClaims(refreshed.data.session.access_token);
       if (!after.data) throw after.error ?? new Error("no claims");
       expect(methodsOf(after.data.claims.amr)).toEqual(["password"]);
-      expect(signInMethodCounts(after.data.claims.amr, "development")).toBe(true);
-      expect(signInMethodCounts(after.data.claims.amr, "production")).toBe(false);
+      // Counted where the password sign-in is allowed, refused elsewhere.
+      expect(signInMethodCounts(after.data.claims.amr, true)).toBe(true);
+      expect(signInMethodCounts(after.data.claims.amr, false)).toBe(false);
     } finally {
       await admin.deleteUser(created.data.user.id);
     }

@@ -31,7 +31,7 @@ export const websiteCopy = {
   wordmark: "AceYourCourse",
   home: {
     eyebrow: "Licensure exam reviewers · Made by passers",
-    headlineLead: "Remember every formula on",
+    headlineLead: "Remember every topic on",
     headlineHighlight: "board day.",
     subheadline:
       "Flash cards, notebooks, and posters for board exam review in various courses. Shipped nationwide.",

@@ -39,10 +39,11 @@
 
 Run them one at a time:
 
-01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18 → 19 → 20 → 21 → 22 → 23
+01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18 → 19 → 20 → 21 → 22 → 23 → 24 → 25
 
 - Ticket 19 was added on 2026-11-04, after 01–18 were done. It needs only 16.
 - Tickets 20–22 were added on 2026-11-05. They close the contract's Milestone 2 wording, "allowing you to edit all content yourself", and its GEO/AEO setup.
+- Ticket 24 was added on 2026-11-11: the password box in production behind `ADMIN_PASSWORD_SIGN_IN`, for testing the deployed site. Remove it when testing is done.
 - Ticket 23 was added on 2026-11-05. It moves "+ Add exam" and "+ Add subject" from Phase 3 into Phase 2, for Owners only.
 
 | #   | Ticket                                      | Blocked by             |
@@ -70,6 +71,8 @@ Run them one at a time:
 | 21  | About page editor                           | 20                     |
 | 22  | Summary for AI assistants                   | 20                     |
 | 23  | Add Exams and Subjects                      | — (20–22 done)         |
+| 24  | Password sign-in in production (temporary)  | — (19 done)            |
+| 25  | Say how to put an Exam on the Website       | — (23 done)            |
 
 **Merge-conflict hotspots** (expected, and small when the tickets run in order):
 

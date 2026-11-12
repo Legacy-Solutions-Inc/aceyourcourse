@@ -148,6 +148,24 @@ describe("signInWithPassword (sample mode)", () => {
     ).rejects.toThrow("NEXT_NOT_FOUND");
     expect(jar.size).toBe(0);
   });
+
+  it("answers 404 with ADMIN_PASSWORD_SIGN_IN true too (ticket 24)", async () => {
+    vi.stubEnv("ADMIN_PASSWORD_SIGN_IN", "true");
+    vi.resetModules();
+    try {
+      const { signInWithPassword } = await import("./actions");
+      await expect(
+        signInWithPassword(
+          { error: null, fieldErrors: {}, email: "" },
+          form({ email: "angel@aceyourcourse.ph", password: "anything" }),
+        ),
+      ).rejects.toThrow("NEXT_NOT_FOUND");
+      expect(jar.size).toBe(0);
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
+  });
 });
 
 describe("signOut", () => {
@@ -186,6 +204,18 @@ describe("closed mode", () => {
   });
 
   it("answers 404 to the password box", async () => {
+    const { signInWithPassword } = await import("./actions");
+    await expect(
+      signInWithPassword(
+        { error: null, fieldErrors: {}, email: "" },
+        form({ email: "angel@aceyourcourse.ph", password: "anything" }),
+      ),
+    ).rejects.toThrow("NEXT_NOT_FOUND");
+  });
+
+  it("answers 404 to the password box with ADMIN_PASSWORD_SIGN_IN true (ticket 24)", async () => {
+    vi.stubEnv("ADMIN_PASSWORD_SIGN_IN", "true");
+    vi.resetModules();
     const { signInWithPassword } = await import("./actions");
     await expect(
       signInWithPassword(

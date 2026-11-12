@@ -80,7 +80,7 @@ test.describe("Home on a 1280 px screen", () => {
       /^https?:\/\/[^/]+\/?$/,
     );
     await expect(
-      page.getByRole("heading", { level: 1, name: "Remember every formula on board day." }),
+      page.getByRole("heading", { level: 1, name: "Remember every topic on board day." }),
     ).toBeVisible();
     await expect(hero(page).getByText("4.8 from 874 ratings")).toBeVisible();
     await expect(hero(page).getByText("as of Oct 2026")).toBeVisible();

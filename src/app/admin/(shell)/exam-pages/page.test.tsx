@@ -525,12 +525,70 @@ describe("Pages & promo", () => {
         "+ Add exam",
       ]);
       expect(within(che).queryByRole("link", { name: /^View page/ })).toBeNull();
-      expect(
-        within(che).getByText(
-          "CHE isn’t on the Website yet. It shows once one of its Products is on the Website.",
-        ),
-      ).toBeInTheDocument();
+      expect(within(che).getByText(/isn’t on the Website yet\./)).toHaveTextContent(
+        "CHE isn’t on the Website yet. Add a Product for CHE, then turn on Show on website. Add a Product →",
+      );
+      expect(within(che).getByRole("link", { name: "Add a Product" })).toHaveAttribute(
+        "href",
+        "/admin/products?exam=che",
+      );
       expect(within(pages()).getByRole("link", { name: /^Exam pages/ })).toHaveTextContent("× 6");
+    });
+
+    it("tells an Editor to show one of EE's 3 hidden Products, with a link to them (ticket 25)", async () => {
+      editSampleCatalogue((seed) => {
+        for (const product of seed.products) {
+          if (product.examCode === "EE") product.showOnWebsite = false;
+        }
+      });
+      await renderPage({ exam: "ee" });
+      const ee = column("EE");
+      expect(chipTexts(ee)).toContain("EE NOT ON SITE");
+      expect(within(ee).getByText(/isn’t on the Website yet\./)).toHaveTextContent(
+        "EE isn’t on the Website yet. To show it, turn on Show on website for one of its 3 Products. Open EE’s Products →",
+      );
+      expect(within(ee).getByRole("link", { name: "Open EE’s Products" })).toHaveAttribute(
+        "href",
+        "/admin/products?exam=ee",
+      );
+    });
+
+    it("counts EE on the Website when its only shown Product is Coming Soon: no note", async () => {
+      editSampleCatalogue((seed) => {
+        for (const product of seed.products) {
+          if (product.examCode === "EE")
+            product.showOnWebsite = product.shortName === "EE Notebook";
+        }
+      });
+      expect(
+        getSampleStore().catalogue.products.filter((p) => p.examCode === "EE" && p.showOnWebsite),
+      ).toEqual([expect.objectContaining({ shortName: "EE Notebook", state: "coming-soon" })]);
+      await renderPage({ exam: "ee" });
+      expect(within(column("EE")).queryByText(/isn’t on the Website yet/)).toBeNull();
+      expect(chipTexts(column("EE"))).not.toContain("EE NOT ON SITE");
+    });
+
+    it("doesn't count EE's Live Product while it's hidden: the note still shows", async () => {
+      editSampleCatalogue((seed) => {
+        for (const product of seed.products) {
+          if (product.examCode === "EE") product.showOnWebsite = false;
+        }
+      });
+      expect(
+        getSampleStore().catalogue.products.some((p) => p.examCode === "EE" && p.state === "live"),
+      ).toBe(true);
+      await renderPage({ exam: "ee" });
+      expect(chipTexts(column("EE"))).toContain("EE NOT ON SITE");
+      expect(within(column("EE")).getByText(/isn’t on the Website yet\./)).toHaveTextContent(
+        "for one of its 3 Products.",
+      );
+    });
+
+    it("shows no note for EE on the sample data, where its Products are shown", async () => {
+      await renderPage({ exam: "ee" });
+      expect(within(column("EE")).queryByText(/isn’t on the Website yet/)).toBeNull();
+      expect(chipTexts(column("EE"))).toContain("EE");
+      expect(chipTexts(column("EE"))).not.toContain("EE NOT ON SITE");
     });
 
     it('shows an Owner "Delete exam" for an Exam nothing uses, and the reason for one with Products', async () => {
