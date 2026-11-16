@@ -343,6 +343,9 @@ for (const size of SIZES) {
       const hide = page.getByRole("switch", { name: "Show CE Formula Flash Cards on the website" });
       await hide.click();
       await expect(hide).toHaveAttribute("aria-checked", "false", { timeout: 15_000 });
+      // The switch flips at once; the row's label comes back with the saved
+      // list, so the reload can't cut the save off.
+      await expect(page.getByText("Hidden from the website")).toBeAttached({ timeout: 15_000 });
       await page.reload();
       await expect(page.getByText("Hidden from the website")).toBeAttached({ timeout: 15_000 });
       await expectNoBlockingViolations(page);

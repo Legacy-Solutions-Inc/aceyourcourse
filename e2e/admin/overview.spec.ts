@@ -10,6 +10,11 @@ import { resetSampleData, signInAs } from "./helpers";
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
 
+const DAY = 24 * 60 * 60 * 1000;
+/** The Manila date `days` from today, as YYYY-MM-DD. Manila is UTC+8 all year. */
+const manilaDay = (days: number) =>
+  new Date(Date.now() + 8 * 60 * 60 * 1000 + days * DAY).toISOString().slice(0, 10);
+
 const needsAttention = (page: Page) => page.getByRole("list", { name: "Needs attention" });
 const quickAction = (page: Page, name: string) =>
   page.getByRole("navigation", { name: "Quick actions" }).getByRole("link", { name });
@@ -80,9 +85,19 @@ test("turning the promo banner on takes it off the list", async ({ page }) => {
     .getByRole("link", { name: /Promo banner is off/ })
     .click();
   await expect(page).toHaveURL(/\/admin\/exam-pages\?page=promo$/);
-  const show = page.getByRole("switch", { name: "Show banner" });
-  await show.click();
-  await expect(show).toHaveAttribute("aria-checked", "true");
+  // The seed banner's dates are fixed (it ended 11 Nov 2026), so dates around
+  // today are saved first: from yesterday to more than 3 days out, so it isn't
+  // listed as ending soon either.
+  const editor = page.getByRole("complementary", { name: "Page editor" });
+  const form = editor.getByRole("form", { name: "Home promo banner" });
+  await form.getByLabel("STARTS ON").fill(manilaDay(-1));
+  await form.getByLabel("ENDS ON").fill(manilaDay(10));
+  await form.getByRole("button", { name: "Save" }).click();
+  await expect(editor.getByRole("status")).toHaveText("✓ SAVED · LIVE ON HOME");
+
+  await editor.getByRole("switch", { name: "Show banner" }).click();
+  // The status line comes from the server, so the switch's save has landed.
+  await expect(editor.getByText(/^Status: ON · SHOWS /)).toBeVisible();
 
   await page.goto(paths.admin.overview);
   await expect(page.getByText("2 things need you today.")).toBeVisible();
