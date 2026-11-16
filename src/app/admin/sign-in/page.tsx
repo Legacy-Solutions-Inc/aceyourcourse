@@ -8,7 +8,11 @@ import { SignInAsPanel } from "@/components/admin/sign-in-as-panel";
 import { BrandLogo } from "@/components/website/brand-logo";
 import { config } from "@/config";
 import { getStaff } from "@/lib/admin/guard";
-import { listSampleUsers, passwordSignInOffered } from "@/lib/admin/identity";
+import {
+  listSampleUsers,
+  passwordSignInOffered,
+  passwordSignInPurpose,
+} from "@/lib/admin/identity";
 import { adminMode } from "@/lib/admin/mode";
 import { safeAdminNext } from "@/lib/admin/safe-next";
 import { parseSignInProblem, SIGN_IN_PROBLEMS } from "@/lib/admin/sign-in-problem";
@@ -24,9 +28,10 @@ interface SignInPageProps {
 /**
  * "Sign in to manage the site" (mockup 883–893). Staff already signed in go
  * straight on. "Continue with Google" goes to Google in live mode, and opens
- * the "Sign in as" list in sample mode. Under `pnpm dev` in live mode, while
- * Supabase has Email on, the "Development only" password box sits under it
- * (ticket 19; not in the mockup). `error` says why the last sign-in didn't go
+ * the "Sign in as" list in sample mode. In live mode, under `pnpm dev` (headed
+ * "Development only", ticket 19) or with ADMIN_PASSWORD_SIGN_IN "true" (headed
+ * "Testing only", ticket 24), while Supabase has Email on, the password box
+ * sits under it (not in the mockup). `error` says why the last sign-in didn't go
  * on. It only reads: signing in happens in /auth/callback (Google), the
  * password box's action, or the Sign in as action (sample).
  */
@@ -60,7 +65,13 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
       {adminMode === "live" ? (
         <>
           <GoogleSignInForm next={next} action={continueWithGoogle} />
-          {passwordBox ? <PasswordSignInForm next={next} action={signInWithPassword} /> : null}
+          {passwordBox ? (
+            <PasswordSignInForm
+              next={next}
+              purpose={passwordSignInPurpose()}
+              action={signInWithPassword}
+            />
+          ) : null}
         </>
       ) : (
         <SignInAsPanel users={listSampleUsers()} next={next} action={signInAs} />

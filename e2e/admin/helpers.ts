@@ -79,6 +79,12 @@ export async function signInWithEmail(page: Page, email: string, next?: string) 
     await page.goto(paths.admin.signIn(next));
     if (new URL(page.url()).pathname === paths.admin.signIn()) {
       await page.goto(paths.admin.overview);
+      // An Invite activates in the page's Guard, while the shell's layout
+      // reads the staff list alongside it: the layout can still see an
+      // Invite and render the bare page, with no sidebar. Google's callback
+      // activates before the Overview, so a reload gives the page Staff see.
+      // Anyone refused is on the 403 screen by now, and isn't recorded twice.
+      if (new URL(page.url()).pathname === paths.admin.overview) await page.reload();
     }
     await waitForHydration(page);
     return;

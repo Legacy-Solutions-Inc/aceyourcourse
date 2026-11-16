@@ -36,7 +36,7 @@ function setEnvironment({ wide = true, reducedMotion = false, saveData }: Enviro
 
 const hero = (
   <HeroVideo>
-    <h1>Remember every formula on board day.</h1>
+    <h1>Remember every topic on board day.</h1>
   </HeroVideo>
 );
 
@@ -55,7 +55,7 @@ describe("HeroVideo", () => {
     expect(html).not.toContain(".mp4");
     expect(html).toContain("ayc-promo-poster.webp");
     expect(html).toContain("Play video");
-    expect(html).toContain("Remember every formula on board day.");
+    expect(html).toContain("Remember every topic on board day.");
   });
 
   it("plays a muted, looping background video on a wide screen", () => {
@@ -142,7 +142,7 @@ describe("HeroVideo", () => {
     setEnvironment();
     render(hero);
     expect(
-      screen.getByRole("heading", { level: 1, name: "Remember every formula on board day." }),
+      screen.getByRole("heading", { level: 1, name: "Remember every topic on board day." }),
     ).toBeInTheDocument();
   });
 });

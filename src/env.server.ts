@@ -23,6 +23,12 @@ function optionalEnv<T extends z.ZodTypeAny>(schema: T) {
 }
 
 const serverEnvSchema = z.object({
+  // TEMPORARY (ticket 24): the production password sign-in switch. Unset or
+  // "false" keeps the Admin's password box to `pnpm dev`; "true" also offers it
+  // (headed "TESTING ONLY") on this deployment while the site is tested, and
+  // counts a password session in the Staff Guard. Set it to "false" (or delete
+  // it) before go-live. Read through src/lib/admin/identity.ts, never directly.
+  ADMIN_PASSWORD_SIGN_IN: optionalEnv(z.enum(["true", "false"]).optional()),
   // Optional so the template still runs with no database configured (the
   // in-memory mock is the default). When set, it must be a valid URL.
   DATABASE_URL: optionalEnv(z.string().url().optional()),
@@ -57,6 +63,7 @@ export function parseServerEnv(raw: Record<string, unknown>): ServerEnv {
 // Reference the variable by its literal name (never spread `process.env`) and
 // validate at import — a misconfiguration then fails loudly, not later.
 export const serverEnv = parseServerEnv({
+  ADMIN_PASSWORD_SIGN_IN: process.env.ADMIN_PASSWORD_SIGN_IN,
   DATABASE_URL: process.env.DATABASE_URL,
   MEMBER_APP_LIVE: process.env.MEMBER_APP_LIVE,
   SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,

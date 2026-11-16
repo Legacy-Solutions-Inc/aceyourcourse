@@ -108,4 +108,26 @@ describe("parseServerEnv", () => {
   it("throws on any other MEMBER_APP_LIVE value, naming the key", () => {
     expect(() => parseServerEnv({ MEMBER_APP_LIVE: "yes" })).toThrow(/MEMBER_APP_LIVE/);
   });
+
+  // The temporary production password sign-in switch (ticket 24).
+  it("leaves the password sign-in switch unset (off) by default", () => {
+    expect(parseServerEnv({}).ADMIN_PASSWORD_SIGN_IN).toBeUndefined();
+  });
+
+  it.each(["true", "false"])("accepts ADMIN_PASSWORD_SIGN_IN=%s", (value) => {
+    expect(parseServerEnv({ ADMIN_PASSWORD_SIGN_IN: value }).ADMIN_PASSWORD_SIGN_IN).toBe(value);
+  });
+
+  it("treats a set-but-empty ADMIN_PASSWORD_SIGN_IN as unset", () => {
+    expect(parseServerEnv({ ADMIN_PASSWORD_SIGN_IN: "" }).ADMIN_PASSWORD_SIGN_IN).toBeUndefined();
+  });
+
+  it.each(["yes", "1", "TRUE", "on"])(
+    "throws on ADMIN_PASSWORD_SIGN_IN=%s, naming the key",
+    (value) => {
+      expect(() => parseServerEnv({ ADMIN_PASSWORD_SIGN_IN: value })).toThrow(
+        /ADMIN_PASSWORD_SIGN_IN/,
+      );
+    },
+  );
 });

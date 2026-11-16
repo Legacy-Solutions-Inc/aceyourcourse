@@ -960,7 +960,8 @@ export const subjectCodeInputSchema = z.object({
 /** A Subject's remove button, as its Server Action takes it: the Exam and the Subject's code. */
 export const deleteSubjectInputSchema = subjectCodeInputSchema.extend({ exam: examCode });
 
-const productCount = (count: number) => `${count} ${count === 1 ? "Product" : "Products"}`;
+/** Pure: "1 Product", "3 Products". */
+export const productCount = (count: number) => `${count} ${count === 1 ? "Product" : "Products"}`;
 
 /**
  * Pure: why the Exam can't be deleted, or null when it can: while any Product

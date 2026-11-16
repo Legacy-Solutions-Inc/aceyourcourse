@@ -12,6 +12,7 @@ import {
   examPageAddress,
   examPagesHref,
   examSectionRows,
+  notOnSiteNote,
   parseExamPagesParams,
   shareImageWarning,
 } from "./exam-pages-view";
@@ -272,5 +273,45 @@ describe("aboutPhotoWarnings", () => {
   it("warns about a photo under 1200 × 900 on either side", () => {
     expect(aboutPhotoWarnings({ width: 800, height: 600 })).toEqual([SOFT]);
     expect(aboutPhotoWarnings({ width: 1000, height: 1000 })).toEqual([FOUR_THREE, SOFT]);
+  });
+});
+
+describe("notOnSiteNote", () => {
+  const hidden = (count: number) => Array.from({ length: count }, () => ({ showOnWebsite: false }));
+  const TODAY = "EE isn’t on the Website yet. It shows once one of its Products is on the Website.";
+
+  it("tells Staff to show one of the Exam's 3 hidden Products, with a link to them", () => {
+    expect(notOnSiteNote("EE", hidden(3))).toEqual({
+      kind: "steps",
+      before: "EE isn’t on the Website yet. To show it, turn on ",
+      after: " for one of its 3 Products.",
+      link: { label: "Open EE’s Products", href: "/admin/products?exam=ee" },
+    });
+  });
+
+  it('says "1 Product" for a single hidden Product, never "1 Products"', () => {
+    const note = notOnSiteNote("EE", hidden(1));
+    expect(note.kind === "steps" && note.after).toBe(" for one of its 1 Product.");
+  });
+
+  it("tells Staff to add a Product for an Exam with none, linking to its Products", () => {
+    expect(notOnSiteNote("CHE", [])).toEqual({
+      kind: "steps",
+      before: "CHE isn’t on the Website yet. Add a Product for CHE, then turn on ",
+      after: ".",
+      link: { label: "Add a Product", href: "/admin/products?exam=che" },
+    });
+  });
+
+  it("falls back to today's text when the Products don't add up: one is shown", () => {
+    expect(notOnSiteNote("EE", [...hidden(2), { showOnWebsite: true }])).toEqual({
+      kind: "plain",
+      text: TODAY,
+    });
+  });
+
+  it("puts the Exam in the link lowercase and URL-encoded", () => {
+    const note = notOnSiteNote("A&B Z", hidden(2));
+    expect(note.kind === "steps" && note.link.href).toBe("/admin/products?exam=a%26b+z");
   });
 });

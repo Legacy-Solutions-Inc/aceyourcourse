@@ -6,9 +6,14 @@ import { z } from "zod";
 
 import { config } from "@/config";
 import { env } from "@/env";
+import { serverEnv } from "@/env.server";
 import { adminMode } from "@/lib/admin/mode";
 import { safeAdminNext } from "@/lib/admin/safe-next";
-import { signInMethodCounts } from "@/lib/admin/sign-in-method";
+import {
+  type PasswordSignInPurpose,
+  passwordSignInPermitted,
+  signInMethodCounts,
+} from "@/lib/admin/sign-in-method";
 import { googleProblem, type PasswordProblem, passwordProblem } from "@/lib/admin/sign-in-problem";
 import { getSession } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -32,8 +37,9 @@ import { SAMPLE_USERS, type SampleUser } from "@/services/mock/staff";
 //   user_metadata, which the User can change, is never read.
 //   How the session signed in counts too (ticket 19): its `amr`, from the
 //   verified claims (supabase.auth.getClaims()). Google counts everywhere; a
-//   password only under `pnpm dev`, where the development box signs in with
-//   one (see sign-in-method.ts).
+//   password only where the password box is allowed: under `pnpm dev`, or
+//   while the deployed site is tested with ADMIN_PASSWORD_SIGN_IN "true"
+//   (ticket 24, temporary; see sign-in-method.ts).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const SAMPLE_IDENTITY_COOKIE = "ayc_admin_sample";
@@ -85,7 +91,9 @@ async function sessionMethodCounts(userId: string): Promise<boolean> {
   try {
     const { data, error } = await createClient(cookies()).auth.getClaims();
     if (error || !data) return false;
-    return data.claims.sub === userId && signInMethodCounts(data.claims.amr, env.NODE_ENV);
+    return (
+      data.claims.sub === userId && signInMethodCounts(data.claims.amr, passwordSignInAllowed())
+    );
   } catch {
     return false;
   }
@@ -220,18 +228,28 @@ export async function googleSignInDestination(next: unknown): Promise<string> {
 }
 
 /**
- * Where the development password sign-in (ticket 19) may run at all: live
- * mode under `pnpm dev`. Production builds, previews and tests never offer
- * it, and never count a password session (sign-in-method.ts).
+ * Where the password sign-in may run at all: live mode under `pnpm dev`
+ * (ticket 19) or, while the deployed site is tested, with ADMIN_PASSWORD_SIGN_IN
+ * "true" (ticket 24, temporary). Anywhere else the box isn't offered, its
+ * action answers 404, and the Staff Guard never counts a password session.
  */
 export function passwordSignInAllowed(): boolean {
-  return adminMode === "live" && env.NODE_ENV === "development";
+  return passwordSignInPermitted({
+    adminMode,
+    nodeEnv: env.NODE_ENV,
+    passwordSwitch: serverEnv.ADMIN_PASSWORD_SIGN_IN,
+  });
+}
+
+/** What the password box is for, for its heading: "DEVELOPMENT ONLY" under `pnpm dev`, "TESTING ONLY" elsewhere. */
+export function passwordSignInPurpose(): PasswordSignInPurpose {
+  return env.NODE_ENV === "development" ? "development" : "testing";
 }
 
 /**
- * Whether the sign-in screen offers the development password box: where it's
- * allowed, while Supabase says its Email provider is on. Not when Supabase
- * doesn't answer.
+ * Whether the sign-in screen offers the password box: where it's allowed,
+ * while Supabase says its Email provider is on. Not when Supabase doesn't
+ * answer.
  */
 export async function passwordSignInOffered(): Promise<boolean> {
   if (!passwordSignInAllowed()) return false;
@@ -241,7 +259,7 @@ export async function passwordSignInOffered(): Promise<boolean> {
 export type PasswordSignInStart = { ok: true } | { ok: false; problem: PasswordProblem };
 
 /**
- * The development password box's sign-in: a Supabase session for this email
+ * The password box's sign-in: a Supabase session for this email
  * and password, set in the cookies as Google's is. Only signs in: Supabase
  * makes no User here. The Staff Guard decides what happens next. Throws
  * where the password sign-in isn't allowed.
@@ -251,7 +269,7 @@ export async function startPasswordSession(
   password: string,
 ): Promise<PasswordSignInStart> {
   if (!passwordSignInAllowed()) {
-    throw new Error("The password sign-in runs only under pnpm dev, in live mode.");
+    throw new Error("The password sign-in isn't allowed here.");
   }
   try {
     const { error } = await createClient(cookies()).auth.signInWithPassword({ email, password });

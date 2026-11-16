@@ -266,19 +266,20 @@ Every variable the app reads (`src/env.ts`, and the server-only
 production, in Vercel's Production environment only (the runbook's step 9).
 Secrets are server-only, and never get a `NEXT_PUBLIC_` name.
 
-| Variable                               | Local (`.env`)                            | Production (Vercel)                       | Secret  |
-| -------------------------------------- | ----------------------------------------- | ----------------------------------------- | ------- |
-| `NEXT_PUBLIC_SITE_URL`                 | `http://localhost:3000`                   | the site URL                              | no      |
-| `NEXT_PUBLIC_SUPABASE_URL`             | `https://<ref>.supabase.co`               | `https://<ref>.supabase.co`               | no      |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | the project's `sb_publishable_…`          | the project's `sb_publishable_…`          | no      |
-| `SUPABASE_SECRET_KEY`                  | the project's `sb_secret_…` (Storage)     | the project's `sb_secret_…`               | **yes** |
-| `DATABASE_URL`                         | the Session pooler, or unset for the mock | the transaction pooler, port 6543         | **yes** |
-| `MEMBER_APP_LIVE`                      | `false`                                   | unset (off) until the Member App launches | no      |
-| `NEXT_PUBLIC_LOG_LEVEL`                | `ALL`                                     | `WARN`                                    | no      |
-| `NEXT_PUBLIC_AUTH_STRATEGY`            | `SUPABASE`, the only one                  | unset (`SUPABASE`)                        | no      |
-| `NEXT_PUBLIC_SITE_VERSION`             | empty                                     | optional, e.g. the git sha                | no      |
-| `NEXT_PUBLIC_POSTHOG_KEY`              | unset (analytics off)                     | the PostHog project token, when live      | no      |
-| `NEXT_PUBLIC_POSTHOG_HOST`             | unset                                     | the PostHog ingestion host, with the key  | no      |
+| Variable                               | Local (`.env`)                            | Production (Vercel)                        | Secret  |
+| -------------------------------------- | ----------------------------------------- | ------------------------------------------ | ------- |
+| `NEXT_PUBLIC_SITE_URL`                 | `http://localhost:3000`                   | the site URL                               | no      |
+| `NEXT_PUBLIC_SUPABASE_URL`             | `https://<ref>.supabase.co`               | `https://<ref>.supabase.co`                | no      |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | the project's `sb_publishable_…`          | the project's `sb_publishable_…`           | no      |
+| `SUPABASE_SECRET_KEY`                  | the project's `sb_secret_…` (Storage)     | the project's `sb_secret_…`                | **yes** |
+| `DATABASE_URL`                         | the Session pooler, or unset for the mock | the transaction pooler, port 6543          | **yes** |
+| `MEMBER_APP_LIVE`                      | `false`                                   | unset (off) until the Member App launches  | no      |
+| `ADMIN_PASSWORD_SIGN_IN`               | unset (`pnpm dev` has the box anyway)     | `true` only while testing; unset at launch | no      |
+| `NEXT_PUBLIC_LOG_LEVEL`                | `ALL`                                     | `WARN`                                     | no      |
+| `NEXT_PUBLIC_AUTH_STRATEGY`            | `SUPABASE`, the only one                  | unset (`SUPABASE`)                         | no      |
+| `NEXT_PUBLIC_SITE_VERSION`             | empty                                     | optional, e.g. the git sha                 | no      |
+| `NEXT_PUBLIC_POSTHOG_KEY`              | unset (analytics off)                     | the PostHog project token, when live       | no      |
+| `NEXT_PUBLIC_POSTHOG_HOST`             | unset                                     | the PostHog ingestion host, with the key   | no      |
 
 Locally, `DATABASE_URL` is the hosted project's **Session pooler** (IPv4),
 not the IPv6-only direct connection; with a local Supabase, its values from

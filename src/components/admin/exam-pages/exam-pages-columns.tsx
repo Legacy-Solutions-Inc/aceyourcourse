@@ -8,6 +8,7 @@ import {
   type ExamPageEditorKey,
   type ExamPagesPage,
   examSectionRows,
+  notOnSiteNote,
 } from "@/lib/admin/exam-pages-view";
 import type { SeoState } from "@/lib/admin/seo-check";
 import { formatDate } from "@/lib/manila-time";
@@ -178,11 +179,7 @@ export function ExamPageColumn({
           </a>
         ) : null}
       </div>
-      {onWebsite ? null : (
-        <p className="border border-dashed border-ayc-rule p-2.5 text-[13px] leading-[1.45]">
-          {exam.code} isn’t on the Website yet. It shows once one of its Products is on the Website.
-        </p>
-      )}
+      {onWebsite ? null : <NotOnSiteNotice opened={opened} />}
       <ExamChips
         examCodes={examCodes}
         onWebsite={opened.examsOnWebsite}
@@ -253,6 +250,34 @@ export function ExamPageColumn({
         })}
       </ul>
     </section>
+  );
+}
+
+/**
+ * The note over a NOT ON SITE Exam's chips (ticket 25): what to turn on, and a
+ * link to the Exam's Products in the same tab, from the Products that come
+ * with the opened Exam.
+ */
+function NotOnSiteNotice({ opened }: { opened: AdminExamPage }) {
+  const note = notOnSiteNote(opened.exam.code, opened.products);
+  return (
+    <p className="border border-dashed border-ayc-rule p-2.5 text-[13px] leading-[1.45]">
+      {note.kind === "plain" ? (
+        note.text
+      ) : (
+        <>
+          {note.before}
+          <strong>Show on website</strong>
+          {note.after}{" "}
+          <Link
+            href={note.link.href}
+            className="font-semibold whitespace-nowrap text-ayc-blue hover:underline"
+          >
+            {note.link.label} <span aria-hidden="true">→</span>
+          </Link>
+        </>
+      )}
+    </p>
   );
 }
 

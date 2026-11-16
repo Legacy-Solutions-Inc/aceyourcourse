@@ -92,6 +92,28 @@ describe("Supabase key names", () => {
   });
 });
 
+// Ticket 24: the temporary production password sign-in switch stays on the
+// server: no NEXT_PUBLIC_ name anywhere, and outside tests only the server env
+// and the identity module (both `import "server-only"`) read it.
+describe("ADMIN_PASSWORD_SIGN_IN", () => {
+  const SWITCH = ["ADMIN", "PASSWORD", "SIGN", "IN"].join("_");
+
+  it("never has a NEXT_PUBLIC_ name", () => {
+    expect(filesContaining(`NEXT_PUBLIC_${SWITCH}`)).toEqual([]);
+  });
+
+  it("is read only by server-only modules under src/", () => {
+    // A read is a property access: process.env.<switch> or serverEnv.<switch>.
+    const readers = filesContaining(new RegExp(`\\.${SWITCH}\\b`)).filter(
+      (file) => file.startsWith("src/") && !/\.test\.tsx?$/.test(file),
+    );
+    expect(readers.sort()).toEqual(["src/env.server.ts", "src/lib/admin/identity.ts"]);
+    for (const file of readers) {
+      expect(readFileSync(file, "utf8"), file).toMatch(/^import "server-only";$/m);
+    }
+  });
+});
+
 // Ticket 18: the docs list every variable the app reads, so the production
 // runbook's Vercel list and a new .env can't miss one.
 describe("the documented environment", () => {

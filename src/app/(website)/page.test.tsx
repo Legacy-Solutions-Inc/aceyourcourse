@@ -92,7 +92,7 @@ describe("Home", () => {
   it("opens with the hero: the H1, the trust line with its date, and the CTAs", async () => {
     await renderHome();
     expect(
-      screen.getByRole("heading", { level: 1, name: "Remember every formula on board day." }),
+      screen.getByRole("heading", { level: 1, name: "Remember every topic on board day." }),
     ).toBeInTheDocument();
     const trust = within(hero());
     expect(trust.getByRole("img", { name: "5 stars" })).toHaveTextContent("★★★★★");

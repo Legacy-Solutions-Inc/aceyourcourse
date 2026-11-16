@@ -375,9 +375,130 @@ describe("the identity module, live mode", () => {
       const { startPasswordSession } = await loadIdentity();
 
       await expect(startPasswordSession(OWNER, "pw")).rejects.toThrow(
-        "The password sign-in runs only under pnpm dev, in live mode.",
+        "The password sign-in isn't allowed here.",
       );
       expect(auth.signInWithPassword).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("the production password switch, ADMIN_PASSWORD_SIGN_IN (ticket 24)", () => {
+    /** Loads the module in this NODE_ENV with the switch set ("" leaves it unset). */
+    async function identityWith(nodeEnv: string, passwordSwitch: string) {
+      vi.stubEnv("NODE_ENV", nodeEnv);
+      vi.stubEnv("ADMIN_PASSWORD_SIGN_IN", passwordSwitch);
+      vi.resetModules();
+      return loadIdentity();
+    }
+
+    it("counts a confirmed password session in a production build with the switch true", async () => {
+      auth.getUser.mockResolvedValue(user(googleUser()));
+      signedInWith("password");
+      const { getIdentity, passwordSignInAllowed } = await identityWith("production", "true");
+
+      expect(passwordSignInAllowed()).toBe(true);
+      expect(await getIdentity()).toEqual({ email: OWNER, name: "Angel Rose L. Lepaña" });
+    });
+
+    it.each(["false", ""])(
+      "refuses a password session in a production build with the switch %j, as before",
+      async (passwordSwitch) => {
+        auth.getUser.mockResolvedValue(user(googleUser()));
+        signedInWith("password");
+        const { getSignInAttempt, passwordSignInAllowed } = await identityWith(
+          "production",
+          passwordSwitch,
+        );
+
+        expect(passwordSignInAllowed()).toBe(false);
+        expect(await getSignInAttempt()).toEqual({ status: "signed-out" });
+      },
+    );
+
+    it.each(["true", "false", ""])(
+      "counts a Google session in a production build with the switch %j",
+      async (passwordSwitch) => {
+        auth.getUser.mockResolvedValue(user(googleUser()));
+        signedInWith("oauth");
+        const { getIdentity } = await identityWith("production", passwordSwitch);
+
+        expect(await getIdentity()).toEqual({ email: OWNER, name: "Angel Rose L. Lepaña" });
+      },
+    );
+
+    it("still never counts otp, magiclink, anonymous, or a missing or unreadable amr with the switch true", async () => {
+      auth.getUser.mockResolvedValue(user(googleUser()));
+      const { getSignInAttempt } = await identityWith("production", "true");
+
+      for (const amr of [
+        [{ method: "otp" }],
+        [{ method: "magiclink" }],
+        [{ method: "anonymous" }],
+        [],
+        undefined,
+        "password",
+        [{ method: 1 }],
+      ]) {
+        auth.getClaims.mockResolvedValue(claims(amr));
+        expect(await getSignInAttempt()).toEqual({ status: "signed-out" });
+      }
+    });
+
+    it("is unverified for a password User with an unconfirmed email, with the switch true", async () => {
+      auth.getUser.mockResolvedValue(
+        user(googleUser({ email_confirmed_at: undefined }, { email_verified: false })),
+      );
+      signedInWith("password");
+      const { getSignInAttempt } = await identityWith("production", "true");
+
+      expect(await getSignInAttempt()).toEqual({ status: "unverified", email: OWNER });
+    });
+
+    it("offers the box in a production build with the switch true while Email is on", async () => {
+      vi.stubGlobal("fetch", providers({ google: true, email: true }));
+      const { passwordSignInOffered } = await identityWith("production", "true");
+
+      expect(await passwordSignInOffered()).toBe(true);
+    });
+
+    it("doesn't offer it with the switch true when Email is off, or Supabase doesn't answer", async () => {
+      const { passwordSignInOffered } = await identityWith("production", "true");
+
+      vi.stubGlobal("fetch", providers({ google: true, email: false }));
+      expect(await passwordSignInOffered()).toBe(false);
+
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => {
+          throw new TypeError("fetch failed");
+        }),
+      );
+      expect(await passwordSignInOffered()).toBe(false);
+    });
+
+    it("signs in with a password in a production build with the switch true", async () => {
+      auth.signInWithPassword.mockResolvedValue({ data: {}, error: null });
+      const { startPasswordSession } = await identityWith("production", "true");
+
+      expect(await startPasswordSession(OWNER, "correct horse")).toEqual({ ok: true });
+    });
+
+    it.each([
+      ["development", "true", "development"],
+      ["development", "false", "development"],
+      ["development", "", "development"],
+      ["production", "true", "testing"],
+    ])("heads the box for %s with the switch %j: %s", async (nodeEnv, passwordSwitch, purpose) => {
+      const { passwordSignInPurpose } = await identityWith(nodeEnv, passwordSwitch);
+
+      expect(passwordSignInPurpose()).toBe(purpose);
+    });
+
+    it("keeps pnpm dev's password sign-in whatever the switch says", async () => {
+      auth.getUser.mockResolvedValue(user(googleUser()));
+      signedInWith("password");
+      const { getIdentity } = await identityWith("development", "false");
+
+      expect(await getIdentity()).toEqual({ email: OWNER, name: "Angel Rose L. Lepaña" });
     });
   });
 

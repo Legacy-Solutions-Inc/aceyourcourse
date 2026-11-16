@@ -290,6 +290,190 @@ describe("the Development only password box (ticket 19)", () => {
   });
 });
 
+describe("the TESTING ONLY password box: a production build with ADMIN_PASSWORD_SIGN_IN (ticket 24)", () => {
+  const IDLE = { error: null, fieldErrors: {}, email: "" };
+  const testingBox = () => screen.queryByRole("region", { name: "Testing only" });
+
+  /** Loads the modules as a production build with the switch set ("" leaves it unset). */
+  function productionWith(passwordSwitch: string) {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("ADMIN_PASSWORD_SIGN_IN", passwordSwitch);
+    vi.resetModules();
+  }
+
+  /** Supabase signs in as this email by password when the password is right. */
+  function passwordUser(email: string, password = "right password") {
+    auth.signInWithPassword.mockImplementation(
+      async (credentials: { email: string; password: string }) => {
+        if (credentials.email !== email || credentials.password !== password) {
+          const { AuthApiError } = await import("@supabase/supabase-js");
+          return {
+            data: { user: null, session: null },
+            error: new AuthApiError("Invalid login credentials", 400, "invalid_credentials"),
+          };
+        }
+        signedInAs(email, "password");
+        return { data: {}, error: null };
+      },
+    );
+  }
+
+  async function signIn(fields: Record<string, string>) {
+    const { signInWithPassword } = await import("./actions");
+    return signInWithPassword(IDLE, form(fields));
+  }
+
+  it("shows under Continue with Google, headed TESTING ONLY, with the switch true and Email on", async () => {
+    productionWith("true");
+    googleProvider(true, true);
+    const { default: SignInPage } = await import("./page");
+    render(await SignInPage(props({ next: "/admin/products" })));
+
+    const google = screen.getByRole("button", { name: "Continue with Google" });
+    const box = screen.getByRole("region", { name: "Testing only" });
+    expect(google.compareDocumentPosition(box) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText("TESTING ONLY")).toBeVisible();
+    expect(screen.queryByText("DEVELOPMENT ONLY")).not.toBeInTheDocument();
+    expect(box.querySelector<HTMLInputElement>('input[name="next"]')?.value).toBe(
+      "/admin/products",
+    );
+  });
+
+  it.each([
+    ["Email is off", () => googleProvider(true, false)],
+    [
+      "Supabase can't be reached",
+      () =>
+        vi.stubGlobal(
+          "fetch",
+          vi.fn(async () => {
+            throw new TypeError("fetch failed");
+          }),
+        ),
+    ],
+  ])("is absent with the switch true when %s", async (_label, settings) => {
+    productionWith("true");
+    settings();
+    const { default: SignInPage } = await import("./page");
+    render(await SignInPage(props()));
+
+    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeInTheDocument();
+    expect(testingBox()).not.toBeInTheDocument();
+  });
+
+  it("stays headed DEVELOPMENT ONLY under pnpm dev with the switch true", async () => {
+    vi.stubEnv("ADMIN_PASSWORD_SIGN_IN", "true");
+    underPnpmDev();
+    googleProvider(true, true);
+    const { default: SignInPage } = await import("./page");
+    render(await SignInPage(props()));
+
+    expect(devBox()).toBeInTheDocument();
+    expect(screen.getByText("DEVELOPMENT ONLY")).toBeVisible();
+    expect(testingBox()).not.toBeInTheDocument();
+  });
+
+  it.each(["false", ""])("is absent with the switch %j, even with Email on", async (value) => {
+    productionWith(value);
+    googleProvider(true, true);
+    const { default: SignInPage } = await import("./page");
+    render(await SignInPage(props()));
+
+    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeInTheDocument();
+    expect(testingBox()).not.toBeInTheDocument();
+    expect(devBox()).not.toBeInTheDocument();
+  });
+
+  it("signs the Owner in through the Staff Guard with the switch true, landing on next", async () => {
+    productionWith("true");
+    passwordUser(OWNER);
+
+    await expect(
+      signIn({ email: OWNER, password: "right password", next: "/admin/settings" }),
+    ).rejects.toThrow(/^NEXT_REDIRECT \/admin\/settings$/);
+    const owner = getSampleStore().staff.find(({ email }) => email === OWNER);
+    expect(owner?.lastSignedInAt).not.toBeNull();
+  });
+
+  it("sends a password User who isn't Staff to denied with the switch true", async () => {
+    productionWith("true");
+    passwordUser("juan.delacruz@gmail.com");
+
+    await expect(
+      signIn({ email: "juan.delacruz@gmail.com", password: "right password" }),
+    ).rejects.toThrow(/^NEXT_REDIRECT \/admin\/denied\?reason=not-staff$/);
+  });
+
+  it("refuses an unconfirmed email with the switch true, ending the session", async () => {
+    productionWith("true");
+    auth.signInWithPassword.mockImplementation(async () => {
+      signedInAs(OWNER, "password");
+      auth.getUser.mockResolvedValue({
+        data: {
+          user: {
+            id: "u1",
+            app_metadata: {},
+            user_metadata: {},
+            aud: "authenticated",
+            created_at: "",
+            email: OWNER,
+          },
+        },
+        error: null,
+      });
+      return { data: {}, error: null };
+    });
+
+    expect(await signIn({ email: OWNER, password: "pw" })).toMatchObject({
+      error:
+        "This email isn't confirmed. Confirm the User in the Supabase dashboard, then try again.",
+    });
+    expect(auth.signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the box's message for a wrong password with the switch true, never sending it back", async () => {
+    productionWith("true");
+    passwordUser(OWNER);
+
+    const state = await signIn({ email: OWNER, password: "wrong secret" });
+    expect(state).toEqual({
+      error: "That email and password don't match.",
+      fieldErrors: {},
+      email: OWNER,
+    });
+    expect(JSON.stringify(state)).not.toContain("wrong secret");
+  });
+
+  it.each(["false", ""])(
+    "answers 404 with the switch %j, whatever is posted, never asking Supabase",
+    async (value) => {
+      productionWith(value);
+
+      await expect(signIn({ email: OWNER, password: "right password" })).rejects.toThrow(
+        "NEXT_NOT_FOUND",
+      );
+      expect(auth.signInWithPassword).not.toHaveBeenCalled();
+    },
+  );
+
+  it("refuses a password session made straight against Supabase with the switch false", async () => {
+    productionWith("false");
+    signedInAs(OWNER, "password");
+    const { getStaff } = await import("@/lib/admin/guard");
+
+    expect(await getStaff()).toBeNull();
+  });
+
+  it.each(["true", "false"])("counts a Google session with the switch %s", async (value) => {
+    productionWith(value);
+    signedInAs(OWNER, "oauth");
+    const { getStaff } = await import("@/lib/admin/guard");
+
+    expect(await getStaff()).toMatchObject({ email: OWNER });
+  });
+});
+
 describe("signInWithPassword (live mode, ticket 19)", () => {
   const IDLE = { error: null, fieldErrors: {}, email: "" };
 

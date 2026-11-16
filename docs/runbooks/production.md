@@ -207,7 +207,8 @@ Until go-live, `pnpm dev` on this project can sign in with a password: the
 sign-in screen's **Development only** box, under "Continue with Google". It
 shows only under `pnpm dev`, and only while this project has its Email
 provider on. Production builds never count a password sign-in, whatever
-Supabase's settings say. The app has no sign-up and no password reset, so you
+Supabase's settings say, unless you turn on testing on the deployed site
+(below). The app has no sign-up and no password reset, so you
 make each password User by hand:
 
 1. **Your own User:** Supabase dashboard → **Authentication → Users → Add
@@ -224,6 +225,28 @@ make each password User by hand:
 4. Never click a "Confirm your signup" email you didn't ask for.
 
 Steps 7 and 8 can wait until go-live.
+
+#### Testing on the deployed site
+
+While you test the deployed site, its sign-in screen can show the same box,
+headed **TESTING ONLY**, under "Continue with Google", so Staff can sign in
+with the password Users above. It's temporary, and is removed once testing is done.
+
+1. **Turn it on:** Vercel → Project → **Settings → Environment Variables**,
+   environment **Production**: add `ADMIN_PASSWORD_SIGN_IN` with the value
+   `true`. Then **Deployments → Redeploy** the latest production deployment:
+   a variable changes nothing until the next deploy.
+2. Keep this project's **Email** provider on, with **Confirm email** on. The
+   box shows only while Supabase says Email is on.
+3. Open `<site-url>/admin/sign-in`, and sign in with the **TESTING ONLY**
+   box. Only emails on the staff list get in; anyone else lands on the
+   "denied" screen, as with Google.
+4. **Turn it off:** set `ADMIN_PASSWORD_SIGN_IN` to `false` (or delete it),
+   and redeploy. The box is gone, and a password session no longer counts,
+   even one already signed in. Turning the Email provider off ends it too.
+
+Only `true` turns it on. Any other value (`yes`, `1`, `TRUE`) stops the
+deployment from starting, with a message naming `ADMIN_PASSWORD_SIGN_IN`.
 
 ## 7. Set up Google sign-in (Google Cloud console)
 
@@ -256,12 +279,15 @@ with no `localhost` entries, and the Audience page shows **In production**.
 ## 8. Set up Supabase Auth (Supabase dashboard)
 
 **First: end development sign-in.** If you signed in with a password while
-you developed (after step 6):
+you developed or tested (after step 6):
 
-1. Remove the test Editors from the Admin's **Settings → Staff & Invites**.
-2. Delete their Users (**Authentication → Users**).
-3. Your own User stays: your first Google sign-in attaches Google to it.
-4. 8.2 below turns Email off. After that the **Development only** box is
+1. In Vercel, set `ADMIN_PASSWORD_SIGN_IN` to `false` (or delete it) for
+   Production, and redeploy. The deployed site's **TESTING ONLY** box is
+   gone, and it counts no password sign-in.
+2. Remove the test Editors from the Admin's **Settings → Staff & Invites**.
+3. Delete their Users (**Authentication → Users**).
+4. Your own User stays: your first Google sign-in attaches Google to it.
+5. 8.2 below turns Email off. After that the **Development only** box is
    gone on localhost too.
 
 Then:
@@ -296,19 +322,20 @@ production database or Storage. (A Preview without them serves the built-in
 seed, with the Admin closed.) Mark each secret **Sensitive**, so Vercel never
 shows its value again.
 
-| Variable                               | Value                                                        | Secret             |
-| -------------------------------------- | ------------------------------------------------------------ | ------------------ |
-| `NEXT_PUBLIC_SITE_URL`                 | `<site-url>`                                                 | no                 |
-| `NEXT_PUBLIC_SUPABASE_URL`             | `https://<ref>.supabase.co`                                  | no                 |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `<publishable-key>` (Project Settings → API Keys)            | no                 |
-| `SUPABASE_SECRET_KEY`                  | the secret key from step 5                                   | **yes, Sensitive** |
-| `DATABASE_URL`                         | the Transaction pooler string, port **6543**, from step 4    | **yes, Sensitive** |
-| `MEMBER_APP_LIVE`                      | leave **unset** (off) until the Member App launches          | no                 |
-| `NEXT_PUBLIC_LOG_LEVEL`                | `WARN` (unset logs everything)                               | no                 |
-| `NEXT_PUBLIC_AUTH_STRATEGY`            | leave unset (`SUPABASE`, the only one)                       | no                 |
-| `NEXT_PUBLIC_SITE_VERSION`             | optional, e.g. the release's git sha                         | no                 |
-| `NEXT_PUBLIC_POSTHOG_KEY`              | the PostHog project token, when analytics go live (ADR 0009) | no                 |
-| `NEXT_PUBLIC_POSTHOG_HOST`             | `https://us.i.posthog.com`, or the EU host, with the key     | no                 |
+| Variable                               | Value                                                                           | Secret             |
+| -------------------------------------- | ------------------------------------------------------------------------------- | ------------------ |
+| `NEXT_PUBLIC_SITE_URL`                 | `<site-url>`                                                                    | no                 |
+| `NEXT_PUBLIC_SUPABASE_URL`             | `https://<ref>.supabase.co`                                                     | no                 |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `<publishable-key>` (Project Settings → API Keys)                               | no                 |
+| `SUPABASE_SECRET_KEY`                  | the secret key from step 5                                                      | **yes, Sensitive** |
+| `DATABASE_URL`                         | the Transaction pooler string, port **6543**, from step 4                       | **yes, Sensitive** |
+| `MEMBER_APP_LIVE`                      | leave **unset** (off) until the Member App launches                             | no                 |
+| `ADMIN_PASSWORD_SIGN_IN`               | `true` only while you test the deployed site (see step 6); **unset** at go-live | no                 |
+| `NEXT_PUBLIC_LOG_LEVEL`                | `WARN` (unset logs everything)                                                  | no                 |
+| `NEXT_PUBLIC_AUTH_STRATEGY`            | leave unset (`SUPABASE`, the only one)                                          | no                 |
+| `NEXT_PUBLIC_SITE_VERSION`             | optional, e.g. the release's git sha                                            | no                 |
+| `NEXT_PUBLIC_POSTHOG_KEY`              | the PostHog project token, when analytics go live (ADR 0009)                    | no                 |
+| `NEXT_PUBLIC_POSTHOG_HOST`             | `https://us.i.posthog.com`, or the EU host, with the key                        | no                 |
 
 Never set `TEST_DATABASE_URL`, `TEST_SUPABASE_SECRET_KEY` or any
 `PLAYWRIGHT_*` variable in Vercel: they're for tests only. Never give
