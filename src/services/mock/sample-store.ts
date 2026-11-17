@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
 import type {
+  BetaTester,
   DeniedSignIn,
   Invite,
   RecordStamp,
@@ -8,7 +9,9 @@ import type {
   StaffMember,
 } from "@/services/admin.types";
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
+import type { Member } from "@/services/member.types";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
+import { sampleBetaTesters } from "@/services/mock/members";
 import { sampleStaff } from "@/services/mock/staff";
 import type { UploadContentType, UploadLookup, UploadRequest } from "@/services/uploads.types";
 
@@ -53,6 +56,10 @@ export interface SampleStore {
   invites: Invite[];
   deniedSignIns: DeniedSignIn[];
   staffActivity: StaffActivity[];
+  /** The Beta Tester list, in the order they were added (Phase 3). */
+  betaTesters: BetaTester[];
+  /** The Members: everyone who has passed the Member App gate (Phase 3). */
+  members: Member[];
   /** The upload seam's files, by upload id. */
   uploads: Record<string, SampleUpload>;
   /**
@@ -78,6 +85,8 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     ...sampleStaff(now),
     deniedSignIns: [],
     staffActivity: [],
+    betaTesters: sampleBetaTesters(now),
+    members: [],
     uploads: {},
   };
 }

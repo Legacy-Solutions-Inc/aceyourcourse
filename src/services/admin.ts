@@ -4,6 +4,7 @@ import * as mockImpl from "@/services/admin.mock";
 import type {
   AboutSectionForm,
   AnnouncementForm,
+  BetaTesterInput,
   BundleOfferForm,
   ChangeStaffRoleInput,
   ExamHeaderForm,
@@ -40,6 +41,7 @@ import type {
   AdminReview,
   AdminReviewList,
   AdminWebsiteSettings,
+  BetaTester,
   DeletedFaq,
   DeletedProduct,
   DeletedReview,
@@ -137,6 +139,26 @@ export interface AdminService {
    * next request. Their Staff Activity stays. Gives the removed Staff User.
    */
   removeStaff(actor: StaffActor, email: string): Promise<AdminResult<StaffMember>>;
+
+  // Beta Testers (Owners only; spec, Phase 3 → The beta gate): the Google
+  // emails let into the Member App while its switch is off, matched by
+  // verified email like an Invite, with no expiry and no role. Each write
+  // appends one Staff Activity record and clears no cache tags.
+
+  /** The Beta Tester list, in the order they were added, each with the date and who added them. */
+  listBetaTesters(actor: StaffActor): Promise<AdminResult<BetaTester[]>>;
+  /**
+   * Adds a Google email, trimmed and lowercased, before the person has an
+   * account. A malformed email, or one already on the list, is refused with
+   * the email field's message. Adding grants nothing but the way in.
+   */
+  addBetaTester(actor: StaffActor, input: BetaTesterInput): Promise<AdminResult<BetaTester>>;
+  /**
+   * Takes an email off the list: while the switch is off, they're refused at
+   * their next request. Their Member record and data stay. Gives the removed
+   * Beta Tester.
+   */
+  removeBetaTester(actor: StaffActor, email: string): Promise<AdminResult<BetaTester>>;
 
   /**
    * The Overview's read (any Staff User): every Product, the Exams, the Exam
@@ -555,6 +577,9 @@ export const renewInvite = impl.renewInvite;
 export const cancelInvite = impl.cancelInvite;
 export const changeStaffRole = impl.changeStaffRole;
 export const removeStaff = impl.removeStaff;
+export const listBetaTesters = impl.listBetaTesters;
+export const addBetaTester = impl.addBetaTester;
+export const removeBetaTester = impl.removeBetaTester;
 export const getOverview = impl.getOverview;
 export const getSettingsForAdmin = impl.getSettingsForAdmin;
 export const updateWebsiteSettings = impl.updateWebsiteSettings;

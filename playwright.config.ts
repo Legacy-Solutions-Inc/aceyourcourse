@@ -22,7 +22,7 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
-      testIgnore: "admin/**",
+      testIgnore: ["admin/**", "member-app/**"],
       dependencies: ["sample data"],
     },
     // The Admin specs change the shared sample data, so they run after the
@@ -32,6 +32,15 @@ export default defineConfig({
       testDir: "./e2e/admin",
       use: { ...devices["Desktop Chrome"] },
       dependencies: ["chromium"],
+      workers: 1,
+    },
+    // The Member App specs (Phase 3) change the same sample data (the Beta
+    // Tester list), so they run after the Admin specs, one at a time too.
+    {
+      name: "member-app",
+      testDir: "./e2e/member-app",
+      use: { ...devices["Desktop Chrome"] },
+      dependencies: ["admin"],
       workers: 1,
     },
   ],

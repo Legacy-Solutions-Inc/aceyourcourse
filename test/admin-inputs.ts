@@ -30,6 +30,8 @@ export function sampleActor(key: "owner" | "editor"): StaffActor {
 export const SAVES = {
   contactEmail: "hello@aceyourcourse.ph",
   invite: { email: "new.editor@example.com", role: "editor" } satisfies InviteStaffInput,
+  /** An email that isn't on the Beta Tester list yet. */
+  betaTester: "new.tester@example.com",
   /** A Coming Soon Product, which needs no photo. */
   newProduct: {
     ...newProductForm("MT"),

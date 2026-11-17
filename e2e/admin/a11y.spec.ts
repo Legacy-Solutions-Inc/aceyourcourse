@@ -230,6 +230,20 @@ const KEYBOARD_SCREENS: {
     ready: (page) => page.getByRole("form", { name: "Announcement bar" }),
   },
   {
+    name: "Users, with the Beta Testers tab and its remove dialog",
+    who: "owner",
+    path: paths.admin.users,
+    ready: (page) => page.getByRole("region", { name: "BETA TESTERS" }),
+    dialog: {
+      open: (page) =>
+        page
+          .getByRole("region", { name: "BETA TESTERS" })
+          .getByRole("button", { name: "Remove tester@example.com" })
+          .click(),
+      name: "Remove tester@example.com from the beta?",
+    },
+  },
+  {
     name: "Settings, with the add-invite modal",
     who: "owner",
     path: paths.admin.settings,
@@ -309,6 +323,7 @@ for (const size of SIZES) {
         "/admin/exam-pages?page=site&site=about&section=seo",
         "/admin/products",
         "/admin/reviews",
+        "/admin/users",
         "/admin/settings",
       ]) {
         await page.goto(path);

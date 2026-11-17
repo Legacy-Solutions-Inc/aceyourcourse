@@ -32,6 +32,7 @@ import * as examPages from "./(shell)/exam-pages/actions";
 import * as products from "./(shell)/products/actions";
 import * as reviews from "./(shell)/reviews/actions";
 import * as settings from "./(shell)/settings/actions";
+import * as users from "./(shell)/users/actions";
 import * as root from "./actions";
 import * as signIn from "./sign-in/actions";
 
@@ -180,6 +181,10 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
       settings.changeStaffMemberRole(IDLE, { input: { email: EDITOR, role: "owner" } }),
     ),
     removeStaffMember: owner(() => settings.removeStaffMember(IDLE, { input: { email: EDITOR } })),
+  },
+  "./(shell)/users/actions.ts": {
+    addTester: owner(() => users.addTester(IDLE, { input: { email: SAVES.betaTester } })),
+    removeTester: owner(() => users.removeTester(IDLE, { input: { email: "tester@example.com" } })),
   },
   "./(shell)/products/actions.ts": {
     setProductFlag: staff(() =>

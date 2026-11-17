@@ -21,9 +21,28 @@ export const paths = {
     privacy: "/legal/privacy",
     terms: "/legal/terms",
   },
+  /** The signed-in Member App (Phase 3). */
   memberApp: {
     home: "/app",
+    /**
+     * The sign-in screen; `next` is where to go afterwards (an /app path
+     * only), and `error` why the last sign-in didn't go on.
+     */
+    signIn: (next?: string, error?: SignInProblem) => {
+      const query = new URLSearchParams();
+      if (next) query.set("next", next);
+      if (error) query.set("error", error);
+      const search = query.toString();
+      return search ? `/app/sign-in?${search}` : "/app/sign-in";
+    },
+    /** "Not open yet": signed in, but not let in while the Member App switch is off. */
+    notOpenYet: "/app/not-open-yet",
+    library: "/app/library",
+    courses: "/app/courses",
     plans: "/app/plans",
+    billing: "/app/billing",
+    account: "/app/account",
+    support: "/app/support",
   },
   auth: {
     /** The OAuth callback: Google sign-in comes back here, then goes on to `next`. */
@@ -50,6 +69,8 @@ export const paths = {
     products: "/admin/products",
     reviews: "/admin/reviews",
     settings: "/admin/settings",
+    /** Users (Owners only): the Beta Testers tab for now; the rest comes with ticket 16. */
+    users: "/admin/users",
     /** Development-only: POST resets the sample data; 404 unless the Admin runs on it. */
     resetSampleData: "/api/dev/sample-data/reset",
     /**

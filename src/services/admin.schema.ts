@@ -248,6 +248,11 @@ export const changeStaffRoleSchema = staffEmailAndRoleSchema;
 
 export type ChangeStaffRoleInput = z.infer<typeof changeStaffRoleSchema>;
 
+/** A Beta Tester's Google email, as the Beta Testers tab sends it: stored lowercase. */
+export const betaTesterInputSchema = staffEmailInputSchema;
+
+export type BetaTesterInput = z.input<typeof betaTesterInputSchema>;
+
 // ── Products ────────────────────────────────────────────────────────────────
 
 const flag = z.boolean({

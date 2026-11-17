@@ -12,6 +12,9 @@ import { isStorageConfigured } from "@/lib/supabase/admin";
 import type { AdminService } from "@/services/admin";
 import { alreadyAnExam, newExamCodeOf, staffEmailSchema, typedCode } from "@/services/admin.schema";
 import {
+  type BetaTesterRow,
+  betaTestersFromRows,
+  betaTesterToRow,
   deniedSignInFromRow,
   deniedSignInToRow,
   SEEDED_RECORD,
@@ -24,6 +27,7 @@ import {
 } from "@/services/admin.rows";
 import type {
   AdminResult,
+  BetaTester,
   DeniedSignIn,
   Invite,
   RecordStamp,
@@ -32,6 +36,7 @@ import type {
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
+import { ALREADY_A_BETA_TESTER } from "@/services/mock/admin/beta-testers";
 import { ALREADY_ON_LIST } from "@/services/mock/admin/staff";
 import { getSampleStore, type SampleStore, withStandInStore } from "@/services/mock/sample-store";
 import { imagesRemoved, storageArm, uploadPathsIn } from "@/services/uploads.storage";
@@ -43,8 +48,9 @@ import type { UploadLookup } from "@/services/uploads.types";
 // runs in one transaction, which
 //   1. takes the write lock of each part it loads, for a write, so writes to
 //      the same part run one at a time,
-//   2. loads what the call needs (the catalogue and its save stamps, or the
-//      staff list) into a store shaped like the sample data,
+//   2. loads what the call needs (the catalogue and its save stamps, the
+//      staff list, or the Beta Tester list) into a store shaped like the
+//      sample data,
 //   3. runs the sample arm's area code over that store (withStandInStore), so
 //      the role check, validation, conflict check and rules are the same code
 //      in both arms, and
@@ -65,8 +71,8 @@ import type { UploadLookup } from "@/services/uploads.types";
 
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
-/** What a call reads: the catalogue with its save stamps, and the staff list. */
-type Part = "catalogue" | "staff";
+/** What a call reads: the catalogue with its save stamps, the staff list, and the Beta Tester list. */
+type Part = "catalogue" | "staff" | "betaTesters";
 
 /**
  * Each part's write lock: writes that change the same part run one at a time,
@@ -115,6 +121,7 @@ interface Loaded {
   catalogue?: { rows: CatalogueRows; value: CatalogueSeed };
   stamps?: Record<string, RecordStamp>;
   staff?: { rows: StaffRow[]; staff: StaffMember[]; invites: Invite[] };
+  betaTesters?: { rows: BetaTesterRow[]; value: BetaTester[] };
 }
 
 function notLoaded(part: string): never {
@@ -149,11 +156,16 @@ async function load(
     const rows = await tx.select().from(schema.staff);
     loaded.staff = { rows, ...staffFromRows(rows) };
   }
+  if (parts.includes("betaTesters")) {
+    const rows = await tx.select().from(schema.betaTesters);
+    loaded.betaTesters = { rows, value: betaTestersFromRows(rows) };
+  }
 
   let catalogue = loaded.catalogue?.value;
   let stamps = loaded.stamps;
   let staff = loaded.staff?.staff;
   let invites = loaded.staff?.invites;
+  let betaTesters = loaded.betaTesters?.value;
   const store: SampleStore = {
     generation: sample.generation,
     bootedAt,
@@ -183,6 +195,16 @@ async function load(
     },
     deniedSignIns: [],
     staffActivity: [],
+    get betaTesters() {
+      return betaTesters ?? notLoaded("the Beta Tester list");
+    },
+    set betaTesters(value) {
+      betaTesters = value;
+    },
+    // The Member seam's database arm (member.db.ts) reads and writes Members itself.
+    get members() {
+      return notLoaded("the Members");
+    },
     // Read only: a rollback couldn't undo a change to the sample data's uploads.
     get uploads() {
       return sample.uploads;
@@ -221,6 +243,7 @@ const CATALOGUE_TABLES: readonly (Synced & { rows: keyof CatalogueRows })[] = [
 ];
 
 const STAFF_TABLE: Synced = { table: schema.staff, key: ["email"] };
+const BETA_TESTERS_TABLE: Synced = { table: schema.betaTesters, key: ["email"] };
 
 const keyOf =
   ({ key }: Synced) =>
@@ -316,6 +339,7 @@ function changes({ store, ...loaded }: Loaded) {
     staff:
       loaded.staff !== undefined &&
       (store.staff !== loaded.staff.staff || store.invites !== loaded.staff.invites),
+    betaTesters: loaded.betaTesters !== undefined && store.betaTesters !== loaded.betaTesters.value,
     deniedSignIns: store.deniedSignIns.length > 0,
     staffActivity: store.staffActivity.length > 0,
   };
@@ -340,6 +364,15 @@ async function save(tx: Transaction, loaded: Loaded): Promise<void> {
   if (changed.staff && loaded.staff) {
     await syncTables(tx, [
       { synced: STAFF_TABLE, before: loaded.staff.rows, after: staffToRows(store) },
+    ]);
+  }
+  if (changed.betaTesters && loaded.betaTesters) {
+    await syncTables(tx, [
+      {
+        synced: BETA_TESTERS_TABLE,
+        before: loaded.betaTesters.rows,
+        after: store.betaTesters.map(betaTesterToRow),
+      },
     ]);
   }
   if (changed.stamps && loaded.stamps) await saveStamps(tx, loaded.stamps, store.stamps);
@@ -458,6 +491,7 @@ async function getLatestDeniedSignIn(email: string): Promise<DeniedSignIn | null
 
 const CATALOGUE: readonly Part[] = ["catalogue"];
 const STAFF: readonly Part[] = ["staff"];
+const BETA_TESTERS: readonly Part[] = ["betaTesters"];
 
 /**
  * An Invite. The staff list's own check refuses an email already on it; should
@@ -470,6 +504,23 @@ const inviteStaff: AdminService["inviteStaff"] = async (actor, input) => {
   } catch (error) {
     if (postgresErrorCode(error) !== UNIQUE_VIOLATION) throw error;
     return { ok: false, error: { kind: "invalid", fieldErrors: { email: [ALREADY_ON_LIST] } } };
+  }
+};
+
+/**
+ * A Beta Tester. The list's own check refuses an email already on it; should
+ * one be added by a save that skipped the lock, the table's primary key
+ * refuses it too, and that says the same, on the email field.
+ */
+const addBetaTester: AdminService["addBetaTester"] = async (actor, input) => {
+  try {
+    return await onDatabase(BETA_TESTERS, "write", () => sampleArm.addBetaTester(actor, input));
+  } catch (error) {
+    if (postgresErrorCode(error) !== UNIQUE_VIOLATION) throw error;
+    return {
+      ok: false,
+      error: { kind: "invalid", fieldErrors: { email: [ALREADY_A_BETA_TESTER] } },
+    };
   }
 };
 
@@ -520,6 +571,10 @@ export const databaseArm: AdminService = {
   cancelInvite: write(STAFF, sampleArm.cancelInvite),
   changeStaffRole: write(STAFF, sampleArm.changeStaffRole),
   removeStaff: write(STAFF, sampleArm.removeStaff),
+
+  listBetaTesters: read(BETA_TESTERS, sampleArm.listBetaTesters),
+  addBetaTester,
+  removeBetaTester: write(BETA_TESTERS, sampleArm.removeBetaTester),
 
   getOverview: read(CATALOGUE, sampleArm.getOverview),
 

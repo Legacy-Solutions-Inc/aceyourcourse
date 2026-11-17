@@ -2,9 +2,10 @@ import { sql } from "drizzle-orm";
 
 import type { Database } from "@/lib/db/connect";
 import * as schema from "@/lib/db/schema";
-import { SEEDED_RECORD, staffToRows } from "@/services/admin.rows";
+import { betaTesterToRow, SEEDED_RECORD, staffToRows } from "@/services/admin.rows";
 import { catalogueToRows } from "@/services/catalogue.rows";
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
+import { sampleBetaTesters } from "@/services/mock/members";
 import { sampleStaff } from "@/services/mock/staff";
 
 import { type SeedPhotos, seedPhotoPlan } from "./photos";
@@ -114,13 +115,17 @@ async function hasCatalogue(tx: Transaction): Promise<boolean> {
 
 /**
  * The Admin's own tables. They describe the catalogue that is loaded (its
- * save stamps, who changed it), so a local load replaces them too.
+ * save stamps, who changed it), so a local load replaces them too. The Member
+ * App's sample data (the Beta Tester list, and the Members "Sign in as" made)
+ * starts again with them.
  */
 const ADMIN_TABLES = [
   schema.staffActivity,
   schema.deniedSignIns,
   schema.recordStamps,
   schema.staff,
+  schema.betaTesters,
+  schema.members,
 ];
 
 /** Deletes every Catalogue row, children before parents. */
@@ -139,11 +144,12 @@ async function stampSeed(tx: Transaction, now: Date): Promise<void> {
     });
 }
 
-/** Replaces the Admin's data with the sample staff list, timed from `now`. */
+/** Replaces the Admin's data with the sample staff list and Beta Tester list, timed from `now`. */
 async function writeSampleStaff(tx: Transaction, now: Date): Promise<SampleStaffCounts> {
   for (const table of ADMIN_TABLES) await tx.delete(table);
   const list = sampleStaff(now);
   await tx.insert(schema.staff).values(staffToRows(list));
+  await tx.insert(schema.betaTesters).values(sampleBetaTesters(now).map(betaTesterToRow));
   return { staff: list.staff.length, invites: list.invites.length };
 }
 

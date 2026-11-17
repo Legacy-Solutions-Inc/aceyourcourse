@@ -79,6 +79,18 @@ export interface StaffList {
   invites: Invite[];
 }
 
+/**
+ * A Beta Tester (CONTEXT.md): a Google email an Owner lets into the Member App
+ * while its switch is off. No expiry and no role. Emails are stored lowercase.
+ */
+export interface BetaTester {
+  email: string;
+  /** ISO time an Owner added them. */
+  addedAt: string;
+  /** The Owner who added them, kept as they were then. */
+  addedBy: { email: string; name: string };
+}
+
 /** Why a signed-in User was refused the Admin. */
 export type DeniedReason = "not-staff" | "invite-expired";
 

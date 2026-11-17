@@ -33,12 +33,15 @@ const OWNER = sampleActor("owner");
 const EDITOR = sampleActor("editor");
 const KIM = sampleEmail("invited");
 const EXPIRED = sampleEmail("expired");
+/** The Beta Tester the sample data starts with. */
+const SAMPLE_TESTER = "tester@example.com";
 
 /** The seam's reads: they change nothing. */
 const READS = [
   "getStaffByEmail",
   "getLatestDeniedSignIn",
   "listStaff",
+  "listBetaTesters",
   "getOverview",
   "getSettingsForAdmin",
   "listProductsForAdmin",
@@ -156,6 +159,22 @@ const WRITES: Record<string, Write> = {
     saves: (seam, actor) => seam.removeStaff(actor, EDITOR.email),
     refused: (seam, actor) => seam.removeStaff(actor, "not-an-email"),
     refusal: "invalid",
+  },
+  addBetaTester: {
+    actor: OWNER,
+    entity: "beta-tester",
+    entityId: SAVES.betaTester,
+    saves: (seam, actor) => seam.addBetaTester(actor, { email: SAVES.betaTester }),
+    refused: (seam, actor) => seam.addBetaTester(actor, { email: "not-an-email" }),
+    refusal: "invalid",
+  },
+  removeBetaTester: {
+    actor: OWNER,
+    entity: "beta-tester",
+    entityId: SAMPLE_TESTER,
+    saves: (seam, actor) => seam.removeBetaTester(actor, SAMPLE_TESTER),
+    refused: (seam, actor) => seam.removeBetaTester(actor, SAVES.betaTester),
+    refusal: "not-found",
   },
   updateWebsiteSettings: {
     actor: OWNER,

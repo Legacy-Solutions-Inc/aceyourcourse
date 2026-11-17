@@ -43,6 +43,13 @@
       "when": 1793852907754,
       "tag": "20261105042827_about_page",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794897962764,
+      "tag": "20261117064602_member_app_gate",
+      "breakpoints": true
     }
   ]
 }

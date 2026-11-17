@@ -10,6 +10,8 @@ import { LOCAL_SUPABASE_URL } from "./src/lib/db/local-database";
 const DATABASE_TESTS = "src/**/*.db.test.ts";
 /** The Admin seam's suites, written over ADMIN_ARMS (test/admin-arms.ts). */
 const ADMIN_SUITES = "src/services/admin.*.test.ts";
+/** The Member seam's suite, written over MEMBER_ARMS (test/member-arms.ts). */
+const MEMBER_SUITES = "src/services/member.test.ts";
 /** Admin tests that aren't written over ADMIN_ARMS. */
 const NOT_ADMIN_SUITES = [
   "src/services/admin.rows.test.ts",
@@ -60,14 +62,14 @@ const testStorage: Record<string, string> = testSecretKey
 const SAMPLE_MODE = { NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "" };
 
 /**
- * With a test database, the database project runs the Admin suites too, over
- * the database arm: the seams' DATABASE_URL is the test database, never the
+ * With a test database, the database project runs the Admin suites and the
+ * Member seam's suite too, over the database arm: the seams' DATABASE_URL is the test database, never the
  * shell's or .env's. Without one, it runs only the `*.db.test.ts` files, which
  * skip saying why.
  */
 const adminSuitesOnDatabase = testDatabaseUrl
   ? {
-      include: [DATABASE_TESTS, ADMIN_SUITES],
+      include: [DATABASE_TESTS, ADMIN_SUITES, MEMBER_SUITES],
       exclude: [...configDefaults.exclude, ...NOT_ADMIN_SUITES],
       env: {
         ...testDatabase,

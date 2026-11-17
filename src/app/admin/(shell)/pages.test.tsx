@@ -9,6 +9,7 @@ import ExamPagesPage from "./exam-pages/page";
 import ProductsPage from "./products/page";
 import ReviewsPage from "./reviews/page";
 import SettingsPage from "./settings/page";
+import UsersPage from "./users/page";
 
 // Every signed-in screen calls the Staff Guard itself, with its own address
 // for `next`, because the shell layout doesn't re-render between screens. The
@@ -54,6 +55,7 @@ const SCREENS = [
     "/admin/reviews",
     "WEBSITE",
   ],
+  ["Users", UsersPage, "/admin/users", "MEMBER APP"],
   ["Settings", SettingsPage, "/admin/settings", "SETTINGS"],
 ] as const;
 
@@ -131,6 +133,27 @@ describe("Admin screens", () => {
     await expect(SettingsPage()).rejects.toThrow("NEXT_REDIRECT /admin/denied?reason=owners-only");
   });
 
+  it("refuses an Editor Users with the owners-only 403 screen", async () => {
+    signInAs("content@aceyourcourse.ph");
+    await expect(UsersPage()).rejects.toThrow("NEXT_REDIRECT /admin/denied?reason=owners-only");
+  });
+
+  it("shows the Owner the Beta Testers tab, with the sample data's tester", async () => {
+    signInAs("angel@aceyourcourse.ph");
+    render(await UsersPage());
+
+    expect(screen.getByRole("link", { name: "BETA TESTERS" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    const list = screen.getByRole("list", { name: "Beta Testers" });
+    const rows = within(list).getAllByRole("listitem");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toHaveTextContent(
+      /^tester@example\.comADDED \d{1,2} [A-Z]{3} \d{4} · BY ANGEL ROSE L\. LEPAÑA/,
+    );
+  });
+
   it.each(SCREENS.slice(0, 4))("%s is open to an Editor", async (title, Page) => {
     signInAs("content@aceyourcourse.ph");
     render(await Page());
@@ -168,7 +191,8 @@ describe("Admin shell layout", () => {
       "02Pages & promo",
       "03Products & store links",
       "04Reviews & FAQs",
-      "05Settings",
+      "05Users",
+      "06Settings",
       "View site ↗",
     ]);
     expect(within(sidebar).getByText("OWNER")).toBeInTheDocument();
@@ -176,11 +200,12 @@ describe("Admin shell layout", () => {
     expect(screen.getByRole("button", { name: "Menu" })).toBeInTheDocument();
   });
 
-  it("leaves Settings out of an Editor's sidebar", async () => {
+  it("leaves Users and Settings out of an Editor's sidebar", async () => {
     signInAs("content@aceyourcourse.ph");
     render(await AdminShellLayout({ children: <p>Screen</p> }));
     const sidebar = screen.getByRole("complementary");
     expect(within(sidebar).queryByRole("link", { name: "Settings" })).not.toBeInTheDocument();
+    expect(within(sidebar).queryByRole("link", { name: "Users" })).not.toBeInTheDocument();
     expect(within(sidebar).getByText("EDITOR")).toBeInTheDocument();
   });
 

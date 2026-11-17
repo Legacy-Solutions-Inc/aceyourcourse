@@ -39,6 +39,8 @@ import type { AboutContent, Marketplace } from "@/services/catalogue.types";
  * The Admin's own records: the staff list with its Invites, denied sign-ins,
  * Staff Activity, and each editable record's save stamp, which the conflict
  * check compares (CONVENTIONS §3).
+ *
+ * The Member App (Phase 3): the Beta Tester list and the Members.
  */
 
 export const MARKETPLACES = [
@@ -398,4 +400,38 @@ export const recordStamps = pgTable("record_stamps", {
   record: text("record").primaryKey(),
   updatedAt: at("updated_at").notNull(),
   updatedBy: text("updated_by"),
+}).enableRLS();
+
+// ── The Member App ──────────────────────────────────────────────────────────
+
+/**
+ * The Beta Tester list: the Google emails an Owner lets into the Member App
+ * while its switch is off, in the order they were added (`seq`). An email is
+ * on it once, lowercased, and can be added before its User exists. It keeps
+ * who added it as they were then, so it outlives their removal from the staff
+ * list.
+ */
+export const betaTesters = pgTable(
+  "beta_testers",
+  {
+    email: text("email").primaryKey(),
+    seq: bigint("seq", { mode: "number" }).generatedAlwaysAsIdentity(),
+    addedAt: at("added_at").notNull(),
+    addedByEmail: text("added_by_email").notNull(),
+    addedByName: text("added_by_name").notNull(),
+  },
+  (t) => [check("beta_testers_email_lowercase", sql`${t.email} = lower(${t.email})`)],
+).enableRLS();
+
+/**
+ * The Members: one row per User who has passed the Member App gate, made on
+ * their first pass. `user_id` is the Supabase User's id (auth.users.id). It
+ * carries no foreign key: with sample data on a local database, "Sign in as"
+ * stands in for Google and there is no Supabase User to point at.
+ */
+export const members = pgTable("members", {
+  userId: uuid("user_id").primaryKey(),
+  email: text("email").notNull(),
+  name: text("name"),
+  joinedAt: at("joined_at").notNull(),
 }).enableRLS();

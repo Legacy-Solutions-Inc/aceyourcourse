@@ -121,6 +121,28 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  # The Member App specs (Phase 3), on the in-memory sample data: "Sign in as"
+  # stands in for Google. They change the Beta Tester list, so they run one at
+  # a time, each resetting the sample data first.
+  e2e-member-app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - run: pnpm test:e2e --project member-app --no-deps
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results-e2e-member-app
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
   # The Admin journeys again, live on the runner's local Supabase (ticket 16):
   # Staff are password Users there, and the Guard reads them through
   # Supabase. Each shard starts its own Supabase. Its URL and keys come from
