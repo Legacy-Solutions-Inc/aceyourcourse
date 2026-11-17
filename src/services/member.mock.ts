@@ -1,6 +1,9 @@
 import { type DeviceStatus, deviceStatusFor } from "@/lib/member-app/device-token";
+import { contentItemOf, type ContentExam, libraryOf } from "@/services/content.rules";
+import type { AccessPass, ContentKind, ContentRecords } from "@/services/content.types";
 import {
   agreedVersionsSchema,
+  contentRefSchema,
   deviceClaimSchema,
   memberEmailSchema,
   memberUserIdSchema,
@@ -19,8 +22,10 @@ import type {
   ActiveDevice,
   AgreedVersions,
   ConsentRecord,
+  ContentItem,
   DeviceClaim,
   DeviceSwitch,
+  LibrarySubject,
   Member,
   MemberUser,
   PickableExam,
@@ -29,10 +34,11 @@ import type {
 import { getSampleStore } from "@/services/mock/sample-store";
 
 // The Member seam's sample arm: over the in-memory sample store
-// (src/services/mock/sample-store.ts), which holds the Beta Tester list the
-// Admin's sample arm edits, the Members, their consent records, their
-// Target Exams and their Active Devices. The Target Exam rules are shared with the database arm
-// (member.rules.ts).
+// (src/services/mock/sample-store.ts), which holds the Beta Tester list and
+// the Topics the Admin's sample arm edits, the Members, their consent
+// records, Target Exams, Active Devices and Access Passes. The Target Exam
+// rules (member.rules.ts) and the content rules (content.rules.ts) are shared
+// with the database arm.
 
 export async function isBetaTester(email: string): Promise<boolean> {
   const wanted = memberEmailSchema.safeParse(email);
@@ -171,4 +177,40 @@ export async function listDeviceSwitches(userId: string): Promise<DeviceSwitch[]
 
 export async function deviceSwitchCount(userId: string): Promise<number> {
   return switchesOf(userId).length;
+}
+
+// ── The Library and content ─────────────────────────────────────────────────
+
+/** The catalogue's Exams with their Subjects, and every Topic with its content, as the store holds them. */
+function contentOfStore(): { exams: ContentExam[]; content: ContentRecords } {
+  const { catalogue, topics, decks, quizzes, reviewerPdfs } = getSampleStore();
+  return structuredClone({
+    exams: catalogue.exams.map(({ code, subjects }) => ({ code, subjects })),
+    content: { topics, decks, quizzes, reviewerPdfs },
+  });
+}
+
+export async function getLibrary(examCode: string): Promise<LibrarySubject[]> {
+  const { exams, content } = contentOfStore();
+  const exam = exams.find((candidate) => candidate.code === examCode.trim().toUpperCase());
+  return exam ? libraryOf(exam, content) : [];
+}
+
+export async function getContentItem(kind: ContentKind, id: string): Promise<ContentItem | null> {
+  const ref = contentRefSchema.safeParse({ kind, id });
+  if (!ref.success) return null;
+  const { exams, content } = contentOfStore();
+  return contentItemOf(ref.data.kind, ref.data.id, exams, content);
+}
+
+export async function listAccessPasses(userId: string): Promise<AccessPass[]> {
+  const wanted = memberUserIdSchema.parse(userId);
+  const store = getSampleStore();
+  // Like the database's cascade: a pass whose Exam an Owner deleted is gone
+  // for good, so it doesn't come back if an Exam with that code is added.
+  const exists = (code: string) => store.catalogue.exams.some((exam) => exam.code === code);
+  if (store.accessPasses.some((pass) => !exists(pass.examCode))) {
+    store.accessPasses = store.accessPasses.filter((pass) => exists(pass.examCode));
+  }
+  return structuredClone(store.accessPasses.filter((pass) => pass.userId === wanted));
 }

@@ -1,5 +1,6 @@
 import { isDatabaseConfigured } from "@/env.server";
 import type { DeviceStatus } from "@/lib/member-app/device-token";
+import type { AccessPass, ContentKind } from "@/services/content.types";
 import { databaseArm } from "@/services/member.db";
 import * as mockImpl from "@/services/member.mock";
 import type {
@@ -7,8 +8,10 @@ import type {
   AddedTargetExam,
   AgreedVersions,
   ConsentRecord,
+  ContentItem,
   DeviceClaim,
   DeviceSwitch,
+  LibrarySubject,
   Member,
   MemberUser,
   NewTargetExam,
@@ -128,6 +131,31 @@ export interface MemberService {
   listDeviceSwitches(userId: string): Promise<DeviceSwitch[]>;
   /** How many claims the Member's switch log holds. */
   deviceSwitchCount(userId: string): Promise<number>;
+
+  // The Library and content (spec, Phase 3 → Content model and Access
+  // decision seam). The content reads are the same for every Member: what one
+  // may open is the access decision's answer (src/lib/member-app/access.ts),
+  // which src/lib/member-app/access-check.ts asks with these reads. Nothing
+  // reads protected content around it.
+
+  /**
+   * An Exam's Library: each of its Subjects in the catalogue's order, each
+   * with its Topics in order, each with its Visible decks and quizzes and
+   * Published Reviewer PDFs only. Nothing for a code that isn't an Exam's.
+   */
+  getLibrary(examCode: string): Promise<LibrarySubject[]>;
+  /**
+   * One deck, quiz or Reviewer PDF, Hidden or not, with where it sits and
+   * what the access decision reads from it. Null for an id or kind that isn't
+   * one (the address is the browser's), and for a Reviewer PDF not yet placed
+   * under a Topic.
+   */
+  getContentItem(kind: ContentKind, id: string): Promise<ContentItem | null>;
+  /**
+   * This Member's Access Passes, at most one per Exam, ended ones too: only
+   * ever their own. Throws for a User id that isn't one.
+   */
+  listAccessPasses(userId: string): Promise<AccessPass[]>;
 }
 
 const impl: MemberService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -147,3 +175,6 @@ export const deviceStatus = impl.deviceStatus;
 export const getActiveDevice = impl.getActiveDevice;
 export const listDeviceSwitches = impl.listDeviceSwitches;
 export const deviceSwitchCount = impl.deviceSwitchCount;
+export const getLibrary = impl.getLibrary;
+export const getContentItem = impl.getContentItem;
+export const listAccessPasses = impl.listAccessPasses;

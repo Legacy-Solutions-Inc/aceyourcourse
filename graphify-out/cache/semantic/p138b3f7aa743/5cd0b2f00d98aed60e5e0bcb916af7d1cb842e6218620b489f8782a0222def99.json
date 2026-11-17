@@ -1,0 +1,389 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "label": "Phase 3 Member App Ticket Index",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Run one executer at a time: executers on the same working tree make each other's tests time out."
+    },
+    {
+      "id": "_scratch_ayc_member_app_readme_feat_phase3_member_app_branch",
+      "label": "feat/phase3-member-app branch",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Every Phase 3 ticket shares one branch; no new branch per ticket."
+    },
+    {
+      "id": "_scratch_ayc_member_app_readme_ayc_v1_spec",
+      "label": "AYC v1 Spec (docs/specs/2026-10-29-ayc-v1.md) Phase 3",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_readme_admin_conventions",
+      "label": "Admin Conventions (.scratch/ayc-admin/CONVENTIONS.md)",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_readme_staff_activity",
+      "label": "Staff Activity",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_readme_staff_guard",
+      "label": "Staff Guard",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_readme_conflict_check",
+      "label": "Conflict Check",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_readme_sample_live_closed_modes",
+      "label": "Sample, Live and Closed Modes",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_readme_vertical_slice_ticket",
+      "label": "Vertical Slice Ticket",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Each ticket covers tables+migration, database and sample-data arms, screens and tests; e2e runs on in-memory sample data, database suites in CI; user applies migrations to hosted after merge."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_readme_feat_phase3_member_app_branch",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_readme_ayc_v1_spec",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_readme_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_admin_conventions",
+      "target": "_scratch_ayc_member_app_readme_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_admin_conventions",
+      "target": "_scratch_ayc_member_app_readme_staff_guard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_admin_conventions",
+      "target": "_scratch_ayc_member_app_readme_conflict_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_admin_conventions",
+      "target": "_scratch_ayc_member_app_readme_sample_live_closed_modes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_readme_vertical_slice_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_grilling_notes_phase3_grilling_notes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_04_active_device_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_05_content_model_topics_library_access_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_06_card_import_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_07_card_editor_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_08_flashcard_study_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_10_question_editor_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_11_quiz_taking_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_16_users_and_member_detail_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_17_grant_extend_end_access_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_readme_phase3_ticket_index",
+      "target": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

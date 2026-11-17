@@ -9,10 +9,19 @@ import type {
   StaffMember,
 } from "@/services/admin.types";
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
+import type {
+  AccessPass,
+  AccessPassGrant,
+  Deck,
+  Quiz,
+  ReviewerPdf,
+  Topic,
+} from "@/services/content.types";
 import type { TargetExamRecord } from "@/services/member.rules";
 import type { ConsentRecord, DeviceSwitch, Member } from "@/services/member.types";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
-import { sampleBetaTesters } from "@/services/mock/members";
+import { sampleContent } from "@/services/mock/content";
+import { sampleAccessPasses, sampleBetaTesters } from "@/services/mock/members";
 import { sampleStaff } from "@/services/mock/staff";
 import type { UploadContentType, UploadLookup, UploadRequest } from "@/services/uploads.types";
 
@@ -82,6 +91,16 @@ export interface SampleStore {
   memberActiveDevices: Record<string, SampleActiveDevice>;
   /** Every Member's Active Device claims, oldest first (Phase 3). */
   memberDeviceSwitches: DeviceSwitch[];
+  /** The Member App's Topics, each in its Subject's order (Phase 3). */
+  topics: Topic[];
+  /** Each Topic's deck, quiz and Reviewer PDF, where it has one (Phase 3). */
+  decks: Deck[];
+  quizzes: Quiz[];
+  reviewerPdfs: ReviewerPdf[];
+  /** Every Member's Access Passes, at most one per Exam (Phase 3). */
+  accessPasses: AccessPass[];
+  /** The grants behind the Access Passes, oldest first (Phase 3; written from ticket 17). */
+  accessPassGrants: AccessPassGrant[];
   /** The upload seam's files, by upload id. */
   uploads: Record<string, SampleUpload>;
   /**
@@ -99,10 +118,11 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
   if (!validation.success) {
     throw new Error(`Invalid catalogue seed — ${validation.errors.join("; ")}`);
   }
+  const catalogue = structuredClone(validation.data);
   return {
     generation: crypto.randomUUID(),
     bootedAt: now.toISOString(),
-    catalogue: structuredClone(validation.data),
+    catalogue,
     stamps: {},
     ...sampleStaff(now),
     deniedSignIns: [],
@@ -114,6 +134,8 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     selectedExams: {},
     memberActiveDevices: {},
     memberDeviceSwitches: [],
+    ...sampleContent(catalogue),
+    ...sampleAccessPasses(now, catalogue),
     uploads: {},
   };
 }

@@ -20,6 +20,7 @@ import type {
   SocialLinks,
   WebsiteSettings,
 } from "@/services/catalogue.types";
+import type { ContentCounts, TopicContent } from "@/services/content.types";
 
 export type StaffRole = "owner" | "editor";
 
@@ -390,6 +391,13 @@ export interface AdminExamPage {
   /** How many Products are tagged with each of the Exam's Subjects, for its remove button. */
   subjectProducts: Record<string, number>;
   /**
+   * The Member App content each Subject's Topics hold, Hidden and Draft
+   * included, for its remove button (Phase 3: content blocks a delete).
+   */
+  subjectContent: Record<string, ContentCounts>;
+  /** The Member App content all the Exam's Topics hold, for "Delete exam". */
+  content: ContentCounts;
+  /**
    * The codes of the Exams the Website shows, those with a Product on it, for
    * the chips' "NOT ON SITE" (ticket 23).
    */
@@ -450,3 +458,26 @@ export interface AdminOverview {
 
 /** The Website's settings the Overview checks: the shop pages, the trust figures and the promo banner. */
 export type OverviewSettings = Pick<WebsiteSettings, "shopLinks" | "shopStats" | "promoBanner">;
+
+// ── Member App content: Topics (Phase 3, ticket 05) ─────────────────────────
+
+/** One Topic in its Subject's Topics list, as the Admin shows it. */
+export interface AdminTopic {
+  id: string;
+  name: string;
+  /** Its place in its Subject's order, from 1. */
+  position: number;
+  /** What it holds, Hidden and Draft content too. */
+  content: TopicContent;
+  /** Why it can't be deleted (it isn't empty), or null when it can. */
+  deleteBlocker: string | null;
+  /** Its name's last save, which a rename's conflict check compares. */
+  stamp: RecordStamp;
+}
+
+/** One Subject's Topics list: the Subject, its Exam, and its Topics in order. */
+export interface AdminTopicList {
+  exam: { code: string; board: string; name: string };
+  subject: { code: string; name: string };
+  topics: AdminTopic[];
+}

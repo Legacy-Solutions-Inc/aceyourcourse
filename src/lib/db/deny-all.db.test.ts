@@ -37,6 +37,12 @@ describeWithDatabase("Deny-all: the browser roles reach no table", database, (db
     "member_target_exams",
     "member_active_devices",
     "member_device_switches",
+    "topics",
+    "decks",
+    "quizzes",
+    "reviewer_pdfs",
+    "access_passes",
+    "access_pass_grants",
   ])("has the Member App's %s table, with RLS on and no policy", async (table) => {
     const [found] = await db()<{ rls: boolean; policies: number }[]>`
         select c.relrowsecurity as rls,

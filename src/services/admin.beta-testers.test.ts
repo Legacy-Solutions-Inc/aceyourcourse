@@ -6,7 +6,8 @@ import { sampleActor } from "../../test/admin-inputs";
 // The Admin seam's Beta Testers (spec, Phase 3 → The beta gate; stories 133a
 // and 133b), run against every arm. Owners keep a list of Google emails that
 // get into the Member App while its switch is off. The sample data starts
-// with one, tester@example.com, added by the Owner 3 days before boot.
+// with two, added by the Owner: tester@example.com 3 days before boot, then
+// lapsed@example.com (whose CE pass has ended) 2 days before.
 const BOOT = new Date("2026-11-17T03:42:00.000Z");
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -18,6 +19,12 @@ const SAMPLE_TESTER = {
   addedAt: new Date(BOOT.getTime() - 3 * DAY).toISOString(),
   addedBy: ADDED_BY,
 };
+const LAPSED_TESTER = {
+  email: "lapsed@example.com",
+  addedAt: new Date(BOOT.getTime() - 2 * DAY).toISOString(),
+  addedBy: ADDED_BY,
+};
+const SAMPLE_TESTERS = [SAMPLE_TESTER, LAPSED_TESTER];
 const NEW_TESTER = "new.tester@example.com";
 
 describe.each(ADMIN_ARMS)("Admin seam: Beta Testers ($name)", (arm) => {
@@ -37,7 +44,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Beta Testers ($name)", (arm) => {
     it("gives an Owner each Beta Tester with the date added and who added them", async () => {
       expect(await seam.listBetaTesters(OWNER)).toEqual({
         ok: true,
-        value: [SAMPLE_TESTER],
+        value: SAMPLE_TESTERS,
         tags: [],
       });
     });
@@ -59,7 +66,9 @@ describe.each(ADMIN_ARMS)("Admin seam: Beta Testers ($name)", (arm) => {
 
       const added = { email: NEW_TESTER, addedAt: later.toISOString(), addedBy: ADDED_BY };
       expect(result).toEqual({ ok: true, value: added, tags: [] });
-      expect(await seam.listBetaTesters(OWNER)).toMatchObject({ value: [SAMPLE_TESTER, added] });
+      expect(await seam.listBetaTesters(OWNER)).toMatchObject({
+        value: [...SAMPLE_TESTERS, added],
+      });
     });
 
     it("records the add in Staff Activity", async () => {
@@ -91,7 +100,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Beta Testers ($name)", (arm) => {
         ok: false,
         error: { kind: "invalid", fieldErrors: { email: [message] } },
       });
-      expect(await seam.listBetaTesters(OWNER)).toMatchObject({ value: [SAMPLE_TESTER] });
+      expect(await seam.listBetaTesters(OWNER)).toMatchObject({ value: SAMPLE_TESTERS });
       expect(await arm.staffActivity()).toEqual([]);
     });
 
@@ -103,7 +112,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Beta Testers ($name)", (arm) => {
           fieldErrors: { email: ["This email is already a Beta Tester."] },
         },
       });
-      expect(await seam.listBetaTesters(OWNER)).toMatchObject({ value: [SAMPLE_TESTER] });
+      expect(await seam.listBetaTesters(OWNER)).toMatchObject({ value: SAMPLE_TESTERS });
       expect(await arm.staffActivity()).toEqual([]);
     });
 
@@ -112,7 +121,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Beta Testers ($name)", (arm) => {
         ok: false,
         error: { kind: "forbidden" },
       });
-      expect(await seam.listBetaTesters(OWNER)).toMatchObject({ value: [SAMPLE_TESTER] });
+      expect(await seam.listBetaTesters(OWNER)).toMatchObject({ value: SAMPLE_TESTERS });
       expect(await arm.staffActivity()).toEqual([]);
     });
   });
@@ -124,7 +133,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Beta Testers ($name)", (arm) => {
         value: SAMPLE_TESTER,
         tags: [],
       });
-      expect(await seam.listBetaTesters(OWNER)).toMatchObject({ value: [] });
+      expect(await seam.listBetaTesters(OWNER)).toMatchObject({ value: [LAPSED_TESTER] });
     });
 
     it("records the removal in Staff Activity", async () => {
@@ -170,7 +179,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Beta Testers ($name)", (arm) => {
         ok: false,
         error: { kind: "forbidden" },
       });
-      expect(await seam.listBetaTesters(OWNER)).toMatchObject({ value: [SAMPLE_TESTER] });
+      expect(await seam.listBetaTesters(OWNER)).toMatchObject({ value: SAMPLE_TESTERS });
       expect(await arm.staffActivity()).toEqual([]);
     });
   });

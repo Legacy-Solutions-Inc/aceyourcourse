@@ -2,6 +2,7 @@ import type { AdminService } from "@/services/admin";
 import * as adminSampleArm from "@/services/admin.mock";
 import type { MemberService } from "@/services/member";
 import * as sampleArm from "@/services/member.mock";
+import type { AccessPass } from "@/services/content.types";
 import type { ConsentRecord, DeviceSwitch, Member } from "@/services/member.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
@@ -37,6 +38,8 @@ export interface MemberArm {
   activeDevices(): Promise<StoredActiveDevice[]>;
   /** Every Member's switch log entries, in the order they were recorded. */
   deviceSwitches(): Promise<DeviceSwitch[]>;
+  /** Gives a Member an Access Pass behind the seam's back, as a grant (ticket 17) will. */
+  putAccessPass(pass: AccessPass): Promise<void>;
 }
 
 /** An Active Device record as it is stored, for checking what is (and isn't) kept. */
@@ -62,6 +65,10 @@ const SAMPLE_ARM: MemberArm = {
       .map(([userId, record]) => ({ userId, ...record }))
       .sort((a, b) => a.claimedAt.localeCompare(b.claimedAt)),
   deviceSwitches: async () => structuredClone(getSampleStore().memberDeviceSwitches),
+  putAccessPass: async (pass) => {
+    const store = getSampleStore();
+    store.accessPasses = [...store.accessPasses, structuredClone(pass)];
+  },
 };
 
 export const MEMBER_ARMS: MemberArm[] =

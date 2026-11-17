@@ -1,0 +1,300 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_executer_prompt",
+      "label": "Executer prompt 17: Grant, extend and end access, with notices",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": "L1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_access_pass_arithmetic",
+      "label": "Access Pass arithmetic (max(current end, now) + days)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": "L29",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_grant_access",
+      "label": "Grant Access Pass",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": "L29",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Days 30/90/180/365 or custom 1-365, with reason."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_extend_access",
+      "label": "Extend access",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": "L30",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "3/7/14/30 days on an existing pass only."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_end_access_now",
+      "label": "End access now",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": "L31",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Sets end to now, keeps progress; Member sees expired state."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_grant_history_rows",
+      "label": "Grant history rows (source grant)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": "L32",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Recorded per grant/extension so Phase 4 can tell granted days from paid ones; End access now may later end only granted days."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_in_app_notices",
+      "label": "Dismissible in-app notices",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": "L36",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "No email and no notification centre; dismissal stored per Member and notice."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_grant_added_target_exam",
+      "label": "Grant-added Target Exam",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": "L34",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_access_pass_arithmetic",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_grant_access",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_extend_access",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_end_access_now",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_grant_history_rows",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_in_app_notices",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_grant_added_target_exam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_member_detail_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_admin_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_member_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_access_decision",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_guardrails",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_grant_access",
+      "target": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_access_pass_arithmetic",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_extend_access",
+      "target": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_access_pass_arithmetic",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_grant_access",
+      "target": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_grant_history_rows",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_extend_access",
+      "target": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_grant_history_rows",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_grant_access",
+      "target": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_grant_added_target_exam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_grant_access",
+      "target": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_in_app_notices",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_end_access_now",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_access_decision",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/17-grant-extend-end-access.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,152 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_ticket",
+      "label": "Ticket 02: Consent and Legal v2.0 Draft",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_consent_screen",
+      "label": "Consent Screen",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_consent_record",
+      "label": "Consent Record (Terms and Privacy versions)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_re_consent",
+      "label": "Re-consent on Version Change",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_legal_v2_document",
+      "label": "Legal v2.0 Member App Sections",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_ticket",
+      "target": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_ticket",
+      "target": "_scratch_ayc_member_app_readme_ayc_v1_spec",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_ticket",
+      "target": "_scratch_ayc_member_app_readme_vertical_slice_ticket",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/issues/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_ticket",
+      "target": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_consent_screen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_ticket",
+      "target": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_consent_record",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_ticket",
+      "target": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_re_consent",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_ticket",
+      "target": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_legal_v2_document",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_ticket",
+      "target": "_scratch_ayc_member_app_grilling_notes_beta_legal_v2",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_re_consent",
+      "target": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_consent_record",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,239 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams",
+      "label": "Executer prompt 03: Onboarding and Target Exams",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_exam_date_resolver",
+      "label": "Exam Date resolver (Member date or Official Exam Date)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": "L35",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "A Target Exam stores the Member's own date only once edited; otherwise reads the Exam's Official Exam Date at read time so Staff changes move everyone with no fan-out job."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_days_left_countdown",
+      "label": "Days-left countdown (Asia/Manila calendar days)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": "L37",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Pure function; 0 shows 'Exam day', past shows 'Exam passed. Update your date in Account.'"
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_member_target_exams",
+      "label": "member_target_exams table (soft remove, selected Target Exam)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": "L45",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Soft remove via removed-at; re-add restores date and progress; last active one cannot be removed; selection falls back to first remaining by order added."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_exam_switcher",
+      "label": "Exam switcher (sidebar and drawer)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": "L47",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_account_your_exams",
+      "label": "/app/account 'Your exams' section",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": "L48",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_onboarding",
+      "label": "Onboarding (pick Exam and Exam Date)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": "L56",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_listexams",
+      "label": "listExams (pickable Exams on the Website)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": "L32",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_manila_time",
+      "label": "Manila time helpers (src/lib/manila-time.ts)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": "L33",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams",
+      "target": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_exam_date_resolver",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams",
+      "target": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_days_left_countdown",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams",
+      "target": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_member_target_exams",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams",
+      "target": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_exam_switcher",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams",
+      "target": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_account_your_exams",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams",
+      "target": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_onboarding",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_days_left_countdown",
+      "target": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_manila_time",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_onboarding",
+      "target": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_listexams",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_days_left_countdown",
+      "target": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_exam_date_resolver",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_member_target_exams",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_exam_switcher",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_shell",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_onboarding",
+      "target": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_consent_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_exam_date_resolver",
+      "target": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_member_target_exams",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

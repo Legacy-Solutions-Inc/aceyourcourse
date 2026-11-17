@@ -1,0 +1,207 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_executer_prompt",
+      "label": "Executer prompt 16: Users list, Member detail and force sign-out",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": "L1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_users_list",
+      "label": "Owner-only Users list",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": "L34",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Search, filters (All, Active Pass, Expired, None, Staff, Beta Tester), paged; Editors never see it."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_member_detail_page",
+      "label": "Member detail page",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": "L39",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Profile, Target Exams, Access Pass history, progress summary, device log, consent, empty purchases section (Phase 4)."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_force_sign_out",
+      "label": "Force sign-out with logged reason",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": "L48",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Clears Active Device so next Member App request lands on Session ended; logged in Staff Activity with reason and old device label."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_url_driven_list_state",
+      "label": "URL-driven search, filters and paging",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": "L33",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_progress_summary_fallback",
+      "label": "Progress summary fallback (basic counts)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": "L47",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Must work whether or not ticket 15 has landed: use its summary if present, else basic counts."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_users_list",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_member_detail_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_force_sign_out",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_url_driven_list_state",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_progress_summary_fallback",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_admin_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_guardrails",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_users_list",
+      "target": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_url_driven_list_state",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_member_detail_page",
+      "target": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_progress_summary_fallback",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_progress_summary_fallback",
+      "target": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_member_progress_summary",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_force_sign_out",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_member_detail_page",
+      "target": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_force_sign_out",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

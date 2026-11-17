@@ -1,0 +1,140 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_10_question_editor",
+      "label": "Executer prompt 10: Question editor",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/10-question-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_10_question_editor_question_editor",
+      "label": "Admin question editor",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/10-question-editor.md",
+      "source_location": "L11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_10_question_editor_question_rules",
+      "label": "Question rules (pure: required, one correct A-D, formula, limits, figure)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-member-app/prompts/10-question-editor.md",
+      "source_location": "L63",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_10_question_editor",
+      "target": "_scratch_ayc_member_app_prompts_10_question_editor_question_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/10-question-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_10_question_editor",
+      "target": "_scratch_ayc_member_app_prompts_10_question_editor_question_rules",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/10-question-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_10_question_editor_question_editor",
+      "target": "_scratch_ayc_member_app_prompts_07_card_editor_card_editor",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/10-question-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_10_question_editor_question_editor",
+      "target": "_scratch_ayc_member_app_prompts_07_card_editor_auto_hide_empty_rule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/10-question-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_10_question_editor_question_editor",
+      "target": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_removed_question_marker",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/10-question-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_10_question_editor_question_editor",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_formula_module",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/10-question-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_10_question_editor_question_editor",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_conflict_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/10-question-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_10_question_editor_question_rules",
+      "target": "_scratch_ayc_member_app_prompts_07_card_editor_card_rules",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/10-question-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_10_question_editor_question_editor",
+      "target": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_best_score",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/10-question-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_10_question_editor_question_editor",
+      "target": "_scratch_ayc_member_app_prompts_10_question_editor_question_rules",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/10-question-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

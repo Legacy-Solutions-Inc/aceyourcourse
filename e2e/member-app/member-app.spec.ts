@@ -75,15 +75,14 @@ test.describe("a signed-out visitor", () => {
     await expect(page).toHaveURL(/\/app\/sign-in$/);
   });
 
-  test("sees the three sample Members in the development-only Sign in as list", async ({
-    page,
-  }) => {
+  test("sees the four sample Members in the development-only Sign in as list", async ({ page }) => {
     const list = await openSignInAs(page);
     await expect(list.getByText("SAMPLE DATA · DEVELOPMENT ONLY")).toBeVisible();
     await expect(list.getByRole("listitem")).toHaveText([
-      /Bea Tester.*tester@example\.com · Beta Tester/,
+      /Bea Tester.*tester@example\.com · Beta Tester · CE All-Access$/,
       /Angel Rose L\. Lepaña.*angel@aceyourcourse\.ph · Owner/,
       /Sam Stranger.*stranger@example\.com · Not a Beta Tester/,
+      /Lou Lapsed.*lapsed@example\.com · Beta Tester · CE All-Access ended/,
     ]);
   });
 });
@@ -121,7 +120,9 @@ test.describe("a Beta Tester", () => {
     await signInAsMember(page, "tester", paths.memberApp.library);
 
     await expect(page).toHaveURL(/\/app\/library$/);
-    await expect(page.getByRole("heading", { level: 1, name: "Coming in the beta" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Subjects and topics" }),
+    ).toBeVisible();
     await expect(memberNav(page).getByRole("link", { name: /Library/ })).toHaveAttribute(
       "aria-current",
       "page",
@@ -143,7 +144,6 @@ test.describe("a Beta Tester", () => {
     await expect(welcome(page, "Bea")).toBeVisible();
 
     for (const [label, path] of [
-      ["Library", "/app/library"],
       ["Courses", "/app/courses"],
       ["Plans", "/app/plans"],
       ["Billing", "/app/billing"],
@@ -442,7 +442,8 @@ test.describe("accessibility", () => {
         await expect(welcome(page, "Bea")).toBeVisible();
         await expectNoBlockingViolations(page);
 
-        await page.goto(paths.memberApp.library);
+        // The Library is built (ticket 05; its checks are in library.spec.ts); Plans isn't yet.
+        await page.goto(paths.memberApp.plans);
         await expect(page.getByRole("heading", { level: 1 })).toHaveText("Coming in the beta");
         await expectNoBlockingViolations(page);
       });

@@ -9,6 +9,7 @@ import {
   type NewExamForm,
   newSubjectFormSchema,
   subjectDeleteBlocker,
+  topicDeleteBlocker,
 } from "./admin.schema";
 import { MAX_EXAMS, validateCatalogueSeed } from "./catalogue.schema";
 import { CATALOGUE_SEED } from "./mock/catalogue";
@@ -180,26 +181,76 @@ describe("the Exam limit", () => {
 });
 
 describe("why a delete is refused", () => {
+  const NONE = { decks: 0, quizzes: 0, reviewerPdfs: 0 };
+
   it("names how many Products belong to the Exam", () => {
-    expect(examDeleteBlocker("CHE", 0)).toBeNull();
-    expect(examDeleteBlocker("CHE", 1)).toBe("1 Product belongs to CHE. Move or delete it first.");
-    expect(examDeleteBlocker("CHE", 2)).toBe(
+    expect(examDeleteBlocker("CHE", 0, NONE)).toBeNull();
+    expect(examDeleteBlocker("CHE", 1, NONE)).toBe(
+      "1 Product belongs to CHE. Move or delete it first.",
+    );
+    expect(examDeleteBlocker("CHE", 2, NONE)).toBe(
       "2 Products belong to CHE. Move or delete them first.",
     );
   });
 
-  it("names how many Products use the Subject, and keeps the Exam's last one", () => {
-    expect(subjectDeleteBlocker({ exam: "CE", subject: "THERMO", products: 0, subjects: 4 })).toBe(
-      null,
+  it("names the Member App content the Exam's Topics hold (Phase 3)", () => {
+    expect(examDeleteBlocker("CE", 0, { decks: 5, quizzes: 3, reviewerPdfs: 2 })).toBe(
+      "CE has Member App content: 5 decks, 3 quizzes and 2 Reviewer PDFs. Delete it first.",
     );
-    expect(subjectDeleteBlocker({ exam: "CE", subject: "MSTC", products: 1, subjects: 4 })).toBe(
+    expect(examDeleteBlocker("CE", 0, { decks: 0, quizzes: 1, reviewerPdfs: 0 })).toBe(
+      "CE has Member App content: 1 quiz. Delete it first.",
+    );
+    // Products are named first.
+    expect(examDeleteBlocker("CE", 1, { decks: 1, quizzes: 0, reviewerPdfs: 0 })).toBe(
+      "1 Product belongs to CE. Move or delete it first.",
+    );
+  });
+
+  it("names how many Products use the Subject, and keeps the Exam's last one", () => {
+    const subject = { exam: "CE", content: NONE, subjects: 4 };
+    expect(subjectDeleteBlocker({ ...subject, subject: "THERMO", products: 0 })).toBe(null);
+    expect(subjectDeleteBlocker({ ...subject, subject: "MSTC", products: 1 })).toBe(
       "1 Product uses MSTC. Remove it from that Product first.",
     );
-    expect(subjectDeleteBlocker({ exam: "CE", subject: "MSTC", products: 3, subjects: 4 })).toBe(
+    expect(subjectDeleteBlocker({ ...subject, subject: "MSTC", products: 3 })).toBe(
       "3 Products use MSTC. Remove it from those Products first.",
     );
-    expect(subjectDeleteBlocker({ exam: "CHE", subject: "PCHEM", products: 0, subjects: 1 })).toBe(
-      "CHE needs at least one Subject. Add another before deleting this one.",
+    expect(
+      subjectDeleteBlocker({
+        exam: "CHE",
+        subject: "PCHEM",
+        products: 0,
+        content: NONE,
+        subjects: 1,
+      }),
+    ).toBe("CHE needs at least one Subject. Add another before deleting this one.");
+  });
+
+  it("names the Member App content the Subject's Topics hold (Phase 3)", () => {
+    const subject = { exam: "CE", subject: "MSTC", products: 0, subjects: 4 };
+    expect(
+      subjectDeleteBlocker({ ...subject, content: { decks: 1, quizzes: 1, reviewerPdfs: 1 } }),
+    ).toBe("MSTC has Member App content: 1 deck, 1 quiz and 1 Reviewer PDF. Delete it first.");
+    expect(
+      subjectDeleteBlocker({ ...subject, content: { decks: 2, quizzes: 0, reviewerPdfs: 1 } }),
+    ).toBe("MSTC has Member App content: 2 decks and 1 Reviewer PDF. Delete it first.");
+  });
+});
+
+describe("why a Topic can't be deleted", () => {
+  it("is null for an empty Topic", () => {
+    expect(topicDeleteBlocker({ deck: null, quiz: null, reviewerPdf: null })).toBeNull();
+  });
+
+  it("names what the Topic holds, Hidden and Draft content too", () => {
+    expect(topicDeleteBlocker({ deck: "hidden", quiz: null, reviewerPdf: null })).toBe(
+      "It has a deck. Only an empty Topic can be deleted.",
+    );
+    expect(topicDeleteBlocker({ deck: "visible", quiz: "hidden", reviewerPdf: "draft" })).toBe(
+      "It has a deck, a quiz and a Reviewer PDF. Only an empty Topic can be deleted.",
+    );
+    expect(topicDeleteBlocker({ deck: null, quiz: "visible", reviewerPdf: "failed" })).toBe(
+      "It has a quiz and a Reviewer PDF. Only an empty Topic can be deleted.",
     );
   });
 });

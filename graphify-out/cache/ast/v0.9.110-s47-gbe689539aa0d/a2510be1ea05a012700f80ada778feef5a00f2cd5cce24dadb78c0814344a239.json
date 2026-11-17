@@ -1,0 +1,96 @@
+{
+  "nodes": [
+    {
+      "id": "$graphify-root$_supabase_migrations_20261117105642_member_active_devices_sql",
+      "label": "20261117105642_member_active_devices.sql",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261117105642_member_active_devices.sql",
+      "source_location": null
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261117105642_member_active_devices_member_active_devices",
+      "label": "\"member_active_devices\"",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261117105642_member_active_devices.sql",
+      "source_location": "L1"
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261117105642_member_active_devices_member_device_switches",
+      "label": "\"member_device_switches\"",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261117105642_member_active_devices.sql",
+      "source_location": "L11"
+    },
+    {
+      "id": "public_members",
+      "label": "\"public\".\"members\"",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "origin_file": "$graphify-root$/supabase/migrations/20261117105642_member_active_devices.sql"
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261117105642_member_active_devices_member_device_switches_user_id_seq_idx",
+      "label": "member_device_switches_user_id_seq_idx",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261117105642_member_active_devices.sql",
+      "source_location": "L22"
+    }
+  ],
+  "edges": [
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117105642_member_active_devices_sql",
+      "target": "$graphify-root$_supabase_migrations_20261117105642_member_active_devices_member_active_devices",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117105642_member_active_devices.sql",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117105642_member_active_devices_sql",
+      "target": "$graphify-root$_supabase_migrations_20261117105642_member_active_devices_member_device_switches",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117105642_member_active_devices.sql",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117105642_member_active_devices_member_active_devices",
+      "target": "public_members",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117105642_member_active_devices.sql",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117105642_member_active_devices_member_device_switches",
+      "target": "public_members",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117105642_member_active_devices.sql",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117105642_member_active_devices_sql",
+      "target": "$graphify-root$_supabase_migrations_20261117105642_member_active_devices_member_device_switches_user_id_seq_idx",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117105642_member_active_devices.sql",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117105642_member_active_devices_member_device_switches_user_id_seq_idx",
+      "target": "$graphify-root$_supabase_migrations_20261117105642_member_active_devices_member_device_switches",
+      "relation": "indexes",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117105642_member_active_devices.sql",
+      "source_location": "L22",
+      "weight": 1.0
+    }
+  ]
+}

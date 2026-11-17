@@ -1,0 +1,171 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_issues_16_users_and_member_detail_ticket",
+      "label": "Ticket 16: Users List, Member Detail and Force Sign-out",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_16_users_and_member_detail_users_list",
+      "label": "Users List (Owner only)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_16_users_and_member_detail_member_detail",
+      "label": "Member Detail Page",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_16_users_and_member_detail_force_sign_out",
+      "label": "Force Sign-out",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_issues_16_users_and_member_detail_ticket",
+      "target": "_scratch_ayc_member_app_issues_04_active_device_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_16_users_and_member_detail_ticket",
+      "target": "_scratch_ayc_member_app_issues_05_content_model_topics_library_access_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_16_users_and_member_detail_ticket",
+      "target": "_scratch_ayc_member_app_readme_ayc_v1_spec",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_16_users_and_member_detail_ticket",
+      "target": "_scratch_ayc_member_app_readme_vertical_slice_ticket",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_16_users_and_member_detail_ticket",
+      "target": "_scratch_ayc_member_app_issues_16_users_and_member_detail_users_list",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_16_users_and_member_detail_ticket",
+      "target": "_scratch_ayc_member_app_issues_16_users_and_member_detail_member_detail",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_16_users_and_member_detail_ticket",
+      "target": "_scratch_ayc_member_app_issues_16_users_and_member_detail_force_sign_out",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_16_users_and_member_detail_force_sign_out",
+      "target": "_scratch_ayc_member_app_issues_04_active_device_active_device",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_16_users_and_member_detail_force_sign_out",
+      "target": "_scratch_ayc_member_app_readme_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_16_users_and_member_detail_member_detail",
+      "target": "_scratch_ayc_member_app_issues_04_active_device_device_switch_log",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_16_users_and_member_detail_users_list",
+      "target": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_beta_testers_tab",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_16_users_and_member_detail_force_sign_out",
+      "target": "_scratch_ayc_member_app_issues_04_active_device_session_ended_screen",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/16-users-and-member-detail.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

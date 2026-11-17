@@ -138,7 +138,7 @@ describe("Admin screens", () => {
     await expect(UsersPage()).rejects.toThrow("NEXT_REDIRECT /admin/denied?reason=owners-only");
   });
 
-  it("shows the Owner the Beta Testers tab, with the sample data's tester", async () => {
+  it("shows the Owner the Beta Testers tab, with the sample data's testers", async () => {
     signInAs("angel@aceyourcourse.ph");
     render(await UsersPage());
 
@@ -148,10 +148,11 @@ describe("Admin screens", () => {
     );
     const list = screen.getByRole("list", { name: "Beta Testers" });
     const rows = within(list).getAllByRole("listitem");
-    expect(rows).toHaveLength(1);
+    expect(rows).toHaveLength(2);
     expect(rows[0]).toHaveTextContent(
       /^tester@example\.comADDED \d{1,2} [A-Z]{3} \d{4} · BY ANGEL ROSE L\. LEPAÑA/,
     );
+    expect(rows[1]).toHaveTextContent(/^lapsed@example\.com/);
   });
 
   it.each(SCREENS.slice(0, 4))("%s is open to an Editor", async (title, Page) => {
@@ -178,7 +179,7 @@ describe("Admin shell layout", () => {
     resetSampleStore();
   });
 
-  it("puts an Owner's screen inside the sidebar, with all five screens", async () => {
+  it("puts an Owner's screen inside the sidebar, with all seven screens", async () => {
     signInAs("angel@aceyourcourse.ph");
     render(await AdminShellLayout({ children: <p>Screen</p> }));
     const sidebar = screen.getByRole("complementary");
@@ -191,8 +192,9 @@ describe("Admin shell layout", () => {
       "02Pages & promo",
       "03Products & store links",
       "04Reviews & FAQs",
-      "05Users",
-      "06Settings",
+      "05Member App content",
+      "06Users",
+      "07Settings",
       "View site ↗",
     ]);
     expect(within(sidebar).getByText("OWNER")).toBeInTheDocument();

@@ -116,13 +116,15 @@ const shell = async (children: React.ReactNode) =>
 const signInPage = async (query: { next?: string; error?: string } = {}) =>
   (await import("./sign-in/page")).default({ searchParams: Promise.resolve(query) });
 const notOpenYetPage = async () => (await import("./not-open-yet/page")).default();
+const library = async () =>
+  (await import("./(shell)/library/page")).default({ searchParams: Promise.resolve({}) });
 const signInAs = async (fields: Record<string, string>) =>
   (await import("./sign-in/actions")).signInAs({ error: null, email: "" }, form(fields));
 
 /** Every /app page behind the gate, by its address. */
 const GATED_PAGES: [string, () => Promise<unknown>][] = [
   ["/app", home],
-  ["/app/library", () => comingSoon("library")],
+  ["/app/library", library],
   ["/app/courses", () => comingSoon("courses")],
   ["/app/plans", () => comingSoon("plans")],
   ["/app/billing", () => comingSoon("billing")],
@@ -260,7 +262,6 @@ describe("Home", () => {
 
 describe("the screens that aren't built yet", () => {
   it.each([
-    ["library", "02 · LIBRARY"],
     ["courses", "03 · COURSES"],
     ["plans", "04 · PLANS"],
     ["billing", "05 · BILLING"],
@@ -349,9 +350,10 @@ describe("the sign-in screen", () => {
         .getAllByRole("listitem")
         .map((item) => item.textContent),
     ).toEqual([
-      "Bea Testertester@example.com · Beta Tester",
+      "Bea Testertester@example.com · Beta Tester · CE All-Access",
       "Angel Rose L. Lepañaangel@aceyourcourse.ph · Owner",
       "Sam Strangerstranger@example.com · Not a Beta Tester · sees “Not open yet”",
+      "Lou Lapsedlapsed@example.com · Beta Tester · CE All-Access ended",
     ]);
     for (const input of region.querySelectorAll<HTMLInputElement>('input[name="next"]')) {
       expect(input.value).toBe("/app/library");

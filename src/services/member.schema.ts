@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { TOKEN_HASH_PATTERN } from "@/lib/member-app/device-token";
 import { staffEmailSchema } from "@/services/admin.schema";
+import { CONTENT_KINDS } from "@/services/content.types";
 import type { TargetExamRefusal } from "@/services/member.types";
 
 // The Member seam's zod schemas, shared by its arms.
@@ -78,3 +79,13 @@ const formText = z.string().trim().max(40).catch("");
 
 /** What the Target Exam forms send: the Exam picked and, where there is one, the date typed. */
 export const targetExamFormSchema = z.object({ examCode: formText, examDate: formText });
+
+/**
+ * A deck, quiz or Reviewer PDF, as the address names it when a Member opens
+ * one (Phase 3, ticket 05). The address is the browser's, so anything else
+ * reads as nothing there.
+ */
+export const contentRefSchema = z.object({
+  kind: z.enum(CONTENT_KINDS),
+  id: z.string().uuid(),
+});

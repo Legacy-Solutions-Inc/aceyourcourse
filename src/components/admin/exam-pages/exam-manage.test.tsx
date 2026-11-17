@@ -59,6 +59,8 @@ function chePage(changes: Partial<AdminExamPage> = {}): AdminExamPage {
     },
     products: [],
     subjectProducts: { PCHEM: 0, THERMO: 0 },
+    subjectContent: {},
+    content: { decks: 0, quizzes: 0, reviewerPdfs: 0 },
     examsOnWebsite: ["CE"],
     ...changes,
   };

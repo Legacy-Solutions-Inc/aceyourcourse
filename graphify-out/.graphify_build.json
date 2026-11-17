@@ -1,0 +1,16 @@
+{
+  "excludes": [
+    "public/**",
+    "docs/mockup/**/*.dc.html",
+    "docs/mockup/**/_template.html",
+    "docs/mockup/assets/**",
+    "e2e/fixtures/**",
+    "src/app/fonts/**",
+    "graphify-out/**",
+    "**/*.mp4",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "**/*.png",
+    "**/*.webp"
+  ]
+}

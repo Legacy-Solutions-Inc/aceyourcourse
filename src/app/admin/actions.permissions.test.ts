@@ -17,6 +17,7 @@ import { productFormValues } from "@/lib/admin/product-form";
 import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
 import { reviewFormValues } from "@/lib/admin/review-form";
 import { getExamPageForAdmin } from "@/services/admin";
+import { sampleTopicId } from "@/services/mock/content";
 import { getSampleStore } from "@/services/mock/sample-store";
 
 import {
@@ -28,6 +29,7 @@ import {
 } from "../../../test/admin-inputs";
 import { editSampleCatalogue } from "../../../test/catalogue-seed";
 
+import * as content from "./(shell)/content/actions";
 import * as examPages from "./(shell)/exam-pages/actions";
 import * as products from "./(shell)/products/actions";
 import * as reviews from "./(shell)/reviews/actions";
@@ -86,6 +88,8 @@ const OWNER = sampleEmail("owner");
 const EDITOR = sampleEmail("editor");
 const NOT_STAFF = sampleEmail("not-staff");
 const READER = sampleActor("editor");
+/** An empty sample Topic in CE's MSTC, which any Staff User may rename, move or delete. */
+const SURVEYING = sampleTopicId("CE", "MSTC", "Surveying");
 
 const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
 /** The stamp every record has before anyone saves it. */
@@ -185,6 +189,19 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
   "./(shell)/users/actions.ts": {
     addTester: owner(() => users.addTester(IDLE, { input: { email: SAVES.betaTester } })),
     removeTester: owner(() => users.removeTester(IDLE, { input: { email: "tester@example.com" } })),
+  },
+  "./(shell)/content/actions.ts": {
+    addTopic: staff(() =>
+      content.addTopic(IDLE, { input: { exam: "ce", subject: "mstc", name: "Highways" } }),
+    ),
+    saveTopicName: editorSave("staff", content.saveTopicName, () => ({
+      id: SURVEYING,
+      name: "Leveling",
+    })),
+    moveTopicInSubject: staff(() =>
+      content.moveTopicInSubject(IDLE, { input: { id: SURVEYING, direction: "up" } }),
+    ),
+    removeTopic: staff(() => content.removeTopic(IDLE, { input: { id: SURVEYING } })),
   },
   "./(shell)/products/actions.ts": {
     setProductFlag: staff(() =>

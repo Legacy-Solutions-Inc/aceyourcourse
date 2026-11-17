@@ -144,7 +144,7 @@ test.describe("a session that never claimed this device", () => {
       await desk.page.getByRole("button", { name: "Use the Member App on this device" }).click();
       await expect(desk.page).toHaveURL(/\/app\/library$/);
       await expect(
-        desk.page.getByRole("heading", { level: 1, name: "Coming in the beta" }),
+        desk.page.getByRole("heading", { level: 1, name: "Subjects and topics" }),
       ).toBeVisible();
 
       // Confirming replaced device A.

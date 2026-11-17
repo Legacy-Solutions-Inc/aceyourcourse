@@ -71,6 +71,13 @@
       "when": 1794913002009,
       "tag": "20261117105642_member_active_devices",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794928546333,
+      "tag": "20261117151546_member_content",
+      "breakpoints": true
     }
   ]
 }

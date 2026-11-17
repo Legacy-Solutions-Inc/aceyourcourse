@@ -1,0 +1,441 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate",
+      "label": "Executer prompt 01: Member App shell, sign-in and beta gate",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_gate",
+      "label": "Member App gate (pure function + server wrapper)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L39",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Single server-side decision from (MEMBER_APP_LIVE switch, verified email, active Staff?, Beta Tester?) to open/not-open-yet; pure so it can be table-tested, called by every /app page and Member App action."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_live_switch",
+      "label": "MEMBER_APP_LIVE switch (memberAppLive)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L34",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_safememberappnext",
+      "label": "safeMemberAppNext",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L46",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Mirrors safeAdminNext so the OAuth callback can keep /app destinations without routing through the Staff Guard's continueSignIn; Admin next handling unchanged."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_beta_testers",
+      "label": "Beta Tester list (beta_testers table)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L41",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Matched by verified Google email, lowercased; no expiry and no role; add/remove writes Staff Activity."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_members_table",
+      "label": "members table / Member record",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L44",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Created only the first time someone passes the gate, keyed by Supabase User id; refused people never get one."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_seam",
+      "label": "Member seam (sample arm, database arm, one behaviour suite)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L61",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_admin_users_screen",
+      "label": "Admin Users screen (Owner-only Beta Testers tab)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L66",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_shell",
+      "label": "Member App shell (sidebar, mobile drawer, placeholder Home)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L49",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_sample_sign_in_as",
+      "label": "Sample-mode 'Sign in as' list",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L50",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Development-only list of sample Members (tester, Owner, stranger) that drives e2e; absent in closed mode where /app answers 404."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_not_open_yet_screen",
+      "label": "Not open yet screen",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L56",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_staff_guard",
+      "label": "Staff Guard",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L31",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_staff_activity",
+      "label": "Staff Activity",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L43",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_oauth_callback_route",
+      "label": "OAuth callback route (/auth/callback)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L33",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_deny_all_rls",
+      "label": "Deny-all RLS on every new table",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L135",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Every new table has RLS on with no anon or authenticated policies; deny-all database test must cover it."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_executer_guardrails",
+      "label": "Executer guardrails (no commit, no hosted Supabase, no new deps)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L128",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Changes stay uncommitted on the shared feat/phase3-member-app branch; migrations are written only and applied to hosted by the user after merging."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_live_sample_closed_modes",
+      "label": "Live / sample / closed modes (computeAdminMode)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": "L32",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_gate",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_safememberappnext",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_beta_testers",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_members_table",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_admin_users_screen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_shell",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_sample_sign_in_as",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_not_open_yet_screen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_oauth_callback_route",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_deny_all_rls",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_executer_guardrails",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_live_switch",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_beta_testers",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_members_table",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_oauth_callback_route",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_safememberappnext",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_admin_users_screen",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_beta_testers",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_beta_testers",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_admin_users_screen",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_staff_guard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_seam",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_members_table",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_shell",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_gate",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_not_open_yet_screen",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_gate",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_sample_sign_in_as",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_live_sample_closed_modes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_gate",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_staff_guard",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/prompts/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

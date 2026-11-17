@@ -16,13 +16,16 @@ import type {
   NewProductForm,
   NewReviewForm,
   NewSubjectForm,
+  NewTopicForm,
   OfficialExamDateForm,
   ProductFlags,
   ProductForm,
   PromoBannerForm,
+  RenameTopicForm,
   ReviewForm,
   ReviewMove,
   SubjectNamesForm,
+  TopicMove,
   WebsiteSettingsUpdate,
 } from "@/services/admin.schema";
 import type {
@@ -40,6 +43,8 @@ import type {
   AdminResult,
   AdminReview,
   AdminReviewList,
+  AdminTopic,
+  AdminTopicList,
   AdminWebsiteSettings,
   BetaTester,
   DeletedFaq,
@@ -59,6 +64,7 @@ import type {
   StaffList,
   StaffMember,
 } from "@/services/admin.types";
+import type { Topic } from "@/services/content.types";
 import type { Exam, ExamPageSection, SitePageKey } from "@/services/catalogue.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -474,8 +480,39 @@ export interface AdminService {
    * Deletes an Exam no Product belongs to, Live, Coming Soon or hidden, with
    * its Subjects and its page record. Otherwise the refusal's message is the
    * reason. Gives the deleted Exam, and clears the exams and exam-pages tags.
+   * From Phase 3, Topic content (a deck, quiz or Reviewer PDF, Hidden and
+   * Draft ones too) blocks deleting an Exam or Subject as well, and the empty
+   * Topics of a deleted Exam or Subject go with it.
    */
   deleteExam(actor: StaffActor, code: string): Promise<AdminResult<Exam>>;
+
+  // Member App content: Topics (any Staff User; Phase 3, ticket 05; spec,
+  // Phase 3 planning decisions → Topics editor). Each Subject's Topics, in
+  // order. A name is 1–120 characters, unique within its Subject ignoring
+  // case. Each write appends one Staff Activity record (entity "topic"); none
+  // returns a cache tag, since nothing cached reads Topics.
+
+  /** A Subject's Topics list, or null when the Exam or Subject isn't in the catalogue. */
+  listTopicsForAdmin(
+    actor: StaffActor,
+    examCode: string,
+    subjectCode: string,
+  ): Promise<AdminTopicList | null>;
+  /** "+ Add topic": a new, empty Topic, last in its Subject. */
+  createTopic(actor: StaffActor, input: NewTopicForm): Promise<AdminResult<AdminTopic>>;
+  /** Renames a Topic, with the conflict check. Its progress is tied to it, not its name. */
+  renameTopic(
+    actor: StaffActor,
+    input: RenameTopicForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminTopic>>;
+  /** ▲▼: one place earlier or later in its Subject. Gives the Subject's new order of ids. */
+  moveTopic(actor: StaffActor, id: string, direction: TopicMove): Promise<AdminResult<string[]>>;
+  /**
+   * Deletes an empty Topic; one with a deck, quiz or Reviewer PDF, Hidden or
+   * Draft ones too, is refused with the reason. Gives the deleted Topic.
+   */
+  deleteTopic(actor: StaffActor, id: string): Promise<AdminResult<Topic>>;
 
   // Site pages (any Staff User; ticket 20; spec, Phase 2 → Site pages). Each
   // of the Website's five Site pages: its SEO title and description (blank
@@ -616,6 +653,11 @@ export const createExam = impl.createExam;
 export const addSubject = impl.addSubject;
 export const deleteSubject = impl.deleteSubject;
 export const deleteExam = impl.deleteExam;
+export const listTopicsForAdmin = impl.listTopicsForAdmin;
+export const createTopic = impl.createTopic;
+export const renameTopic = impl.renameTopic;
+export const moveTopic = impl.moveTopic;
+export const deleteTopic = impl.deleteTopic;
 export const getSitePageForAdmin = impl.getSitePageForAdmin;
 export const updateSitePageSeo = impl.updateSitePageSeo;
 export const getAboutForAdmin = impl.getAboutForAdmin;

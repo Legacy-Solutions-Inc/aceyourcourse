@@ -12,6 +12,7 @@ import type { UploadRequest } from "@/services/uploads.types";
 
 import type { AdminArm } from "./admin-arms";
 import { loadTestCatalogue } from "./catalogue-database";
+import { newContent } from "./content-inputs";
 import { imageBytes } from "./image-bytes";
 import { SHARE_IMAGE_OWNERS, uploadSamplePhoto } from "./sample-photo";
 import { putFile } from "./storage-database";
@@ -74,4 +75,17 @@ export const DATABASE_ARM: AdminArm = {
     (await getDb().select().from(schema.deniedSignIns).orderBy(asc(schema.deniedSignIns.seq))).map(
       deniedSignInFromRow,
     ),
+  putContent: async (kind, topicId) => {
+    const { id, visibility, status, freePreview } = newContent(topicId);
+    if (kind === "deck") {
+      await getDb().insert(schema.decks).values({ id, topicId, visibility, freePreview });
+    }
+    if (kind === "quiz") {
+      await getDb().insert(schema.quizzes).values({ id, topicId, visibility, freePreview });
+    }
+    if (kind === "reviewer-pdf") {
+      await getDb().insert(schema.reviewerPdfs).values({ id, topicId, status, freePreview });
+    }
+    return id;
+  },
 };

@@ -12,6 +12,7 @@ import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
 import { isCalendarDate } from "@/lib/manila-time";
 import { variationLabel } from "@/lib/catalogue/price";
 import type { AdminError, RequiredRole, StaffActor } from "@/services/admin.types";
+import type { ContentCounts, TopicContent } from "@/services/content.types";
 import {
   EXAM_PAGE_SECTIONS,
   FAQ_ANSWER_MAX,
@@ -968,31 +969,69 @@ export const deleteSubjectInputSchema = subjectCodeInputSchema.extend({ exam: ex
 /** Pure: "1 Product", "3 Products". */
 export const productCount = (count: number) => `${count} ${count === 1 ? "Product" : "Products"}`;
 
+/** Pure: "1 deck", "2 quizzes": a count of one kind of Member App content. */
+function contentCount(count: number, one: string, many: string): string {
+  return `${count} ${count === 1 ? one : many}`;
+}
+
+/**
+ * Pure: the Member App content the counts hold, by kind, such as "2 decks,
+ * 1 quiz and 1 Reviewer PDF", or null when they hold none.
+ */
+export function contentList({ decks, quizzes, reviewerPdfs }: ContentCounts): string | null {
+  return andList([
+    decks > 0 ? contentCount(decks, "deck", "decks") : null,
+    quizzes > 0 ? contentCount(quizzes, "quiz", "quizzes") : null,
+    reviewerPdfs > 0 ? contentCount(reviewerPdfs, "Reviewer PDF", "Reviewer PDFs") : null,
+  ]);
+}
+
+/** Pure: "a, b and c" from the parts given, skipping nulls; null when there are none. */
+function andList(parts: readonly (string | null)[]): string | null {
+  const given = parts.filter((part) => part !== null);
+  const last = given.pop();
+  if (last === undefined) return null;
+  return given.length > 0 ? `${given.join(", ")} and ${last}` : last;
+}
+
 /**
  * Pure: why the Exam can't be deleted, or null when it can: while any Product
- * belongs to it, Live, Coming Soon or hidden.
+ * belongs to it, Live, Coming Soon or hidden, or while any of its Topics has
+ * a deck, quiz or Reviewer PDF (Phase 3; Hidden and Draft ones too).
  */
-export function examDeleteBlocker(exam: string, count: number): string | null {
-  if (count === 0) return null;
-  const belong = count === 1 ? "belongs" : "belong";
-  const them = count === 1 ? "it" : "them";
-  return `${productCount(count)} ${belong} to ${exam}. Move or delete ${them} first.`;
+export function examDeleteBlocker(
+  exam: string,
+  count: number,
+  content: ContentCounts,
+): string | null {
+  if (count > 0) {
+    const belong = count === 1 ? "belongs" : "belong";
+    const them = count === 1 ? "it" : "them";
+    return `${productCount(count)} ${belong} to ${exam}. Move or delete ${them} first.`;
+  }
+  const held = contentList(content);
+  return held ? `${exam} has Member App content: ${held}. Delete it first.` : null;
 }
 
 /**
  * Pure: why the Subject can't be deleted, or null when it can: while a
- * Product is tagged with it, or while it's its Exam's only Subject.
+ * Product is tagged with it, while any of its Topics has a deck, quiz or
+ * Reviewer PDF (Phase 3), or while it's its Exam's only Subject. Its empty
+ * Topics go with it.
  */
 export function subjectDeleteBlocker({
   exam,
   subject,
   products: count,
+  content,
   subjects,
 }: {
   exam: string;
   subject: string;
   /** How many Products are tagged with the Subject. */
   products: number;
+  /** The Member App content its Topics hold, Hidden and Draft included. */
+  content: ContentCounts;
   /** How many Subjects the Exam has. */
   subjects: number;
 }): string | null {
@@ -1001,6 +1040,8 @@ export function subjectDeleteBlocker({
     const those = count === 1 ? "that Product" : "those Products";
     return `${productCount(count)} ${use} ${subject}. Remove it from ${those} first.`;
   }
+  const held = contentList(content);
+  if (held) return `${subject} has Member App content: ${held}. Delete it first.`;
   return subjects <= 1
     ? `${exam} needs at least one Subject. Add another before deleting this one.`
     : null;
@@ -1432,3 +1473,68 @@ export const announcementFormSchema = announcementFormFields
 
 /** "Save announcement": its messages, their shape checked. */
 export const saveAnnouncementInputSchema = announcementFormFields;
+
+// ── Member App content: Topics (Phase 3, ticket 05) ─────────────────────────
+// Each Subject's Topics list in the Admin (spec, Phase 3 planning decisions →
+// Topics editor): any Staff User adds, renames, moves and deletes Topics. A
+// name is unique within its Subject, ignoring case; that rule needs the
+// Topics, so it's the seam's, with the message below.
+
+export const TOPIC_NAME_MAX = 120;
+
+/** A Topic's name as saved: trimmed, with single spaces, 1–120 characters. */
+const topicName = z
+  .string()
+  .max(2000, `KEEP IT TO ${TOPIC_NAME_MAX} CHARACTERS`)
+  .transform((text) => text.trim().replace(/\s+/g, " "))
+  .pipe(
+    z
+      .string()
+      .min(1, "ENTER THE TOPIC’S NAME")
+      .max(TOPIC_NAME_MAX, `KEEP IT TO ${TOPIC_NAME_MAX} CHARACTERS`),
+  );
+
+/** A Topic, as its row's buttons name it. */
+const topicId = z.string().uuid("THAT TOPIC ISN’T THERE · RELOAD THE PAGE");
+
+/** "+ Add topic": the Subject (its Exam's code and its own) and the new Topic's name. */
+export const newTopicFormSchema = z.object({
+  exam: examCode.transform(typedCode),
+  subject: subjectCodeInputSchema.shape.code,
+  name: topicName,
+});
+
+export type NewTopicForm = z.input<typeof newTopicFormSchema>;
+
+/** Rename: the Topic and its new name. */
+export const renameTopicFormSchema = z.object({ id: topicId, name: topicName });
+
+export type RenameTopicForm = z.input<typeof renameTopicFormSchema>;
+
+/** ▲▼ on a Topic: one place earlier or later in its Subject's order. */
+export const topicMoveSchema = reviewMoveSchema;
+
+export type TopicMove = z.infer<typeof topicMoveSchema>["direction"];
+
+/** ▲▼, as its Server Action takes it: the Topic and the way it moves. */
+export const topicMoveInputSchema = topicMoveSchema.extend({ id: topicId });
+
+/** Delete: the Topic. */
+export const topicIdInputSchema = z.object({ id: topicId });
+
+/** "<SUBJECT> ALREADY HAS A TOPIC CALLED “<name>”", on the name field. */
+export const alreadyATopic = (name: string, subject: string) =>
+  `${subject} ALREADY HAS A TOPIC CALLED “${name}”`;
+
+/**
+ * Pure: why the Topic can't be deleted, or null when it can: while it has a
+ * deck, quiz or Reviewer PDF, Hidden and Draft ones too.
+ */
+export function topicDeleteBlocker({ deck, quiz, reviewerPdf }: TopicContent): string | null {
+  const held = andList([
+    deck ? "a deck" : null,
+    quiz ? "a quiz" : null,
+    reviewerPdf ? "a Reviewer PDF" : null,
+  ]);
+  return held ? `It has ${held}. Only an empty Topic can be deleted.` : null;
+}

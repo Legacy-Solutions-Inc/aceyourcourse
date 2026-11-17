@@ -78,10 +78,8 @@ const home = async (query: { restored?: string } = {}) =>
   (await import("./(shell)/page")).default({ searchParams: Promise.resolve(query) });
 const account = async () => (await import("./(shell)/account/page")).default();
 const addExamPage = async () => (await import("./(shell)/add-exam/page")).default();
-const comingSoon = async (segment: string) =>
-  (await import("./(shell)/[screen]/page")).default({
-    params: Promise.resolve({ screen: segment }),
-  });
+const library = async () =>
+  (await import("./(shell)/library/page")).default({ searchParams: Promise.resolve({}) });
 const shell = async () =>
   (await import("./(shell)/layout")).default({ children: <p>the screen</p> });
 
@@ -162,7 +160,7 @@ describe("onboarding", () => {
   });
 
   it.each([
-    ["/app/library", () => comingSoon("library")],
+    ["/app/library", library],
     ["/app/account", account],
     ["/app/add-exam", addExamPage],
   ])("sends them from %s to Home until they have a Target Exam", async (_path, page) => {

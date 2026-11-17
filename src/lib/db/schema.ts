@@ -16,11 +16,13 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
 import { FAQ_GROUPS, PRODUCT_FORMATS, SITE_PAGES } from "@/services/catalogue.schema";
 import type { AboutContent, Marketplace } from "@/services/catalogue.types";
+import { CONTENT_VISIBILITIES, REVIEWER_PDF_STATUSES } from "@/services/content.types";
 
 /**
  * Drizzle schema, the typed data layer behind the service seams
@@ -41,7 +43,8 @@ import type { AboutContent, Marketplace } from "@/services/catalogue.types";
  * check compares (CONVENTIONS §3).
  *
  * The Member App (Phase 3): the Beta Tester list, the Members and their
- * consent records.
+ * records (consent, Target Exams, Active Device), the content model (Topics
+ * and their decks, quizzes and Reviewer PDFs), and the Access Passes.
  */
 
 export const MARKETPLACES = [
@@ -545,5 +548,151 @@ export const memberDeviceSwitches = pgTable(
       "member_device_switches_device_label_length",
       sql`char_length(${t.deviceLabel}) between 1 and 80`,
     ),
+  ],
+).enableRLS();
+
+// ── Member App content ──────────────────────────────────────────────────────
+
+export const contentVisibility = pgEnum("content_visibility", CONTENT_VISIBILITIES);
+export const reviewerPdfStatus = pgEnum("reviewer_pdf_status", REVIEWER_PDF_STATUSES);
+
+/**
+ * The Topics (spec, Phase 3 → Content model): units of study within a
+ * Subject, in its order (`position`). A name is unique within its Subject,
+ * ignoring case, and kept trimmed. Deleting a Subject (or its Exam) deletes
+ * its Topics, but a Topic with a deck, quiz or Reviewer PDF can't be deleted
+ * (their foreign keys restrict it), so neither can its Subject or Exam.
+ * Progress is tied to the Topic's id, never its name.
+ */
+export const topics = pgTable(
+  "topics",
+  {
+    id: uuid("id").primaryKey(),
+    examCode: text("exam_code").notNull(),
+    subjectCode: text("subject_code").notNull(),
+    name: text("name").notNull(),
+    position: integer("position").notNull(),
+  },
+  (t) => [
+    foreignKey({
+      name: "topics_subject_fk",
+      columns: [t.examCode, t.subjectCode],
+      foreignColumns: [subjects.examCode, subjects.code],
+    })
+      .onDelete("cascade")
+      .onUpdate("cascade"),
+    uniqueIndex("topics_subject_name_key").on(t.examCode, t.subjectCode, sql`lower(${t.name})`),
+    check("topics_name_length", sql`char_length(${t.name}) between 1 and 120`),
+    check("topics_name_trimmed", sql`${t.name} = btrim(${t.name})`),
+    check("topics_position_positive", sql`${t.position} > 0`),
+  ],
+).enableRLS();
+
+/**
+ * Each Topic's flashcard deck, at most one: Hidden until Staff make it
+ * Visible, and optionally Free Preview. Its cards come with ticket 06.
+ */
+export const decks = pgTable("decks", {
+  id: uuid("id").primaryKey(),
+  topicId: uuid("topic_id")
+    .notNull()
+    .unique("decks_topic_id_key")
+    .references(() => topics.id, { onDelete: "restrict" }),
+  visibility: contentVisibility("visibility").notNull().default("hidden"),
+  freePreview: boolean("free_preview").notNull().default(false),
+}).enableRLS();
+
+/**
+ * Each Topic's quiz, at most one: Hidden until Staff make it Visible, and
+ * optionally Free Preview. Its questions and settings come with ticket 09.
+ */
+export const quizzes = pgTable("quizzes", {
+  id: uuid("id").primaryKey(),
+  topicId: uuid("topic_id")
+    .notNull()
+    .unique("quizzes_topic_id_key")
+    .references(() => topics.id, { onDelete: "restrict" }),
+  visibility: contentVisibility("visibility").notNull().default("hidden"),
+  freePreview: boolean("free_preview").notNull().default(false),
+}).enableRLS();
+
+/**
+ * The Reviewer PDFs: at most one per Topic, and none until Staff place it
+ * under one, which Publishing needs. Only the record and its status are here;
+ * the upload, the job and the page images come with ticket 12.
+ */
+export const reviewerPdfs = pgTable(
+  "reviewer_pdfs",
+  {
+    id: uuid("id").primaryKey(),
+    topicId: uuid("topic_id")
+      .unique("reviewer_pdfs_topic_id_key")
+      .references(() => topics.id, { onDelete: "restrict" }),
+    status: reviewerPdfStatus("status").notNull().default("processing"),
+    freePreview: boolean("free_preview").notNull().default(false),
+  },
+  (t) => [
+    check(
+      "reviewer_pdfs_published_has_topic",
+      sql`${t.status} <> 'published' or ${t.topicId} is not null`,
+    ),
+  ],
+).enableRLS();
+
+// ── Access Passes ───────────────────────────────────────────────────────────
+
+/**
+ * The Access Passes (ADR 0010): one per Member and Exam, active while
+ * `ends_at` is later than now. `user_id` is the Member's User id, with no
+ * foreign key to members, so a pass can wait for its holder's first sign-in
+ * (the sample data's passes do); deleting an account deletes its passes with
+ * it (ticket 19). Deleting the Exam deletes its passes.
+ */
+export const accessPasses = pgTable(
+  "access_passes",
+  {
+    userId: uuid("user_id").notNull(),
+    examCode: text("exam_code")
+      .notNull()
+      .references(() => exams.code, { onDelete: "cascade", onUpdate: "cascade" }),
+    endsAt: at("ends_at").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.examCode] }),
+    index("access_passes_exam_code_idx").on(t.examCode),
+  ],
+).enableRLS();
+
+/**
+ * Each Access Pass's history: every grant that made or extended it, in order
+ * (`seq`), with who granted it as they were then. Granting comes with ticket
+ * 17; until then the table stays empty. Deleting the pass deletes its history.
+ */
+export const accessPassGrants = pgTable(
+  "access_pass_grants",
+  {
+    seq: bigint("seq", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+    userId: uuid("user_id").notNull(),
+    examCode: text("exam_code").notNull(),
+    days: integer("days").notNull(),
+    startsAt: at("starts_at").notNull(),
+    endsAt: at("ends_at").notNull(),
+    reason: text("reason").notNull(),
+    grantedByEmail: text("granted_by_email").notNull(),
+    grantedByName: text("granted_by_name").notNull(),
+    grantedAt: at("granted_at").notNull(),
+  },
+  (t) => [
+    foreignKey({
+      name: "access_pass_grants_pass_fk",
+      columns: [t.userId, t.examCode],
+      foreignColumns: [accessPasses.userId, accessPasses.examCode],
+    })
+      .onDelete("cascade")
+      .onUpdate("cascade"),
+    index("access_pass_grants_user_id_exam_code_seq_idx").on(t.userId, t.examCode, t.seq),
+    check("access_pass_grants_days_range", sql`${t.days} between 1 and 365`),
+    check("access_pass_grants_ends_after_start", sql`${t.endsAt} > ${t.startsAt}`),
+    check("access_pass_grants_reason_present", sql`btrim(${t.reason}) <> ''`),
   ],
 ).enableRLS();

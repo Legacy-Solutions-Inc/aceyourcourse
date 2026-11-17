@@ -230,6 +230,16 @@ const KEYBOARD_SCREENS: {
     ready: (page) => page.getByRole("form", { name: "Announcement bar" }),
   },
   {
+    name: "Member App content, with a Topic's delete dialog",
+    who: "editor",
+    path: paths.admin.contentTopics("CE", "MSTC"),
+    ready: (page) => page.getByRole("region", { name: "CE · MSTC · TOPICS" }),
+    dialog: {
+      open: (page) => page.getByRole("button", { name: "Delete Surveying" }).click(),
+      name: "Delete “Surveying” from MSTC?",
+    },
+  },
+  {
     name: "Users, with the Beta Testers tab and its remove dialog",
     who: "owner",
     path: paths.admin.users,
@@ -323,6 +333,8 @@ for (const size of SIZES) {
         "/admin/exam-pages?page=site&site=about&section=seo",
         "/admin/products",
         "/admin/reviews",
+        // Member App content: a Subject's Topics (Phase 3, ticket 05).
+        "/admin/content",
         "/admin/users",
         "/admin/settings",
       ]) {

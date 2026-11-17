@@ -7,7 +7,7 @@ import type { StaffRole } from "@/services/admin.types";
 // mockup.
 
 export type AdminScreenKey =
-  "overview" | "exam-pages" | "products" | "reviews" | "users" | "settings";
+  "overview" | "exam-pages" | "products" | "reviews" | "content" | "users" | "settings";
 
 export interface AdminMenuItem {
   key: AdminScreenKey;
@@ -65,8 +65,15 @@ const MENU: readonly AdminMenuGroup[] = [
     label: "MEMBER APP",
     items: [
       {
-        key: "users",
+        key: "content",
         code: "05",
+        label: "Member App content",
+        href: paths.admin.content,
+        ownerOnly: false,
+      },
+      {
+        key: "users",
+        code: "06",
         label: "Users",
         href: paths.admin.users,
         ownerOnly: true,
@@ -78,7 +85,7 @@ const MENU: readonly AdminMenuGroup[] = [
     items: [
       {
         key: "settings",
-        code: "06",
+        code: "07",
         label: "Settings",
         href: paths.admin.settings,
         ownerOnly: true,

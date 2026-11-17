@@ -37,9 +37,12 @@ import type {
 import { type CatalogueSeed, examPageDefaults, MAX_EXAMS } from "@/services/catalogue.schema";
 import type { Exam, ExamPage, ExamPageSection } from "@/services/catalogue.types";
 import { CATALOGUE_TAGS } from "@/services/catalogue.tags";
+import { contentCountsOf } from "@/services/content.rules";
+import type { ContentCounts, Topic } from "@/services/content.types";
 import { getSampleStore, stampOf } from "@/services/mock/sample-store";
 
 import { shareImageAsSaved } from "./photos";
+import { deleteTopics } from "./topic-records";
 import { writeCatalogue } from "./write";
 
 // The sample arm of the Admin seam's Exam pages area: each Exam page's
@@ -75,6 +78,16 @@ function draftPage(draft: CatalogueSeed, code: string): ExamPage {
   return made;
 }
 
+/** The Member App content the Topics that match hold, Hidden and Draft included. */
+function contentIn(matches: (topic: Topic) => boolean): ContentCounts {
+  const { topics, decks, quizzes, reviewerPdfs } = getSampleStore();
+  return contentCountsOf({ topics, decks, quizzes, reviewerPdfs }, matches);
+}
+
+const inExam = (exam: string) => (topic: Topic) => topic.examCode === exam;
+const inSubject = (exam: string, subject: string) => (topic: Topic) =>
+  topic.examCode === exam && topic.subjectCode === subject;
+
 function adminExamPageOf(catalogue: CatalogueSeed, code: string): AdminExamPage | null {
   const exam = findExam(catalogue, code);
   if (!exam) return null;
@@ -97,6 +110,10 @@ function adminExamPageOf(catalogue: CatalogueSeed, code: string): AdminExamPage 
     subjectProducts: Object.fromEntries(
       exam.subjects.map((subject) => [subject.code, taggedWith(catalogue, code, subject.code)]),
     ),
+    subjectContent: Object.fromEntries(
+      exam.subjects.map((subject) => [subject.code, contentIn(inSubject(code, subject.code))]),
+    ),
+    content: contentIn(inExam(code)),
     examsOnWebsite: catalogue.exams
       .filter((e) => catalogue.products.some((p) => p.examCode === e.code && p.showOnWebsite))
       .map((e) => e.code),
@@ -307,7 +324,9 @@ export async function updateOfficialExamDate(
 // offer and no Official Exam Date. It stays off the Website until one of its
 // Products is on the Website (listExams). An Exam is deleted only while no
 // Product belongs to it, and a Subject only while no Product is tagged with
-// it; the reason is the refusal's message.
+// it; the reason is the refusal's message. From Phase 3, Topic content (a
+// deck, quiz or Reviewer PDF, Hidden and Draft ones too) blocks a delete as
+// well, and the empty Topics of a deleted Exam or Subject go with it.
 
 const refusal = (message: string): AdminError => ({
   kind: "invalid",
@@ -376,7 +395,7 @@ export async function deleteSubject(
   const examCode = examCodeOf(code);
   const subject = typedCode(subjectCode);
   const subjectsOf = (catalogue: CatalogueSeed) => findExam(catalogue, examCode)?.subjects ?? null;
-  return writeCatalogue(actor, { code: subjectCode }, undefined, {
+  const result = writeCatalogue(actor, { code: subjectCode }, undefined, {
     ...partWrite(examCode, "subjects", "owner"),
     schema: subjectCodeInputSchema,
     exists: (catalogue) => subjectsOf(catalogue)?.some((s) => s.code === subject) ?? false,
@@ -385,6 +404,7 @@ export async function deleteSubject(
         exam: examCode,
         subject,
         products: taggedWith(catalogue, examCode, subject),
+        content: contentIn(inSubject(examCode, subject)),
         subjects: subjectsOf(catalogue)?.length ?? 0,
       });
       return reason ? refusal(reason) : null;
@@ -397,19 +417,22 @@ export async function deleteSubject(
     },
     tags: [CATALOGUE_TAGS.exams],
   });
+  // Like the database's cascade, its Topics (all empty) go with it.
+  if (result.ok) deleteTopics(actor, new Date(), inSubject(examCode, subject));
+  return result;
 }
 
 export async function deleteExam(actor: StaffActor, code: string): Promise<AdminResult<Exam>> {
   const examCode = examCodeOf(code);
   let deleted: Exam | undefined;
-  return writeCatalogue(actor, { code }, undefined, {
+  const result = writeCatalogue(actor, { code }, undefined, {
     role: "owner",
     record: recordOf(examCode, "header"),
     exists: exists(examCode),
     schema: deleteExamInputSchema,
     check: (catalogue) => {
       const products = catalogue.products.filter((p) => p.examCode === examCode).length;
-      const reason = examDeleteBlocker(examCode, products);
+      const reason = examDeleteBlocker(examCode, products, contentIn(inExam(examCode)));
       return reason ? refusal(reason) : null;
     },
     activity: { entity: "exam", entityId: examCode, action: "delete" },
@@ -430,4 +453,7 @@ export async function deleteExam(actor: StaffActor, code: string): Promise<Admin
     },
     tags: [CATALOGUE_TAGS.exams, CATALOGUE_TAGS.examPages],
   });
+  // Like the database's cascade, its Topics (all empty) go with it.
+  if (result.ok) deleteTopics(actor, new Date(), inExam(examCode));
+  return result;
 }

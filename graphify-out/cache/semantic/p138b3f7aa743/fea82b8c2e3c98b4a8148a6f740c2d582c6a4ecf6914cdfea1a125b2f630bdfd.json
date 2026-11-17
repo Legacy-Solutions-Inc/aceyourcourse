@@ -1,0 +1,218 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft",
+      "label": "Executer prompt 02: Consent and the Legal v2.0 draft",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_consent_check",
+      "label": "Consent check (pure: ok / first-time / terms-changed / privacy-changed / both-changed)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": "L28",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Compares the Member's latest agreement with current Terms and Privacy versions read from the legal documents as single source; runs after the gate on every /app page and action except sign-out and the consent action."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_member_consents",
+      "label": "member_consents table (consent history)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": "L29",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Records Member, Terms version, Privacy version, agreed at; kept as history, never overwritten."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_consent_screen",
+      "label": "Consent screen and action",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": "L30",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Two unchecked required checkboxes, Agree disabled until both ticked; the action takes the shown versions and refuses stale ones so the screen reloads with current versions."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_legal_v2_draft",
+      "label": "Legal v2.0 draft (Member App sections)",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": "L38",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Adds account/Google sign-in, study data, Active Device log, PDF watermarking, Access Passes, Privacy Requests, cookieless analytics; marked 'Draft, pending legal review'."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_draft_notice",
+      "label": "'Draft, pending legal review' notice (draft flag)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": "L48",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_privacy_requests",
+      "label": "Privacy Requests (copy within 7 days, deletion within 30)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": "L46",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft",
+      "target": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_consent_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft",
+      "target": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_member_consents",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft",
+      "target": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_consent_screen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft",
+      "target": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_legal_v2_draft",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft",
+      "target": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_draft_notice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_consent_check",
+      "target": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_member_consents",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_consent_check",
+      "target": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_legal_v2_draft",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_consent_screen",
+      "target": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_consent_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_legal_v2_draft",
+      "target": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_draft_notice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_legal_v2_draft",
+      "target": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_privacy_requests",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_consent_check",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_gate",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_member_consents",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/02-consent-and-legal-v2-draft.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

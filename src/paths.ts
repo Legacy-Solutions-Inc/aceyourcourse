@@ -1,5 +1,6 @@
 import type { SignInProblem } from "@/lib/admin/sign-in-problem";
 import type { DeniedScreenReason } from "@/services/admin.types";
+import type { ContentKind } from "@/services/content.types";
 
 export const paths = {
   home: "/",
@@ -69,6 +70,11 @@ export const paths = {
     /** Home, saying a Target Exam the Member removed earlier is back. */
     examRestored: (examCode: string) => `/app?restored=${encodeURIComponent(examCode)}`,
     library: "/app/library",
+    /** The Library open on one of the selected Target Exam's Subjects. */
+    librarySubject: (subjectCode: string) =>
+      `/app/library?subject=${encodeURIComponent(subjectCode)}`,
+    /** One deck, quiz or Reviewer PDF: opening it runs the access decision. */
+    content: (kind: ContentKind, id: string) => `/app/library/${kind}/${encodeURIComponent(id)}`,
     courses: "/app/courses",
     plans: "/app/plans",
     billing: "/app/billing",
@@ -102,6 +108,14 @@ export const paths = {
     settings: "/admin/settings",
     /** Users (Owners only): the Beta Testers tab for now; the rest comes with ticket 16. */
     users: "/admin/users",
+    /** Member App content (Phase 3): each Subject's Topics, picked by Exam and Subject. */
+    content: "/admin/content",
+    /** Member App content open on one Subject's Topics list. */
+    contentTopics: (examCode: string, subjectCode: string) =>
+      `/admin/content?${new URLSearchParams({
+        exam: examCode.toLowerCase(),
+        subject: subjectCode.toLowerCase(),
+      }).toString()}`,
     /** Development-only: POST resets the sample data; 404 unless the Admin runs on it. */
     resetSampleData: "/api/dev/sample-data/reset",
     /**

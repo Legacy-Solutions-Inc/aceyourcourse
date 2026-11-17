@@ -9,6 +9,7 @@ import * as adminSeam from "@/services/admin";
 import type { AdminService } from "@/services/admin";
 import type { AdminResult, StaffActor } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
+import { sampleTopicId } from "@/services/mock/content";
 
 import {
   SAVES,
@@ -35,6 +36,9 @@ const KIM = sampleEmail("invited");
 const EXPIRED = sampleEmail("expired");
 /** The Beta Tester the sample data starts with. */
 const SAMPLE_TESTER = "tester@example.com";
+/** An empty sample Topic, in CE's MSTC. */
+const SURVEYING = sampleTopicId("CE", "MSTC", "Surveying");
+const UNKNOWN_TOPIC = "3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b";
 
 /** The seam's reads: they change nothing. */
 const READS = [
@@ -58,6 +62,7 @@ const READS = [
   "getAboutForAdmin",
   "getPromoForAdmin",
   "getAnnouncementForAdmin",
+  "listTopicsForAdmin",
 ] as const satisfies readonly (keyof AdminService)[];
 
 /**
@@ -528,6 +533,40 @@ const WRITES: Record<string, Write> = {
     saves: (seam, actor) => seam.deleteExam(actor, "che"),
     refused: (seam, actor) => seam.deleteExam(actor, "zz"),
     refusal: "not-found",
+  },
+  createTopic: {
+    actor: EDITOR,
+    entity: "topic",
+    entityId: null,
+    saves: (seam, actor) =>
+      seam.createTopic(actor, { exam: "ce", subject: "mstc", name: "Highways" }),
+    refused: (seam, actor) => seam.createTopic(actor, { exam: "ce", subject: "mstc", name: " " }),
+    refusal: "invalid",
+  },
+  renameTopic: {
+    actor: EDITOR,
+    entity: "topic",
+    entityId: SURVEYING,
+    saves: (seam, actor) => seam.renameTopic(actor, { id: SURVEYING, name: "Leveling" }),
+    refused: (seam, actor) => seam.renameTopic(actor, { id: UNKNOWN_TOPIC, name: "Leveling" }),
+    refusal: "not-found",
+  },
+  moveTopic: {
+    actor: EDITOR,
+    entity: "topic",
+    entityId: SURVEYING,
+    saves: (seam, actor) => seam.moveTopic(actor, SURVEYING, "up"),
+    refused: (seam, actor) => seam.moveTopic(actor, UNKNOWN_TOPIC, "up"),
+    refusal: "not-found",
+  },
+  deleteTopic: {
+    actor: EDITOR,
+    entity: "topic",
+    entityId: SURVEYING,
+    saves: (seam, actor) => seam.deleteTopic(actor, SURVEYING),
+    // Simple Curves has a deck, a quiz and a Reviewer PDF.
+    refused: (seam, actor) => seam.deleteTopic(actor, sampleTopicId("CE", "MSTC", "Simple Curves")),
+    refusal: "invalid",
   },
   updatePromoBanner: {
     actor: EDITOR,

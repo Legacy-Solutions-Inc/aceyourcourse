@@ -1,0 +1,346 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_executer_prompt",
+      "label": "Executer prompt 15: Dashboard and progress",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": "L1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_progress_calculator",
+      "label": "Pure progress calculator",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": "L27",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "All dashboard and Library numbers come from one pure calculator over current-state records; Hidden or Draft content is left out of every denominator."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_topic_percent",
+      "label": "Topic % (mean of present components)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": "L28",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "A missing component is not counted as 0."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_subject_percent",
+      "label": "Subject % and quiz average",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": "L29",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_weak_topic",
+      "label": "Weak Topic rule",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": "L31",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Best Score below passing score, or 5+ Review again marks; show 3 lowest by Topic %."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_study_streak",
+      "label": "Study Streak (current, best, last 7 days)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": "L32",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_dashboard_screen",
+      "label": "Member App dashboard (Home)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": "L34",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_continue_where_left_off",
+      "label": "Continue where you left off",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": "L36",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_member_progress_summary",
+      "label": "Per-Member progress summary (for ticket 16)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": "L43",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_progress_calculator",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_topic_percent",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_subject_percent",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_weak_topic",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_study_streak",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_dashboard_screen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_continue_where_left_off",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_member_progress_summary",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_member_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_guardrails",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_progress_calculator",
+      "target": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_topic_percent",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_progress_calculator",
+      "target": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_subject_percent",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_progress_calculator",
+      "target": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_weak_topic",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_progress_calculator",
+      "target": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_study_streak",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_progress_calculator",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_quiz_attempt",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_progress_calculator",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_best_score_only_rises",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_progress_calculator",
+      "target": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_pages_viewed_record",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_study_streak",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_study_day",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_dashboard_screen",
+      "target": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_progress_calculator",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_continue_where_left_off",
+      "target": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_reviewer_resume_state",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_member_progress_summary",
+      "target": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_progress_calculator",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_member_progress_summary",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_member_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "progress_records_into_calculator",
+      "label": "Current-state progress records feeding the progress calculator",
+      "nodes": [
+        "_scratch_ayc_member_app_prompts_11_quiz_taking_quiz_attempt",
+        "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_pages_viewed_record",
+        "_scratch_ayc_member_app_prompts_11_quiz_taking_study_day",
+        "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_reviewer_resume_state",
+        "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_progress_calculator",
+        "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_member_progress_summary"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/15-dashboard-and-progress.md"
+    }
+  ]
+}

@@ -1,14 +1,17 @@
 import "server-only";
 
-import { asc, count, desc, eq } from "drizzle-orm";
+import { and, asc, type Column, count, desc, eq } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
 import { deviceStatusFor } from "@/lib/member-app/device-token";
+import { type ContentExam, contentItemOf, libraryOf } from "@/services/content.rules";
+import { accessPassFromRow, contentFromRows } from "@/services/content.rows";
 import type { MemberService } from "@/services/member";
 import {
   agreedVersionsSchema,
+  contentRefSchema,
   deviceClaimSchema,
   memberEmailSchema,
   memberUserIdSchema,
@@ -23,14 +26,16 @@ import {
   type TargetExamRecord,
   type WithMemberExams,
 } from "@/services/member.rules";
+import type { ContentKind } from "@/services/content.types";
 import type { ConsentRecord, DeviceSwitch, Member } from "@/services/member.types";
 
 // The Member seam on Postgres, selected by src/services/member.ts when
 // DATABASE_URL is set. Drizzle bypasses RLS, so each call is scoped here, in
 // the app layer, to the User the Member App gate passes it (coding standards
 // §3): a Member's records are only ever read or made by their own User id.
-// The Target Exam rules are shared with the sample arm (member.rules.ts), and
-// the Active Device's comparison with it (device-token.ts).
+// The Target Exam rules (member.rules.ts), the content rules
+// (content.rules.ts) and the Active Device's comparison (device-token.ts) are
+// shared with the sample arm.
 
 type MemberRow = typeof schema.members.$inferSelect;
 type ConsentRow = typeof schema.memberConsents.$inferSelect;
@@ -332,6 +337,112 @@ const deviceSwitchCount: MemberService["deviceSwitchCount"] = async (userId) => 
   }
 };
 
+// ── The Library and content ─────────────────────────────────────────────────
+
+/** The Exams with these codes (or every one), each with its Subjects in order. */
+async function readContentExams(db: Reader, examCode?: string): Promise<ContentExam[]> {
+  const { exams, subjects } = schema;
+  const rows = await db
+    .select({ examCode: exams.code, code: subjects.code, name: subjects.name })
+    .from(exams)
+    .leftJoin(subjects, eq(subjects.examCode, exams.code))
+    .where(examCode === undefined ? undefined : eq(exams.code, examCode))
+    .orderBy(asc(exams.position), asc(subjects.position));
+  const found = new Map<string, ContentExam & { subjects: { code: string; name: string }[] }>();
+  for (const row of rows) {
+    const exam = found.get(row.examCode) ?? { code: row.examCode, subjects: [] };
+    found.set(row.examCode, exam);
+    if (row.code !== null && row.name !== null)
+      exam.subjects.push({ code: row.code, name: row.name });
+  }
+  return [...found.values()];
+}
+
+const getLibrary: MemberService["getLibrary"] = async (examCode) => {
+  const wanted = examCode.trim().toUpperCase();
+  const { topics, decks, quizzes, reviewerPdfs } = schema;
+  try {
+    const db = getDb();
+    const [exam] = await readContentExams(db, wanted);
+    if (!exam) return [];
+    // Each kind's records whose Topic is in this Exam.
+    const inExam = (topicId: Column) => and(eq(topicId, topics.id), eq(topics.examCode, wanted));
+    const [topicRows, deckRows, quizRows, pdfRows] = await Promise.all([
+      db.select().from(topics).where(eq(topics.examCode, wanted)),
+      db.select({ row: decks }).from(decks).innerJoin(topics, inExam(decks.topicId)),
+      db.select({ row: quizzes }).from(quizzes).innerJoin(topics, inExam(quizzes.topicId)),
+      db
+        .select({ row: reviewerPdfs })
+        .from(reviewerPdfs)
+        .innerJoin(topics, inExam(reviewerPdfs.topicId)),
+    ]);
+    const content = contentFromRows({
+      topics: topicRows,
+      decks: deckRows.map(({ row }) => row),
+      quizzes: quizRows.map(({ row }) => row),
+      reviewerPdfs: pdfRows.map(({ row }) => row),
+    });
+    return libraryOf(exam, content);
+  } catch (error) {
+    throw asDatabaseError(error);
+  }
+};
+
+/** The record of this kind with this id, as the content rules take it, or none. */
+async function readRecord(db: Reader, ref: { kind: ContentKind; id: string }) {
+  const { decks, quizzes, reviewerPdfs } = schema;
+  const none = { decks: [], quizzes: [], reviewerPdfs: [] };
+  switch (ref.kind) {
+    case "deck":
+      return { ...none, decks: await db.select().from(decks).where(eq(decks.id, ref.id)) };
+    case "quiz":
+      return { ...none, quizzes: await db.select().from(quizzes).where(eq(quizzes.id, ref.id)) };
+    case "reviewer-pdf":
+      return {
+        ...none,
+        reviewerPdfs: await db.select().from(reviewerPdfs).where(eq(reviewerPdfs.id, ref.id)),
+      };
+  }
+}
+
+const getContentItem: MemberService["getContentItem"] = async (kind, id) => {
+  const ref = contentRefSchema.safeParse({ kind, id });
+  if (!ref.success) return null;
+  const { topics } = schema;
+  try {
+    const db = getDb();
+    const records = await readRecord(db, ref.data);
+    const [record] = [...records.decks, ...records.quizzes, ...records.reviewerPdfs];
+    if (!record?.topicId) return null;
+    const topicRows = await db.select().from(topics).where(eq(topics.id, record.topicId));
+    const [topic] = topicRows;
+    if (!topic) return null;
+    return contentItemOf(
+      ref.data.kind,
+      ref.data.id,
+      await readContentExams(db, topic.examCode),
+      contentFromRows({ topics: topicRows, ...records }),
+    );
+  } catch (error) {
+    throw asDatabaseError(error);
+  }
+};
+
+const listAccessPasses: MemberService["listAccessPasses"] = async (userId) => {
+  const wanted = memberUserIdSchema.parse(userId);
+  const { accessPasses } = schema;
+  try {
+    const rows = await getDb()
+      .select()
+      .from(accessPasses)
+      .where(eq(accessPasses.userId, wanted))
+      .orderBy(asc(accessPasses.examCode));
+    return rows.map(accessPassFromRow);
+  } catch (error) {
+    throw asDatabaseError(error);
+  }
+};
+
 export const databaseArm: MemberService = {
   isBetaTester,
   getOrCreateMember,
@@ -345,4 +456,7 @@ export const databaseArm: MemberService = {
   getActiveDevice,
   listDeviceSwitches,
   deviceSwitchCount,
+  getLibrary,
+  getContentItem,
+  listAccessPasses,
 };

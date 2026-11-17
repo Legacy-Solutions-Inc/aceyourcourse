@@ -1,0 +1,259 @@
+{
+  "nodes": [
+    {
+      "id": "docs_adr_0010_access_follows_the_exam",
+      "label": "ADR 0010: Access follows the Exam",
+      "file_type": "document",
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": "L1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_0010_access_follows_the_exam_plan_unlocks_exam",
+      "label": "Plan unlocks all of one Exam's content",
+      "file_type": "rationale",
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": "L21",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "The only Plans sold are '{Exam} All-Access'; content belongs to an Exam so access follows the Exam."
+    },
+    {
+      "id": "docs_adr_0010_access_follows_the_exam_access_pass",
+      "label": "Access Pass",
+      "file_type": "concept",
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": "L24",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_0010_access_follows_the_exam_course_ownership",
+      "label": "Course Ownership",
+      "file_type": "concept",
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": "L26",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_0010_access_follows_the_exam_free_preview",
+      "label": "Free Preview flag",
+      "file_type": "concept",
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": "L28",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_0010_access_follows_the_exam_three_access_questions",
+      "label": "Access check questions",
+      "file_type": "concept",
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": "L31",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_0010_access_follows_the_exam_per_content_type_unlocks",
+      "label": "Per-content-type unlocks (rejected)",
+      "file_type": "rationale",
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": "L39",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Rejected: adds a layer to every access check and Admin screen for partial Plans nobody asked for."
+    },
+    {
+      "id": "docs_adr_0010_access_follows_the_exam_per_item_included_in",
+      "label": "Per-item 'Included in' list (rejected)",
+      "file_type": "rationale",
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": "L43",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_0010_access_follows_the_exam_staff_access_amendment",
+      "label": "Staff access amendment (2026-11-17)",
+      "file_type": "rationale",
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": "L46",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Active Staff open Visible/Published content without an Access Pass to check the real Member experience; no leak risk since Staff have originals in the Admin."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_adr_0010_access_follows_the_exam",
+      "target": "docs_adr_0010_access_follows_the_exam_plan_unlocks_exam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0010_access_follows_the_exam",
+      "target": "docs_adr_0010_access_follows_the_exam_access_pass",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0010_access_follows_the_exam",
+      "target": "docs_adr_0010_access_follows_the_exam_course_ownership",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0010_access_follows_the_exam",
+      "target": "docs_adr_0010_access_follows_the_exam_free_preview",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0010_access_follows_the_exam",
+      "target": "docs_adr_0010_access_follows_the_exam_three_access_questions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0010_access_follows_the_exam",
+      "target": "docs_adr_0010_access_follows_the_exam_per_content_type_unlocks",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0010_access_follows_the_exam",
+      "target": "docs_adr_0010_access_follows_the_exam_per_item_included_in",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0010_access_follows_the_exam",
+      "target": "docs_adr_0010_access_follows_the_exam_staff_access_amendment",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0010_access_follows_the_exam_plan_unlocks_exam",
+      "target": "docs_adr_0010_access_follows_the_exam_access_pass",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0010_access_follows_the_exam_three_access_questions",
+      "target": "docs_adr_0010_access_follows_the_exam_free_preview",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0010_access_follows_the_exam_three_access_questions",
+      "target": "docs_adr_0010_access_follows_the_exam_access_pass",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0010_access_follows_the_exam_three_access_questions",
+      "target": "docs_adr_0010_access_follows_the_exam_course_ownership",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0010_access_follows_the_exam_staff_access_amendment",
+      "target": "docs_adr_0010_access_follows_the_exam_three_access_questions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0010_access_follows_the_exam_plan_unlocks_exam",
+      "target": "docs_adr_0010_access_follows_the_exam_per_content_type_unlocks",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0010_access_follows_the_exam_plan_unlocks_exam",
+      "target": "docs_adr_0010_access_follows_the_exam_per_item_included_in",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0010-access-follows-the-exam.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

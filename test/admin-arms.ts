@@ -1,11 +1,13 @@
 import type { AdminService } from "@/services/admin";
 import * as sampleArm from "@/services/admin.mock";
 import type { DeniedSignIn, StaffActivity } from "@/services/admin.types";
+import type { ContentKind } from "@/services/content.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import type { UploadRequest } from "@/services/uploads.types";
 
 import { DATABASE_ARM } from "./admin-database";
+import { newContent } from "./content-inputs";
 import { editSampleCatalogue } from "./catalogue-seed";
 import { uploadSamplePhoto } from "./sample-photo";
 
@@ -43,6 +45,11 @@ export interface AdminArm {
   }): Promise<{ path: string; publicUrl: string }>;
   staffActivity(): Promise<StaffActivity[]>;
   deniedSignIns(): Promise<DeniedSignIn[]>;
+  /**
+   * Gives a Topic a Hidden deck or quiz, or a Draft Reviewer PDF, behind the
+   * seam's back, as a later ticket's import or upload will. Gives its id.
+   */
+  putContent(kind: ContentKind, topicId: string): Promise<string>;
 }
 
 const SAMPLE_ARM: AdminArm = {
@@ -64,6 +71,18 @@ const SAMPLE_ARM: AdminArm = {
   uploadPhoto: uploadSamplePhoto,
   staffActivity: async () => structuredClone(getSampleStore().staffActivity),
   deniedSignIns: async () => structuredClone(getSampleStore().deniedSignIns),
+  putContent: async (kind, topicId) => {
+    const store = getSampleStore();
+    const { id, visibility, status, freePreview } = newContent(topicId);
+    if (kind === "deck") store.decks = [...store.decks, { id, topicId, visibility, freePreview }];
+    if (kind === "quiz") {
+      store.quizzes = [...store.quizzes, { id, topicId, visibility, freePreview }];
+    }
+    if (kind === "reviewer-pdf") {
+      store.reviewerPdfs = [...store.reviewerPdfs, { id, topicId, status, freePreview }];
+    }
+    return id;
+  },
 };
 
 export const ADMIN_ARMS: AdminArm[] =

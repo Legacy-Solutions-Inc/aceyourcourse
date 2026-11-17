@@ -1,0 +1,115 @@
+// The Member App's content model (spec, Phase 3 → Content model; CONTEXT.md):
+// Exam → Subject → Topic, and each Topic's deck, quiz and Reviewer PDF, each
+// optional. Both the Member seam and the Admin seam read these records; the
+// Admin edits them. Cards, questions and page images come with later tickets.
+// The Access Pass records are here too: they decide what a Member may open.
+
+/** The three kinds of study content a Topic can have, in the order the Library shows them. */
+export const CONTENT_KINDS = ["deck", "quiz", "reviewer-pdf"] as const;
+export type ContentKind = (typeof CONTENT_KINDS)[number];
+
+/** Decks and quizzes are Hidden until Staff make them Visible. */
+export const CONTENT_VISIBILITIES = ["hidden", "visible"] as const;
+export type ContentVisibility = (typeof CONTENT_VISIBILITIES)[number];
+
+/** A Reviewer PDF goes Processing → Draft → Published or Unpublished, or Processing → Failed. */
+export const REVIEWER_PDF_STATUSES = [
+  "processing",
+  "draft",
+  "published",
+  "unpublished",
+  "failed",
+] as const;
+export type ReviewerPdfStatus = (typeof REVIEWER_PDF_STATUSES)[number];
+
+/** A unit of study within a Subject, in its Subject's order. */
+export interface Topic {
+  id: string;
+  /** The Exam and Subject it belongs to: the Subject's code is unique within its Exam. */
+  examCode: string;
+  subjectCode: string;
+  /** Unique within its Subject, ignoring case. */
+  name: string;
+  /** Its place in its Subject's order, from 1. */
+  position: number;
+}
+
+/** A Topic's flashcard deck: at most one per Topic. Its cards come with ticket 06. */
+export interface Deck {
+  id: string;
+  topicId: string;
+  visibility: ContentVisibility;
+  freePreview: boolean;
+}
+
+/** A Topic's quiz: at most one per Topic. Its questions come with ticket 09. */
+export interface Quiz {
+  id: string;
+  topicId: string;
+  visibility: ContentVisibility;
+  freePreview: boolean;
+}
+
+/**
+ * A Reviewer PDF: at most one per Topic. Until Staff place it under a Topic
+ * it has none, and it can't be Published. Its file and page images come with
+ * ticket 12.
+ */
+export interface ReviewerPdf {
+  id: string;
+  topicId: string | null;
+  status: ReviewerPdfStatus;
+  freePreview: boolean;
+}
+
+/** Every Topic and its content, as both seams' rules read them. */
+export interface ContentRecords {
+  topics: Topic[];
+  decks: Deck[];
+  quizzes: Quiz[];
+  reviewerPdfs: ReviewerPdf[];
+}
+
+/** What a Topic holds: each kind's visibility or status, or null when it has none. */
+export interface TopicContent {
+  deck: ContentVisibility | null;
+  quiz: ContentVisibility | null;
+  reviewerPdf: ReviewerPdfStatus | null;
+}
+
+/** How much of each kind of content something holds, for the delete rules. */
+export interface ContentCounts {
+  decks: number;
+  quizzes: number;
+  reviewerPdfs: number;
+}
+
+/**
+ * A Member's Access Pass (CONTEXT.md; ADR 0010): their right to all of one
+ * Exam's study content until `endsAt`. At most one per Member and Exam.
+ */
+export interface AccessPass {
+  /** The Member's User id. */
+  userId: string;
+  examCode: string;
+  /** ISO time it ends: active while that is later than now. */
+  endsAt: string;
+}
+
+/**
+ * One grant that made or extended an Access Pass, kept as its history.
+ * Granting comes with ticket 17; until then the history is empty.
+ */
+export interface AccessPassGrant {
+  userId: string;
+  examCode: string;
+  /** How many days it added. */
+  days: number;
+  /** ISO times the days it added start and end. */
+  startsAt: string;
+  endsAt: string;
+  reason: string;
+  /** The Staff User who granted it, as they were then. */
+  grantedBy: { email: string; name: string };
+  grantedAt: string;
+}

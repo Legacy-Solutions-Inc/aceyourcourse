@@ -53,7 +53,8 @@ test.describe("the Owner", () => {
       "aria-current",
       "page",
     );
-    await expect(rows(page)).toHaveCount(1);
+    // The sample data's two testers: the tester and the lapsed tester.
+    await expect(rows(page)).toHaveCount(2);
     await expect(row(page, SAMPLE_TESTER)).toContainText(/ADDED \d{1,2} [A-Z]{3} \d{4} · BY ANGEL/);
   });
 
@@ -62,7 +63,7 @@ test.describe("the Owner", () => {
 
     await add(page, "New.Tester@Example.com");
     await expect(status(page)).toHaveText(`✓ ADDED · ${NEW_TESTER.toUpperCase()} IS A BETA TESTER`);
-    await expect(rows(page)).toHaveCount(2);
+    await expect(rows(page)).toHaveCount(3);
     await expect(row(page, NEW_TESTER)).toContainText("BY ANGEL ROSE L. LEPAÑA");
     await expect(testers(page).getByLabel("GOOGLE ACCOUNT EMAIL")).toHaveValue("");
 
@@ -79,7 +80,7 @@ test.describe("the Owner", () => {
     await expect(status(page)).toHaveText(
       `✓ REMOVED · ${NEW_TESTER.toUpperCase()} IS NO LONGER A BETA TESTER`,
     );
-    await expect(rows(page)).toHaveCount(1);
+    await expect(rows(page)).toHaveCount(2);
     await page.reload();
     await expect(row(page, NEW_TESTER)).toHaveCount(0);
     await expect(row(page, SAMPLE_TESTER)).toBeVisible();
@@ -113,7 +114,7 @@ test.describe("the Owner", () => {
       "aria-invalid",
       "true",
     );
-    await expect(rows(page)).toHaveCount(1);
+    await expect(rows(page)).toHaveCount(2);
   });
 });
 
@@ -124,7 +125,8 @@ test.describe("the Editor", () => {
     const nav = page.getByRole("complementary").getByRole("navigation", { name: "Admin" });
     await expect(nav.getByRole("link", { name: "Reviews & FAQs" })).toBeVisible();
     await expect(nav.getByRole("link", { name: "Users" })).toHaveCount(0);
-    await expect(page.getByText("MEMBER APP", { exact: true })).toHaveCount(0);
+    // MEMBER APP holds only Member App content for an Editor.
+    await expect(nav.getByRole("link", { name: /Member App content/ })).toBeVisible();
 
     await page.goto(paths.admin.users);
     await expect(page).toHaveURL(/\/admin\/denied\?reason=owners-only$/);

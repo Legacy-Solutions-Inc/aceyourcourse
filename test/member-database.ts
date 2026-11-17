@@ -3,6 +3,7 @@ import { asc } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import * as schema from "@/lib/db/schema";
 import { databaseArm as adminDatabaseArm } from "@/services/admin.db";
+import { accessPassToRow } from "@/services/content.rows";
 import {
   consentFromRow,
   databaseArm,
@@ -50,4 +51,7 @@ export const MEMBER_DATABASE_ARM: MemberArm = {
         .from(schema.memberDeviceSwitches)
         .orderBy(asc(schema.memberDeviceSwitches.seq))
     ).map(deviceSwitchFromRow),
+  putAccessPass: async (pass) => {
+    await getDb().insert(schema.accessPasses).values(accessPassToRow(pass));
+  },
 };

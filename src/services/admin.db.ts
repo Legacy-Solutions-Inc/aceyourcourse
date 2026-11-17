@@ -10,7 +10,14 @@ import { diffRows } from "@/lib/db/row-diff";
 import * as schema from "@/lib/db/schema";
 import { isStorageConfigured } from "@/lib/supabase/admin";
 import type { AdminService } from "@/services/admin";
-import { alreadyAnExam, newExamCodeOf, staffEmailSchema, typedCode } from "@/services/admin.schema";
+import {
+  alreadyAnExam,
+  alreadyATopic,
+  newExamCodeOf,
+  newTopicFormSchema,
+  staffEmailSchema,
+  typedCode,
+} from "@/services/admin.schema";
 import {
   type BetaTesterRow,
   betaTestersFromRows,
@@ -36,6 +43,8 @@ import type {
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
+import { type ContentRows, contentFromRows, contentToRows } from "@/services/content.rows";
+import type { ContentRecords } from "@/services/content.types";
 import { ALREADY_A_BETA_TESTER } from "@/services/mock/admin/beta-testers";
 import { ALREADY_ON_LIST } from "@/services/mock/admin/staff";
 import { getSampleStore, type SampleStore, withStandInStore } from "@/services/mock/sample-store";
@@ -49,8 +58,8 @@ import type { UploadLookup } from "@/services/uploads.types";
 //   1. takes the write lock of each part it loads, for a write, so writes to
 //      the same part run one at a time,
 //   2. loads what the call needs (the catalogue and its save stamps, the
-//      staff list, or the Beta Tester list) into a store shaped like the
-//      sample data,
+//      Member App's Topics and their content, the staff list, or the Beta
+//      Tester list) into a store shaped like the sample data,
 //   3. runs the sample arm's area code over that store (withStandInStore), so
 //      the role check, validation, conflict check and rules are the same code
 //      in both arms, and
@@ -71,8 +80,16 @@ import type { UploadLookup } from "@/services/uploads.types";
 
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
-/** What a call reads: the catalogue with its save stamps, the staff list, and the Beta Tester list. */
-type Part = "catalogue" | "staff" | "betaTesters";
+/**
+ * What a call reads: the catalogue with its save stamps, the Member App's
+ * content (its Topics, with their decks, quizzes and Reviewer PDFs), the
+ * staff list, and the Beta Tester list. A call that reads both the catalogue
+ * and the content lists them in that order, so their locks are always taken
+ * in the same order.
+ */
+type Part = "catalogue" | "content" | "staff" | "betaTesters";
+
+const CATALOGUE: readonly Part[] = ["catalogue"];
 
 /**
  * Each part's write lock: writes that change the same part run one at a time,
@@ -115,10 +132,22 @@ async function readCatalogueRows(tx: Transaction): Promise<CatalogueRows> {
   };
 }
 
+async function readContentRows(tx: Transaction): Promise<ContentRows> {
+  return {
+    topics: await tx.select().from(schema.topics),
+    decks: await tx.select().from(schema.decks),
+    quizzes: await tx.select().from(schema.quizzes),
+    reviewerPdfs: await tx.select().from(schema.reviewerPdfs),
+  };
+}
+
 /** What a call loaded: the rows as they were, and the store the sample arm's code ran over. */
 interface Loaded {
   store: SampleStore;
   catalogue?: { rows: CatalogueRows; value: CatalogueSeed };
+  content?: { rows: ContentRows; value: ContentRecords };
+  /** The content as the call left it: the value loaded, or what its writes set. */
+  contentNow: () => ContentRecords | undefined;
   stamps?: Record<string, RecordStamp>;
   staff?: { rows: StaffRow[]; staff: StaffMember[]; invites: Invite[] };
   betaTesters?: { rows: BetaTesterRow[]; value: BetaTester[] };
@@ -142,7 +171,7 @@ async function load(
   uploadAt: UploadLookup | undefined,
 ): Promise<Loaded> {
   const sample = getSampleStore();
-  const loaded: Omit<Loaded, "store"> = {};
+  const loaded: Omit<Loaded, "store" | "contentNow"> = {};
   let bootedAt = sample.bootedAt;
 
   if (parts.includes("catalogue")) {
@@ -151,6 +180,10 @@ async function load(
     const stamps = stampsFromRows(await tx.select().from(schema.recordStamps));
     loaded.stamps = stamps.stamps;
     bootedAt = stamps.seededAt;
+  }
+  if (parts.includes("content")) {
+    const rows = await readContentRows(tx);
+    loaded.content = { rows, value: contentFromRows(rows) };
   }
   if (parts.includes("staff")) {
     const rows = await tx.select().from(schema.staff);
@@ -166,6 +199,8 @@ async function load(
   let staff = loaded.staff?.staff;
   let invites = loaded.staff?.invites;
   let betaTesters = loaded.betaTesters?.value;
+  let content = loaded.content?.value;
+  const contentPart = () => content ?? notLoaded("the Member App content");
   const store: SampleStore = {
     generation: sample.generation,
     bootedAt,
@@ -221,13 +256,44 @@ async function load(
     get memberDeviceSwitches() {
       return notLoaded("the device switches");
     },
+    get topics() {
+      return contentPart().topics;
+    },
+    set topics(topics) {
+      content = { ...contentPart(), topics };
+    },
+    get decks() {
+      return contentPart().decks;
+    },
+    set decks(decks) {
+      content = { ...contentPart(), decks };
+    },
+    get quizzes() {
+      return contentPart().quizzes;
+    },
+    set quizzes(quizzes) {
+      content = { ...contentPart(), quizzes };
+    },
+    get reviewerPdfs() {
+      return contentPart().reviewerPdfs;
+    },
+    set reviewerPdfs(reviewerPdfs) {
+      content = { ...contentPart(), reviewerPdfs };
+    },
+    // The Member seam reads the Access Passes itself; granting comes with ticket 17.
+    get accessPasses() {
+      return notLoaded("the Access Passes");
+    },
+    get accessPassGrants() {
+      return notLoaded("the Access Pass grants");
+    },
     // Read only: a rollback couldn't undo a change to the sample data's uploads.
     get uploads() {
       return sample.uploads;
     },
     ...(uploadAt ? { uploadAt } : {}),
   };
-  return { store, ...loaded };
+  return { store, ...loaded, contentNow: () => content };
 }
 
 // ── Saving ──────────────────────────────────────────────────────────────────
@@ -256,6 +322,14 @@ const CATALOGUE_TABLES: readonly (Synced & { rows: keyof CatalogueRows })[] = [
   { rows: "websiteSettings", table: schema.websiteSettings, key: ["id"] },
   { rows: "announcementMessages", table: schema.announcementMessages, key: ["position"] },
   { rows: "promoBanner", table: schema.promoBanner, key: ["id"] },
+];
+
+/** The Member App's content tables, parents before children, with their keys. */
+const CONTENT_TABLES: readonly (Synced & { rows: keyof ContentRows })[] = [
+  { rows: "topics", table: schema.topics, key: ["id"] },
+  { rows: "decks", table: schema.decks, key: ["id"] },
+  { rows: "quizzes", table: schema.quizzes, key: ["id"] },
+  { rows: "reviewerPdfs", table: schema.reviewerPdfs, key: ["id"] },
 ];
 
 const STAFF_TABLE: Synced = { table: schema.staff, key: ["email"] };
@@ -348,9 +422,10 @@ async function saveStamps(
 }
 
 /** Whether the call changed each part of what it loaded. */
-function changes({ store, ...loaded }: Loaded) {
+function changes({ store, contentNow, ...loaded }: Loaded) {
   return {
     catalogue: loaded.catalogue !== undefined && store.catalogue !== loaded.catalogue.value,
+    content: loaded.content !== undefined && contentNow() !== loaded.content.value,
     stamps: loaded.stamps !== undefined && store.stamps !== loaded.stamps,
     staff:
       loaded.staff !== undefined &&
@@ -365,18 +440,25 @@ function changes({ store, ...loaded }: Loaded) {
 async function save(tx: Transaction, loaded: Loaded): Promise<void> {
   const { store } = loaded;
   const changed = changes(loaded);
+  // The catalogue and the content in one sync, so a Topic is deleted before
+  // its Subject, and a Subject is added before its Topic.
+  const tables: Parameters<typeof syncTables>[1][number][] = [];
   if (changed.catalogue && loaded.catalogue) {
     const before = loaded.catalogue.rows;
     const after = catalogueToRows(store.catalogue);
-    await syncTables(
-      tx,
-      CATALOGUE_TABLES.map((synced) => ({
-        synced,
-        before: before[synced.rows],
-        after: after[synced.rows],
-      })),
-    );
+    for (const synced of CATALOGUE_TABLES) {
+      tables.push({ synced, before: before[synced.rows], after: after[synced.rows] });
+    }
   }
+  const content = loaded.contentNow();
+  if (changed.content && loaded.content && content) {
+    const before = loaded.content.rows;
+    const after = contentToRows(content);
+    for (const synced of CONTENT_TABLES) {
+      tables.push({ synced, before: before[synced.rows], after: after[synced.rows] });
+    }
+  }
+  if (tables.length > 0) await syncTables(tx, tables);
   if (changed.staff && loaded.staff) {
     await syncTables(tx, [
       { synced: STAFF_TABLE, before: loaded.staff.rows, after: staffToRows(store) },
@@ -464,10 +546,13 @@ const write =
  * database after the call read it, it answers conflict, with who saved it.
  */
 const stampedWrite =
-  <Args extends unknown[], Value>(call: Call<Args, AdminResult<Value>>) =>
+  <Args extends unknown[], Value>(
+    call: Call<Args, AdminResult<Value>>,
+    parts: readonly Part[] = CATALOGUE,
+  ) =>
   async (...args: Args): Promise<AdminResult<Value>> => {
     try {
-      return await onDatabase(["catalogue"], "write", () => call(...args), args);
+      return await onDatabase(parts, "write", () => call(...args), args);
     } catch (error) {
       if (!(error instanceof StaleStampError)) throw error;
       const { recordStamps } = schema;
@@ -505,9 +590,13 @@ async function getLatestDeniedSignIn(email: string): Promise<DeniedSignIn | null
   }
 }
 
-const CATALOGUE: readonly Part[] = ["catalogue"];
 const STAFF: readonly Part[] = ["staff"];
 const BETA_TESTERS: readonly Part[] = ["betaTesters"];
+/**
+ * The Exam pages and the Topics: an Exam page shows what Topic content
+ * blocks deleting its Exam or Subjects, and a Topic belongs to a Subject.
+ */
+const WITH_CONTENT: readonly Part[] = ["catalogue", "content"];
 
 /**
  * An Invite. The staff list's own check refuses an email already on it; should
@@ -547,7 +636,7 @@ const addBetaTester: AdminService["addBetaTester"] = async (actor, input) => {
  */
 const createExam: AdminService["createExam"] = async (actor, input) => {
   try {
-    return await stampedWrite(sampleArm.createExam)(actor, input);
+    return await stampedWrite(sampleArm.createExam, WITH_CONTENT)(actor, input);
   } catch (error) {
     if (postgresErrorCode(error) !== UNIQUE_VIOLATION) throw error;
     const code = newExamCodeOf(input);
@@ -556,9 +645,9 @@ const createExam: AdminService["createExam"] = async (actor, input) => {
 };
 
 /**
- * A delete the seam's check allowed, which a Product's foreign key still
- * refuses: one added by a save that skipped the lock. Nothing changes, and
- * the refusal says so.
+ * A delete the seam's check allowed, which a foreign key still refuses: a
+ * Product's, or a deck's, quiz's or Reviewer PDF's on a Topic, added by a
+ * save that skipped the lock. Nothing changes, and the refusal says so.
  */
 function refusedByForeignKey<Args extends unknown[], Value>(
   call: Call<Args, AdminResult<Value>>,
@@ -566,10 +655,33 @@ function refusedByForeignKey<Args extends unknown[], Value>(
 ): Call<Args, AdminResult<Value>> {
   return async (...args) => {
     try {
-      return await stampedWrite(call)(...args);
+      // The content too: a deck, quiz or Reviewer PDF on a Topic is what blocks it.
+      return await stampedWrite(call, WITH_CONTENT)(...args);
     } catch (error) {
       if (postgresErrorCode(error) !== FOREIGN_KEY_VIOLATION) throw error;
       return { ok: false, error: { kind: "invalid", fieldErrors: {}, formError: reason(...args) } };
+    }
+  };
+}
+
+/** What a Topic name the unique index refused says: one a save that skipped the lock took first. */
+const TOPIC_NAME_TAKEN = "ANOTHER TOPIC IN THIS SUBJECT NOW HAS THIS NAME · RELOAD THE PAGE";
+
+/**
+ * A Topic's name, unique within its Subject. The seam's own check refuses a
+ * name already taken; should one be taken by a save that skipped the lock,
+ * the topics table's unique index refuses it too, on the name field.
+ */
+function refusedTakenName<Args extends unknown[], Value>(
+  call: Call<Args, AdminResult<Value>>,
+  message: (...args: Args) => string,
+): Call<Args, AdminResult<Value>> {
+  return async (...args) => {
+    try {
+      return await stampedWrite(call, WITH_CONTENT)(...args);
+    } catch (error) {
+      if (postgresErrorCode(error) !== UNIQUE_VIOLATION) throw error;
+      return { ok: false, error: { kind: "invalid", fieldErrors: { name: [message(...args)] } } };
     }
   };
 }
@@ -622,23 +734,37 @@ export const databaseArm: AdminService = {
   moveFaq: stampedWrite(sampleArm.moveFaq),
   deleteFaq: stampedWrite(sampleArm.deleteFaq),
 
-  getExamPageForAdmin: read(CATALOGUE, sampleArm.getExamPageForAdmin),
-  updateExamHeader: stampedWrite(sampleArm.updateExamHeader),
-  updateSubjectNames: stampedWrite(sampleArm.updateSubjectNames),
-  setExamSection: stampedWrite(sampleArm.setExamSection),
-  updateBundleOffer: stampedWrite(sampleArm.updateBundleOffer),
-  updateExamSeo: stampedWrite(sampleArm.updateExamSeo),
-  updateOfficialExamDate: stampedWrite(sampleArm.updateOfficialExamDate),
+  // Each returns the Exam page, which shows the Topic content that blocks a delete.
+  getExamPageForAdmin: read(WITH_CONTENT, sampleArm.getExamPageForAdmin),
+  updateExamHeader: stampedWrite(sampleArm.updateExamHeader, WITH_CONTENT),
+  updateSubjectNames: stampedWrite(sampleArm.updateSubjectNames, WITH_CONTENT),
+  setExamSection: stampedWrite(sampleArm.setExamSection, WITH_CONTENT),
+  updateBundleOffer: stampedWrite(sampleArm.updateBundleOffer, WITH_CONTENT),
+  updateExamSeo: stampedWrite(sampleArm.updateExamSeo, WITH_CONTENT),
+  updateOfficialExamDate: stampedWrite(sampleArm.updateOfficialExamDate, WITH_CONTENT),
   createExam,
-  addSubject: stampedWrite(sampleArm.addSubject),
+  addSubject: stampedWrite(sampleArm.addSubject, WITH_CONTENT),
   deleteSubject: refusedByForeignKey(
     sampleArm.deleteSubject,
     (_actor, _code, subject) =>
-      `A Product now uses ${typedCode(subject)}. Reload the page to see it.`,
+      `A Product or Member App content now uses ${typedCode(subject)}. Reload the page to see it.`,
   ),
   deleteExam: refusedByForeignKey(
     sampleArm.deleteExam,
-    (_actor, code) => `A Product now belongs to ${typedCode(code)}. Reload the page to see it.`,
+    (_actor, code) =>
+      `A Product or Member App content now belongs to ${typedCode(code)}. Reload the page to see it.`,
+  ),
+
+  listTopicsForAdmin: read(WITH_CONTENT, sampleArm.listTopicsForAdmin),
+  createTopic: refusedTakenName(sampleArm.createTopic, (_actor, input) => {
+    const form = newTopicFormSchema.safeParse(input);
+    return form.success ? alreadyATopic(form.data.name, form.data.subject) : TOPIC_NAME_TAKEN;
+  }),
+  renameTopic: refusedTakenName(sampleArm.renameTopic, () => TOPIC_NAME_TAKEN),
+  moveTopic: stampedWrite(sampleArm.moveTopic, WITH_CONTENT),
+  deleteTopic: refusedByForeignKey(
+    sampleArm.deleteTopic,
+    () => "This Topic now has content, so it can’t be deleted. Reload the page to see it.",
   ),
 
   getSitePageForAdmin: read(CATALOGUE, sampleArm.getSitePageForAdmin),

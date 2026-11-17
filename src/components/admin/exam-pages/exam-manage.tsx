@@ -2,19 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  AdminDialog,
-  AdminDialogButton,
-  AdminDialogButtons,
-} from "@/components/admin/admin-dialog";
 import { callAdminAction } from "@/components/admin/call-admin-action";
+import { ConfirmDelete } from "@/components/admin/confirm-delete";
 import { EditorSaveRow } from "@/components/admin/editor-save-row";
 import { TextField } from "@/components/admin/products/product-fields";
 import { useAdminForm } from "@/components/admin/use-admin-form";
-import type { AdminAction, AdminActionState } from "@/lib/admin/action";
+import type { AdminAction } from "@/lib/admin/action";
 import { blankSubject, newExamFormValues } from "@/lib/admin/exam-page-form";
 import { examPageAddress, examPagesHref } from "@/lib/admin/exam-pages-view";
 import { listNumber } from "@/lib/text";
@@ -214,105 +210,11 @@ export function AddSubjectForm({
   );
 }
 
-/** Pure: what a refused or failed delete says, in the dialog. */
-function deleteError(state: AdminActionState<unknown>): string | undefined {
-  if (state.status === "failed") return "COULDN’T DELETE IT · CHECK YOUR CONNECTION AND TRY AGAIN";
-  if (state.status !== "refused") return undefined;
-  const { error } = state;
-  if (error.kind === "invalid" && error.formError) return error.formError;
-  if (error.kind === "forbidden") return error.message;
-  if (error.kind === "not-found") return "IT’S ALREADY GONE · RELOAD THE PAGE";
-  return "NOT DELETED · RELOAD THE PAGE AND TRY AGAIN";
-}
-
-interface ConfirmDeleteProps {
-  /** The button that opens the confirmation, e.g. "Delete exam". */
-  label: string;
-  /** The button's accessible name, when it needs more than its label. */
-  ariaLabel?: string;
-  buttonClassName: string;
-  tag: string;
-  title: string;
-  description: string;
-  confirmLabel: string;
-  /** Sends the delete; gives its answer. */
-  send: () => Promise<AdminActionState<unknown>>;
-  onDeleted: () => void;
-}
-
-/** A delete button and its in-page confirmation (the Admin's dialog, never the browser's). */
-function ConfirmDelete({
-  label,
-  ariaLabel,
-  buttonClassName,
-  tag,
-  title,
-  description,
-  confirmLabel,
-  send,
-  onDeleted,
-}: ConfirmDeleteProps) {
-  const [open, setOpen] = useState(false);
-  const [error, setError] = useState<string>();
-  const [pending, startTransition] = useTransition();
-
-  function confirm() {
-    setError(undefined);
-    startTransition(async () => {
-      const state = await send();
-      if (state.status === "saved") {
-        setOpen(false);
-        onDeleted();
-      } else {
-        setError(deleteError(state));
-      }
-    });
-  }
-
-  return (
-    <>
-      <button
-        type="button"
-        aria-label={ariaLabel}
-        onClick={() => {
-          setError(undefined);
-          setOpen(true);
-        }}
-        className={buttonClassName}
-      >
-        {label}
-      </button>
-      <AdminDialog
-        open={open}
-        onOpenChange={setOpen}
-        tag={tag}
-        tone="danger"
-        title={title}
-        description={description}
-      >
-        {error ? (
-          <p role="alert" className="font-mono text-[11px] font-medium text-destructive">
-            {error}
-          </p>
-        ) : null}
-        <AdminDialogButtons>
-          <AdminDialogButton onClick={() => setOpen(false)}>Cancel</AdminDialogButton>
-          <AdminDialogButton
-            variant="danger"
-            onClick={confirm}
-            disabled={pending}
-            aria-busy={pending || undefined}
-          >
-            {confirmLabel}
-          </AdminDialogButton>
-        </AdminDialogButtons>
-      </AdminDialog>
-    </>
-  );
-}
-
 const REMOVE_BUTTON =
   "min-h-6 cursor-pointer text-[13px] font-semibold text-destructive hover:underline";
+
+/** A Subject with no Topic content: what one missing from the page's counts holds. */
+const NO_CONTENT = { decks: 0, quizzes: 0, reviewerPdfs: 0 };
 
 /** A Subject's remove button, or why it can't be removed. */
 export function RemoveSubject({
@@ -330,6 +232,7 @@ export function RemoveSubject({
     exam,
     subject,
     products: opened.subjectProducts[subject] ?? 0,
+    content: opened.subjectContent[subject] ?? NO_CONTENT,
     subjects: opened.exam.subjects.length,
   });
   if (reason) return <p className="text-xs leading-[1.45] text-muted-foreground">{reason}</p>;
@@ -361,7 +264,7 @@ export function DeleteExam({
 }) {
   const router = useRouter();
   const { code, name, subjects } = opened.exam;
-  const reason = examDeleteBlocker(code, opened.products.length);
+  const reason = examDeleteBlocker(code, opened.products.length, opened.content);
   const count = `${subjects.length} ${subjects.length === 1 ? "Subject" : "Subjects"}`;
   return (
     <section

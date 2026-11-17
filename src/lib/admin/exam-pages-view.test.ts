@@ -39,6 +39,8 @@ function adminPage(changes: Partial<AdminExamPage["page"]> = {}): AdminExamPage 
       { id: "prd-008", shortName: "CE Review Bundle 3-in-1", state: "live", showOnWebsite: true },
     ],
     subjectProducts: {},
+    subjectContent: {},
+    content: { decks: 0, quizzes: 0, reviewerPdfs: 0 },
     examsOnWebsite: ["CE"],
   };
 }

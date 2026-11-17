@@ -1,4 +1,5 @@
 import type { ExamDateSetBy } from "@/lib/member-app/exam-date";
+import type { ContentKind } from "@/services/content.types";
 
 // The Member seam's types (spec, Phase 3 → Phase 3 seams). A Member is a
 // person with a Member App account (CONTEXT.md), keyed by their User.
@@ -134,4 +135,51 @@ export interface DeviceSwitch {
   deviceLabel: string;
   /** ISO time of the claim. */
   switchedAt: string;
+}
+
+// The Library and opening a content item (spec, Phase 3 → Content model and
+// Access decision seam). These are the content as it is, the same for every
+// Member: what each Member may open is the access decision's answer
+// (src/lib/member-app/access.ts), never part of these reads.
+
+/** A deck, quiz or Reviewer PDF as the Library lists it: only Visible or Published ones. */
+export interface LibraryItem {
+  kind: ContentKind;
+  id: string;
+  freePreview: boolean;
+}
+
+/** One Topic in the Library, with the content Members can see, in deck, quiz, Reviewer PDF order. */
+export interface LibraryTopic {
+  id: string;
+  name: string;
+  /** Its place in its Subject's order, from 1. */
+  position: number;
+  /** Empty while nothing in it is Visible or Published: its content is still being prepared. */
+  items: LibraryItem[];
+}
+
+/** One of an Exam's Subjects in the Library, with its Topics in order. */
+export interface LibrarySubject {
+  code: string;
+  name: string;
+  topics: LibraryTopic[];
+}
+
+/**
+ * One deck, quiz or Reviewer PDF, as opening it needs: where it sits, and
+ * what the access decision reads from it. A Hidden or unpublished one reads
+ * too, so the Member is told it's no longer available.
+ */
+export interface ContentItem {
+  kind: ContentKind;
+  id: string;
+  examCode: string;
+  subjectCode: string;
+  subjectName: string;
+  topicId: string;
+  topicName: string;
+  /** A Visible deck or quiz, or a Published Reviewer PDF. */
+  available: boolean;
+  freePreview: boolean;
 }

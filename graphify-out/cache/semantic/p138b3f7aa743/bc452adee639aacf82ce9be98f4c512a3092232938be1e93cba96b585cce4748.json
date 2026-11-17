@@ -1,0 +1,427 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "label": "Executer prompt 12: Reviewer PDF upload and processing job",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": "L1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_tus_resumable_upload",
+      "label": "Resumable TUS upload to private bucket",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": "L38",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Uploads go straight from browser to private Supabase Storage so they never pass through a Vercel request body capped at ~4.5 MB."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_reviewer_pdf_job_state_machine",
+      "label": "Reviewer PDF job state machine",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": "L45",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Status Processing/Draft/Failed with pages done, total pages, failure reason, restart count and heartbeat; job status lives in Postgres per ADR 0012."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_batched_page_rendering",
+      "label": "Batched page rendering (~25 pages per run, 1600px WebP)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": "L47",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Runs resume from pages done, never duplicating or skipping a page."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_stale_heartbeat_cron_restart",
+      "label": "Vercel Cron stale-heartbeat restart",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": "L50",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_cron_secret",
+      "label": "CRON_SECRET server-only env var",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": "L52",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Optional so local and e2e don't need it; cron endpoint answers 404/401 when unset; never NEXT_PUBLIC_."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_permissive_pdf_libraries",
+      "label": "Permissive PDF libraries (pdfjs-dist, @napi-rs/canvas, sharp)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": "L55",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Permissive licences only; AGPL MuPDF/mupdf.js excluded. New deps require asking the user first."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_failure_reasons_with_fixes",
+      "label": "Failure reasons with fixes",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": "L58",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_page_images_interface",
+      "label": "Page-images interface with in-memory fake",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": "L63",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Seam tests and e2e use the fake; real renderer tests use tiny committed fixture PDFs."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_fixture_pdfs",
+      "label": "Fixture PDFs (3-page, password-protected, corrupt)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": "L63",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_admin_reviewer_pdfs_screen",
+      "label": "Admin Reviewer PDFs screen (upload, list, progress, delete)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": "L64",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_admin_seam",
+      "label": "Admin seam (sample and database arms)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": "L29",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_staff_activity",
+      "label": "Staff Activity logging",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": "L67",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_upload_seam_pattern",
+      "label": "Upload seam pattern (one-time signed upload URL)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": "L32",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_tus_resumable_upload",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_reviewer_pdf_job_state_machine",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_batched_page_rendering",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_stale_heartbeat_cron_restart",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_cron_secret",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_permissive_pdf_libraries",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_failure_reasons_with_fixes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_page_images_interface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_fixture_pdfs",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_admin_reviewer_pdfs_screen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_admin_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_upload_seam_pattern",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_guardrails",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_access_decision",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_tus_resumable_upload",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_upload_seam_pattern",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_batched_page_rendering",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_reviewer_pdf_job_state_machine",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_stale_heartbeat_cron_restart",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_reviewer_pdf_job_state_machine",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_stale_heartbeat_cron_restart",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_cron_secret",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_batched_page_rendering",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_page_images_interface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_batched_page_rendering",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_permissive_pdf_libraries",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_fixture_pdfs",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_page_images_interface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_reviewer_pdf_job_state_machine",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_failure_reasons_with_fixes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_admin_reviewer_pdfs_screen",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_reviewer_pdf_job_state_machine",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_admin_reviewer_pdfs_screen",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_admin_seam",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_admin_seam",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

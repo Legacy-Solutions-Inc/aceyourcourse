@@ -1,0 +1,220 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings",
+      "label": "Executer prompt 09: Quiz import and quiz settings",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_quiz_import",
+      "label": "Quiz import (extends ticket 06 planner)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": "L37",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Extends the card import planner rather than writing a second import system; Replace keeps Best Scores and attempt history."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_quiz_settings",
+      "label": "Quiz settings (passing score 1-100 default 70, shuffle, show answers, Free Preview, Visible)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": "L53",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_removed_question_marker",
+      "label": "Removed-question marker",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": "L51",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Removed questions are kept, marked removed, so old attempts still show 'This question has since been removed'."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_quiz_template",
+      "label": "Quiz CSV template (topic, question, choices A-D, correct, explanation, figure)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": "L38",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_best_score",
+      "label": "Best Score and attempt history",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": "L51",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings",
+      "target": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_quiz_import",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings",
+      "target": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_quiz_settings",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings",
+      "target": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_removed_question_marker",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings",
+      "target": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_quiz_template",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_quiz_import",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_card_import_planner",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_quiz_import",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_formula_module",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_quiz_import",
+      "target": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_removed_question_marker",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_removed_question_marker",
+      "target": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_best_score",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_quiz_settings",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_conflict_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_quiz_settings",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_content_tables",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_quiz_import",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_private_content_bucket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_quiz_settings",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_quiz_import",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_rename_hint",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "progress_preserved_across_corrections",
+      "label": "Corrections never cost progress",
+      "nodes": [
+        "_scratch_ayc_member_app_prompts_06_card_import_replace_vs_add",
+        "_scratch_ayc_member_app_prompts_08_flashcard_study_card_mark",
+        "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_removed_question_marker",
+        "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_best_score"
+      ],
+      "relation": "implement",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/09-quiz-import-and-settings.md"
+    }
+  ]
+}

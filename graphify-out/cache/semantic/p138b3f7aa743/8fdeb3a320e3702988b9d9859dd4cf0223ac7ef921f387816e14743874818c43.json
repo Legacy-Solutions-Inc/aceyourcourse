@@ -1,0 +1,288 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_04_active_device",
+      "label": "Executer prompt 04: Active Device",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_04_active_device_ayc_device_token",
+      "label": "ayc_device cookie token (32 random bytes, SHA-256 hash stored)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": "L31",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "httpOnly, SameSite=Lax, Path=/app, Secure outside localhost; only the hash is stored, raw token never stored or logged; per ADR 0011 rather than Supabase single-session."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_04_active_device_devicestatus",
+      "label": "deviceStatus (active / no-token / replaced)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": "L37",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Seam function comparing hashes in constant time; tampered or unknown token is 'replaced'. Runs after gate and consent; Admin exempt."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_04_active_device_member_active_devices",
+      "label": "member_active_devices table (one row per Member)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": "L32",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_04_active_device_member_device_switches",
+      "label": "member_device_switches log",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": "L33",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_04_active_device_claimdevice",
+      "label": "claimDevice",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": "L49",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_04_active_device_user_agent_label_parser",
+      "label": "User-Agent label parser ('{Browser} on {OS}')",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": "L42",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_04_active_device_session_ended_screen",
+      "label": "Session ended / 'Use the Member App on this device' screens",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": "L39",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_04_active_device_adr_0011",
+      "label": "ADR 0011 (one Active Device, Member App only)",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": "L19",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_ayc_device_token",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_devicestatus",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_member_active_devices",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_member_device_switches",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_claimdevice",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_user_agent_label_parser",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_session_ended_screen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_adr_0011",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device_ayc_device_token",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_adr_0011",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device_claimdevice",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_member_active_devices",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device_claimdevice",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_member_device_switches",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device_claimdevice",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_user_agent_label_parser",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device_devicestatus",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_ayc_device_token",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device_devicestatus",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_member_active_devices",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device_session_ended_screen",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_devicestatus",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_oauth_callback_route",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_claimdevice",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device_devicestatus",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_gate",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_04_active_device",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}
