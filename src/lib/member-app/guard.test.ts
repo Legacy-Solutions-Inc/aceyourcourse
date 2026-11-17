@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { DEVICE_COOKIE, hashDeviceToken } from "@/lib/member-app/device-token";
 import { removeBetaTester, removeStaff } from "@/services/admin.mock";
-import { getOrCreateMember, recordConsent } from "@/services/member.mock";
+import { claimDevice, getOrCreateMember, recordConsent } from "@/services/member.mock";
 import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
+import { ANDROID_CHROME, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 
 // The Member App gate on the server, with the sample identity: the sample
 // cookie names the signed-in User, and the switch, the staff list and the Beta
@@ -24,7 +26,9 @@ const { jar, live, mode, legal } = vi.hoisted(() => ({
 vi.mock("next/headers", () => ({
   cookies: async () => ({
     get: (name: string) => (jar.has(name) ? { name, value: jar.get(name) } : undefined),
+    set: (name: string, value: string) => jar.set(name, value),
   }),
+  headers: async () => new Headers({ "user-agent": ANDROID_CHROME }),
 }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
@@ -56,10 +60,17 @@ const TESTER = "tester@example.com";
 const STRANGER = "stranger@example.com";
 
 const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
+/** This request comes from the browser that is now this Member's Active Device. */
+async function onTheActiveDevice(userId: string) {
+  await onThisDevice(userId);
+  jar.set(DEVICE_COOKIE, TEST_DEVICE_TOKEN);
+}
+
 /** Matches the error redirect() throws for exactly this URL. */
 const redirectsTo = (url: string) =>
   new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 const NOT_OPEN_YET = redirectsTo("/app/not-open-yet");
+const DEVICE_SCREEN = (next: string) => redirectsTo(`/app/device?next=${encodeURIComponent(next)}`);
 
 const members = () => getSampleStore().members;
 const consents = () => getSampleStore().memberConsents;
@@ -227,7 +238,7 @@ describe("the Member App gate on the server (sample mode)", () => {
   // Every Member App page and Member App Server Action runs requireMember:
   // the gate, then consent (spec, Phase 3 → Consent). Only the consent screen
   // and its action stop at the gate.
-  describe("requireMember: the gate, then consent", () => {
+  describe("requireMember: the gate, then consent, then the Active Device", () => {
     it("sends a signed-out visitor to the sign-in screen first, coming back", async () => {
       const { requireMember } = await loadGuard();
       await expect(requireMember("/app/library")).rejects.toThrow(
@@ -255,12 +266,47 @@ describe("the Member App gate on the server (sample mode)", () => {
       expect(consents()).toEqual([]);
     });
 
-    it("lets in a Member whose latest agreement has both current versions", async () => {
+    it("lets in a Member whose latest agreement has both current versions, on their Active Device", async () => {
       signInAs(TESTER);
       const userId = await testerAgreed("2.0", "2.0");
+      await onTheActiveDevice(userId);
       const { requireMember } = await loadGuard();
 
       expect(await requireMember()).toMatchObject({ userId, email: TESTER });
+    });
+
+    it("sends an agreed Member with no device token to the Active Device screen, coming back", async () => {
+      signInAs(TESTER);
+      await testerAgreed("2.0", "2.0");
+      const { requireMember } = await loadGuard();
+
+      await expect(requireMember("/app/library")).rejects.toThrow(DEVICE_SCREEN("/app/library"));
+    });
+
+    it("sends a replaced device to the Active Device screen, coming back", async () => {
+      signInAs(TESTER);
+      const userId = await testerAgreed("2.0", "2.0");
+      await onTheActiveDevice(userId);
+      await claimDevice(userId, {
+        tokenHash: hashDeviceToken("another-device"),
+        deviceLabel: "Safari on iOS",
+      });
+      const { requireMember } = await loadGuard();
+
+      await expect(requireMember("/app/plans")).rejects.toThrow(DEVICE_SCREEN("/app/plans"));
+    });
+
+    it("checks consent before the device: a replaced device that hasn't agreed goes to the consent screen", async () => {
+      signInAs(TESTER);
+      const userId = await testerAgreed("1.0", "1.0");
+      await claimDevice(userId, {
+        tokenHash: hashDeviceToken("another-device"),
+        deviceLabel: "Safari on iOS",
+      });
+      jar.set(DEVICE_COOKIE, TEST_DEVICE_TOKEN);
+      const { requireMember } = await loadGuard();
+
+      await expect(requireMember()).rejects.toThrow(redirectsTo("/app/consent?next=%2Fapp"));
     });
 
     it.each([
@@ -269,7 +315,7 @@ describe("the Member App gate on the server (sample mode)", () => {
       ["both", { terms: "3.0", privacy: "3.0" }],
     ])("asks again at the next request once %s change version", async (_label, bumped) => {
       signInAs(TESTER);
-      await testerAgreed("2.0", "2.0");
+      await onTheActiveDevice(await testerAgreed("2.0", "2.0"));
       const { requireMember } = await loadGuard();
       expect(await requireMember()).toMatchObject({ email: TESTER });
 
@@ -287,6 +333,57 @@ describe("the Member App gate on the server (sample mode)", () => {
       const { requireMember } = await loadGuard();
 
       await expect(requireMember()).rejects.toThrow(NOT_OPEN_YET);
+    });
+  });
+
+  describe("requireConsentedMember: the gate and consent, for the Active Device screen", () => {
+    it("lets in an agreed Member whatever the device", async () => {
+      signInAs(TESTER);
+      const userId = await testerAgreed("2.0", "2.0");
+      const { requireConsentedMember } = await loadGuard();
+
+      expect(await requireConsentedMember()).toMatchObject({ userId });
+    });
+
+    it("sends a Member who hasn't agreed to the consent screen, coming back", async () => {
+      signInAs(TESTER);
+      const { requireConsentedMember } = await loadGuard();
+      await expect(requireConsentedMember("/app/account")).rejects.toThrow(
+        redirectsTo("/app/consent?next=%2Fapp%2Faccount"),
+      );
+    });
+  });
+
+  describe("claimDeviceAtSignIn", () => {
+    const switches = () => getSampleStore().memberDeviceSwitches;
+
+    it("makes this device the Active Device of someone the gate lets in, labelled from the User-Agent", async () => {
+      signInAs(TESTER);
+      const { claimDeviceAtSignIn, requireMember } = await loadGuard();
+      await claimDeviceAtSignIn();
+
+      expect(switches()).toMatchObject([
+        { userId: sampleUserId(TESTER), deviceLabel: "Chrome on Android" },
+      ]);
+      expect(jar.get(DEVICE_COOKIE)).toMatch(/^[A-Za-z0-9_-]{43}$/);
+      await recordConsent(sampleUserId(TESTER), { termsVersion: "2.0", privacyVersion: "2.0" });
+      expect(await requireMember()).toMatchObject({ email: TESTER });
+    });
+
+    it("claims nothing for someone the gate turns away, and makes no Member record", async () => {
+      signInAs(STRANGER);
+      const { claimDeviceAtSignIn } = await loadGuard();
+      await claimDeviceAtSignIn();
+
+      expect(switches()).toEqual([]);
+      expect(members()).toEqual([]);
+      expect(jar.has(DEVICE_COOKIE)).toBe(false);
+    });
+
+    it("claims nothing when nobody is signed in", async () => {
+      const { claimDeviceAtSignIn } = await loadGuard();
+      await claimDeviceAtSignIn();
+      expect(switches()).toEqual([]);
     });
   });
 

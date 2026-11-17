@@ -496,3 +496,54 @@ export const memberConsents = pgTable(
     check("member_consents_privacy_version_format", sql`${t.privacyVersion} ~ '^[0-9]+[.][0-9]+$'`),
   ],
 ).enableRLS();
+
+/**
+ * Each Member's Active Device (spec, Phase 3 → Active Device; ADR 0011): one
+ * row per Member, replaced by every claim. It holds the SHA-256 hash of the
+ * token in the device's cookie, never the token itself, with the device's
+ * label from its User-Agent and when it was claimed. The Admin never reads or
+ * sets it. Deleting the Member deletes it.
+ */
+export const memberActiveDevices = pgTable(
+  "member_active_devices",
+  {
+    userId: uuid("user_id")
+      .primaryKey()
+      .references(() => members.userId, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    deviceLabel: text("device_label").notNull(),
+    claimedAt: at("claimed_at").notNull(),
+  },
+  (t) => [
+    check("member_active_devices_token_hash_format", sql`${t.tokenHash} ~ '^[0-9a-f]{64}$'`),
+    check(
+      "member_active_devices_device_label_length",
+      sql`char_length(${t.deviceLabel}) between 1 and 80`,
+    ),
+  ],
+).enableRLS();
+
+/**
+ * Each Member's Active Device switch log: a row for every claim, the first one
+ * too, with its time and the device's label, in the order made (`seq`). Never
+ * changed. Owners see the count (spec, Phase 3 → Users and Member detail).
+ * Deleting the Member deletes their log.
+ */
+export const memberDeviceSwitches = pgTable(
+  "member_device_switches",
+  {
+    seq: bigint("seq", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => members.userId, { onDelete: "cascade" }),
+    deviceLabel: text("device_label").notNull(),
+    switchedAt: at("switched_at").notNull(),
+  },
+  (t) => [
+    index("member_device_switches_user_id_seq_idx").on(t.userId, t.seq),
+    check(
+      "member_device_switches_device_label_length",
+      sql`char_length(${t.deviceLabel}) between 1 and 80`,
+    ),
+  ],
+).enableRLS();

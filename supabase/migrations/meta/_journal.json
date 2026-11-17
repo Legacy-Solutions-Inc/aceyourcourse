@@ -64,6 +64,13 @@
       "when": 1794909259154,
       "tag": "20261117095419_member_target_exams",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794913002009,
+      "tag": "20261117105642_member_active_devices",
+      "breakpoints": true
     }
   ]
 }

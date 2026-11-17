@@ -4,22 +4,36 @@ import { fileURLToPath } from "node:url";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { DEVICE_COOKIE, hashDeviceToken } from "@/lib/member-app/device-token";
+import {
+  addTargetExam,
+  claimDevice,
+  getOrCreateMember,
+  recordConsent,
+} from "@/services/member.mock";
+import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import * as targetExams from "./(shell)/actions";
 import * as root from "./actions";
 import * as consent from "./consent/actions";
+import * as device from "./device/actions";
 import * as signIn from "./sign-in/actions";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// The Member App's gate matrix (spec, Phase 3 → The beta gate and Consent):
-// every Member App Server Action is a public endpoint, so each one is listed
-// here with who may call it, and called as a browser would by everyone it
-// must refuse:
-//   - "member": behind the gate, then consent (the Target Exam actions). Signed out goes to the sign-in
-//     screen, someone the gate doesn't let in goes to "Not open yet", with no
-//     Member record made, and a Member who hasn't agreed to the current Terms
-//     and Privacy Policy goes to the consent screen.
+// The Member App's gate matrix (spec, Phase 3 → The beta gate, Consent and
+// Active Device): every Member App Server Action is a public endpoint, so
+// each one is listed here with who may call it, and called as a browser would
+// by everyone it must refuse:
+//   - "member": behind the gate, then consent, then the Active Device (the
+//     Target Exam actions). Signed out goes to the sign-in screen, someone the
+//     gate doesn't let in goes to "Not open yet", with no Member record made,
+//     a Member who hasn't agreed to the current Terms and Privacy Policy goes
+//     to the consent screen, and a request that isn't from the Member's Active
+//     Device (no device token, or a replaced one) goes to the Active Device
+//     screen, changing nothing.
+//   - "before-device": behind the gate and consent. That's the Active Device
+//     screen's actions, since claiming the device is what they do.
 //   - "before-consent": behind the gate only. That's the consent action alone,
 //     since consent is what it gives.
 //   - "anyone": signing in and out, which happen before the gate. Those are
@@ -40,6 +54,7 @@ vi.mock("next/headers", () => ({
     set: (name: string, value: string) => jar.set(name, value),
     delete: (name: string) => jar.delete(name),
   }),
+  headers: async () => new Headers(),
 }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
@@ -57,14 +72,16 @@ vi.mock("@/lib/admin/mode", async (importOriginal) => ({
 }));
 
 const STRANGER = "stranger@example.com";
+const TESTER = "tester@example.com";
 
 interface Entry {
-  who: "member" | "before-consent" | "anyone";
+  who: "member" | "before-device" | "before-consent" | "anyone";
   /** Calls the action with an input it would accept. */
   call: () => Promise<unknown>;
 }
 const anyone = (call: Entry["call"]): Entry => ({ who: "anyone", call });
 const beforeConsent = (call: Entry["call"]): Entry => ({ who: "before-consent", call });
+const beforeDevice = (call: Entry["call"]): Entry => ({ who: "before-device", call });
 const member = (call: Entry["call"]): Entry => ({ who: "member", call });
 
 /** A Target Exam form, as onboarding, the add form, Account and the switcher send it. */
@@ -82,6 +99,13 @@ function consentForm() {
   data.set("termsVersion", "2.0");
   data.set("privacyVersion", "2.0");
   data.set("next", "/app");
+  return data;
+}
+
+/** The Active Device screen's form: where to go once this device is active. */
+function deviceForm() {
+  const data = new FormData();
+  data.set("next", "/app/account");
   return data;
 }
 
@@ -110,6 +134,10 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
   "./consent/actions.ts": {
     agreeAndContinue: beforeConsent(() => consent.agreeAndContinue({ error: null }, consentForm())),
   },
+  "./device/actions.ts": {
+    confirmThisDevice: beforeDevice(() => device.confirmThisDevice(deviceForm())),
+    signInOnThisDevice: beforeDevice(() => device.signInOnThisDevice(deviceForm())),
+  },
   "./sign-in/actions.ts": {
     signInAs: anyone(() => signIn.signInAs({ error: null, email: "" }, signInForm(STRANGER))),
     // Live mode only: sample mode answers 404.
@@ -121,7 +149,34 @@ const ENTRIES = Object.entries(REGISTRY).flatMap(([module, actions]) =>
   Object.entries(actions).map(([name, entry]) => ({ module, name, ...entry })),
 );
 const GATED = ENTRIES.filter((entry) => entry.who !== "anyone");
+const AFTER_CONSENT = ENTRIES.filter(
+  (entry) => entry.who === "member" || entry.who === "before-device",
+);
 const MEMBER_ONLY = ENTRIES.filter((entry) => entry.who === "member");
+
+/** The tester, a Member who has agreed to the current versions, with ME as a Target Exam. */
+async function agreedTester() {
+  const userId = sampleUserId(TESTER);
+  await getOrCreateMember({ userId, email: TESTER, name: "Bea Tester" });
+  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await addTargetExam(userId, { examCode: "ME", examDate: "2099-02-08" });
+  jar.set("ayc_admin_sample", TESTER);
+  return userId;
+}
+
+/** What the Member App's actions could change, to check a refusal changed none of it. */
+const memberData = () => {
+  const { members, memberConsents, memberTargetExams, selectedExams } = getSampleStore();
+  const { memberActiveDevices, memberDeviceSwitches } = getSampleStore();
+  return structuredClone({
+    members,
+    memberConsents,
+    memberTargetExams,
+    selectedExams,
+    memberActiveDevices,
+    memberDeviceSwitches,
+  });
+};
 
 /** The "use server" modules under this folder, and what each exports. */
 function serverActionModules(): Record<string, string[]> {
@@ -183,13 +238,39 @@ describe("the Member App's Server Actions and the gate", () => {
     },
   );
 
-  it.each(MEMBER_ONLY)(
+  it.each(AFTER_CONSENT)(
     "$name sends a Member who hasn't agreed to the current Terms and Privacy Policy to the consent screen, and changes nothing",
     async ({ call }) => {
-      jar.set("ayc_admin_sample", "tester@example.com");
+      jar.set("ayc_admin_sample", TESTER);
       await expect(call()).rejects.toThrow(/^NEXT_REDIRECT \/app\/consent\?next=/);
       expect(getSampleStore().memberConsents).toEqual([]);
       expect(getSampleStore().memberTargetExams).toEqual({});
+      expect(getSampleStore().memberDeviceSwitches).toEqual([]);
+    },
+  );
+
+  it.each(MEMBER_ONLY)(
+    "$name sends an agreed Member with no device token (signed in through the Admin) to the Active Device screen, and changes nothing",
+    async ({ call }) => {
+      await agreedTester();
+      const before = memberData();
+      await expect(call()).rejects.toThrow(/^NEXT_REDIRECT \/app\/device\?next=/);
+      expect(memberData()).toEqual(before);
+    },
+  );
+
+  it.each(MEMBER_ONLY)(
+    "$name refuses a replaced device's post, and changes nothing",
+    async ({ call }) => {
+      const userId = await agreedTester();
+      await claimDevice(userId, {
+        tokenHash: hashDeviceToken("the-other-device"),
+        deviceLabel: "Chrome on Android",
+      });
+      jar.set(DEVICE_COOKIE, "this-device");
+      const before = memberData();
+      await expect(call()).rejects.toThrow(/^NEXT_REDIRECT \/app\/device\?next=/);
+      expect(memberData()).toEqual(before);
     },
   );
 
@@ -198,5 +279,13 @@ describe("the Member App's Server Actions and the gate", () => {
     await call().catch(() => {});
     expect(getSampleStore().memberTargetExams).toEqual({});
     expect(getSampleStore().selectedExams).toEqual({});
+  });
+
+  it.each(ENTRIES)("$name gives nobody the gate refuses a device token", async ({ call }) => {
+    jar.set("ayc_admin_sample", STRANGER);
+    await call().catch(() => {});
+    // Sign-out empties the cookie; nothing ever puts a token in it here.
+    expect(jar.get(DEVICE_COOKIE) ?? "").toBe("");
+    expect(getSampleStore().memberDeviceSwitches).toEqual([]);
   });
 });

@@ -405,6 +405,10 @@ test.describe("someone who is neither Staff nor a Beta Tester", () => {
     await page.reload();
     await expect(page).toHaveURL(/\/app\/consent\?next=%2Fapp$/);
     await agreeToConsent(page);
+    // They signed in while the gate refused them, so sign-in claimed no
+    // device (ticket 04): one tap makes this browser their Active Device.
+    await expect(page).toHaveURL(/\/app\/device\?next=%2Fapp$/);
+    await page.getByRole("button", { name: "Use the Member App on this device" }).click();
     await expect(page).toHaveURL(/\/app$/);
     await expect(onboardingHeading(page, "late.joiner")).toBeVisible();
   });

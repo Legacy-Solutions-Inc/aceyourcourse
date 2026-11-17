@@ -8,6 +8,7 @@ import { getSignedInUser } from "@/lib/admin/identity";
 import { adminMode } from "@/lib/admin/mode";
 import type { LegalVersions } from "@/content/legal/types";
 import { type ConsentStatus, consentStatus } from "@/lib/member-app/consent";
+import { checkDevice, claimThisDevice } from "@/lib/member-app/device";
 import { memberAppGate } from "@/lib/member-app/gate";
 import { paths } from "@/paths";
 import { getStaffByEmail } from "@/services/admin";
@@ -17,9 +18,12 @@ import type { Member, MemberUser, TargetExam } from "@/services/member.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The Member App's server checks, in order: the gate (spec, Phase 3 → The
-// beta gate), then consent (Phase 3 → Consent). Every Member App page and
-// every Member App Server Action calls requireMember, which runs both; only
-// the consent screen and its action call requireGatedMember, the gate alone.
+// beta gate), then consent (Phase 3 → Consent), then the Active Device
+// (Phase 3 → Active Device; ADR 0011). Every Member App page and every Member
+// App Server Action calls requireMember, which runs all three. Only the
+// consent screen and its action call requireGatedMember, the gate alone; only
+// the Active Device screen and its actions call requireConsentedMember, the
+// gate and consent.
 //
 // The gate takes the signed-in User from src/lib/admin/identity.ts (the Admin
 // and the Member App share one sign-in), then reads the Member App switch, the
@@ -31,7 +35,10 @@ import type { Member, MemberUser, TargetExam } from "@/services/member.types";
 // Consent compares the Member's latest agreement with the current Terms and
 // Privacy versions, read from the legal documents; the pure rule is
 // src/lib/member-app/consent.ts. Authorisation never comes from the client.
-// A later ticket adds the Active Device behind consent.
+//
+// The Active Device compares this request's device token with the Member's
+// Active Device (src/lib/member-app/device.ts): anything but a match goes to
+// the Active Device screen. The Admin never runs this check.
 //
 // Past consent, a Member with no Target Exam yet is onboarding (Phase 3 →
 // Target Exams): Home shows them the onboarding form, and every other screen
@@ -116,17 +123,48 @@ export const checkConsent = cache(async (userId: string): Promise<ConsentCheck> 
 });
 
 /**
- * The signed-in Member, past the gate and consent: what every Member App page
- * and Member App Server Action calls first. The gate goes first, exactly as
+ * The gate and consent, for the Active Device screen and its actions:
+ * everywhere else calls requireMember. The gate goes first, exactly as
  * requireGatedMember. Then a Member who hasn't agreed to the current Terms and
  * Privacy Policy goes to the consent screen, coming back to `from` once they
  * agree.
  */
-export async function requireMember(from: string = paths.memberApp.home): Promise<Member> {
+export async function requireConsentedMember(from: string = paths.memberApp.home): Promise<Member> {
   const member = await requireGatedMember(from);
   const { status } = await checkConsent(member.userId);
   if (status !== "ok") redirect(paths.memberApp.consent(from));
   return member;
+}
+
+/**
+ * The signed-in Member, past the gate, consent and the Active Device: what
+ * every Member App page and Member App Server Action calls first. The gate
+ * and consent go first, exactly as requireConsentedMember. Then a request
+ * that isn't from the Member's Active Device goes to the Active Device screen
+ * ("Session ended" for a replaced device, "Use the Member App on this device"
+ * for no token), coming back to `from` once this device is active. An action
+ * refused this way has changed nothing.
+ */
+export async function requireMember(from: string = paths.memberApp.home): Promise<Member> {
+  const member = await requireConsentedMember(from);
+  if ((await checkDevice(member.userId)) !== "active") redirect(paths.memberApp.device(from));
+  return member;
+}
+
+/**
+ * The Member App sign-in's claim, once sign-in completes (the callback after
+ * Google, or the sample "Sign in as"): when the gate lets the signed-in User
+ * in, this device becomes their Active Device, replacing any other, and the
+ * claim is logged. Their Member record is made here if this is their first
+ * pass, as the gate's first pass would. Someone the gate turns away gets no
+ * claim, no device token and no Member record. Consent is asked afterwards,
+ * on the page they land on, like everything else.
+ */
+export async function claimDeviceAtSignIn(): Promise<void> {
+  const access = await getMemberAppAccess();
+  if (access.status !== "open") return;
+  const member = await getOrCreateMember(access.user);
+  await claimThisDevice(member.userId);
 }
 
 /**

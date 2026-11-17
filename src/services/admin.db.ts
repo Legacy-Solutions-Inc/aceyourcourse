@@ -202,7 +202,7 @@ async function load(
       betaTesters = value;
     },
     // The Member seam's database arm (member.db.ts) reads and writes Members,
-    // their consent records and their Target Exams itself.
+    // their consent records, Target Exams and Active Devices itself.
     get members() {
       return notLoaded("the Members");
     },
@@ -214,6 +214,12 @@ async function load(
     },
     get selectedExams() {
       return notLoaded("the selected Target Exams");
+    },
+    get memberActiveDevices() {
+      return notLoaded("the Active Devices");
+    },
+    get memberDeviceSwitches() {
+      return notLoaded("the device switches");
     },
     // Read only: a rollback couldn't undo a change to the sample data's uploads.
     get uploads() {

@@ -1,5 +1,7 @@
+import { type DeviceStatus, deviceStatusFor } from "@/lib/member-app/device-token";
 import {
   agreedVersionsSchema,
+  deviceClaimSchema,
   memberEmailSchema,
   memberUserIdSchema,
   memberUserSchema,
@@ -14,8 +16,11 @@ import {
   type WithMemberExams,
 } from "@/services/member.rules";
 import type {
+  ActiveDevice,
   AgreedVersions,
   ConsentRecord,
+  DeviceClaim,
+  DeviceSwitch,
   Member,
   MemberUser,
   PickableExam,
@@ -25,8 +30,8 @@ import { getSampleStore } from "@/services/mock/sample-store";
 
 // The Member seam's sample arm: over the in-memory sample store
 // (src/services/mock/sample-store.ts), which holds the Beta Tester list the
-// Admin's sample arm edits, the Members, their consent records and their
-// Target Exams. The Target Exam rules are shared with the database arm
+// Admin's sample arm edits, the Members, their consent records, their
+// Target Exams and their Active Devices. The Target Exam rules are shared with the database arm
 // (member.rules.ts).
 
 export async function isBetaTester(email: string): Promise<boolean> {
@@ -119,3 +124,51 @@ const withMemberExams: WithMemberExams = async (userId, work) => {
 
 export const { addTargetExam, setExamDate, selectTargetExam, removeTargetExam } =
   targetExamOperations(withMemberExams);
+
+// ── The Active Device ───────────────────────────────────────────────────────
+
+export async function claimDevice(userId: string, claim: DeviceClaim): Promise<ActiveDevice> {
+  const wanted = memberUserIdSchema.parse(userId);
+  const { tokenHash, deviceLabel } = deviceClaimSchema.parse(claim);
+  const store = getSampleStore();
+  // Like the database's foreign keys: only a Member, someone the gate let in, claims a device.
+  if (!store.members.some((member) => member.userId === wanted)) {
+    throw new Error("Only a Member has an Active Device.");
+  }
+  const claimedAt = new Date().toISOString();
+  store.memberActiveDevices[wanted] = { tokenHash, deviceLabel, claimedAt };
+  store.memberDeviceSwitches = [
+    ...store.memberDeviceSwitches,
+    { userId: wanted, deviceLabel, switchedAt: claimedAt },
+  ];
+  return { deviceLabel, claimedAt };
+}
+
+export async function deviceStatus(
+  userId: string,
+  tokenHash: string | null,
+): Promise<DeviceStatus> {
+  const wanted = memberUserIdSchema.parse(userId);
+  const stored = getSampleStore().memberActiveDevices[wanted]?.tokenHash ?? null;
+  return deviceStatusFor(stored, tokenHash);
+}
+
+export async function getActiveDevice(userId: string): Promise<ActiveDevice | null> {
+  const wanted = memberUserIdSchema.parse(userId);
+  const record = getSampleStore().memberActiveDevices[wanted];
+  return record ? { deviceLabel: record.deviceLabel, claimedAt: record.claimedAt } : null;
+}
+
+/** One Member's claims, oldest first. */
+function switchesOf(userId: string): DeviceSwitch[] {
+  const wanted = memberUserIdSchema.parse(userId);
+  return getSampleStore().memberDeviceSwitches.filter((entry) => entry.userId === wanted);
+}
+
+export async function listDeviceSwitches(userId: string): Promise<DeviceSwitch[]> {
+  return structuredClone(switchesOf(userId));
+}
+
+export async function deviceSwitchCount(userId: string): Promise<number> {
+  return switchesOf(userId).length;
+}

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { TOKEN_HASH_PATTERN } from "@/lib/member-app/device-token";
 import { staffEmailSchema } from "@/services/admin.schema";
 import type { TargetExamRefusal } from "@/services/member.types";
 
@@ -47,6 +48,18 @@ export const shownVersionsSchema = z.object({
 export const bothAgreementsSchema = z.object({
   terms: z.literal("agreed", { errorMap: () => ({ message: BOTH_AGREEMENTS_REQUIRED }) }),
   privacy: z.literal("agreed", { errorMap: () => ({ message: BOTH_AGREEMENTS_REQUIRED }) }),
+});
+
+/** A device token's hash, as the Active Device record holds it: SHA-256 in 64 lowercase hex characters. */
+export const tokenHashSchema = z.string().regex(TOKEN_HASH_PATTERN, "must be a SHA-256 hash");
+
+/** A device label, such as "Chrome on Android". */
+export const deviceLabelSchema = z.string().trim().min(1).max(80);
+
+/** A claim of the Active Device: the token's hash, never the token, and the label. */
+export const deviceClaimSchema = z.object({
+  tokenHash: tokenHashSchema,
+  deviceLabel: deviceLabelSchema,
 });
 
 /** What the Member App says for each refused Target Exam change. */

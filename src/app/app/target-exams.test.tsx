@@ -1,19 +1,25 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { DEVICE_COOKIE } from "@/lib/member-app/device-token";
 import { getExamPageForAdmin, updateOfficialExamDate } from "@/services/admin.mock";
 import { getOrCreateMember, listTargetExams, recordConsent } from "@/services/member.mock";
 import { sampleUserId } from "@/services/mock/members";
 
 import { sampleActor } from "../../../test/admin-inputs";
 import { editSampleCatalogue } from "../../../test/catalogue-seed";
-import { CE_OFFICIAL, withExamDates } from "../../../test/member-inputs";
+import {
+  CE_OFFICIAL,
+  onThisDevice,
+  TEST_DEVICE_TOKEN,
+  withExamDates,
+} from "../../../test/member-inputs";
 
 // Onboarding and Target Exams in the Member App (Phase 3, ticket 03; spec →
 // Target Exams; stories 84–88, 133g), on sample data: the pages as a browser
-// would load them and the Server Actions as it would send them. The gate and
-// consent for each of them are in member-app.test.tsx and
-// actions.gate.test.ts.
+// would load them and the Server Actions as it would send them. The gate,
+// consent and the Active Device for each of them are in member-app.test.tsx,
+// device.test.tsx and actions.gate.test.ts.
 //
 // The data: CE has an Official Exam Date (21 Nov 2026), no other Exam has
 // one, and CHE isn't on the Website. It's 17 Nov 2026, 11:42 in Manila.
@@ -42,15 +48,23 @@ const BEA = "tester@example.com";
 const ANGEL = sampleActor("owner").email;
 const BEA_ID = sampleUserId(BEA);
 
-const signedInAs = (email: string) => jar.set("ayc_admin_sample", email);
+/** Signed in, on the browser that is the Members' Active Device (see agreedAs). */
+const signedInAs = (email: string) => {
+  jar.set("ayc_admin_sample", email);
+  jar.set(DEVICE_COOKIE, TEST_DEVICE_TOKEN);
+};
 const redirectsTo = (url: string) =>
   new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 
-/** A sample User who is a Member and has agreed, with no Target Exam yet. */
+/**
+ * A sample User who is a Member and has agreed, with no Target Exam yet,
+ * using the Member App on the test browser (their Active Device).
+ */
 async function agreedAs(email: string, name: string) {
   const userId = sampleUserId(email);
   await getOrCreateMember({ userId, email, name });
   await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await onThisDevice(userId);
 }
 
 function form(fields: Record<string, string>) {

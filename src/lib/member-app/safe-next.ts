@@ -6,6 +6,7 @@ const NOT_A_DESTINATION = new Set([
   paths.memberApp.signIn(),
   paths.memberApp.notOpenYet,
   paths.memberApp.consent(),
+  paths.memberApp.device(),
 ]);
 
 // A throwaway origin to resolve `next` against. A value that resolves to any
@@ -16,8 +17,8 @@ const BASE = "http://member-app.invalid";
  * Pure: `next` as a Member App destination, or null when it isn't a path
  * inside the Member App at all (another site, another Surface, or a path that
  * climbs in or out with ".."). The path keeps its search string. The sign-in,
- * "Not open yet" and consent screens themselves are the Member App's, but
- * aren't somewhere to land, so they answer Home.
+ * "Not open yet", consent and Active Device screens themselves are the Member
+ * App's, but aren't somewhere to land, so they answer Home.
  */
 export function memberAppNext(next: unknown): string | null {
   if (typeof next !== "string" || !next.startsWith("/")) return null;

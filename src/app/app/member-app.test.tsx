@@ -2,20 +2,28 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { DEVICE_COOKIE, hashDeviceToken } from "@/lib/member-app/device-token";
 import { removeBetaTester } from "@/services/admin.mock";
-import { addTargetExam, getOrCreateMember, recordConsent } from "@/services/member.mock";
+import {
+  addTargetExam,
+  claimDevice,
+  getOrCreateMember,
+  recordConsent,
+} from "@/services/member.mock";
 import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
+import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 
 // The Member App's pages and Server Actions on sample data (Phase 3, tickets
 // 01 and 02), each called as a browser would reach it, by everyone the gate
 // and consent must turn away: signed out goes to the sign-in screen, someone
 // signed in who is neither Staff nor a Beta Tester goes to "Not open yet",
-// with no Member record made, and a Member who hasn't agreed to the current
+// with no Member record made, a Member who hasn't agreed to the current
 // Terms and Privacy Policy goes to the consent screen (its own tests are in
-// consent/consent.test.tsx). Onboarding and Target Exams are in
+// consent/consent.test.tsx), and a request that isn't from the Member's
+// Active Device goes to the Active Device screen (device.test.tsx). Onboarding and Target Exams are in
 // target-exams.test.tsx: the Members here have one already. The cookie jar, redirect() and notFound() are the
 // framework boundary, so they are replaced; the switch, the mode and the
 // current legal versions are as the server would read them, and a test can
@@ -33,6 +41,7 @@ vi.mock("next/headers", () => ({
     set: (name: string, value: string) => jar.set(name, value),
     delete: (name: string) => jar.delete(name),
   }),
+  headers: async () => new Headers(),
 }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
@@ -63,7 +72,11 @@ const TESTER = "tester@example.com";
 const STRANGER = "stranger@example.com";
 const COOKIE = "ayc_admin_sample";
 
-const signedInAs = (email: string) => jar.set(COOKIE, email);
+/** Signed in, on the browser that is the Members' Active Device (see agreedAs). */
+const signedInAs = (email: string) => {
+  jar.set(COOKIE, email);
+  jar.set(DEVICE_COOKIE, TEST_DEVICE_TOKEN);
+};
 /** Matches the error redirect() throws for exactly this URL. */
 const redirectsTo = (url: string) =>
   new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
@@ -73,13 +86,15 @@ const consents = () => getSampleStore().memberConsents;
 
 /**
  * A sample User, already a Member under this name, having agreed to these
- * versions (the current ones unless given), with ME as their Target Exam.
+ * versions (the current ones unless given), with ME as their Target Exam,
+ * using the Member App on the test browser (their Active Device).
  */
 async function agreedAs(email: string, name: string, termsVersion = "2.0", privacyVersion = "2.0") {
   const userId = sampleUserId(email);
   await getOrCreateMember({ userId, email, name });
   await recordConsent(userId, { termsVersion, privacyVersion });
   await addTargetExam(userId, { examCode: "ME", examDate: "2099-02-08" });
+  await onThisDevice(userId);
 }
 
 function form(fields: Record<string, string>) {
@@ -175,6 +190,32 @@ describe("every gated /app page", () => {
       signedInAs(TESTER);
       await expect(page()).rejects.toThrow(
         redirectsTo(`/app/consent?next=${encodeURIComponent(path)}`),
+      );
+    },
+  );
+
+  it.each(GATED_PAGES)(
+    "%s sends a Member signed in with no device token to the Active Device screen, coming back",
+    async (path, page) => {
+      await agreedAs(TESTER, "Bea Tester");
+      jar.set(COOKIE, TESTER);
+      await expect(page()).rejects.toThrow(
+        redirectsTo(`/app/device?next=${encodeURIComponent(path)}`),
+      );
+    },
+  );
+
+  it.each(GATED_PAGES)(
+    "%s sends a replaced device to the Active Device screen, coming back",
+    async (path, page) => {
+      await agreedAs(TESTER, "Bea Tester");
+      await claimDevice(sampleUserId(TESTER), {
+        tokenHash: hashDeviceToken("the-new-device"),
+        deviceLabel: "Safari on iOS",
+      });
+      signedInAs(TESTER);
+      await expect(page()).rejects.toThrow(
+        redirectsTo(`/app/device?next=${encodeURIComponent(path)}`),
       );
     },
   );
@@ -290,6 +331,11 @@ describe("the sign-in screen", () => {
     expect(
       screen.getByText("Use your Google account. No separate username or password."),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "One device at a time. Signing in here signs out any other device on your account.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/legal/terms");
     expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
       "href",
@@ -397,12 +443,14 @@ describe("“Not open yet”", () => {
 
 describe("the Member App's Server Actions", () => {
   describe("signInAs (sample mode)", () => {
-    it("signs in as a sample Member and goes to next, making no Member record itself", async () => {
+    it("signs in as a sample Member, claims this device for them, and goes to next", async () => {
       await expect(signInAs({ email: TESTER, next: "/app/library" })).rejects.toThrow(
         redirectsTo("/app/library"),
       );
       expect(jar.get(COOKIE)).toBe(TESTER);
-      expect(members()).toEqual([]);
+      // The claim needs a Member to own it, so the gate's first pass happens here.
+      expect(members()).toMatchObject([{ email: TESTER }]);
+      expect(jar.get(DEVICE_COOKIE)).toMatch(/^[A-Za-z0-9_-]{43}$/);
     });
 
     it("signs in any email, lowercased: the gate on the next page decides", async () => {
@@ -410,6 +458,8 @@ describe("the Member App's Server Actions", () => {
         redirectsTo("/app"),
       );
       expect(jar.get(COOKIE)).toBe(STRANGER);
+      expect(members()).toEqual([]);
+      expect(jar.has(DEVICE_COOKIE)).toBe(false);
       await expect(home()).rejects.toThrow(NOT_OPEN_YET);
     });
 

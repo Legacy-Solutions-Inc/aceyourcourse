@@ -11,7 +11,11 @@ const DATABASE_TESTS = "src/**/*.db.test.ts";
 /** The Admin seam's suites, written over ADMIN_ARMS (test/admin-arms.ts). */
 const ADMIN_SUITES = "src/services/admin.*.test.ts";
 /** The Member seam's suites, written over MEMBER_ARMS (test/member-arms.ts). */
-const MEMBER_SUITES = ["src/services/member.test.ts", "src/services/member.target-exams.test.ts"];
+const MEMBER_SUITES = [
+  "src/services/member.test.ts",
+  "src/services/member.target-exams.test.ts",
+  "src/services/member.devices.test.ts",
+];
 /** Admin tests that aren't written over ADMIN_ARMS. */
 const NOT_ADMIN_SUITES = [
   "src/services/admin.rows.test.ts",

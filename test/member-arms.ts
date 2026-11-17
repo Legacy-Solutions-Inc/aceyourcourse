@@ -2,7 +2,7 @@ import type { AdminService } from "@/services/admin";
 import * as adminSampleArm from "@/services/admin.mock";
 import type { MemberService } from "@/services/member";
 import * as sampleArm from "@/services/member.mock";
-import type { ConsentRecord, Member } from "@/services/member.types";
+import type { ConsentRecord, DeviceSwitch, Member } from "@/services/member.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
@@ -33,6 +33,18 @@ export interface MemberArm {
   members(): Promise<Member[]>;
   /** Every Member's consent records, in the order they were recorded. */
   consents(): Promise<ConsentRecord[]>;
+  /** Every Active Device record as stored, token hash and all, oldest claim first. */
+  activeDevices(): Promise<StoredActiveDevice[]>;
+  /** Every Member's switch log entries, in the order they were recorded. */
+  deviceSwitches(): Promise<DeviceSwitch[]>;
+}
+
+/** An Active Device record as it is stored, for checking what is (and isn't) kept. */
+export interface StoredActiveDevice {
+  userId: string;
+  tokenHash: string;
+  deviceLabel: string;
+  claimedAt: string;
 }
 
 const SAMPLE_ARM: MemberArm = {
@@ -45,6 +57,11 @@ const SAMPLE_ARM: MemberArm = {
   },
   members: async () => structuredClone(getSampleStore().members),
   consents: async () => structuredClone(getSampleStore().memberConsents),
+  activeDevices: async () =>
+    Object.entries(getSampleStore().memberActiveDevices)
+      .map(([userId, record]) => ({ userId, ...record }))
+      .sort((a, b) => a.claimedAt.localeCompare(b.claimedAt)),
+  deviceSwitches: async () => structuredClone(getSampleStore().memberDeviceSwitches),
 };
 
 export const MEMBER_ARMS: MemberArm[] =

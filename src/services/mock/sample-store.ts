@@ -10,7 +10,7 @@ import type {
 } from "@/services/admin.types";
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
 import type { TargetExamRecord } from "@/services/member.rules";
-import type { ConsentRecord, Member } from "@/services/member.types";
+import type { ConsentRecord, DeviceSwitch, Member } from "@/services/member.types";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { sampleBetaTesters } from "@/services/mock/members";
 import { sampleStaff } from "@/services/mock/staff";
@@ -44,6 +44,14 @@ export interface SampleUpload {
   bytes: Uint8Array | null;
 }
 
+/** A Member's Active Device record in the sample data. */
+export interface SampleActiveDevice {
+  tokenHash: string;
+  deviceLabel: string;
+  /** ISO time it was claimed. */
+  claimedAt: string;
+}
+
 export interface SampleStore {
   /** Changes on boot and on every reset, so caches can't outlive the data. */
   generation: string;
@@ -67,6 +75,13 @@ export interface SampleStore {
   memberTargetExams: Record<string, TargetExamRecord[]>;
   /** The Exam each Member last selected, by User id (Phase 3). */
   selectedExams: Record<string, string | null>;
+  /**
+   * Each Member's Active Device, by User id (Phase 3): the hash of the token
+   * the device holds, never the token, with its label and claim time.
+   */
+  memberActiveDevices: Record<string, SampleActiveDevice>;
+  /** Every Member's Active Device claims, oldest first (Phase 3). */
+  memberDeviceSwitches: DeviceSwitch[];
   /** The upload seam's files, by upload id. */
   uploads: Record<string, SampleUpload>;
   /**
@@ -97,6 +112,8 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     memberConsents: [],
     memberTargetExams: {},
     selectedExams: {},
+    memberActiveDevices: {},
+    memberDeviceSwitches: [],
     uploads: {},
   };
 }

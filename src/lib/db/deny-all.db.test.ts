@@ -30,17 +30,21 @@ describeWithDatabase("Deny-all: the browser roles reach no table", database, (db
 
   // The check above passes a table that isn't there, so the Member App's
   // tables (Phase 3) are named: each exists, with RLS on and no policy at all.
-  it.each(["beta_testers", "members", "member_consents", "member_target_exams"])(
-    "has the Member App's %s table, with RLS on and no policy",
-    async (table) => {
-      const [found] = await db()<{ rls: boolean; policies: number }[]>`
+  it.each([
+    "beta_testers",
+    "members",
+    "member_consents",
+    "member_target_exams",
+    "member_active_devices",
+    "member_device_switches",
+  ])("has the Member App's %s table, with RLS on and no policy", async (table) => {
+    const [found] = await db()<{ rls: boolean; policies: number }[]>`
         select c.relrowsecurity as rls,
           (select count(*)::int from pg_policy p where p.polrelid = c.oid) as policies
         from pg_class c join pg_namespace n on n.oid = c.relnamespace
         where n.nspname = 'public' and c.relname = ${table} and c.relkind = 'r'`;
-      expect(found).toEqual({ rls: true, policies: 0 });
-    },
-  );
+    expect(found).toEqual({ rls: true, policies: 0 });
+  });
 
   it("gives a new table in public no grant for the browser roles (the revoke migration)", async () => {
     const violations = await rolledBack(db(), async (tx) => {

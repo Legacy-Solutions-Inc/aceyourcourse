@@ -107,3 +107,31 @@ export type TargetExamRefusal =
   | "last-one";
 
 export type TargetExamResult<T> = { ok: true; value: T } | { ok: false; error: TargetExamRefusal };
+
+// The Active Device (spec, Phase 3 → Active Device; ADR 0011). The token
+// itself never reaches the seam: callers hash it first
+// (src/lib/member-app/device-token.ts), and no read gives the hash back.
+
+/** A Member's Active Device, as people see it: its label and when it was claimed. */
+export interface ActiveDevice {
+  /** "{Browser} on {OS}" from the User-Agent, such as "Chrome on Android", or "Unknown browser". */
+  deviceLabel: string;
+  /** ISO time the device was claimed. */
+  claimedAt: string;
+}
+
+/** What a claim sends: the new token's hash, never the token, and the device's label. */
+export interface DeviceClaim {
+  /** The token's SHA-256, as 64 lowercase hex characters. */
+  tokenHash: string;
+  deviceLabel: string;
+}
+
+/** One claim in a Member's switch log: every claim, the first one too. */
+export interface DeviceSwitch {
+  /** The Member's User id. */
+  userId: string;
+  deviceLabel: string;
+  /** ISO time of the claim. */
+  switchedAt: string;
+}

@@ -50,6 +50,20 @@ export const paths = {
       const search = query.toString();
       return search ? `/app/consent?${search}` : "/app/consent";
     },
+    /**
+     * The Active Device screen, for a request that isn't from the Member's
+     * Active Device: "Session ended" for a replaced device, "Use the Member
+     * App on this device" for a session with no device token. `next` is where
+     * to go once this device is active (an /app path only), and `error` why
+     * the last "Sign in on this device" didn't go on.
+     */
+    device: (next?: string, error?: SignInProblem) => {
+      const query = new URLSearchParams();
+      if (next) query.set("next", next);
+      if (error) query.set("error", error);
+      const search = query.toString();
+      return search ? `/app/device?${search}` : "/app/device";
+    },
     /** The add form for another Target Exam, opened from the exam switcher and Account. */
     addExam: "/app/add-exam",
     /** Home, saying a Target Exam the Member removed earlier is back. */

@@ -1,10 +1,14 @@
 import { isDatabaseConfigured } from "@/env.server";
+import type { DeviceStatus } from "@/lib/member-app/device-token";
 import { databaseArm } from "@/services/member.db";
 import * as mockImpl from "@/services/member.mock";
 import type {
+  ActiveDevice,
   AddedTargetExam,
   AgreedVersions,
   ConsentRecord,
+  DeviceClaim,
+  DeviceSwitch,
   Member,
   MemberUser,
   NewTargetExam,
@@ -24,7 +28,7 @@ import type {
 // The seam trusts its caller for who is signed in: the Member App gate
 // (src/lib/member-app/guard.ts) passes the User that sign-in verified, never
 // anything the browser sent. Each read and write is scoped to that User's own
-// records. Later tickets add the Active Device and the study records.
+// records. Later tickets add the study records.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** The seam's public contract, checked against each arm below. */
@@ -95,6 +99,35 @@ export interface MemberService {
    * removed, the selection falls back to the first one remaining.
    */
   removeTargetExam(userId: string, examCode: string): Promise<TargetExamResult<TargetExam>>;
+
+  // The Active Device (spec, Phase 3 → Active Device; ADR 0011). Each call is
+  // scoped to the User id given. The seam only ever receives a token's hash:
+  // the caller hashes the device's token (src/lib/member-app/device-token.ts),
+  // so the token itself is never stored or logged, and no read gives the hash
+  // back. The Admin never calls these.
+
+  /**
+   * Makes the device holding this token hash the Member's Active Device,
+   * replacing the one before, and adds the claim to their switch log, timed
+   * now. Every claim is logged, the first one too. Refuses anything but a
+   * SHA-256 hash (a raw token above all), a blank or overlong label, and a
+   * User with no Member record.
+   */
+  claimDevice(userId: string, claim: DeviceClaim): Promise<ActiveDevice>;
+  /**
+   * Is this request from the Member's Active Device? "no-token" when the
+   * request carries no token; "active" when its hash matches the Member's
+   * Active Device, compared in constant time; "replaced" for any other value,
+   * including one Member's token sent for another and a Member with no Active
+   * Device yet. Never "active" for a tampered or unknown token.
+   */
+  deviceStatus(userId: string, tokenHash: string | null): Promise<DeviceStatus>;
+  /** The Member's Active Device's label and claim time, or null before their first claim. */
+  getActiveDevice(userId: string): Promise<ActiveDevice | null>;
+  /** The Member's switch log, oldest first: every claim, the first one too. */
+  listDeviceSwitches(userId: string): Promise<DeviceSwitch[]>;
+  /** How many claims the Member's switch log holds. */
+  deviceSwitchCount(userId: string): Promise<number>;
 }
 
 const impl: MemberService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -109,3 +142,8 @@ export const addTargetExam = impl.addTargetExam;
 export const setExamDate = impl.setExamDate;
 export const selectTargetExam = impl.selectTargetExam;
 export const removeTargetExam = impl.removeTargetExam;
+export const claimDevice = impl.claimDevice;
+export const deviceStatus = impl.deviceStatus;
+export const getActiveDevice = impl.getActiveDevice;
+export const listDeviceSwitches = impl.listDeviceSwitches;
+export const deviceSwitchCount = impl.deviceSwitchCount;

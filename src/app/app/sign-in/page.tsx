@@ -35,8 +35,8 @@ const SELLING_POINTS = [
  * live mode, and opens the development-only "Sign in as" list in sample mode.
  * `error` says why the last sign-in didn't go on. It only reads: signing in
  * happens in /auth/callback (Google) or the Sign in as action (sample).
- *
- * The mockup's "One device at a time" notice comes with the Active Device.
+ * Its "One device at a time" notice says up front that signing in here makes
+ * this device the Active Device (ADR 0011).
  */
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const params = await searchParams;
@@ -88,6 +88,14 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           ) : (
             <SignInAsPanel users={listSampleMembers()} next={next} action={signInAs} />
           )}
+          <p className="flex gap-3 border border-dashed border-ayc-rule p-3.5 text-sm leading-[1.45]">
+            <span aria-hidden="true" className="font-mono text-xs font-bold text-ayc-blue">
+              i
+            </span>
+            <span>
+              One device at a time. Signing in here signs out any other device on your account.
+            </span>
+          </p>
           <p className="text-[13px] text-muted-foreground">
             By continuing you agree to the{" "}
             <Link href={paths.legal.terms} className="text-ayc-blue underline underline-offset-2">

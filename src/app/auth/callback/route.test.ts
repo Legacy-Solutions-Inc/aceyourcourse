@@ -9,14 +9,19 @@ import { GET } from "./route";
 // (ticket 01). Without a code, or with one Supabase refuses, it goes back to
 // sign-in saying so. The identity module (Supabase) and the Guard are the
 // boundary here, so both are replaced.
-const { finishGoogleSignIn, continueSignIn, getSignInAttempt, endSession } = vi.hoisted(() => ({
-  finishGoogleSignIn: vi.fn(),
-  continueSignIn: vi.fn(),
-  getSignInAttempt: vi.fn(),
-  endSession: vi.fn(),
-}));
+const { finishGoogleSignIn, continueSignIn, getSignInAttempt, endSession, claimDeviceAtSignIn } =
+  vi.hoisted(() => ({
+    finishGoogleSignIn: vi.fn(),
+    continueSignIn: vi.fn(),
+    getSignInAttempt: vi.fn(),
+    endSession: vi.fn(),
+    claimDeviceAtSignIn: vi.fn(),
+  }));
 vi.mock("@/lib/admin/identity", () => ({ finishGoogleSignIn, getSignInAttempt, endSession }));
 vi.mock("@/lib/admin/guard", () => ({ continueSignIn }));
+// The Member App's sign-in claims the Active Device (ticket 04); its own tests
+// are in src/app/app/device.test.tsx.
+vi.mock("@/lib/member-app/guard", () => ({ claimDeviceAtSignIn }));
 
 const ORIGIN = "http://localhost:3000";
 const OWNER = { email: "angel@aceyourcourse.ph", name: "Angel Rose L. Lepaña", role: "owner" };
@@ -139,6 +144,51 @@ describe("GET /auth/callback", () => {
       expect(endSession).not.toHaveBeenCalled();
       expect(location.origin).toBe(ORIGIN);
       expect(path).toBe("/app/library?topic=simple-curves");
+    });
+
+    // Signing in to the Member App makes this device the Active Device
+    // (ticket 04): claimDeviceAtSignIn runs the gate itself, so someone it
+    // turns away claims nothing.
+    it("claims this device as the Active Device once the session is verified, then lands", async () => {
+      finishGoogleSignIn.mockResolvedValue(true);
+      getSignInAttempt.mockResolvedValue(VERIFIED);
+      const order: string[] = [];
+      claimDeviceAtSignIn.mockImplementation(async () => {
+        order.push("claimed");
+      });
+
+      const { path } = await callback(`?code=valid&next=${encodeURIComponent("/app/account")}`);
+      order.push("landed");
+
+      expect(claimDeviceAtSignIn).toHaveBeenCalledTimes(1);
+      expect(order).toEqual(["claimed", "landed"]);
+      expect(path).toBe("/app/account");
+    });
+
+    it.each([
+      ["the code is refused", false, VERIFIED],
+      [
+        "Google didn't verify the email",
+        true,
+        { status: "unverified", email: "tester@example.com" },
+      ],
+      ["the session didn't stick", true, { status: "signed-out" }],
+    ])("claims no device when %s", async (_label, exchanged, attempt) => {
+      finishGoogleSignIn.mockResolvedValue(exchanged);
+      getSignInAttempt.mockResolvedValue(attempt);
+
+      await callback("?code=valid&next=%2Fapp");
+
+      expect(claimDeviceAtSignIn).not.toHaveBeenCalled();
+    });
+
+    it("never claims the Member App's device for an Admin sign-in", async () => {
+      finishGoogleSignIn.mockResolvedValue(true);
+      continueSignIn.mockResolvedValue({ status: "staff", actor: OWNER });
+
+      await callback(`?code=valid&next=${encodeURIComponent("/admin/products")}`);
+
+      expect(claimDeviceAtSignIn).not.toHaveBeenCalled();
     });
 
     it.each([

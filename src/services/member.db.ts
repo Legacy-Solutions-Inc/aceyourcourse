@@ -1,13 +1,15 @@
 import "server-only";
 
-import { asc, desc, eq } from "drizzle-orm";
+import { asc, count, desc, eq } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
+import { deviceStatusFor } from "@/lib/member-app/device-token";
 import type { MemberService } from "@/services/member";
 import {
   agreedVersionsSchema,
+  deviceClaimSchema,
   memberEmailSchema,
   memberUserIdSchema,
   memberUserSchema,
@@ -21,13 +23,14 @@ import {
   type TargetExamRecord,
   type WithMemberExams,
 } from "@/services/member.rules";
-import type { ConsentRecord, Member } from "@/services/member.types";
+import type { ConsentRecord, DeviceSwitch, Member } from "@/services/member.types";
 
 // The Member seam on Postgres, selected by src/services/member.ts when
 // DATABASE_URL is set. Drizzle bypasses RLS, so each call is scoped here, in
 // the app layer, to the User the Member App gate passes it (coding standards
 // §3): a Member's records are only ever read or made by their own User id.
-// The Target Exam rules are shared with the sample arm (member.rules.ts).
+// The Target Exam rules are shared with the sample arm (member.rules.ts), and
+// the Active Device's comparison with it (device-token.ts).
 
 type MemberRow = typeof schema.members.$inferSelect;
 type ConsentRow = typeof schema.memberConsents.$inferSelect;
@@ -232,6 +235,103 @@ const withMemberExams: WithMemberExams = async (userId, work) => {
   }
 };
 
+// ── The Active Device ───────────────────────────────────────────────────────
+
+type DeviceSwitchRow = typeof schema.memberDeviceSwitches.$inferSelect;
+
+export const deviceSwitchFromRow = (row: DeviceSwitchRow): DeviceSwitch => ({
+  userId: row.userId,
+  deviceLabel: row.deviceLabel,
+  switchedAt: row.switchedAt.toISOString(),
+});
+
+const claimDevice: MemberService["claimDevice"] = async (userId, claim) => {
+  const wanted = memberUserIdSchema.parse(userId);
+  const { tokenHash, deviceLabel } = deviceClaimSchema.parse(claim);
+  const { memberActiveDevices, memberDeviceSwitches } = schema;
+  const claimedAt = new Date();
+  try {
+    // One transaction: the record is never replaced without its log row. The
+    // foreign keys to members refuse a User the gate never let in.
+    await getDb().transaction(async (tx) => {
+      await tx
+        .insert(memberActiveDevices)
+        .values({ userId: wanted, tokenHash, deviceLabel, claimedAt })
+        .onConflictDoUpdate({
+          target: memberActiveDevices.userId,
+          set: { tokenHash, deviceLabel, claimedAt },
+        });
+      await tx
+        .insert(memberDeviceSwitches)
+        .values({ userId: wanted, deviceLabel, switchedAt: claimedAt });
+    });
+    return { deviceLabel, claimedAt: claimedAt.toISOString() };
+  } catch (error) {
+    throw asDatabaseError(error);
+  }
+};
+
+const deviceStatus: MemberService["deviceStatus"] = async (userId, tokenHash) => {
+  const wanted = memberUserIdSchema.parse(userId);
+  if (tokenHash === null) return "no-token";
+  const { memberActiveDevices } = schema;
+  try {
+    const [row] = await getDb()
+      .select({ tokenHash: memberActiveDevices.tokenHash })
+      .from(memberActiveDevices)
+      .where(eq(memberActiveDevices.userId, wanted));
+    return deviceStatusFor(row?.tokenHash ?? null, tokenHash);
+  } catch (error) {
+    throw asDatabaseError(error);
+  }
+};
+
+const getActiveDevice: MemberService["getActiveDevice"] = async (userId) => {
+  const wanted = memberUserIdSchema.parse(userId);
+  const { memberActiveDevices } = schema;
+  try {
+    const [row] = await getDb()
+      .select({
+        deviceLabel: memberActiveDevices.deviceLabel,
+        claimedAt: memberActiveDevices.claimedAt,
+      })
+      .from(memberActiveDevices)
+      .where(eq(memberActiveDevices.userId, wanted));
+    return row ? { deviceLabel: row.deviceLabel, claimedAt: row.claimedAt.toISOString() } : null;
+  } catch (error) {
+    throw asDatabaseError(error);
+  }
+};
+
+const listDeviceSwitches: MemberService["listDeviceSwitches"] = async (userId) => {
+  const wanted = memberUserIdSchema.parse(userId);
+  const { memberDeviceSwitches } = schema;
+  try {
+    const rows = await getDb()
+      .select()
+      .from(memberDeviceSwitches)
+      .where(eq(memberDeviceSwitches.userId, wanted))
+      .orderBy(asc(memberDeviceSwitches.seq));
+    return rows.map(deviceSwitchFromRow);
+  } catch (error) {
+    throw asDatabaseError(error);
+  }
+};
+
+const deviceSwitchCount: MemberService["deviceSwitchCount"] = async (userId) => {
+  const wanted = memberUserIdSchema.parse(userId);
+  const { memberDeviceSwitches } = schema;
+  try {
+    const [row] = await getDb()
+      .select({ switches: count() })
+      .from(memberDeviceSwitches)
+      .where(eq(memberDeviceSwitches.userId, wanted));
+    return row?.switches ?? 0;
+  } catch (error) {
+    throw asDatabaseError(error);
+  }
+};
+
 export const databaseArm: MemberService = {
   isBetaTester,
   getOrCreateMember,
@@ -240,4 +340,9 @@ export const databaseArm: MemberService = {
   listPickableExams,
   listTargetExams,
   ...targetExamOperations(withMemberExams),
+  claimDevice,
+  deviceStatus,
+  getActiveDevice,
+  listDeviceSwitches,
+  deviceSwitchCount,
 };

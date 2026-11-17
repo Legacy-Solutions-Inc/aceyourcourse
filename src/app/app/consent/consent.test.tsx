@@ -199,9 +199,9 @@ describe("agreeAndContinue", () => {
         agreedAt: BOOT.toISOString(),
       },
     ]);
-    // Agreed, the Member is let through.
-    const { requireMember } = await import("@/lib/member-app/guard");
-    expect(await requireMember("/app/library")).toMatchObject({ email: TESTER });
+    // Agreed, consent lets the Member through (the Active Device is checked next).
+    const { requireConsentedMember } = await import("@/lib/member-app/guard");
+    expect(await requireConsentedMember("/app/library")).toMatchObject({ email: TESTER });
   });
 
   it.each(["https://evil.example", "//x", "/admin", "/app/../admin", ""])(
