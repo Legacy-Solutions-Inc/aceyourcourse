@@ -37,6 +37,19 @@ export const paths = {
     },
     /** "Not open yet": signed in, but not let in while the Member App switch is off. */
     notOpenYet: "/app/not-open-yet",
+    /**
+     * The consent screen, before any other Member App screen until the Member
+     * agrees to the current Terms and Privacy Policy; `next` is where to go
+     * afterwards (an /app path only). `outdated` says a document changed
+     * while the screen was open, so it shows the current version.
+     */
+    consent: (next?: string, { outdated = false }: { outdated?: boolean } = {}) => {
+      const query = new URLSearchParams();
+      if (next) query.set("next", next);
+      if (outdated) query.set("outdated", "1");
+      const search = query.toString();
+      return search ? `/app/consent?${search}` : "/app/consent";
+    },
     library: "/app/library",
     courses: "/app/courses",
     plans: "/app/plans",

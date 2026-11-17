@@ -3,8 +3,10 @@
 
 export const legalPageCopy = {
   switcherLabel: "Legal documents",
-  /** Shown after the effective date while a document's status is "draft". */
-  draftLabel: "Draft for legal review",
+  /** The notice under the header while a document's status is "draft": its title, then its text. */
+  draftLabel: "Draft, pending legal review",
+  draftNote:
+    "This version hasn’t been reviewed by our lawyer yet, so its wording may change. The reviewed version will get a new version number, and the Member App will ask you to agree to it.",
   inShort: "In short",
   summaryNote: "This summary isn’t a replacement for the full text below.",
   contents: "Contents",

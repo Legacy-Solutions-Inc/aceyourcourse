@@ -39,6 +39,8 @@ describe("safeMemberAppNext", () => {
     "/app/sign-in",
     "/app/sign-in?next=%2Fapp",
     "/app/not-open-yet",
+    "/app/consent",
+    "/app/consent?next=%2Fapp%2Flibrary",
   ])("falls back to Home for %s", (next) => {
     expect(safeMemberAppNext(next)).toBe("/app");
   });
@@ -59,6 +61,7 @@ describe("memberAppNext", () => {
     ["/app/library?topic=x", "/app/library?topic=x"],
     ["/app/sign-in", "/app"],
     ["/app/not-open-yet", "/app"],
+    ["/app/consent", "/app"],
   ])("answers %s with %s", (next, expected) => {
     expect(memberAppNext(next)).toBe(expected);
   });

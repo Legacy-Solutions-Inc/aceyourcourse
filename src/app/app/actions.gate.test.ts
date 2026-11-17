@@ -7,15 +7,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import * as root from "./actions";
+import * as consent from "./consent/actions";
 import * as signIn from "./sign-in/actions";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// The Member App's gate matrix (spec, Phase 3 → The beta gate): every Member
-// App Server Action is a public endpoint, so each one is listed here with who
-// may call it, and called as a browser would by everyone it must refuse:
-//   - "member": behind the gate. Signed out goes to the sign-in screen, and
-//     someone the gate doesn't let in goes to "Not open yet", with no Member
-//     record made.
+// The Member App's gate matrix (spec, Phase 3 → The beta gate and Consent):
+// every Member App Server Action is a public endpoint, so each one is listed
+// here with who may call it, and called as a browser would by everyone it
+// must refuse:
+//   - "member": behind the gate, then consent. Signed out goes to the sign-in
+//     screen, someone the gate doesn't let in goes to "Not open yet", with no
+//     Member record made, and a Member who hasn't agreed to the current Terms
+//     and Privacy Policy goes to the consent screen.
+//   - "before-consent": behind the gate only. That's the consent action alone,
+//     since consent is what it gives.
 //   - "anyone": signing in and out, which happen before the gate. Those are
 //     refused only when the Member App is closed.
 // Anyone at all gets a 404 in closed mode. A new action in any "use server"
@@ -53,11 +58,22 @@ vi.mock("@/lib/admin/mode", async (importOriginal) => ({
 const STRANGER = "stranger@example.com";
 
 interface Entry {
-  who: "member" | "anyone";
+  who: "member" | "before-consent" | "anyone";
   /** Calls the action with an input it would accept. */
   call: () => Promise<unknown>;
 }
 const anyone = (call: Entry["call"]): Entry => ({ who: "anyone", call });
+const beforeConsent = (call: Entry["call"]): Entry => ({ who: "before-consent", call });
+
+/** Both boxes ticked, with versions the consent screen could have shown. */
+function consentForm() {
+  const data = new FormData();
+  for (const name of ["terms", "privacy"]) data.set(name, "agreed");
+  data.set("termsVersion", "2.0");
+  data.set("privacyVersion", "2.0");
+  data.set("next", "/app");
+  return data;
+}
 
 function signInForm(email: string) {
   const data = new FormData();
@@ -73,6 +89,9 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
   "./actions.ts": {
     signOut: anyone(() => root.signOut()),
   },
+  "./consent/actions.ts": {
+    agreeAndContinue: beforeConsent(() => consent.agreeAndContinue({ error: null }, consentForm())),
+  },
   "./sign-in/actions.ts": {
     signInAs: anyone(() => signIn.signInAs({ error: null, email: "" }, signInForm(STRANGER))),
     // Live mode only: sample mode answers 404.
@@ -83,7 +102,8 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
 const ENTRIES = Object.entries(REGISTRY).flatMap(([module, actions]) =>
   Object.entries(actions).map(([name, entry]) => ({ module, name, ...entry })),
 );
-const GATED = ENTRIES.filter((entry) => entry.who === "member");
+const GATED = ENTRIES.filter((entry) => entry.who !== "anyone");
+const MEMBER_ONLY = ENTRIES.filter((entry) => entry.who === "member");
 
 /** The "use server" modules under this folder, and what each exports. */
 function serverActionModules(): Record<string, string[]> {
@@ -119,6 +139,7 @@ describe("the Member App's Server Actions and the gate", () => {
     jar.set("ayc_admin_sample", "tester@example.com");
     await expect(call()).rejects.toThrow("NEXT_NOT_FOUND");
     expect(getSampleStore().members).toEqual([]);
+    expect(getSampleStore().memberConsents).toEqual([]);
   });
 
   it.each(ENTRIES.filter((entry) => entry.who === "anyone"))(
@@ -129,19 +150,30 @@ describe("the Member App's Server Actions and the gate", () => {
     },
   );
 
-  // No action sits behind the gate yet: sign-in and sign-out come before it.
-  // The first one a later ticket registers as "member" is checked here.
-  if (GATED.length > 0) {
-    it.each(GATED)("$name sends a signed-out visitor to the sign-in screen", async ({ call }) => {
-      await expect(call()).rejects.toThrow(/^NEXT_REDIRECT \/app\/sign-in/);
-    });
+  it.each(GATED)("$name sends a signed-out visitor to the sign-in screen", async ({ call }) => {
+    await expect(call()).rejects.toThrow(/^NEXT_REDIRECT \/app\/sign-in/);
+    expect(getSampleStore().memberConsents).toEqual([]);
+  });
 
-    it.each(GATED)(
-      "$name refuses someone the gate doesn't let in, and makes no Member record",
+  it.each(GATED)(
+    "$name refuses someone the gate doesn't let in, and makes no Member or consent record",
+    async ({ call }) => {
+      jar.set("ayc_admin_sample", STRANGER);
+      await expect(call()).rejects.toThrow(/^NEXT_REDIRECT \/app\/not-open-yet$/);
+      expect(getSampleStore().members).toEqual([]);
+      expect(getSampleStore().memberConsents).toEqual([]);
+    },
+  );
+
+  // No action needs consent yet: the consent action is the only one past the
+  // gate. The first one a later ticket registers as "member" is checked here.
+  if (MEMBER_ONLY.length > 0) {
+    it.each(MEMBER_ONLY)(
+      "$name sends a Member who hasn't agreed to the current Terms and Privacy Policy to the consent screen",
       async ({ call }) => {
-        jar.set("ayc_admin_sample", STRANGER);
-        await expect(call()).rejects.toThrow(/^NEXT_REDIRECT \/app\/not-open-yet$/);
-        expect(getSampleStore().members).toEqual([]);
+        jar.set("ayc_admin_sample", "tester@example.com");
+        await expect(call()).rejects.toThrow(/^NEXT_REDIRECT \/app\/consent\?next=/);
+        expect(getSampleStore().memberConsents).toEqual([]);
       },
     );
   }

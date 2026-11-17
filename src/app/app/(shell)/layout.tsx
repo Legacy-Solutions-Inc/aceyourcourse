@@ -1,6 +1,6 @@
 import { MemberDrawer } from "@/components/member-app/member-drawer";
 import { MemberSidebar } from "@/components/member-app/member-sidebar";
-import { getMemberAppAccess } from "@/lib/member-app/guard";
+import { checkConsent, getMemberAppAccess } from "@/lib/member-app/guard";
 
 import { signOut } from "../actions";
 
@@ -10,12 +10,15 @@ import { signOut } from "../actions";
  *
  * A layout doesn't re-render when a Member moves between screens, so it can't
  * be the gate: every page calls requireMember itself. When the gate doesn't
- * let this request in, the layout renders the bare page, whose gate then
- * redirects to sign-in (with the right `next`) or to "Not open yet".
+ * let this request in, or the Member hasn't agreed to the current Terms and
+ * Privacy Policy, the layout renders the bare page, whose checks then
+ * redirect to sign-in (with the right `next`), to "Not open yet" or to the
+ * consent screen.
  */
 export default async function MemberShellLayout({ children }: { children: React.ReactNode }) {
   const access = await getMemberAppAccess();
   if (access.status !== "open") return children;
+  if ((await checkConsent(access.user.userId)).status !== "ok") return children;
 
   const { user } = access;
   return (

@@ -46,3 +46,28 @@ export async function signInWithEmail(page: Page, email: string, next?: string) 
   await list.getByLabel("Other email").fill(email);
   await list.getByRole("button", { name: "Sign in", exact: true }).click();
 }
+
+/** The consent screen's two boxes and its button. */
+export function consentScreen(page: Page) {
+  return {
+    terms: page.getByRole("checkbox", { name: /I agree to the Terms of Use/ }),
+    privacy: page.getByRole("checkbox", { name: /I’ve read the Privacy Policy/ }),
+    agree: page.getByRole("button", { name: "Agree and continue" }),
+  };
+}
+
+/** On the consent screen: ticks both boxes and agrees, going on to where the Member was going. */
+export async function agreeToConsent(page: Page) {
+  const consent = consentScreen(page);
+  await expect(page).toHaveURL(/\/app\/consent(\?|$)/);
+  await consent.terms.check();
+  await consent.privacy.check();
+  await consent.agree.click();
+  await expect(page).not.toHaveURL(/\/app\/consent(\?|$)/);
+}
+
+/** Signs in as a sample Member who hasn't agreed yet, and agrees on the consent screen. */
+export async function signInAndAgree(page: Page, who: SampleMemberKey, next?: string) {
+  await signInAsMember(page, who, next);
+  await agreeToConsent(page);
+}

@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { removeBetaTester, removeStaff } from "@/services/admin.mock";
+import { getOrCreateMember, recordConsent } from "@/services/member.mock";
+import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
@@ -9,12 +11,14 @@ import { sampleActor } from "../../../test/admin-inputs";
 // cookie names the signed-in User, and the switch, the staff list and the Beta
 // Tester list decide on every call. next/headers and next/navigation are the
 // framework boundary, so they are replaced: the cookie jar is a Map, and
-// redirect() and notFound() throw what they would. The switch and the mode
-// are as the server would read them, and a test can change either.
-const { jar, live, mode } = vi.hoisted(() => ({
+// redirect() and notFound() throw what they would. The switch, the mode and
+// the current legal versions are as the server would read them, and a test
+// can change any of them.
+const { jar, live, mode, legal } = vi.hoisted(() => ({
   jar: new Map<string, string>(),
   live: { current: false },
   mode: { current: "sample" as "sample" | "closed" },
+  legal: { current: { terms: "2.0", privacy: "2.0" } },
 }));
 
 vi.mock("next/headers", () => ({
@@ -40,6 +44,10 @@ vi.mock("@/lib/admin/mode", async (importOriginal) => ({
     return mode.current;
   },
 }));
+vi.mock("@/content/legal/documents", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/content/legal/documents")>()),
+  currentLegalVersions: () => ({ ...legal.current }),
+}));
 
 const OWNER = sampleActor("owner");
 const EDITOR = sampleActor("editor");
@@ -54,6 +62,15 @@ const redirectsTo = (url: string) =>
 const NOT_OPEN_YET = redirectsTo("/app/not-open-yet");
 
 const members = () => getSampleStore().members;
+const consents = () => getSampleStore().memberConsents;
+
+/** The sample Beta Tester, already a Member, having agreed to these versions. */
+async function testerAgreed(termsVersion: string, privacyVersion: string) {
+  const userId = sampleUserId(TESTER);
+  await getOrCreateMember({ userId, email: TESTER, name: "Bea Tester" });
+  await recordConsent(userId, { termsVersion, privacyVersion });
+  return userId;
+}
 
 async function loadGuard() {
   return import("./guard");
@@ -64,27 +81,28 @@ describe("the Member App gate on the server (sample mode)", () => {
     jar.clear();
     live.current = false;
     mode.current = "sample";
+    legal.current = { terms: "2.0", privacy: "2.0" };
     resetSampleStore();
   });
 
-  describe("requireMember, while the switch is off", () => {
+  describe("requireGatedMember (the gate alone), while the switch is off", () => {
     it("sends a signed-out visitor to the sign-in screen, coming back to Home", async () => {
-      const { requireMember } = await loadGuard();
-      await expect(requireMember()).rejects.toThrow(redirectsTo("/app/sign-in?next=%2Fapp"));
+      const { requireGatedMember } = await loadGuard();
+      await expect(requireGatedMember()).rejects.toThrow(redirectsTo("/app/sign-in?next=%2Fapp"));
     });
 
     it("comes back to the screen that asked", async () => {
-      const { requireMember } = await loadGuard();
-      await expect(requireMember("/app/library")).rejects.toThrow(
+      const { requireGatedMember } = await loadGuard();
+      await expect(requireGatedMember("/app/library")).rejects.toThrow(
         redirectsTo("/app/sign-in?next=%2Fapp%2Flibrary"),
       );
     });
 
     it("lets a Beta Tester in, and makes their Member record on the way", async () => {
       signInAs(TESTER);
-      const { requireMember } = await loadGuard();
+      const { requireGatedMember } = await loadGuard();
 
-      const member = await requireMember();
+      const member = await requireGatedMember();
 
       expect(member).toMatchObject({ email: TESTER, name: "Bea Tester" });
       expect(member.userId).toMatch(
@@ -95,63 +113,63 @@ describe("the Member App gate on the server (sample mode)", () => {
 
     it("gives the same Member record on every later request", async () => {
       signInAs(TESTER);
-      const { requireMember } = await loadGuard();
+      const { requireGatedMember } = await loadGuard();
 
-      const first = await requireMember();
-      expect(await requireMember("/app/library")).toEqual(first);
+      const first = await requireGatedMember();
+      expect(await requireGatedMember("/app/library")).toEqual(first);
       expect(members()).toHaveLength(1);
     });
 
     it("matches the Beta Tester list whatever the email's case", async () => {
       signInAs("  Tester@Example.COM ");
-      const { requireMember } = await loadGuard();
-      expect(await requireMember()).toMatchObject({ email: TESTER });
+      const { requireGatedMember } = await loadGuard();
+      expect(await requireGatedMember()).toMatchObject({ email: TESTER });
     });
 
     it("lets an active Staff User in, an Owner or an Editor, without being a Beta Tester", async () => {
-      const { requireMember } = await loadGuard();
+      const { requireGatedMember } = await loadGuard();
       signInAs(OWNER.email);
-      expect(await requireMember()).toMatchObject({ email: OWNER.email, name: OWNER.name });
+      expect(await requireGatedMember()).toMatchObject({ email: OWNER.email, name: OWNER.name });
       signInAs(EDITOR.email);
-      expect(await requireMember()).toMatchObject({ email: EDITOR.email });
+      expect(await requireGatedMember()).toMatchObject({ email: EDITOR.email });
       expect(members()).toHaveLength(2);
     });
 
     it("refuses anyone else: “Not open yet”, with no Member record made", async () => {
       signInAs(STRANGER);
-      const { requireMember } = await loadGuard();
+      const { requireGatedMember } = await loadGuard();
 
-      await expect(requireMember()).rejects.toThrow(NOT_OPEN_YET);
-      await expect(requireMember("/app/library")).rejects.toThrow(NOT_OPEN_YET);
+      await expect(requireGatedMember()).rejects.toThrow(NOT_OPEN_YET);
+      await expect(requireGatedMember("/app/library")).rejects.toThrow(NOT_OPEN_YET);
       expect(members()).toEqual([]);
     });
 
     it("refuses a removed tester at their next request, keeping their Member record", async () => {
       signInAs(TESTER);
-      const { requireMember } = await loadGuard();
-      const member = await requireMember();
+      const { requireGatedMember } = await loadGuard();
+      const member = await requireGatedMember();
 
       await removeBetaTester(OWNER, TESTER);
 
-      await expect(requireMember()).rejects.toThrow(NOT_OPEN_YET);
+      await expect(requireGatedMember()).rejects.toThrow(NOT_OPEN_YET);
       expect(members()).toEqual([member]);
     });
 
     it("treats removed Staff as anyone else, at their next request", async () => {
       signInAs(EDITOR.email);
-      const { requireMember } = await loadGuard();
-      await requireMember();
+      const { requireGatedMember } = await loadGuard();
+      await requireGatedMember();
 
       await removeStaff(OWNER, EDITOR.email);
 
-      await expect(requireMember()).rejects.toThrow(NOT_OPEN_YET);
+      await expect(requireGatedMember()).rejects.toThrow(NOT_OPEN_YET);
     });
 
     it("treats Staff with an unused Invite as anyone else, and doesn't activate the Invite", async () => {
       signInAs(KIM);
-      const { requireMember } = await loadGuard();
+      const { requireGatedMember } = await loadGuard();
 
-      await expect(requireMember()).rejects.toThrow(NOT_OPEN_YET);
+      await expect(requireGatedMember()).rejects.toThrow(NOT_OPEN_YET);
 
       const { staff, invites, staffActivity, deniedSignIns } = getSampleStore();
       expect(staff.map((member) => member.email)).not.toContain(KIM);
@@ -164,42 +182,133 @@ describe("the Member App gate on the server (sample mode)", () => {
 
     it("treats Staff whose Invite expired as anyone else", async () => {
       signInAs("expired.invite@example.com");
-      const { requireMember } = await loadGuard();
+      const { requireGatedMember } = await loadGuard();
 
-      await expect(requireMember()).rejects.toThrow(NOT_OPEN_YET);
+      await expect(requireGatedMember()).rejects.toThrow(NOT_OPEN_YET);
       expect(getSampleStore().deniedSignIns).toEqual([]);
       expect(members()).toEqual([]);
     });
 
     it("treats a cookie that doesn't hold an email address as signed out", async () => {
       signInAs("not-an-email");
-      const { requireMember } = await loadGuard();
-      await expect(requireMember()).rejects.toThrow(redirectsTo("/app/sign-in?next=%2Fapp"));
+      const { requireGatedMember } = await loadGuard();
+      await expect(requireGatedMember()).rejects.toThrow(redirectsTo("/app/sign-in?next=%2Fapp"));
     });
   });
 
-  describe("requireMember, once the switch is on", () => {
+  describe("requireGatedMember (the gate alone), once the switch is on", () => {
     beforeEach(() => {
       live.current = true;
     });
 
     it("lets anyone in, and makes their Member record", async () => {
       signInAs(STRANGER);
-      const { requireMember } = await loadGuard();
+      const { requireGatedMember } = await loadGuard();
 
-      expect(await requireMember()).toMatchObject({ email: STRANGER, name: "Sam Stranger" });
+      expect(await requireGatedMember()).toMatchObject({ email: STRANGER, name: "Sam Stranger" });
       expect(members()).toHaveLength(1);
     });
 
     it("lets in an email that is on no list at all", async () => {
       signInAs("someone.new@example.com");
-      const { requireMember } = await loadGuard();
-      expect(await requireMember()).toMatchObject({ email: "someone.new@example.com", name: null });
+      const { requireGatedMember } = await loadGuard();
+      expect(await requireGatedMember()).toMatchObject({
+        email: "someone.new@example.com",
+        name: null,
+      });
     });
 
     it("still sends a signed-out visitor to the sign-in screen", async () => {
+      const { requireGatedMember } = await loadGuard();
+      await expect(requireGatedMember()).rejects.toThrow(redirectsTo("/app/sign-in?next=%2Fapp"));
+    });
+  });
+
+  // Every Member App page and Member App Server Action runs requireMember:
+  // the gate, then consent (spec, Phase 3 → Consent). Only the consent screen
+  // and its action stop at the gate.
+  describe("requireMember: the gate, then consent", () => {
+    it("sends a signed-out visitor to the sign-in screen first, coming back", async () => {
       const { requireMember } = await loadGuard();
-      await expect(requireMember()).rejects.toThrow(redirectsTo("/app/sign-in?next=%2Fapp"));
+      await expect(requireMember("/app/library")).rejects.toThrow(
+        redirectsTo("/app/sign-in?next=%2Fapp%2Flibrary"),
+      );
+    });
+
+    it("sends someone the gate doesn't let in to “Not open yet”, with no Member or consent record", async () => {
+      signInAs(STRANGER);
+      const { requireMember } = await loadGuard();
+
+      await expect(requireMember()).rejects.toThrow(NOT_OPEN_YET);
+      expect(members()).toEqual([]);
+      expect(consents()).toEqual([]);
+    });
+
+    it("sends a new Member to the consent screen, coming back, with their Member record made and nothing agreed", async () => {
+      signInAs(TESTER);
+      const { requireMember } = await loadGuard();
+
+      await expect(requireMember("/app/library")).rejects.toThrow(
+        redirectsTo("/app/consent?next=%2Fapp%2Flibrary"),
+      );
+      expect(members()).toMatchObject([{ email: TESTER }]);
+      expect(consents()).toEqual([]);
+    });
+
+    it("lets in a Member whose latest agreement has both current versions", async () => {
+      signInAs(TESTER);
+      const userId = await testerAgreed("2.0", "2.0");
+      const { requireMember } = await loadGuard();
+
+      expect(await requireMember()).toMatchObject({ userId, email: TESTER });
+    });
+
+    it.each([
+      ["the Terms", { terms: "2.1", privacy: "2.0" }],
+      ["the Privacy Policy", { terms: "2.0", privacy: "2.1" }],
+      ["both", { terms: "3.0", privacy: "3.0" }],
+    ])("asks again at the next request once %s change version", async (_label, bumped) => {
+      signInAs(TESTER);
+      await testerAgreed("2.0", "2.0");
+      const { requireMember } = await loadGuard();
+      expect(await requireMember()).toMatchObject({ email: TESTER });
+
+      legal.current = bumped;
+
+      await expect(requireMember("/app/plans")).rejects.toThrow(
+        redirectsTo("/app/consent?next=%2Fapp%2Fplans"),
+      );
+    });
+
+    it("checks the gate before consent: a removed tester who agreed goes to “Not open yet”", async () => {
+      signInAs(TESTER);
+      await testerAgreed("2.0", "2.0");
+      await removeBetaTester(OWNER, TESTER);
+      const { requireMember } = await loadGuard();
+
+      await expect(requireMember()).rejects.toThrow(NOT_OPEN_YET);
+    });
+  });
+
+  describe("checkConsent", () => {
+    it("answers first-time, with the current versions, for a Member who never agreed", async () => {
+      const { checkConsent } = await loadGuard();
+      expect(await checkConsent(sampleUserId(TESTER))).toEqual({
+        status: "first-time",
+        current: { terms: "2.0", privacy: "2.0" },
+      });
+    });
+
+    it("names what changed since the Member's latest agreement", async () => {
+      const userId = await testerAgreed("2.0", "1.0");
+      const { checkConsent } = await loadGuard();
+      expect(await checkConsent(userId)).toMatchObject({ status: "privacy-changed" });
+    });
+
+    it("answers ok once the Member agrees to the current versions", async () => {
+      const userId = await testerAgreed("2.0", "2.0");
+      const { checkConsent } = await loadGuard();
+      expect(await checkConsent(userId)).toMatchObject({ status: "ok" });
     });
   });
 
@@ -226,12 +335,15 @@ describe("the Member App gate on the server (sample mode)", () => {
     });
 
     it("answers 404 from every entry point, whatever cookie is sent", async () => {
-      const { getMemberAppAccess, requireMember, requireMemberAppOpen } = await loadGuard();
+      const { getMemberAppAccess, requireGatedMember, requireMember, requireMemberAppOpen } =
+        await loadGuard();
 
       expect(() => requireMemberAppOpen()).toThrow("NEXT_NOT_FOUND");
       await expect(requireMember()).rejects.toThrow("NEXT_NOT_FOUND");
+      await expect(requireGatedMember()).rejects.toThrow("NEXT_NOT_FOUND");
       await expect(getMemberAppAccess()).rejects.toThrow("NEXT_NOT_FOUND");
       expect(members()).toEqual([]);
+      expect(consents()).toEqual([]);
     });
   });
 });

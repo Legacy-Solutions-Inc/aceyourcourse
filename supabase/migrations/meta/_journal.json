@@ -50,6 +50,13 @@
       "when": 1794897962764,
       "tag": "20261117064602_member_app_gate",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794902794457,
+      "tag": "20261117080634_member_consents",
+      "breakpoints": true
     }
   ]
 }

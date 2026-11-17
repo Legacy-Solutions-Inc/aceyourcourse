@@ -64,6 +64,18 @@ describe("legalDocumentSchema", () => {
     ]);
   });
 
+  // The draft flag: the page shows "Draft, pending legal review" under the
+  // header while a document's status is "draft", until the lawyer has
+  // reviewed it and it becomes "final".
+  it("carries the draft flag: draft or final, nothing else", () => {
+    expect(issuesOf(testDocument({ status: "draft" }))).toEqual([]);
+    expect(issuesOf(testDocument({ status: "final" }))).toEqual([]);
+    expect(issuesOf({ ...testDocument(), status: "pending" })).toEqual([
+      expect.stringMatching(/^status: /),
+    ]);
+    expect(issuesOf({ ...testDocument(), status: true })).toHaveLength(1);
+  });
+
   it("rejects an unknown kind or status", () => {
     expect(issuesOf({ ...testDocument(), kind: "cookies" })).toHaveLength(1);
     expect(issuesOf({ ...testDocument(), status: "approved" })).toHaveLength(1);

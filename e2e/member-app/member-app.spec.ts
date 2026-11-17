@@ -4,19 +4,24 @@ import { type Browser, expect as baseExpect, type Page, test } from "@playwright
 import { paths } from "../../src/paths";
 import { resetSampleData, signInAs as signInToAdmin } from "../admin/helpers";
 import {
+  agreeToConsent,
+  consentScreen,
   LIVE,
   memberEmail,
   openSignInAs,
+  signInAndAgree,
   signInAsMember,
   signInWithEmail,
   SKIP_LIVE,
 } from "./helpers";
 
-// The Member App's shell, sign-in and beta gate on sample data (Phase 3,
-// ticket 01). The Member App switch is off on the e2e server, so only active
-// Staff and Beta Testers get past sign-in; everyone else sees "Not open yet".
-// The Beta Tester list is read on every request, so an Owner's change applies
-// to the other person's next click.
+// The Member App's shell, sign-in, beta gate and consent on sample data
+// (Phase 3, tickets 01 and 02). The Member App switch is off on the e2e
+// server, so only active Staff and Beta Testers get past sign-in; everyone
+// else sees "Not open yet". Each sample Member starts with nothing agreed, so
+// their first visit shows the consent screen. The Beta Tester list is read on
+// every request, so an Owner's change applies to the other person's next
+// click.
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -29,6 +34,8 @@ const memberNav = (page: Page) => sidebar(page).getByRole("navigation", { name: 
 const welcome = (page: Page, name: string) =>
   page.getByRole("heading", { level: 1, name: `Welcome, ${name}` });
 const notOpenYet = (page: Page) => page.getByRole("heading", { level: 1, name: "Not open yet" });
+const consentHeading = (page: Page) =>
+  page.getByRole("heading", { level: 1, name: "What we keep, and why" });
 
 /** A second person, in their own browser context. */
 async function anotherPerson(browser: Browser) {
@@ -80,7 +87,7 @@ test.describe("a signed-out visitor", () => {
 
 test.describe("a Beta Tester", () => {
   test("signs in and reaches Home, in the shell with its seven screens", async ({ page }) => {
-    await signInAsMember(page, "tester");
+    await signInAndAgree(page, "tester");
 
     await expect(page).toHaveURL(/\/app$/);
     await expect(welcome(page, "Bea")).toBeVisible();
@@ -105,6 +112,8 @@ test.describe("a Beta Tester", () => {
     await page.goto(paths.memberApp.library);
     await expect(page).toHaveURL(/\/app\/sign-in\?next=%2Fapp%2Flibrary$/);
     await signInAsMember(page, "tester", paths.memberApp.library);
+    await expect(page).toHaveURL(/\/app\/consent\?next=%2Fapp%2Flibrary$/);
+    await agreeToConsent(page);
 
     await expect(page).toHaveURL(/\/app\/library$/);
     await expect(page.getByRole("heading", { level: 1, name: "Coming in the beta" })).toBeVisible();
@@ -117,13 +126,15 @@ test.describe("a Beta Tester", () => {
   for (const next of ["https://evil.example", "//evil.example", "/admin", "/app/../admin"]) {
     test(`goes to Home, not next=${next}`, async ({ page }) => {
       await signInAsMember(page, "tester", next);
+      await expect(page).toHaveURL(/\/app\/consent\?next=%2Fapp$/);
+      await agreeToConsent(page);
       await expect(page).toHaveURL(/\/app$/);
       await expect(welcome(page, "Bea")).toBeVisible();
     });
   }
 
   test("opens each screen that isn't built yet, and goes back Home", async ({ page }) => {
-    await signInAsMember(page, "tester");
+    await signInAndAgree(page, "tester");
     await expect(welcome(page, "Bea")).toBeVisible();
 
     for (const [label, path] of [
@@ -149,7 +160,7 @@ test.describe("a Beta Tester", () => {
   });
 
   test("signs out to the sign-in screen, and /app asks to sign in again", async ({ page }) => {
-    await signInAsMember(page, "tester");
+    await signInAndAgree(page, "tester");
     await expect(welcome(page, "Bea")).toBeVisible();
 
     await sidebar(page).getByRole("button", { name: "Sign out" }).click();
@@ -161,7 +172,7 @@ test.describe("a Beta Tester", () => {
   });
 
   test("is refused at their next click once an Owner removes them", async ({ page, browser }) => {
-    await signInAsMember(page, "tester");
+    await signInAndAgree(page, "tester");
     await expect(welcome(page, "Bea")).toBeVisible();
 
     const owner = await anotherPerson(browser);
@@ -186,11 +197,98 @@ test.describe("a Beta Tester", () => {
   });
 });
 
+test.describe("the consent screen", () => {
+  test("shows first, says what's kept, and keeps Agree disabled until both boxes are ticked", async ({
+    page,
+  }) => {
+    await signInAsMember(page, "tester");
+
+    await expect(page).toHaveURL(/\/app\/consent\?next=%2Fapp$/);
+    await expect(page.getByText("BEFORE YOU START")).toBeVisible();
+    await expect(consentHeading(page)).toBeVisible();
+    await expect(
+      page.getByRole("list", { name: "What we keep, and why" }).getByRole("listitem"),
+    ).toHaveCount(4);
+    // Outside the shell, as in the mockup: no menu yet.
+    await expect(page.getByRole("navigation")).toHaveCount(0);
+
+    const consent = consentScreen(page);
+    await expect(consent.terms).not.toBeChecked();
+    await expect(consent.privacy).not.toBeChecked();
+    await expect(consent.agree).toBeDisabled();
+
+    await consent.terms.check();
+    await expect(consent.agree).toBeDisabled();
+    await consent.terms.uncheck();
+    await consent.privacy.check();
+    await expect(consent.agree).toBeDisabled();
+    await consent.terms.check();
+    await expect(consent.agree).toBeEnabled();
+
+    await expect(page.getByRole("link", { name: "Terms of Use" })).toHaveAttribute(
+      "href",
+      "/legal/terms",
+    );
+    await expect(page.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
+      "href",
+      "/legal/privacy",
+    );
+    await expect(consent.terms).toHaveAccessibleName(/version 2\.0/);
+  });
+
+  test("comes before every Member App address until the Member agrees", async ({ page }) => {
+    await signInAsMember(page, "tester");
+    await expect(consentHeading(page)).toBeVisible();
+
+    for (const path of [paths.memberApp.home, paths.memberApp.library, paths.memberApp.account]) {
+      await page.goto(path);
+      await expect(page).toHaveURL(new RegExp(`/app/consent\\?next=${encodeURIComponent(path)}$`));
+    }
+  });
+
+  test("agreeing continues to where the Member was going, and isn't asked again", async ({
+    page,
+  }) => {
+    await page.goto(paths.memberApp.plans);
+    await signInAsMember(page, "tester", paths.memberApp.plans);
+    await agreeToConsent(page);
+
+    await expect(page).toHaveURL(/\/app\/plans$/);
+    await expect(memberNav(page).getByRole("link", { name: /Plans/ })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+
+    // The agreement is kept: later visits, and the consent address itself, go straight on.
+    await page.goto(paths.memberApp.home);
+    await expect(welcome(page, "Bea")).toBeVisible();
+    await page.goto(paths.memberApp.consent(paths.memberApp.library));
+    await expect(page).toHaveURL(/\/app\/library$/);
+  });
+
+  test("offers Sign out to someone who doesn't want to agree", async ({ page }) => {
+    await signInAsMember(page, "tester");
+    await page.getByRole("button", { name: "Sign out" }).click();
+
+    await expect(page).toHaveURL(/\/app\/sign-in$/);
+    await page.goto(paths.memberApp.home);
+    await expect(page).toHaveURL(/\/app\/sign-in\?next=%2Fapp$/);
+  });
+
+  test("is never shown to someone the gate doesn't let in", async ({ page }) => {
+    await signInAsMember(page, "stranger");
+    await expect(notOpenYet(page)).toBeVisible();
+
+    await page.goto(paths.memberApp.consent());
+    await expect(page).toHaveURL(/\/app\/not-open-yet$/);
+  });
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
   test("the Menu button opens the drawer; Escape, ✕ and the scrim close it", async ({ page }) => {
-    await signInAsMember(page, "tester");
+    await signInAndAgree(page, "tester");
     await expect(welcome(page, "Bea")).toBeVisible();
     await expect(sidebar(page)).toBeHidden();
 
@@ -221,7 +319,7 @@ test.describe("on a phone", () => {
   test("a screen chosen in the drawer opens, and Sign out is in the drawer too", async ({
     page,
   }) => {
-    await signInAsMember(page, "tester");
+    await signInAndAgree(page, "tester");
     await page.getByRole("button", { name: "Menu" }).click();
     const drawer = page.getByRole("dialog", { name: "Menu" });
     await drawer.getByRole("link", { name: /Plans/ }).click();
@@ -236,8 +334,10 @@ test.describe("on a phone", () => {
 });
 
 test.describe("active Staff", () => {
-  test("the Owner reaches Home without being a Beta Tester", async ({ page }) => {
+  test("the Owner reaches Home without being a Beta Tester, after agreeing", async ({ page }) => {
     await signInAsMember(page, "owner");
+    await expect(consentHeading(page)).toBeVisible();
+    await agreeToConsent(page);
     await expect(page).toHaveURL(/\/app$/);
     await expect(welcome(page, "Angel")).toBeVisible();
   });
@@ -293,6 +393,8 @@ test.describe("someone who is neither Staff nor a Beta Tester", () => {
     }
 
     await page.reload();
+    await expect(page).toHaveURL(/\/app\/consent\?next=%2Fapp$/);
+    await agreeToConsent(page);
     await expect(page).toHaveURL(/\/app$/);
     await expect(welcome(page, "late.joiner")).toBeVisible();
   });
@@ -338,12 +440,26 @@ test.describe("accessibility", () => {
       test("no serious or critical violations on Home and a screen that isn't built yet", async ({
         page,
       }) => {
-        await signInAsMember(page, "tester");
+        await signInAndAgree(page, "tester");
         await expect(welcome(page, "Bea")).toBeVisible();
         await expectNoBlockingViolations(page);
 
         await page.goto(paths.memberApp.library);
         await expect(page.getByRole("heading", { level: 1 })).toHaveText("Coming in the beta");
+        await expectNoBlockingViolations(page);
+      });
+
+      test("no serious or critical violations on the consent screen, before and after ticking", async ({
+        page,
+      }) => {
+        await signInAsMember(page, "tester");
+        await expect(consentHeading(page)).toBeVisible();
+        await expectNoBlockingViolations(page);
+
+        const consent = consentScreen(page);
+        await consent.terms.check();
+        await consent.privacy.check();
+        await expect(consent.agree).toBeEnabled();
         await expectNoBlockingViolations(page);
       });
 

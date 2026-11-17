@@ -2,30 +2,39 @@ import type { LegalDocument } from "@/content/legal/types";
 import { formatDate } from "@/lib/manila-time";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Terms of Use v1.0: the Website only, a draft for the client's lawyer. The
-// Website is a catalogue that links out to the Marketplaces, so these terms
-// cover browsing, "as of" prices and figures, Marketplace purchases and AYC's
-// IPOPHIL-registered content. The Member App terms (accounts, Plans, payments,
-// refunds) arrive as v2.0 at the Member App launch.
+// Terms of Use v2.0: the Website and the Member App, a draft for the client's
+// lawyer ("Draft, pending legal review" shows while `status` is "draft").
+// v1.0 covered the Website only: browsing, "as of" prices and figures,
+// Marketplace purchases and AYC's IPOPHIL-registered content. Its text stays
+// as the Website sections (1 to 5), and v1.0 itself is in git history. The
+// Member App sections (6 to 10) cover the account and consent, one Active
+// Device, Access Passes, Free Preview and Staff grants, watermarked content,
+// and ending access or deleting the account (spec, Phase 3). Plans, payments
+// and refunds come with Phase 4, and a new version. Bumping
+// TERMS_OF_USE_VERSION asks every Member to agree again.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const VERSION = "1.0";
-const EFFECTIVE_DATE = "2026-12-01";
+/** The current version: what the consent screen asks Members to agree to. */
+export const TERMS_OF_USE_VERSION = "2.0";
+const EFFECTIVE_DATE = "2026-11-17";
+/** v1.0 was set to take effect on this date, and v2.0 replaced it before then. */
+const V1_EFFECTIVE_DATE = "2026-12-01";
 
 export function termsOfUse(contactEmail: string): LegalDocument {
   return {
     kind: "terms",
     title: "Terms of Use",
     description:
-      "The terms for using the Ace Your Course website: purchases on the Marketplaces, prices and figures shown as of a date, and our IPOPHIL-registered content.",
-    version: VERSION,
+      "The terms for the Ace Your Course website and Member App: your account, one Active Device, Access Passes, watermarked content and Marketplace purchases.",
+    version: TERMS_OF_USE_VERSION,
     effectiveDate: EFFECTIVE_DATE,
     status: "draft",
     summary: [
-      "The Website is a catalogue. It doesn’t sell anything or take payments.",
+      "The Website is a catalogue. It doesn’t sell anything or take payments: you buy our printed reviewers on Shopee, Lazada or TikTok Shop, under that platform’s terms.",
       "Prices and Shopee figures are shown as of a date. When you buy, the Marketplace listing is what counts.",
-      "You buy on Shopee, Lazada or TikTok Shop, under that platform’s terms, including for returns and refunds.",
-      "Our reviewers are registered with IPOPHIL and protected by copyright. Don’t copy, share or resell them.",
+      "The Member App is for your own study, with your own Google account, on one Active Device at a time.",
+      "An Access Pass opens one exam’s content until its end date. Member App content is watermarked with your email and Member ID. Don’t share, copy or resell it.",
+      "Our reviewers are registered with IPOPHIL, and all our content is protected by copyright.",
       `These terms follow Philippine law. Questions? Email ${contactEmail}.`,
     ],
     sections: [
@@ -33,7 +42,7 @@ export function termsOfUse(contactEmail: string): LegalDocument {
         id: "s1",
         title: "Using the Website",
         paragraphs: [
-          "These terms apply to your use of the Ace Your Course website (“the Website”). By using the Website, you agree to them. If you don’t agree, please don’t use it.",
+          "These terms apply to your use of the Ace Your Course website (“the Website”) and our Member App (“the Member App”). By using the Website, you agree to them, and the Member App asks you to agree to them before you first use it. If you don’t agree, please don’t use either.",
           "You may use the Website to learn about our reviewers and find our official stores, for your own personal, non-commercial use.",
           "Please don’t misuse it: don’t try to break or overload it, get around its security, or copy its content in bulk, by hand or with automated tools.",
         ],
@@ -76,23 +85,70 @@ export function termsOfUse(contactEmail: string): LegalDocument {
       },
       {
         id: "s6",
-        title: "Limitation of liability",
+        title: "The Member App and your account",
         paragraphs: [
-          "We provide the Website for information, as it is. We work to keep it accurate and available, but we can’t promise it will always be complete, error-free or uninterrupted.",
-          "Our reviewers are study aids. They help you review, but they don’t guarantee that you’ll pass a board exam.",
-          "To the extent the law allows, we aren’t liable for any loss that comes from using the Website or relying on its information. Nothing in these terms takes away rights you have under the Consumer Act of the Philippines (Republic Act No. 7394) or any other law that can’t be waived.",
+          "The Member App is where Members study our digital content: flashcards, quizzes and Reviewer PDFs, organised by exam, subject and topic.",
+          "You sign in with your Google account, and your first sign-in creates your Member App account. It’s for you alone: don’t share it or let anyone else use it. Keep your Google account secure, because what happens under your account is your responsibility.",
+          "Before you first use the Member App, you agree to these terms and our Privacy Policy. When either gets a new version, the Member App asks you to agree again before you continue.",
+          "The Member App is in a beta. Until it opens to everyone, only our staff and the Beta Testers we invite can use it, and its features may change or not always work as they should.",
         ],
       },
       {
         id: "s7",
-        title: "Changes to these terms",
+        title: "One Active Device",
         paragraphs: [
-          "We may update these terms. When we do, we’ll give them a new version number and effective date, shown at the top of this page. If you keep using the Website after a change takes effect, the updated terms apply.",
-          `Version ${VERSION}, effective ${formatDate(EFFECTIVE_DATE, "long")}: the first version, covering the Website.`,
+          "You can use the Member App on one device at a time: your Active Device. Signing in on another device makes that one your Active Device, and ends the Member App session on the old one.",
+          "We log each change of Active Device. If an account seems to be shared, we may sign out its Active Device, and act under section 10.",
         ],
       },
       {
         id: "s8",
+        title: "Access Passes, Free Preview and grants",
+        paragraphs: [
+          "Some Member App content is a Free Preview that any Member can open. The rest needs an Access Pass for its exam.",
+          "An Access Pass lets you open all of one exam’s study content until its end date, in Philippine time. When it ends, that content locks again, and your progress is kept.",
+          "Our Owners may grant you an Access Pass, for example during the beta, and may extend it or end it early. Each grant is recorded with a reason.",
+          "The Member App doesn’t take payments yet. Before it does, these terms will set out prices, payment and refunds, under a new version.",
+        ],
+      },
+      {
+        id: "s9",
+        title: "Member App content and watermarks",
+        paragraphs: [
+          "The Member App’s flashcards, quizzes and Reviewer PDFs, with their text, images and figures, belong to Ace Your Course and are protected by copyright. Your Access Pass lets you study them in the Member App for your own review. It doesn’t give you the right to copy them.",
+          "Don’t copy, download, record, print, share or resell Member App content, in whole or in part, and don’t use tools to scrape it or get around its protections.",
+          "Each Reviewer PDF page is stamped with your email address and Member ID, and flashcards and quizzes show a watermark on screen. Don’t remove, hide or crop out a watermark.",
+        ],
+      },
+      {
+        id: "s10",
+        title: "Ending your access, and deleting your account",
+        paragraphs: [
+          `You can stop using the Member App at any time. You can also ask us to delete your account, from the Member App’s Account screen or by emailing ${contactEmail}. We delete it within 30 days, as our Privacy Policy explains.`,
+          "Deleting your account ends your Access Passes, and your progress is deleted with it. Access you paid for isn’t refunded when you delete your account.",
+          "We may suspend or close your account, or end your Access Passes, if you break these terms, for example by sharing your account or our content. Where we can, we’ll tell you why.",
+        ],
+      },
+      {
+        id: "s11",
+        title: "Limitation of liability",
+        paragraphs: [
+          "We provide the Website and the Member App as they are. We work to keep them accurate and available, but we can’t promise they will always be complete, error-free or uninterrupted, especially while the Member App is in its beta.",
+          "Our reviewers and Member App content are study aids. They help you review, but they don’t guarantee that you’ll pass a board exam.",
+          "To the extent the law allows, we aren’t liable for any loss that comes from using the Website or the Member App, or relying on their information. Nothing in these terms takes away rights you have under the Consumer Act of the Philippines (Republic Act No. 7394) or any other law that can’t be waived.",
+        ],
+      },
+      {
+        id: "s12",
+        title: "Changes to these terms",
+        paragraphs: [
+          "We may update these terms. When we do, we’ll give them a new version number and effective date, shown at the top of this page. If you keep using the Website after a change takes effect, the updated terms apply. The Member App asks you to agree to each new version before you continue using it.",
+          `Version 1.0, set to take effect ${formatDate(V1_EFFECTIVE_DATE, "long")}: the first version, covering the Website only. Version 2.0 replaced it before that date.`,
+          `Version ${TERMS_OF_USE_VERSION}, effective ${formatDate(EFFECTIVE_DATE, "long")}: adds the Member App, covering your account, one Active Device, Access Passes, Free Preview and grants, watermarked content, and ending your access or deleting your account. A draft, pending legal review.`,
+        ],
+      },
+      {
+        id: "s13",
         title: "Governing law and contact",
         paragraphs: [
           "These terms are governed by the laws of the Republic of the Philippines.",

@@ -22,3 +22,21 @@ export interface Member {
   /** ISO time they first passed the gate. */
   joinedAt: string;
 }
+
+/** The Terms of Use and Privacy Policy versions in one agreement, such as "2.0". */
+export interface AgreedVersions {
+  termsVersion: string;
+  privacyVersion: string;
+}
+
+/**
+ * One time a Member agreed to the Terms of Use and the Privacy Policy, with
+ * the versions they agreed to (spec, Phase 3 → Consent). Agreements are kept
+ * as history: a new one is added each time, and none is ever changed.
+ */
+export interface ConsentRecord extends AgreedVersions {
+  /** The Member's User id. */
+  userId: string;
+  /** ISO time they agreed. */
+  agreedAt: string;
+}

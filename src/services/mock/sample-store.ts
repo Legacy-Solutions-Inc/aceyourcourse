@@ -9,7 +9,7 @@ import type {
   StaffMember,
 } from "@/services/admin.types";
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
-import type { Member } from "@/services/member.types";
+import type { ConsentRecord, Member } from "@/services/member.types";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { sampleBetaTesters } from "@/services/mock/members";
 import { sampleStaff } from "@/services/mock/staff";
@@ -60,6 +60,8 @@ export interface SampleStore {
   betaTesters: BetaTester[];
   /** The Members: everyone who has passed the Member App gate (Phase 3). */
   members: Member[];
+  /** Every Member's agreements to the Terms and Privacy Policy, oldest first (Phase 3). */
+  memberConsents: ConsentRecord[];
   /** The upload seam's files, by upload id. */
   uploads: Record<string, SampleUpload>;
   /**
@@ -87,6 +89,7 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     staffActivity: [],
     betaTesters: sampleBetaTesters(now),
     members: [],
+    memberConsents: [],
     uploads: {},
   };
 }

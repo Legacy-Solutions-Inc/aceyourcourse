@@ -124,4 +124,83 @@ describe.each(MEMBER_ARMS)("Member seam ($name)", (arm) => {
       expect(await arm.members()).toEqual([]);
     });
   });
+
+  // Consent (spec, Phase 3 → Consent; stories 82, 83, 133e): each agreement
+  // is added to the Member's history, never changed, and the consent check
+  // reads the latest one.
+  describe("consent records", () => {
+    const V1 = { termsVersion: "1.0", privacyVersion: "1.0" };
+    const V2 = { termsVersion: "2.0", privacyVersion: "2.0" };
+    const later = (ms: number) => vi.setSystemTime(new Date(BOOT.getTime() + ms));
+
+    beforeEach(async () => {
+      await seam.getOrCreateMember(BEA);
+    });
+
+    it("has no agreement for a Member who never agreed", async () => {
+      expect(await seam.latestConsent(BEA.userId)).toBeNull();
+      expect(await arm.consents()).toEqual([]);
+    });
+
+    it("records an agreement with both versions and the time, and reads it as the latest", async () => {
+      const agreed = await seam.recordConsent(BEA.userId, V2);
+
+      expect(agreed).toEqual({ userId: BEA.userId, ...V2, agreedAt: BOOT.toISOString() });
+      expect(await seam.latestConsent(BEA.userId)).toEqual(agreed);
+      expect(await arm.consents()).toEqual([agreed]);
+    });
+
+    it("keeps every agreement as history, unchanged, and reads the newest as the latest", async () => {
+      const first = await seam.recordConsent(BEA.userId, V1);
+      later(60_000);
+      const second = await seam.recordConsent(BEA.userId, { ...V1, termsVersion: "2.0" });
+      later(120_000);
+      const third = await seam.recordConsent(BEA.userId, V2);
+
+      expect(await seam.latestConsent(BEA.userId)).toEqual(third);
+      expect(await arm.consents()).toEqual([first, second, third]);
+      expect(first).toEqual({ userId: BEA.userId, ...V1, agreedAt: BOOT.toISOString() });
+    });
+
+    it("reads the last one recorded as the latest when two share a time", async () => {
+      await seam.recordConsent(BEA.userId, V1);
+      const second = await seam.recordConsent(BEA.userId, V2);
+
+      expect(await seam.latestConsent(BEA.userId)).toEqual(second);
+    });
+
+    it("never gives one Member another Member's agreements", async () => {
+      await seam.getOrCreateMember(SAM);
+      const beas = await seam.recordConsent(BEA.userId, V2);
+
+      expect(await seam.latestConsent(SAM.userId)).toBeNull();
+
+      later(60_000);
+      const sams = await seam.recordConsent(SAM.userId, V1);
+      expect(await seam.latestConsent(BEA.userId)).toEqual(beas);
+      expect(await seam.latestConsent(SAM.userId)).toEqual(sams);
+      expect(sams.userId).toBe(SAM.userId);
+    });
+
+    it("refuses a User with no Member record, such as someone the gate turned away, and records nothing", async () => {
+      await expect(seam.recordConsent(SAM.userId, V2)).rejects.toThrow();
+      expect(await arm.consents()).toEqual([]);
+      expect(await seam.latestConsent(SAM.userId)).toBeNull();
+    });
+
+    it.each([
+      ["a Terms version that isn't one", { ...V2, termsVersion: "v2" }],
+      ["a Privacy version that isn't one", { ...V2, privacyVersion: "2" }],
+      ["a blank version", { ...V2, termsVersion: "" }],
+    ])("refuses %s, and records nothing", async (_label, versions) => {
+      await expect(seam.recordConsent(BEA.userId, versions)).rejects.toThrow();
+      expect(await arm.consents()).toEqual([]);
+    });
+
+    it("refuses a User id that isn't one, reading or recording", async () => {
+      await expect(seam.latestConsent("not-a-uuid")).rejects.toThrow();
+      await expect(seam.recordConsent("not-a-uuid", V2)).rejects.toThrow();
+      expect(await arm.consents()).toEqual([]);
+    });
+  });
 });

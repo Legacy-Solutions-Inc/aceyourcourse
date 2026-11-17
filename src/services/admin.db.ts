@@ -201,9 +201,13 @@ async function load(
     set betaTesters(value) {
       betaTesters = value;
     },
-    // The Member seam's database arm (member.db.ts) reads and writes Members itself.
+    // The Member seam's database arm (member.db.ts) reads and writes Members,
+    // and their consent records, itself.
     get members() {
       return notLoaded("the Members");
+    },
+    get memberConsents() {
+      return notLoaded("the consent records");
     },
     // Read only: a rollback couldn't undo a change to the sample data's uploads.
     get uploads() {

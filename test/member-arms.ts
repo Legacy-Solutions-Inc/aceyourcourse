@@ -2,7 +2,7 @@ import type { AdminService } from "@/services/admin";
 import * as adminSampleArm from "@/services/admin.mock";
 import type { MemberService } from "@/services/member";
 import * as sampleArm from "@/services/member.mock";
-import type { Member } from "@/services/member.types";
+import type { ConsentRecord, Member } from "@/services/member.types";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { MEMBER_DATABASE_ARM } from "./member-database";
@@ -26,6 +26,8 @@ export interface MemberArm {
   reset(): Promise<void>;
   /** Every Member record, in the order they joined. */
   members(): Promise<Member[]>;
+  /** Every Member's consent records, in the order they were recorded. */
+  consents(): Promise<ConsentRecord[]>;
 }
 
 const SAMPLE_ARM: MemberArm = {
@@ -36,6 +38,7 @@ const SAMPLE_ARM: MemberArm = {
     resetSampleStore();
   },
   members: async () => structuredClone(getSampleStore().members),
+  consents: async () => structuredClone(getSampleStore().memberConsents),
 };
 
 export const MEMBER_ARMS: MemberArm[] =

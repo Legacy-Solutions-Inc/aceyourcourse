@@ -3,21 +3,27 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { removeBetaTester } from "@/services/admin.mock";
+import { getOrCreateMember, recordConsent } from "@/services/member.mock";
+import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
 
-// The Member App's pages and Server Actions on sample data (Phase 3, ticket
-// 01), each called as a browser would reach it, by everyone the gate must
-// turn away: signed out goes to the sign-in screen, and someone signed in
-// who is neither Staff nor a Beta Tester goes to "Not open yet", with no
-// Member record made. The cookie jar, redirect() and notFound() are the
-// framework boundary, so they are replaced; the switch and the mode are as
-// the server would read them, and a test can change either.
-const { jar, live, mode } = vi.hoisted(() => ({
+// The Member App's pages and Server Actions on sample data (Phase 3, tickets
+// 01 and 02), each called as a browser would reach it, by everyone the gate
+// and consent must turn away: signed out goes to the sign-in screen, someone
+// signed in who is neither Staff nor a Beta Tester goes to "Not open yet",
+// with no Member record made, and a Member who hasn't agreed to the current
+// Terms and Privacy Policy goes to the consent screen (its own tests are in
+// consent/consent.test.tsx). The cookie jar, redirect() and notFound() are the
+// framework boundary, so they are replaced; the switch, the mode and the
+// current legal versions are as the server would read them, and a test can
+// change any of them.
+const { jar, live, mode, legal } = vi.hoisted(() => ({
   jar: new Map<string, string>(),
   live: { current: false },
   mode: { current: "sample" as "sample" | "closed" },
+  legal: { current: { terms: "2.0", privacy: "2.0" } },
 }));
 
 vi.mock("next/headers", () => ({
@@ -46,6 +52,10 @@ vi.mock("@/lib/admin/mode", async (importOriginal) => ({
     return mode.current;
   },
 }));
+vi.mock("@/content/legal/documents", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/content/legal/documents")>()),
+  currentLegalVersions: () => ({ ...legal.current }),
+}));
 
 const OWNER = sampleActor("owner");
 const TESTER = "tester@example.com";
@@ -58,6 +68,17 @@ const redirectsTo = (url: string) =>
   new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 const NOT_OPEN_YET = redirectsTo("/app/not-open-yet");
 const members = () => getSampleStore().members;
+const consents = () => getSampleStore().memberConsents;
+
+/**
+ * A sample User, already a Member under this name, having agreed to these
+ * versions (the current ones unless given).
+ */
+async function agreedAs(email: string, name: string, termsVersion = "2.0", privacyVersion = "2.0") {
+  const userId = sampleUserId(email);
+  await getOrCreateMember({ userId, email, name });
+  await recordConsent(userId, { termsVersion, privacyVersion });
+}
 
 function form(fields: Record<string, string>) {
   const data = new FormData();
@@ -94,6 +115,7 @@ beforeEach(() => {
   jar.clear();
   live.current = false;
   mode.current = "sample";
+  legal.current = { terms: "2.0", privacy: "2.0" };
   resetSampleStore();
 });
 
@@ -127,10 +149,45 @@ describe("every gated /app page", () => {
     signedInAs(TESTER);
     await expect(page()).rejects.toThrow("NEXT_NOT_FOUND");
   });
+
+  it.each(GATED_PAGES)(
+    "%s sends a Member who has never agreed to the consent screen, coming back, with nothing agreed",
+    async (path, page) => {
+      signedInAs(TESTER);
+      await expect(page()).rejects.toThrow(
+        redirectsTo(`/app/consent?next=${encodeURIComponent(path)}`),
+      );
+      expect(members()).toMatchObject([{ email: TESTER }]);
+      expect(consents()).toEqual([]);
+    },
+  );
+
+  it.each(GATED_PAGES)(
+    "%s sends a Member who agreed to an old Privacy version to the consent screen",
+    async (path, page) => {
+      await agreedAs(TESTER, "Bea Tester", "2.0", "1.0");
+      signedInAs(TESTER);
+      await expect(page()).rejects.toThrow(
+        redirectsTo(`/app/consent?next=${encodeURIComponent(path)}`),
+      );
+    },
+  );
+
+  it("sends every Member to the consent screen again once a version changes", async () => {
+    await agreedAs(TESTER, "Bea Tester");
+    await agreedAs(OWNER.email, OWNER.name);
+    legal.current = { terms: "2.1", privacy: "2.0" };
+
+    for (const email of [TESTER, OWNER.email]) {
+      signedInAs(email);
+      await expect(home()).rejects.toThrow(redirectsTo("/app/consent?next=%2Fapp"));
+    }
+  });
 });
 
 describe("Home", () => {
-  it("welcomes a Beta Tester by their first name, and makes their Member record", async () => {
+  it("welcomes a Beta Tester who has agreed, by their first name", async () => {
+    await agreedAs(TESTER, "Bea Tester");
     signedInAs(TESTER);
     render(await home());
 
@@ -138,14 +195,16 @@ describe("Home", () => {
     expect(members()).toMatchObject([{ email: TESTER, name: "Bea Tester" }]);
   });
 
-  it("welcomes an active Staff User", async () => {
+  it("welcomes an active Staff User who has agreed", async () => {
+    await agreedAs(OWNER.email, OWNER.name);
     signedInAs(OWNER.email);
     render(await home());
     expect(screen.getByRole("heading", { level: 1, name: "Welcome, Angel" })).toBeInTheDocument();
   });
 
-  it("welcomes anyone once the switch is on", async () => {
+  it("welcomes anyone who has agreed once the switch is on", async () => {
     live.current = true;
+    await agreedAs(STRANGER, "Sam Stranger");
     signedInAs(STRANGER);
     render(await home());
     expect(screen.getByRole("heading", { level: 1, name: "Welcome, Sam" })).toBeInTheDocument();
@@ -161,6 +220,7 @@ describe("the screens that aren't built yet", () => {
     ["account", "06 · ACCOUNT"],
     ["support", "07 · SUPPORT"],
   ])("/app/%s says it's coming in the beta", async (segment, eyebrow) => {
+    await agreedAs(TESTER, "Bea Tester");
     signedInAs(TESTER);
     render(await comingSoon(segment));
 
@@ -171,7 +231,8 @@ describe("the screens that aren't built yet", () => {
     expect(screen.getByRole("link", { name: "Back to Home" })).toHaveAttribute("href", "/app");
   });
 
-  it("answers 404 for an address that is no screen, once the gate has let the Member in", async () => {
+  it("answers 404 for an address that is no screen, once the gate and consent let the Member in", async () => {
+    await agreedAs(TESTER, "Bea Tester");
     signedInAs(TESTER);
     await expect(comingSoon("nonsense")).rejects.toThrow("NEXT_NOT_FOUND");
   });
@@ -179,6 +240,7 @@ describe("the screens that aren't built yet", () => {
 
 describe("the shell", () => {
   it("wraps a Member's screen in the sidebar and the Menu button", async () => {
+    await agreedAs(TESTER, "Bea Tester");
     signedInAs(TESTER);
     render(await shell(<p>the screen</p>));
 
@@ -194,7 +256,8 @@ describe("the shell", () => {
   it.each([
     ["a signed-out visitor", null],
     ["someone the gate doesn't let in", STRANGER],
-  ])("shows %s no menu: the bare page, whose gate redirects", async (_who, email) => {
+    ["a Member who hasn't agreed yet", TESTER],
+  ])("shows %s no menu: the bare page, whose checks redirect", async (_who, email) => {
     if (email) signedInAs(email);
     render(await shell(<p>the screen</p>));
 
@@ -202,6 +265,14 @@ describe("the shell", () => {
     expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Menu" })).not.toBeInTheDocument();
     expect(members()).toEqual([]);
+    expect(consents()).toEqual([]);
+  });
+
+  it("shows a Member whose agreement is out of date no menu", async () => {
+    await agreedAs(TESTER, "Bea Tester", "1.0", "2.0");
+    signedInAs(TESTER);
+    render(await shell(<p>the screen</p>));
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
   });
 });
 

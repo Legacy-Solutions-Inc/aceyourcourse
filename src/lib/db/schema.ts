@@ -40,7 +40,8 @@ import type { AboutContent, Marketplace } from "@/services/catalogue.types";
  * Staff Activity, and each editable record's save stamp, which the conflict
  * check compares (CONVENTIONS §3).
  *
- * The Member App (Phase 3): the Beta Tester list and the Members.
+ * The Member App (Phase 3): the Beta Tester list, the Members and their
+ * consent records.
  */
 
 export const MARKETPLACES = [
@@ -435,3 +436,28 @@ export const members = pgTable("members", {
   name: text("name"),
   joinedAt: at("joined_at").notNull(),
 }).enableRLS();
+
+/**
+ * Each Member's agreements to the Terms of Use and the Privacy Policy, with
+ * the versions agreed to (spec, Phase 3 → Consent). A row is added each time
+ * the Member agrees and is never changed, so the history is kept; the latest
+ * (`seq`) is the one the consent check reads. Only a Member agrees, and
+ * deleting the Member deletes their agreements.
+ */
+export const memberConsents = pgTable(
+  "member_consents",
+  {
+    seq: bigint("seq", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => members.userId, { onDelete: "cascade" }),
+    termsVersion: text("terms_version").notNull(),
+    privacyVersion: text("privacy_version").notNull(),
+    agreedAt: at("agreed_at").notNull(),
+  },
+  (t) => [
+    index("member_consents_user_id_seq_idx").on(t.userId, t.seq),
+    check("member_consents_terms_version_format", sql`${t.termsVersion} ~ '^[0-9]+[.][0-9]+$'`),
+    check("member_consents_privacy_version_format", sql`${t.privacyVersion} ~ '^[0-9]+[.][0-9]+$'`),
+  ],
+).enableRLS();
