@@ -12,8 +12,8 @@ import { memberAppGate } from "@/lib/member-app/gate";
 import { paths } from "@/paths";
 import { getStaffByEmail } from "@/services/admin";
 import { memberAppLive } from "@/services/catalogue.rules";
-import { getOrCreateMember, isBetaTester, latestConsent } from "@/services/member";
-import type { Member, MemberUser } from "@/services/member.types";
+import { getOrCreateMember, isBetaTester, latestConsent, listTargetExams } from "@/services/member";
+import type { Member, MemberUser, TargetExam } from "@/services/member.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The Member App's server checks, in order: the gate (spec, Phase 3 → The
@@ -32,6 +32,10 @@ import type { Member, MemberUser } from "@/services/member.types";
 // Privacy versions, read from the legal documents; the pure rule is
 // src/lib/member-app/consent.ts. Authorisation never comes from the client.
 // A later ticket adds the Active Device behind consent.
+//
+// Past consent, a Member with no Target Exam yet is onboarding (Phase 3 →
+// Target Exams): Home shows them the onboarding form, and every other screen
+// in the shell calls requireMemberWithExam, which sends them there.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -123,4 +127,36 @@ export async function requireMember(from: string = paths.memberApp.home): Promis
   const { status } = await checkConsent(member.userId);
   if (status !== "ok") redirect(paths.memberApp.consent(from));
   return member;
+}
+
+/**
+ * This Member's Target Exams, read once per request like the gate (the
+ * shell's layout and the page both ask) and fresh on the next.
+ */
+export const readTargetExams = cache((userId: string): Promise<TargetExam[]> =>
+  listTargetExams(userId),
+);
+
+/** A Member past onboarding: they have Target Exams, one of them selected. */
+export interface MemberWithExam {
+  member: Member;
+  /** In the order added. Never empty. */
+  targetExams: TargetExam[];
+  selected: TargetExam;
+}
+
+/**
+ * The signed-in Member, past the gate, consent and onboarding: what every
+ * Member App screen but Home calls first. requireMember goes first. Then a
+ * Member with no Target Exam yet goes to Home, which shows the onboarding
+ * form.
+ */
+export async function requireMemberWithExam(
+  from: string = paths.memberApp.home,
+): Promise<MemberWithExam> {
+  const member = await requireMember(from);
+  const targetExams = await readTargetExams(member.userId);
+  const selected = targetExams.find((exam) => exam.selected);
+  if (!selected) redirect(paths.memberApp.home);
+  return { member, targetExams, selected };
 }

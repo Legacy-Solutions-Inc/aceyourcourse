@@ -4,12 +4,30 @@ import {
   memberUserIdSchema,
   memberUserSchema,
 } from "@/services/member.schema";
-import type { AgreedVersions, ConsentRecord, Member, MemberUser } from "@/services/member.types";
+import {
+  applyChange,
+  examsForMembers,
+  pickableExams,
+  targetExamOperations,
+  targetExams,
+  type MemberExams,
+  type WithMemberExams,
+} from "@/services/member.rules";
+import type {
+  AgreedVersions,
+  ConsentRecord,
+  Member,
+  MemberUser,
+  PickableExam,
+  TargetExam,
+} from "@/services/member.types";
 import { getSampleStore } from "@/services/mock/sample-store";
 
 // The Member seam's sample arm: over the in-memory sample store
 // (src/services/mock/sample-store.ts), which holds the Beta Tester list the
-// Admin's sample arm edits, the Members, and their consent records.
+// Admin's sample arm edits, the Members, their consent records and their
+// Target Exams. The Target Exam rules are shared with the database arm
+// (member.rules.ts).
 
 export async function isBetaTester(email: string): Promise<boolean> {
   const wanted = memberEmailSchema.safeParse(email);
@@ -54,3 +72,50 @@ export async function recordConsent(
   store.memberConsents = [...store.memberConsents, record];
   return structuredClone(record);
 }
+
+/**
+ * One Member's Target Exams as the store holds them now, with the catalogue's
+ * Exams. Like the database's cascade, a record whose Exam an Owner deleted is
+ * gone for good: it doesn't come back if an Exam with that code is added.
+ */
+function memberExams(userId: string): MemberExams {
+  const store = getSampleStore();
+  const exams = examsForMembers(store.catalogue);
+  const exists = (code: string) => exams.some((exam) => exam.code === code);
+  const records = (store.memberTargetExams[userId] ?? []).filter((r) => exists(r.examCode));
+  if (store.memberTargetExams[userId]) store.memberTargetExams[userId] = records;
+  const selected = store.selectedExams[userId] ?? null;
+  if (selected !== null && !exists(selected)) store.selectedExams[userId] = null;
+  return structuredClone({
+    records,
+    selectedExamCode: store.selectedExams[userId] ?? null,
+    exams,
+  });
+}
+
+export async function listPickableExams(): Promise<PickableExam[]> {
+  return pickableExams(examsForMembers(structuredClone(getSampleStore().catalogue)));
+}
+
+export async function listTargetExams(userId: string): Promise<TargetExam[]> {
+  return targetExams(memberExams(memberUserIdSchema.parse(userId)));
+}
+
+const withMemberExams: WithMemberExams = async (userId, work) => {
+  const store = getSampleStore();
+  // Like the database's foreign key: only a Member, someone the gate let in, has Target Exams.
+  if (!store.members.some((member) => member.userId === userId)) {
+    throw new Error("Only a Member has Target Exams.");
+  }
+  const state = memberExams(userId);
+  const { change, result } = work(state);
+  if (change) {
+    const after = applyChange(state, change);
+    store.memberTargetExams[userId] = after.records;
+    store.selectedExams[userId] = after.selectedExamCode;
+  }
+  return result;
+};
+
+export const { addTargetExam, setExamDate, selectTargetExam, removeTargetExam } =
+  targetExamOperations(withMemberExams);

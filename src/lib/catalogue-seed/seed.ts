@@ -117,7 +117,7 @@ async function hasCatalogue(tx: Transaction): Promise<boolean> {
  * The Admin's own tables. They describe the catalogue that is loaded (its
  * save stamps, who changed it), so a local load replaces them too. The Member
  * App's sample data (the Beta Tester list, and the Members "Sign in as" made,
- * with their consent records) starts again with them.
+ * with their consent records and Target Exams) starts again with them.
  */
 const ADMIN_TABLES = [
   schema.staffActivity,
@@ -126,6 +126,7 @@ const ADMIN_TABLES = [
   schema.staff,
   schema.betaTesters,
   schema.memberConsents,
+  schema.memberTargetExams,
   schema.members,
 ];
 

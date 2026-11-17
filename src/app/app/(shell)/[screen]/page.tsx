@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { memberScreen } from "@/components/member-app/member-menu";
 import { MemberScreen } from "@/components/member-app/member-screen";
-import { requireMember } from "@/lib/member-app/guard";
+import { requireMemberWithExam } from "@/lib/member-app/guard";
 import { paths } from "@/paths";
 
 interface ComingSoonPageProps {
@@ -17,13 +17,14 @@ export async function generateMetadata({ params }: ComingSoonPageProps): Promise
 
 /**
  * The menu's screens that aren't built yet (Library, Courses, Plans, Billing,
- * Account, Support): each says it's coming in the beta. A later ticket's own
+ * Support): each says it's coming in the beta. A later ticket's own
  * folder takes its address over from this one. The gate runs first, so
- * someone it doesn't let in learns nothing about which addresses exist.
+ * someone it doesn't let in learns nothing about which addresses exist, and a
+ * Member who is still onboarding goes to Home to pick their Exam.
  */
 export default async function ComingSoonPage({ params }: ComingSoonPageProps) {
   const { screen: segment } = await params;
-  await requireMember(`${paths.memberApp.home}/${segment}`);
+  await requireMemberWithExam(`${paths.memberApp.home}/${segment}`);
   const screen = memberScreen(segment);
   if (!screen) notFound();
 

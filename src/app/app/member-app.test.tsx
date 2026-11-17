@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { removeBetaTester } from "@/services/admin.mock";
-import { getOrCreateMember, recordConsent } from "@/services/member.mock";
+import { addTargetExam, getOrCreateMember, recordConsent } from "@/services/member.mock";
 import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
@@ -15,7 +15,8 @@ import { sampleActor } from "../../../test/admin-inputs";
 // signed in who is neither Staff nor a Beta Tester goes to "Not open yet",
 // with no Member record made, and a Member who hasn't agreed to the current
 // Terms and Privacy Policy goes to the consent screen (its own tests are in
-// consent/consent.test.tsx). The cookie jar, redirect() and notFound() are the
+// consent/consent.test.tsx). Onboarding and Target Exams are in
+// target-exams.test.tsx: the Members here have one already. The cookie jar, redirect() and notFound() are the
 // framework boundary, so they are replaced; the switch, the mode and the
 // current legal versions are as the server would read them, and a test can
 // change any of them.
@@ -72,12 +73,13 @@ const consents = () => getSampleStore().memberConsents;
 
 /**
  * A sample User, already a Member under this name, having agreed to these
- * versions (the current ones unless given).
+ * versions (the current ones unless given), with ME as their Target Exam.
  */
 async function agreedAs(email: string, name: string, termsVersion = "2.0", privacyVersion = "2.0") {
   const userId = sampleUserId(email);
   await getOrCreateMember({ userId, email, name });
   await recordConsent(userId, { termsVersion, privacyVersion });
+  await addTargetExam(userId, { examCode: "ME", examDate: "2099-02-08" });
 }
 
 function form(fields: Record<string, string>) {
@@ -86,7 +88,10 @@ function form(fields: Record<string, string>) {
   return data;
 }
 
-const home = async () => (await import("./(shell)/page")).default();
+const home = async () =>
+  (await import("./(shell)/page")).default({ searchParams: Promise.resolve({}) });
+const account = async () => (await import("./(shell)/account/page")).default();
+const addExamPage = async () => (await import("./(shell)/add-exam/page")).default();
 const comingSoon = async (segment: string) =>
   (await import("./(shell)/[screen]/page")).default({
     params: Promise.resolve({ screen: segment }),
@@ -106,7 +111,8 @@ const GATED_PAGES: [string, () => Promise<unknown>][] = [
   ["/app/courses", () => comingSoon("courses")],
   ["/app/plans", () => comingSoon("plans")],
   ["/app/billing", () => comingSoon("billing")],
-  ["/app/account", () => comingSoon("account")],
+  ["/app/account", account],
+  ["/app/add-exam", addExamPage],
   ["/app/support", () => comingSoon("support")],
   ["/app/nonsense", () => comingSoon("nonsense")],
 ];
@@ -217,7 +223,6 @@ describe("the screens that aren't built yet", () => {
     ["courses", "03 · COURSES"],
     ["plans", "04 · PLANS"],
     ["billing", "05 · BILLING"],
-    ["account", "06 · ACCOUNT"],
     ["support", "07 · SUPPORT"],
   ])("/app/%s says it's coming in the beta", async (segment, eyebrow) => {
     await agreedAs(TESTER, "Bea Tester");

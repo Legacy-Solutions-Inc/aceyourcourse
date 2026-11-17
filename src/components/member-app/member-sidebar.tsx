@@ -9,7 +9,9 @@ import { BrandLogo } from "@/components/website/brand-logo";
 import { config } from "@/config";
 import { cn } from "@/lib/utils";
 
+import { ExamSwitcher } from "./exam-switcher";
 import { isCurrentItem, MEMBER_MENU } from "./member-menu";
+import type { SwitcherExam } from "./target-exam-view";
 
 /** The signed-in Member, as the shell's footer shows them. */
 export interface ShellUser {
@@ -17,7 +19,15 @@ export interface ShellUser {
   email: string;
 }
 
-interface MemberSidebarProps {
+/** What the shell needs for the exam switcher. */
+export interface ShellExams {
+  /** The Member's Target Exams, one selected. Empty while they're onboarding. */
+  exams: readonly SwitcherExam[];
+  /** The switch Server Action. */
+  switchAction: (formData: FormData) => Promise<void>;
+}
+
+interface MemberSidebarProps extends ShellExams {
   user: ShellUser;
   /** The Member App's sign-out Server Action. */
   signOutAction: () => Promise<void>;
@@ -26,17 +36,26 @@ interface MemberSidebarProps {
 }
 
 /**
- * The sidebar's contents (mockup L119–139; BUILD-MAP §2): the logo, the seven
- * numbered nav items, and a footer with the Member's name, email and Sign
- * out. The desktop sidebar and the mobile drawer (mockup L89–113) both use it.
- * The exam switcher card comes with ticket 03, and the streak button and the
- * access badge with the tickets that give them something true to say.
+ * The sidebar's contents (mockup L119–139; BUILD-MAP §2): the logo, the exam
+ * switcher, the seven numbered nav items, and a footer with the Member's
+ * name, email, a badge for the selected Target Exam and Sign out. The desktop
+ * sidebar and the mobile drawer (mockup L89–113) both use it. A Member who is
+ * still onboarding has no Target Exam, so no switcher and no badge. The
+ * streak button, and what the badge says about access, come with the tickets
+ * that give them something true to say.
  */
-export function MemberSidebar({ user, signOutAction, inDrawer = false }: MemberSidebarProps) {
+export function MemberSidebar({
+  user,
+  exams,
+  switchAction,
+  signOutAction,
+  inDrawer = false,
+}: MemberSidebarProps) {
   const pathname = usePathname() ?? "";
   // In the drawer, following a link also closes it.
   const closesDrawer = (link: React.ReactElement) =>
     inDrawer ? <SheetClose asChild>{link}</SheetClose> : link;
+  const selected = exams.find((exam) => exam.selected);
 
   return (
     <div className="flex min-h-full flex-1 flex-col gap-4.5 px-3.5 pt-4 pb-5.5">
@@ -54,6 +73,10 @@ export function MemberSidebar({ user, signOutAction, inDrawer = false }: MemberS
           </SheetClose>
         ) : null}
       </div>
+
+      {exams.length > 0 ? (
+        <ExamSwitcher exams={exams} switchAction={switchAction} wrapLink={closesDrawer} />
+      ) : null}
 
       <nav aria-label="Member App">
         <ul className="flex flex-col gap-0.5">
@@ -100,7 +123,15 @@ export function MemberSidebar({ user, signOutAction, inDrawer = false }: MemberS
       <div className="mt-auto flex flex-col gap-2 border-t-[1.5px] pt-3.5">
         {user.name ? <p className="text-[15px] font-bold">{user.name}</p> : null}
         <p className="font-mono text-[11px] wrap-anywhere text-muted-foreground">{user.email}</p>
-        <form action={signOutAction} className="flex justify-end">
+        <form action={signOutAction} className="flex items-center justify-between gap-2">
+          {selected ? (
+            <span className="border bg-ayc-paper px-1.5 py-1 font-mono text-[10px] font-bold tracking-[0.06em]">
+              <span className="sr-only">Studying for </span>
+              {selected.code} · {selected.board}
+            </span>
+          ) : (
+            <span />
+          )}
           <button
             type="submit"
             className="flex min-h-11 cursor-pointer items-center text-[13px] font-bold text-destructive hover:underline"

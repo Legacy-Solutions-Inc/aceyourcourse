@@ -1,4 +1,3 @@
-import AxeBuilder from "@axe-core/playwright";
 import { type Browser, expect as baseExpect, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
@@ -6,11 +5,14 @@ import { resetSampleData, signInAs as signInToAdmin } from "../admin/helpers";
 import {
   agreeToConsent,
   consentScreen,
+  expectNoBlockingViolations,
   LIVE,
   memberEmail,
+  onboardingHeading,
   openSignInAs,
-  signInAndAgree,
+  signInAndOnboard,
   signInAsMember,
+  startCountdown,
   signInWithEmail,
   SKIP_LIVE,
 } from "./helpers";
@@ -19,9 +21,10 @@ import {
 // (Phase 3, tickets 01 and 02). The Member App switch is off on the e2e
 // server, so only active Staff and Beta Testers get past sign-in; everyone
 // else sees "Not open yet". Each sample Member starts with nothing agreed, so
-// their first visit shows the consent screen. The Beta Tester list is read on
-// every request, so an Owner's change applies to the other person's next
-// click.
+// their first visit shows the consent screen, and with no Target Exam, so
+// Home then shows onboarding (ticket 03, target-exams.spec.ts). The Beta
+// Tester list is read on every request, so an Owner's change applies to the
+// other person's next click.
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -87,7 +90,7 @@ test.describe("a signed-out visitor", () => {
 
 test.describe("a Beta Tester", () => {
   test("signs in and reaches Home, in the shell with its seven screens", async ({ page }) => {
-    await signInAndAgree(page, "tester");
+    await signInAndOnboard(page, "tester");
 
     await expect(page).toHaveURL(/\/app$/);
     await expect(welcome(page, "Bea")).toBeVisible();
@@ -109,11 +112,13 @@ test.describe("a Beta Tester", () => {
   });
 
   test("comes back to the screen that sent them to sign-in", async ({ page }) => {
+    await signInAndOnboard(page, "tester");
+    await sidebar(page).getByRole("button", { name: "Sign out" }).click();
+    await expect(page).toHaveURL(/\/app\/sign-in$/);
+
     await page.goto(paths.memberApp.library);
     await expect(page).toHaveURL(/\/app\/sign-in\?next=%2Fapp%2Flibrary$/);
     await signInAsMember(page, "tester", paths.memberApp.library);
-    await expect(page).toHaveURL(/\/app\/consent\?next=%2Fapp%2Flibrary$/);
-    await agreeToConsent(page);
 
     await expect(page).toHaveURL(/\/app\/library$/);
     await expect(page.getByRole("heading", { level: 1, name: "Coming in the beta" })).toBeVisible();
@@ -129,12 +134,12 @@ test.describe("a Beta Tester", () => {
       await expect(page).toHaveURL(/\/app\/consent\?next=%2Fapp$/);
       await agreeToConsent(page);
       await expect(page).toHaveURL(/\/app$/);
-      await expect(welcome(page, "Bea")).toBeVisible();
+      await expect(onboardingHeading(page, "Bea")).toBeVisible();
     });
   }
 
   test("opens each screen that isn't built yet, and goes back Home", async ({ page }) => {
-    await signInAndAgree(page, "tester");
+    await signInAndOnboard(page, "tester");
     await expect(welcome(page, "Bea")).toBeVisible();
 
     for (const [label, path] of [
@@ -142,7 +147,6 @@ test.describe("a Beta Tester", () => {
       ["Courses", "/app/courses"],
       ["Plans", "/app/plans"],
       ["Billing", "/app/billing"],
-      ["Account", "/app/account"],
       ["Support", "/app/support"],
     ] as const) {
       await memberNav(page)
@@ -160,7 +164,7 @@ test.describe("a Beta Tester", () => {
   });
 
   test("signs out to the sign-in screen, and /app asks to sign in again", async ({ page }) => {
-    await signInAndAgree(page, "tester");
+    await signInAndOnboard(page, "tester");
     await expect(welcome(page, "Bea")).toBeVisible();
 
     await sidebar(page).getByRole("button", { name: "Sign out" }).click();
@@ -172,7 +176,7 @@ test.describe("a Beta Tester", () => {
   });
 
   test("is refused at their next click once an Owner removes them", async ({ page, browser }) => {
-    await signInAndAgree(page, "tester");
+    await signInAndOnboard(page, "tester");
     await expect(welcome(page, "Bea")).toBeVisible();
 
     const owner = await anotherPerson(browser);
@@ -204,7 +208,7 @@ test.describe("the consent screen", () => {
     await signInAsMember(page, "tester");
 
     await expect(page).toHaveURL(/\/app\/consent\?next=%2Fapp$/);
-    await expect(page.getByText("BEFORE YOU START")).toBeVisible();
+    await expect(page.getByText("BEFORE YOU START", { exact: true })).toBeVisible();
     await expect(consentHeading(page)).toBeVisible();
     await expect(
       page.getByRole("list", { name: "What we keep, and why" }).getByRole("listitem"),
@@ -246,13 +250,17 @@ test.describe("the consent screen", () => {
     }
   });
 
-  test("agreeing continues to where the Member was going, and isn't asked again", async ({
+  test("agreeing continues to onboarding, then to where the Member goes, and isn't asked again", async ({
     page,
   }) => {
     await page.goto(paths.memberApp.plans);
     await signInAsMember(page, "tester", paths.memberApp.plans);
     await agreeToConsent(page);
 
+    // A new Member has no Target Exam yet, so Home's onboarding comes first.
+    await expect(page).toHaveURL(/\/app$/);
+    await startCountdown(page);
+    await page.goto(paths.memberApp.plans);
     await expect(page).toHaveURL(/\/app\/plans$/);
     await expect(memberNav(page).getByRole("link", { name: /Plans/ })).toHaveAttribute(
       "aria-current",
@@ -288,7 +296,7 @@ test.describe("on a phone", () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
   test("the Menu button opens the drawer; Escape, ✕ and the scrim close it", async ({ page }) => {
-    await signInAndAgree(page, "tester");
+    await signInAndOnboard(page, "tester");
     await expect(welcome(page, "Bea")).toBeVisible();
     await expect(sidebar(page)).toBeHidden();
 
@@ -319,7 +327,7 @@ test.describe("on a phone", () => {
   test("a screen chosen in the drawer opens, and Sign out is in the drawer too", async ({
     page,
   }) => {
-    await signInAndAgree(page, "tester");
+    await signInAndOnboard(page, "tester");
     await page.getByRole("button", { name: "Menu" }).click();
     const drawer = page.getByRole("dialog", { name: "Menu" });
     await drawer.getByRole("link", { name: /Plans/ }).click();
@@ -339,6 +347,8 @@ test.describe("active Staff", () => {
     await expect(consentHeading(page)).toBeVisible();
     await agreeToConsent(page);
     await expect(page).toHaveURL(/\/app$/);
+    await expect(onboardingHeading(page, "Angel")).toBeVisible();
+    await startCountdown(page);
     await expect(welcome(page, "Angel")).toBeVisible();
   });
 });
@@ -396,27 +406,11 @@ test.describe("someone who is neither Staff nor a Beta Tester", () => {
     await expect(page).toHaveURL(/\/app\/consent\?next=%2Fapp$/);
     await agreeToConsent(page);
     await expect(page).toHaveURL(/\/app$/);
-    await expect(welcome(page, "late.joiner")).toBeVisible();
+    await expect(onboardingHeading(page, "late.joiner")).toBeVisible();
   });
 });
 
 test.describe("accessibility", () => {
-  const BLOCKING_IMPACTS = new Set(["serious", "critical"]);
-
-  /** No serious or critical axe issues, and the page doesn't scroll sideways. */
-  async function expectNoBlockingViolations(page: Page) {
-    const { violations } = await new AxeBuilder({ page }).analyze();
-    const blocking = violations.filter((v) => BLOCKING_IMPACTS.has(v.impact ?? ""));
-    const summary = blocking.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length }));
-    expect(summary, JSON.stringify(summary, null, 2)).toEqual([]);
-
-    const sideways = await page.evaluate(() => {
-      const scrolling = document.scrollingElement;
-      return scrolling ? scrolling.scrollWidth - window.innerWidth : 0;
-    });
-    expect(sideways, "how far the page scrolls sideways, in px").toBeLessThanOrEqual(0);
-  }
-
   for (const size of [
     { name: "a desktop", viewport: { width: 1280, height: 800 } },
     { name: "a phone", viewport: { width: 375, height: 812 } },
@@ -440,7 +434,7 @@ test.describe("accessibility", () => {
       test("no serious or critical violations on Home and a screen that isn't built yet", async ({
         page,
       }) => {
-        await signInAndAgree(page, "tester");
+        await signInAndOnboard(page, "tester");
         await expect(welcome(page, "Bea")).toBeVisible();
         await expectNoBlockingViolations(page);
 

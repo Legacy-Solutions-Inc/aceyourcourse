@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { staffEmailSchema } from "@/services/admin.schema";
+import type { TargetExamRefusal } from "@/services/member.types";
 
 // The Member seam's zod schemas, shared by its arms.
 
@@ -47,3 +48,20 @@ export const bothAgreementsSchema = z.object({
   terms: z.literal("agreed", { errorMap: () => ({ message: BOTH_AGREEMENTS_REQUIRED }) }),
   privacy: z.literal("agreed", { errorMap: () => ({ message: BOTH_AGREEMENTS_REQUIRED }) }),
 });
+
+/** What the Member App says for each refused Target Exam change. */
+export const TARGET_EXAM_REFUSALS: Record<TargetExamRefusal, string> = {
+  "not-an-exam": "Pick one of the exams listed.",
+  "already-yours": "Already one of your exams",
+  "date-required": "Enter your exam date.",
+  "invalid-date": "Enter a real date.",
+  "date-in-past": "That date has passed. Enter today’s date or a later one.",
+  "not-yours": "That exam isn’t one of yours.",
+  "last-one": "You can’t remove your only exam. Add another one first.",
+};
+
+/** A form field as text: a missing field or a file reads as blank, which the seam then refuses. */
+const formText = z.string().trim().max(40).catch("");
+
+/** What the Target Exam forms send: the Exam picked and, where there is one, the date typed. */
+export const targetExamFormSchema = z.object({ examCode: formText, examDate: formText });

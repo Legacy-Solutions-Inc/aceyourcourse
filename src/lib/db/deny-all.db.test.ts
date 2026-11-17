@@ -30,7 +30,7 @@ describeWithDatabase("Deny-all: the browser roles reach no table", database, (db
 
   // The check above passes a table that isn't there, so the Member App's
   // tables (Phase 3) are named: each exists, with RLS on and no policy at all.
-  it.each(["beta_testers", "members", "member_consents"])(
+  it.each(["beta_testers", "members", "member_consents", "member_target_exams"])(
     "has the Member App's %s table, with RLS on and no policy",
     async (table) => {
       const [found] = await db()<{ rls: boolean; policies: number }[]>`

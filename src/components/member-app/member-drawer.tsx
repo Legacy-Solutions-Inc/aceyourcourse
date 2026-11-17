@@ -4,9 +4,9 @@ import { useState } from "react";
 
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-import { MemberSidebar, type ShellUser } from "./member-sidebar";
+import { MemberSidebar, type ShellExams, type ShellUser } from "./member-sidebar";
 
-interface MemberDrawerProps {
+interface MemberDrawerProps extends ShellExams {
   user: ShellUser;
   signOutAction: () => Promise<void>;
 }
@@ -16,7 +16,7 @@ interface MemberDrawerProps {
  * (mockup L693) opens it as a slide-in drawer over a scrim (mockup L89–113).
  * Escape, ✕, the scrim or a link close it, and focus goes back to the button.
  */
-export function MemberDrawer({ user, signOutAction }: MemberDrawerProps) {
+export function MemberDrawer({ user, exams, switchAction, signOutAction }: MemberDrawerProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -41,7 +41,13 @@ export function MemberDrawer({ user, signOutAction }: MemberDrawerProps) {
         className="w-[min(86%,330px)] gap-0 overflow-y-auto border-r-[1.5px] bg-ayc-sand p-0 shadow-[6px_0_0_var(--ayc-navy)]"
       >
         <SheetTitle className="sr-only">Menu</SheetTitle>
-        <MemberSidebar user={user} signOutAction={signOutAction} inDrawer />
+        <MemberSidebar
+          user={user}
+          exams={exams}
+          switchAction={switchAction}
+          signOutAction={signOutAction}
+          inDrawer
+        />
       </SheetContent>
     </Sheet>
   );

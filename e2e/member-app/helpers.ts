@@ -1,5 +1,7 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page } from "@playwright/test";
 
+import { manilaDate } from "../../src/lib/manila-time";
 import { paths } from "../../src/paths";
 import { SAMPLE_MEMBERS, type SampleMemberKey } from "../../src/services/mock/members";
 import { LIVE } from "../server";
@@ -70,4 +72,54 @@ export async function agreeToConsent(page: Page) {
 export async function signInAndAgree(page: Page, who: SampleMemberKey, next?: string) {
   await signInAsMember(page, who, next);
   await agreeToConsent(page);
+}
+
+/** The Asia/Manila calendar date `days` from today, as YYYY-MM-DD: an Exam Date that many days away. */
+export function daysFromToday(days: number): string {
+  return manilaDate(new Date(Date.now() + days * 24 * 60 * 60 * 1000));
+}
+
+/** Onboarding's heading on Home: what a Member with no Target Exam yet sees. */
+export const onboardingHeading = (page: Page, name: string) =>
+  page.getByRole("heading", { level: 1, name: `Hi, ${name}. Let’s set you up.` });
+
+/** The Exam pills and the date in onboarding and the add form. */
+export function examForm(page: Page) {
+  return {
+    /** A pill: its radio button is visually hidden, so it's picked by its label. */
+    pick: (code: string) => page.locator("label", { hasText: new RegExp(`^${code}\\b`) }).click(),
+    pill: (code: string) => page.getByRole("radio", { name: new RegExp(`^${code} · `) }),
+    date: page.getByLabel("Exam date", { exact: true }),
+  };
+}
+
+/** In onboarding: picks an Exam, sets its date `days` from today, and starts the countdown. */
+export async function startCountdown(page: Page, examCode = "ME", days = 30) {
+  const form = examForm(page);
+  await form.pick(examCode);
+  await form.date.fill(daysFromToday(days));
+  await page.getByRole("button", { name: "Start my countdown" }).click();
+  await expect(page.getByRole("region", { name: /board exam countdown/ })).toBeVisible();
+}
+
+/** Signs in as a sample Member new to the Member App, agrees, and onboards with one Target Exam. */
+export async function signInAndOnboard(page: Page, who: SampleMemberKey, examCode = "ME") {
+  await signInAndAgree(page, who);
+  await startCountdown(page, examCode);
+}
+
+const BLOCKING_IMPACTS = new Set(["serious", "critical"]);
+
+/** No serious or critical axe issues, and the page doesn't scroll sideways. */
+export async function expectNoBlockingViolations(page: Page) {
+  const { violations } = await new AxeBuilder({ page }).analyze();
+  const blocking = violations.filter((v) => BLOCKING_IMPACTS.has(v.impact ?? ""));
+  const summary = blocking.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length }));
+  expect(summary, JSON.stringify(summary, null, 2)).toEqual([]);
+
+  const sideways = await page.evaluate(() => {
+    const scrolling = document.scrollingElement;
+    return scrolling ? scrolling.scrollWidth - window.innerWidth : 0;
+  });
+  expect(sideways, "how far the page scrolls sideways, in px").toBeLessThanOrEqual(0);
 }

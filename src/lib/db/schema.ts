@@ -435,7 +435,42 @@ export const members = pgTable("members", {
   email: text("email").notNull(),
   name: text("name"),
   joinedAt: at("joined_at").notNull(),
+  // The Exam the Member last selected in the exam switcher. The Member seam
+  // reads it only while it's one of their Target Exams.
+  selectedExamCode: text("selected_exam_code").references(() => exams.code, {
+    onDelete: "set null",
+    onUpdate: "cascade",
+  }),
 }).enableRLS();
+
+/**
+ * Each Member's Target Exams (spec, Phase 3 → Target Exams): an Exam plus the
+ * Member's own Exam Date for it, in the order first added (`seq`).
+ * `member_exam_date` is null until the Member edits the date: until then the
+ * Exam Date is read from the Exam's Official Exam Date, so a Staff change
+ * moves everyone who never edited. Removing one only sets `removed_at`, so
+ * adding it back restores its date (and, later, its progress). Deleting the
+ * Member or the Exam deletes the row.
+ */
+export const memberTargetExams = pgTable(
+  "member_target_exams",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => members.userId, { onDelete: "cascade" }),
+    examCode: text("exam_code")
+      .notNull()
+      .references(() => exams.code, { onDelete: "cascade", onUpdate: "cascade" }),
+    seq: bigint("seq", { mode: "number" }).generatedAlwaysAsIdentity(),
+    memberExamDate: date("member_exam_date"),
+    addedAt: at("added_at").notNull(),
+    removedAt: at("removed_at"),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.examCode] }),
+    index("member_target_exams_exam_code_idx").on(t.examCode),
+  ],
+).enableRLS();
 
 /**
  * Each Member's agreements to the Terms of Use and the Privacy Policy, with

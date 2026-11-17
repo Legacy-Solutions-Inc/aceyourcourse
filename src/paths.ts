@@ -50,6 +50,10 @@ export const paths = {
       const search = query.toString();
       return search ? `/app/consent?${search}` : "/app/consent";
     },
+    /** The add form for another Target Exam, opened from the exam switcher and Account. */
+    addExam: "/app/add-exam",
+    /** Home, saying a Target Exam the Member removed earlier is back. */
+    examRestored: (examCode: string) => `/app?restored=${encodeURIComponent(examCode)}`,
     library: "/app/library",
     courses: "/app/courses",
     plans: "/app/plans",

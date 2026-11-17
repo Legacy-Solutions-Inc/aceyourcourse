@@ -9,6 +9,7 @@ import type {
   StaffMember,
 } from "@/services/admin.types";
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
+import type { TargetExamRecord } from "@/services/member.rules";
 import type { ConsentRecord, Member } from "@/services/member.types";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { sampleBetaTesters } from "@/services/mock/members";
@@ -62,6 +63,10 @@ export interface SampleStore {
   members: Member[];
   /** Every Member's agreements to the Terms and Privacy Policy, oldest first (Phase 3). */
   memberConsents: ConsentRecord[];
+  /** Each Member's Target Exams, removed ones too, in the order first added, by User id (Phase 3). */
+  memberTargetExams: Record<string, TargetExamRecord[]>;
+  /** The Exam each Member last selected, by User id (Phase 3). */
+  selectedExams: Record<string, string | null>;
   /** The upload seam's files, by upload id. */
   uploads: Record<string, SampleUpload>;
   /**
@@ -90,6 +95,8 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     betaTesters: sampleBetaTesters(now),
     members: [],
     memberConsents: [],
+    memberTargetExams: {},
+    selectedExams: {},
     uploads: {},
   };
 }

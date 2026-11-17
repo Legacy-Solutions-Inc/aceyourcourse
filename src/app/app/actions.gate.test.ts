@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
+import * as targetExams from "./(shell)/actions";
 import * as root from "./actions";
 import * as consent from "./consent/actions";
 import * as signIn from "./sign-in/actions";
@@ -15,7 +16,7 @@ import * as signIn from "./sign-in/actions";
 // every Member App Server Action is a public endpoint, so each one is listed
 // here with who may call it, and called as a browser would by everyone it
 // must refuse:
-//   - "member": behind the gate, then consent. Signed out goes to the sign-in
+//   - "member": behind the gate, then consent (the Target Exam actions). Signed out goes to the sign-in
 //     screen, someone the gate doesn't let in goes to "Not open yet", with no
 //     Member record made, and a Member who hasn't agreed to the current Terms
 //     and Privacy Policy goes to the consent screen.
@@ -64,6 +65,15 @@ interface Entry {
 }
 const anyone = (call: Entry["call"]): Entry => ({ who: "anyone", call });
 const beforeConsent = (call: Entry["call"]): Entry => ({ who: "before-consent", call });
+const member = (call: Entry["call"]): Entry => ({ who: "member", call });
+
+/** A Target Exam form, as onboarding, the add form, Account and the switcher send it. */
+function examForm(examDate?: string) {
+  const data = new FormData();
+  data.set("examCode", "CE");
+  if (examDate) data.set("examDate", examDate);
+  return data;
+}
 
 /** Both boxes ticked, with versions the consent screen could have shown. */
 function consentForm() {
@@ -86,6 +96,14 @@ const APP_DIR = path.dirname(fileURLToPath(import.meta.url));
 
 /** Every exported Member App Server Action, by its module, relative to this folder. */
 const REGISTRY: Record<string, Record<string, Entry>> = {
+  "./(shell)/actions.ts": {
+    addExam: member(() => targetExams.addExam({ error: null }, examForm("2099-04-18"))),
+    changeExamDate: member(() =>
+      targetExams.changeExamDate({ error: null, saved: false }, examForm("2099-04-18")),
+    ),
+    removeExam: member(() => targetExams.removeExam({ error: null }, examForm())),
+    switchExam: member(() => targetExams.switchExam(examForm())),
+  },
   "./actions.ts": {
     signOut: anyone(() => root.signOut()),
   },
@@ -165,16 +183,20 @@ describe("the Member App's Server Actions and the gate", () => {
     },
   );
 
-  // No action needs consent yet: the consent action is the only one past the
-  // gate. The first one a later ticket registers as "member" is checked here.
-  if (MEMBER_ONLY.length > 0) {
-    it.each(MEMBER_ONLY)(
-      "$name sends a Member who hasn't agreed to the current Terms and Privacy Policy to the consent screen",
-      async ({ call }) => {
-        jar.set("ayc_admin_sample", "tester@example.com");
-        await expect(call()).rejects.toThrow(/^NEXT_REDIRECT \/app\/consent\?next=/);
-        expect(getSampleStore().memberConsents).toEqual([]);
-      },
-    );
-  }
+  it.each(MEMBER_ONLY)(
+    "$name sends a Member who hasn't agreed to the current Terms and Privacy Policy to the consent screen, and changes nothing",
+    async ({ call }) => {
+      jar.set("ayc_admin_sample", "tester@example.com");
+      await expect(call()).rejects.toThrow(/^NEXT_REDIRECT \/app\/consent\?next=/);
+      expect(getSampleStore().memberConsents).toEqual([]);
+      expect(getSampleStore().memberTargetExams).toEqual({});
+    },
+  );
+
+  it.each(GATED)("$name gives nobody the gate refuses a Target Exam", async ({ call }) => {
+    jar.set("ayc_admin_sample", STRANGER);
+    await call().catch(() => {});
+    expect(getSampleStore().memberTargetExams).toEqual({});
+    expect(getSampleStore().selectedExams).toEqual({});
+  });
 });
