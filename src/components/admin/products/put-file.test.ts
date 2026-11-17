@@ -70,6 +70,16 @@ describe("putFile", () => {
     expect(progress).toEqual([0.25]);
   });
 
+  it("sends the file as the type it's told, whatever the browser calls it", async () => {
+    vi.stubGlobal("XMLHttpRequest", FakeRequest);
+    const file = new File(["a,b"], "cards.csv", { type: "application/vnd.ms-excel" });
+    const done = putFile("/api/dev/uploads/2?token=t", file, () => {}, "text/csv");
+    FakeRequest.last?.answer(201);
+
+    await expect(done).resolves.toBeUndefined();
+    expect(FakeRequest.last?.headers).toEqual({ "content-type": "text/csv" });
+  });
+
   it("rejects when the upload URL refuses the file", async () => {
     const { done, request } = sending();
     request.answer(409);

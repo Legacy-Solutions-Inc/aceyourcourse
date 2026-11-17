@@ -118,10 +118,17 @@ async function hasCatalogue(tx: Transaction): Promise<boolean> {
 
 /**
  * The Member App's content, children before parents: Topics hang off the
- * catalogue's Subjects, and each Topic's deck, quiz and Reviewer PDF off it,
- * which keeps a Topic, and so its Subject, from being deleted under them.
+ * catalogue's Subjects, each Topic's deck, quiz and Reviewer PDF off it,
+ * which keeps a Topic, and so its Subject, from being deleted under them, and
+ * each deck's cards off the deck.
  */
-const CONTENT_TABLES = [schema.decks, schema.quizzes, schema.reviewerPdfs, schema.topics];
+const CONTENT_TABLES = [
+  schema.cards,
+  schema.decks,
+  schema.quizzes,
+  schema.reviewerPdfs,
+  schema.topics,
+];
 
 /**
  * The Admin's own tables. They describe the catalogue that is loaded (its

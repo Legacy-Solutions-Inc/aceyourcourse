@@ -1,0 +1,4 @@
+topic,front,back,note,image
+Beams,Half,$\frac{1}{$,,
+Beams,Moment of inertia,,,
+Columns,Euler buckling load,$P = EI$,,missing.png

@@ -2,6 +2,13 @@ import type { SignInProblem } from "@/lib/admin/sign-in-problem";
 import type { DeniedScreenReason } from "@/services/admin.types";
 import type { ContentKind } from "@/services/content.types";
 
+/** An Exam and Subject as an address names them: their codes, in lower case. */
+const subjectQuery = (examCode: string, subjectCode: string) =>
+  new URLSearchParams({
+    exam: examCode.toLowerCase(),
+    subject: subjectCode.toLowerCase(),
+  }).toString();
+
 export const paths = {
   home: "/",
   /** The site's default share image (src/app/opengraph-image.tsx). */
@@ -112,10 +119,14 @@ export const paths = {
     content: "/admin/content",
     /** Member App content open on one Subject's Topics list. */
     contentTopics: (examCode: string, subjectCode: string) =>
-      `/admin/content?${new URLSearchParams({
-        exam: examCode.toLowerCase(),
-        subject: subjectCode.toLowerCase(),
-      }).toString()}`,
+      `/admin/content?${subjectQuery(examCode, subjectCode)}`,
+    /** A Subject's card import (ticket 06): choose a CSV and zip, check them, import. */
+    cardImport: (examCode: string, subjectCode: string) =>
+      `/admin/content/import?${subjectQuery(examCode, subjectCode)}`,
+    /** The card import's template CSV, downloaded (Staff only). */
+    cardImportTemplate: "/admin/content/import/template",
+    /** The zip of the template's example image, downloaded (Staff only). */
+    cardImportExampleImages: "/admin/content/import/example-images",
     /** Development-only: POST resets the sample data; 404 unless the Admin runs on it. */
     resetSampleData: "/api/dev/sample-data/reset",
     /**

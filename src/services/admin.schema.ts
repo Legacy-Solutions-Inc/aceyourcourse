@@ -12,6 +12,7 @@ import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
 import { isCalendarDate } from "@/lib/manila-time";
 import { variationLabel } from "@/lib/catalogue/price";
 import type { AdminError, RequiredRole, StaffActor } from "@/services/admin.types";
+import { IMPORT_MODES } from "@/lib/card-import/modes";
 import type { ContentCounts, TopicContent } from "@/services/content.types";
 import {
   EXAM_PAGE_SECTIONS,
@@ -1538,3 +1539,37 @@ export function topicDeleteBlocker({ deck, quiz, reviewerPdf }: TopicContent): s
   ]);
   return held ? `It has ${held}. Only an empty Topic can be deleted.` : null;
 }
+
+// ── Member App content: card import (Phase 3, ticket 06) ────────────────────
+// An Editor imports a Subject's cards from a CSV and a zip of images, which
+// the browser has uploaded to the private content bucket (the upload seam's
+// createContentUpload): the import names them by their paths. Checking the
+// file gives a preview; confirming sends back what the preview was based on,
+// for the conflict check.
+
+/** An uploaded import file's path, as the upload seam gave it. Only the server reads it. */
+const importFilePath = (missing: string) =>
+  z
+    .string({ required_error: missing, invalid_type_error: missing })
+    .min(1, missing)
+    .max(200, missing);
+
+/** "Check file": the Subject, the uploaded CSV and zip (optional), and Replace or Add. */
+export const cardImportInputSchema = z.object({
+  exam: examCode.transform(typedCode),
+  subject: subjectCodeInputSchema.shape.code,
+  csv: importFilePath("CHOOSE THE CSV FILE"),
+  zip: importFilePath("CHOOSE THE ZIP OF IMAGES AGAIN").nullable(),
+  mode: z.enum(IMPORT_MODES, { errorMap: () => ({ message: "CHOOSE REPLACE OR ADD" }) }),
+});
+
+export type CardImportInput = z.input<typeof cardImportInputSchema>;
+
+/** "Import": the same, with what the preview was based on. */
+export const confirmCardImportInputSchema = cardImportInputSchema.extend({
+  basedOn: z
+    .string({ required_error: "CHECK THE FILE AGAIN", invalid_type_error: "CHECK THE FILE AGAIN" })
+    .regex(/^[0-9a-f]{64}$/, "CHECK THE FILE AGAIN"),
+});
+
+export type ConfirmCardImportInput = z.input<typeof confirmCardImportInputSchema>;

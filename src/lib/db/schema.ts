@@ -590,7 +590,7 @@ export const topics = pgTable(
 
 /**
  * Each Topic's flashcard deck, at most one: Hidden until Staff make it
- * Visible, and optionally Free Preview. Its cards come with ticket 06.
+ * Visible, and optionally Free Preview. Its cards are in `cards`.
  */
 export const decks = pgTable("decks", {
   id: uuid("id").primaryKey(),
@@ -601,6 +601,39 @@ export const decks = pgTable("decks", {
   visibility: contentVisibility("visibility").notNull().default("hidden"),
   freePreview: boolean("free_preview").notNull().default(false),
 }).enableRLS();
+
+/**
+ * Each deck's flashcards, in its order (`position`; ticket 06): front text, a
+ * back and an optional note, each in the formula notation, and an optional
+ * back image in the private content bucket. `front_hash` is the SHA-256 of
+ * the front as a re-import matches it (trimmed, single spaces, case kept):
+ * Replace keeps a card's id, and so every Member's Card Mark on it, while its
+ * front is unchanged. Deleting the deck deletes its cards.
+ */
+export const cards = pgTable(
+  "cards",
+  {
+    id: uuid("id").primaryKey(),
+    deckId: uuid("deck_id")
+      .notNull()
+      .references(() => decks.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    front: text("front").notNull(),
+    back: text("back").notNull(),
+    note: text("note"),
+    imagePath: text("image_path"),
+    frontHash: text("front_hash").notNull(),
+  },
+  (t) => [
+    index("cards_deck_id_position_idx").on(t.deckId, t.position),
+    check("cards_position_positive", sql`${t.position} > 0`),
+    check("cards_front_length", sql`char_length(${t.front}) between 1 and 500`),
+    check("cards_back_length", sql`char_length(${t.back}) between 1 and 2000`),
+    check("cards_note_length", sql`char_length(${t.note}) between 1 and 1000`),
+    check("cards_image_path_present", sql`${t.imagePath} <> ''`),
+    check("cards_front_hash_format", sql`${t.frontHash} ~ '^[0-9a-f]{64}$'`),
+  ],
+).enableRLS();
 
 /**
  * Each Topic's quiz, at most one: Hidden until Staff make it Visible, and

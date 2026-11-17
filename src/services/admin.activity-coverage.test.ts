@@ -18,7 +18,8 @@ import {
   UNUSED_EXAM,
   withUnusedExam,
 } from "../../test/admin-inputs";
-import { ADMIN_ARMS } from "../../test/admin-arms";
+import { type AdminArm, ADMIN_ARMS } from "../../test/admin-arms";
+import { importCsv } from "../../test/card-import-files";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Staff Activity covers every Admin write (spec, Phase 2 → Staff Activity;
@@ -63,6 +64,8 @@ const READS = [
   "getPromoForAdmin",
   "getAnnouncementForAdmin",
   "listTopicsForAdmin",
+  // "Check file" for a card import: a preview, which saves nothing.
+  "planCardImport",
 ] as const satisfies readonly (keyof AdminService)[];
 
 /**
@@ -80,9 +83,9 @@ interface Write {
   entity: string;
   /** The changed entity's id, or any id for a new one. */
   entityId: string | null;
-  saves: (seam: AdminService, actor: StaffActor) => Promise<AdminResult<unknown>>;
+  saves: (seam: AdminService, actor: StaffActor, arm: AdminArm) => Promise<AdminResult<unknown>>;
   /** An input it refuses, and why. */
-  refused: (seam: AdminService, actor: StaffActor) => Promise<AdminResult<unknown>>;
+  refused: (seam: AdminService, actor: StaffActor, arm: AdminArm) => Promise<AdminResult<unknown>>;
   refusal: "invalid" | "not-found";
   /** The data it saves on, when the seed has nothing it can save: an edited copy of the seed. */
   seed?: (seed: CatalogueSeed) => void;
@@ -115,6 +118,15 @@ async function cePage(seam: AdminService) {
   const found = await seam.getExamPageForAdmin(EDITOR, "ce");
   if (!found) throw new Error("CE isn't in the sample data");
   return found;
+}
+
+/** A card import's files, uploaded and checked, ready to confirm. */
+async function checkedImport(seam: AdminService, arm: AdminArm, rows: string[]) {
+  const paths = await arm.uploadImport({ csv: importCsv(rows) });
+  const input = { exam: "ce", subject: "mstc", mode: "add", ...paths } as const;
+  const planned = await seam.planCardImport(EDITOR, input);
+  if (!planned.ok) throw new Error("The import's files were refused");
+  return { ...input, basedOn: planned.value.basedOn };
 }
 
 async function promoForm(seam: AdminService) {
@@ -568,6 +580,20 @@ const WRITES: Record<string, Write> = {
     refused: (seam, actor) => seam.deleteTopic(actor, sampleTopicId("CE", "MSTC", "Simple Curves")),
     refusal: "invalid",
   },
+  confirmCardImport: {
+    actor: EDITOR,
+    entity: "card-import",
+    entityId: "CE:MSTC",
+    saves: async (seam, actor, arm) =>
+      seam.confirmCardImport(
+        actor,
+        await checkedImport(seam, arm, ["Highways,Grade,Rise over run,,"]),
+      ),
+    // A formula that won't render.
+    refused: async (seam, actor, arm) =>
+      seam.confirmCardImport(actor, await checkedImport(seam, arm, ["Highways,Grade,$x,,"])),
+    refusal: "invalid",
+  },
   updatePromoBanner: {
     actor: EDITOR,
     entity: "promo-banner",
@@ -646,7 +672,7 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
     "%s appends exactly one record, with the values before and after",
     async (_name, write) => {
       if (write.seed) await arm.reset(write.seed);
-      const { result, appended } = await appendedBy(() => write.saves(seam, write.actor));
+      const { result, appended } = await appendedBy(() => write.saves(seam, write.actor, arm));
 
       expect(result).toMatchObject({ ok: true });
       expect(appended).toHaveLength(1);
@@ -670,7 +696,7 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
 
   it.each(writes)("%s appends nothing when it's refused", async (_name, write) => {
     if (write.seed) await arm.reset(write.seed);
-    const { result, appended } = await appendedBy(() => write.refused(seam, write.actor));
+    const { result, appended } = await appendedBy(() => write.refused(seam, write.actor, arm));
 
     expect(result).toMatchObject({ ok: false, error: { kind: write.refusal } });
     expect(appended).toEqual([]);
@@ -680,7 +706,7 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
     "%s appends nothing for an Editor, who isn't allowed it",
     async (_name, write) => {
       if (write.seed) await arm.reset(write.seed);
-      const { result, appended } = await appendedBy(() => write.saves(seam, EDITOR));
+      const { result, appended } = await appendedBy(() => write.saves(seam, EDITOR, arm));
 
       expect(result).toMatchObject({ ok: false, error: { kind: "forbidden" } });
       expect(appended).toEqual([]);

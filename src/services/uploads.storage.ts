@@ -6,8 +6,12 @@ import { getStorage, type StorageConnection } from "@/lib/supabase/admin";
 import { invalidInput } from "@/services/admin.schema";
 import type { AdminResult, StaffActor } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
-import type { UploadService } from "@/services/uploads";
+import type { ContentFiles, UploadService } from "@/services/uploads";
 import {
+  CONTENT_UPLOADS,
+  type ContentUploadRequest,
+  contentUploadRequestSchema,
+  type ContentUploadTicket,
   UPLOAD_OWNER,
   UPLOAD_PURPOSES,
   type UploadContentType,
@@ -30,7 +34,16 @@ import {
 //   - After a save commits, it deletes the files the save stopped using
 //     (removeImages). A failed delete is logged and never fails the save: a
 //     stray file costs a little storage, nothing on the Website.
+//
+// Private uploads and card images (Phase 3, ticket 06) go to the PRIVATE
+// `content` bucket (supabase/migrations/…_content_bucket.sql), which has no
+// public URLs: createContentUpload signs a one-time upload URL for an
+// import's CSV or zip, and the card import reads it back, stores each card's
+// image and deletes what it no longer needs through contentFiles.
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** The private bucket: card images, and the files an import uploads. */
+export const CONTENT_BUCKET = "content";
 
 const EXTENSIONS: Record<UploadContentType, string> = {
   "image/jpeg": "jpg",
@@ -65,6 +78,10 @@ const FOLDERS: Record<
   "site-page-share-image": (owner, file) => `site-pages/${owner}/share-${file}`,
   "about-photo": (slot, file) => `site-pages/about/${slot}-${file}`,
 };
+
+/** Pure: whether a path is where a private upload of this purpose is filed: imports/<uuid>.<extension>. */
+const isContentUploadPath = (path: string, purpose: keyof typeof CONTENT_UPLOADS) =>
+  new RegExp(`^imports/${UPLOAD_ID}\\.${CONTENT_UPLOADS[purpose].extension}$`).test(path);
 
 /** Pure: the purpose of the upload filed at this path, or null when no upload is. */
 function uploadPurposeAt(path: string): UploadRequest["purpose"] | null {
@@ -119,6 +136,8 @@ export function imagesRemoved(before: CatalogueSeed, after: CatalogueSeed): stri
 }
 
 export interface StorageArm extends UploadService {
+  /** The private content bucket, for the card import (ticket 06). */
+  contentFiles: ContentFiles;
   /**
    * Asks Storage which of these upload paths have their file, and gives what
    * a save finds at each (sample-store.ts's uploadAt). Paths that aren't
@@ -136,6 +155,7 @@ export interface StorageArm extends UploadService {
 /** The Storage arm, on the Storage `connect` gives; it throws when there's none. */
 export function createStorageArm(connect: () => StorageConnection): StorageArm {
   const bucket = () => connect().client.storage.from(CATALOGUE_BUCKET);
+  const contentBucket = () => connect().client.storage.from(CONTENT_BUCKET);
 
   async function createUpload(
     actor: StaffActor | null,
@@ -210,7 +230,58 @@ export function createStorageArm(connect: () => StorageConnection): StorageArm {
     }
   }
 
-  return { createUpload, lookupUploads, removeImages };
+  async function createContentUpload(
+    actor: StaffActor | null,
+    request: ContentUploadRequest,
+  ): Promise<AdminResult<ContentUploadTicket>> {
+    if (!actor) {
+      return { ok: false, error: { kind: "forbidden", message: "SIGN IN TO UPLOAD FILES" } };
+    }
+    const parsed = contentUploadRequestSchema.safeParse(request);
+    if (!parsed.success) return { ok: false, error: invalidInput(parsed.error) };
+
+    const { purpose } = parsed.data;
+    const { extension, contentType } = CONTENT_UPLOADS[purpose];
+    const path = `imports/${crypto.randomUUID()}.${extension}`;
+    const { data, error } = await contentBucket().createSignedUploadUrl(path);
+    if (error) throw new Error(`Storage couldn't make an upload URL: ${error.message}`);
+    return {
+      ok: true,
+      value: { uploadUrl: data.signedUrl, path, contentType },
+      tags: [],
+    };
+  }
+
+  const contentFiles: ContentFiles = {
+    async readUpload(path, purpose) {
+      if (!isContentUploadPath(path, purpose)) return null;
+      const files = contentBucket();
+      // A file that isn't there is false, with its 404 as the error.
+      const exists = await files.exists(path).catch((error: unknown) => {
+        const reason = error instanceof Error ? error.message : String(error);
+        throw new Error(`Storage couldn't check an upload: ${reason}`);
+      });
+      if (exists.data !== true) return null;
+      const { data, error } = await files.download(path);
+      if (error) throw new Error(`Storage couldn't read an upload: ${error.message}`);
+      return new Uint8Array(await data.arrayBuffer());
+    },
+    async put(path, bytes, contentType) {
+      const { error } = await contentBucket().upload(path, bytes, { contentType, upsert: false });
+      if (error) throw new Error(`Storage couldn't store a card image: ${error.message}`);
+    },
+    async remove(paths) {
+      if (paths.length === 0) return;
+      try {
+        const { error } = await contentBucket().remove([...paths]);
+        if (error) throw error;
+      } catch (error) {
+        console.error("Couldn't delete files from the content bucket; they stay:", paths, error);
+      }
+    },
+  };
+
+  return { createUpload, createContentUpload, lookupUploads, removeImages, contentFiles };
 }
 
 /** The Storage arm on this server's Storage (NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY). */

@@ -20,7 +20,9 @@ import type {
   SocialLinks,
   WebsiteSettings,
 } from "@/services/catalogue.types";
-import type { ContentCounts, TopicContent } from "@/services/content.types";
+import type { ImportCounts, ImportProblem } from "@/lib/card-import/plan";
+import type { ImportMode } from "@/lib/card-import/modes";
+import type { ContentCounts, ContentVisibility, TopicContent } from "@/services/content.types";
 
 export type StaffRole = "owner" | "editor";
 
@@ -480,4 +482,52 @@ export interface AdminTopicList {
   exam: { code: string; board: string; name: string };
   subject: { code: string; name: string };
   topics: AdminTopic[];
+}
+
+// ── Member App content: card import (Phase 3, ticket 06) ────────────────────
+
+/** What a card import does to one Topic the CSV names, as the preview shows it. */
+export interface CardImportTopic {
+  /** The existing Topic's name, or the new one's. */
+  name: string;
+  /** The existing Topic, or null for one the import creates. */
+  topicId: string | null;
+  /** For a new Topic: the existing Topic whose name is close to it ("did you rename it?"). */
+  similarTo: string | null;
+  /** Where the cards go: a new deck (made Hidden), or the Topic's deck, Hidden or Visible. */
+  deck: "new" | ContentVisibility;
+  /** Replace only when the Topic has cards and the import replaces; otherwise its rows are added. */
+  mode: ImportMode;
+  counts: ImportCounts;
+}
+
+/** A card import's preview: nothing is saved until Staff confirm one with no problems. */
+export interface CardImportPreview {
+  exam: { code: string; name: string };
+  subject: { code: string; name: string };
+  mode: ImportMode;
+  /** Each Topic the CSV names, in order of first appearance. */
+  topics: CardImportTopic[];
+  /** Every problem with the files; while there are any, the import can't be confirmed. */
+  problems: ImportProblem[];
+  /**
+   * The Subject's Topics and cards as the preview read them. Confirming sends
+   * it back, and is refused (a conflict) if they've changed since.
+   */
+  basedOn: string;
+}
+
+/** What a confirmed card import did to one Topic. */
+export interface CardImportTopicResult {
+  topicId: string;
+  deckId: string;
+  name: string;
+  /** Whether the import created the Topic. */
+  created: boolean;
+  counts: ImportCounts;
+}
+
+/** A confirmed card import: each Topic it changed, in the preview's order. */
+export interface CardImportResult {
+  topics: CardImportTopicResult[];
 }

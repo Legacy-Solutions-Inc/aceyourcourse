@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -11,6 +12,7 @@ import { ConfirmDelete } from "@/components/admin/confirm-delete";
 import { MoveButtons } from "@/components/admin/move-buttons";
 import type { AdminAction, AdminActionState } from "@/lib/admin/action";
 import { topicContentLabels } from "@/lib/admin/topics-view";
+import { paths } from "@/paths";
 import type { AdminError, AdminTopic, AdminTopicList } from "@/services/admin.types";
 import type { Topic } from "@/services/content.types";
 
@@ -231,14 +233,22 @@ export function TopicsEditor({ list, actions }: TopicsEditorProps) {
       aria-labelledby="content-topics"
       className="flex max-w-3xl min-w-0 flex-col gap-3 border-[1.5px] bg-ayc-paper p-4.5"
     >
-      <div className="flex flex-col gap-0.5">
-        <h2
-          id="content-topics"
-          className="font-mono text-[11px] font-bold tracking-[0.06em] text-ayc-blue"
+      <div className="flex flex-wrap items-start justify-between gap-2.5">
+        <div className="flex flex-col gap-0.5">
+          <h2
+            id="content-topics"
+            className="font-mono text-[11px] font-bold tracking-[0.06em] text-ayc-blue"
+          >
+            {exam.code} · {subject.code} · TOPICS
+          </h2>
+          <p className="text-sm">{subject.name}</p>
+        </div>
+        <Link
+          href={paths.admin.cardImport(exam.code, subject.code)}
+          className={`${BUTTON} inline-flex items-center bg-ayc-paper`}
         >
-          {exam.code} · {subject.code} · TOPICS
-        </h2>
-        <p className="text-sm">{subject.name}</p>
+          Import cards
+        </Link>
       </div>
 
       {topics.length > 0 ? (

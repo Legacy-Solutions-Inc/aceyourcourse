@@ -1,7 +1,7 @@
 // The Member App's content model (spec, Phase 3 → Content model; CONTEXT.md):
 // Exam → Subject → Topic, and each Topic's deck, quiz and Reviewer PDF, each
 // optional. Both the Member seam and the Admin seam read these records; the
-// Admin edits them. Cards, questions and page images come with later tickets.
+// Admin edits them. Questions and page images come with later tickets.
 // The Access Pass records are here too: they decide what a Member may open.
 
 /** The three kinds of study content a Topic can have, in the order the Library shows them. */
@@ -34,12 +34,28 @@ export interface Topic {
   position: number;
 }
 
-/** A Topic's flashcard deck: at most one per Topic. Its cards come with ticket 06. */
+/** A Topic's flashcard deck: at most one per Topic. */
 export interface Deck {
   id: string;
   topicId: string;
   visibility: ContentVisibility;
   freePreview: boolean;
+}
+
+/**
+ * A flashcard in a deck (ticket 06): front text, a back and an optional note,
+ * each in the formula notation, and an optional back image.
+ */
+export interface Card {
+  id: string;
+  deckId: string;
+  /** Its place in its deck's order, from 1. */
+  position: number;
+  front: string;
+  back: string;
+  note: string | null;
+  /** Where its back image is in the private content bucket, or null. */
+  image: string | null;
 }
 
 /** A Topic's quiz: at most one per Topic. Its questions come with ticket 09. */

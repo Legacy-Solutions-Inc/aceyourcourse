@@ -1,6 +1,10 @@
+import { createHash } from "node:crypto";
+
+import { matchingFront } from "@/lib/cards/card-rules";
 import type * as schema from "@/lib/db/schema";
 import type {
   AccessPass,
+  Card,
   ContentRecords,
   Deck,
   Quiz,
@@ -18,6 +22,7 @@ type DeckRow = typeof schema.decks.$inferSelect;
 type QuizRow = typeof schema.quizzes.$inferSelect;
 type ReviewerPdfRow = typeof schema.reviewerPdfs.$inferSelect;
 type AccessPassRow = typeof schema.accessPasses.$inferSelect;
+type CardRow = typeof schema.cards.$inferSelect;
 
 /** Every content table's rows, as the records are. */
 export interface ContentRows {
@@ -78,4 +83,30 @@ export const accessPassToRow = (pass: AccessPass): AccessPassRow => ({
   userId: pass.userId,
   examCode: pass.examCode,
   endsAt: new Date(pass.endsAt),
+});
+
+/** Pure: the SHA-256 of a front as a re-import matches it, which the cards table keeps. */
+export const frontHashOf = (front: string) =>
+  createHash("sha256").update(matchingFront(front), "utf8").digest("hex");
+
+export const cardFromRow = (row: CardRow): Card => ({
+  id: row.id,
+  deckId: row.deckId,
+  position: row.position,
+  front: row.front,
+  back: row.back,
+  note: row.note,
+  image: row.imagePath,
+});
+
+/** Pure: a card's row, with its front's hash, so the hash can't drift from the front. */
+export const cardToRow = (card: Card): CardRow => ({
+  id: card.id,
+  deckId: card.deckId,
+  position: card.position,
+  front: card.front,
+  back: card.back,
+  note: card.note,
+  imagePath: card.image,
+  frontHash: frontHashOf(card.front),
 });

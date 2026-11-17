@@ -16,6 +16,8 @@ import type {
   NewProductForm,
   NewReviewForm,
   NewSubjectForm,
+  CardImportInput,
+  ConfirmCardImportInput,
   NewTopicForm,
   OfficialExamDateForm,
   ProductFlags,
@@ -45,6 +47,8 @@ import type {
   AdminReviewList,
   AdminTopic,
   AdminTopicList,
+  CardImportPreview,
+  CardImportResult,
   AdminWebsiteSettings,
   BetaTester,
   DeletedFaq,
@@ -514,6 +518,36 @@ export interface AdminService {
    */
   deleteTopic(actor: StaffActor, id: string): Promise<AdminResult<Topic>>;
 
+  // Member App content: card import (any Staff User; Phase 3, ticket 06; spec,
+  // Phase 3 → Spreadsheet import). The browser uploads the CSV and zip to the
+  // private content bucket (the upload seam's createContentUpload) and names
+  // them here by their paths. Nothing cached reads Topics or cards, so neither
+  // returns a cache tag. src/services/card-import.core.ts has the steps.
+
+  /**
+   * "Check file": the preview of importing the CSV (and zip) into a Subject:
+   * each Topic the CSV names (created or matched by name) with the cards to
+   * add, replace, keep and remove, and every problem with its row and column.
+   * Saves nothing. Not found when the Exam or Subject isn't there; invalid
+   * when a file hasn't been uploaded.
+   */
+  planCardImport(
+    actor: StaffActor,
+    input: CardImportInput,
+  ): Promise<AdminResult<CardImportPreview>>;
+  /**
+   * "Import": saves a preview with no problems in one go, or nothing: the new
+   * Topics (after the existing ones), their decks (Hidden), the cards and
+   * their images (in the private content bucket), and one Staff Activity
+   * record with each Topic's counts. A conflict when the Subject's Topics or
+   * cards changed since the preview (`basedOn`); invalid when the files now
+   * have problems.
+   */
+  confirmCardImport(
+    actor: StaffActor,
+    input: ConfirmCardImportInput,
+  ): Promise<AdminResult<CardImportResult>>;
+
   // Site pages (any Staff User; ticket 20; spec, Phase 2 → Site pages). Each
   // of the Website's five Site pages: its SEO title and description (blank
   // uses the text in code) and its share image, with an Exam page's rules.
@@ -658,6 +692,8 @@ export const createTopic = impl.createTopic;
 export const renameTopic = impl.renameTopic;
 export const moveTopic = impl.moveTopic;
 export const deleteTopic = impl.deleteTopic;
+export const planCardImport = impl.planCardImport;
+export const confirmCardImport = impl.confirmCardImport;
 export const getSitePageForAdmin = impl.getSitePageForAdmin;
 export const updateSitePageSeo = impl.updateSitePageSeo;
 export const getAboutForAdmin = impl.getAboutForAdmin;

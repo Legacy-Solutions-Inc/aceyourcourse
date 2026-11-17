@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { IMPORT_FILES } from "@/lib/card-import/limits";
 import { ABOUT_PHOTO_SLOTS } from "@/lib/catalogue/about-content";
 import { isSitePageKey } from "@/services/catalogue.schema";
 
@@ -108,3 +109,48 @@ export type UploadLookup = (
   path: string,
   purpose: UploadRequest["purpose"],
 ) => { publicUrl: string } | "waiting" | null;
+
+// ── Private content uploads (Phase 3, ticket 06) ────────────────────────────
+// An Editor's card import: the browser uploads its CSV and its zip of images
+// straight to the private content bucket, as it does a photo to the public
+// one (the zip can be far bigger than a Server Action may take). These files
+// are never public: an upload gives no public URL, and only the server reads
+// them back, to plan and confirm the import.
+
+/** What a private upload is for: an import's CSV, or its zip of images. */
+export const CONTENT_UPLOAD_PURPOSES = ["card-import-csv", "card-import-zip"] as const;
+
+export type ContentUploadPurpose = (typeof CONTENT_UPLOAD_PURPOSES)[number];
+
+/** Each private upload's rules (src/lib/card-import/limits.ts): its type, extension and largest size. */
+export const CONTENT_UPLOADS = {
+  "card-import-csv": IMPORT_FILES.csv,
+  "card-import-zip": IMPORT_FILES.zip,
+} as const satisfies Record<ContentUploadPurpose, (typeof IMPORT_FILES)[keyof typeof IMPORT_FILES]>;
+
+export type ContentUploadType = (typeof CONTENT_UPLOADS)[ContentUploadPurpose]["contentType"];
+
+/** A private upload as the browser asks for it: what it's for, and the file's size. */
+export const contentUploadRequestSchema = z
+  .object({
+    purpose: z.enum(CONTENT_UPLOAD_PURPOSES, { errorMap: () => ({ message: UNKNOWN_UPLOAD }) }),
+    size: z
+      .number({ invalid_type_error: "THE FILE IS EMPTY", required_error: "THE FILE IS EMPTY" })
+      .int("THE FILE IS EMPTY")
+      .positive("THE FILE IS EMPTY"),
+  })
+  .superRefine(({ purpose, size }, ctx) => {
+    const { max, tooBig } = CONTENT_UPLOADS[purpose];
+    if (size > max) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["size"], message: tooBig });
+  });
+
+export type ContentUploadRequest = z.input<typeof contentUploadRequestSchema>;
+
+/** A private upload's one-time URL. There's no public URL: only the server reads the file. */
+export interface ContentUploadTicket {
+  uploadUrl: string;
+  /** What the import sends back, for the server to read the file at. */
+  path: string;
+  /** The type to PUT the file as. */
+  contentType: ContentUploadType;
+}

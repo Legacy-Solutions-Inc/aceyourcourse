@@ -1,8 +1,9 @@
 import "server-only";
 
-import { and, asc, desc, eq, getTableColumns, inArray, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, inArray, type SQL } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 
+import { type AdminPart, adminWriteLock } from "@/lib/db/admin-locks";
 import { getDb } from "@/lib/db/client";
 import type { Database } from "@/lib/db/connect";
 import { asDatabaseError, postgresErrorCode } from "@/lib/db/errors";
@@ -40,6 +41,7 @@ import type {
   RecordStamp,
   StaffMember,
 } from "@/services/admin.types";
+import { confirmCardImport, planCardImport } from "@/services/admin.card-import.db";
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
@@ -81,23 +83,13 @@ import type { UploadLookup } from "@/services/uploads.types";
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 /**
- * What a call reads: the catalogue with its save stamps, the Member App's
- * content (its Topics, with their decks, quizzes and Reviewer PDFs), the
- * staff list, and the Beta Tester list. A call that reads both the catalogue
- * and the content lists them in that order, so their locks are always taken
- * in the same order.
+ * What a call reads (src/lib/db/admin-locks.ts). A call that reads both the
+ * catalogue and the content lists them in that order, so their locks are
+ * always taken in the same order.
  */
-type Part = "catalogue" | "content" | "staff" | "betaTesters";
+type Part = AdminPart;
 
 const CATALOGUE: readonly Part[] = ["catalogue"];
-
-/**
- * Each part's write lock: writes that change the same part run one at a time,
- * so a write's checks see every write before it. The Staff Guard's sign-in
- * check (a staff write) never waits for a catalogue save.
- */
-const writeLock = (part: Part) =>
-  sql`select pg_advisory_xact_lock(hashtext(${`aceyourcourse:admin:${part}`}))`;
 
 /** Postgres's SQLSTATE for a unique key refusing a row. */
 const UNIQUE_VIOLATION = "23505";
@@ -267,6 +259,14 @@ async function load(
     },
     set decks(decks) {
       content = { ...contentPart(), decks };
+    },
+    // The card import (admin.card-import.db.ts) reads and writes a Subject's
+    // cards itself, and the private bucket is Storage's.
+    get cards() {
+      return notLoaded("the cards");
+    },
+    get contentFiles() {
+      return notLoaded("the private content bucket");
     },
     get quizzes() {
       return contentPart().quizzes;
@@ -508,7 +508,11 @@ async function onDatabase<T>(
   try {
     result = await getDb().transaction(
       async (tx) => {
-        if (mode === "write") for (const part of parts) await tx.execute(writeLock(part));
+        if (mode === "write")
+          // Each part's write lock: writes that change the same part run one at a
+          // time, so a write's checks see every write before it. The Staff
+          // Guard's sign-in check (a staff write) never waits for a catalogue save.
+          for (const part of parts) await tx.execute(adminWriteLock(part));
         const loaded = await load(tx, parts, uploadAt);
         const value = await withStandInStore(loaded.store, work);
         if (mode === "write") {
@@ -766,6 +770,9 @@ export const databaseArm: AdminService = {
     sampleArm.deleteTopic,
     () => "This Topic now has content, so it can’t be deleted. Reload the page to see it.",
   ),
+  // One Subject's cards, read and saved by the import itself.
+  planCardImport,
+  confirmCardImport,
 
   getSitePageForAdmin: read(CATALOGUE, sampleArm.getSitePageForAdmin),
   updateSitePageSeo: stampedWrite(sampleArm.updateSitePageSeo),

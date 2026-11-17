@@ -240,6 +240,12 @@ const KEYBOARD_SCREENS: {
     },
   },
   {
+    name: "a Subject's card import",
+    who: "editor",
+    path: paths.admin.cardImport("CE", "MSTC"),
+    ready: (page) => page.getByRole("region", { name: "CE · MSTC · IMPORT CARDS" }),
+  },
+  {
     name: "Users, with the Beta Testers tab and its remove dialog",
     who: "owner",
     path: paths.admin.users,
@@ -333,8 +339,9 @@ for (const size of SIZES) {
         "/admin/exam-pages?page=site&site=about&section=seo",
         "/admin/products",
         "/admin/reviews",
-        // Member App content: a Subject's Topics (Phase 3, ticket 05).
+        // Member App content: a Subject's Topics (Phase 3, ticket 05), and its card import (ticket 06).
         "/admin/content",
+        "/admin/content/import?exam=ce&subject=mstc",
         "/admin/users",
         "/admin/settings",
       ]) {

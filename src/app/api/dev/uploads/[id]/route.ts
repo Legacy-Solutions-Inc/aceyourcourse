@@ -23,7 +23,7 @@ const ANSWERS: Record<SampleUploadAnswer, { status: number; text: string }> = {
   "already-uploaded": { status: 409, text: "This upload URL has been used" },
   "wrong-type": { status: 415, text: "The file isn't the type declared" },
   "wrong-size": { status: 400, text: "The file isn't the size declared" },
-  "not-an-image": { status: 415, text: "The file isn't a JPEG, PNG or WebP image" },
+  "not-an-image": { status: 415, text: "The file's contents aren't the type declared" },
 };
 
 /**
@@ -49,7 +49,7 @@ export async function PUT(request: Request, { params }: RouteContext): Promise<R
   return new Response(text, { status });
 }
 
-/** Serves an uploaded file with its type. */
+/** Serves an uploaded file with its type. A private upload (an import's CSV or zip) is never served. */
 export async function GET(_request: Request, { params }: RouteContext): Promise<Response> {
   if (adminMode !== "sample") return notFound();
   const upload = readSampleUpload((await params).id);

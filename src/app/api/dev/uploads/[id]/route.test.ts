@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { StaffActor } from "@/services/admin.types";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
-import { createUpload } from "@/services/uploads";
+import { createContentUpload, createUpload } from "@/services/uploads";
 import type { UploadContentType, UploadTicket } from "@/services/uploads.types";
 
 import { imageBytes, textBytes } from "../../../../../../test/image-bytes";
@@ -70,6 +70,22 @@ describe("/api/dev/uploads/[id]", () => {
     expect(served.status).toBe(200);
     expect(served.headers.get("content-type")).toBe("image/webp");
     expect(new Uint8Array(await served.arrayBuffer())).toEqual(bytes);
+  });
+
+  it("takes an import's private CSV, but never serves it: GET answers 404", async () => {
+    const created = await createContentUpload(EDITOR, { purpose: "card-import-csv", size: 4 });
+    if (!created.ok) throw new Error("refused");
+    const { uploadUrl } = created.value;
+    const id = new URL(uploadUrl, ORIGIN).pathname.split("/").at(-1) ?? "";
+    const params = { params: Promise.resolve({ id }) };
+    const { GET, PUT } = await import("./route");
+
+    const response = await PUT(put(uploadUrl, textBytes(4), "text/csv"), params);
+    expect(response.status).toBe(201);
+    expect(getSampleStore().uploads[id]?.bytes).not.toBeNull();
+
+    const served = await GET(new Request(new URL(`/api/dev/uploads/${id}`, ORIGIN)), params);
+    expect(served.status).toBe(404);
   });
 
   it("refuses a second PUT to the same URL, keeping the first file", async () => {

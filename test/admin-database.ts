@@ -1,16 +1,24 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import * as schema from "@/lib/db/schema";
-import { isStorageConfigured } from "@/lib/supabase/admin";
+import { getStorage, isStorageConfigured } from "@/lib/supabase/admin";
 import { databaseArm } from "@/services/admin.db";
 import { deniedSignInFromRow, staffActivityFromRow } from "@/services/admin.rows";
+import { cardFromRow } from "@/services/content.rows";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
-import { resetSampleStore } from "@/services/mock/sample-store";
-import { storageArm } from "@/services/uploads.storage";
+import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
+import { sampleContentFiles } from "@/services/uploads.mock";
+import { CONTENT_BUCKET, storageArm } from "@/services/uploads.storage";
 import type { UploadRequest } from "@/services/uploads.types";
 
-import type { AdminArm } from "./admin-arms";
+import { type AdminArm, byDeckAndPosition } from "./admin-arms";
+import {
+  IMPORT_UPLOADER,
+  type ImportFiles,
+  uploadContent,
+  uploadSampleImport,
+} from "./card-import-files";
 import { loadTestCatalogue } from "./catalogue-database";
 import { newContent } from "./content-inputs";
 import { imageBytes } from "./image-bytes";
@@ -40,6 +48,27 @@ async function uploadStoragePhoto({
     throw new Error("The file wasn't stored");
   }
   return { path: created.value.path, publicUrl: created.value.publicUrl };
+}
+
+/** Uploads an import's files to local Supabase's private content bucket, as the import screen does. */
+async function uploadStorageImport({ csv, zip = null, send = true }: ImportFiles) {
+  const create = (purpose: "card-import-csv" | "card-import-zip", size: number) =>
+    storageArm.createContentUpload(IMPORT_UPLOADER, { purpose, size });
+  const put = async (ticket: { uploadUrl: string; contentType: string }, bytes: Uint8Array) =>
+    (await putFile(ticket.uploadUrl, ticket.contentType, bytes)).ok;
+  return {
+    csv: await uploadContent(create, put, "card-import-csv", csv, send),
+    zip: zip ? await uploadContent(create, put, "card-import-zip", zip, send) : null,
+  };
+}
+
+/** The file at a path in the sample data's private content bucket, or null. */
+const getSampleStoreFile = (path: string) => getSampleStore().contentFiles[path]?.bytes ?? null;
+
+/** The file at a path in local Supabase's private content bucket, or null. */
+async function storedStorageFile(path: string): Promise<Uint8Array | null> {
+  const { data, error } = await getStorage().client.storage.from(CONTENT_BUCKET).download(path);
+  return error ? null : new Uint8Array(await data.arrayBuffer());
 }
 
 /**
@@ -87,5 +116,27 @@ export const DATABASE_ARM: AdminArm = {
       await getDb().insert(schema.reviewerPdfs).values({ id, topicId, status, freePreview });
     }
     return id;
+  },
+  // Storage when the database project has it, as the database arm does.
+  uploadImport: isStorageConfigured ? uploadStorageImport : uploadSampleImport,
+  cards: async () =>
+    byDeckAndPosition((await getDb().select().from(schema.cards)).map(cardFromRow)),
+  storedFile: isStorageConfigured ? storedStorageFile : async (path) => getSampleStoreFile(path),
+  contentFiles: isStorageConfigured ? storageArm.contentFiles : sampleContentFiles,
+  // A trigger that refuses every Staff Activity row: the save's last write.
+  // The database tests run one file at a time, so no other test meets it.
+  breakStaffActivity: async () => {
+    await getDb().execute(sql`
+      create or replace function public.test_refuse_staff_activity() returns trigger
+      language plpgsql as $$ begin raise exception 'Staff Activity can''t be written.'; end $$`);
+    await getDb().execute(sql`
+      create trigger test_refuse_staff_activity before insert on staff_activity
+      for each row execute function public.test_refuse_staff_activity()`);
+    return async () => {
+      await getDb().execute(
+        sql`drop trigger if exists test_refuse_staff_activity on staff_activity`,
+      );
+      await getDb().execute(sql`drop function if exists public.test_refuse_staff_activity()`);
+    };
   },
 };

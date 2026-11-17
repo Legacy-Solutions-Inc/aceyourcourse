@@ -111,6 +111,15 @@ describe("TopicsEditor", () => {
     expect(screen.getByRole("list", { name: "What Surveying holds" })).toHaveTextContent("EMPTY");
   });
 
+  it("opens the Subject's card import from “Import cards”", () => {
+    renderEditor();
+
+    expect(screen.getByRole("link", { name: "Import cards" })).toHaveAttribute(
+      "href",
+      `/admin/content/import?exam=${LIST.exam.code.toLowerCase()}&subject=${LIST.subject.code.toLowerCase()}`,
+    );
+  });
+
   it("shows why a Topic with content can't be deleted, in place of its Delete button", () => {
     renderEditor();
 

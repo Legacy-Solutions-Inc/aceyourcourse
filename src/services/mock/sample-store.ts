@@ -9,9 +9,11 @@ import type {
   StaffMember,
 } from "@/services/admin.types";
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
+import type { CardImageType } from "@/lib/cards/card-rules";
 import type {
   AccessPass,
   AccessPassGrant,
+  Card,
   Deck,
   Quiz,
   ReviewerPdf,
@@ -23,7 +25,13 @@ import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { sampleContent } from "@/services/mock/content";
 import { sampleAccessPasses, sampleBetaTesters } from "@/services/mock/members";
 import { sampleStaff } from "@/services/mock/staff";
-import type { UploadContentType, UploadLookup, UploadRequest } from "@/services/uploads.types";
+import type {
+  ContentUploadPurpose,
+  ContentUploadType,
+  UploadContentType,
+  UploadLookup,
+  UploadRequest,
+} from "@/services/uploads.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The Admin's Stage A sample data (CONVENTIONS §3): one editable in-memory copy,
@@ -44,13 +52,20 @@ import type { UploadContentType, UploadLookup, UploadRequest } from "@/services/
  */
 export interface SampleUpload {
   id: string;
-  purpose: UploadRequest["purpose"];
-  contentType: UploadContentType;
+  /** A public catalogue image, or a private import file (ticket 06), which the route never serves. */
+  purpose: UploadRequest["purpose"] | ContentUploadPurpose;
+  contentType: UploadContentType | ContentUploadType;
   /** The size the browser declared, in bytes; the file sent must match it. */
   size: number;
   token: string;
   /** The file, once sent. Null until then. */
   bytes: Uint8Array | null;
+}
+
+/** A file in the sample data's private content bucket: a card's back image (ticket 06). */
+export interface SampleContentFile {
+  contentType: CardImageType;
+  bytes: Uint8Array;
 }
 
 /** A Member's Active Device record in the sample data. */
@@ -95,6 +110,8 @@ export interface SampleStore {
   topics: Topic[];
   /** Each Topic's deck, quiz and Reviewer PDF, where it has one (Phase 3). */
   decks: Deck[];
+  /** Each deck's cards (ticket 06), in no particular order: each has its position. */
+  cards: Card[];
   quizzes: Quiz[];
   reviewerPdfs: ReviewerPdf[];
   /** Every Member's Access Passes, at most one per Exam (Phase 3). */
@@ -103,6 +120,8 @@ export interface SampleStore {
   accessPassGrants: AccessPassGrant[];
   /** The upload seam's files, by upload id. */
   uploads: Record<string, SampleUpload>;
+  /** The private content bucket's files, by path (ticket 06): card back images. */
+  contentFiles: Record<string, SampleContentFile>;
   /**
    * What a save finds at an upload's path. Unset, it's the sample uploads'
    * (uploads.mock.ts); the Admin's database arm sets Storage's (ticket 17).
@@ -135,8 +154,10 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     memberActiveDevices: {},
     memberDeviceSwitches: [],
     ...sampleContent(catalogue),
+    cards: [],
     ...sampleAccessPasses(now, catalogue),
     uploads: {},
+    contentFiles: {},
   };
 }
 

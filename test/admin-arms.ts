@@ -1,12 +1,15 @@
 import type { AdminService } from "@/services/admin";
 import * as sampleArm from "@/services/admin.mock";
 import type { DeniedSignIn, StaffActivity } from "@/services/admin.types";
-import type { ContentKind } from "@/services/content.types";
+import type { Card, ContentKind } from "@/services/content.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
+import type { ContentFiles } from "@/services/uploads";
+import { sampleContentFiles } from "@/services/uploads.mock";
 import type { UploadRequest } from "@/services/uploads.types";
 
 import { DATABASE_ARM } from "./admin-database";
+import { type ImportFiles, type ImportPaths, uploadSampleImport } from "./card-import-files";
 import { newContent } from "./content-inputs";
 import { editSampleCatalogue } from "./catalogue-seed";
 import { uploadSamplePhoto } from "./sample-photo";
@@ -50,7 +53,27 @@ export interface AdminArm {
    * seam's back, as a later ticket's import or upload will. Gives its id.
    */
   putContent(kind: ContentKind, topicId: string): Promise<string>;
+  /**
+   * Uploads a card import's CSV (and zip) through the upload seam's private
+   * uploads, as the import screen does (ticket 06), and gives their paths.
+   */
+  uploadImport(files: ImportFiles): Promise<ImportPaths>;
+  /** Every deck's cards, read behind the seam's back, by deck then position. */
+  cards(): Promise<Card[]>;
+  /** The file the private content bucket holds at a path, or null. */
+  storedFile(path: string): Promise<Uint8Array | null>;
+  /** The private content bucket the arm uses, for a test to watch or break. */
+  contentFiles: ContentFiles;
+  /**
+   * Makes every Staff Activity write fail, as a failure halfway through a
+   * save would, until the function it gives is called.
+   */
+  breakStaffActivity(): Promise<() => Promise<void>>;
 }
+
+/** Pure: cards by deck, then by position. */
+export const byDeckAndPosition = (cards: Card[]) =>
+  [...cards].sort((a, b) => a.deckId.localeCompare(b.deckId) || a.position - b.position);
 
 const SAMPLE_ARM: AdminArm = {
   name: "sample data",
@@ -82,6 +105,28 @@ const SAMPLE_ARM: AdminArm = {
       store.reviewerPdfs = [...store.reviewerPdfs, { id, topicId, status, freePreview }];
     }
     return id;
+  },
+  uploadImport: uploadSampleImport,
+  cards: async () => byDeckAndPosition(structuredClone(getSampleStore().cards)),
+  storedFile: async (path) => getSampleStore().contentFiles[path]?.bytes ?? null,
+  contentFiles: sampleContentFiles,
+  breakStaffActivity: async () => {
+    const store = getSampleStore();
+    const records = store.staffActivity;
+    Object.defineProperty(store, "staffActivity", {
+      configurable: true,
+      get: () => records,
+      set: () => {
+        throw new Error("Staff Activity can't be written.");
+      },
+    });
+    return async () => {
+      Object.defineProperty(store, "staffActivity", {
+        configurable: true,
+        writable: true,
+        value: records,
+      });
+    };
   },
 };
 

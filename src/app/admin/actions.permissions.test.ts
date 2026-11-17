@@ -16,7 +16,7 @@ import { faqFormValues } from "@/lib/admin/faq-form";
 import { productFormValues } from "@/lib/admin/product-form";
 import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
 import { reviewFormValues } from "@/lib/admin/review-form";
-import { getExamPageForAdmin } from "@/services/admin";
+import { getExamPageForAdmin, planCardImport } from "@/services/admin";
 import { sampleTopicId } from "@/services/mock/content";
 import { getSampleStore } from "@/services/mock/sample-store";
 
@@ -27,6 +27,7 @@ import {
   UNUSED_EXAM,
   withUnusedExam,
 } from "../../../test/admin-inputs";
+import { importCsv, type ImportPaths, uploadSampleImport } from "../../../test/card-import-files";
 import { editSampleCatalogue } from "../../../test/catalogue-seed";
 
 import * as content from "./(shell)/content/actions";
@@ -92,6 +93,9 @@ const READER = sampleActor("editor");
 const SURVEYING = sampleTopicId("CE", "MSTC", "Surveying");
 
 const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
+
+/** A card import's files, uploaded before each test, and the preview of them. */
+let cardImport: ImportPaths & { exam: string; subject: string; mode: "add"; basedOn: string };
 /** The stamp every record has before anyone saves it. */
 const opened = () => ({ savedAt: getSampleStore().bootedAt });
 
@@ -202,6 +206,14 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
       content.moveTopicInSubject(IDLE, { input: { id: SURVEYING, direction: "up" } }),
     ),
     removeTopic: staff(() => content.removeTopic(IDLE, { input: { id: SURVEYING } })),
+    createImportUpload: staff(() =>
+      content.createImportUpload(IDLE, { input: { purpose: "card-import-csv", size: 2048 } }),
+    ),
+    checkCardImport: staff(() => {
+      const { basedOn: _, ...input } = cardImport;
+      return content.checkCardImport(IDLE, { input });
+    }),
+    importCards: staff(() => content.importCards(IDLE, { input: cardImport })),
   },
   "./(shell)/products/actions.ts": {
     setProductFlag: staff(() =>
@@ -345,12 +357,17 @@ const named = <T extends { module: string; name: string }>(entries: T[]) =>
 /** The whole sample store, byte for byte. */
 const snapshot = () => JSON.stringify(getSampleStore());
 
-beforeEach(() => {
+beforeEach(async () => {
   jar.clear();
   mode.current = "sample";
   // The seed, with an Exam nothing uses yet, which the Exam and Subject deletes can delete.
   editSampleCatalogue(withUnusedExam);
   vi.mocked(revalidateTag).mockClear();
+  const paths = await uploadSampleImport({ csv: importCsv(["Highways,Grade,Rise over run,,"]) });
+  const input = { exam: "ce", subject: "mstc", mode: "add" as const, ...paths };
+  const planned = await planCardImport(READER, input);
+  if (!planned.ok) throw new Error("The card import's files were refused");
+  cardImport = { ...input, basedOn: planned.value.basedOn };
 });
 
 describe("the action registry", () => {
