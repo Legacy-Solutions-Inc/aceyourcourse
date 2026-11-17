@@ -1,0 +1,60 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_website_issues_10_legal_pages",
+      "label": "Ticket 10: Legal pages",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-website/issues/10-legal-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_10_legal_pages_versioned_legal_content",
+      "label": "Typed versioned Legal content (v1.0, effective date, status)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-website/issues/10-legal-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Privacy and Terms describe what the Website actually does (cookieless analytics, no accounts, Marketplace terms, RA 10173/NPC); Member App sections deferred to v2.0."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_website_issues_10_legal_pages",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/10-legal-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_10_legal_pages",
+      "target": "_scratch_ayc_website_issues_10_legal_pages_versioned_legal_content",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/10-legal-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_10_legal_pages_versioned_legal_content",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell_cookieless_analytics",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-website/issues/10-legal-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

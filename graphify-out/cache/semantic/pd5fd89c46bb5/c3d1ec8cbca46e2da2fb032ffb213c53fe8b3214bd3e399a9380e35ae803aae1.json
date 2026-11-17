@@ -1,0 +1,100 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_website_prompts_11_sitemap_and_site_checks",
+      "label": "Executer prompt: Ticket 11: Sitemap, robots, Organization data and site-wide checks",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-website/prompts/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_prompts_11_sitemap_and_site_checks_buildsitemap",
+      "label": "buildSitemap / buildRobots",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-website/prompts/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_prompts_11_sitemap_and_site_checks_organizationjsonld",
+      "label": "organizationJsonLd(settings, siteUrl)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-website/prompts/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_website_prompts_11_sitemap_and_site_checks",
+      "target": "_scratch_ayc_website_issues_11_sitemap_and_site_checks",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/prompts/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_prompts_11_sitemap_and_site_checks",
+      "target": "_scratch_ayc_website_readme_risen_prompt_structure",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-website/prompts/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_prompts_11_sitemap_and_site_checks",
+      "target": "_scratch_ayc_website_prompts_11_sitemap_and_site_checks_buildsitemap",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/prompts/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_prompts_11_sitemap_and_site_checks",
+      "target": "_scratch_ayc_website_prompts_11_sitemap_and_site_checks_organizationjsonld",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/prompts/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_prompts_11_sitemap_and_site_checks_buildsitemap",
+      "target": "_scratch_ayc_website_issues_11_sitemap_and_site_checks_sitemap_and_robots",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-website/prompts/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_prompts_11_sitemap_and_site_checks_organizationjsonld",
+      "target": "_scratch_ayc_website_issues_11_sitemap_and_site_checks_organization_json_ld",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-website/prompts/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

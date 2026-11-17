@@ -1,0 +1,122 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in",
+      "label": "Ticket 01: Admin shell and Staff sign-in (sample data)",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in_next_sanitising",
+      "label": "next= sanitising (/admin paths only)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/issues/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Prevents open redirects: https://, //, /app fall back to /admin."
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in_denied_screen",
+      "label": "403 denied screen (not-staff, invite-expired, owners-only; attempt logged)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in_invite_activation",
+      "label": "Invite activation on first sign-in (case-insensitive)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in_next_sanitising",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in_denied_screen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in_invite_activation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_conventions_computeadminmode",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_conventions_staff_guard",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_conventions_sample_users",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

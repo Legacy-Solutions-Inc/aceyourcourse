@@ -1,0 +1,208 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_website_issues_11_sitemap_and_site_checks",
+      "label": "Ticket 11: Sitemap, robots, Organization data and site-wide checks",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_11_sitemap_and_site_checks_sitemap_and_robots",
+      "label": "Sitemap and robots built from the Catalogue seam",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_11_sitemap_and_site_checks_organization_json_ld",
+      "label": "Organization JSON-LD with sameAs links",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_11_sitemap_and_site_checks_sitewide_checks",
+      "label": "Site-wide checks (axe, 390px mobile, buying journey, no Member App leaks)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_website_issues_11_sitemap_and_site_checks",
+      "target": "_scratch_ayc_website_issues_02_product_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_11_sitemap_and_site_checks",
+      "target": "_scratch_ayc_website_issues_03_products_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_11_sitemap_and_site_checks",
+      "target": "_scratch_ayc_website_issues_04_exam_pages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_11_sitemap_and_site_checks",
+      "target": "_scratch_ayc_website_issues_06_home_bottom_half",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_11_sitemap_and_site_checks",
+      "target": "_scratch_ayc_website_issues_07_reviews_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_11_sitemap_and_site_checks",
+      "target": "_scratch_ayc_website_issues_08_faq_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_11_sitemap_and_site_checks",
+      "target": "_scratch_ayc_website_issues_09_about_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_11_sitemap_and_site_checks",
+      "target": "_scratch_ayc_website_issues_10_legal_pages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_11_sitemap_and_site_checks",
+      "target": "_scratch_ayc_website_issues_11_sitemap_and_site_checks_sitemap_and_robots",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_11_sitemap_and_site_checks",
+      "target": "_scratch_ayc_website_issues_11_sitemap_and_site_checks_organization_json_ld",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_11_sitemap_and_site_checks",
+      "target": "_scratch_ayc_website_issues_11_sitemap_and_site_checks_sitewide_checks",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_11_sitemap_and_site_checks_sitemap_and_robots",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell_catalogue_service_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_11_sitemap_and_site_checks_sitewide_checks",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell_member_app_switch",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_11_sitemap_and_site_checks_organization_json_ld",
+      "target": "_scratch_ayc_website_issues_02_product_page_no_rating_review_markup",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "structured_data_rules",
+      "label": "Website structured data builders (no rating/review markup)",
+      "nodes": [
+        "_scratch_ayc_website_issues_02_product_page_no_rating_review_markup",
+        "_scratch_ayc_website_prompts_02_product_page_productjsonld",
+        "_scratch_ayc_website_prompts_08_faq_page_faqpagejsonld",
+        "_scratch_ayc_website_prompts_11_sitemap_and_site_checks_organizationjsonld",
+        "_scratch_ayc_website_issues_11_sitemap_and_site_checks_organization_json_ld",
+        "_scratch_ayc_website_issues_08_faq_page_faqpage_json_ld"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-website/issues/11-sitemap-and-site-checks.md"
+    }
+  ]
+}

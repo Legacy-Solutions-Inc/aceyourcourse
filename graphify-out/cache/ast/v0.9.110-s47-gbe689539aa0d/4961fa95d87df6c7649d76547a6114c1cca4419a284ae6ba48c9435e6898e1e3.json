@@ -1,0 +1,20 @@
+{
+  "nodes": [
+    {
+      "id": "$graphify-root$_supabase_migrations_20261105042827_about_page_sql",
+      "label": "20261105042827_about_page.sql",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261105042827_about_page.sql",
+      "source_location": null
+    },
+    {
+      "id": "site_pages",
+      "label": "\"site_pages\"",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "origin_file": "$graphify-root$/supabase/migrations/20261105042827_about_page.sql"
+    }
+  ],
+  "edges": []
+}

@@ -1,0 +1,121 @@
+{
+  "nodes": [
+    {
+      "id": "_claude_skills_shadcn_ui_skill_shadcn_ui_skill",
+      "label": "shadcn-ui Skill",
+      "file_type": "document",
+      "source_file": ".claude/skills/shadcn-ui/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_shadcn_ui_skill_copy_in_registry",
+      "label": "Copy-In Component Registry (not a runtime dependency)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/shadcn-ui/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_shadcn_ui_skill_components_json",
+      "label": "components.json (new-york, neutral, rsc)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/shadcn-ui/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_shadcn_ui_skill_cn_cva_composition",
+      "label": "cn() + cva + asChild Composition",
+      "file_type": "concept",
+      "source_file": ".claude/skills/shadcn-ui/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_claude_skills_shadcn_ui_skill_shadcn_ui_skill",
+      "target": "_claude_skills_shadcn_ui_skill_copy_in_registry",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/shadcn-ui/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_shadcn_ui_skill_shadcn_ui_skill",
+      "target": "_claude_skills_shadcn_ui_skill_components_json",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/shadcn-ui/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_shadcn_ui_skill_shadcn_ui_skill",
+      "target": "_claude_skills_shadcn_ui_skill_cn_cva_composition",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/shadcn-ui/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_shadcn_ui_skill_shadcn_ui_skill",
+      "target": "_claude_skills_tailwind_v4_skill_tailwind_v4_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/shadcn-ui/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_shadcn_ui_skill_components_json",
+      "target": "_claude_skills_tailwind_v4_skill_css_first_config",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/shadcn-ui/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_shadcn_ui_skill_shadcn_ui_skill",
+      "target": "_claude_skills_data_tables_skill_data_tables_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/shadcn-ui/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_shadcn_ui_skill_shadcn_ui_skill",
+      "target": "_claude_skills_forms_validation_skill_forms_validation_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/shadcn-ui/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

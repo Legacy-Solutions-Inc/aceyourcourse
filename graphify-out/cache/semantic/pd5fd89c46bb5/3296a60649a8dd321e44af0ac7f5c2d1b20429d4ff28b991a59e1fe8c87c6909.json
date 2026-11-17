@@ -1,0 +1,109 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_11_overview",
+      "label": "Ticket 11: Overview",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/11-overview.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_11_overview_needs_attention",
+      "label": "needs-attention.ts pure helper (Overview items)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/11-overview.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_11_overview",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_11_overview",
+      "target": "_scratch_ayc_admin_issues_05_product_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_11_overview",
+      "target": "_scratch_ayc_admin_issues_10_promo_banner_and_announcement",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_11_overview",
+      "target": "_scratch_ayc_admin_issues_11_overview_needs_attention",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_11_overview_needs_attention",
+      "target": "_scratch_ayc_admin_issues_04_products_list_missing_product_links",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_11_overview_needs_attention",
+      "target": "_scratch_ayc_admin_issues_10_promo_banner_and_announcement_home_promo_banner",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_11_overview_needs_attention",
+      "target": "_scratch_ayc_admin_issues_09_exam_pages_search_ai_visibility_helper",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_11_overview_needs_attention",
+      "target": "_scratch_ayc_admin_issues_04_products_list_app_site_toggles",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

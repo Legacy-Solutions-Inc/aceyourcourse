@@ -1,0 +1,12 @@
+{
+  "nodes": [
+    {
+      "id": "$graphify-root$_supabase_migrations_20261103050233_revoke_default_privileges_sql",
+      "label": "20261103050233_revoke_default_privileges.sql",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261103050233_revoke_default_privileges.sql",
+      "source_location": null
+    }
+  ],
+  "edges": []
+}

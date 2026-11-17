@@ -1,0 +1,151 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_20_site_page_seo",
+      "label": "Ticket 20: Site page SEO",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_20_site_page_seo_site_pages_seo",
+      "label": "Site pages SEO (Home, About, Products, FAQ, Reviews)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_20_site_page_seo_pages_and_promo_rename",
+      "label": "Menu rename: Exam pages & promo -> Pages & promo (route kept)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_20_site_page_seo_catalogue_site_pages_tag",
+      "label": "catalogue:site-pages cache tag and sitePages area",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_20_site_page_seo",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_20_site_page_seo",
+      "target": "_scratch_ayc_admin_issues_16_real_staff_sign_in",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_20_site_page_seo",
+      "target": "_scratch_ayc_admin_issues_17_photo_storage",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_20_site_page_seo",
+      "target": "_scratch_ayc_admin_issues_20_site_page_seo_site_pages_seo",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_20_site_page_seo",
+      "target": "_scratch_ayc_admin_issues_20_site_page_seo_pages_and_promo_rename",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_20_site_page_seo",
+      "target": "_scratch_ayc_admin_issues_20_site_page_seo_catalogue_site_pages_tag",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_20_site_page_seo_site_pages_seo",
+      "target": "_scratch_ayc_admin_issues_09_exam_pages_search_ai_visibility_helper",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_20_site_page_seo_catalogue_site_pages_tag",
+      "target": "_scratch_ayc_admin_conventions_cache_tags",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_20_site_page_seo_site_pages_seo",
+      "target": "_scratch_ayc_admin_conventions_upload_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_20_site_page_seo_site_pages_seo",
+      "target": "_scratch_ayc_admin_issues_17_photo_storage_storage_cleanup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

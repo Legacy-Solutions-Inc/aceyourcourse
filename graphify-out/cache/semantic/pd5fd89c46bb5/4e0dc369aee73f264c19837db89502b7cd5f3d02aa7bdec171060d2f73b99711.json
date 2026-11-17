@@ -1,0 +1,174 @@
+{
+  "nodes": [
+    {
+      "id": "docs_mockup_admin_build_map",
+      "label": "Admin mockup BUILD-MAP",
+      "file_type": "document",
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_mockup_admin_build_map_admindashboard_v2",
+      "label": "AdminDashboard_v2 mockup (sections & sidebar nav)",
+      "file_type": "concept",
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": "L3",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_mockup_admin_build_map_admin_roles",
+      "label": "Admin roles: Owner / Editor / Invited (7-day invite expiry)",
+      "file_type": "concept",
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": "L13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_mockup_admin_build_map_digital_access_rules",
+      "label": "Digital access granted only via PayMongo purchase, admin grant, or Free preview",
+      "file_type": "concept",
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": "L466",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_mockup_admin_build_map_content_protection",
+      "label": "Content protection: email watermark, no download, page-by-page PDF, DRM video",
+      "file_type": "concept",
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": "L486",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_mockup_admin_build_map_store_link_fallback",
+      "label": "Store link fallback (product link -> shop link -> hidden)",
+      "file_type": "concept",
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": "L506",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_mockup_admin_build_map_sample_data_tag",
+      "label": "In-memory sample data with SAMPLE DATA header tag",
+      "file_type": "concept",
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": "L7",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_mockup_admin_build_map",
+      "target": "docs_mockup_admin_build_map_admindashboard_v2",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_admin_build_map",
+      "target": "docs_mockup_admin_build_map_admin_roles",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_admin_build_map",
+      "target": "docs_mockup_admin_build_map_digital_access_rules",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_admin_build_map",
+      "target": "docs_mockup_admin_build_map_content_protection",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_admin_build_map",
+      "target": "docs_mockup_admin_build_map_store_link_fallback",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_admin_build_map",
+      "target": "docs_mockup_admin_build_map_sample_data_tag",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_admin_build_map_sample_data_tag",
+      "target": "docs_mockup_readme_aycdata_js",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_admin_build_map_admindashboard_v2",
+      "target": "docs_mockup_readme_dc_html_component",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_admin_build_map",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/mockup/admin/BUILD-MAP.md",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,450 @@
+{
+  "nodes": [
+    {
+      "id": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "label": "coding-standards 12-Category Checker",
+      "file_type": "document",
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_coding_standards_skill_verification_gate",
+      "label": "Green Gate: pnpm lint && type:check && test && build",
+      "file_type": "concept",
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_coding_standards_skill_conventional_commits",
+      "label": "Conventional Commits",
+      "file_type": "concept",
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_coding_standards_skill_branch_off_main_rule",
+      "label": "Branch Off main, Never Commit to main",
+      "file_type": "concept",
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_coding_standards_skill_in_action_authz",
+      "label": "In-Action Re-Auth and Ownership Check (IDOR Prevention)",
+      "file_type": "rationale",
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Every Server Action/Route Handler is a public POST endpoint; page/layout/middleware gating is optimistic only."
+    },
+    {
+      "id": "_claude_skills_coding_standards_skill_strict_nonce_csp",
+      "label": "Strict Nonce + strict-dynamic CSP",
+      "file_type": "rationale",
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "The nonce CSP forces dynamic rendering, and @supabase/ssr cookies are not HttpOnly, so strict script-src is the primary defense against session-token theft."
+    },
+    {
+      "id": "_claude_skills_coding_standards_skill_rls_every_table",
+      "label": "RLS Enabled on Every Exposed Table + Cross-User Denial Test",
+      "file_type": "concept",
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_coding_standards_skill_typescript_strictness",
+      "label": "No any / no ! / no as-to-silence TypeScript Rules",
+      "file_type": "concept",
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_coding_standards_skill_wcag_22_aa",
+      "label": "WCAG 2.2 AA Accessibility Target",
+      "file_type": "concept",
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_coding_standards_skill_coding_standards_spec",
+      "label": "Coding Standards Spec (docs/superpowers/specs/2026-07-31-coding-standards.md)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_coding_standards_skill_verification_gate",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_coding_standards_skill_coding_standards_spec",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_coding_standards_skill_in_action_authz",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_coding_standards_skill_strict_nonce_csp",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_coding_standards_skill_rls_every_table",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_coding_standards_skill_typescript_strictness",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_coding_standards_skill_wcag_22_aa",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_coding_standards_skill_conventional_commits",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_coding_standards_skill_branch_off_main_rule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_clean_architecture_skill_service_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_in_action_authz",
+      "target": "_claude_skills_supabase_auth_skill_getuser_not_getsession",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_in_action_authz",
+      "target": "_claude_skills_supabase_auth_skill_staff_list_authorization",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_supabase_auth_skill_auth_disabled_fail_closed",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_testing_unit_skill_coverage_ratchet",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_wcag_22_aa",
+      "target": "_claude_skills_testing_e2e_skill_axe_a11y_gate",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_anime_js_skill_prefers_reduced_motion",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_typescript_strictness",
+      "target": "_claude_skills_forms_validation_skill_zod_single_source",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_rls_every_table",
+      "target": "_claude_skills_drizzle_data_skill_deny_all_rls",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_strict_nonce_csp",
+      "target": "_claude_skills_nextjs_app_router_skill_csp_middleware",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_tailwind_v4_skill_tailwind_v4_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_shadcn_ui_skill_shadcn_ui_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_supabase_auth_skill_supabase_auth_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_drizzle_data_skill_drizzle_data_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_forms_validation_skill_forms_validation_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_data_tables_skill_data_tables_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_testing_unit_skill_testing_unit_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_testing_e2e_skill_testing_e2e_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_anime_js_skill_anime_js_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "target": "_claude_skills_supabase_auth_skill_adr_0008",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/coding-standards/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "server_action_security_flow",
+      "label": "Server Action Security Flow (re-auth, authz, validate, seam)",
+      "nodes": [
+        "_claude_skills_coding_standards_skill_in_action_authz",
+        "_claude_skills_forms_validation_skill_two_boundary_validation",
+        "_claude_skills_nextjs_app_router_references_server_actions_server_action_write_pattern",
+        "_claude_skills_supabase_auth_skill_getuser_not_getsession",
+        "_claude_skills_supabase_auth_skill_staff_list_authorization"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".claude/skills/coding-standards/SKILL.md"
+    },
+    {
+      "id": "nonce_csp_defense",
+      "label": "Nonce CSP Defense-in-Depth",
+      "nodes": [
+        "_claude_skills_coding_standards_skill_strict_nonce_csp",
+        "_claude_skills_nextjs_app_router_skill_csp_middleware",
+        "_claude_skills_nextjs_app_router_skill_dynamic_root_layout",
+        "_claude_skills_posthog_skill_session_replay_worker_src",
+        "_claude_skills_posthog_skill_relay_reverse_proxy"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".claude/skills/coding-standards/SKILL.md"
+    }
+  ]
+}

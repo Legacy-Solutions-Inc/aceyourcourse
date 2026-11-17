@@ -1,0 +1,60 @@
+{
+  "nodes": [
+    {
+      "id": "_claude_agents_readme_project_subagents",
+      "label": "Project Subagents (empty, global agents)",
+      "file_type": "document",
+      "source_file": ".claude/agents/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_agents_readme_global_agents_policy",
+      "label": "Prefer Global Agents Over Local Duplicates",
+      "file_type": "rationale",
+      "source_file": ".claude/agents/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Add a project subagent only when a need is genuinely local to this codebase."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_claude_agents_readme_global_agents_policy",
+      "target": "_claude_agents_readme_project_subagents",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/agents/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_agents_readme_project_subagents",
+      "target": "_claude_readme_planning_executer_model",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/agents/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_agents_readme_global_agents_policy",
+      "target": "_claude_skills_readme_global_skills_reliance",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".claude/agents/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

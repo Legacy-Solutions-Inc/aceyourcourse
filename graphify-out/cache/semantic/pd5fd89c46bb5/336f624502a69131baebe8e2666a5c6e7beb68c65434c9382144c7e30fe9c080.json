@@ -1,0 +1,81 @@
+{
+  "nodes": [
+    {
+      "id": "docs_adr_0012_vercel_and_supabase_singapore",
+      "label": "ADR 0012: Host on Vercel Pro and Supabase Pro in Singapore",
+      "file_type": "document",
+      "source_file": "docs/adr/0012-vercel-and-supabase-singapore.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Singapore is closest to the Philippines; managed hosting avoids running servers/TLS/scaling and keeps data cache revalidation and preview deploys; Docker build kept as exit path."
+    },
+    {
+      "id": "docs_adr_0012_vercel_and_supabase_singapore_singapore_hosting",
+      "label": "Vercel sin1 + Supabase ap-southeast-1 hosting",
+      "file_type": "concept",
+      "source_file": "docs/adr/0012-vercel-and-supabase-singapore.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_0012_vercel_and_supabase_singapore_background_functions",
+      "label": "Vercel background functions with job status in Postgres",
+      "file_type": "concept",
+      "source_file": "docs/adr/0012-vercel-and-supabase-singapore.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_adr_0012_vercel_and_supabase_singapore",
+      "target": "docs_adr_0012_vercel_and_supabase_singapore_singapore_hosting",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0012-vercel-and-supabase-singapore.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0012_vercel_and_supabase_singapore",
+      "target": "docs_adr_0012_vercel_and_supabase_singapore_background_functions",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0012-vercel-and-supabase-singapore.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0012_vercel_and_supabase_singapore_background_functions",
+      "target": "context_reviewer_pdf",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0012-vercel-and-supabase-singapore.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0012_vercel_and_supabase_singapore",
+      "target": "docker_compose",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/adr/0012-vercel-and-supabase-singapore.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

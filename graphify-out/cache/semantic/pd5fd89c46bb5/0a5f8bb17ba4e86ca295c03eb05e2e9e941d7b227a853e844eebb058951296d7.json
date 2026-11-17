@@ -1,0 +1,365 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "label": "Executer prompt 12: Admin-wide checks",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_12_admin_wide_checks",
+      "label": "Ticket 12-admin-wide-checks",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_12_admin_wide_checks_action_registry_permission_matrix",
+      "label": "Admin Server Action registry and permission matrix test",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_12_admin_wide_checks_staff_activity_coverage_test",
+      "label": "Staff Activity coverage test",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_12_admin_wide_checks_admin_axe_sweep",
+      "label": "Axe and sideways-scroll sweep at 1280 and 375 px",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_12_admin_wide_checks_production_closed_check",
+      "label": "Production build check: Admin and dev routes answer 404",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_12_admin_wide_checks_admin_journey_e2e",
+      "label": "Admin journey e2e",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_12_admin_wide_checks_admin_prototype_readme",
+      "label": "README Admin prototype section",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_issues_12_admin_wide_checks",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_prompts_03_staff_and_invites",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_prompts_04_products_list",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_prompts_05_product_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_prompts_06_product_photos_and_upload",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_prompts_07_reviews",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_prompts_08_faqs",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_prompts_11_overview",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_prompts_12_admin_wide_checks_action_registry_permission_matrix",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_prompts_12_admin_wide_checks_staff_activity_coverage_test",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_prompts_12_admin_wide_checks_admin_axe_sweep",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_prompts_12_admin_wide_checks_production_closed_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_prompts_12_admin_wide_checks_admin_journey_e2e",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_prompts_12_admin_wide_checks_admin_prototype_readme",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks_action_registry_permission_matrix",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_staff_guard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks_action_registry_permission_matrix",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_admin_closed_in_production",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks_staff_activity_coverage_test",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks_production_closed_check",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_admin_closed_in_production",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks_production_closed_check",
+      "target": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_dev_upload_route",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks_production_closed_check",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_sample_data_reset",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks_admin_prototype_readme",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_sign_in_as_panel",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks_admin_prototype_readme",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_sample_data_reset",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_12_admin_wide_checks_admin_journey_e2e",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_invite_activation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

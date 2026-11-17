@@ -1,0 +1,187 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_website_issues_01_branded_website_shell",
+      "label": "Ticket 01: Branded Website shell and Exams menu",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_01_branded_website_shell_catalogue_service_seam",
+      "label": "Catalogue Service Seam",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Every Website ticket reads Exams, Products, Reviews, FAQs and Website settings through one seam; Phase 1 is mock-first (typed seed), Phase 2 adds a database arm with no page changes."
+    },
+    {
+      "id": "_scratch_ayc_website_issues_01_branded_website_shell_member_app_switch",
+      "label": "Member App switch (off by default)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Hides every Member App CTA/copy until the app ships; flips via env (MEMBER_APP_LIVE) with no code change."
+    },
+    {
+      "id": "_scratch_ayc_website_issues_01_branded_website_shell_cookieless_analytics",
+      "label": "Cookieless anonymous PostHog analytics",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "ADR 0009 amends 0007: no consent banner or gating because nothing is stored on the device; events limited to pageviews and marketplace_click."
+    },
+    {
+      "id": "_scratch_ayc_website_issues_01_branded_website_shell_marketplace_click_event",
+      "label": "marketplace_click analytics event",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_01_branded_website_shell_middleware_session_scope",
+      "label": "Middleware calls Supabase only for signed-in/auth areas",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Public pages should not pay a Supabase round trip; prefix-boundary matching so /application is not /app; CSP with per-request nonce stays on every route."
+    },
+    {
+      "id": "_scratch_ayc_website_issues_01_branded_website_shell_ayc_brand_tokens",
+      "label": "AYC brand tokens (cream/navy/orange/blue, hard shadows, light only)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Light-only brand; orange used as a fill, never as body text on cream, so axe color-contrast passes."
+    },
+    {
+      "id": "_scratch_ayc_website_issues_01_branded_website_shell_announcement_bar",
+      "label": "Announcement bar (rotating, dismissible)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_website_issues_01_branded_website_shell",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell_catalogue_service_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_01_branded_website_shell",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell_member_app_switch",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_01_branded_website_shell",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell_cookieless_analytics",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_01_branded_website_shell",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell_marketplace_click_event",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_01_branded_website_shell",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell_middleware_session_scope",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_01_branded_website_shell",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell_ayc_brand_tokens",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_01_branded_website_shell",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell_announcement_bar",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "member_app_switch_gating",
+      "label": "Features gated by the Member App switch",
+      "nodes": [
+        "_scratch_ayc_website_issues_01_branded_website_shell_member_app_switch",
+        "_scratch_ayc_website_issues_03_products_page_help_me_choose_picker",
+        "_scratch_ayc_website_issues_08_faq_page_faq_seam",
+        "_scratch_ayc_website_issues_11_sitemap_and_site_checks_sitewide_checks",
+        "_scratch_ayc_website_issues_05_home_top_half",
+        "_scratch_ayc_website_issues_02_product_page"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/01-branded-website-shell.md"
+    }
+  ]
+}

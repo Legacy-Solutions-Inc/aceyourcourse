@@ -1,0 +1,111 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_08_faqs",
+      "label": "Ticket 08: FAQs",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/08-faqs.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_08_faqs_faq_editor",
+      "label": "FAQ editor (5 fixed groups, reorder, 400-char answers)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/08-faqs.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_08_faqs_supporting_review_quote",
+      "label": "Supporting Review quote with automatic credit line",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/08-faqs.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_08_faqs_faqpage_json_ld",
+      "label": "FAQPage structured data (JSON-LD)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/08-faqs.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_08_faqs",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_08_faqs",
+      "target": "_scratch_ayc_admin_issues_07_reviews",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_08_faqs",
+      "target": "_scratch_ayc_admin_issues_08_faqs_faq_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_08_faqs",
+      "target": "_scratch_ayc_admin_issues_08_faqs_supporting_review_quote",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_08_faqs",
+      "target": "_scratch_ayc_admin_issues_08_faqs_faqpage_json_ld",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_08_faqs_supporting_review_quote",
+      "target": "_scratch_ayc_admin_issues_07_reviews_faq_quote_integrity",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-admin/issues/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

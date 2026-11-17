@@ -1,0 +1,287 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "label": "Executer prompt 09: Exam pages",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_09_exam_pages",
+      "label": "Ticket 09-exam-pages",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_09_exam_pages_exam_page_record",
+      "label": "Exam page record (sections, bundleOffer, SEO overrides, shareImage, officialExamDate)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_09_exam_pages_get_exam_page",
+      "label": "getExamPage(code) Catalogue seam read tagged catalogue:exam-pages",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_09_exam_pages_seo_check",
+      "label": "seo-check helper (title <=60 with suffix, description 80-160)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_09_exam_pages_share_image",
+      "label": "Exam page 1200x630 share image via upload seam",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_09_exam_pages_official_exam_date",
+      "label": "Official Exam Date (used by Phase 3 countdown)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_09_exam_pages_exam_promos_move",
+      "label": "Move examPromos from src/content/exam-pages.ts into catalogue data",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Exam page promo banners move out of fixed code into the seed so they become editable while pages render unchanged."
+    },
+    {
+      "id": "src_app__website__exams__code__page",
+      "label": "src/app/(website)/exams/[code]/page.tsx",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "target": "_scratch_ayc_admin_issues_09_exam_pages",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "target": "docs_mockup_admin_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "target": "_scratch_ayc_admin_prompts_06_product_photos_and_upload",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "target": "_scratch_ayc_admin_prompts_09_exam_pages_exam_page_record",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "target": "_scratch_ayc_admin_prompts_09_exam_pages_get_exam_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "target": "_scratch_ayc_admin_prompts_09_exam_pages_seo_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "target": "_scratch_ayc_admin_prompts_09_exam_pages_share_image",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "target": "_scratch_ayc_admin_prompts_09_exam_pages_official_exam_date",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "target": "_scratch_ayc_admin_prompts_09_exam_pages_exam_promos_move",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages_get_exam_page",
+      "target": "_scratch_ayc_admin_prompts_09_exam_pages_exam_page_record",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages_get_exam_page",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_catalogue_cache_tags",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages_share_image",
+      "target": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_upload_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_app__website__exams__code__page",
+      "target": "_scratch_ayc_admin_prompts_09_exam_pages_get_exam_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages_exam_promos_move",
+      "target": "_scratch_ayc_admin_prompts_09_exam_pages_exam_page_record",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_09_exam_pages_exam_page_record",
+      "target": "src_services_catalogue_schema",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

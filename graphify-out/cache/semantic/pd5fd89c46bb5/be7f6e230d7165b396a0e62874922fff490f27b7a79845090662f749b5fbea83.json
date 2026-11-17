@@ -1,0 +1,160 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_12_admin_wide_checks",
+      "label": "Ticket 12: Admin-wide checks on the prototype",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/12-admin-wide-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_12_admin_wide_checks_permission_matrix_test",
+      "label": "Permission-matrix test over every Admin Server Action",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/issues/12-admin-wide-checks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "A new action missing from the matrix fails the test, so permissions stay enforced on the server."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_issues_03_staff_and_invites",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_issues_04_products_list",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_issues_05_product_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_issues_06_product_photos_and_upload",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_issues_07_reviews",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_issues_08_faqs",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_issues_09_exam_pages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_issues_10_promo_banner_and_announcement",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_issues_11_overview",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_issues_12_admin_wide_checks_permission_matrix_test",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_12_admin_wide_checks_permission_matrix_test",
+      "target": "_scratch_ayc_admin_conventions_adminaction",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_12_admin_wide_checks",
+      "target": "_scratch_ayc_admin_conventions_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/12-admin-wide-checks.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

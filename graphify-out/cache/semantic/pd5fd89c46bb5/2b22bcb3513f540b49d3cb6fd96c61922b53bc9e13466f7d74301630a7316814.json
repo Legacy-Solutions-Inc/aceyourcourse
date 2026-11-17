@@ -1,0 +1,202 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_11_overview",
+      "label": "Executer prompt 11: Overview",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_11_overview",
+      "label": "Ticket 11-overview",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_11_overview_needs_attention",
+      "label": "needsAttention pure function (src/lib/admin/needs-attention.ts)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Reuse existing helpers (seo-check, link status, isPromoActive); never rewrite their rules."
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_11_overview_quick_actions",
+      "label": "Overview quick actions (+ Add product, + Add Review, + Add FAQ)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_11_overview",
+      "target": "_scratch_ayc_admin_issues_11_overview",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_11_overview",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_11_overview",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_11_overview",
+      "target": "docs_mockup_admin_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_11_overview",
+      "target": "_scratch_ayc_admin_prompts_05_product_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_11_overview",
+      "target": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_11_overview",
+      "target": "_scratch_ayc_admin_prompts_11_overview_needs_attention",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_11_overview",
+      "target": "_scratch_ayc_admin_prompts_11_overview_quick_actions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_11_overview_needs_attention",
+      "target": "_scratch_ayc_admin_prompts_09_exam_pages_seo_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_11_overview_needs_attention",
+      "target": "_scratch_ayc_admin_prompts_04_products_list_missing_product_links",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_11_overview_needs_attention",
+      "target": "src_lib_catalogue_promo",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_11_overview_needs_attention",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_manila_greeting",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_11_overview_quick_actions",
+      "target": "_scratch_ayc_admin_prompts_05_product_editor_product_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_11_overview_quick_actions",
+      "target": "_scratch_ayc_admin_prompts_07_reviews_reviews_area",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_11_overview_quick_actions",
+      "target": "_scratch_ayc_admin_prompts_08_faqs_faqs_area",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/11-overview.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

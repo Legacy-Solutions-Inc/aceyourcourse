@@ -1,0 +1,29 @@
+{
+  "nodes": [
+    {
+      "id": "docs_adr_0002_supabase_only_auth",
+      "label": "ADR 0002: Supabase as the sole auth strategy",
+      "file_type": "document",
+      "source_file": "docs/adr/0002-supabase-only-auth.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Five auth strategies bloated deps and flows though real projects use one; Supabase only, keeping the AuthStrategy enum so another provider can be added later."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_adr_0002_supabase_only_auth",
+      "target": "context_auth_strategy",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0002-supabase-only-auth.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

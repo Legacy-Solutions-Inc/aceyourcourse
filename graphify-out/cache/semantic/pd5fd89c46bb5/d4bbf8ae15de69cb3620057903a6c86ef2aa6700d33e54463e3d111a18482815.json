@@ -1,0 +1,81 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_10_promo_banner_and_announcement",
+      "label": "Ticket 10: Home promo banner and announcement bar",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_10_promo_banner_and_announcement_home_promo_banner",
+      "label": "Home promo banner (dates, status line in Manila time, Turn off now)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_10_promo_banner_and_announcement_announcement_bar",
+      "label": "Announcement bar (1-3 messages, new id re-shows dismissed bar)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/issues/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Changed messages get a new id so Visitors who dismissed the bar see it again; unchanged saves keep the id."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_10_promo_banner_and_announcement",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_10_promo_banner_and_announcement",
+      "target": "_scratch_ayc_admin_issues_09_exam_pages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_10_promo_banner_and_announcement",
+      "target": "_scratch_ayc_admin_issues_10_promo_banner_and_announcement_home_promo_banner",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_10_promo_banner_and_announcement",
+      "target": "_scratch_ayc_admin_issues_10_promo_banner_and_announcement_announcement_bar",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

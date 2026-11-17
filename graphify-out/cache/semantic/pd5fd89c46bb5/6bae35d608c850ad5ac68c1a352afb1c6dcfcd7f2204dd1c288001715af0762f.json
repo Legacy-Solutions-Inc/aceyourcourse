@@ -1,0 +1,112 @@
+{
+  "nodes": [
+    {
+      "id": "_claude_skills_anime_js_skill_anime_js_skill",
+      "label": "anime-js Skill (v4, install-on-demand)",
+      "file_type": "document",
+      "source_file": ".claude/skills/anime-js/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_anime_js_skill_install_on_demand",
+      "label": "anime.js Install-on-Demand Policy",
+      "file_type": "rationale",
+      "source_file": ".claude/skills/anime-js/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "CSS/tw-animate-css is cheaper and SSR-friendly; add animejs only when timelines/SVG/scroll choreography genuinely require it."
+    },
+    {
+      "id": "_claude_skills_anime_js_skill_createscope_cleanup",
+      "label": "createScope().revert() Cleanup on Unmount",
+      "file_type": "concept",
+      "source_file": ".claude/skills/anime-js/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_anime_js_skill_prefers_reduced_motion",
+      "label": "prefers-reduced-motion Guard",
+      "file_type": "concept",
+      "source_file": ".claude/skills/anime-js/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_claude_skills_anime_js_skill_install_on_demand",
+      "target": "_claude_skills_anime_js_skill_anime_js_skill",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/anime-js/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_anime_js_skill_anime_js_skill",
+      "target": "_claude_skills_anime_js_skill_createscope_cleanup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/anime-js/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_anime_js_skill_anime_js_skill",
+      "target": "_claude_skills_anime_js_skill_prefers_reduced_motion",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/anime-js/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_anime_js_skill_anime_js_skill",
+      "target": "_claude_skills_tailwind_v4_skill_tw_animate_css",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/anime-js/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_anime_js_skill_anime_js_skill",
+      "target": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/anime-js/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_anime_js_skill_anime_js_skill",
+      "target": "_claude_skills_coding_standards_skill_strict_nonce_csp",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/anime-js/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

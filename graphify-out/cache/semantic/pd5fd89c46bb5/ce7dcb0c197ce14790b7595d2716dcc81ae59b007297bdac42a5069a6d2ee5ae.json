@@ -1,0 +1,111 @@
+{
+  "nodes": [
+    {
+      "id": "docs_adr_0008_single_brand_members_and_staff",
+      "label": "ADR 0008: Single-brand app, three Surfaces, Members and Staff, no tenancy",
+      "file_type": "document",
+      "source_file": "docs/adr/0008-single-brand-members-and-staff.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "AYC sells directly to individuals so tenancy adds unused complexity; staff list is a table keyed by email because staff are invited before their account exists."
+    },
+    {
+      "id": "docs_adr_0008_single_brand_members_and_staff_staff_list",
+      "label": "Staff list table keyed by email",
+      "file_type": "concept",
+      "source_file": "docs/adr/0008-single-brand-members-and-staff.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Not auth app_metadata, because staff are invited before their account exists."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_adr_0008_single_brand_members_and_staff",
+      "target": "docs_adr_0005_multi_tenancy",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0008-single-brand-members-and-staff.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0008_single_brand_members_and_staff",
+      "target": "docs_adr_0008_single_brand_members_and_staff_staff_list",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0008-single-brand-members-and-staff.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0008_single_brand_members_and_staff",
+      "target": "context_surface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0008-single-brand-members-and-staff.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0008_single_brand_members_and_staff",
+      "target": "context_member",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0008-single-brand-members-and-staff.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0008_single_brand_members_and_staff",
+      "target": "context_staff",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0008-single-brand-members-and-staff.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0008_single_brand_members_and_staff",
+      "target": "context_staff_role",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0008-single-brand-members-and-staff.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0008_single_brand_members_and_staff_staff_list",
+      "target": "context_staff",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/adr/0008-single-brand-members-and-staff.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0005_multi_tenancy_tenancy_model",
+      "target": "docs_adr_0008_single_brand_members_and_staff_staff_list",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "docs/adr/0008-single-brand-members-and-staff.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,39 @@
+{
+  "nodes": [
+    {
+      "id": "docs_adr_0003_mock_first_service_seam",
+      "label": "ADR 0003: Mock-first typed Service Seam",
+      "file_type": "document",
+      "source_file": "docs/adr/0003-mock-first-service-seam.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "App must run with zero backend yet make going real a one-file change per service; screens never read mock data directly."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_adr_0003_mock_first_service_seam",
+      "target": "context_service_seam",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0003-mock-first-service-seam.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0003_mock_first_service_seam",
+      "target": "docs_adr_0002_supabase_only_auth",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0003-mock-first-service-seam.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,79 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_website_prompts_12_catalogue_spreadsheet",
+      "label": "Executer prompt: Ticket 12: Catalogue spreadsheet template and seed converter",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-website/prompts/12-catalogue-spreadsheet.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_prompts_12_catalogue_spreadsheet_catalogue_import_script",
+      "label": "scripts/catalogue-import.ts",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-website/prompts/12-catalogue-spreadsheet.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_website_prompts_12_catalogue_spreadsheet",
+      "target": "_scratch_ayc_website_issues_12_catalogue_spreadsheet",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/prompts/12-catalogue-spreadsheet.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_prompts_12_catalogue_spreadsheet",
+      "target": "_scratch_ayc_website_readme_risen_prompt_structure",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-website/prompts/12-catalogue-spreadsheet.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_prompts_12_catalogue_spreadsheet",
+      "target": "_scratch_ayc_website_prompts_12_catalogue_spreadsheet_catalogue_import_script",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/prompts/12-catalogue-spreadsheet.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_prompts_12_catalogue_spreadsheet_catalogue_import_script",
+      "target": "_scratch_ayc_website_issues_12_catalogue_spreadsheet_catalogue_import_converter",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-website/prompts/12-catalogue-spreadsheet.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_prompts_12_catalogue_spreadsheet_catalogue_import_script",
+      "target": "_scratch_ayc_website_prompts_01_branded_website_shell_validatecatalogueseed",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-website/prompts/12-catalogue-spreadsheet.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

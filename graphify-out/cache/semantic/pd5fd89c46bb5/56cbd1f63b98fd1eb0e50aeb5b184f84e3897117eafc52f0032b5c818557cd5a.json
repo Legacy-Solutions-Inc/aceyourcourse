@@ -1,0 +1,251 @@
+{
+  "nodes": [
+    {
+      "id": "docs_superpowers_handoffs_2026_07_31_posthog_analytics",
+      "label": "Handoff: PostHog analytics",
+      "file_type": "document",
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_opt_in_inert",
+      "label": "Opt-in / inert by default (isAnalyticsConfigured)",
+      "file_type": "rationale",
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": "L11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Mirrors isSupabaseConfigured; no init and no network unless NEXT_PUBLIC_POSTHOG_KEY is set."
+    },
+    {
+      "id": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_relay_reverse_proxy",
+      "label": "/relay same-origin reverse proxy (next.config rewrites)",
+      "file_type": "rationale",
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": "L16",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Keeps the strict CSP unchanged (connect-src 'self') and dodges ad-blockers."
+    },
+    {
+      "id": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_middleware_matcher_exclusion",
+      "label": "Exclude /relay from middleware matcher",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": "L72",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_instrumentation_client",
+      "label": "instrumentation-client.ts PostHog init",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": "L79",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_privacy_first_consent",
+      "label": "Privacy-first: identified_only, respect_dnt, consent-gated capture",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": "L18",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_csp_worker_src_replay",
+      "label": "CSP worker-src 'self' blob: only when session replay on",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": "L147",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_server_evaluate_flags",
+      "label": "Server helper captureServer + evaluateFlags (posthog-node)",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": "L127",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_posthog_analytics",
+      "target": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_opt_in_inert",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_posthog_analytics",
+      "target": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_relay_reverse_proxy",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_posthog_analytics",
+      "target": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_middleware_matcher_exclusion",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_posthog_analytics",
+      "target": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_instrumentation_client",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_posthog_analytics",
+      "target": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_privacy_first_consent",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_posthog_analytics",
+      "target": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_csp_worker_src_replay",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_posthog_analytics",
+      "target": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_server_evaluate_flags",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_instrumentation_client",
+      "target": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_relay_reverse_proxy",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_middleware_matcher_exclusion",
+      "target": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_relay_reverse_proxy",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_instrumentation_client",
+      "target": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_privacy_first_consent",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_csp_worker_src_replay",
+      "target": "docs_superpowers_specs_2026_07_31_coding_standards_strict_nonce_csp",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_posthog_analytics",
+      "target": "docs_adr_0007_analytics_posthog",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": "L160",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_posthog_analytics",
+      "target": "agents",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_posthog_analytics_opt_in_inert",
+      "target": "docs_adr_0009_cookieless_website_analytics",
+      "relation": "conceptually_related_to",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.3,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "posthog_relay_path_sync",
+      "label": "/relay path kept in sync across rewrites, client api_host and middleware matcher",
+      "nodes": [
+        "docs_superpowers_handoffs_2026_07_31_posthog_analytics_relay_reverse_proxy",
+        "docs_superpowers_handoffs_2026_07_31_posthog_analytics_instrumentation_client",
+        "docs_superpowers_handoffs_2026_07_31_posthog_analytics_middleware_matcher_exclusion"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-posthog-analytics.md"
+    }
+  ]
+}

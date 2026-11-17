@@ -1,0 +1,164 @@
+{
+  "nodes": [
+    {
+      "id": "docs_mockup_readme",
+      "label": "Ace Your Course mockup README",
+      "file_type": "document",
+      "source_file": "docs/mockup/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_mockup_readme_reference_not_spec",
+      "label": "Mockup is reference, not spec",
+      "file_type": "rationale",
+      "source_file": "docs/mockup/README.md",
+      "source_location": "L6",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Mockup contains placeholder data, hardcoded values and bugs; docs/specs, docs/adr and CONTEXT.md win where they disagree (e.g. \u20b10 Coming Soon price, Gmail vs support@, per-type Plan unlocks)."
+    },
+    {
+      "id": "docs_mockup_readme_dc_html_component",
+      "label": "DCLogic .dc.html prototype component",
+      "file_type": "concept",
+      "source_file": "docs/mockup/README.md",
+      "source_location": "L28",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Markup first, DCLogic class with liveVals()/renderVals(); read for layout, copy and behaviour, not code to port."
+    },
+    {
+      "id": "docs_mockup_readme_aycdata_js",
+      "label": "aycData.js shared mock data",
+      "file_type": "concept",
+      "source_file": "docs/mockup/README.md",
+      "source_location": "L21",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_mockup_readme_prototype_template",
+      "label": "_template.html prototype shell (hash routing, 760px breakpoint)",
+      "file_type": "concept",
+      "source_file": "docs/mockup/README.md",
+      "source_location": "L20",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_mockup_readme",
+      "target": "docs_mockup_readme_reference_not_spec",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_readme",
+      "target": "docs_mockup_readme_dc_html_component",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_readme",
+      "target": "docs_mockup_readme_aycdata_js",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_readme",
+      "target": "docs_mockup_readme_prototype_template",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_readme",
+      "target": "docs_mockup_admin_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/README.md",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_readme",
+      "target": "docs_mockup_member_app_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/README.md",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_readme",
+      "target": "docs_mockup_website_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/README.md",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_readme_reference_not_spec",
+      "target": "docs_adr_0010_access_follows_the_exam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/README.md",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_readme_reference_not_spec",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/README.md",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_readme_aycdata_js",
+      "target": "docs_specs_2026_10_29_ayc_v1_catalogue_seam",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/mockup/README.md",
+      "source_location": "L21",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

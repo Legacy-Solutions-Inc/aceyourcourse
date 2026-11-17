@@ -1,0 +1,214 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_06_product_photos_and_upload",
+      "label": "Executer prompt 06: Product photos and upload seam",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_06_product_photos_and_upload",
+      "label": "Ticket 06-product-photos-and-upload",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_upload_seam",
+      "label": "Upload seam (createUpload -> uploadUrl, path, publicUrl)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_dev_upload_route",
+      "label": "Dev-only upload route /api/dev/uploads/[id] with one-time token and magic-byte check",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Sample arm held in memory; ticket 17 swaps in Supabase Storage behind the same seam; CSP not widened."
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_photo_strip",
+      "label": "Photo strip: cover first, native drag and Move left/right",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_generated_alt_text",
+      "label": "Generated alt text '{full name}, photo N of M'",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_06_product_photos_and_upload",
+      "target": "_scratch_ayc_admin_issues_06_product_photos_and_upload",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_06_product_photos_and_upload",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_06_product_photos_and_upload",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_06_product_photos_and_upload",
+      "target": "docs_mockup_admin_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_06_product_photos_and_upload",
+      "target": "_scratch_ayc_admin_prompts_05_product_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_06_product_photos_and_upload",
+      "target": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_upload_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_06_product_photos_and_upload",
+      "target": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_dev_upload_route",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_06_product_photos_and_upload",
+      "target": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_photo_strip",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_06_product_photos_and_upload",
+      "target": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_generated_alt_text",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_dev_upload_route",
+      "target": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_upload_seam",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_dev_upload_route",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_admin_closed_in_production",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_photo_strip",
+      "target": "_scratch_ayc_admin_prompts_05_product_editor_product_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_photo_strip",
+      "target": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_upload_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_06_product_photos_and_upload_upload_seam",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_sample_store",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

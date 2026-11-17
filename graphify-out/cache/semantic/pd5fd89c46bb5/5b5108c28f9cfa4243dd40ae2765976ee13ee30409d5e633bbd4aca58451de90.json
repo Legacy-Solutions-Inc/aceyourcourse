@@ -1,0 +1,194 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_07_reviews",
+      "label": "Executer prompt 07: Reviews",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_07_reviews",
+      "label": "Ticket 07-reviews",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_07_reviews_reviews_area",
+      "label": "Reviews area (listReviewsForAdmin, createReview, updateReview, deleteReview)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_07_reviews_home_pin_order",
+      "label": "Home pin order (setReviewPinned, moveReviewPin, first 9 on Home)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_07_reviews_faq_quote_guard",
+      "label": "FAQ quote guard: edits removing quoted words are refused",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Never silently drop a quote on edit; only delete removes quotes."
+    },
+    {
+      "id": "src_components_website_review_card",
+      "label": "src/components/website/review-card.tsx",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_07_reviews",
+      "target": "_scratch_ayc_admin_issues_07_reviews",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_07_reviews",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_07_reviews",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_07_reviews",
+      "target": "docs_mockup_admin_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_07_reviews",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_07_reviews",
+      "target": "_scratch_ayc_admin_prompts_07_reviews_reviews_area",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_07_reviews",
+      "target": "_scratch_ayc_admin_prompts_07_reviews_home_pin_order",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_07_reviews",
+      "target": "_scratch_ayc_admin_prompts_07_reviews_faq_quote_guard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_07_reviews_reviews_area",
+      "target": "src_components_website_review_card",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_07_reviews_faq_quote_guard",
+      "target": "src_services_catalogue_schema",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_07_reviews_reviews_area",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_conflict_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_07_reviews_faq_quote_guard",
+      "target": "_scratch_ayc_admin_prompts_05_product_editor_product_delete_cascade",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-admin/prompts/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

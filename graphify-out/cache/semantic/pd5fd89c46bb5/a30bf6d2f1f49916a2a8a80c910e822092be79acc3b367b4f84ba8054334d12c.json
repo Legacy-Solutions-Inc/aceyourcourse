@@ -1,0 +1,100 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_03_staff_and_invites",
+      "label": "Ticket 03: Staff and Invites",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/03-staff-and-invites.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_03_staff_and_invites_invites_management",
+      "label": "Invites: Authorise an account, Copy invite message, Renew (7 days), Cancel",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/03-staff-and-invites.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_03_staff_and_invites_last_owner_rule",
+      "label": "Last Owner can't be removed or demoted; nobody removes/demotes themselves",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/03-staff-and-invites.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_03_staff_and_invites",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_03_staff_and_invites",
+      "target": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_03_staff_and_invites",
+      "target": "_scratch_ayc_admin_issues_03_staff_and_invites_invites_management",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_03_staff_and_invites",
+      "target": "_scratch_ayc_admin_issues_03_staff_and_invites_last_owner_rule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_03_staff_and_invites_invites_management",
+      "target": "_scratch_ayc_admin_conventions_copy_overrides",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_03_staff_and_invites_invites_management",
+      "target": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in_invite_activation",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/issues/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

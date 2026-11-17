@@ -1,0 +1,162 @@
+{
+  "nodes": [
+    {
+      "id": "docs_superpowers_handoffs_2026_07_31_template_hardening",
+      "label": "Handoff: template hardening quick wins",
+      "file_type": "document",
+      "source_file": "docs/superpowers/handoffs/2026-07-31-template-hardening.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_handoffs_2026_07_31_template_hardening_s1_getall_setall",
+      "label": "S1: Supabase cookie adapter get/set/remove -> getAll/setAll",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/handoffs/2026-07-31-template-hardening.md",
+      "source_location": "L26",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_handoffs_2026_07_31_template_hardening_s4_csp_tightening",
+      "label": "S4: CSP base-uri 'none' + upgrade-insecure-requests",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/handoffs/2026-07-31-template-hardening.md",
+      "source_location": "L37",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_handoffs_2026_07_31_template_hardening_s5_security_headers",
+      "label": "S5: poweredByHeader false, COOP, CORP, wider Permissions-Policy",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/handoffs/2026-07-31-template-hardening.md",
+      "source_location": "L46",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_handoffs_2026_07_31_template_hardening_t1_no_unused_vars",
+      "label": "T1: ESLint no-unused-vars back on (^_ ignore)",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/handoffs/2026-07-31-template-hardening.md",
+      "source_location": "L58",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_template_hardening",
+      "target": "docs_superpowers_handoffs_2026_07_31_template_hardening_s1_getall_setall",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-template-hardening.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_template_hardening_s1_getall_setall",
+      "target": "docs_superpowers_specs_2026_07_31_coding_standards_remediation_backlog",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-template-hardening.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_template_hardening",
+      "target": "docs_superpowers_handoffs_2026_07_31_template_hardening_s4_csp_tightening",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-template-hardening.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_template_hardening_s4_csp_tightening",
+      "target": "docs_superpowers_specs_2026_07_31_coding_standards_remediation_backlog",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-template-hardening.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_template_hardening",
+      "target": "docs_superpowers_handoffs_2026_07_31_template_hardening_s5_security_headers",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-template-hardening.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_template_hardening_s5_security_headers",
+      "target": "docs_superpowers_specs_2026_07_31_coding_standards_remediation_backlog",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-template-hardening.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_template_hardening",
+      "target": "docs_superpowers_handoffs_2026_07_31_template_hardening_t1_no_unused_vars",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-template-hardening.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_template_hardening_t1_no_unused_vars",
+      "target": "docs_superpowers_specs_2026_07_31_coding_standards_remediation_backlog",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-template-hardening.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_template_hardening_s4_csp_tightening",
+      "target": "docs_superpowers_specs_2026_07_31_coding_standards_strict_nonce_csp",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-template-hardening.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_template_hardening",
+      "target": "agents",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-template-hardening.md",
+      "source_location": "L5",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

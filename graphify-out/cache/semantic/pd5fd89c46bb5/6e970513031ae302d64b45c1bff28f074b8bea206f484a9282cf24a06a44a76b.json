@@ -1,0 +1,131 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_website_issues_04_exam_pages",
+      "label": "Ticket 04: Exam pages",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-website/issues/04-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_04_exam_pages_exam_stats",
+      "label": "Computed Exam stats (Live Products only)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/04-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_04_exam_pages_ce_bundle_banner",
+      "label": "CE bundle banner",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/04-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_04_exam_pages_exam_review_selection",
+      "label": "Exam Review selection and display mode (marquee/grid/empty)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/04-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_website_issues_04_exam_pages",
+      "target": "_scratch_ayc_website_issues_02_product_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/04-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_04_exam_pages",
+      "target": "_scratch_ayc_website_issues_04_exam_pages_exam_stats",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/04-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_04_exam_pages",
+      "target": "_scratch_ayc_website_issues_04_exam_pages_ce_bundle_banner",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/04-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_04_exam_pages",
+      "target": "_scratch_ayc_website_issues_04_exam_pages_exam_review_selection",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/04-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_04_exam_pages_exam_review_selection",
+      "target": "_scratch_ayc_website_issues_02_product_page_shared_website_components",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-website/issues/04-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_04_exam_pages_exam_stats",
+      "target": "_scratch_ayc_website_issues_02_product_page_coming_soon_rules",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-website/issues/04-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_04_exam_pages",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell_marketplace_click_event",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/04-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_04_exam_pages_exam_stats",
+      "target": "_scratch_ayc_website_issues_09_about_page_about_stats",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-website/issues/04-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

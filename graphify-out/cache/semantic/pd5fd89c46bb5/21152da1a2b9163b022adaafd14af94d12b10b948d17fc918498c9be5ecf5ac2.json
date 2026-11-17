@@ -1,0 +1,151 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_18_production_go_live",
+      "label": "Ticket 18: Production go-live",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/18-production-go-live.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_18_production_go_live_production_runbook",
+      "label": "Production runbook (docs/runbooks/production.md)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/18-production-go-live.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_18_production_go_live_db_check",
+      "label": "pnpm db:check read-only check (migrations, deny-all, bucket, counts)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/18-production-go-live.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_18_production_go_live_smoke_checklist",
+      "label": "Production smoke checklist",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/18-production-go-live.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_18_production_go_live",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_18_production_go_live",
+      "target": "_scratch_ayc_admin_issues_16_real_staff_sign_in",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_18_production_go_live",
+      "target": "_scratch_ayc_admin_issues_17_photo_storage",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_18_production_go_live",
+      "target": "_scratch_ayc_admin_issues_18_production_go_live_production_runbook",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_18_production_go_live",
+      "target": "_scratch_ayc_admin_issues_18_production_go_live_db_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_18_production_go_live",
+      "target": "_scratch_ayc_admin_issues_18_production_go_live_smoke_checklist",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_18_production_go_live_db_check",
+      "target": "_scratch_ayc_admin_issues_13_local_supabase_foundation_deny_all_test",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_18_production_go_live_db_check",
+      "target": "_scratch_ayc_admin_issues_17_photo_storage_catalogue_storage_bucket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_18_production_go_live_production_runbook",
+      "target": "_scratch_ayc_admin_issues_14_catalogue_on_the_database_catalogue_seed",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_18_production_go_live_production_runbook",
+      "target": "_scratch_ayc_admin_issues_16_real_staff_sign_in_staff_add_owner",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

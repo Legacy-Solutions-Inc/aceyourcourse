@@ -1,0 +1,131 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_17_photo_storage",
+      "label": "Ticket 17: Photo storage",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/17-photo-storage.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_17_photo_storage_catalogue_storage_bucket",
+      "label": "catalogue Storage bucket (public read, 10 MB, image MIME types)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/17-photo-storage.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_17_photo_storage_storage_upload_arm",
+      "label": "Upload seam Storage arm (signed URL, src/lib/supabase/admin.ts server-only)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/17-photo-storage.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_17_photo_storage_storage_cleanup",
+      "label": "Storage clean-up after save commits (failures logged, never fail the save)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/17-photo-storage.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_17_photo_storage",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_17_photo_storage",
+      "target": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_17_photo_storage",
+      "target": "_scratch_ayc_admin_issues_17_photo_storage_catalogue_storage_bucket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_17_photo_storage",
+      "target": "_scratch_ayc_admin_issues_17_photo_storage_storage_upload_arm",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_17_photo_storage",
+      "target": "_scratch_ayc_admin_issues_17_photo_storage_storage_cleanup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_17_photo_storage_storage_upload_arm",
+      "target": "_scratch_ayc_admin_conventions_upload_seam",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_17_photo_storage_storage_upload_arm",
+      "target": "_scratch_ayc_admin_issues_13_local_supabase_foundation_publishable_key_rename",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_17_photo_storage",
+      "target": "_scratch_ayc_admin_issues_14_catalogue_on_the_database_catalogue_seed",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

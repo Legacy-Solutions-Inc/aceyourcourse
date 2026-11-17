@@ -1,0 +1,706 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_conventions",
+      "label": "Phase 2 (Admin) shared conventions",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Single source of decided names, modules, routes and rules so executers don't invent parallel ones; the spec wins on disagreement."
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_stage_a",
+      "label": "Stage A: Admin on sample data (tickets 01-12)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Every Admin screen and rule is proven against an editable in-memory seed copy before database work."
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_stage_b",
+      "label": "Stage B: the database (tickets 13-18)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Each seam gets a database arm behind the same contract, so no screens change."
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_computeadminmode",
+      "label": "computeAdminMode / adminMode (sample | live | closed)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Closed mode makes every /admin route 404 so production keeps the Admin shut until live; sample mode makes no Supabase round trip."
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_paths_admin",
+      "label": "paths.admin route table (src/paths.ts)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_sample_store",
+      "label": "Sample store (getSampleStore / resetSampleStore on globalThis)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Lives on globalThis so every route module and HMR reload share one copy; generation id changes on boot/reset so caches never serve pre-restart data."
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_catalogue_seam",
+      "label": "Catalogue seam (mock arm reads sample store)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Mock arm reads the sample store, never the static seed, so an Admin save shows on the Website."
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_cache_tags",
+      "label": "Catalogue cache tags (catalogue, catalogue:* ) with unstable_cache",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "unstable_cache chosen over experimental 'use cache' in Next 15; per-area tags let saves clear only what changed."
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_admin_seam",
+      "label": "Admin seam (src/services/admin.ts) write contract",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_adminresult",
+      "label": "AdminResult / AdminError / StaffActor types",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_admin_write_pipeline",
+      "label": "Admin write pipeline (role check, zod, conflict check, apply, Staff Activity, stamp, tags)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "The seam re-checks the Staff Role itself, not only the action; sample arm validates the whole catalogue on a draft so the Website can never break."
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_conflict_check",
+      "label": "Conflict check against expected savedAt stamp",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Optimistic concurrency: stale saves fail with who saved and when; single toggles skip it and always save."
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_staff_activity",
+      "label": "Staff Activity record (before/after per entity changed)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_staff_guard",
+      "label": "Staff Guard (getStaff / requireStaff / requireOwner)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_identity_amr_rule",
+      "label": "Identity and sign-in method rule (amr: oauth always, password only in dev)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Reading the verified amr claim keeps production Google-only whatever Supabase's Email setting says; Phase 3 Member sign-in keeps the same rule."
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_adminaction",
+      "label": "adminAction helper (Guard, zod, seam, revalidateTag)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_upload_seam",
+      "label": "Upload seam (createUpload: JPEG/PNG/WebP up to 10 MB, signed PUT URL)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_admin_mockup_look",
+      "label": "Admin mockup look (AdminDashboard_v2, Website tokens, light-only)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_copy_overrides",
+      "label": "Copy overrides over the mockup (Copy invite message, Renew, no Paid today)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Invites are shared by hand, no email sending; Phase 4 sales content excluded."
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_sample_users",
+      "label": "Sample Users for Stage A Sign in as (Angel, Content Team, Kim, Expired Invite, Juan)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Only mockup sample addresses go in the repo; the first real Owner is added at deployment with staff:add-owner."
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_admin_arms_test_pattern",
+      "label": "describe.each(ADMIN_ARMS) behaviour suites",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Writing suites over a list of arms means Stage B only adds the database arm, asserting the same behaviour."
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_playwright_admin_project",
+      "label": "Playwright admin project (e2e/admin, workers 1, resetSampleData, signInAs)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions_no_commit_workflow",
+      "label": "Workflow: shared branch docs/ayc-v1-planning, executer never commits",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "User reviews and commits each ticket; overrides commit rules in CLAUDE.md/AGENTS.md."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_stage_a",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_stage_b",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_computeadminmode",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_paths_admin",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_sample_store",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_catalogue_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_cache_tags",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_admin_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_adminresult",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_admin_write_pipeline",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_conflict_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_staff_guard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_identity_amr_rule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_adminaction",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_upload_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_admin_mockup_look",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_copy_overrides",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_sample_users",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_admin_arms_test_pattern",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_playwright_admin_project",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions",
+      "target": "_scratch_ayc_admin_conventions_no_commit_workflow",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_catalogue_seam",
+      "target": "_scratch_ayc_admin_conventions_sample_store",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_catalogue_seam",
+      "target": "_scratch_ayc_admin_conventions_cache_tags",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_admin_seam",
+      "target": "_scratch_ayc_admin_conventions_adminresult",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_admin_seam",
+      "target": "_scratch_ayc_admin_conventions_admin_write_pipeline",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_admin_write_pipeline",
+      "target": "_scratch_ayc_admin_conventions_conflict_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_admin_write_pipeline",
+      "target": "_scratch_ayc_admin_conventions_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_admin_write_pipeline",
+      "target": "_scratch_ayc_admin_conventions_cache_tags",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_adminaction",
+      "target": "_scratch_ayc_admin_conventions_staff_guard",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_adminaction",
+      "target": "_scratch_ayc_admin_conventions_admin_seam",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_adminaction",
+      "target": "_scratch_ayc_admin_conventions_cache_tags",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_staff_guard",
+      "target": "_scratch_ayc_admin_conventions_identity_amr_rule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_staff_guard",
+      "target": "_scratch_ayc_admin_conventions_computeadminmode",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_sample_store",
+      "target": "_scratch_ayc_admin_conventions_sample_users",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_stage_a",
+      "target": "_scratch_ayc_admin_conventions_sample_store",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_stage_a",
+      "target": "_scratch_ayc_admin_conventions_sample_users",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_stage_b",
+      "target": "_scratch_ayc_admin_conventions_upload_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_admin_arms_test_pattern",
+      "target": "_scratch_ayc_admin_conventions_admin_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_admin_arms_test_pattern",
+      "target": "_scratch_ayc_admin_conventions_sample_store",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "admin_write_flow",
+      "label": "Admin write flow: action -> Guard -> seam -> conflict -> Staff Activity -> cache tags",
+      "nodes": [
+        "_scratch_ayc_admin_conventions_adminaction",
+        "_scratch_ayc_admin_conventions_staff_guard",
+        "_scratch_ayc_admin_conventions_admin_seam",
+        "_scratch_ayc_admin_conventions_conflict_check",
+        "_scratch_ayc_admin_conventions_staff_activity",
+        "_scratch_ayc_admin_conventions_cache_tags"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md"
+    },
+    {
+      "id": "staff_sign_in_method_evolution",
+      "label": "Staff sign-in method evolution (sample list, Google OAuth, dev password, temporary prod password)",
+      "nodes": [
+        "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in",
+        "_scratch_ayc_admin_issues_16_real_staff_sign_in_live_mode_google_oauth",
+        "_scratch_ayc_admin_issues_19_development_password_sign_in_dev_password_box",
+        "_scratch_ayc_admin_issues_24_password_sign_in_in_production_admin_password_sign_in_switch",
+        "_scratch_ayc_admin_conventions_identity_amr_rule"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/CONVENTIONS.md"
+    }
+  ]
+}

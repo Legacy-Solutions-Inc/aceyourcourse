@@ -1,0 +1,49 @@
+{
+  "nodes": [
+    {
+      "id": "docs_adr_0011_one_active_device_member_app_only",
+      "label": "ADR 0011: One Active Device per Member, Member App only",
+      "file_type": "document",
+      "source_file": "docs/adr/0011-one-active-device-member-app-only.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Supabase single-session-per-user is account-wide and would sign out Staff using Admin and Member App together, and keeps no switch history."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_adr_0011_one_active_device_member_app_only",
+      "target": "context_active_device",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0011-one-active-device-member-app-only.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0011_one_active_device_member_app_only",
+      "target": "context_member_app",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0011-one-active-device-member-app-only.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0011_one_active_device_member_app_only",
+      "target": "context_staff",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0011-one-active-device-member-app-only.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

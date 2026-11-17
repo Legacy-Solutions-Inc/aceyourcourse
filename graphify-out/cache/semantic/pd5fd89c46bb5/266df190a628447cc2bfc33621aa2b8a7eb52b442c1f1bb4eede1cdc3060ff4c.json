@@ -1,0 +1,194 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement",
+      "label": "Executer prompt 10: Home promo banner and announcement bar",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_10_promo_banner_and_announcement",
+      "label": "Ticket 10-promo-banner-and-announcement",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement_promo_banner_editor",
+      "label": "Home promo banner editor (updatePromoBanner, setPromoBannerVisible, Turn off banner now)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement_promo_status_line",
+      "label": "Promo status line helper (ON, SCHEDULED, ENDED, OFF)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement_announcement_bar_editor",
+      "label": "Announcement bar editor: 1-3 messages, id regenerated only on change",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Changing the id re-shows the bar to Visitors who dismissed it; unchanged saves keep the id."
+    },
+    {
+      "id": "src_lib_catalogue_promo",
+      "label": "src/lib/catalogue/promo.ts (isPromoActive)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement",
+      "target": "_scratch_ayc_admin_issues_10_promo_banner_and_announcement",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement",
+      "target": "docs_mockup_admin_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement",
+      "target": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement",
+      "target": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement_promo_banner_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement",
+      "target": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement_promo_status_line",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement",
+      "target": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement_announcement_bar_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement_promo_status_line",
+      "target": "src_lib_catalogue_promo",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement_promo_banner_editor",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_website_settings_editor",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement_announcement_bar_editor",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_website_settings_editor",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_10_promo_banner_and_announcement_promo_banner_editor",
+      "target": "_scratch_ayc_admin_prompts_09_exam_pages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/10-promo-banner-and-announcement.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

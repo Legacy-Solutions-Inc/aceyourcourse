@@ -1,0 +1,152 @@
+{
+  "nodes": [
+    {
+      "id": "_claude_skills_forms_validation_skill_forms_validation_skill",
+      "label": "forms-validation Skill (react-hook-form + zod)",
+      "file_type": "document",
+      "source_file": ".claude/skills/forms-validation/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_forms_validation_skill_two_boundary_validation",
+      "label": "Validate at Both Boundaries (zodResolver + Server Action safeParse)",
+      "file_type": "rationale",
+      "source_file": ".claude/skills/forms-validation/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Client validation is UX, not security; Server Actions are directly reachable POST endpoints."
+    },
+    {
+      "id": "_claude_skills_forms_validation_skill_zod_single_source",
+      "label": "zod as Single Source of Truth (z.infer)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/forms-validation/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_forms_validation_skill_shadcn_form_primitives",
+      "label": "shadcn Form Primitives (Form, FormField, FormMessage)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/forms-validation/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_claude_skills_forms_validation_skill_forms_validation_skill",
+      "target": "_claude_skills_forms_validation_skill_two_boundary_validation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/forms-validation/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_forms_validation_skill_forms_validation_skill",
+      "target": "_claude_skills_forms_validation_skill_zod_single_source",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/forms-validation/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_forms_validation_skill_forms_validation_skill",
+      "target": "_claude_skills_forms_validation_skill_shadcn_form_primitives",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/forms-validation/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_forms_validation_skill_forms_validation_skill",
+      "target": "_claude_skills_shadcn_ui_skill_shadcn_ui_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/forms-validation/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_forms_validation_skill_forms_validation_skill",
+      "target": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/forms-validation/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_forms_validation_skill_forms_validation_skill",
+      "target": "_claude_skills_supabase_auth_skill_supabase_auth_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/forms-validation/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_forms_validation_skill_forms_validation_skill",
+      "target": "_claude_skills_drizzle_data_skill_retired_template_commit_aea34ea",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/forms-validation/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_forms_validation_skill_two_boundary_validation",
+      "target": "_claude_skills_nextjs_app_router_references_server_actions_server_action_write_pattern",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".claude/skills/forms-validation/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_forms_validation_skill_two_boundary_validation",
+      "target": "_claude_skills_coding_standards_skill_in_action_authz",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".claude/skills/forms-validation/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_forms_validation_skill_shadcn_form_primitives",
+      "target": "_claude_skills_shadcn_ui_skill_copy_in_registry",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".claude/skills/forms-validation/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,581 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "label": "Executer prompt 01: Admin shell and Staff sign-in",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions",
+      "label": "Phase 2 Admin CONVENTIONS.md",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1",
+      "label": "AYC v1 spec (2026-10-29)",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_mockup_admin_build_map",
+      "label": "Admin mockup BUILD-MAP",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_mockup_admin_admindashboard_v2_dc",
+      "label": "AdminDashboard_v2 mockup",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_0008_single_brand_members_and_staff",
+      "label": "ADR 0008 single brand, Members and Staff",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_0003_mock_first_service_seam",
+      "label": "ADR 0003 mock-first service seam",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in",
+      "label": "Ticket 01-admin-shell-and-sign-in",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_staff_guard",
+      "label": "Staff Guard (getStaff, requireStaff, requireOwner)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Every Admin page and Server Action calls the Staff Guard; authorisation never comes from the client, hidden fields or user metadata."
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_stage_a_sample_mode",
+      "label": "Stage A sample mode (no database, no Supabase sign-in)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Build the whole Admin against in-memory sample data first; real Google sign-in and the database arrive in Stage B (tickets 13-18) behind the same seams."
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_admin_closed_in_production",
+      "label": "Admin closed mode: every /admin route 404s in production (computeAdminMode)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Production can never reach the Sign-in-as list or sample actions until Stage B."
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_sign_in_as_panel",
+      "label": "Sign in as sample-User panel (dev only)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_invite_activation",
+      "label": "Invite activation on first sign-in (resolveSignIn)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_safe_next",
+      "label": "safe-next redirect accepting /admin paths only",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Prevents open redirects (next=https://evil.example, //evil.example, /app)."
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_manila_greeting",
+      "label": "Manila-time greeting and date line",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_admin_seam",
+      "label": "Admin seam (src/services/admin.ts, admin.types, admin.mock)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_sample_store",
+      "label": "Sample store (src/services/mock/sample-store.ts)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_admin_shell",
+      "label": "Admin shell: sidebar, header with SAMPLE DATA tag, user block, mobile drawer",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_denied_403_screen",
+      "label": "403 denied screen with logged attempt",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_denied_sign_in_record",
+      "label": "Denied sign-in attempt recording (recordDeniedSignIn)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_no_commit_guardrail",
+      "label": "Executer guardrail: leave changes uncommitted on docs/ayc-v1-planning",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Overrides CLAUDE.md/AGENTS.md commit rules; planner reviews before any commit."
+    },
+    {
+      "id": "src_middleware",
+      "label": "src/middleware.ts",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_mockup_admin_build_map",
+      "target": "docs_mockup_admin_admindashboard_v2_dc",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "docs_mockup_admin_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "docs_adr_0008_single_brand_members_and_staff",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "docs_adr_0003_mock_first_service_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "docs_mockup_admin_admindashboard_v2_dc",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_staff_guard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_stage_a_sample_mode",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_admin_closed_in_production",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_sign_in_as_panel",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_invite_activation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_safe_next",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_manila_greeting",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_admin_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_sample_store",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_admin_shell",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_denied_403_screen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_denied_sign_in_record",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_no_commit_guardrail",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "target": "src_middleware",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_stage_a_sample_mode",
+      "target": "src_middleware",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_staff_guard",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_admin_closed_in_production",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_staff_guard",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_invite_activation",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_staff_guard",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_denied_403_screen",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_denied_403_screen",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_denied_sign_in_record",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_admin_seam",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_sample_store",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_admin_seam",
+      "target": "docs_adr_0003_mock_first_service_seam",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_staff_guard",
+      "target": "docs_adr_0008_single_brand_members_and_staff",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_sign_in_as_panel",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_stage_a_sample_mode",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "admin_sign_in_decision_flow",
+      "label": "Staff sign-in decision flow",
+      "nodes": [
+        "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_staff_guard",
+        "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_invite_activation",
+        "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_denied_403_screen",
+        "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_denied_sign_in_record",
+        "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_safe_next",
+        "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_admin_closed_in_production"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/01-admin-shell-and-sign-in.md"
+    }
+  ]
+}

@@ -1,0 +1,395 @@
+{
+  "nodes": [
+    {
+      "id": "$graphify-root$_docs_mockup_tools_unbundle_py",
+      "label": "unbundle.py",
+      "file_type": "code",
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "$graphify-root$_docs_mockup_tools_unbundle_block",
+      "label": "block()",
+      "file_type": "code",
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L11",
+      "_callable": true
+    },
+    {
+      "id": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L15",
+      "_callable": true
+    },
+    {
+      "id": "$graphify-root$_docs_mockup_tools_unbundle_rationale_1",
+      "label": "Unpack a __bundler HTML export into its embedded source files.",
+      "file_type": "rationale",
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "$graphify-root$_docs_mockup_tools_unbundle_py",
+      "target": "base64",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_python_import_module": "base64",
+      "_python_import_bindings": [["base64", "base64"]],
+      "_python_import_module_binding": true
+    },
+    {
+      "source": "$graphify-root$_docs_mockup_tools_unbundle_py",
+      "target": "gzip",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_python_import_module": "gzip",
+      "_python_import_bindings": [["gzip", "gzip"]],
+      "_python_import_module_binding": true
+    },
+    {
+      "source": "$graphify-root$_docs_mockup_tools_unbundle_py",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_python_import_module": "json",
+      "_python_import_bindings": [["json", "json"]],
+      "_python_import_module_binding": true
+    },
+    {
+      "source": "$graphify-root$_docs_mockup_tools_unbundle_py",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_python_import_module": "os",
+      "_python_import_bindings": [["os", "os"]],
+      "_python_import_module_binding": true
+    },
+    {
+      "source": "$graphify-root$_docs_mockup_tools_unbundle_py",
+      "target": "re",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_python_import_module": "re",
+      "_python_import_bindings": [["re", "re"]],
+      "_python_import_module_binding": true
+    },
+    {
+      "source": "$graphify-root$_docs_mockup_tools_unbundle_py",
+      "target": "sys",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_python_import_module": "sys",
+      "_python_import_bindings": [["sys", "sys"]],
+      "_python_import_module_binding": true
+    },
+    {
+      "source": "$graphify-root$_docs_mockup_tools_unbundle_py",
+      "target": "$graphify-root$_docs_mockup_tools_unbundle_block",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_docs_mockup_tools_unbundle_py",
+      "target": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "target": "$graphify-root$_docs_mockup_tools_unbundle_block",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_docs_mockup_tools_unbundle_rationale_1",
+      "target": "$graphify-root$_docs_mockup_tools_unbundle_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "raw_calls": [
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_block",
+      "callee": "search",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L12",
+      "receiver": "re",
+      "_python_receiver_shadowed": false,
+      "_python_call_site": [496, 570]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_block",
+      "callee": "loads",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L13",
+      "receiver": "json",
+      "_python_receiver_shadowed": false,
+      "_python_call_site": [582, 604]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_block",
+      "callee": "group",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L13",
+      "receiver": "m",
+      "_python_receiver_shadowed": true,
+      "_python_receiver_factory": [496, 570],
+      "_python_call_site": [593, 603]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "read",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L16",
+      "receiver": null,
+      "_python_receiver_shadowed": true,
+      "_python_call_site": [661, 701]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "makedirs",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L20",
+      "receiver": "os",
+      "_python_receiver_shadowed": false,
+      "_python_call_site": [840, 875]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "items",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L22",
+      "receiver": "manifest",
+      "_python_receiver_shadowed": true,
+      "_python_call_site": [914, 930]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "b64decode",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L23",
+      "receiver": "base64",
+      "_python_receiver_shadowed": false,
+      "_python_call_site": [946, 977]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L24",
+      "receiver": "entry",
+      "_python_receiver_shadowed": true,
+      "_python_call_site": [989, 1012]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "decompress",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L25",
+      "receiver": "gzip",
+      "_python_receiver_shadowed": false,
+      "_python_call_site": [1032, 1052]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L26",
+      "receiver": "entry",
+      "_python_receiver_shadowed": true,
+      "_python_call_site": [1068, 1089]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L27",
+      "receiver": "names",
+      "_python_receiver_shadowed": true,
+      "_python_call_site": [1105, 1126]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "strip",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L28",
+      "receiver": null,
+      "_python_receiver_shadowed": true,
+      "_python_call_site": [1142, 1211]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "sub",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L28",
+      "receiver": "re",
+      "_python_receiver_shadowed": false,
+      "_python_call_site": [1142, 1200]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "replace",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L28",
+      "receiver": "name",
+      "_python_receiver_shadowed": true,
+      "_python_receiver_factory": [1105, 1126],
+      "_python_call_site": [1175, 1199]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "splitext",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L29",
+      "receiver": null,
+      "_python_receiver_shadowed": true,
+      "_python_call_site": [1227, 1249]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "get",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L30",
+      "receiver": "EXT",
+      "_python_receiver_shadowed": true,
+      "_python_call_site": [1274, 1309]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "split",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L30",
+      "receiver": "mime",
+      "_python_receiver_shadowed": true,
+      "_python_receiver_factory": [1068, 1089],
+      "_python_call_site": [1282, 1297]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L32",
+      "receiver": null,
+      "_python_receiver_shadowed": true,
+      "_python_call_site": [1366, 1393]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "write",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L33",
+      "receiver": "f",
+      "_python_receiver_shadowed": true,
+      "_python_call_site": [1419, 1431]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "append",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L34",
+      "receiver": "index",
+      "_python_receiver_shadowed": true,
+      "_python_call_site": [1440, 1476]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "join",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L37",
+      "receiver": null,
+      "_python_receiver_shadowed": true,
+      "_python_call_site": [1540, 1579]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "write",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L38",
+      "receiver": "f",
+      "_python_receiver_shadowed": true,
+      "_python_call_site": [1622, 1679]
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "str",
+      "is_member_call": false,
+      "indirect": true,
+      "context": "argument",
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L38"
+    },
+    {
+      "caller_nid": "$graphify-root$_docs_mockup_tools_unbundle_main",
+      "callee": "dumps",
+      "is_member_call": true,
+      "source_file": "docs/mockup/tools/unbundle.py",
+      "source_location": "L38",
+      "receiver": "json",
+      "_python_receiver_shadowed": false,
+      "_python_call_site": [1663, 1678]
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_23_add_exams_and_subjects",
+      "label": "Ticket 23: Add Exams and Subjects",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/23-add-exams-and-subjects.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_23_add_exams_and_subjects_add_exams_subjects",
+      "label": "Owner add/delete Exams and Subjects (up to 12, codes fixed)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/23-add-exams-and-subjects.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_23_add_exams_and_subjects_not_on_site_rule",
+      "label": "New Exam stays NOT ON SITE until a Product is on the Website",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/23-add-exams-and-subjects.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_23_add_exams_and_subjects",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/23-add-exams-and-subjects.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_23_add_exams_and_subjects",
+      "target": "_scratch_ayc_admin_issues_20_site_page_seo",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/23-add-exams-and-subjects.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_23_add_exams_and_subjects",
+      "target": "_scratch_ayc_admin_issues_21_about_page_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/23-add-exams-and-subjects.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_23_add_exams_and_subjects",
+      "target": "_scratch_ayc_admin_issues_22_summary_for_ai_assistants",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/23-add-exams-and-subjects.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_23_add_exams_and_subjects",
+      "target": "_scratch_ayc_admin_issues_23_add_exams_and_subjects_add_exams_subjects",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/23-add-exams-and-subjects.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_23_add_exams_and_subjects",
+      "target": "_scratch_ayc_admin_issues_23_add_exams_and_subjects_not_on_site_rule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/23-add-exams-and-subjects.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_23_add_exams_and_subjects_add_exams_subjects",
+      "target": "_scratch_ayc_admin_issues_09_exam_pages_exam_page_sections",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/23-add-exams-and-subjects.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_23_add_exams_and_subjects_add_exams_subjects",
+      "target": "_scratch_ayc_admin_conventions_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/23-add-exams-and-subjects.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_23_add_exams_and_subjects_add_exams_subjects",
+      "target": "_scratch_ayc_admin_conventions_staff_guard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/23-add-exams-and-subjects.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

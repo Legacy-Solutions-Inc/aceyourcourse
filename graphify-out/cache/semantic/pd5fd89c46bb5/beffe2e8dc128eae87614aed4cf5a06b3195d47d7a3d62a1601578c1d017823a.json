@@ -1,0 +1,80 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_21_about_page_editor",
+      "label": "Ticket 21: About page editor",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/21-about-page-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_21_about_page_editor_about_editor",
+      "label": "About page editor (six sections, blank means today's text)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/issues/21-about-page-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Every field defaults to the text in code so an empty database renders the page unchanged; About's shape stays fixed."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_21_about_page_editor",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_21_about_page_editor",
+      "target": "_scratch_ayc_admin_issues_20_site_page_seo",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_21_about_page_editor",
+      "target": "_scratch_ayc_admin_issues_21_about_page_editor_about_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_21_about_page_editor_about_editor",
+      "target": "_scratch_ayc_admin_issues_20_site_page_seo_catalogue_site_pages_tag",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_21_about_page_editor_about_editor",
+      "target": "_scratch_ayc_admin_conventions_upload_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

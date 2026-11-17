@@ -1,0 +1,515 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "label": "Executer prompt 16: Real Staff sign-in",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_16_real_staff_sign_in",
+      "label": "Ticket 16-real-staff-sign-in",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_0002_supabase_only_auth",
+      "label": "ADR 0002 Supabase-only auth",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_0008_single_brand_members_and_staff",
+      "label": "ADR 0008 Single brand members and staff",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_lib_admin_mode_computeadminmode",
+      "label": "computeAdminMode (live | sample | closed)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_lib_admin_identity",
+      "label": "src/lib/admin/identity.ts (Supabase identity arm)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_live_mode",
+      "label": "Admin live mode (database + Supabase configured)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scripts_staff_add_owner",
+      "label": "scripts/staff-add-owner.ts (pnpm staff:add-owner)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_hosted_dev_environment",
+      "label": "Dev uses the hosted Supabase project; tests never touch it",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "No Docker on the user's machine; supersedes 'local Supabase for development and every test'"
+    },
+    {
+      "id": "e2e_admin_global_setup",
+      "label": "e2e/admin/global-setup.ts (creates auth Users, live mode only)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_password_grant_e2e_helper",
+      "label": "e2e password-grant helper writing the @supabase/ssr session cookie",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_google_oauth_pkce",
+      "label": "Google OAuth sign-in via Supabase PKCE through /auth/callback",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_app_auth_callback",
+      "label": "src/app/auth/callback (OAuth code exchange)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_session_pooler_locally",
+      "label": "Local DATABASE_URL must be the Session pooler (IPv4)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Direct connection db.<ref>.supabase.co is IPv6-only and unreachable from this machine"
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_playwright_sample_mode_default",
+      "label": "playwright.config: in-memory sample mode by default; live only with local PLAYWRIGHT_* values",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_getuser_not_getsession",
+      "label": "Authorisation from supabase.auth.getUser(), never getSession() or user_metadata",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_issues_16_real_staff_sign_in",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "agents",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "docs_adr_0002_supabase_only_auth",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "docs_adr_0008_single_brand_members_and_staff",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_executer_no_commit_guardrail",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_scratchpad_copy_build_gotcha",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_staff_guard_server_authorisation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "src_lib_admin_mode_computeadminmode",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "src_lib_admin_identity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_live_mode",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "scripts_staff_add_owner",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_hosted_dev_environment",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "e2e_admin_global_setup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_password_grant_e2e_helper",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_google_oauth_pkce",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "src_app_auth_callback",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_session_pooler_locally",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_playwright_sample_mode_default",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_getuser_not_getsession",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_lib_admin_mode_computeadminmode",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_live_mode",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_lib_admin_identity",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_google_oauth_pkce",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_google_oauth_pkce",
+      "target": "src_app_auth_callback",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_lib_admin_identity",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_getuser_not_getsession",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_hosted_dev_environment",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_local_and_production_decision",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_staff_add_owner",
+      "target": "_scratch_ayc_admin_prompts_15_admin_writes_on_the_database_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "e2e_admin_global_setup",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_supabase_secret_key",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_15_admin_writes_on_the_database_reset_route_local_only",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_live_mode",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_prompts_15_admin_writes_on_the_database",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_google_oauth_pkce",
+      "target": "docs_adr_0002_supabase_only_auth",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "target": "docs_runbooks_production",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

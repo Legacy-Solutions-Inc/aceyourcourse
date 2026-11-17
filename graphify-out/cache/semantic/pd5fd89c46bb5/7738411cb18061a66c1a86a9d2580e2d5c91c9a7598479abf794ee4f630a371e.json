@@ -1,0 +1,110 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_19_development_password_sign_in",
+      "label": "Ticket 19: Development password sign-in",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/19-development-password-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_19_development_password_sign_in_dev_password_box",
+      "label": "DEVELOPMENT ONLY password sign-in box (pnpm dev + live + Email on)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/19-development-password-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_19_development_password_sign_in_amr_method_check",
+      "label": "Sign-in method check from verified amr claim",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/19-development-password-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_19_development_password_sign_in",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_19_development_password_sign_in",
+      "target": "_scratch_ayc_admin_issues_16_real_staff_sign_in",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_19_development_password_sign_in",
+      "target": "_scratch_ayc_admin_issues_19_development_password_sign_in_dev_password_box",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_19_development_password_sign_in",
+      "target": "_scratch_ayc_admin_issues_19_development_password_sign_in_amr_method_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_19_development_password_sign_in_amr_method_check",
+      "target": "_scratch_ayc_admin_conventions_identity_amr_rule",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_19_development_password_sign_in_dev_password_box",
+      "target": "_scratch_ayc_admin_conventions_staff_guard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_19_development_password_sign_in_dev_password_box",
+      "target": "_scratch_ayc_admin_issues_18_production_go_live_production_runbook",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}
