@@ -1,7 +1,9 @@
+import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
+
 // The Member App's content model (spec, Phase 3 → Content model; CONTEXT.md):
 // Exam → Subject → Topic, and each Topic's deck, quiz and Reviewer PDF, each
 // optional. Both the Member seam and the Admin seam read these records; the
-// Admin edits them. Questions and page images come with later tickets.
+// Admin edits them. Page images come with later tickets.
 // The Access Pass records are here too: they decide what a Member may open.
 
 /** The three kinds of study content a Topic can have, in the order the Library shows them. */
@@ -105,12 +107,40 @@ export interface DeckPosition {
   savedAt: string;
 }
 
-/** A Topic's quiz: at most one per Topic. Its questions come with ticket 09. */
+/**
+ * A Topic's quiz: at most one per Topic, with its settings (ticket 09): the
+ * passing score (a whole percentage, 1–100), whether its questions are
+ * shuffled, and whether Members see the answers after scoring.
+ */
 export interface Quiz {
   id: string;
   topicId: string;
   visibility: ContentVisibility;
   freePreview: boolean;
+  passingScore: number;
+  shuffle: boolean;
+  showAnswers: boolean;
+}
+
+/**
+ * A question in a quiz (ticket 09): the question, four choices A–D, the
+ * correct choice and an explanation, each in the formula notation, and an
+ * optional figure. A question taken out of its quiz is kept, marked removed
+ * (`removedAt`, with no place), for Members' old attempts to show.
+ */
+export interface Question {
+  id: string;
+  quizId: string;
+  /** Its place in its quiz's order, from 1, or null once it's removed. */
+  position: number | null;
+  question: string;
+  choices: Record<QuizChoice, string>;
+  correct: QuizChoice;
+  explanation: string;
+  /** Where its figure is in the private content bucket, or null. */
+  figure: string | null;
+  /** ISO time it was taken out of its quiz, or null while it's in it. */
+  removedAt: string | null;
 }
 
 /**

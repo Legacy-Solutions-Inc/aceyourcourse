@@ -16,7 +16,7 @@ import { faqFormValues } from "@/lib/admin/faq-form";
 import { productFormValues } from "@/lib/admin/product-form";
 import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
 import { reviewFormValues } from "@/lib/admin/review-form";
-import { getExamPageForAdmin, planCardImport } from "@/services/admin";
+import { getExamPageForAdmin, planCardImport, planQuizImport } from "@/services/admin";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
 import { getSampleStore } from "@/services/mock/sample-store";
 
@@ -27,7 +27,12 @@ import {
   UNUSED_EXAM,
   withUnusedExam,
 } from "../../../test/admin-inputs";
-import { importCsv, type ImportPaths, uploadSampleImport } from "../../../test/card-import-files";
+import {
+  importCsv,
+  type ImportPaths,
+  quizCsv,
+  uploadSampleImport,
+} from "../../../test/import-files";
 import { editSampleCatalogue } from "../../../test/catalogue-seed";
 
 import * as content from "./(shell)/content/actions";
@@ -94,6 +99,8 @@ const SURVEYING = sampleTopicId("CE", "MSTC", "Surveying");
 /** A Hidden deck, given two cards before each test, which any Staff User may edit. */
 const ALGEBRA = sampleTopicId("CE", "MSTC", "Algebra");
 const ALGEBRA_DECK = sampleContentId(ALGEBRA, "deck");
+/** A Hidden quiz, given a question before each test, which any Staff User may set. */
+const SPIRAL_CURVES_QUIZ = sampleContentId(sampleTopicId("CE", "MSTC", "Spiral Curves"), "quiz");
 const CARD = "5d6e7f80-9a1b-4c2d-8e3f-4a5b6c7d8e9f";
 const SECOND_CARD = "6e7f8091-ab2c-4d3e-9f40-5b6c7d8e9fa0";
 
@@ -101,6 +108,8 @@ const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
 
 /** A card import's files, uploaded before each test, and the preview of them. */
 let cardImport: ImportPaths & { exam: string; subject: string; mode: "add"; basedOn: string };
+/** A quiz import's files, uploaded before each test, and the preview of them. */
+let quizImport: typeof cardImport;
 /** The stamp every record has before anyone saves it. */
 const opened = () => ({ savedAt: getSampleStore().bootedAt });
 
@@ -212,7 +221,7 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     ),
     removeTopic: staff(() => content.removeTopic(IDLE, { input: { id: SURVEYING } })),
     createImportUpload: staff(() =>
-      content.createImportUpload(IDLE, { input: { purpose: "card-import-csv", size: 2048 } }),
+      content.createImportUpload(IDLE, { input: { purpose: "import-csv", size: 2048 } }),
     ),
     checkCardImport: staff(() => {
       const { basedOn: _, ...input } = cardImport;
@@ -243,6 +252,25 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     ),
     saveDeckFreePreview: staff(() =>
       content.saveDeckFreePreview(IDLE, { input: { deck: ALGEBRA_DECK, freePreview: true } }),
+    ),
+    checkQuizImport: staff(() => {
+      const { basedOn: _, ...input } = quizImport;
+      return content.checkQuizImport(IDLE, { input });
+    }),
+    importQuizzes: staff(() => content.importQuizzes(IDLE, { input: quizImport })),
+    saveQuizSettings: editorSave("staff", content.saveQuizSettings, () => ({
+      id: SPIRAL_CURVES_QUIZ,
+      passingScore: "80",
+      shuffle: false,
+      showAnswers: false,
+    })),
+    saveQuizVisibility: staff(() =>
+      content.saveQuizVisibility(IDLE, { input: { quiz: SPIRAL_CURVES_QUIZ, visible: true } }),
+    ),
+    saveQuizFreePreview: staff(() =>
+      content.saveQuizFreePreview(IDLE, {
+        input: { quiz: SPIRAL_CURVES_QUIZ, freePreview: true },
+      }),
     ),
   },
   "./(shell)/products/actions.ts": {
@@ -408,6 +436,27 @@ beforeEach(async () => {
   const planned = await planCardImport(READER, input);
   if (!planned.ok) throw new Error("The card import's files were refused");
   cardImport = { ...input, basedOn: planned.value.basedOn };
+  // A question in Spiral Curves' quiz, so it can be made Visible.
+  getSampleStore().questions = [
+    {
+      id: "7f8091a2-bc3d-4e4f-8a51-6c7d8e9fa0b1",
+      quizId: SPIRAL_CURVES_QUIZ,
+      position: 1,
+      question: "Length of spiral?",
+      choices: { A: "1", B: "2", C: "3", D: "4" },
+      correct: "B",
+      explanation: "$L_s = 0.036 V^3/R$",
+      figure: null,
+      removedAt: null,
+    },
+  ];
+  const quizPaths = await uploadSampleImport({
+    csv: quizCsv(["Highways,Grade?,1,2,3,4,A,Rise over run.,"]),
+  });
+  const quizInput = { exam: "ce", subject: "mstc", mode: "add" as const, ...quizPaths };
+  const plannedQuiz = await planQuizImport(READER, quizInput);
+  if (!plannedQuiz.ok) throw new Error("The quiz import's files were refused");
+  quizImport = { ...quizInput, basedOn: plannedQuiz.value.basedOn };
 });
 
 describe("the action registry", () => {

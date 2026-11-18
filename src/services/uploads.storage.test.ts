@@ -475,8 +475,8 @@ describe("the Storage arm's private uploads (ticket 06)", () => {
   });
 
   it.each([
-    ["card-import-csv", "csv", "text/csv"],
-    ["card-import-zip", "zip", "application/zip"],
+    ["import-csv", "csv", "text/csv"],
+    ["import-zip", "zip", "application/zip"],
   ] as const)(
     "files a %s in the private content bucket, with no public URL",
     async (purpose, extension, contentType) => {
@@ -497,17 +497,12 @@ describe("the Storage arm's private uploads (ticket 06)", () => {
   );
 
   it.each([
-    ["signed out", null, { purpose: "card-import-csv", size: 64 }, "forbidden"],
-    [
-      "a CSV over 10 MB",
-      EDITOR,
-      { purpose: "card-import-csv", size: 10 * 1024 * 1024 + 1 },
-      "invalid",
-    ],
+    ["signed out", null, { purpose: "import-csv", size: 64 }, "forbidden"],
+    ["a CSV over 10 MB", EDITOR, { purpose: "import-csv", size: 10 * 1024 * 1024 + 1 }, "invalid"],
     [
       "a zip over 200 MB",
       EDITOR,
-      { purpose: "card-import-zip", size: 200 * 1024 * 1024 + 1 },
+      { purpose: "import-zip", size: 200 * 1024 * 1024 + 1 },
       "invalid",
     ],
     ["an unknown purpose", EDITOR, { purpose: "product-photo", size: 64 }, "invalid"],
@@ -526,21 +521,19 @@ describe("the Storage arm's private uploads (ticket 06)", () => {
   it("reads back an import's file from the content bucket", async () => {
     const { arm, bucket, from } = fakeBucket();
 
-    expect(await arm.contentFiles.readUpload(csv, "card-import-csv")).toEqual(
-      new Uint8Array([1, 2]),
-    );
+    expect(await arm.contentFiles.readUpload(csv, "import-csv")).toEqual(new Uint8Array([1, 2]));
     expect(from).toHaveBeenCalledWith("content");
     expect(bucket.download).toHaveBeenCalledWith(csv);
   });
 
   it.each([
-    ["a CSV read as the zip", csv, "card-import-zip"],
-    ["a card image", "decks/0d6c1e0a-6f0e-4f43-9b8a-1f2a3b4c5d6e/a.png", "card-import-csv"],
-    ["a path that climbs out", "imports/../decks/x.csv", "card-import-csv"],
+    ["a CSV read as the zip", csv, "import-zip"],
+    ["a card image", "decks/0d6c1e0a-6f0e-4f43-9b8a-1f2a3b4c5d6e/a.png", "import-csv"],
+    ["a path that climbs out", "imports/../decks/x.csv", "import-csv"],
     [
       "a catalogue photo",
       "products/prd-001/0d6c1e0a-6f0e-4f43-9b8a-1f2a3b4c5d6e.png",
-      "card-import-csv",
+      "import-csv",
     ],
   ] as const)("reads nothing for %s", async (_, path, purpose) => {
     const { arm, from } = fakeBucket();
@@ -554,7 +547,7 @@ describe("the Storage arm's private uploads (ticket 06)", () => {
       exists: async () => ({ data: false, error: new Error("Object not found") }) as never,
     });
 
-    expect(await arm.contentFiles.readUpload(csv, "card-import-csv")).toBeNull();
+    expect(await arm.contentFiles.readUpload(csv, "import-csv")).toBeNull();
     expect(bucket.download).not.toHaveBeenCalled();
   });
 
@@ -563,7 +556,7 @@ describe("the Storage arm's private uploads (ticket 06)", () => {
       download: async () => ({ data: null, error: new Error("timeout") }),
     });
 
-    await expect(arm.contentFiles.readUpload(csv, "card-import-csv")).rejects.toThrow(
+    await expect(arm.contentFiles.readUpload(csv, "import-csv")).rejects.toThrow(
       "Storage couldn't read an upload: timeout",
     );
   });
@@ -636,7 +629,7 @@ describe("the Storage arm's private uploads (ticket 06)", () => {
 
     expect(await arm.contentFiles.readUpload(image, "card-image")).toEqual(new Uint8Array([1, 2]));
     expect(bucket.download).toHaveBeenCalledWith(image);
-    expect(await arm.contentFiles.readUpload(image, "card-import-csv")).toBeNull();
+    expect(await arm.contentFiles.readUpload(image, "import-csv")).toBeNull();
     expect(await arm.contentFiles.readUpload(csv, "card-image")).toBeNull();
   });
 
@@ -656,10 +649,26 @@ describe("the Storage arm's private uploads (ticket 06)", () => {
     expect(bucket.download).toHaveBeenCalledWith(stored);
   });
 
+  it("reads a stored quiz figure with its type, for Staff (ticket 09)", async () => {
+    const figure =
+      "quizzes/0d6c1e0a-6f0e-4f43-9b8a-1f2a3b4c5d6e/1b2c3d4e-5f6a-4b7c-8d9e-0f1a2b3c4d5e.png";
+    const { arm, bucket } = fakeBucket({
+      download: async () => ({
+        data: { arrayBuffer: async () => PNG.buffer } as Blob,
+        error: null,
+      }),
+    });
+
+    expect(await arm.contentFiles.read(figure)).toEqual({ contentType: "image/png", bytes: PNG });
+    expect(bucket.download).toHaveBeenCalledWith(figure);
+  });
+
   it.each([
     ["an import's upload", csv],
     ["a card image's upload", image],
     ["a path that climbs out", "decks/../imports/x.png"],
+    ["a quiz path that climbs out", "quizzes/../imports/x.png"],
+    ["another folder", "products/0d6c1e0a-6f0e-4f43-9b8a-1f2a3b4c5d6e/a.png"],
   ])("reads no card image at %s", async (_, path) => {
     const { arm, from } = fakeBucket();
 
@@ -700,6 +709,17 @@ describe("the Storage arm's signed card image URLs (ticket 08)", () => {
     });
     expect(from).toHaveBeenCalledWith("content");
     expect(bucket.createSignedUrls).toHaveBeenCalledWith([first, second], 600);
+  });
+
+  it("signs a quiz figure, as the quiz will ask (ticket 11)", async () => {
+    const figure =
+      "quizzes/0b8f4b8e-6a2f-4b1e-9d3c-5e7f9a1b2c3d/3e1a4b6c-9d5f-4a7b-8c8d-1e2f3a4b5c6d.jpg";
+    const { arm, bucket } = fakeBucket();
+
+    expect(await arm.contentFiles.signedUrls([figure], 600)).toEqual({
+      [figure]: `${SUPABASE}/storage/v1/object/sign/content/${figure}?token=t`,
+    });
+    expect(bucket.createSignedUrls).toHaveBeenCalledWith([figure], 600);
   });
 
   it("signs nothing that isn't a card image, asking Storage nothing", async () => {

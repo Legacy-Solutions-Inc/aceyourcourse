@@ -1,33 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useRef, useState, useTransition } from "react";
+import { type FormEvent, type ReactNode, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { callAdminAction } from "@/components/admin/call-admin-action";
 import { putFile } from "@/components/admin/products/put-file";
 import type { AdminAction, AdminActionState } from "@/lib/admin/action";
 import {
-  importDeckLabel,
+  IMPORT_WORDS,
+  importContentLabel,
   importFileProblem,
   importProblemPlace,
   importTotals,
-} from "@/lib/admin/card-import-view";
-import type { ImportMode } from "@/lib/card-import/modes";
+} from "@/lib/admin/content-import-view";
+import type { ImportKind, ImportMode } from "@/lib/content-import/modes";
 import { paths } from "@/paths";
-import type { CardImportPreview, CardImportResult, CardImportTopic } from "@/services/admin.types";
+import type { ImportPreview, ImportResult, ImportTopicPreview } from "@/services/admin.types";
 import type { ContentUploadTicket } from "@/services/uploads.types";
 
-export interface CardImportActions {
+export interface ContentImportActions {
   createImportUpload: AdminAction<ContentUploadTicket>;
-  checkCardImport: AdminAction<CardImportPreview>;
-  importCards: AdminAction<CardImportResult>;
+  /** "Check file": the kind's preview. */
+  checkImport: AdminAction<ImportPreview>;
+  /** "Import": the kind's confirm. */
+  confirmImport: AdminAction<ImportResult>;
 }
 
-interface CardImportProps {
+interface ContentImportProps {
+  /** What the file brings in: flashcards or quiz questions. */
+  kind: ImportKind;
   exam: { code: string; name: string };
   subject: { code: string; name: string };
-  actions: CardImportActions;
+  actions: ContentImportActions;
 }
 
 /** The uploaded files' paths, which checking and importing send. */
@@ -38,8 +43,8 @@ interface UploadedFiles {
 
 type Step =
   | { kind: "choose" }
-  | { kind: "preview"; files: UploadedFiles; preview: CardImportPreview }
-  | { kind: "done"; result: CardImportResult };
+  | { kind: "preview"; files: UploadedFiles; preview: ImportPreview }
+  | { kind: "done"; result: ImportResult };
 
 /** The most problems the table lists; the rest are counted. */
 const SHOWN_PROBLEMS = 100;
@@ -47,25 +52,71 @@ const SHOWN_PROBLEMS = 100;
 const BUTTON =
   "min-h-10 cursor-pointer border-[1.5px] px-3.5 text-[13px] font-bold disabled:cursor-not-allowed disabled:opacity-60";
 const LABEL = "font-mono text-[11px] font-bold tracking-[0.06em]";
-const MODES: { mode: ImportMode; label: string; detail: string }[] = [
+
+/** What each kind of import's screen says that the other's doesn't. */
+const SCREENS: Record<
+  ImportKind,
+  {
+    title: string;
+    help: ReactNode;
+    template: { href: string; label: string };
+    replace: string;
+  }
+> = {
+  cards: {
+    title: "IMPORT CARDS",
+    help: (
+      <>
+        One row per card, with the columns <b>topic, front, back, note, image</b>. Maths goes in{" "}
+        <code>$...$</code>, or <code>$$...$$</code> on its own line; write a dollar sign as{" "}
+        <code>\$</code>. <b>image</b> names a JPEG, PNG or WebP (up to 5 MB) in the zip. Topics are
+        matched by name; a new name creates a Topic.
+      </>
+    ),
+    template: { href: paths.admin.cardImportTemplate, label: "Download the template (CSV)" },
+    replace:
+      "Make its deck the file’s cards. A card whose front is unchanged keeps Members’ progress; cards not in the file are removed.",
+  },
+  quizzes: {
+    title: "IMPORT QUIZZES",
+    help: (
+      <>
+        One row per question, with the columns{" "}
+        <b>
+          topic, question, choice a, choice b, choice c, choice d, correct answer, explanation,
+          figure
+        </b>
+        . <b>correct answer</b> is A, B, C or D. Maths goes in <code>$...$</code>, or{" "}
+        <code>$$...$$</code> on its own line; write a dollar sign as <code>\$</code>. <b>figure</b>{" "}
+        names a JPEG, PNG or WebP (up to 5 MB) in the zip, or is blank. Topics are matched by name;
+        a new name creates a Topic.
+      </>
+    ),
+    template: { href: paths.admin.quizImportTemplate, label: "Download the template (CSV)" },
+    replace:
+      "Make its quiz the file’s questions. A question whose text is unchanged stays the same question; questions not in the file are taken out. Members keep their Best Scores and past attempts.",
+  },
+};
+
+/** Replace and Add, as the kind's screen explains them. */
+const modesOf = (kind: ImportKind): { mode: ImportMode; label: string; detail: string }[] => [
   {
     mode: "add",
     label: "Add",
-    detail: "Put the new cards after the ones it has.",
+    detail: `Put the new ${IMPORT_WORDS[kind].item.many} after the ones it has.`,
   },
-  {
-    mode: "replace",
-    label: "Replace",
-    detail:
-      "Make its deck the file’s cards. A card whose front is unchanged keeps Members’ progress; cards not in the file are removed.",
-  },
+  { mode: "replace", label: "Replace", detail: SCREENS[kind].replace },
 ];
 
 /** A thrown failure with the message to show, rather than the generic one. */
 class ImportStop extends Error {}
 
 /** What a refused or failed check or import says, when it isn't about one file. */
-function refusalText(state: AdminActionState<unknown>, what: "check" | "import"): string {
+function refusalText(
+  state: AdminActionState<unknown>,
+  what: "check" | "import",
+  kind: ImportKind,
+): string {
   if (state.status === "failed") {
     return what === "import"
       ? "COULDN’T IMPORT · NOTHING WAS SAVED · TRY AGAIN"
@@ -83,7 +134,7 @@ function refusalText(state: AdminActionState<unknown>, what: "check" | "import")
     case "not-found":
       return "THAT EXAM OR SUBJECT IS GONE · GO BACK TO MEMBER APP CONTENT";
     case "conflict":
-      return "THE TOPICS OR CARDS CHANGED SINCE YOU CHECKED THE FILE · CHECK IT AGAIN";
+      return `THE TOPICS OR ${IMPORT_WORDS[kind].item.many.toUpperCase()} CHANGED SINCE YOU CHECKED THE FILE · CHECK IT AGAIN`;
   }
 }
 
@@ -98,13 +149,25 @@ function filesGone(state: AdminActionState<unknown>): { csv?: string; zip?: stri
 const fileKey = (file: File) => `${file.name}:${file.size}:${file.lastModified}`;
 
 /** What a refusal says, and whether it's a conflict, which offers to check the file again. */
-const noticeOf = (state: AdminActionState<unknown>, what: "check" | "import") => ({
-  text: refusalText(state, what),
+const noticeOf = (
+  state: AdminActionState<unknown>,
+  what: "check" | "import",
+  kind: ImportKind,
+) => ({
+  text: refusalText(state, what, kind),
   conflict: state.status === "refused" && state.error.kind === "conflict",
 });
 
 /** One Topic's row in the preview. */
-function TopicRow({ topic, subject }: { topic: CardImportTopic; subject: string }) {
+function TopicRow({
+  kind,
+  topic,
+  subject,
+}: {
+  kind: ImportKind;
+  topic: ImportTopicPreview;
+  subject: string;
+}) {
   const created = topic.topicId === null;
   return (
     <tr className="border-b border-ayc-ruled align-top last:border-b-0">
@@ -124,15 +187,16 @@ function TopicRow({ topic, subject }: { topic: CardImportTopic; subject: string 
               </span>
             </>
           ) : null}
-          {topic.deck === "visible" ? (
+          {topic.content === "visible" ? (
             <span className="text-xs leading-[1.45] text-muted-foreground">
-              Its deck is Visible: Members see these changes as soon as you import.
+              Its {IMPORT_WORDS[kind].content} is Visible: Members see these changes as soon as you
+              import.
             </span>
           ) : null}
         </span>
       </th>
       <td className="py-2 pr-3 font-mono text-[11px] font-bold tracking-[0.04em]">
-        {importDeckLabel(topic.deck)}
+        {importContentLabel(kind, topic.content)}
         {topic.mode === "replace" ? (
           <span className="block font-sans text-xs font-normal text-muted-foreground">Replace</span>
         ) : null}
@@ -146,15 +210,17 @@ function TopicRow({ topic, subject }: { topic: CardImportTopic; subject: string 
 }
 
 /** The preview: each Topic's counts, then the problems, which block importing. */
-function Preview({ preview }: { preview: CardImportPreview }) {
+function Preview({ kind, preview }: { kind: ImportKind; preview: ImportPreview }) {
   const { topics, problems, subject } = preview;
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-[15px] font-bold">{importTotals(preview)}</p>
+      <p className="text-[15px] font-bold">{importTotals(kind, preview)}</p>
       {topics.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[520px] border-collapse text-sm">
-            <caption className={`${LABEL} pb-2 text-left text-ayc-blue`}>CARDS PER TOPIC</caption>
+            <caption className={`${LABEL} pb-2 text-left text-ayc-blue`}>
+              {IMPORT_WORDS[kind].item.many.toUpperCase()} PER TOPIC
+            </caption>
             <thead>
               <tr className={`${LABEL} border-b-[1.5px] text-left`}>
                 <th scope="col" className="py-1.5 pr-3">
@@ -179,7 +245,7 @@ function Preview({ preview }: { preview: CardImportPreview }) {
             </thead>
             <tbody>
               {topics.map((topic) => (
-                <TopicRow key={topic.name} topic={topic} subject={subject.code} />
+                <TopicRow key={topic.name} kind={kind} topic={topic} subject={subject.code} />
               ))}
             </tbody>
           </table>
@@ -236,16 +302,19 @@ function Preview({ preview }: { preview: CardImportPreview }) {
 
 /** The success summary: each Topic the import changed, with where to see it. */
 function Done({
+  kind,
   result,
   exam,
   subject,
   onAgain,
 }: {
-  result: CardImportResult;
-  exam: CardImportProps["exam"];
-  subject: CardImportProps["subject"];
+  kind: ImportKind;
+  result: ImportResult;
+  exam: ContentImportProps["exam"];
+  subject: ContentImportProps["subject"];
   onAgain: () => void;
 }) {
+  const { content, contents, contentScreen } = IMPORT_WORDS[kind];
   return (
     <div className="flex flex-col gap-3">
       <p className={`${LABEL} text-ayc-blue`}>✓ IMPORTED</p>
@@ -260,13 +329,21 @@ function Done({
           return (
             <li key={topic.topicId} className="border-b border-ayc-ruled py-2 last:border-b-0">
               <span className="font-bold">{topic.name}</span>
-              {topic.created ? " · new Topic, with a Hidden deck" : ""} · {changes.join(", ")}
+              {topic.created ? ` · new Topic, with a Hidden ${content}` : ""} · {changes.join(", ")}{" "}
+              ·{" "}
+              <Link
+                href={contentScreen(topic.topicId)}
+                className="font-semibold text-ayc-blue underline-offset-2 hover:underline"
+              >
+                Open the {content}
+                <span className="sr-only"> in {topic.name}</span>
+              </Link>
             </li>
           );
         })}
       </ul>
       <p className="text-[13px] leading-[1.45]">
-        New decks are Hidden, so Members don’t see them until Staff make them Visible.
+        New {contents} are Hidden, so Members don’t see them until Staff make them Visible.
       </p>
       <div className="flex flex-wrap gap-2.5">
         <Link
@@ -284,15 +361,18 @@ function Done({
 }
 
 /**
- * A Subject's card import (Phase 3, ticket 06; spec, Phase 3 → Spreadsheet
- * import; stories 118, 120–124, 133p): choose the CSV (and a zip of images),
- * which upload straight to the private content bucket, then "Check file" for
- * the preview: each Topic's counts, the Topics it would create, and every
- * problem with its row and column. "Import" stays off while there are
- * problems. The server checks everything again when importing, saves all of
- * it or nothing, and refuses if the Subject changed since the check.
+ * A Subject's spreadsheet import (Phase 3, tickets 06 and 09; spec, Phase 3
+ * → Spreadsheet import; stories 118–124, 133l, 133p), of flashcards or quiz
+ * questions: choose the CSV (and a zip of images or figures), which upload
+ * straight to the private content bucket, then "Check file" for the preview:
+ * each Topic's counts, the Topics it would create, and every problem with
+ * its row and column. "Import" stays off while there are problems. The
+ * server checks everything again when importing, saves all of it or
+ * nothing, and refuses if the Subject changed since the check.
  */
-export function CardImport({ exam, subject, actions }: CardImportProps) {
+export function ContentImport({ kind, exam, subject, actions }: ContentImportProps) {
+  const screen = SCREENS[kind];
+  const words = IMPORT_WORDS[kind];
   const form = useRef<HTMLFormElement>(null);
   const csvInput = useRef<HTMLInputElement>(null);
   const zipInput = useRef<HTMLInputElement>(null);
@@ -308,15 +388,15 @@ export function CardImport({ exam, subject, actions }: CardImportProps) {
    * Uploads one file to the private content bucket, and gives its path. A
    * file already uploaded, unchanged, isn't sent again.
    */
-  async function upload(file: File, kind: "csv" | "zip") {
-    const what = kind.toUpperCase();
-    const before = uploaded.current[kind];
+  async function upload(file: File, which: "csv" | "zip") {
+    const what = which.toUpperCase();
+    const before = uploaded.current[which];
     if (before?.file === fileKey(file)) return before.path;
     setProgress(`UPLOADING THE ${what} · 0%`);
     const ticket = await callAdminAction(actions.createImportUpload, {
-      input: { purpose: `card-import-${kind}`, size: file.size },
+      input: { purpose: `import-${which}`, size: file.size },
     });
-    if (ticket.status !== "saved") throw new ImportStop(refusalText(ticket, "check"));
+    if (ticket.status !== "saved") throw new ImportStop(refusalText(ticket, "check", kind));
     try {
       await putFile(
         ticket.value.uploadUrl,
@@ -327,7 +407,7 @@ export function CardImport({ exam, subject, actions }: CardImportProps) {
     } catch {
       throw new ImportStop(`THE ${what} DIDN’T UPLOAD · CHECK YOUR CONNECTION AND TRY AGAIN`);
     }
-    uploaded.current[kind] = { file: fileKey(file), path: ticket.value.path };
+    uploaded.current[which] = { file: fileKey(file), path: ticket.value.path };
     return ticket.value.path;
   }
 
@@ -341,7 +421,7 @@ export function CardImport({ exam, subject, actions }: CardImportProps) {
   /** Checks the uploaded files, and shows the preview, or why it can't. */
   async function check(files: UploadedFiles, checkMode: ImportMode) {
     setProgress("CHECKING THE FILE…");
-    const state = await callAdminAction(actions.checkCardImport, {
+    const state = await callAdminAction(actions.checkImport, {
       input: { exam: exam.code, subject: subject.code, ...files, mode: checkMode },
     });
     setProgress(null);
@@ -351,7 +431,7 @@ export function CardImport({ exam, subject, actions }: CardImportProps) {
     }
     const gone = filesGone(state);
     if (gone) chooseAgain(gone);
-    else setNotice(noticeOf(state, "check"));
+    else setNotice(noticeOf(state, "check", kind));
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -360,8 +440,8 @@ export function CardImport({ exam, subject, actions }: CardImportProps) {
     const csvFile = csvInput.current?.files?.[0] ?? null;
     const zipFile = zipInput.current?.files?.[0] ?? null;
     const errors = {
-      csv: csvFile ? (importFileProblem(csvFile, "csv") ?? undefined) : "CHOOSE THE CSV FILE",
-      zip: zipFile ? (importFileProblem(zipFile, "zip") ?? undefined) : undefined,
+      csv: csvFile ? (importFileProblem(csvFile, "csv", kind) ?? undefined) : "CHOOSE THE CSV FILE",
+      zip: zipFile ? (importFileProblem(zipFile, "zip", kind) ?? undefined) : undefined,
     };
     setFileErrors(errors);
     setNotice(null);
@@ -377,7 +457,9 @@ export function CardImport({ exam, subject, actions }: CardImportProps) {
       } catch (error) {
         setProgress(null);
         const text =
-          error instanceof ImportStop ? error.message : refusalText({ status: "failed" }, "check");
+          error instanceof ImportStop
+            ? error.message
+            : refusalText({ status: "failed" }, "check", kind);
         setNotice({ text, conflict: false });
       }
     });
@@ -398,7 +480,7 @@ export function CardImport({ exam, subject, actions }: CardImportProps) {
     startTransition(async () => {
       setProgress("IMPORTING…");
       // The preview's own mode: the one it showed the counts for.
-      const state = await callAdminAction(actions.importCards, {
+      const state = await callAdminAction(actions.confirmImport, {
         input: {
           exam: exam.code,
           subject: subject.code,
@@ -416,7 +498,7 @@ export function CardImport({ exam, subject, actions }: CardImportProps) {
       }
       const gone = filesGone(state);
       if (gone) chooseAgain(gone);
-      else setNotice(noticeOf(state, "import"));
+      else setNotice(noticeOf(state, "import", kind));
     });
   }
 
@@ -440,46 +522,41 @@ export function CardImport({ exam, subject, actions }: CardImportProps) {
   if (step.kind === "done") {
     return (
       <section
-        aria-labelledby="card-import-heading"
+        aria-labelledby="content-import-heading"
         className="flex max-w-3xl min-w-0 flex-col gap-3 border-[1.5px] bg-ayc-paper p-4.5"
       >
-        <h2 id="card-import-heading" className={`${LABEL} text-ayc-blue`}>
-          {exam.code} · {subject.code} · IMPORT CARDS
+        <h2 id="content-import-heading" className={`${LABEL} text-ayc-blue`}>
+          {exam.code} · {subject.code} · {screen.title}
         </h2>
-        <Done result={step.result} exam={exam} subject={subject} onAgain={startAgain} />
+        <Done kind={kind} result={step.result} exam={exam} subject={subject} onAgain={startAgain} />
       </section>
     );
   }
 
   return (
     <section
-      aria-labelledby="card-import-heading"
+      aria-labelledby="content-import-heading"
       className="flex max-w-3xl min-w-0 flex-col gap-4 border-[1.5px] bg-ayc-paper p-4.5"
     >
       <div className="flex flex-col gap-0.5">
-        <h2 id="card-import-heading" className={`${LABEL} text-ayc-blue`}>
-          {exam.code} · {subject.code} · IMPORT CARDS
+        <h2 id="content-import-heading" className={`${LABEL} text-ayc-blue`}>
+          {exam.code} · {subject.code} · {screen.title}
         </h2>
         <p className="text-sm">{subject.name}</p>
       </div>
 
       <div className="flex flex-col gap-1.5 border border-dashed border-ayc-rule p-3.5 text-[13px] leading-[1.5]">
-        <p>
-          One row per card, with the columns <b>topic, front, back, note, image</b>. Maths goes in{" "}
-          <code>$...$</code>, or <code>$$...$$</code> on its own line; write a dollar sign as{" "}
-          <code>\$</code>. <b>image</b> names a JPEG, PNG or WebP (up to 5 MB) in the zip. Topics
-          are matched by name; a new name creates a Topic.
-        </p>
+        <p>{screen.help}</p>
         <p className="flex flex-wrap gap-x-4 gap-y-1">
           <a
-            href={paths.admin.cardImportTemplate}
+            href={screen.template.href}
             download
             className="font-semibold text-ayc-blue underline-offset-2 hover:underline"
           >
-            Download the template (CSV)
+            {screen.template.label}
           </a>
           <a
-            href={paths.admin.cardImportExampleImages}
+            href={paths.admin.importExampleImages}
             download
             className="font-semibold text-ayc-blue underline-offset-2 hover:underline"
           >
@@ -490,51 +567,53 @@ export function CardImport({ exam, subject, actions }: CardImportProps) {
 
       <form ref={form} noValidate onSubmit={submit} className="flex flex-col gap-3.5">
         <div className="flex flex-col gap-1">
-          <label htmlFor="card-import-csv" className={LABEL}>
+          <label htmlFor="import-csv" className={LABEL}>
             CSV FILE
           </label>
           <input
             ref={csvInput}
-            id="card-import-csv"
+            id="import-csv"
             name="csv"
             type="file"
             accept=".csv,text/csv"
             aria-invalid={fileErrors.csv ? true : undefined}
-            aria-describedby={fileErrors.csv ? "card-import-csv-error" : undefined}
+            aria-describedby={fileErrors.csv ? "import-csv-error" : undefined}
             onChange={() => step.kind === "preview" && startAgainKeepingFiles()}
             className="text-sm file:mr-3 file:min-h-9 file:cursor-pointer file:border-[1.5px] file:bg-ayc-paper file:px-3 file:font-bold"
           />
           {fileErrors.csv ? (
-            <p id="card-import-csv-error" className={`${LABEL} text-destructive`}>
+            <p id="import-csv-error" className={`${LABEL} text-destructive`}>
               {fileErrors.csv}
             </p>
           ) : null}
         </div>
         <div className="flex flex-col gap-1">
-          <label htmlFor="card-import-zip" className={LABEL}>
-            ZIP OF IMAGES (OPTIONAL)
+          <label htmlFor="import-zip" className={LABEL}>
+            ZIP OF {words.files.toUpperCase()} (OPTIONAL)
           </label>
           <input
             ref={zipInput}
-            id="card-import-zip"
+            id="import-zip"
             name="zip"
             type="file"
             accept=".zip,application/zip"
             aria-invalid={fileErrors.zip ? true : undefined}
-            aria-describedby={fileErrors.zip ? "card-import-zip-error" : undefined}
+            aria-describedby={fileErrors.zip ? "import-zip-error" : undefined}
             onChange={() => step.kind === "preview" && startAgainKeepingFiles()}
             className="text-sm file:mr-3 file:min-h-9 file:cursor-pointer file:border-[1.5px] file:bg-ayc-paper file:px-3 file:font-bold"
           />
           {fileErrors.zip ? (
-            <p id="card-import-zip-error" className={`${LABEL} text-destructive`}>
+            <p id="import-zip-error" className={`${LABEL} text-destructive`}>
               {fileErrors.zip}
             </p>
           ) : null}
         </div>
 
         <fieldset className="flex flex-col gap-1.5">
-          <legend className={`${LABEL} mb-1`}>IF A TOPIC ALREADY HAS CARDS</legend>
-          {MODES.map((option) => (
+          <legend className={`${LABEL} mb-1`}>
+            IF A TOPIC ALREADY HAS {words.item.many.toUpperCase()}
+          </legend>
+          {modesOf(kind).map((option) => (
             <label key={option.mode} className="flex cursor-pointer items-start gap-2 text-sm">
               <input
                 type="radio"
@@ -591,32 +670,32 @@ export function CardImport({ exam, subject, actions }: CardImportProps) {
 
       {preview ? (
         <section
-          aria-labelledby="card-import-preview"
+          aria-labelledby="content-import-preview"
           className="flex flex-col gap-3 border-t-[1.5px] pt-4"
         >
-          <h2 id="card-import-preview" className={`${LABEL} text-ayc-blue`}>
+          <h2 id="content-import-preview" className={`${LABEL} text-ayc-blue`}>
             PREVIEW · NOTHING IS SAVED YET
           </h2>
-          <Preview preview={preview} />
+          <Preview kind={kind} preview={preview} />
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               disabled={blocked || pending}
-              aria-describedby={blocked ? "card-import-blocked" : undefined}
+              aria-describedby={blocked ? "content-import-blocked" : undefined}
               onClick={importNow}
               className={`${BUTTON} bg-primary text-primary-foreground`}
             >
               Import
             </button>
             {blocked ? (
-              <p id="card-import-blocked" className="text-[13px] text-muted-foreground">
+              <p id="content-import-blocked" className="text-[13px] text-muted-foreground">
                 {preview.problems.length > 0
                   ? "Fix the problems first: nothing is imported while there are any."
-                  : "The file has no cards to import."}
+                  : `The file has no ${words.item.many} to import.`}
               </p>
             ) : (
               <p className="text-[13px] text-muted-foreground">
-                Everything is saved together, or nothing is. New decks are Hidden.
+                Everything is saved together, or nothing is. New {words.contents} are Hidden.
               </p>
             )}
           </div>

@@ -1,15 +1,23 @@
 import { zipSync } from "fflate";
 
+import { CARD_IMPORT_COLUMNS } from "@/lib/content-import/cards";
+import { QUIZ_IMPORT_COLUMNS } from "@/lib/content-import/quizzes";
 import type { StaffActor } from "@/services/admin.types";
 import { createContentUpload, receiveSampleUpload } from "@/services/uploads.mock";
 import type { ContentUploadTicket, ImportUploadPurpose } from "@/services/uploads.types";
 
 /** The card import template's header row. */
-export const IMPORT_HEADER = "topic,front,back,note,image";
+export const IMPORT_HEADER = CARD_IMPORT_COLUMNS.join(",");
 
-/** A CSV file's bytes: the header, then each row. */
+/** The quiz import template's header row. */
+export const QUIZ_IMPORT_HEADER = QUIZ_IMPORT_COLUMNS.join(",");
+
+/** A CSV file's bytes: the header (the card template's unless given), then each row. */
 export const importCsv = (rows: string[], header = IMPORT_HEADER) =>
   new TextEncoder().encode([header, ...rows].join("\n"));
+
+/** A quiz CSV file's bytes: the quiz template's header, then each row. */
+export const quizCsv = (rows: string[]) => importCsv(rows, QUIZ_IMPORT_HEADER);
 
 /** A zip of the files, by their paths inside it. */
 export const importZip = (files: Record<string, Uint8Array>) => zipSync(files);
@@ -65,7 +73,7 @@ export async function uploadSampleImport({ csv, zip = null, send = true }: Impor
     return answer === "stored";
   };
   return {
-    csv: await uploadContent(create, put, "card-import-csv", csv, send),
-    zip: zip ? await uploadContent(create, put, "card-import-zip", zip, send) : null,
+    csv: await uploadContent(create, put, "import-csv", csv, send),
+    zip: zip ? await uploadContent(create, put, "import-zip", zip, send) : null,
   } satisfies ImportPaths;
 }

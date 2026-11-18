@@ -1,3 +1,4 @@
+import { DEFAULT_QUIZ_SETTINGS } from "@/lib/quizzes/quiz-rules";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import type {
   ContentRecords,
@@ -96,6 +97,7 @@ export function sampleContent(catalogue: CatalogueSeed): ContentRecords {
             topicId: id,
             visibility,
             freePreview,
+            ...DEFAULT_QUIZ_SETTINGS,
           });
         }
         if (sample.reviewerPdf) {

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { IMPORT_FILES } from "@/lib/card-import/limits";
+import { IMPORT_FILES } from "@/lib/content-import/limits";
 import {
   CARD_IMAGE_TYPES,
   type CardImageType,
@@ -127,21 +127,17 @@ export type UploadLookup = (
 // reads them back, to plan and confirm an import or to save a card.
 
 /** What a private upload is for: an import's CSV or zip of images, or a card's back image. */
-export const CONTENT_UPLOAD_PURPOSES = [
-  "card-import-csv",
-  "card-import-zip",
-  "card-image",
-] as const;
+export const CONTENT_UPLOAD_PURPOSES = ["import-csv", "import-zip", "card-image"] as const;
 
 export type ContentUploadPurpose = (typeof CONTENT_UPLOAD_PURPOSES)[number];
 
 /** The import's private uploads. */
 export type ImportUploadPurpose = Exclude<ContentUploadPurpose, "card-image">;
 
-/** Each import upload's rules (src/lib/card-import/limits.ts): its type, extension and largest size. */
+/** Each import upload's rules (src/lib/content-import/limits.ts): its type, extension and largest size. */
 export const CONTENT_UPLOADS = {
-  "card-import-csv": IMPORT_FILES.csv,
-  "card-import-zip": IMPORT_FILES.zip,
+  "import-csv": IMPORT_FILES.csv,
+  "import-zip": IMPORT_FILES.zip,
 } as const satisfies Record<ImportUploadPurpose, (typeof IMPORT_FILES)[keyof typeof IMPORT_FILES]>;
 
 export type ContentUploadType =
@@ -174,8 +170,8 @@ export const contentUploadRequestSchema = z
   .discriminatedUnion(
     "purpose",
     [
-      z.object({ purpose: z.literal("card-import-csv"), size: importFileSize }),
-      z.object({ purpose: z.literal("card-import-zip"), size: importFileSize }),
+      z.object({ purpose: z.literal("import-csv"), size: importFileSize }),
+      z.object({ purpose: z.literal("import-zip"), size: importFileSize }),
       cardImageFileSchema.extend({ purpose: z.literal("card-image") }),
     ],
     {

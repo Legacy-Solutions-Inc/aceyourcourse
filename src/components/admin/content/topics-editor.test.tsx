@@ -120,12 +120,26 @@ describe("TopicsEditor", () => {
     );
   });
 
-  it("opens the Subject's card import from “Import cards”", () => {
+  it("opens each Topic's quiz screen from “Quiz”", () => {
     renderEditor();
+
+    expect(screen.getByRole("link", { name: "Quiz in Surveying" })).toHaveAttribute(
+      "href",
+      `/admin/content/quiz?topic=${SURVEYING.id}`,
+    );
+  });
+
+  it("opens the Subject's card import from “Import cards”, and its quiz import from “Import quizzes”", () => {
+    renderEditor();
+    const subject = `exam=${LIST.exam.code.toLowerCase()}&subject=${LIST.subject.code.toLowerCase()}`;
 
     expect(screen.getByRole("link", { name: "Import cards" })).toHaveAttribute(
       "href",
-      `/admin/content/import?exam=${LIST.exam.code.toLowerCase()}&subject=${LIST.subject.code.toLowerCase()}`,
+      `/admin/content/import?${subject}`,
+    );
+    expect(screen.getByRole("link", { name: "Import quizzes" })).toHaveAttribute(
+      "href",
+      `/admin/content/import?${subject}&kind=quizzes`,
     );
   });
 

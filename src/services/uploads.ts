@@ -54,9 +54,10 @@ export interface UploadService {
 }
 
 /**
- * The private content bucket, as the Admin's card import (ticket 06) and card
- * editor (ticket 07) use it on the server, and the Member seam signs card
- * images from (ticket 08). Never handed to the browser.
+ * The private content bucket, as the Admin's imports (tickets 06 and 09), card
+ * editor (ticket 07) and quiz screen (ticket 09) use it on the server, and the
+ * Member seam signs card images from (ticket 08). Never handed to the browser.
+ * A quiz figure has a card image's rules, so the same calls serve both.
  */
 export interface ContentFiles {
   /**
@@ -65,8 +66,9 @@ export interface ContentFiles {
    */
   readUpload(path: string, purpose: ContentUploadPurpose): Promise<Uint8Array | null>;
   /**
-   * A stored card image (decks/<deck>/<file>), with its type, for Staff to see
-   * through the Admin's image route (ticket 07), or null when there's none.
+   * A stored card image (decks/<deck>/<file>) or quiz figure
+   * (quizzes/<quiz>/<file>), with its type, for Staff to see through the
+   * Admin's image routes (tickets 07 and 09), or null when there's none.
    * Throws when Storage can't say.
    */
   read(path: string): Promise<CardImageFile | null>;
@@ -75,10 +77,11 @@ export interface ContentFiles {
   /** Deletes these files, card images or uploads. Logs a failure, and never throws. */
   remove(paths: readonly string[]): Promise<void>;
   /**
-   * Signed URLs for stored card images, by path, that stop working after
-   * `seconds` (ticket 08): only the Member seam asks, and only for a deck the
-   * access decision allowed. A path that isn't a card image's, or whose file
-   * is gone, gets none. Throws when Storage can't sign them.
+   * Signed URLs for stored card images (or quiz figures), by path, that stop
+   * working after `seconds` (ticket 08): only the Member seam asks, and only
+   * for a deck (or quiz) the access decision allowed. A path that isn't a
+   * stored image's, or whose file is gone, gets none. Throws when Storage
+   * can't sign them.
    */
   signedUrls(paths: readonly string[], seconds: number): Promise<Record<string, string>>;
 }

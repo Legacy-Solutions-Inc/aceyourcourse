@@ -96,9 +96,13 @@ function isContentUploadPath(path: string, purpose: ContentUploadPurpose): boole
   return new RegExp(pattern).test(path);
 }
 
-/** Pure: whether a path is where a card's image is stored: decks/<deck uuid>/<uuid>.<jpg|png|webp>. */
-const isCardImagePath = (path: string) =>
-  new RegExp(`^decks/${UPLOAD_ID}/${UPLOAD_ID}\\.${EXTENSION}$`).test(path);
+/**
+ * Pure: whether a path is where a stored image is: a card's back image at
+ * decks/<deck uuid>/<uuid>.<jpg|png|webp> (ticket 06), or a quiz question's
+ * figure at quizzes/<quiz uuid>/<uuid>.<jpg|png|webp> (ticket 09).
+ */
+const isStoredImagePath = (path: string) =>
+  new RegExp(`^(decks|quizzes)/${UPLOAD_ID}/${UPLOAD_ID}\\.${EXTENSION}$`).test(path);
 
 /** Pure: the purpose of the upload filed at this path, or null when no upload is. */
 function uploadPurposeAt(path: string): UploadRequest["purpose"] | null {
@@ -292,7 +296,7 @@ export function createStorageArm(connect: () => StorageConnection): StorageArm {
       return new Uint8Array(await data.arrayBuffer());
     },
     async read(path) {
-      if (!isCardImagePath(path)) return null;
+      if (!isStoredImagePath(path)) return null;
       const files = contentBucket();
       // A file that isn't there is false, with its 404 as the error.
       const exists = await files.exists(path).catch((error: unknown) => {
@@ -312,7 +316,7 @@ export function createStorageArm(connect: () => StorageConnection): StorageArm {
       if (error) throw new Error(`Storage couldn't store a card image: ${error.message}`);
     },
     async signedUrls(paths, seconds) {
-      const wanted = [...new Set(paths)].filter(isCardImagePath);
+      const wanted = [...new Set(paths)].filter(isStoredImagePath);
       if (wanted.length === 0) return {};
       const { data, error } = await contentBucket().createSignedUrls(wanted, seconds);
       if (error) throw new Error(`Storage couldn't sign card images: ${error.message}`);

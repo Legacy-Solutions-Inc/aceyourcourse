@@ -3,12 +3,13 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AdminActionState } from "@/lib/admin/action";
-import type { CardImportPreview, CardImportResult } from "@/services/admin.types";
+import type { ImportPreview, ImportResult } from "@/services/admin.types";
 import type { ContentUploadTicket } from "@/services/uploads.types";
 
-import { CardImport, type CardImportActions } from "./card-import";
+import { ContentImport, type ContentImportActions } from "./content-import";
 
-// The card import screen (Phase 3, ticket 06; stories 118, 120–124), with stub
+// The import screen, for cards (Phase 3, ticket 06; stories 118, 120–124) and
+// quizzes (ticket 09; stories 119–124), with stub
 // Server Actions. The browser's PUT to the upload URL is the network boundary,
 // so put-file is replaced.
 const network = vi.hoisted(() => ({
@@ -33,7 +34,7 @@ const EXAM = { code: "CE", name: "Civil Engineering" };
 const SUBJECT = { code: "MSTC", name: "Mathematics, Surveying & Transportation Engineering" };
 const BASED_ON = "a".repeat(64);
 
-const PREVIEW: CardImportPreview = {
+const PREVIEW: ImportPreview = {
   exam: EXAM,
   subject: SUBJECT,
   mode: "add",
@@ -42,7 +43,7 @@ const PREVIEW: CardImportPreview = {
       name: "Simple Curves",
       topicId: "t-simple",
       similarTo: null,
-      deck: "visible",
+      content: "visible",
       mode: "add",
       counts: { add: 1, replace: 0, keep: 0, remove: 0 },
     },
@@ -50,7 +51,7 @@ const PREVIEW: CardImportPreview = {
       name: "Simple Curve",
       topicId: null,
       similarTo: "Simple Curves",
-      deck: "new",
+      content: "new",
       mode: "add",
       counts: { add: 2, replace: 0, keep: 0, remove: 0 },
     },
@@ -59,11 +60,11 @@ const PREVIEW: CardImportPreview = {
   basedOn: BASED_ON,
 };
 
-const RESULT: CardImportResult = {
+const RESULT: ImportResult = {
   topics: [
     {
       topicId: "t-new",
-      deckId: "d-new",
+      contentId: "d-new",
       name: "Simple Curve",
       created: true,
       counts: { add: 2, replace: 0, keep: 0, remove: 0 },
@@ -97,7 +98,7 @@ function tickets() {
         value: {
           uploadUrl: `/api/dev/uploads/${count}?token=t`,
           path: `uploads/${count}`,
-          contentType: purpose === "card-import-csv" ? "text/csv" : "application/zip",
+          contentType: purpose === "import-csv" ? "text/csv" : "application/zip",
         },
       };
     },
@@ -108,14 +109,17 @@ const csvFile = (name = "cards.csv") =>
   new File(["topic,front,back,note,image\n"], name, { type: "application/vnd.ms-excel" });
 const zipFile = () => new File([new Uint8Array([0x50, 0x4b, 3, 4])], "images.zip");
 
-function renderImport(actions: Partial<CardImportActions> = {}) {
-  const all: CardImportActions = {
+function renderImport(
+  actions: Partial<ContentImportActions> = {},
+  kind: "cards" | "quizzes" = "cards",
+) {
+  const all: ContentImportActions = {
     createImportUpload: tickets(),
-    checkCardImport: answering<CardImportPreview>({ status: "saved", value: PREVIEW }),
-    importCards: answering<CardImportResult>({ status: "saved", value: RESULT }),
+    checkImport: answering<ImportPreview>({ status: "saved", value: PREVIEW }),
+    confirmImport: answering<ImportResult>({ status: "saved", value: RESULT }),
     ...actions,
   };
-  render(<CardImport exam={EXAM} subject={SUBJECT} actions={all} />);
+  render(<ContentImport kind={kind} exam={EXAM} subject={SUBJECT} actions={all} />);
   return all;
 }
 
@@ -134,7 +138,7 @@ beforeEach(() => {
   network.fail = false;
 });
 
-describe("CardImport", () => {
+describe("ContentImport for cards", () => {
   it("offers the template and its example image to download", () => {
     renderImport();
 
@@ -154,17 +158,17 @@ describe("CardImport", () => {
 
     await screen.findByRole("heading", { name: "PREVIEW · NOTHING IS SAVED YET" });
     expect(actions.createImportUpload).toHaveBeenNthCalledWith(1, expect.anything(), {
-      input: { purpose: "card-import-csv", size: csvFile().size },
+      input: { purpose: "import-csv", size: csvFile().size },
     });
     expect(actions.createImportUpload).toHaveBeenNthCalledWith(2, expect.anything(), {
-      input: { purpose: "card-import-zip", size: zipFile().size },
+      input: { purpose: "import-zip", size: zipFile().size },
     });
     // The CSV goes as text/csv, whatever the browser called it.
     expect(network.sent).toEqual([
       { url: "/api/dev/uploads/1?token=t", name: "cards.csv", contentType: "text/csv" },
       { url: "/api/dev/uploads/2?token=t", name: "images.zip", contentType: "application/zip" },
     ]);
-    expect(actions.checkCardImport).toHaveBeenCalledWith(expect.anything(), {
+    expect(actions.checkImport).toHaveBeenCalledWith(expect.anything(), {
       input: { exam: "CE", subject: "MSTC", csv: "uploads/1", zip: "uploads/2", mode: "add" },
     });
 
@@ -197,7 +201,7 @@ describe("CardImport", () => {
 
   it("asks “did you rename it?” only of a new Topic whose name is close to an existing one", async () => {
     renderImport({
-      checkCardImport: answering<CardImportPreview>({
+      checkImport: answering<ImportPreview>({
         status: "saved",
         value: {
           ...PREVIEW,
@@ -215,7 +219,7 @@ describe("CardImport", () => {
 
   it("checks again without uploading files it already sent, and uploads a file chosen anew", async () => {
     const actions = renderImport({
-      checkCardImport: answering<CardImportPreview>(
+      checkImport: answering<ImportPreview>(
         { status: "saved", value: PREVIEW },
         { status: "saved", value: PREVIEW },
         { status: "saved", value: PREVIEW },
@@ -225,23 +229,23 @@ describe("CardImport", () => {
     await screen.findByRole("button", { name: "Import" });
 
     await user.click(screen.getByRole("button", { name: "Check again" }));
-    await waitFor(() => expect(actions.checkCardImport).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(actions.checkImport).toHaveBeenCalledTimes(2));
     expect(actions.createImportUpload).toHaveBeenCalledTimes(2);
 
     await user.upload(screen.getByLabelText("CSV FILE"), csvFile("fixed.csv"));
     await user.click(screen.getByRole("button", { name: "Check file" }));
-    await waitFor(() => expect(actions.checkCardImport).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(actions.checkImport).toHaveBeenCalledTimes(3));
     expect(actions.createImportUpload).toHaveBeenCalledTimes(3);
-    expect(actions.checkCardImport).toHaveBeenLastCalledWith(expect.anything(), {
+    expect(actions.checkImport).toHaveBeenLastCalledWith(expect.anything(), {
       input: expect.objectContaining({ csv: "uploads/3", zip: "uploads/2" }),
     });
   });
 
   it("locks Replace and Add while it checks", async () => {
-    let answer: (state: AdminActionState<CardImportPreview>) => void = () => {};
+    let answer: (state: AdminActionState<ImportPreview>) => void = () => {};
     renderImport({
-      checkCardImport: vi.fn(
-        () => new Promise<AdminActionState<CardImportPreview>>((resolve) => (answer = resolve)),
+      checkImport: vi.fn(
+        () => new Promise<AdminActionState<ImportPreview>>((resolve) => (answer = resolve)),
       ),
     });
     await chooseAndCheck();
@@ -253,7 +257,7 @@ describe("CardImport", () => {
 
   it("imports in the mode the preview showed", async () => {
     const actions = renderImport({
-      checkCardImport: answering<CardImportPreview>({
+      checkImport: answering<ImportPreview>({
         status: "saved",
         value: { ...PREVIEW, mode: "replace" },
       }),
@@ -262,7 +266,7 @@ describe("CardImport", () => {
     await user.click(await screen.findByRole("button", { name: "Import" }));
 
     await screen.findByText("✓ IMPORTED");
-    expect(actions.importCards).toHaveBeenCalledWith(expect.anything(), {
+    expect(actions.confirmImport).toHaveBeenCalledWith(expect.anything(), {
       input: expect.objectContaining({ mode: "replace" }),
     });
   });
@@ -273,14 +277,14 @@ describe("CardImport", () => {
 
     await screen.findByRole("button", { name: "Import" });
     expect(actions.createImportUpload).toHaveBeenCalledTimes(1);
-    expect(actions.checkCardImport).toHaveBeenCalledWith(expect.anything(), {
+    expect(actions.checkImport).toHaveBeenCalledWith(expect.anything(), {
       input: expect.objectContaining({ csv: "uploads/1", zip: null }),
     });
   });
 
   it("lists the problems where they are, and keeps Import off while there are any", async () => {
     renderImport({
-      checkCardImport: answering<CardImportPreview>({
+      checkImport: answering<ImportPreview>({
         status: "saved",
         value: {
           ...PREVIEW,
@@ -315,7 +319,7 @@ describe("CardImport", () => {
     await user.click(await screen.findByRole("button", { name: "Import" }));
 
     await screen.findByText("✓ IMPORTED");
-    expect(actions.importCards).toHaveBeenCalledWith(expect.anything(), {
+    expect(actions.confirmImport).toHaveBeenCalledWith(expect.anything(), {
       input: {
         exam: "CE",
         subject: "MSTC",
@@ -336,7 +340,7 @@ describe("CardImport", () => {
 
   it("checks the same files again in Replace, without uploading them again", async () => {
     const actions = renderImport({
-      checkCardImport: answering<CardImportPreview>(
+      checkImport: answering<ImportPreview>(
         { status: "saved", value: PREVIEW },
         { status: "saved", value: { ...PREVIEW, mode: "replace" } },
       ),
@@ -346,8 +350,8 @@ describe("CardImport", () => {
 
     await user.click(screen.getByRole("radio", { name: /^Replace/ }));
 
-    await waitFor(() => expect(actions.checkCardImport).toHaveBeenCalledTimes(2));
-    expect(actions.checkCardImport).toHaveBeenLastCalledWith(expect.anything(), {
+    await waitFor(() => expect(actions.checkImport).toHaveBeenCalledTimes(2));
+    expect(actions.checkImport).toHaveBeenLastCalledWith(expect.anything(), {
       input: expect.objectContaining({ csv: "uploads/1", zip: "uploads/2", mode: "replace" }),
     });
     expect(actions.createImportUpload).toHaveBeenCalledTimes(2);
@@ -377,12 +381,12 @@ describe("CardImport", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "THE CSV DIDN’T UPLOAD · CHECK YOUR CONNECTION AND TRY AGAIN",
     );
-    expect(actions.checkCardImport).not.toHaveBeenCalled();
+    expect(actions.checkImport).not.toHaveBeenCalled();
   });
 
   it("asks for the files again when the server no longer has them", async () => {
     renderImport({
-      checkCardImport: answering<CardImportPreview>({
+      checkImport: answering<ImportPreview>({
         status: "refused",
         error: { kind: "invalid", fieldErrors: { csv: ["UPLOAD THE CSV FILE AGAIN"] } },
       }),
@@ -395,11 +399,11 @@ describe("CardImport", () => {
 
   it("explains a conflict, and checks the file again on request", async () => {
     const actions = renderImport({
-      checkCardImport: answering<CardImportPreview>(
+      checkImport: answering<ImportPreview>(
         { status: "saved", value: PREVIEW },
         { status: "saved", value: { ...PREVIEW, basedOn: "b".repeat(64) } },
       ),
-      importCards: answering<CardImportResult>({
+      confirmImport: answering<ImportResult>({
         status: "refused",
         error: { kind: "conflict", savedBy: null, savedAt: "2026-11-17T03:42:00.000Z" },
       }),
@@ -413,12 +417,12 @@ describe("CardImport", () => {
     );
     await user.click(within(alert).getByRole("button", { name: "Check the file again" }));
 
-    await waitFor(() => expect(actions.checkCardImport).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(actions.checkImport).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
   });
 
   it("says nothing was saved when the import breaks down", async () => {
-    renderImport({ importCards: answering<CardImportResult>({ status: "failed" }) });
+    renderImport({ confirmImport: answering<ImportResult>({ status: "failed" }) });
     const user = await chooseAndCheck();
     await user.click(await screen.findByRole("button", { name: "Import" }));
 
@@ -429,7 +433,7 @@ describe("CardImport", () => {
 
   it("refuses the server's formError, such as problems found on import", async () => {
     renderImport({
-      importCards: answering<CardImportResult>({
+      confirmImport: answering<ImportResult>({
         status: "refused",
         error: {
           kind: "invalid",
@@ -443,6 +447,90 @@ describe("CardImport", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "FIX THE PROBLEMS IN THE FILE, THEN CHECK IT AGAIN",
+    );
+  });
+});
+
+describe("ContentImport for quizzes", () => {
+  const quizzes = (actions: Partial<ContentImportActions> = {}) => renderImport(actions, "quizzes");
+
+  it("offers the quiz template and its example figure, and asks for a zip of figures", () => {
+    quizzes();
+
+    expect(screen.getByRole("heading", { name: "CE · MSTC · IMPORT QUIZZES" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Download the template (CSV)" })).toHaveAttribute(
+      "href",
+      "/admin/content/import/quiz-template",
+    );
+    expect(screen.getByRole("link", { name: "Its example image (zip)" })).toHaveAttribute(
+      "href",
+      "/admin/content/import/example-images",
+    );
+    expect(screen.getByText("correct answer", { selector: "b" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "IF A TOPIC ALREADY HAS QUESTIONS" }),
+    ).toHaveTextContent("Members keep their Best Scores and past attempts.");
+  });
+
+  it("previews each Topic's questions and quiz, then imports and links to each quiz", async () => {
+    const actions = quizzes();
+    const user = userEvent.setup();
+    await user.upload(screen.getByLabelText("CSV FILE"), csvFile("quizzes.csv"));
+    await user.upload(screen.getByLabelText("ZIP OF FIGURES (OPTIONAL)"), zipFile());
+    await user.click(screen.getByRole("button", { name: "Check file" }));
+
+    expect(await screen.findByText("3 questions in 2 Topics · 1 new Topic")).toBeInTheDocument();
+    const table = screen.getByRole("table", { name: "QUESTIONS PER TOPIC" });
+    expect(within(table).getByText("QUIZ · VISIBLE")).toBeInTheDocument();
+    expect(within(table).getByText("NEW QUIZ · HIDDEN")).toBeInTheDocument();
+    expect(
+      within(table).getByText(
+        "Its quiz is Visible: Members see these changes as soon as you import.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/New quizzes are Hidden\./)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Import" }));
+
+    await screen.findByText("✓ IMPORTED");
+    expect(actions.confirmImport).toHaveBeenCalledWith(expect.anything(), {
+      input: expect.objectContaining({ basedOn: BASED_ON }),
+    });
+    expect(screen.getByRole("list", { name: "Imported Topics" })).toHaveTextContent(
+      "Simple Curve · new Topic, with a Hidden quiz · 2 added",
+    );
+    expect(screen.getByRole("link", { name: "Open the quiz in Simple Curve" })).toHaveAttribute(
+      "href",
+      "/admin/content/quiz?topic=t-new",
+    );
+  });
+
+  it("refuses a zip that isn't a .zip, asking for one of figures", async () => {
+    const actions = quizzes();
+    const user = userEvent.setup({ applyAccept: false });
+    await user.upload(screen.getByLabelText("CSV FILE"), csvFile());
+    await user.upload(
+      screen.getByLabelText("ZIP OF FIGURES (OPTIONAL)"),
+      new File(["x"], "figures.rar"),
+    );
+    await user.click(screen.getByRole("button", { name: "Check file" }));
+
+    expect(screen.getByText("CHOOSE A .ZIP FILE OF FIGURES")).toBeInTheDocument();
+    expect(actions.createImportUpload).not.toHaveBeenCalled();
+  });
+
+  it("names questions in a conflict", async () => {
+    quizzes({
+      confirmImport: answering<ImportResult>({
+        status: "refused",
+        error: { kind: "conflict", savedBy: null, savedAt: "2026-11-17T03:42:00.000Z" },
+      }),
+    });
+    const user = await chooseAndCheck({ csv: csvFile() });
+    await user.click(await screen.findByRole("button", { name: "Import" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "THE TOPICS OR QUESTIONS CHANGED SINCE YOU CHECKED THE FILE · CHECK IT AGAIN",
     );
   });
 });

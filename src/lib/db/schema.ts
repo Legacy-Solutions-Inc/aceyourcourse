@@ -20,6 +20,13 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import {
+  DEFAULT_QUIZ_SETTINGS,
+  PASSING_SCORE_MAX,
+  PASSING_SCORE_MIN,
+  QUESTION_TEXT_LIMITS,
+  QUIZ_CHOICES,
+} from "@/lib/quizzes/quiz-rules";
 import { FAQ_GROUPS, PRODUCT_FORMATS, SITE_PAGES } from "@/services/catalogue.schema";
 import type { AboutContent, Marketplace } from "@/services/catalogue.types";
 import {
@@ -717,17 +724,87 @@ export const deckPositions = pgTable(
 
 /**
  * Each Topic's quiz, at most one: Hidden until Staff make it Visible, and
- * optionally Free Preview. Its questions and settings come with ticket 09.
+ * optionally Free Preview, with its settings (ticket 09): the passing score,
+ * a whole percentage from 1 to 100 (70 by default), whether its questions are
+ * shuffled, and whether Members see the answers after scoring. Its questions
+ * are in `questions`.
  */
-export const quizzes = pgTable("quizzes", {
-  id: uuid("id").primaryKey(),
-  topicId: uuid("topic_id")
-    .notNull()
-    .unique("quizzes_topic_id_key")
-    .references(() => topics.id, { onDelete: "restrict" }),
-  visibility: contentVisibility("visibility").notNull().default("hidden"),
-  freePreview: boolean("free_preview").notNull().default(false),
-}).enableRLS();
+export const quizzes = pgTable(
+  "quizzes",
+  {
+    id: uuid("id").primaryKey(),
+    topicId: uuid("topic_id")
+      .notNull()
+      .unique("quizzes_topic_id_key")
+      .references(() => topics.id, { onDelete: "restrict" }),
+    visibility: contentVisibility("visibility").notNull().default("hidden"),
+    freePreview: boolean("free_preview").notNull().default(false),
+    passingScore: integer("passing_score").notNull().default(DEFAULT_QUIZ_SETTINGS.passingScore),
+    shuffle: boolean("shuffle").notNull().default(DEFAULT_QUIZ_SETTINGS.shuffle),
+    showAnswers: boolean("show_answers").notNull().default(DEFAULT_QUIZ_SETTINGS.showAnswers),
+  },
+  (t) => [
+    check(
+      "quizzes_passing_score_range",
+      sql`${t.passingScore} between ${sql.raw(String(PASSING_SCORE_MIN))} and ${sql.raw(String(PASSING_SCORE_MAX))}`,
+    ),
+  ],
+).enableRLS();
+
+export const quizChoice = pgEnum("quiz_choice", QUIZ_CHOICES);
+
+/**
+ * Each quiz's questions (ticket 09): the question, four choices A–D, the
+ * correct choice and an explanation, each in the formula notation, and an
+ * optional figure in the private content bucket. A question in the quiz has
+ * its place in the quiz's order (`position`). A question taken out of the
+ * quiz (a Replace import; the question editor's delete, ticket 10) is never
+ * deleted: it's marked removed (`removed_at`, its place cleared), so every
+ * Member's old attempts that answered it, and their Best Scores, keep it, and
+ * show it as "This question has since been removed" (ticket 11). Retakes use
+ * the questions still in the quiz. Deleting the quiz deletes its questions.
+ */
+export const questions = pgTable(
+  "questions",
+  {
+    id: uuid("id").primaryKey(),
+    quizId: uuid("quiz_id")
+      .notNull()
+      .references(() => quizzes.id, { onDelete: "cascade" }),
+    position: integer("position"),
+    question: text("question").notNull(),
+    choiceA: text("choice_a").notNull(),
+    choiceB: text("choice_b").notNull(),
+    choiceC: text("choice_c").notNull(),
+    choiceD: text("choice_d").notNull(),
+    correctChoice: quizChoice("correct_choice").notNull(),
+    explanation: text("explanation").notNull(),
+    figurePath: text("figure_path"),
+    removedAt: at("removed_at"),
+  },
+  (t) => {
+    const length = (column: typeof t.question, max: number) =>
+      sql`char_length(${column}) between 1 and ${sql.raw(String(max))}`;
+    return [
+      index("questions_quiz_id_position_idx").on(t.quizId, t.position),
+      check("questions_position_positive", sql`${t.position} > 0`),
+      check(
+        "questions_removed_has_no_position",
+        sql`(${t.position} is null) = (${t.removedAt} is not null)`,
+      ),
+      check("questions_question_length", length(t.question, QUESTION_TEXT_LIMITS.question)),
+      check("questions_choice_a_length", length(t.choiceA, QUESTION_TEXT_LIMITS.choice)),
+      check("questions_choice_b_length", length(t.choiceB, QUESTION_TEXT_LIMITS.choice)),
+      check("questions_choice_c_length", length(t.choiceC, QUESTION_TEXT_LIMITS.choice)),
+      check("questions_choice_d_length", length(t.choiceD, QUESTION_TEXT_LIMITS.choice)),
+      check(
+        "questions_explanation_length",
+        length(t.explanation, QUESTION_TEXT_LIMITS.explanation),
+      ),
+      check("questions_figure_path_present", sql`${t.figurePath} <> ''`),
+    ];
+  },
+).enableRLS();
 
 /**
  * The Reviewer PDFs: at most one per Topic, and none until Staff place it

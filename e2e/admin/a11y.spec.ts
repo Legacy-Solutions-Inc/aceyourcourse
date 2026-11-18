@@ -24,6 +24,8 @@ const BLOCKING_IMPACTS = new Set(["serious", "critical"]);
 
 /** A sample Topic with a Hidden deck and no cards, for the card editor (ticket 07). */
 const ALGEBRA = sampleTopicId("CE", "MSTC", "Algebra");
+/** A sample Topic with a Hidden quiz and no questions, for the quiz screen (ticket 09). */
+const SPIRAL_CURVES = sampleTopicId("CE", "MSTC", "Spiral Curves");
 
 const SIZES = [
   { name: "a desktop", viewport: { width: 1280, height: 800 } },
@@ -256,6 +258,18 @@ const KEYBOARD_SCREENS: {
     ready: (page) => page.getByRole("form", { name: "New card" }),
   },
   {
+    name: "a Subject's quiz import",
+    who: "editor",
+    path: paths.admin.quizImport("CE", "MSTC"),
+    ready: (page) => page.getByRole("region", { name: "CE · MSTC · IMPORT QUIZZES" }),
+  },
+  {
+    name: "a Topic's quiz, with its settings",
+    who: "editor",
+    path: paths.admin.quiz(SPIRAL_CURVES),
+    ready: (page) => page.getByRole("form", { name: "SETTINGS" }),
+  },
+  {
     name: "Users, with the Beta Testers tab and its remove dialog",
     who: "owner",
     path: paths.admin.users,
@@ -354,6 +368,9 @@ for (const size of SIZES) {
         "/admin/content/import?exam=ce&subject=mstc",
         // A Topic's deck in the card editor (ticket 07).
         paths.admin.deck(ALGEBRA),
+        // A Subject's quiz import, and a Topic's quiz with its settings (ticket 09).
+        paths.admin.quizImport("CE", "MSTC"),
+        paths.admin.quiz(SPIRAL_CURVES),
         "/admin/users",
         "/admin/settings",
       ]) {

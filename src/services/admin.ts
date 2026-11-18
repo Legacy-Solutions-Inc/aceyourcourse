@@ -17,11 +17,12 @@ import type {
   NewReviewForm,
   NewSubjectForm,
   CardForm,
-  CardImportInput,
-  ConfirmCardImportInput,
+  ImportInput,
+  ConfirmImportInput,
   NewCardForm,
   NewTopicForm,
   OfficialExamDateForm,
+  QuizSettingsForm,
   ProductFlags,
   ProductForm,
   PromoBannerForm,
@@ -44,6 +45,8 @@ import type {
   AdminFaqList,
   AdminOverview,
   AdminProduct,
+  AdminQuiz,
+  AdminQuizSettings,
   AdminProductList,
   AdminProductRow,
   AdminPromoBanner,
@@ -53,8 +56,8 @@ import type {
   AdminTopic,
   AdminTopicList,
   CardImageFile,
-  CardImportPreview,
-  CardImportResult,
+  ImportPreview,
+  ImportResult,
   AdminWebsiteSettings,
   BetaTester,
   DeletedCard,
@@ -538,10 +541,7 @@ export interface AdminService {
    * Saves nothing. Not found when the Exam or Subject isn't there; invalid
    * when a file hasn't been uploaded.
    */
-  planCardImport(
-    actor: StaffActor,
-    input: CardImportInput,
-  ): Promise<AdminResult<CardImportPreview>>;
+  planCardImport(actor: StaffActor, input: ImportInput): Promise<AdminResult<ImportPreview>>;
   /**
    * "Import": saves a preview with no problems in one go, or nothing: the new
    * Topics (after the existing ones), their decks (Hidden), the cards and
@@ -552,8 +552,31 @@ export interface AdminService {
    */
   confirmCardImport(
     actor: StaffActor,
-    input: ConfirmCardImportInput,
-  ): Promise<AdminResult<CardImportResult>>;
+    input: ConfirmImportInput,
+  ): Promise<AdminResult<ImportResult>>;
+
+  // Member App content: quiz import (any Staff User; Phase 3, ticket 09; spec,
+  // Phase 3 → Spreadsheet import, Corrections never cost progress). The same
+  // import as cards, with quiz rows: src/services/quiz-import.core.ts.
+
+  /**
+   * "Check file": the preview of importing a quiz CSV (and zip of figures)
+   * into a Subject: each Topic the CSV names with the questions to add,
+   * replace, keep and remove, and every problem with its row and column.
+   * Saves nothing.
+   */
+  planQuizImport(actor: StaffActor, input: ImportInput): Promise<AdminResult<ImportPreview>>;
+  /**
+   * "Import": saves a preview with no problems in one go, or nothing: the new
+   * Topics, their quizzes (Hidden, with the default settings), the questions
+   * and their figures, and one Staff Activity record with each Topic's
+   * counts. Replace never deletes a question: one it takes out is kept,
+   * marked removed, so Members' attempts and Best Scores keep it.
+   */
+  confirmQuizImport(
+    actor: StaffActor,
+    input: ConfirmImportInput,
+  ): Promise<AdminResult<ImportResult>>;
 
   // Member App content: the card editor (any Staff User; Phase 3, ticket 07;
   // spec, Phase 3 → Content model; stories 125, 127, 128). A Topic's deck,
@@ -608,6 +631,43 @@ export interface AdminService {
     deckId: string,
     freePreview: boolean,
   ): Promise<AdminResult<AdminDeckSettings>>;
+
+  // Member App content: quizzes (any Staff User; Phase 3, ticket 09; spec,
+  // Phase 3 → Content model; stories 126–128). A Topic's quiz screen: its
+  // settings, its Visible and Free Preview toggles, and its questions (the
+  // question editor comes with ticket 10). Each write appends one Staff
+  // Activity record (entity "quiz"); none returns a cache tag, since nothing
+  // cached reads quizzes. src/services/quiz-editor.core.ts has the steps.
+
+  /** A Topic's quiz screen: the Topic, its quiz (null when it has none) and its questions in order. */
+  getQuizForAdmin(actor: StaffActor, topicId: string): Promise<AdminQuiz | null>;
+  /** A question's figure, for Staff, or null when it has none or isn't in a quiz. */
+  getQuestionFigureForAdmin(actor: StaffActor, questionId: string): Promise<CardImageFile | null>;
+  /**
+   * "Save settings": the passing score (a whole number from 1 to 100),
+   * shuffle and "show answers after", with the conflict check against the
+   * settings' stamp when the form opened.
+   */
+  updateQuizSettings(
+    actor: StaffActor,
+    input: QuizSettingsForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminQuizSettings>>;
+  /**
+   * "Visible to members", a single toggle: Visible is refused while the quiz
+   * has no questions ("ADD A QUESTION FIRST"); Hidden always saves.
+   */
+  setQuizVisibility(
+    actor: StaffActor,
+    quizId: string,
+    visible: boolean,
+  ): Promise<AdminResult<AdminQuizSettings>>;
+  /** "Free Preview", a single toggle: Members with no Access Pass can open a Visible quiz. */
+  setQuizFreePreview(
+    actor: StaffActor,
+    quizId: string,
+    freePreview: boolean,
+  ): Promise<AdminResult<AdminQuizSettings>>;
 
   // Site pages (any Staff User; ticket 20; spec, Phase 2 → Site pages). Each
   // of the Website's five Site pages: its SEO title and description (blank
@@ -755,6 +815,8 @@ export const moveTopic = impl.moveTopic;
 export const deleteTopic = impl.deleteTopic;
 export const planCardImport = impl.planCardImport;
 export const confirmCardImport = impl.confirmCardImport;
+export const planQuizImport = impl.planQuizImport;
+export const confirmQuizImport = impl.confirmQuizImport;
 export const getDeckForAdmin = impl.getDeckForAdmin;
 export const getCardImageForAdmin = impl.getCardImageForAdmin;
 export const createCard = impl.createCard;
@@ -763,6 +825,11 @@ export const moveCard = impl.moveCard;
 export const deleteCard = impl.deleteCard;
 export const setDeckVisibility = impl.setDeckVisibility;
 export const setDeckFreePreview = impl.setDeckFreePreview;
+export const getQuizForAdmin = impl.getQuizForAdmin;
+export const getQuestionFigureForAdmin = impl.getQuestionFigureForAdmin;
+export const updateQuizSettings = impl.updateQuizSettings;
+export const setQuizVisibility = impl.setQuizVisibility;
+export const setQuizFreePreview = impl.setQuizFreePreview;
 export const getSitePageForAdmin = impl.getSitePageForAdmin;
 export const updateSitePageSeo = impl.updateSitePageSeo;
 export const getAboutForAdmin = impl.getAboutForAdmin;

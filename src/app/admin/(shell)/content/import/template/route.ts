@@ -1,5 +1,8 @@
 import { requireStaff } from "@/lib/admin/guard";
-import { CARD_IMPORT_TEMPLATE_CSV, TEMPLATE_CSV_FILENAME } from "@/lib/card-import/template";
+import {
+  CARD_IMPORT_TEMPLATE_CSV,
+  CARD_TEMPLATE_CSV_FILENAME,
+} from "@/lib/content-import/template";
 import { paths } from "@/paths";
 
 // GET /admin/content/import/template (Phase 3, ticket 06; story 124): the
@@ -12,7 +15,7 @@ export async function GET(): Promise<Response> {
   return new Response(CARD_IMPORT_TEMPLATE_CSV, {
     headers: {
       "content-type": "text/csv; charset=utf-8",
-      "content-disposition": `attachment; filename="${TEMPLATE_CSV_FILENAME}"`,
+      "content-disposition": `attachment; filename="${CARD_TEMPLATE_CSV_FILENAME}"`,
       "cache-control": "private, no-store",
     },
   });

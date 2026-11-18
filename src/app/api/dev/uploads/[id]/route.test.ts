@@ -73,7 +73,7 @@ describe("/api/dev/uploads/[id]", () => {
   });
 
   it("takes an import's private CSV, but never serves it: GET answers 404", async () => {
-    const created = await createContentUpload(EDITOR, { purpose: "card-import-csv", size: 4 });
+    const created = await createContentUpload(EDITOR, { purpose: "import-csv", size: 4 });
     if (!created.ok) throw new Error("refused");
     const { uploadUrl } = created.value;
     const id = new URL(uploadUrl, ORIGIN).pathname.split("/").at(-1) ?? "";

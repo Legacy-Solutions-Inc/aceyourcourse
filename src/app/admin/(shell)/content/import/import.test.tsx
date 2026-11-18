@@ -3,24 +3,39 @@ import { unzipSync } from "fflate";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AdminActionState } from "@/lib/admin/action";
-import { CARD_IMPORT_TEMPLATE_CSV, EXAMPLE_IMAGE } from "@/lib/card-import/template";
-import type { CardImportPreview } from "@/services/admin.types";
+import {
+  CARD_IMPORT_TEMPLATE_CSV,
+  EXAMPLE_IMAGE,
+  QUIZ_IMPORT_TEMPLATE_CSV,
+} from "@/lib/content-import/template";
+import type { ImportPreview } from "@/services/admin.types";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import { receiveSampleUpload } from "@/services/uploads.mock";
 import type { ContentUploadTicket } from "@/services/uploads.types";
 
-import { importCsv } from "../../../../../../test/card-import-files";
-import { checkCardImport, createImportUpload, importCards } from "../actions";
+import { getOrCreateMember } from "@/services/member.mock";
+import { sampleUserId } from "@/services/mock/members";
+
+import { importCsv, quizCsv } from "../../../../../../test/import-files";
+import {
+  checkCardImport,
+  checkQuizImport,
+  createImportUpload,
+  importCards,
+  importQuizzes,
+} from "../actions";
 import { GET as exampleImages } from "./example-images/route";
-import CardImportPage from "./page";
+import CardImportPage, { generateMetadata } from "./page";
+import { GET as quizTemplate } from "./quiz-template/route";
 import { GET as template } from "./template/route";
 
-// A Subject's card import (Phase 3, ticket 06; stories 118, 120–124), on
-// sample data: the page and the template downloads as a browser loads them,
-// and the import's Server Actions as the screen sends them. Every Admin
-// action's refusals for signed-out visitors, non-Staff (a Member, say) and
-// closed mode are in actions.permissions.test.ts; the seam's rules in
-// admin.card-import.test.ts.
+// A Subject's spreadsheet import, of cards (Phase 3, ticket 06; stories 118,
+// 120–124) or quizzes (ticket 09; stories 119–124), on sample data: the page
+// and the template downloads as a browser loads them, and the import's Server
+// Actions as the screen sends them. Every Admin action's refusals for
+// signed-out visitors, non-Staff (a Member, say) and closed mode are in
+// actions.permissions.test.ts; the seam's rules in admin.card-import.test.ts
+// and admin.quiz-import.test.ts.
 const { jar } = vi.hoisted(() => ({ jar: new Map<string, string>() }));
 
 vi.mock("next/headers", () => ({
@@ -93,7 +108,48 @@ describe("the card import page", () => {
   });
 });
 
+describe("the quiz import page", () => {
+  it("opens an Editor on the Subject's quiz import, with the quiz template", async () => {
+    signInAs(EDITOR);
+    const params = { exam: "ce", subject: "mstc", kind: "quizzes" };
+    await renderPage(params);
+
+    expect(screen.getByRole("heading", { name: "CE · MSTC · IMPORT QUIZZES" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Download the template (CSV)" })).toHaveAttribute(
+      "href",
+      "/admin/content/import/quiz-template",
+    );
+    expect(screen.getByLabelText("ZIP OF FIGURES (OPTIONAL)")).toBeInTheDocument();
+    expect(await generateMetadata({ searchParams: Promise.resolve(params) })).toEqual({
+      title: "Import quizzes",
+    });
+    expect(
+      await generateMetadata({ searchParams: Promise.resolve({ exam: "ce", subject: "mstc" }) }),
+    ).toEqual({ title: "Import cards" });
+  });
+
+  it("sends someone signed out to sign-in, coming back to the quiz import", async () => {
+    await expect(renderPage({ exam: "ce", subject: "mstc", kind: "quizzes" })).rejects.toThrow(
+      `NEXT_REDIRECT /admin/sign-in?next=${encodeURIComponent("/admin/content/import?exam=ce&subject=mstc&kind=quizzes")}`,
+    );
+  });
+});
+
 describe("the template downloads", () => {
+  it("gives Staff the quiz template CSV as a download", async () => {
+    signInAs(EDITOR);
+    const response = await quizTemplate();
+
+    expect(response.headers.get("content-disposition")).toBe(
+      'attachment; filename="quiz-import-template.csv"',
+    );
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    expect([...bytes]).toEqual([...new TextEncoder().encode(QUIZ_IMPORT_TEMPLATE_CSV)]);
+    expect(new TextDecoder().decode(bytes)).toContain(
+      "topic,question,choice a,choice b,choice c,choice d,correct answer,explanation,figure",
+    );
+  });
+
   it("gives Staff the template CSV as a download", async () => {
     signInAs(EDITOR);
     const response = await template();
@@ -119,6 +175,7 @@ describe("the template downloads", () => {
 
   it.each([
     ["the template", template],
+    ["the quiz template", quizTemplate],
     ["the example images", exampleImages],
   ])("refuses %s to someone signed out, and to a User who isn't Staff", async (_, get) => {
     await expect(get()).rejects.toThrow(/^NEXT_REDIRECT \/admin\/sign-in/);
@@ -129,7 +186,7 @@ describe("the template downloads", () => {
 
 describe("the card import's Server Actions", () => {
   /** Asks for an upload URL and sends the file there, as the screen does. */
-  async function upload(purpose: "card-import-csv" | "card-import-zip", bytes: Uint8Array) {
+  async function upload(purpose: "import-csv" | "import-zip", bytes: Uint8Array) {
     const created = await createImportUpload(IDLE, { input: { purpose, size: bytes.byteLength } });
     if (created.status !== "saved") throw new Error(JSON.stringify(created));
     const ticket: ContentUploadTicket = created.value;
@@ -148,12 +205,12 @@ describe("the card import's Server Actions", () => {
 
   it("check and import a CSV an Editor uploaded, creating its Topic with a Hidden deck", async () => {
     signInAs(EDITOR);
-    const csv = await upload("card-import-csv", importCsv(["Highways,Grade,Rise over run,,"]));
+    const csv = await upload("import-csv", importCsv(["Highways,Grade,Rise over run,,"]));
     const input = { exam: "ce", subject: "mstc", csv, zip: null, mode: "add" };
 
     const checked = await checkCardImport(IDLE, { input });
     expect(checked).toMatchObject({ status: "saved", value: { problems: [] } });
-    const { basedOn } = (checked as { value: CardImportPreview }).value;
+    const { basedOn } = (checked as { value: ImportPreview }).value;
 
     const imported = await importCards(IDLE, { input: { ...input, basedOn } });
 
@@ -169,10 +226,10 @@ describe("the card import's Server Actions", () => {
 
   it("refuses to import a preview with problems, saving nothing", async () => {
     signInAs(EDITOR);
-    const csv = await upload("card-import-csv", importCsv(["Highways,Grade,$x,,"]));
+    const csv = await upload("import-csv", importCsv(["Highways,Grade,$x,,"]));
     const input = { exam: "ce", subject: "mstc", csv, zip: null, mode: "add" };
     const checked = await checkCardImport(IDLE, { input });
-    const { basedOn, problems } = (checked as { value: CardImportPreview }).value;
+    const { basedOn, problems } = (checked as { value: ImportPreview }).value;
     expect(problems).toHaveLength(1);
 
     expect(await importCards(IDLE, { input: { ...input, basedOn } })).toEqual({
@@ -184,5 +241,81 @@ describe("the card import's Server Actions", () => {
       },
     });
     expect(getSampleStore().cards).toEqual([]);
+  });
+});
+
+describe("the quiz import's Server Actions", () => {
+  /** Asks for an upload URL and sends the CSV there, as the screen does. */
+  async function uploadCsv(bytes: Uint8Array) {
+    const created = await createImportUpload(IDLE, {
+      input: { purpose: "import-csv", size: bytes.byteLength },
+    });
+    if (created.status !== "saved") throw new Error(JSON.stringify(created));
+    const url = new URL(created.value.uploadUrl, "http://localhost");
+    await receiveSampleUpload(
+      url.pathname.split("/").at(-1) ?? "",
+      url.searchParams.get("token") ?? "",
+      { contentType: "text/csv", contentLength: bytes.byteLength, body: async () => bytes },
+    );
+    return created.value.path;
+  }
+
+  it("check and import a quiz CSV an Editor uploaded, creating its Topic with a Hidden quiz", async () => {
+    signInAs(EDITOR);
+    const csv = await uploadCsv(quizCsv(["Highways,Grade of 5%?,1,2,3,4,C,Rise over run.,"]));
+    const input = { exam: "ce", subject: "mstc", csv, zip: null, mode: "add" };
+
+    const checked = await checkQuizImport(IDLE, { input });
+    expect(checked).toMatchObject({ status: "saved", value: { problems: [] } });
+    const { basedOn } = (checked as { value: ImportPreview }).value;
+    const imported = await importQuizzes(IDLE, { input: { ...input, basedOn } });
+
+    expect(imported).toMatchObject({
+      status: "saved",
+      value: { topics: [{ name: "Highways", created: true }] },
+    });
+    const store = getSampleStore();
+    const highways = store.topics.find((topic) => topic.name === "Highways");
+    expect(store.quizzes.find((quiz) => quiz.topicId === highways?.id)).toMatchObject({
+      visibility: "hidden",
+      passingScore: 70,
+    });
+    expect(store.questions.map((question) => [question.question, question.correct])).toEqual([
+      ["Grade of 5%?", "C"],
+    ]);
+  });
+
+  it("refuses to import a quiz preview with problems, saving nothing", async () => {
+    signInAs(EDITOR);
+    const csv = await uploadCsv(quizCsv(["Highways,Grade?,1,2,3,4,E,Because.,"]));
+    const input = { exam: "ce", subject: "mstc", csv, zip: null, mode: "add" };
+    const checked = await checkQuizImport(IDLE, { input });
+    const { basedOn, problems } = (checked as { value: ImportPreview }).value;
+    expect(problems).toEqual([
+      { file: "csv", row: 2, column: "correct answer", message: "is “E”: write A, B, C or D" },
+    ]);
+
+    expect(await importQuizzes(IDLE, { input: { ...input, basedOn } })).toMatchObject({
+      status: "refused",
+      error: { kind: "invalid", formError: "FIX THE PROBLEMS IN THE FILE, THEN CHECK IT AGAIN" },
+    });
+    expect(getSampleStore().questions).toEqual([]);
+  });
+
+  it("refuses a Member who posts the quiz import's actions directly, changing nothing", async () => {
+    signInAs(EDITOR);
+    const csv = await uploadCsv(quizCsv(["Highways,Grade?,1,2,3,4,A,Because.,"]));
+    const input = { exam: "ce", subject: "mstc", csv, zip: null, mode: "add" };
+    const checked = await checkQuizImport(IDLE, { input });
+    const { basedOn } = (checked as { value: ImportPreview }).value;
+    await getOrCreateMember({ userId: sampleUserId(TESTER), email: TESTER, name: "Bea Tester" });
+    signInAs(TESTER);
+
+    await expect(checkQuizImport(IDLE, { input })).rejects.toThrow("NEXT_REDIRECT /admin/denied");
+    await expect(importQuizzes(IDLE, { input: { ...input, basedOn } })).rejects.toThrow(
+      "NEXT_REDIRECT /admin/denied",
+    );
+    expect(getSampleStore().questions).toEqual([]);
+    expect(getSampleStore().quizzes.some((quiz) => quiz.passingScore !== 70)).toBe(false);
   });
 });

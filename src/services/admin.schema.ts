@@ -12,8 +12,9 @@ import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
 import { isCalendarDate } from "@/lib/manila-time";
 import { variationLabel } from "@/lib/catalogue/price";
 import type { AdminError, RequiredRole, StaffActor } from "@/services/admin.types";
-import { IMPORT_MODES } from "@/lib/card-import/modes";
+import { IMPORT_MODES } from "@/lib/content-import/modes";
 import { cardFieldProblems, cardFieldsOf } from "@/lib/cards/card-fields";
+import { PASSING_SCORE_MAX, PASSING_SCORE_MIN } from "@/lib/quizzes/quiz-rules";
 import type { ContentCounts, TopicContent } from "@/services/content.types";
 import {
   EXAM_PAGE_SECTIONS,
@@ -1556,7 +1557,7 @@ const importFilePath = (missing: string) =>
     .max(200, missing);
 
 /** "Check file": the Subject, the uploaded CSV and zip (optional), and Replace or Add. */
-export const cardImportInputSchema = z.object({
+export const importInputSchema = z.object({
   exam: examCode.transform(typedCode),
   subject: subjectCodeInputSchema.shape.code,
   csv: importFilePath("CHOOSE THE CSV FILE"),
@@ -1564,16 +1565,16 @@ export const cardImportInputSchema = z.object({
   mode: z.enum(IMPORT_MODES, { errorMap: () => ({ message: "CHOOSE REPLACE OR ADD" }) }),
 });
 
-export type CardImportInput = z.input<typeof cardImportInputSchema>;
+export type ImportInput = z.input<typeof importInputSchema>;
 
 /** "Import": the same, with what the preview was based on. */
-export const confirmCardImportInputSchema = cardImportInputSchema.extend({
+export const confirmImportInputSchema = importInputSchema.extend({
   basedOn: z
     .string({ required_error: "CHECK THE FILE AGAIN", invalid_type_error: "CHECK THE FILE AGAIN" })
     .regex(/^[0-9a-f]{64}$/, "CHECK THE FILE AGAIN"),
 });
 
-export type ConfirmCardImportInput = z.input<typeof confirmCardImportInputSchema>;
+export type ConfirmImportInput = z.input<typeof confirmImportInputSchema>;
 
 // ── Member App content: the card editor (Phase 3, ticket 07) ────────────────
 // A Topic's deck, one card at a time (spec, Phase 3 → Content model; stories
@@ -1650,3 +1651,52 @@ export const deckFreePreviewInputSchema = z.object({
   deck: deckId,
   freePreview: z.boolean({ invalid_type_error: "SHOULD BE ON OR OFF" }),
 });
+
+// ── Member App content: quiz settings (Phase 3, ticket 09) ──────────────────
+// A Topic's quiz (spec, Phase 3 → Content model; stories 126–128): any Staff
+// User sets its passing score, shuffle and "show answers after" (one form,
+// with the conflict check), and makes it Visible or Hidden and Free Preview
+// (single toggles). Visible needs a question, which the seam checks.
+
+const quizId = z.string().uuid("THAT QUIZ ISN’T THERE · RELOAD THE PAGE");
+
+export const PASSING_SCORE_ERROR = "ENTER A WHOLE NUMBER FROM 1 TO 100";
+
+const onOrOff = z.boolean({
+  invalid_type_error: "SHOULD BE ON OR OFF",
+  required_error: "SHOULD BE ON OR OFF",
+});
+
+/**
+ * The passing score as the form holds it ("70", " 85 ", "85%") or as sent
+ * (85): a whole number from 1 to 100. "0", "101", "70.5" and "abc" are
+ * refused.
+ */
+const passingScore = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") return value;
+    const typed = value.trim().replace(/\s*%$/, "");
+    return /^\d{1,4}$/.test(typed) ? Number(typed) : value;
+  },
+  z
+    .number({ invalid_type_error: PASSING_SCORE_ERROR, required_error: PASSING_SCORE_ERROR })
+    .int(PASSING_SCORE_ERROR)
+    .min(PASSING_SCORE_MIN, PASSING_SCORE_ERROR)
+    .max(PASSING_SCORE_MAX, PASSING_SCORE_ERROR),
+);
+
+/** "Save settings": the quiz, its passing score, and whether it shuffles and shows answers after. */
+export const quizSettingsFormSchema = z.object({
+  id: quizId,
+  passingScore,
+  shuffle: onOrOff,
+  showAnswers: onOrOff,
+});
+
+export type QuizSettingsForm = z.input<typeof quizSettingsFormSchema>;
+
+/** "Visible to members": the quiz, and whether Members see it. */
+export const quizVisibilityInputSchema = z.object({ quiz: quizId, visible: onOrOff });
+
+/** "Free Preview": the quiz, and whether Members with no Access Pass can open it. */
+export const quizFreePreviewInputSchema = z.object({ quiz: quizId, freePreview: onOrOff });

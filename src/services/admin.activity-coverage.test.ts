@@ -19,7 +19,7 @@ import {
   withUnusedExam,
 } from "../../test/admin-inputs";
 import { type AdminArm, ADMIN_ARMS } from "../../test/admin-arms";
-import { importCsv } from "../../test/card-import-files";
+import { importCsv, quizCsv } from "../../test/import-files";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Staff Activity covers every Admin write (spec, Phase 2 → Staff Activity;
@@ -69,6 +69,10 @@ const READS = [
   // The card editor's deck screen, and a card's image for Staff.
   "getDeckForAdmin",
   "getCardImageForAdmin",
+  // "Check file" for a quiz import, the quiz screen, and a question's figure for Staff.
+  "planQuizImport",
+  "getQuizForAdmin",
+  "getQuestionFigureForAdmin",
 ] as const satisfies readonly (keyof AdminService)[];
 
 /**
@@ -153,6 +157,19 @@ async function checkedImport(seam: AdminService, arm: AdminArm, rows: string[]) 
   if (!planned.ok) throw new Error("The import's files were refused");
   return { ...input, basedOn: planned.value.basedOn };
 }
+
+/** A quiz import's files, uploaded and checked, ready to confirm. */
+async function checkedQuizImport(seam: AdminService, arm: AdminArm, rows: string[]) {
+  const paths = await arm.uploadImport({ csv: quizCsv(rows) });
+  const input = { exam: "ce", subject: "mstc", mode: "add", ...paths } as const;
+  const planned = await seam.planQuizImport(EDITOR, input);
+  if (!planned.ok) throw new Error("The import's files were refused");
+  return { ...input, basedOn: planned.value.basedOn };
+}
+
+/** The Visible quiz with no questions in the seed, and the Hidden one, in CE's MSTC. */
+const SIMPLE_CURVES_QUIZ = sampleContentId(sampleTopicId("CE", "MSTC", "Simple Curves"), "quiz");
+const SPIRAL_CURVES_QUIZ = sampleContentId(sampleTopicId("CE", "MSTC", "Spiral Curves"), "quiz");
 
 async function promoForm(seam: AdminService) {
   return promoBannerFormValues((await seam.getPromoForAdmin(EDITOR)).banner);
@@ -678,6 +695,60 @@ const WRITES: Record<string, Write> = {
     entityId: ALGEBRA_DECK,
     saves: (seam, actor) => seam.setDeckFreePreview(actor, ALGEBRA_DECK, true),
     refused: (seam, actor) => seam.setDeckFreePreview(actor, UNKNOWN_TOPIC, true),
+    refusal: "not-found",
+  },
+  confirmQuizImport: {
+    actor: EDITOR,
+    entity: "quiz-import",
+    entityId: "CE:MSTC",
+    saves: async (seam, actor, arm) =>
+      seam.confirmQuizImport(
+        actor,
+        await checkedQuizImport(seam, arm, ["Highways,Grade?,1,2,3,4,A,Rise over run.,"]),
+      ),
+    // A correct answer that isn't A–D.
+    refused: async (seam, actor, arm) =>
+      seam.confirmQuizImport(
+        actor,
+        await checkedQuizImport(seam, arm, ["Highways,Grade?,1,2,3,4,E,Rise over run.,"]),
+      ),
+    refusal: "invalid",
+  },
+  updateQuizSettings: {
+    actor: EDITOR,
+    entity: "quiz",
+    entityId: SPIRAL_CURVES_QUIZ,
+    saves: (seam, actor) =>
+      seam.updateQuizSettings(actor, {
+        id: SPIRAL_CURVES_QUIZ,
+        passingScore: 85,
+        shuffle: false,
+        showAnswers: true,
+      }),
+    refused: (seam, actor) =>
+      seam.updateQuizSettings(actor, {
+        id: SPIRAL_CURVES_QUIZ,
+        passingScore: 101,
+        shuffle: false,
+        showAnswers: true,
+      }),
+    refusal: "invalid",
+  },
+  setQuizVisibility: {
+    actor: EDITOR,
+    entity: "quiz",
+    entityId: SIMPLE_CURVES_QUIZ,
+    // The seed's Simple Curves quiz is Visible, with no questions: Hidden always saves.
+    saves: (seam, actor) => seam.setQuizVisibility(actor, SIMPLE_CURVES_QUIZ, false),
+    refused: (seam, actor) => seam.setQuizVisibility(actor, UNKNOWN_TOPIC, false),
+    refusal: "not-found",
+  },
+  setQuizFreePreview: {
+    actor: EDITOR,
+    entity: "quiz",
+    entityId: SPIRAL_CURVES_QUIZ,
+    saves: (seam, actor) => seam.setQuizFreePreview(actor, SPIRAL_CURVES_QUIZ, true),
+    refused: (seam, actor) => seam.setQuizFreePreview(actor, UNKNOWN_TOPIC, true),
     refusal: "not-found",
   },
   updatePromoBanner: {

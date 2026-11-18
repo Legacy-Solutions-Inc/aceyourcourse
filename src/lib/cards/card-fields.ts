@@ -13,7 +13,7 @@ import { CARD_TEXT_LIMITS, textLength } from "./card-rules";
 //     put through KaTeX (src/lib/formula/check.ts).
 // A back image's rules (cardImageProblem) are in card-rules.ts, which has no
 // dependencies, as the upload seam's shared rules need.
-// The import planner (src/lib/card-import/plan.ts) applies the same limits
+// The import planner (src/lib/content-import/plan.ts) applies the same limits
 // and the same formula check to each CSV row.
 // ─────────────────────────────────────────────────────────────────────────────
 

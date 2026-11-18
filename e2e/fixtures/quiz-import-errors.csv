@@ -1,0 +1,3 @@
+topic,question,choice a,choice b,choice c,choice d,correct answer,explanation,figure
+Beams,What is the moment of inertia of a b × h rectangle about its centroid?,$\dfrac{bh^3}{12}$,$\dfrac{bh^3}{3}$,$\dfrac{bh^2}{6}$,$\dfrac{b^3h}{12}$,A,"About the centroidal axis parallel to b, $I = \dfrac{bh^3}{12}$.",
+Beams,What is the maximum moment in the simply supported beam shown?,$\dfrac{wL^2}{8}$,$\dfrac{wL^2}{2}$,$\dfrac{wL}{4}$,$\dfrac{wL^2}{12}$,E,"$$M = \dfrac{wL^2}{8}$$ at midspan, under a uniform load w.",beam.png

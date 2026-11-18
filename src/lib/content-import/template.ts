@@ -1,18 +1,22 @@
 import { zipSync } from "fflate";
 
-import { IMPORT_COLUMNS } from "./plan";
+import { CARD_IMPORT_COLUMNS } from "./cards";
+import { QUIZ_IMPORT_COLUMNS } from "./quizzes";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// The card import's template (Phase 3, ticket 06; story 124): a CSV with the
-// header row and two example cards, one with maths and a back image, and a
-// zip holding that example image, so importing both unchanged succeeds. The
-// import screen offers both for download.
+// The import templates (Phase 3, tickets 06 and 09; story 124): for cards, a
+// CSV with the header row and two example cards, one with maths and a back
+// image; for quizzes, one with two example questions, one with a figure; and
+// a zip holding the example image both use, so importing either unchanged
+// succeeds. The import screen offers the kind's template and the zip for
+// download.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const TEMPLATE_CSV_FILENAME = "card-import-template.csv";
-export const EXAMPLE_ZIP_FILENAME = "card-import-example-images.zip";
+export const CARD_TEMPLATE_CSV_FILENAME = "card-import-template.csv";
+export const QUIZ_TEMPLATE_CSV_FILENAME = "quiz-import-template.csv";
+export const EXAMPLE_ZIP_FILENAME = "import-example-images.zip";
 
-/** The example card's back image, as the template's image column names it. */
+/** The example card's back image and the example question's figure, as the templates name it. */
 export const EXAMPLE_IMAGE = "simple-curve.png";
 
 /** A 320 × 180 PNG of a simple curve (PC, PT and its radius), base64. */
@@ -55,7 +59,7 @@ const EXAMPLE_IMAGE_PNG = [
 const cell = (value: string) =>
   /[",\r\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value;
 
-const ROWS: Record<(typeof IMPORT_COLUMNS)[number], string>[] = [
+const CARD_ROWS: Record<(typeof CARD_IMPORT_COLUMNS)[number], string>[] = [
   {
     topic: "Simple Curves",
     front: "Degree of curve (arc basis)",
@@ -72,17 +76,56 @@ const ROWS: Record<(typeof IMPORT_COLUMNS)[number], string>[] = [
   },
 ];
 
-/**
- * The template: UTF-8 with a byte order mark (so Excel reads it as UTF-8),
- * the header row in the template's column order, then the example cards.
- */
-export const CARD_IMPORT_TEMPLATE_CSV = `\uFEFF${[
-  IMPORT_COLUMNS.join(","),
-  ...ROWS.map((row) => IMPORT_COLUMNS.map((column) => cell(row[column])).join(",")),
-].join("\r\n")}\r\n`;
+const QUIZ_ROWS: Record<(typeof QUIZ_IMPORT_COLUMNS)[number], string>[] = [
+  {
+    topic: "Simple Curves",
+    question: "A simple curve has a radius of 200 m. What is its degree of curve (arc basis)?",
+    "choice a": "$5.73^\\circ$",
+    "choice b": "$2.86^\\circ$",
+    "choice c": "$11.46^\\circ$",
+    "choice d": "$1.15^\\circ$",
+    "correct answer": "A",
+    explanation:
+      "$D = \\dfrac{1145.916}{R} = \\dfrac{1145.916}{200} \\approx 5.73^\\circ$. A dollar sign is written \\$.",
+    figure: "",
+  },
+  {
+    topic: "Simple Curves",
+    question:
+      "The curve in the figure has a central angle of 30° and a degree of curve of 2°. How long is it?",
+    "choice a": "150 m",
+    "choice b": "300 m",
+    "choice c": "600 m",
+    "choice d": "60 m",
+    "correct answer": "B",
+    explanation: "$$L_c = \\dfrac{20I}{D} = \\dfrac{20(30)}{2} = 300\\text{ m}$$",
+    figure: EXAMPLE_IMAGE,
+  },
+];
 
-/** Pure: the zip of the template's example image. */
-export function cardImportExampleZip(): Uint8Array {
+/**
+ * Pure: a template: UTF-8 with a byte order mark (so Excel reads it as
+ * UTF-8), the header row in the template's column order, then the examples.
+ */
+function templateCsv<Column extends string>(
+  columns: readonly Column[],
+  rows: readonly Record<Column, string>[],
+): string {
+  const lines = [
+    columns.join(","),
+    ...rows.map((row) => columns.map((c) => cell(row[c])).join(",")),
+  ];
+  return `\uFEFF${lines.join("\r\n")}\r\n`;
+}
+
+/** The card import's template. */
+export const CARD_IMPORT_TEMPLATE_CSV = templateCsv(CARD_IMPORT_COLUMNS, CARD_ROWS);
+
+/** The quiz import's template. */
+export const QUIZ_IMPORT_TEMPLATE_CSV = templateCsv(QUIZ_IMPORT_COLUMNS, QUIZ_ROWS);
+
+/** Pure: the zip of the templates' example image. */
+export function importExampleZip(): Uint8Array {
   const png = Uint8Array.from(atob(EXAMPLE_IMAGE_PNG), (char) => char.charCodeAt(0));
   return zipSync({ [EXAMPLE_IMAGE]: png });
 }

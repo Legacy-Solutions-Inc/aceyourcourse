@@ -38,7 +38,7 @@ async function send(ticket: ContentUploadTicket, bytes: Uint8Array, contentType:
   });
 }
 
-async function upload(purpose: "card-import-csv" | "card-import-zip", bytes: Uint8Array) {
+async function upload(purpose: "import-csv" | "import-zip", bytes: Uint8Array) {
   const created = await createContentUpload(EDITOR, { purpose, size: bytes.byteLength });
   if (!created.ok) throw new Error(JSON.stringify(created.error));
   return created.value;
@@ -50,8 +50,8 @@ beforeEach(() => {
 
 describe("createContentUpload (sample data)", () => {
   it.each([
-    ["card-import-csv", CSV, "text/csv"],
-    ["card-import-zip", ZIP, "application/zip"],
+    ["import-csv", CSV, "text/csv"],
+    ["import-zip", ZIP, "application/zip"],
   ] as const)(
     "takes a %s once at its one-time URL, and the server reads it back by path",
     async (purpose, bytes, contentType) => {
@@ -70,43 +70,38 @@ describe("createContentUpload (sample data)", () => {
   );
 
   it("never serves a private upload at the upload route", async () => {
-    const ticket = await upload("card-import-csv", CSV);
+    const ticket = await upload("import-csv", CSV);
     await send(ticket, CSV, "text/csv");
 
     expect(readSampleUpload(urlParts(ticket).id)).toBeNull();
   });
 
   it("reads an upload only for its own purpose", async () => {
-    const ticket = await upload("card-import-csv", CSV);
+    const ticket = await upload("import-csv", CSV);
     await send(ticket, CSV, "text/csv");
 
-    expect(await sampleContentFiles.readUpload(ticket.path, "card-import-zip")).toBeNull();
-    expect(await sampleContentFiles.readUpload("uploads/not-one", "card-import-csv")).toBeNull();
-    expect(await sampleContentFiles.readUpload("decks/x/y.png", "card-import-csv")).toBeNull();
+    expect(await sampleContentFiles.readUpload(ticket.path, "import-zip")).toBeNull();
+    expect(await sampleContentFiles.readUpload("uploads/not-one", "import-csv")).toBeNull();
+    expect(await sampleContentFiles.readUpload("decks/x/y.png", "import-csv")).toBeNull();
   });
 
   it("refuses a zip that doesn't start as a zip does, or a file sent as another type", async () => {
-    const ticket = await upload("card-import-zip", CSV);
+    const ticket = await upload("import-zip", CSV);
 
     expect(await send(ticket, CSV, "application/zip")).toBe("not-an-image");
     expect(await send(ticket, CSV, "text/csv")).toBe("wrong-type");
   });
 
   it.each([
-    ["signed out", null, { purpose: "card-import-csv", size: 10 }, "forbidden"],
-    [
-      "a CSV over 10 MB",
-      EDITOR,
-      { purpose: "card-import-csv", size: 10 * 1024 * 1024 + 1 },
-      "invalid",
-    ],
+    ["signed out", null, { purpose: "import-csv", size: 10 }, "forbidden"],
+    ["a CSV over 10 MB", EDITOR, { purpose: "import-csv", size: 10 * 1024 * 1024 + 1 }, "invalid"],
     [
       "a zip over 200 MB",
       EDITOR,
-      { purpose: "card-import-zip", size: 200 * 1024 * 1024 + 1 },
+      { purpose: "import-zip", size: 200 * 1024 * 1024 + 1 },
       "invalid",
     ],
-    ["an empty file", EDITOR, { purpose: "card-import-csv", size: 0 }, "invalid"],
+    ["an empty file", EDITOR, { purpose: "import-csv", size: 0 }, "invalid"],
     ["a catalogue photo's purpose", EDITOR, { purpose: "product-photo", size: 10 }, "invalid"],
   ] as const)("refuses %s", async (_, actor, request, kind) => {
     expect(await createContentUpload(actor, request as never)).toMatchObject({
@@ -117,11 +112,11 @@ describe("createContentUpload (sample data)", () => {
 
   it("takes a CSV of exactly 10 MB and a zip of exactly 200 MB", async () => {
     const csv = await createContentUpload(EDITOR, {
-      purpose: "card-import-csv",
+      purpose: "import-csv",
       size: 10 * 1024 * 1024,
     });
     const zip = await createContentUpload(EDITOR, {
-      purpose: "card-import-zip",
+      purpose: "import-zip",
       size: 200 * 1024 * 1024,
     });
 
@@ -153,7 +148,7 @@ describe("a card's back image (ticket 07, sample data)", () => {
     expect(await sampleContentFiles.readUpload(ticket.path, "card-image")).toBeNull();
     expect(await send(ticket, PNG, "image/png")).toBe("stored");
     expect(await sampleContentFiles.readUpload(ticket.path, "card-image")).toEqual(PNG);
-    expect(await sampleContentFiles.readUpload(ticket.path, "card-import-csv")).toBeNull();
+    expect(await sampleContentFiles.readUpload(ticket.path, "import-csv")).toBeNull();
     // Private, like an import's files: the upload route never serves it.
     expect(readSampleUpload(urlParts(ticket).id)).toBeNull();
   });
@@ -198,7 +193,7 @@ describe("sampleContentFiles", () => {
   });
 
   it("stores card images by path, and deletes them and the import's uploads", async () => {
-    const ticket = await upload("card-import-csv", CSV);
+    const ticket = await upload("import-csv", CSV);
     await send(ticket, CSV, "text/csv");
     const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
 
@@ -210,6 +205,6 @@ describe("sampleContentFiles", () => {
 
     await sampleContentFiles.remove(["decks/d/a.png", ticket.path]);
     expect(getSampleStore().contentFiles).toEqual({});
-    expect(await sampleContentFiles.readUpload(ticket.path, "card-import-csv")).toBeNull();
+    expect(await sampleContentFiles.readUpload(ticket.path, "import-csv")).toBeNull();
   });
 });

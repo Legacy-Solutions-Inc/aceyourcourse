@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { readCsvFile } from "./csv";
 import type { ImportMode } from "./modes";
-import { type ExistingTopic, MAX_IMPORT_ROWS, planCardImport, type TopicPlan } from "./plan";
+import { type CardFields, type ExistingCardTopic, planCardImport } from "./cards";
+import { MAX_IMPORT_ROWS, type TopicPlan } from "./plan";
 import type { ZipListing } from "./zip";
 
 // The card import planner (spec, Phase 3 → Spreadsheet import; Testing
@@ -24,11 +25,11 @@ const zip = (...entries: [string, number][]): ZipListing => ({
   entries: entries.map(([name, size]) => ({ name, size })),
 });
 
-const SIMPLE_CURVES: ExistingTopic = {
+const SIMPLE_CURVES: ExistingCardTopic = {
   id: "t-simple",
   name: "Simple Curves",
-  deck: { id: "d-simple", visibility: "visible" },
-  cards: [
+  content: { id: "d-simple", visibility: "visible" },
+  items: [
     { id: "c-degree", front: "Degree of curve", back: "$D = 1145.916/R$", note: null, image: null },
     { id: "c-length", front: "Length of curve", back: "$L = 20I/D$", note: null, image: null },
     {
@@ -40,12 +41,17 @@ const SIMPLE_CURVES: ExistingTopic = {
     },
   ],
 };
-const SURVEYING: ExistingTopic = { id: "t-survey", name: "Surveying", deck: null, cards: [] };
-const ALGEBRA: ExistingTopic = {
+const SURVEYING: ExistingCardTopic = {
+  id: "t-survey",
+  name: "Surveying",
+  content: null,
+  items: [],
+};
+const ALGEBRA: ExistingCardTopic = {
   id: "t-algebra",
   name: "Algebra",
-  deck: { id: "d-algebra", visibility: "hidden" },
-  cards: [],
+  content: { id: "d-algebra", visibility: "hidden" },
+  items: [],
 };
 const TOPICS = [SIMPLE_CURVES, SURVEYING, ALGEBRA];
 
@@ -54,7 +60,7 @@ function plan(
   options: {
     header?: string;
     zip?: ZipListing | null;
-    topics?: ExistingTopic[];
+    topics?: ExistingCardTopic[];
     mode?: ImportMode;
   } = {},
 ) {
@@ -66,7 +72,7 @@ function plan(
   });
 }
 
-const counts = (topic: TopicPlan | undefined) => topic?.counts;
+const counts = (topic: TopicPlan<CardFields> | undefined) => topic?.counts;
 
 describe("planCardImport: a valid file", () => {
   it("plans each Topic in order of first appearance, with its cards in the CSV's order", () => {
@@ -84,10 +90,10 @@ describe("planCardImport: a valid file", () => {
       ["Statics", null],
       ["Surveying", "t-survey"],
     ]);
-    expect(planned.topics[0]?.cards).toEqual([
+    expect(planned.topics[0]?.items).toEqual([
       {
         row: 2,
-        cardId: null,
+        existingId: null,
         change: "add",
         front: "Moment",
         back: "$M = Fd$",
@@ -96,7 +102,7 @@ describe("planCardImport: a valid file", () => {
       },
       {
         row: 4,
-        cardId: null,
+        existingId: null,
         change: "add",
         front: "Couple",
         back: "Two equal and opposite forces",
@@ -110,7 +116,7 @@ describe("planCardImport: a valid file", () => {
     const planned = plan(["  Statics ,  Moment  ,  $M$  ,   ,   "]);
 
     expect(planned.problems).toEqual([]);
-    expect(planned.topics[0]?.cards[0]).toMatchObject({
+    expect(planned.topics[0]?.items[0]).toMatchObject({
       front: "Moment",
       back: "$M$",
       note: null,
@@ -125,24 +131,24 @@ describe("planCardImport: a valid file", () => {
     expect(planned.topics[0]).toMatchObject({
       name: "Simple Curves",
       topicId: "t-simple",
-      deck: { id: "d-simple", visibility: "visible" },
+      content: { id: "d-simple", visibility: "visible" },
     });
   });
 
   it("creates a Topic per new name, named as first written with single spaces, one per name in any case", () => {
     const planned = plan(["Fluid   Mechanics,a,b,,", "FLUID MECHANICS,c,d,,", "Hydraulics,e,f,,"]);
 
-    expect(planned.topics.map((t) => [t.name, t.topicId, t.deck])).toEqual([
+    expect(planned.topics.map((t) => [t.name, t.topicId, t.content])).toEqual([
       ["Fluid Mechanics", null, null],
       ["Hydraulics", null, null],
     ]);
-    expect(planned.topics[0]?.cards.map((c) => c.front)).toEqual(["a", "c"]);
+    expect(planned.topics[0]?.items.map((c) => c.front)).toEqual(["a", "c"]);
   });
 
   it("gives an existing Topic without a deck a new one, and one with an empty deck that deck", () => {
     const planned = plan(["Surveying,a,b,,", "Algebra,c,d,,"]);
 
-    expect(planned.topics.map((t) => [t.name, t.deck])).toEqual([
+    expect(planned.topics.map((t) => [t.name, t.content])).toEqual([
       ["Surveying", null],
       ["Algebra", { id: "d-algebra", visibility: "hidden" }],
     ]);
@@ -156,14 +162,14 @@ describe("planCardImport: a valid file", () => {
 
     expect(planned.problems).toEqual([]);
     expect(planned.topics[0]).toMatchObject({ name: "Statics" });
-    expect(planned.topics[0]?.cards[0]).toMatchObject({ front: "Moment", image: "beam.png" });
+    expect(planned.topics[0]?.items[0]).toMatchObject({ front: "Moment", image: "beam.png" });
   });
 
   it("accepts a literal \\$ and maths in every text field", () => {
     const planned = plan(["Costs,Ticket price,It costs \\$5,$\\frac{1}{2}$ off on Sundays,"]);
 
     expect(planned.problems).toEqual([]);
-    expect(planned.topics[0]?.cards[0]).toMatchObject({
+    expect(planned.topics[0]?.items[0]).toMatchObject({
       back: "It costs \\$5",
       note: "$\\frac{1}{2}$ off on Sundays",
     });
@@ -186,7 +192,7 @@ describe("planCardImport: images", () => {
     );
 
     expect(planned.problems).toEqual([]);
-    expect(planned.topics[0]?.cards.map((c) => c.image)).toEqual([
+    expect(planned.topics[0]?.items.map((c) => c.image)).toEqual([
       "images/beam.png",
       "photos/truss.jpg",
       "images/arch.webp",
@@ -199,7 +205,7 @@ describe("planCardImport: images", () => {
     });
 
     expect(planned.problems).toEqual([]);
-    expect(planned.topics[0]?.cards[0]?.image).toBe("beam.png");
+    expect(planned.topics[0]?.items[0]?.image).toBe("beam.png");
   });
 
   it("lets two cards share one image", () => {
@@ -343,7 +349,7 @@ describe("planCardImport: row errors, each naming its row and column", () => {
   it("leaves a row with problems out of the plan's cards", () => {
     const planned = plan(["T,,b,,", "T,f,b,,"]);
 
-    expect(planned.topics[0]?.cards.map((c) => c.row)).toEqual([3]);
+    expect(planned.topics[0]?.items.map((c) => c.row)).toEqual([3]);
   });
 });
 
@@ -475,7 +481,7 @@ describe("planCardImport: new Topics and rename hints", () => {
 
   it("never asks it of an existing Topic, or of a short name", () => {
     const planned = plan(["Algebra,a,b,,", "Alg,c,d,,"], {
-      topics: [...TOPICS, { id: "t-al", name: "Al", deck: null, cards: [] }],
+      topics: [...TOPICS, { id: "t-al", name: "Al", content: null, items: [] }],
     });
 
     expect(planned.topics.map((t) => t.similarTo)).toEqual([null, null]);
@@ -498,7 +504,7 @@ describe("planCardImport: re-importing a Topic that has cards", () => {
 
     expect(planned.problems).toEqual([]);
     expect(topic?.mode).toBe("replace");
-    expect(topic?.cards.map((c) => [c.cardId, c.change, c.front])).toEqual([
+    expect(topic?.items.map((c) => [c.existingId, c.change, c.front])).toEqual([
       ["c-degree", "keep", "Degree of curve"],
       // Saved as typed (trimmed), so line breaks in a front survive.
       ["c-length", "replace", "Length   of curve"],
@@ -511,7 +517,7 @@ describe("planCardImport: re-importing a Topic that has cards", () => {
   it("Replace matches fronts case-sensitively", () => {
     const planned = plan(["Simple Curves,degree of curve,$D$,,"], { mode: "replace" });
 
-    expect(planned.topics[0]?.cards[0]).toMatchObject({ cardId: null, change: "add" });
+    expect(planned.topics[0]?.items[0]).toMatchObject({ existingId: null, change: "add" });
     expect(planned.topics[0]?.removed).toEqual(["c-degree", "c-length", "c-tangent"]);
   });
 
@@ -524,7 +530,7 @@ describe("planCardImport: re-importing a Topic that has cards", () => {
       { mode: "replace", zip: zip(["c.png", 10]) },
     );
 
-    expect(planned.topics[0]?.cards.map((c) => c.change)).toEqual(["replace", "replace"]);
+    expect(planned.topics[0]?.items.map((c) => c.change)).toEqual(["replace", "replace"]);
   });
 
   it("Replace pairs repeated fronts with existing cards in order, and adds the extra", () => {
@@ -533,7 +539,7 @@ describe("planCardImport: re-importing a Topic that has cards", () => {
       { mode: "replace" },
     );
 
-    expect(planned.topics[0]?.cards.map((c) => c.cardId)).toEqual(["c-degree", null]);
+    expect(planned.topics[0]?.items.map((c) => c.existingId)).toEqual(["c-degree", null]);
   });
 
   it("Add appends every row after the existing cards, keeping them all", () => {
@@ -541,7 +547,7 @@ describe("planCardImport: re-importing a Topic that has cards", () => {
     const topic = planned.topics[0];
 
     expect(topic?.mode).toBe("add");
-    expect(topic?.cards.map((c) => [c.cardId, c.change])).toEqual([
+    expect(topic?.items.map((c) => [c.existingId, c.change])).toEqual([
       [null, "add"],
       [null, "add"],
       [null, "add"],

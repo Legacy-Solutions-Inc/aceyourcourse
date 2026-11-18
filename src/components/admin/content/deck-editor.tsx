@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useId, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { AdminSwitch } from "@/components/admin/admin-switch";
 import { callAdminAction } from "@/components/admin/call-admin-action";
 import { ConfirmDelete } from "@/components/admin/confirm-delete";
 import { MoveButtons } from "@/components/admin/move-buttons";
@@ -22,6 +21,7 @@ import type {
 } from "@/services/admin.types";
 
 import { CardForm, type CardFormActions } from "./card-form";
+import { ContentSwitch } from "./content-switch";
 
 export interface DeckEditorActions extends CardFormActions {
   moveCardInDeck: AdminAction<string[]>;
@@ -53,51 +53,6 @@ const settingRefusal = (error: AdminError) =>
     : error.kind === "not-found"
       ? "That deck is gone. Reload the page."
       : "The deck wasn’t changed. Reload the page and try again.";
-
-/** One of the deck's switches, with its label and, when it can't be used, why. */
-function DeckSwitch({
-  label,
-  description,
-  checked,
-  disabledReason,
-  onChange,
-  pending,
-}: {
-  label: string;
-  description: string;
-  checked: boolean;
-  disabledReason: string | null;
-  onChange: (checked: boolean) => void;
-  pending: boolean;
-}) {
-  const id = useId();
-  return (
-    <div className="flex min-w-0 flex-[1_1_220px] items-start gap-2.5">
-      <AdminSwitch
-        checked={checked}
-        onCheckedChange={onChange}
-        disabled={pending || disabledReason !== null}
-        aria-labelledby={`${id}-label`}
-        aria-describedby={`${id}-description`}
-        className="disabled:cursor-not-allowed disabled:opacity-60"
-      />
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <span id={`${id}-label`} className="text-sm font-bold">
-          {label}
-        </span>
-        <span
-          id={`${id}-description`}
-          className={cn(
-            "text-xs leading-[1.45]",
-            disabledReason ? "font-mono font-bold text-destructive" : "text-muted-foreground",
-          )}
-        >
-          {disabledReason ?? description}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 /** One card's row: its place and front, with Edit, ▲▼ and Delete. */
 function CardRow({
@@ -235,7 +190,7 @@ export function DeckEditor({ deck, selected, watermark, actions }: DeckEditorPro
           </p>
         </div>
         <div className="flex flex-wrap gap-x-6 gap-y-3">
-          <DeckSwitch
+          <ContentSwitch
             label="Visible to members"
             description={
               visible
@@ -249,7 +204,7 @@ export function DeckEditor({ deck, selected, watermark, actions }: DeckEditorPro
               settings && visibility.save({ deck: settings.id, visible: checked })
             }
           />
-          <DeckSwitch
+          <ContentSwitch
             label="Free Preview"
             description="Members with no Access Pass can open it while it’s Visible."
             checked={settings?.freePreview ?? false}

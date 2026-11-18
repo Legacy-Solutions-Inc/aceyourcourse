@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CARD_IMPORT_TEMPLATE_CSV, cardImportExampleZip } from "@/lib/card-import/template";
-import type { ConfirmCardImportInput } from "@/services/admin.schema";
-import type { CardImportPreview } from "@/services/admin.types";
+import { CARD_IMPORT_TEMPLATE_CSV, importExampleZip } from "@/lib/content-import/template";
+import type { ConfirmImportInput } from "@/services/admin.schema";
+import type { ImportPreview } from "@/services/admin.types";
 import { sampleTopicId } from "@/services/mock/content";
 
 import { ADMIN_ARMS } from "../../test/admin-arms";
 import { sampleActor } from "../../test/admin-inputs";
-import { importCsv, importZip } from "../../test/card-import-files";
+import { importCsv, importZip } from "../../test/import-files";
 import { imageBytes, textBytes } from "../../test/image-bytes";
 
 // The Admin seam's card import (Phase 3, ticket 06; spec, Phase 3 →
@@ -93,7 +93,7 @@ describe.each(ADMIN_ARMS)("Admin seam: card import ($name)", (arm) => {
             name: "Simple Curves",
             topicId: SIMPLE_CURVES,
             similarTo: null,
-            deck: "visible",
+            content: "visible",
             mode: "add",
             counts: { add: 1, replace: 0, keep: 0, remove: 0 },
           },
@@ -101,7 +101,7 @@ describe.each(ADMIN_ARMS)("Admin seam: card import ($name)", (arm) => {
             name: "Highways",
             topicId: null,
             similarTo: null,
-            deck: "new",
+            content: "new",
             mode: "add",
             counts: { add: 2, replace: 0, keep: 0, remove: 0 },
           },
@@ -109,14 +109,14 @@ describe.each(ADMIN_ARMS)("Admin seam: card import ($name)", (arm) => {
             name: "Simple Curve",
             topicId: null,
             similarTo: "Simple Curves",
-            deck: "new",
+            content: "new",
             mode: "add",
             counts: { add: 1, replace: 0, keep: 0, remove: 0 },
           },
         ],
         problems: [],
         basedOn: expect.stringMatching(/^[0-9a-f]{64}$/),
-      } satisfies CardImportPreview);
+      } satisfies ImportPreview);
       expect(await mstcTopics()).toEqual(before);
       expect(await arm.cards()).toEqual([]);
       expect(await arm.staffActivity()).toEqual([]);
@@ -253,16 +253,18 @@ describe.each(ADMIN_ARMS)("Admin seam: card import ($name)", (arm) => {
 
       const cards = await arm.cards();
       const inDeck = (deckId: string | undefined) => cards.filter((card) => card.deckId === deckId);
-      expect(inDeck(simple?.deckId).map((c) => [c.position, c.front, c.note])).toEqual([
+      expect(inDeck(simple?.contentId).map((c) => [c.position, c.front, c.note])).toEqual([
         [1, "Degree of curve", "Arc basis"],
       ]);
-      expect(inDeck(simpleCurve?.deckId).map((c) => c.front)).toEqual(["Length of curve"]);
-      const [superelevation, sightDistance] = inDeck(highways?.deckId);
+      expect(inDeck(simpleCurve?.contentId).map((c) => c.front)).toEqual(["Length of curve"]);
+      const [superelevation, sightDistance] = inDeck(highways?.contentId);
       expect([superelevation?.position, sightDistance?.position]).toEqual([1, 2]);
       expect(superelevation?.image).toMatch(
-        new RegExp(`^decks/${highways?.deckId}/${UUID}\\.png$`),
+        new RegExp(`^decks/${highways?.contentId}/${UUID}\\.png$`),
       );
-      expect(sightDistance?.image).toMatch(new RegExp(`^decks/${highways?.deckId}/${UUID}\\.jpg$`));
+      expect(sightDistance?.image).toMatch(
+        new RegExp(`^decks/${highways?.contentId}/${UUID}\\.jpg$`),
+      );
       expect(await arm.storedFile(superelevation?.image ?? "")).toEqual(PNG);
       expect(await arm.storedFile(sightDistance?.image ?? "")).toEqual(JPEG);
     });
@@ -283,9 +285,9 @@ describe.each(ADMIN_ARMS)("Admin seam: card import ($name)", (arm) => {
             exam: "CE",
             subject: "MSTC",
             mode: "add",
-            topics: confirmed.value.topics.map(({ topicId, deckId, name, created, counts }) => ({
+            topics: confirmed.value.topics.map(({ topicId, contentId, name, created, counts }) => ({
               topicId,
-              deckId,
+              deckId: contentId,
               name,
               created,
               ...counts,
@@ -314,7 +316,7 @@ describe.each(ADMIN_ARMS)("Admin seam: card import ($name)", (arm) => {
         ],
         { zip: ZIP() },
       );
-      const deckId = first.value.topics[0]?.deckId;
+      const deckId = first.value.topics[0]?.contentId;
       const before = await arm.cards();
       const id = (front: string) => before.find((card) => card.front === front)?.id;
       const removedImage = before.find((card) => card.front === "Traverse")?.image ?? "";
@@ -331,7 +333,7 @@ describe.each(ADMIN_ARMS)("Admin seam: card import ($name)", (arm) => {
 
       expect(second.value.topics[0]).toMatchObject({
         topicId: SURVEYING,
-        deckId,
+        contentId: deckId,
         created: false,
         counts: { add: 1, replace: 1, keep: 1, remove: 1 },
       });
@@ -528,7 +530,7 @@ describe.each(ADMIN_ARMS)("Admin seam: card import ($name)", (arm) => {
     it("imports the template unchanged, with its example image", async () => {
       const paths = await arm.uploadImport({
         csv: new TextEncoder().encode(CARD_IMPORT_TEMPLATE_CSV),
-        zip: cardImportExampleZip(),
+        zip: importExampleZip(),
       });
       const input = { exam: "ce", subject: "psad", mode: "add", ...paths } as const;
       const planned = await seam.planCardImport(EDITOR, input);
@@ -538,7 +540,7 @@ describe.each(ADMIN_ARMS)("Admin seam: card import ($name)", (arm) => {
       const confirmed = await seam.confirmCardImport(EDITOR, {
         ...input,
         basedOn: planned.value.basedOn,
-      } satisfies ConfirmCardImportInput);
+      } satisfies ConfirmImportInput);
 
       expect(confirmed.ok).toBe(true);
       const cards = await arm.cards();

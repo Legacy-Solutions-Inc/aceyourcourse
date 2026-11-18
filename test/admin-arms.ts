@@ -1,7 +1,8 @@
+import { DEFAULT_QUIZ_SETTINGS } from "@/lib/quizzes/quiz-rules";
 import type { AdminService } from "@/services/admin";
 import * as sampleArm from "@/services/admin.mock";
 import type { DeniedSignIn, StaffActivity } from "@/services/admin.types";
-import type { Card, CardMark, ContentKind } from "@/services/content.types";
+import type { Card, CardMark, ContentKind, Question, Quiz } from "@/services/content.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import type { ContentFiles } from "@/services/uploads";
@@ -10,7 +11,7 @@ import type { UploadRequest } from "@/services/uploads.types";
 
 import { DATABASE_ARM } from "./admin-database";
 import { type CardImageUpload, uploadSampleCardImage } from "./card-images";
-import { type ImportFiles, type ImportPaths, uploadSampleImport } from "./card-import-files";
+import { type ImportFiles, type ImportPaths, uploadSampleImport } from "./import-files";
 import { newContent } from "./content-inputs";
 import { editSampleCatalogue } from "./catalogue-seed";
 import { uploadSamplePhoto } from "./sample-photo";
@@ -80,11 +81,29 @@ export interface AdminArm {
   putCardMark(mark: CardMark): Promise<void>;
   /** Every Member's Card Marks, read behind the seam's back, by card then Member. */
   cardMarks(): Promise<CardMark[]>;
+  /** Every quiz, read behind the seam's back, by id. */
+  quizzes(): Promise<Quiz[]>;
+  /** Every quiz's questions, removed ones too, read behind the seam's back (byQuizAndPosition). */
+  questions(): Promise<Question[]>;
 }
 
 /** Pure: Card Marks by card, then Member. */
 export const byCardAndMember = (marks: CardMark[]) =>
   [...marks].sort((a, b) => a.cardId.localeCompare(b.cardId) || a.userId.localeCompare(b.userId));
+
+/** Pure: quizzes by id. */
+export const byId = <T extends { id: string }>(records: T[]) =>
+  [...records].sort((a, b) => a.id.localeCompare(b.id));
+
+/** Pure: questions by quiz, then by position, with the removed ones last, oldest first. */
+export const byQuizAndPosition = (questions: Question[]) =>
+  [...questions].sort(
+    (a, b) =>
+      a.quizId.localeCompare(b.quizId) ||
+      (a.position ?? Number.MAX_SAFE_INTEGER) - (b.position ?? Number.MAX_SAFE_INTEGER) ||
+      (a.removedAt ?? "").localeCompare(b.removedAt ?? "") ||
+      a.id.localeCompare(b.id),
+  );
 
 /** Pure: cards by deck, then by position. */
 export const byDeckAndPosition = (cards: Card[]) =>
@@ -114,7 +133,10 @@ const SAMPLE_ARM: AdminArm = {
     const { id, visibility, status, freePreview } = newContent(topicId);
     if (kind === "deck") store.decks = [...store.decks, { id, topicId, visibility, freePreview }];
     if (kind === "quiz") {
-      store.quizzes = [...store.quizzes, { id, topicId, visibility, freePreview }];
+      store.quizzes = [
+        ...store.quizzes,
+        { id, topicId, visibility, freePreview, ...DEFAULT_QUIZ_SETTINGS },
+      ];
     }
     if (kind === "reviewer-pdf") {
       store.reviewerPdfs = [...store.reviewerPdfs, { id, topicId, status, freePreview }];
@@ -131,6 +153,8 @@ const SAMPLE_ARM: AdminArm = {
     store.cardMarks = [...store.cardMarks, structuredClone(mark)];
   },
   cardMarks: async () => byCardAndMember(structuredClone(getSampleStore().cardMarks)),
+  quizzes: async () => byId(structuredClone(getSampleStore().quizzes)),
+  questions: async () => byQuizAndPosition(structuredClone(getSampleStore().questions)),
   breakStaffActivity: async () => {
     const store = getSampleStore();
     const records = store.staffActivity;

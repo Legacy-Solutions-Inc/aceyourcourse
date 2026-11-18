@@ -7,6 +7,7 @@ import type {
   Card,
   ContentRecords,
   Deck,
+  Question,
   Quiz,
   ReviewerPdf,
   Topic,
@@ -23,6 +24,7 @@ type QuizRow = typeof schema.quizzes.$inferSelect;
 type ReviewerPdfRow = typeof schema.reviewerPdfs.$inferSelect;
 type AccessPassRow = typeof schema.accessPasses.$inferSelect;
 type CardRow = typeof schema.cards.$inferSelect;
+type QuestionRow = typeof schema.questions.$inferSelect;
 
 /** Every content table's rows, as the records are. */
 export interface ContentRows {
@@ -58,12 +60,17 @@ export function contentToRows(content: ContentRecords): ContentRows {
       visibility,
       freePreview,
     })),
-    quizzes: content.quizzes.map(({ id, topicId, visibility, freePreview }) => ({
-      id,
-      topicId,
-      visibility,
-      freePreview,
-    })),
+    quizzes: content.quizzes.map(
+      ({ id, topicId, visibility, freePreview, passingScore, shuffle, showAnswers }) => ({
+        id,
+        topicId,
+        visibility,
+        freePreview,
+        passingScore,
+        shuffle,
+        showAnswers,
+      }),
+    ),
     reviewerPdfs: content.reviewerPdfs.map(({ id, topicId, status, freePreview }) => ({
       id,
       topicId,
@@ -109,4 +116,31 @@ export const cardToRow = (card: Card): CardRow => ({
   note: card.note,
   imagePath: card.image,
   frontHash: frontHashOf(card.front),
+});
+
+export const questionFromRow = (row: QuestionRow): Question => ({
+  id: row.id,
+  quizId: row.quizId,
+  position: row.position,
+  question: row.question,
+  choices: { A: row.choiceA, B: row.choiceB, C: row.choiceC, D: row.choiceD },
+  correct: row.correctChoice,
+  explanation: row.explanation,
+  figure: row.figurePath,
+  removedAt: row.removedAt?.toISOString() ?? null,
+});
+
+export const questionToRow = (question: Question): QuestionRow => ({
+  id: question.id,
+  quizId: question.quizId,
+  position: question.position,
+  question: question.question,
+  choiceA: question.choices.A,
+  choiceB: question.choices.B,
+  choiceC: question.choices.C,
+  choiceD: question.choices.D,
+  correctChoice: question.correct,
+  explanation: question.explanation,
+  figurePath: question.figure,
+  removedAt: question.removedAt === null ? null : new Date(question.removedAt),
 });

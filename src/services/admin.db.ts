@@ -41,8 +41,14 @@ import type {
   RecordStamp,
   StaffMember,
 } from "@/services/admin.types";
-import { confirmCardImport, planCardImport } from "@/services/admin.card-import.db";
+import {
+  confirmCardImport,
+  confirmQuizImport,
+  planCardImport,
+  planQuizImport,
+} from "@/services/admin.content-import.db";
 import * as deckEditor from "@/services/admin.deck.db";
+import * as quizEditor from "@/services/admin.quiz.db";
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
@@ -282,6 +288,10 @@ async function load(
     },
     get signedFiles() {
       return notLoaded("the signed card image URLs");
+    },
+    // The quiz import and the quiz screen (ticket 09) read and write the questions themselves.
+    get questions() {
+      return notLoaded("the questions");
     },
     get quizzes() {
       return contentPart().quizzes;
@@ -785,9 +795,11 @@ export const databaseArm: AdminService = {
     sampleArm.deleteTopic,
     () => "This Topic now has content, so it can’t be deleted. Reload the page to see it.",
   ),
-  // One Subject's cards, read and saved by the import itself.
+  // One Subject's cards or quizzes, read and saved by the import itself.
   planCardImport,
   confirmCardImport,
+  planQuizImport,
+  confirmQuizImport,
   // One Topic's deck and cards, read and saved by the card editor itself.
   getDeckForAdmin: deckEditor.getDeckForAdmin,
   getCardImageForAdmin: deckEditor.getCardImageForAdmin,
@@ -797,6 +809,12 @@ export const databaseArm: AdminService = {
   deleteCard: deckEditor.deleteCard,
   setDeckVisibility: deckEditor.setDeckVisibility,
   setDeckFreePreview: deckEditor.setDeckFreePreview,
+  // One Topic's quiz and questions, read and saved by the quiz screen itself.
+  getQuizForAdmin: quizEditor.getQuizForAdmin,
+  getQuestionFigureForAdmin: quizEditor.getQuestionFigureForAdmin,
+  updateQuizSettings: quizEditor.updateQuizSettings,
+  setQuizVisibility: quizEditor.setQuizVisibility,
+  setQuizFreePreview: quizEditor.setQuizFreePreview,
 
   getSitePageForAdmin: read(CATALOGUE, sampleArm.getSitePageForAdmin),
   updateSitePageSeo: stampedWrite(sampleArm.updateSitePageSeo),

@@ -169,6 +169,13 @@ function TopicRow({
           >
             Flashcards
           </Link>
+          <Link
+            href={paths.admin.quiz(topic.id)}
+            aria-label={`Quiz in ${topic.name}`}
+            className={TEXT_BUTTON}
+          >
+            Quiz
+          </Link>
           <button
             type="button"
             aria-label={`Rename ${topic.name}`}
@@ -250,12 +257,20 @@ export function TopicsEditor({ list, actions }: TopicsEditorProps) {
           </h2>
           <p className="text-sm">{subject.name}</p>
         </div>
-        <Link
-          href={paths.admin.cardImport(exam.code, subject.code)}
-          className={`${BUTTON} inline-flex items-center bg-ayc-paper`}
-        >
-          Import cards
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={paths.admin.cardImport(exam.code, subject.code)}
+            className={`${BUTTON} inline-flex items-center bg-ayc-paper`}
+          >
+            Import cards
+          </Link>
+          <Link
+            href={paths.admin.quizImport(exam.code, subject.code)}
+            className={`${BUTTON} inline-flex items-center bg-ayc-paper`}
+          >
+            Import quizzes
+          </Link>
+        </div>
       </div>
 
       {topics.length > 0 ? (

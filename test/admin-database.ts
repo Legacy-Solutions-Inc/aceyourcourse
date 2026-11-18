@@ -1,3 +1,4 @@
+import { DEFAULT_QUIZ_SETTINGS } from "@/lib/quizzes/quiz-rules";
 import { asc, eq, sql } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
@@ -5,14 +6,20 @@ import * as schema from "@/lib/db/schema";
 import { getStorage, isStorageConfigured } from "@/lib/supabase/admin";
 import { databaseArm } from "@/services/admin.db";
 import { deniedSignInFromRow, staffActivityFromRow } from "@/services/admin.rows";
-import { cardFromRow } from "@/services/content.rows";
+import { cardFromRow, contentFromRows, questionFromRow } from "@/services/content.rows";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import { sampleContentFiles } from "@/services/uploads.mock";
 import { CONTENT_BUCKET, storageArm } from "@/services/uploads.storage";
 import type { UploadRequest } from "@/services/uploads.types";
 
-import { type AdminArm, byCardAndMember, byDeckAndPosition } from "./admin-arms";
+import {
+  type AdminArm,
+  byCardAndMember,
+  byDeckAndPosition,
+  byId,
+  byQuizAndPosition,
+} from "./admin-arms";
 import {
   type CardImageUpload,
   declaredSize,
@@ -24,7 +31,7 @@ import {
   type ImportFiles,
   uploadContent,
   uploadSampleImport,
-} from "./card-import-files";
+} from "./import-files";
 import { loadTestCatalogue } from "./catalogue-database";
 import { newContent } from "./content-inputs";
 import { imageBytes } from "./image-bytes";
@@ -58,13 +65,13 @@ async function uploadStoragePhoto({
 
 /** Uploads an import's files to local Supabase's private content bucket, as the import screen does. */
 async function uploadStorageImport({ csv, zip = null, send = true }: ImportFiles) {
-  const create = (purpose: "card-import-csv" | "card-import-zip", size: number) =>
+  const create = (purpose: "import-csv" | "import-zip", size: number) =>
     storageArm.createContentUpload(IMPORT_UPLOADER, { purpose, size });
   const put = async (ticket: { uploadUrl: string; contentType: string }, bytes: Uint8Array) =>
     (await putFile(ticket.uploadUrl, ticket.contentType, bytes)).ok;
   return {
-    csv: await uploadContent(create, put, "card-import-csv", csv, send),
-    zip: zip ? await uploadContent(create, put, "card-import-zip", zip, send) : null,
+    csv: await uploadContent(create, put, "import-csv", csv, send),
+    zip: zip ? await uploadContent(create, put, "import-zip", zip, send) : null,
   };
 }
 
@@ -137,7 +144,9 @@ export const DATABASE_ARM: AdminArm = {
       await getDb().insert(schema.decks).values({ id, topicId, visibility, freePreview });
     }
     if (kind === "quiz") {
-      await getDb().insert(schema.quizzes).values({ id, topicId, visibility, freePreview });
+      await getDb()
+        .insert(schema.quizzes)
+        .values({ id, topicId, visibility, freePreview, ...DEFAULT_QUIZ_SETTINGS });
     }
     if (kind === "reviewer-pdf") {
       await getDb().insert(schema.reviewerPdfs).values({ id, topicId, status, freePreview });
@@ -170,6 +179,17 @@ export const DATABASE_ARM: AdminArm = {
         markedAt: row.markedAt.toISOString(),
       })),
     ),
+  quizzes: async () =>
+    byId(
+      contentFromRows({
+        topics: [],
+        decks: [],
+        quizzes: await getDb().select().from(schema.quizzes),
+        reviewerPdfs: [],
+      }).quizzes,
+    ),
+  questions: async () =>
+    byQuizAndPosition((await getDb().select().from(schema.questions)).map(questionFromRow)),
   // A trigger that refuses every Staff Activity row: the save's last write.
   // The database tests run one file at a time, so no other test meets it.
   breakStaffActivity: async () => {

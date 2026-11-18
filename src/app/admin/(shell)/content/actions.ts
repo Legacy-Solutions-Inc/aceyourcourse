@@ -3,6 +3,7 @@
 import { adminAction } from "@/lib/admin/action";
 import {
   confirmCardImport,
+  confirmQuizImport,
   createCard,
   createTopic,
   deleteCard,
@@ -10,21 +11,28 @@ import {
   moveCard,
   moveTopic,
   planCardImport,
+  planQuizImport,
   renameTopic,
   setDeckFreePreview,
   setDeckVisibility,
+  setQuizFreePreview,
+  setQuizVisibility,
   updateCard,
+  updateQuizSettings,
 } from "@/services/admin";
 import {
   cardFormSchema,
   cardIdInputSchema,
-  cardImportInputSchema,
+  importInputSchema,
   cardMoveInputSchema,
-  confirmCardImportInputSchema,
+  confirmImportInputSchema,
   deckFreePreviewInputSchema,
   deckVisibilityInputSchema,
   newCardFormSchema,
   newTopicFormSchema,
+  quizFreePreviewInputSchema,
+  quizSettingsFormSchema,
+  quizVisibilityInputSchema,
   renameTopicFormSchema,
   topicIdInputSchema,
   topicMoveInputSchema,
@@ -74,14 +82,28 @@ export const createImportUpload = adminAction(
 
 /** "Check file": the import's preview. Saves nothing. */
 export const checkCardImport = adminAction(
-  { role: "staff", schema: cardImportInputSchema },
+  { role: "staff", schema: importInputSchema },
   async (actor, input) => planCardImport(actor, input),
 );
 
 /** "Import": saves a preview with no problems, all or nothing. */
 export const importCards = adminAction(
-  { role: "staff", schema: confirmCardImportInputSchema },
+  { role: "staff", schema: confirmImportInputSchema },
   async (actor, input) => confirmCardImport(actor, input),
+);
+
+// The quiz import (ticket 09): the same screen and uploads, with quiz rows.
+
+/** "Check file" for a quiz CSV: the import's preview. Saves nothing. */
+export const checkQuizImport = adminAction(
+  { role: "staff", schema: importInputSchema },
+  async (actor, input) => planQuizImport(actor, input),
+);
+
+/** "Import" for a quiz CSV: saves a preview with no problems, all or nothing. */
+export const importQuizzes = adminAction(
+  { role: "staff", schema: confirmImportInputSchema },
+  async (actor, input) => confirmQuizImport(actor, input),
 );
 
 // The card editor (ticket 07): any Staff User adds, edits, moves and deletes
@@ -128,4 +150,27 @@ export const saveDeckVisibility = adminAction(
 export const saveDeckFreePreview = adminAction(
   { role: "staff", schema: deckFreePreviewInputSchema },
   async (actor, { deck, freePreview }) => setDeckFreePreview(actor, deck, freePreview),
+);
+
+// The quiz screen (ticket 09): any Staff User sets a quiz's passing score,
+// shuffle and "show answers after", and makes it Visible and Free Preview.
+// Like every Admin action, each runs the Staff Guard first, so a Member or
+// someone signed out never reaches the seam, which checks every rule again.
+
+/** "Save settings": an editor's save, so it sends the stamp the settings had when the form opened. */
+export const saveQuizSettings = adminAction(
+  { role: "staff", schema: quizSettingsFormSchema, requiresStamp: true },
+  updateQuizSettings,
+);
+
+/** "Visible to members": refused while the quiz has no questions. */
+export const saveQuizVisibility = adminAction(
+  { role: "staff", schema: quizVisibilityInputSchema },
+  async (actor, { quiz, visible }) => setQuizVisibility(actor, quiz, visible),
+);
+
+/** "Free Preview": Members with no Access Pass can open the quiz while it's Visible. */
+export const saveQuizFreePreview = adminAction(
+  { role: "staff", schema: quizFreePreviewInputSchema },
+  async (actor, { quiz, freePreview }) => setQuizFreePreview(actor, quiz, freePreview),
 );

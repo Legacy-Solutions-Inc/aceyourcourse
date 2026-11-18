@@ -128,10 +128,15 @@ export const paths = {
     /** A Subject's card import (ticket 06): choose a CSV and zip, check them, import. */
     cardImport: (examCode: string, subjectCode: string) =>
       `/admin/content/import?${subjectQuery(examCode, subjectCode)}`,
+    /** A Subject's quiz import (ticket 09): the same screen, for quiz questions. */
+    quizImport: (examCode: string, subjectCode: string) =>
+      `/admin/content/import?${subjectQuery(examCode, subjectCode)}&kind=quizzes`,
     /** The card import's template CSV, downloaded (Staff only). */
     cardImportTemplate: "/admin/content/import/template",
-    /** The zip of the template's example image, downloaded (Staff only). */
-    cardImportExampleImages: "/admin/content/import/example-images",
+    /** The quiz import's template CSV, downloaded (Staff only). */
+    quizImportTemplate: "/admin/content/import/quiz-template",
+    /** The zip of the templates' example image, downloaded (Staff only). */
+    importExampleImages: "/admin/content/import/example-images",
     /**
      * A Topic's deck in the card editor (ticket 07), with one card open in the
      * form, or "new" for a new card.
@@ -142,6 +147,11 @@ export const paths = {
       }`,
     /** A card's back image, from the private content bucket (Staff only). */
     cardImage: (cardId: string) => `/admin/content/deck/image/${encodeURIComponent(cardId)}`,
+    /** A Topic's quiz (ticket 09): its settings and questions. */
+    quiz: (topicId: string) => `/admin/content/quiz?topic=${encodeURIComponent(topicId)}`,
+    /** A question's figure, from the private content bucket (Staff only). */
+    questionFigure: (questionId: string) =>
+      `/admin/content/quiz/figure/${encodeURIComponent(questionId)}`,
     /** Development-only: POST resets the sample data; 404 unless the Admin runs on it. */
     resetSampleData: "/api/dev/sample-data/reset",
     /**

@@ -106,6 +106,13 @@
       "when": 1794978507551,
       "tag": "20261118050827_study_progress",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1794986593563,
+      "tag": "20261118072313_quizzes",
+      "breakpoints": true
     }
   ]
 }
