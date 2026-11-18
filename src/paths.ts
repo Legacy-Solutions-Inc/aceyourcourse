@@ -147,8 +147,14 @@ export const paths = {
       }`,
     /** A card's back image, from the private content bucket (Staff only). */
     cardImage: (cardId: string) => `/admin/content/deck/image/${encodeURIComponent(cardId)}`,
-    /** A Topic's quiz (ticket 09): its settings and questions. */
-    quiz: (topicId: string) => `/admin/content/quiz?topic=${encodeURIComponent(topicId)}`,
+    /**
+     * A Topic's quiz (ticket 09): its settings and questions, with one
+     * question open in the question editor's form (ticket 10), or "new".
+     */
+    quiz: (topicId: string, question?: string) =>
+      `/admin/content/quiz?topic=${encodeURIComponent(topicId)}${
+        question ? `&question=${encodeURIComponent(question)}` : ""
+      }`,
     /** A question's figure, from the private content bucket (Staff only). */
     questionFigure: (questionId: string) =>
       `/admin/content/quiz/figure/${encodeURIComponent(questionId)}`,

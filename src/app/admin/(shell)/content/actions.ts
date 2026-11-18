@@ -5,10 +5,13 @@ import {
   confirmCardImport,
   confirmQuizImport,
   createCard,
+  createQuestion,
   createTopic,
   deleteCard,
+  deleteQuestion,
   deleteTopic,
   moveCard,
+  moveQuestion,
   moveTopic,
   planCardImport,
   planQuizImport,
@@ -18,6 +21,7 @@ import {
   setQuizFreePreview,
   setQuizVisibility,
   updateCard,
+  updateQuestion,
   updateQuizSettings,
 } from "@/services/admin";
 import {
@@ -29,7 +33,11 @@ import {
   deckFreePreviewInputSchema,
   deckVisibilityInputSchema,
   newCardFormSchema,
+  newQuestionFormSchema,
   newTopicFormSchema,
+  questionFormSchema,
+  questionIdInputSchema,
+  questionMoveInputSchema,
   quizFreePreviewInputSchema,
   quizSettingsFormSchema,
   quizVisibilityInputSchema,
@@ -173,4 +181,35 @@ export const saveQuizVisibility = adminAction(
 export const saveQuizFreePreview = adminAction(
   { role: "staff", schema: quizFreePreviewInputSchema },
   async (actor, { quiz, freePreview }) => setQuizFreePreview(actor, quiz, freePreview),
+);
+
+// The question editor (ticket 10): any Staff User adds, edits, moves and
+// deletes a Topic's quiz questions, as the card editor does cards. A figure
+// has a card image's rules, so the form asks for its upload with
+// createCardImageUpload. Like every Admin action, each runs the Staff Guard
+// first, so a Member or someone signed out never reaches the seam, which
+// checks every rule again.
+
+/** "Save" or "Save & add next" on a new question, last in its Topic's quiz. */
+export const addQuestion = adminAction(
+  { role: "staff", schema: newQuestionFormSchema },
+  createQuestion,
+);
+
+/** "Save" on a question being edited: it sends the stamp the question had when the form opened. */
+export const saveQuestion = adminAction(
+  { role: "staff", schema: questionFormSchema, requiresStamp: true },
+  updateQuestion,
+);
+
+/** ▲▼: one place earlier or later in its quiz. */
+export const moveQuestionInQuiz = adminAction(
+  { role: "staff", schema: questionMoveInputSchema },
+  async (actor, { id, direction }) => moveQuestion(actor, id, direction),
+);
+
+/** Delete, after the confirmation: the question leaves the quiz, kept for Members' old attempts. */
+export const removeQuestion = adminAction(
+  { role: "staff", schema: questionIdInputSchema },
+  async (actor, { id }) => deleteQuestion(actor, id),
 );

@@ -28,6 +28,7 @@ import type {
   Card,
   ContentCounts,
   ContentVisibility,
+  Question,
   TopicContent,
 } from "@/services/content.types";
 
@@ -598,6 +599,18 @@ export interface AdminQuestion {
   explanation: string;
   /** Where its figure is in the private content bucket, or null. Staff see it through the Admin's figure route. */
   figure: string | null;
+  /** Its last save, which an edit's conflict check compares (ticket 10). */
+  stamp: RecordStamp;
+}
+
+/**
+ * A deleted question as it was, and whether deleting it made its Visible quiz
+ * Hidden (it was the last question). The question itself is kept, marked
+ * removed, for Members' old attempts (ticket 10).
+ */
+export interface DeletedQuestion {
+  question: Question;
+  quizHidden: boolean;
 }
 
 /** A Topic's quiz as its settings show it. */

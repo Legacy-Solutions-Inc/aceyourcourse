@@ -14,6 +14,7 @@ import type {
   InviteStaffInput,
   NewExamForm,
   NewProductForm,
+  NewQuestionForm,
   NewReviewForm,
   NewSubjectForm,
   CardForm,
@@ -22,6 +23,7 @@ import type {
   NewCardForm,
   NewTopicForm,
   OfficialExamDateForm,
+  QuestionForm,
   QuizSettingsForm,
   ProductFlags,
   ProductForm,
@@ -45,6 +47,7 @@ import type {
   AdminFaqList,
   AdminOverview,
   AdminProduct,
+  AdminQuestion,
   AdminQuiz,
   AdminQuizSettings,
   AdminProductList,
@@ -63,6 +66,7 @@ import type {
   DeletedCard,
   DeletedFaq,
   DeletedProduct,
+  DeletedQuestion,
   DeletedReview,
   DeniedReason,
   DeniedSignIn,
@@ -669,6 +673,47 @@ export interface AdminService {
     freePreview: boolean,
   ): Promise<AdminResult<AdminQuizSettings>>;
 
+  // Member App content: the question editor (any Staff User; Phase 3, ticket
+  // 10; spec, Phase 3 → Content model, Corrections never cost progress;
+  // stories 125, 127, 133l). A Topic's quiz, one question at a time, as the
+  // card editor does cards. A question, each of its four choices and its
+  // explanation are required, each held to its length and must render, and
+  // one of A–D is correct (src/lib/quizzes/question-fields.ts). Its figure is
+  // the question's own, a finished "card-image" upload (a JPEG, PNG or WebP
+  // of at most 5 MB, copied under the quiz in the private content bucket), or
+  // none. Each write appends one Staff Activity record per entity it changes
+  // ("question", "quiz"); none returns a cache tag.
+
+  /**
+   * "Save" or "Save & add next" on a new question: it goes last in its
+   * Topic's quiz. A Topic with no quiz gets one, Hidden, not Free Preview,
+   * with the default settings.
+   */
+  createQuestion(actor: StaffActor, input: NewQuestionForm): Promise<AdminResult<AdminQuestion>>;
+  /**
+   * Saves a question's fields and figure, with the conflict check against the
+   * stamp its form opened with. A replaced or removed figure's file is
+   * deleted. Members' old attempts and Best Scores aren't recalculated.
+   */
+  updateQuestion(
+    actor: StaffActor,
+    input: QuestionForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminQuestion>>;
+  /** ▲▼: one place earlier or later in its quiz. Gives the quiz's new order of ids. */
+  moveQuestion(
+    actor: StaffActor,
+    id: string,
+    direction: ReviewMove,
+  ): Promise<AdminResult<string[]>>;
+  /**
+   * Takes a question out of its quiz and closes the gap. It's never erased:
+   * it's kept, marked removed, with its figure, so Members' old attempts show
+   * it as removed and their Best Scores stay. The last question of a Visible
+   * quiz makes the quiz Hidden, which `quizHidden` says.
+   */
+  deleteQuestion(actor: StaffActor, id: string): Promise<AdminResult<DeletedQuestion>>;
+
   // Site pages (any Staff User; ticket 20; spec, Phase 2 → Site pages). Each
   // of the Website's five Site pages: its SEO title and description (blank
   // uses the text in code) and its share image, with an Exam page's rules.
@@ -830,6 +875,10 @@ export const getQuestionFigureForAdmin = impl.getQuestionFigureForAdmin;
 export const updateQuizSettings = impl.updateQuizSettings;
 export const setQuizVisibility = impl.setQuizVisibility;
 export const setQuizFreePreview = impl.setQuizFreePreview;
+export const createQuestion = impl.createQuestion;
+export const updateQuestion = impl.updateQuestion;
+export const moveQuestion = impl.moveQuestion;
+export const deleteQuestion = impl.deleteQuestion;
 export const getSitePageForAdmin = impl.getSitePageForAdmin;
 export const updateSitePageSeo = impl.updateSitePageSeo;
 export const getAboutForAdmin = impl.getAboutForAdmin;

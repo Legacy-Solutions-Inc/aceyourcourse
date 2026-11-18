@@ -100,6 +100,8 @@ describe.each(ADMIN_ARMS)("Admin seam: quizzes ($name)", (arm) => {
           correct: "B",
           explanation: "$L_s = 0.036 V^3/R$",
           figure: null,
+          // Imported, never saved through the question editor: the data's stamp.
+          stamp: { savedAt: expect.any(String), savedBy: null },
         },
         expect.objectContaining({
           position: 2,

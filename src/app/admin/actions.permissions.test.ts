@@ -99,8 +99,18 @@ const SURVEYING = sampleTopicId("CE", "MSTC", "Surveying");
 /** A Hidden deck, given two cards before each test, which any Staff User may edit. */
 const ALGEBRA = sampleTopicId("CE", "MSTC", "Algebra");
 const ALGEBRA_DECK = sampleContentId(ALGEBRA, "deck");
-/** A Hidden quiz, given a question before each test, which any Staff User may set. */
-const SPIRAL_CURVES_QUIZ = sampleContentId(sampleTopicId("CE", "MSTC", "Spiral Curves"), "quiz");
+/** A Hidden quiz, given two questions before each test, which any Staff User may set and edit. */
+const SPIRAL_CURVES = sampleTopicId("CE", "MSTC", "Spiral Curves");
+const SPIRAL_CURVES_QUIZ = sampleContentId(SPIRAL_CURVES, "quiz");
+const QUESTION = "7f8091a2-bc3d-4e4f-8a51-6c7d8e9fa0b1";
+const SECOND_QUESTION = "8091a2b3-cd4e-4f50-9b62-7d8e9fa0b1c2";
+/** A question's fields that save, apart from the question itself. */
+const QUESTION_FIELDS = {
+  choices: { A: "1", B: "2", C: "3", D: "4" },
+  correct: "B",
+  explanation: "$L_s = 0.036 V^3/R$",
+  figure: null,
+} as const;
 const CARD = "5d6e7f80-9a1b-4c2d-8e3f-4a5b6c7d8e9f";
 const SECOND_CARD = "6e7f8091-ab2c-4d3e-9f40-5b6c7d8e9fa0";
 
@@ -272,6 +282,20 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
         input: { quiz: SPIRAL_CURVES_QUIZ, freePreview: true },
       }),
     ),
+    addQuestion: staff(() =>
+      content.addQuestion(IDLE, {
+        input: { topic: SPIRAL_CURVES, question: "Spiral angle?", ...QUESTION_FIELDS },
+      }),
+    ),
+    saveQuestion: editorSave("staff", content.saveQuestion, () => ({
+      id: QUESTION,
+      question: "Length of spiral, edited?",
+      ...QUESTION_FIELDS,
+    })),
+    moveQuestionInQuiz: staff(() =>
+      content.moveQuestionInQuiz(IDLE, { input: { id: SECOND_QUESTION, direction: "up" } }),
+    ),
+    removeQuestion: staff(() => content.removeQuestion(IDLE, { input: { id: QUESTION } })),
   },
   "./(shell)/products/actions.ts": {
     setProductFlag: staff(() =>
@@ -436,20 +460,16 @@ beforeEach(async () => {
   const planned = await planCardImport(READER, input);
   if (!planned.ok) throw new Error("The card import's files were refused");
   cardImport = { ...input, basedOn: planned.value.basedOn };
-  // A question in Spiral Curves' quiz, so it can be made Visible.
-  getSampleStore().questions = [
-    {
-      id: "7f8091a2-bc3d-4e4f-8a51-6c7d8e9fa0b1",
-      quizId: SPIRAL_CURVES_QUIZ,
-      position: 1,
-      question: "Length of spiral?",
-      choices: { A: "1", B: "2", C: "3", D: "4" },
-      correct: "B",
-      explanation: "$L_s = 0.036 V^3/R$",
-      figure: null,
-      removedAt: null,
-    },
-  ];
+  // Two questions in Spiral Curves' quiz, nobody has saved through the editor,
+  // so it can be made Visible and a question's stamp is the one opened() gives.
+  getSampleStore().questions = [QUESTION, SECOND_QUESTION].map((id, index) => ({
+    id,
+    quizId: SPIRAL_CURVES_QUIZ,
+    position: index + 1,
+    question: index === 0 ? "Length of spiral?" : "Spiral angle?",
+    ...QUESTION_FIELDS,
+    removedAt: null,
+  }));
   const quizPaths = await uploadSampleImport({
     csv: quizCsv(["Highways,Grade?,1,2,3,4,A,Rise over run.,"]),
   });

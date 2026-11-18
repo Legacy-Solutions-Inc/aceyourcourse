@@ -1,6 +1,6 @@
-import { formulaProblem } from "@/lib/formula/check";
+import { formulaFieldProblem } from "@/lib/formula/field";
 
-import { CARD_TEXT_LIMITS, textLength } from "./card-rules";
+import { CARD_TEXT_LIMITS } from "./card-rules";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // A card's fields as the card editor judges them (Phase 3, ticket 07; spec,
@@ -10,7 +10,8 @@ import { CARD_TEXT_LIMITS, textLength } from "./card-rules";
 //   - each has the import's length limit (card-rules.ts), counted as
 //     Postgres counts characters, on the text as saved (trimmed),
 //   - each must render: the formula notation is read, and every formula is
-//     put through KaTeX (src/lib/formula/check.ts).
+//     put through KaTeX (src/lib/formula/check.ts),
+// each judged by src/lib/formula/field.ts, as the question editor's are.
 // A back image's rules (cardImageProblem) are in card-rules.ts, which has no
 // dependencies, as the upload seam's shared rules need.
 // The import planner (src/lib/content-import/plan.ts) applies the same limits
@@ -32,18 +33,13 @@ export const ADD_A_BACK = "ADD A BACK TO SAVE";
 
 const REQUIRED: Partial<Record<CardField, string>> = { front: ADD_A_FRONT, back: ADD_A_BACK };
 
-/** Pure: "KEEP IT TO 2,000 CHARACTERS". */
-export const keepItTo = (limit: number) => `KEEP IT TO ${limit.toLocaleString("en")} CHARACTERS`;
-
 /** Pure: why one field's text can't be saved, or null when it can. */
-export function cardFieldProblem(field: CardField, text: string): string | null {
-  const value = text.trim();
-  if (value === "") return REQUIRED[field] ?? null;
-  const limit = CARD_TEXT_LIMITS[field];
-  if (textLength(value) > limit) return keepItTo(limit);
-  const formula = formulaProblem(value);
-  return formula ? `The ${field} ${formula}` : null;
-}
+export const cardFieldProblem = (field: CardField, text: string): string | null =>
+  formulaFieldProblem(text, {
+    name: `The ${field}`,
+    limit: CARD_TEXT_LIMITS[field],
+    blank: REQUIRED[field] ?? null,
+  });
 
 /** Pure: each field that can't be saved, with why. Empty when the card can be saved. */
 export function cardFieldProblems(card: CardText): Partial<Record<CardField, string>> {

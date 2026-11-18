@@ -1,5 +1,7 @@
+import type { RecordStamp } from "@/services/admin.types";
 import { getSampleStore } from "@/services/mock/sample-store";
 import {
+  questionRecordOf,
   quizEditorCalls,
   type QuizEditorStore,
   type QuizKey,
@@ -10,12 +12,13 @@ import {
 import { sampleContentFiles } from "@/services/uploads.mock";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// The sample arm of the Admin seam's quiz screen (Phase 3, ticket 09): the
-// shared calls (src/services/quiz-editor.core.ts) over the in-memory sample
-// store, with the sample data's private content bucket. A save reads the quiz
-// and applies its writes with no await in between, so no other request can
-// come between them; should any part of it fail, the parts already applied
-// are put back.
+// The sample arm of the Admin seam's quiz screen and question editor (Phase
+// 3, tickets 09 and 10): the shared calls (src/services/quiz-editor.core.ts)
+// over the in-memory sample store, with the sample data's private content
+// bucket. A save reads the quiz and applies its writes with no await in
+// between, so no other request can come between them; should any part of it
+// fail, the parts already applied are put back. A question is never deleted:
+// one taken out of its quiz stays in the store, marked removed.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** The Topic a key names: its own id, its quiz's Topic, or its question's quiz's Topic. */
@@ -43,6 +46,11 @@ function readQuiz(key: QuizKey): TopicQuiz | null {
         .filter((question) => question.quizId === quiz.id && question.removedAt === null)
         .sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || a.id.localeCompare(b.id))
     : [];
+  const questionStamps: Record<string, RecordStamp> = {};
+  for (const question of questions) {
+    const stamp = store.stamps[questionRecordOf(question.id)];
+    if (stamp) questionStamps[question.id] = stamp;
+  }
   return structuredClone({
     exam: { code: exam.code, name: exam.name },
     subject: { code: subject.code, name: subject.name },
@@ -50,6 +58,7 @@ function readQuiz(key: QuizKey): TopicQuiz | null {
     quiz,
     questions,
     stamp: quiz ? (store.stamps[quizRecordOf(quiz.id)] ?? null) : null,
+    questionStamps,
     seededAt: store.bootedAt,
   });
 }
@@ -57,14 +66,33 @@ function readQuiz(key: QuizKey): TopicQuiz | null {
 /** Applies a save's writes to the store, all or none. */
 function apply(writes: QuizWrites): void {
   const store = getSampleStore();
-  const { quizzes, stamps, staffActivity } = store;
+  const { quizzes, questions, stamps, staffActivity } = store;
+  const changed = new Map(
+    writes.questions.map((question) => [question.id, structuredClone(question)]),
+  );
   try {
-    const quiz = structuredClone(writes.quiz);
-    store.quizzes = quizzes.map((candidate) => (candidate.id === quiz.id ? quiz : candidate));
-    if (writes.stamp) store.stamps = { ...stamps, [quizRecordOf(quiz.id)]: writes.stamp };
+    const quiz = writes.quiz;
+    if (quiz) {
+      const value = structuredClone(quiz.value);
+      store.quizzes = quiz.isNew
+        ? [...quizzes, value]
+        : quizzes.map((candidate) => (candidate.id === value.id ? value : candidate));
+    }
+    const kept = questions.map((question) => changed.get(question.id) ?? question);
+    const added = [...changed.values()].filter(
+      (question) => !questions.some((existing) => existing.id === question.id),
+    );
+    store.questions = [...kept, ...added];
+    const next = { ...stamps };
+    if (quiz && writes.stamp) next[quizRecordOf(quiz.value.id)] = writes.stamp;
+    for (const [id, stamp] of Object.entries(writes.questionStamps)) {
+      next[questionRecordOf(id)] = stamp;
+    }
+    store.stamps = next;
     store.staffActivity = [...staffActivity, ...structuredClone(writes.activity)];
   } catch (error) {
     store.quizzes = quizzes;
+    store.questions = questions;
     store.stamps = stamps;
     throw error;
   }
@@ -86,4 +114,8 @@ export const {
   updateQuizSettings,
   setQuizVisibility,
   setQuizFreePreview,
+  createQuestion,
+  updateQuestion,
+  moveQuestion,
+  deleteQuestion,
 } = quizEditorCalls(sampleQuizStore);

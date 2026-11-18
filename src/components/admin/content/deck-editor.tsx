@@ -1,27 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
-import { toast } from "sonner";
 
-import { callAdminAction } from "@/components/admin/call-admin-action";
-import { ConfirmDelete } from "@/components/admin/confirm-delete";
-import { MoveButtons } from "@/components/admin/move-buttons";
 import { useInstantSave } from "@/components/admin/use-instant-save";
 import type { AdminAction } from "@/lib/admin/action";
-import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
-import type {
-  AdminCard,
-  AdminDeck,
-  AdminDeckSettings,
-  AdminError,
-  DeletedCard,
-} from "@/services/admin.types";
+import type { AdminDeck, AdminDeckSettings, AdminError, DeletedCard } from "@/services/admin.types";
 
 import { CardForm, type CardFormActions } from "./card-form";
+import { ContentRow } from "./content-row";
 import { ContentSwitch } from "./content-switch";
+import { useContentScreen } from "./use-content-screen";
 
 export interface DeckEditorActions extends CardFormActions {
   moveCardInDeck: AdminAction<string[]>;
@@ -43,9 +32,6 @@ interface DeckEditorProps {
 export const NOW_HIDDEN = "The deck is now Hidden because it has no cards.";
 export const ADD_A_CARD_FIRST = "ADD A CARD FIRST · A DECK NEEDS AT LEAST ONE CARD TO BE VISIBLE";
 
-const TEXT_BUTTON =
-  "min-h-6 cursor-pointer text-[13px] font-semibold underline-offset-2 hover:underline";
-
 /** Pure: what a refused toggle says, as a toast. */
 const settingRefusal = (error: AdminError) =>
   error.kind === "invalid" && error.formError
@@ -53,76 +39,6 @@ const settingRefusal = (error: AdminError) =>
     : error.kind === "not-found"
       ? "That deck is gone. Reload the page."
       : "The deck wasn’t changed. Reload the page and try again.";
-
-/** One card's row: its place and front, with Edit, ▲▼ and Delete. */
-function CardRow({
-  card,
-  topicId,
-  first,
-  last,
-  current,
-  actions,
-  onDeleted,
-}: {
-  card: AdminCard;
-  topicId: string;
-  first: boolean;
-  last: boolean;
-  current: boolean;
-  actions: DeckEditorActions;
-  onDeleted: (deleted: DeletedCard) => void;
-}) {
-  const name = `card ${card.position}`;
-  // The delete's answer, which says whether the deck was hidden with it.
-  const answer = useRef<DeletedCard | null>(null);
-  return (
-    <li
-      aria-current={current ? "true" : undefined}
-      className={cn(
-        "flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-ayc-ruled px-2 py-2.5 last:border-b-0",
-        current && "bg-ayc-sand",
-      )}
-    >
-      <span className="font-mono text-xs font-bold text-ayc-blue">
-        {String(card.position).padStart(2, "0")}
-      </span>
-      <Link
-        href={paths.admin.deck(topicId, card.id)}
-        aria-label={`Edit ${name}: ${card.front}`}
-        className="min-w-0 flex-[1_1_180px] text-sm font-semibold wrap-anywhere hover:underline"
-      >
-        {card.front}
-      </Link>
-      <MoveButtons
-        id={card.id}
-        labels={{ up: `Move up: ${name}`, down: `Move down: ${name}` }}
-        first={first}
-        last={last}
-        disabledReason={null}
-        action={actions.moveCardInDeck}
-        what="The card order"
-        gone="That card is gone. Reload the page."
-      />
-      <ConfirmDelete
-        label="Delete"
-        ariaLabel={`Delete ${name}`}
-        buttonClassName={`${TEXT_BUTTON} text-destructive`}
-        tag="DELETE CARD"
-        title={`Delete card ${card.position}, “${card.front}”?`}
-        description="Members who marked it lose that mark. This can’t be undone."
-        confirmLabel="Delete card"
-        send={async () => {
-          const state = await callAdminAction(actions.removeCard, { input: { id: card.id } });
-          if (state.status === "saved") answer.current = state.value;
-          return state;
-        }}
-        onDeleted={() => {
-          if (answer.current) onDeleted(answer.current);
-        }}
-      />
-    </li>
-  );
-}
 
 /**
  * A Topic's deck in Member App content (BUILD-MAP §3.6; stories 125, 127,
@@ -134,10 +50,8 @@ function CardRow({
  * only shows what it answered.
  */
 export function DeckEditor({ deck, selected, watermark, actions }: DeckEditorProps) {
-  const router = useRouter();
   const { exam, subject, topic, cards } = deck;
   const settings = deck.deck;
-  const [notice, setNotice] = useState<string | null>(null);
   const visibility = useInstantSave(actions.saveDeckVisibility, {
     what: `${topic.name} flashcards`,
     kept: "The switch is back as it was.",
@@ -154,25 +68,13 @@ export function DeckEditor({ deck, selected, watermark, actions }: DeckEditorPro
   const count = `${cards.length} ${cards.length === 1 ? "CARD" : "CARDS"}`;
   const label = `${subject.code} · ${topic.name.toUpperCase()}`;
 
-  function deleted({ card: gone, deckHidden }: DeletedCard) {
-    toast(`✓ DELETED · CARD ${gone.position}`);
-    setNotice(deckHidden ? NOW_HIDDEN : null);
-    if (deckHidden) toast(NOW_HIDDEN);
-    if (gone.id === selected) router.replace(paths.admin.deck(topic.id, "new"));
-    router.refresh();
-  }
-
-  function saved(savedCard: AdminCard, next: boolean) {
-    setNotice(null);
-    // A new card's form clears itself for the next one and keeps its place;
-    // an edited card's opens a new card's form once the address changes.
-    if (next) {
-      if (card) router.replace(paths.admin.deck(topic.id, "new"));
-    } else if (!card) {
-      router.replace(paths.admin.deck(topic.id, savedCard.id));
-    }
-    router.refresh();
-  }
+  const screen = useContentScreen({
+    noun: "CARD",
+    nowHidden: NOW_HIDDEN,
+    pathOf: (item) => paths.admin.deck(topic.id, item),
+    openId: card?.id ?? null,
+  });
+  const deleted = ({ card: gone, deckHidden }: DeletedCard) => screen.deleted(gone, deckHidden);
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
@@ -216,7 +118,7 @@ export function DeckEditor({ deck, selected, watermark, actions }: DeckEditorPro
           />
         </div>
         <p role="status" className="text-sm font-semibold">
-          {notice}
+          {screen.notice}
         </p>
       </section>
 
@@ -242,16 +144,23 @@ export function DeckEditor({ deck, selected, watermark, actions }: DeckEditorPro
           {cards.length > 0 ? (
             <ol aria-label={`Cards in ${topic.name}`} className="flex flex-col">
               {cards.map((row, index) => (
-                <CardRow
+                <ContentRow
                   key={`${row.id}:${row.position}`}
-                  card={row}
-                  topicId={topic.id}
+                  id={row.id}
+                  noun="card"
+                  position={row.position}
+                  text={row.front}
+                  href={paths.admin.deck(topic.id, row.id)}
                   first={index === 0}
                   last={index === cards.length - 1}
                   current={row.id === card?.id}
-                  actions={actions}
+                  move={actions.moveCardInDeck}
+                  remove={actions.removeCard}
+                  deleteWarning="Members who marked it lose that mark. This can’t be undone."
                   onDeleted={deleted}
-                />
+                >
+                  {row.front}
+                </ContentRow>
               ))}
             </ol>
           ) : (
@@ -273,7 +182,7 @@ export function DeckEditor({ deck, selected, watermark, actions }: DeckEditorPro
             imageSrc={card?.image ? paths.admin.cardImage(card.id) : null}
             watermark={watermark}
             actions={actions}
-            onSaved={saved}
+            onSaved={(saved, next) => screen.saved(saved.id, next)}
           />
         </section>
       </div>

@@ -14,7 +14,17 @@ import { variationLabel } from "@/lib/catalogue/price";
 import type { AdminError, RequiredRole, StaffActor } from "@/services/admin.types";
 import { IMPORT_MODES } from "@/lib/content-import/modes";
 import { cardFieldProblems, cardFieldsOf } from "@/lib/cards/card-fields";
-import { PASSING_SCORE_MAX, PASSING_SCORE_MIN } from "@/lib/quizzes/quiz-rules";
+import {
+  PICK_THE_CORRECT_CHOICE,
+  questionFieldProblems,
+  questionFieldsOf,
+} from "@/lib/quizzes/question-fields";
+import {
+  PASSING_SCORE_MAX,
+  PASSING_SCORE_MIN,
+  QUIZ_CHOICES,
+  type QuizChoice,
+} from "@/lib/quizzes/quiz-rules";
 import type { ContentCounts, TopicContent } from "@/services/content.types";
 import {
   EXAM_PAGE_SECTIONS,
@@ -1591,18 +1601,24 @@ const cardFieldText = z
   .string({ invalid_type_error: "ENTER TEXT", required_error: "ENTER TEXT" })
   .max(20_000, "THAT’S FAR TOO LONG FOR A CARD");
 
+/**
+ * An image on a card or question, as its form sends it: the path it has, a
+ * finished "card-image" upload's path, or none. The seam checks which.
+ */
+const imageUpload = z
+  .string({ invalid_type_error: "UPLOAD THE IMAGE AGAIN" })
+  .min(1, "UPLOAD THE IMAGE AGAIN")
+  .max(300, "UPLOAD THE IMAGE AGAIN")
+  .nullable()
+  .default(null);
+
 /** The card form's fields: the front, back and note, and the back image. */
 const cardFieldShape = {
   front: cardFieldText,
   back: cardFieldText,
   // A blank note is saved as none (null), and a saved card's form sends that back.
   note: cardFieldText.nullish().transform((note) => note ?? ""),
-  image: z
-    .string({ invalid_type_error: "UPLOAD THE IMAGE AGAIN" })
-    .min(1, "UPLOAD THE IMAGE AGAIN")
-    .max(300, "UPLOAD THE IMAGE AGAIN")
-    .nullable()
-    .default(null),
+  image: imageUpload,
 };
 
 /** Adds card-fields.ts's message to each field that can't be saved. */
@@ -1700,3 +1716,96 @@ export const quizVisibilityInputSchema = z.object({ quiz: quizId, visible: onOrO
 
 /** "Free Preview": the quiz, and whether Members with no Access Pass can open it. */
 export const quizFreePreviewInputSchema = z.object({ quiz: quizId, freePreview: onOrOff });
+
+// ── Member App content: the question editor (Phase 3, ticket 10) ────────────
+// A Topic's quiz, one question at a time (spec, Phase 3 → Content model;
+// stories 125, 127, 133l): any Staff User adds, edits, moves and deletes
+// questions, as the card editor does cards. A question's text follows
+// src/lib/quizzes/question-fields.ts, which the browser checks first; its
+// figure is the question's own, a finished "card-image" upload's path (a
+// figure has a card image's rules), or none.
+
+const questionId = z.string().uuid("THAT QUESTION ISN’T THERE · RELOAD THE PAGE");
+
+/** A question's text field from the form, held to a generous size before its own rules run. */
+const questionFieldText = z
+  .string({ invalid_type_error: "ENTER TEXT", required_error: "ENTER TEXT" })
+  .max(20_000, "THAT’S FAR TOO LONG FOR A QUESTION");
+
+/** The correct choice: A–D, or none picked yet ("", null or missing), which the rules refuse. */
+const correctChoice = z.preprocess(
+  (value) => (value === "" || value === undefined ? null : value),
+  z.enum(QUIZ_CHOICES, { errorMap: () => ({ message: PICK_THE_CORRECT_CHOICE }) }).nullable(),
+);
+
+/** The question form's fields: the question, four choices, the correct one, the explanation and the figure. */
+const questionFieldShape = {
+  question: questionFieldText,
+  choices: z.object({
+    A: questionFieldText,
+    B: questionFieldText,
+    C: questionFieldText,
+    D: questionFieldText,
+  }),
+  correct: correctChoice,
+  explanation: questionFieldText,
+  figure: imageUpload,
+};
+
+type QuestionShape = z.output<z.ZodObject<typeof questionFieldShape>>;
+
+/** Adds question-fields.ts's message to each field that can't be saved. */
+function checkQuestionFields(form: QuestionShape, ctx: z.RefinementCtx) {
+  for (const [field, message] of Object.entries(questionFieldProblems(form))) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: field.split("."), message });
+  }
+}
+
+/**
+ * The correct choice as saved. The transform after checkQuestionFields runs
+ * only when it refused nothing, so a choice is always picked: this narrows it.
+ */
+function pickedChoice(correct: QuizChoice | null, ctx: z.RefinementCtx): QuizChoice {
+  if (correct !== null) return correct;
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    path: ["correct"],
+    message: PICK_THE_CORRECT_CHOICE,
+  });
+  return z.NEVER;
+}
+
+/**
+ * "Save" or "Save & add next" on a new question: its Topic and its fields, as
+ * saved (trimmed). The quiz is made when the Topic has none.
+ */
+export const newQuestionFormSchema = z
+  .object({ topic: topicId, ...questionFieldShape })
+  .superRefine(checkQuestionFields)
+  .transform((form, ctx) => ({
+    topic: form.topic,
+    ...questionFieldsOf(form),
+    correct: pickedChoice(form.correct, ctx),
+    figure: form.figure,
+  }));
+
+export type NewQuestionForm = z.input<typeof newQuestionFormSchema>;
+
+/** "Save" on a question being edited: which question, and its fields, as saved. */
+export const questionFormSchema = z
+  .object({ id: questionId, ...questionFieldShape })
+  .superRefine(checkQuestionFields)
+  .transform((form, ctx) => ({
+    id: form.id,
+    ...questionFieldsOf(form),
+    correct: pickedChoice(form.correct, ctx),
+    figure: form.figure,
+  }));
+
+export type QuestionForm = z.input<typeof questionFormSchema>;
+
+/** ▲▼ on a question: one place earlier or later in its quiz. */
+export const questionMoveInputSchema = reviewMoveSchema.extend({ id: questionId });
+
+/** Delete: the question, which is kept, marked removed, for Members' old attempts. */
+export const questionIdInputSchema = z.object({ id: questionId });

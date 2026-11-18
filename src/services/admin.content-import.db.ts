@@ -1,12 +1,13 @@
 import "server-only";
 
-import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 
 import { adminWriteLock } from "@/lib/db/admin-locks";
 import { getDb } from "@/lib/db/client";
 import type { Database } from "@/lib/db/connect";
 import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
+import { fromExcluded, QUESTION_UPSERT_SET } from "@/lib/db/upsert";
 import { isStorageConfigured } from "@/lib/supabase/admin";
 import { staffActivityToRow } from "@/services/admin.rows";
 import {
@@ -126,9 +127,6 @@ async function readSubjectQuizzes(
   };
 }
 
-/** A column's value as the row an upsert offered has it. */
-const fromExcluded = (column: string) => sql.raw(`excluded."${column}"`);
-
 /** Runs a save in one transaction under the content write lock, as a database error if it fails. */
 async function underContentLock<T>(save: (tx: Transaction) => Promise<T>): Promise<T> {
   try {
@@ -214,17 +212,7 @@ const databaseQuizImportStore: QuizImportStore = {
           .values(rows.slice(start, start + CHUNK))
           .onConflictDoUpdate({
             target: questions.id,
-            set: {
-              position: fromExcluded("position"),
-              question: fromExcluded("question"),
-              choiceA: fromExcluded("choice_a"),
-              choiceB: fromExcluded("choice_b"),
-              choiceC: fromExcluded("choice_c"),
-              choiceD: fromExcluded("choice_d"),
-              correctChoice: fromExcluded("correct_choice"),
-              explanation: fromExcluded("explanation"),
-              figurePath: fromExcluded("figure_path"),
-            },
+            set: QUESTION_UPSERT_SET,
           });
       }
       await tx.insert(schema.staffActivity).values(staffActivityToRow(activity));

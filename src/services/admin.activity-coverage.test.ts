@@ -169,7 +169,31 @@ async function checkedQuizImport(seam: AdminService, arm: AdminArm, rows: string
 
 /** The Visible quiz with no questions in the seed, and the Hidden one, in CE's MSTC. */
 const SIMPLE_CURVES_QUIZ = sampleContentId(sampleTopicId("CE", "MSTC", "Simple Curves"), "quiz");
-const SPIRAL_CURVES_QUIZ = sampleContentId(sampleTopicId("CE", "MSTC", "Spiral Curves"), "quiz");
+const SPIRAL_CURVES = sampleTopicId("CE", "MSTC", "Spiral Curves");
+const SPIRAL_CURVES_QUIZ = sampleContentId(SPIRAL_CURVES, "quiz");
+
+/** A question's fields that save. */
+const QUESTION = {
+  choices: { A: "1", B: "2", C: "3", D: "4" },
+  correct: "B",
+  explanation: "$L_s = 0.036 V^3/R$",
+  figure: null,
+} as const;
+/** The two questions withTwoQuestions adds to Spiral Curves' Hidden quiz, first and second. */
+const questions = { first: "", second: "" };
+
+/** Gives Spiral Curves' Hidden quiz two questions, for the question editor's writes. */
+async function withTwoQuestions(seam: AdminService) {
+  for (const key of ["first", "second"] as const) {
+    const added = await seam.createQuestion(EDITOR, {
+      topic: SPIRAL_CURVES,
+      question: key,
+      ...QUESTION,
+    });
+    if (!added.ok) throw new Error("The question wasn't added");
+    questions[key] = added.value.id;
+  }
+}
 
 async function promoForm(seam: AdminService) {
   return promoBannerFormValues((await seam.getPromoForAdmin(EDITOR)).banner);
@@ -749,6 +773,51 @@ const WRITES: Record<string, Write> = {
     entityId: SPIRAL_CURVES_QUIZ,
     saves: (seam, actor) => seam.setQuizFreePreview(actor, SPIRAL_CURVES_QUIZ, true),
     refused: (seam, actor) => seam.setQuizFreePreview(actor, UNKNOWN_TOPIC, true),
+    refusal: "not-found",
+  },
+  createQuestion: {
+    actor: EDITOR,
+    entity: "question",
+    entityId: null,
+    saves: (seam, actor) =>
+      seam.createQuestion(actor, { topic: SPIRAL_CURVES, question: "Grade?", ...QUESTION }),
+    // No correct choice picked.
+    refused: (seam, actor) =>
+      seam.createQuestion(actor, {
+        topic: SPIRAL_CURVES,
+        question: "Grade?",
+        ...QUESTION,
+        correct: "",
+      }),
+    refusal: "invalid",
+  },
+  updateQuestion: {
+    actor: EDITOR,
+    entity: "question",
+    entityId: null,
+    setUp: withTwoQuestions,
+    saves: (seam, actor) =>
+      seam.updateQuestion(actor, { id: questions.first, question: "First, edited", ...QUESTION }),
+    refused: (seam, actor) =>
+      seam.updateQuestion(actor, { id: UNKNOWN_TOPIC, question: "Gone?", ...QUESTION }),
+    refusal: "not-found",
+  },
+  moveQuestion: {
+    actor: EDITOR,
+    entity: "question",
+    entityId: null,
+    setUp: withTwoQuestions,
+    saves: (seam, actor) => seam.moveQuestion(actor, questions.second, "up"),
+    refused: (seam, actor) => seam.moveQuestion(actor, UNKNOWN_TOPIC, "up"),
+    refusal: "not-found",
+  },
+  deleteQuestion: {
+    actor: EDITOR,
+    entity: "question",
+    entityId: null,
+    setUp: withTwoQuestions,
+    saves: (seam, actor) => seam.deleteQuestion(actor, questions.first),
+    refused: (seam, actor) => seam.deleteQuestion(actor, UNKNOWN_TOPIC),
     refusal: "not-found",
   },
   updatePromoBanner: {

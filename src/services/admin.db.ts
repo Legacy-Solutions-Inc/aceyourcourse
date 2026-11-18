@@ -815,6 +815,11 @@ export const databaseArm: AdminService = {
   updateQuizSettings: quizEditor.updateQuizSettings,
   setQuizVisibility: quizEditor.setQuizVisibility,
   setQuizFreePreview: quizEditor.setQuizFreePreview,
+  // One question at a time, saved by the question editor itself (ticket 10).
+  createQuestion: quizEditor.createQuestion,
+  updateQuestion: quizEditor.updateQuestion,
+  moveQuestion: quizEditor.moveQuestion,
+  deleteQuestion: quizEditor.deleteQuestion,
 
   getSitePageForAdmin: read(CATALOGUE, sampleArm.getSitePageForAdmin),
   updateSitePageSeo: stampedWrite(sampleArm.updateSitePageSeo),

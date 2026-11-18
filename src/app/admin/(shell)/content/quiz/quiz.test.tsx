@@ -12,9 +12,13 @@ import { receiveSampleUpload } from "@/services/uploads.mock";
 import { importZip, quizCsv } from "../../../../../../test/import-files";
 import { imageBytes } from "../../../../../../test/image-bytes";
 import {
+  addQuestion,
   checkQuizImport,
   createImportUpload,
   importQuizzes,
+  moveQuestionInQuiz,
+  removeQuestion,
+  saveQuestion,
   saveQuizFreePreview,
   saveQuizSettings,
   saveQuizVisibility,
@@ -22,11 +26,12 @@ import {
 import { GET as questionFigure } from "./figure/[question]/route";
 import QuizPage from "./page";
 
-// Member App content → a Topic's quiz (Phase 3, ticket 09; stories 126–128),
-// on sample data: the page as a browser loads it, its Server Actions as a
-// browser sends them, and the Staff-only figure route. Every Admin action's
-// refusals for signed-out visitors, non-Staff and closed mode are also in
-// actions.permissions.test.ts; the seam's rules in admin.quiz.test.ts.
+// Member App content → a Topic's quiz (Phase 3, tickets 09 and 10; stories
+// 125–128), on sample data: the page as a browser loads it, its Server
+// Actions as a browser sends them (the question editor's too), and the
+// Staff-only figure route. Every Admin action's refusals for signed-out
+// visitors, non-Staff and closed mode are also in actions.permissions.test.ts;
+// the seam's rules in admin.quiz.test.ts and admin.questions.test.ts.
 const { jar } = vi.hoisted(() => ({ jar: new Map<string, string>() }));
 
 vi.mock("next/headers", () => ({
@@ -96,8 +101,21 @@ async function withQuestions() {
   if (imported.status !== "saved") throw new Error(JSON.stringify(imported));
 }
 
-/** The quiz's settings as the page would open them. */
+/** The quiz's settings as the page would open them, and a question nobody has saved. */
 const openedStamp = () => ({ savedAt: getSampleStore().bootedAt });
+
+/** The stamp a saved question's form opens with. */
+const openedStampOf = (state: AdminActionState<{ stamp: { savedAt: string } }>) => ({
+  savedAt: state.status === "saved" ? state.value.stamp.savedAt : "",
+});
+
+/** A question's fields that save, apart from the question itself. */
+const FIELDS = {
+  choices: { A: "$5.73°$", B: "$11.46°$", C: "$2.86°$", D: "$1.43°$" },
+  correct: "C",
+  explanation: "$D = \\frac{1145.916}{R}$",
+  figure: null,
+} as const;
 
 beforeEach(() => {
   jar.clear();
@@ -105,7 +123,7 @@ beforeEach(() => {
 });
 
 describe("the quiz page", () => {
-  it("opens an Editor on a Topic's quiz: its state, settings and questions, with the correct choices marked", async () => {
+  it("opens an Editor on a Topic's quiz: its state, settings, questions and a new question's form", async () => {
     signInAs(EDITOR);
     await withQuestions();
     await renderPage({ topic: SPIRAL_CURVES });
@@ -116,32 +134,55 @@ describe("the quiz page", () => {
     expect(screen.getByRole("switch", { name: "Shuffle questions" })).toBeChecked();
     expect(screen.getByRole("switch", { name: "Show answers after" })).toBeChecked();
     const questions = within(screen.getByRole("list", { name: "Questions in Spiral Curves" }));
-    expect(questions.getByRole("img", { name: "Figure for question 2" })).toHaveAttribute(
-      "src",
-      expect.stringMatching(/^\/admin\/content\/quiz\/figure\/[0-9a-f-]+$/),
-    );
-    const choices = within(screen.getByRole("list", { name: "Choices for question 1" }));
-    expect(choices.getAllByRole("listitem").map((item) => item.textContent)).toEqual([
-      "A1 m",
-      "B2 m✓ CORRECT",
-      "C3 m",
-      "D4 m",
+    expect(questions.getAllByRole("link").map((link) => link.getAttribute("aria-label"))).toEqual([
+      "Edit question 1: Length of spiral $L_s$?",
+      "Edit question 2: Spiral angle?",
     ]);
+    expect(screen.getByRole("form", { name: "New question" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "← MSTC Topics" })).toHaveAttribute(
       "href",
       "/admin/content?exam=ce&subject=mstc",
     );
   });
 
-  it("points a Topic with no quiz to the quiz import", async () => {
+  it("opens a question in the form, previewed with its figure and its correct choice marked", async () => {
+    signInAs(EDITOR);
+    await withQuestions();
+    const [, second] = getSampleStore().questions.filter((q) => q.quizId === SPIRAL_CURVES_QUIZ);
+    await renderPage({ topic: SPIRAL_CURVES, question: second?.id ?? "" });
+
+    expect(screen.getByRole("form", { name: "Question 2" })).toBeInTheDocument();
+    const preview = within(screen.getByRole("region", { name: "PREVIEW · AS MEMBERS SEE IT" }));
+    expect(preview.getByRole("img", { name: "Figure for the question" })).toHaveAttribute(
+      "src",
+      `/admin/content/quiz/figure/${second?.id}`,
+    );
+    const choices = preview.getAllByRole("listitem").map((item) => item.textContent);
+    expect(choices).toEqual(["Aa", "Bb", "Cc", "Dd✓ CORRECT"]);
+  });
+
+  it("opens a new question's form for a question that was removed, or isn't there", async () => {
+    signInAs(EDITOR);
+    await withQuestions();
+    const [first] = getSampleStore().questions.filter((q) => q.quizId === SPIRAL_CURVES_QUIZ);
+    await removeQuestion(IDLE, { input: { id: first?.id ?? "" } });
+
+    await renderPage({ topic: SPIRAL_CURVES, question: first?.id ?? "" });
+
+    expect(screen.getByRole("form", { name: "New question" })).toBeInTheDocument();
+    expect(screen.getByText("CE · MSTC · 1 QUESTION · HIDDEN")).toBeInTheDocument();
+  });
+
+  it("lets a Topic with no quiz write its first question, or points to the quiz import", async () => {
     signInAs(EDITOR);
     await renderPage({ topic: SURVEYING });
 
     expect(screen.getByText("CE · MSTC · 0 QUESTIONS · NO QUIZ YET")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Import MSTC’s questions from a spreadsheet" }),
+      screen.getByRole("link", { name: "import MSTC’s questions from a spreadsheet" }),
     ).toHaveAttribute("href", "/admin/content/import?exam=ce&subject=mstc&kind=quizzes");
-    expect(screen.queryByRole("form")).not.toBeInTheDocument();
+    expect(screen.getByRole("form", { name: "New question" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save settings" })).not.toBeInTheDocument();
   });
 
   it("answers 404 for a Topic that isn't there", async () => {
@@ -224,10 +265,13 @@ describe("the quiz's actions", () => {
     });
   });
 
-  it("refuses every quiz action from a Member, changing nothing", async () => {
+  it("refuses every quiz action from a Member, the question editor's too, changing nothing", async () => {
+    signInAs(EDITOR);
+    await withQuestions();
+    const [first, second] = getSampleStore().questions;
     await getOrCreateMember({ userId: sampleUserId(TESTER), email: TESTER, name: "Bea Tester" });
     signInAs(TESTER);
-    const before = JSON.stringify(getSampleStore().quizzes);
+    const before = JSON.stringify([getSampleStore().quizzes, getSampleStore().questions]);
 
     for (const post of [
       () =>
@@ -237,10 +281,72 @@ describe("the quiz's actions", () => {
         }),
       () => saveQuizVisibility(IDLE, { input: { quiz: SPIRAL_CURVES_QUIZ, visible: false } }),
       () => saveQuizFreePreview(IDLE, { input: { quiz: SPIRAL_CURVES_QUIZ, freePreview: true } }),
+      () => addQuestion(IDLE, { input: { topic: SPIRAL_CURVES, question: "Mine?", ...FIELDS } }),
+      () =>
+        saveQuestion(IDLE, {
+          input: { id: first?.id, question: "Changed?", ...FIELDS },
+          expected: openedStamp(),
+        }),
+      () => moveQuestionInQuiz(IDLE, { input: { id: second?.id, direction: "up" } }),
+      () => removeQuestion(IDLE, { input: { id: first?.id } }),
     ]) {
       await expect(post()).rejects.toThrow("NEXT_REDIRECT /admin/denied");
     }
-    expect(JSON.stringify(getSampleStore().quizzes)).toBe(before);
+    expect(JSON.stringify([getSampleStore().quizzes, getSampleStore().questions])).toBe(before);
+  });
+});
+
+describe("the question editor's actions", () => {
+  it("let an Editor add a question with maths, edit it, reorder it and delete it", async () => {
+    signInAs(EDITOR);
+    await withQuestions();
+
+    const added = await addQuestion(IDLE, {
+      input: { topic: SPIRAL_CURVES, question: "Degree of curve for $R = 200$?", ...FIELDS },
+    });
+    expect(added).toMatchObject({ status: "saved", value: { position: 3, correct: "C" } });
+    const id = added.status === "saved" ? added.value.id : "";
+    const edited = await saveQuestion(IDLE, {
+      input: { id, question: "Degree of curve?", ...FIELDS, correct: "A" },
+      expected: openedStampOf(added),
+    });
+    expect(edited).toMatchObject({ status: "saved", value: { correct: "A" } });
+    expect(await moveQuestionInQuiz(IDLE, { input: { id, direction: "up" } })).toMatchObject({
+      status: "saved",
+    });
+    const removed = await removeQuestion(IDLE, { input: { id } });
+    expect(removed).toMatchObject({ status: "saved", value: { quizHidden: false } });
+
+    // Gone from the quiz, kept for old attempts.
+    await renderPage({ topic: SPIRAL_CURVES });
+    expect(screen.getByText("CE · MSTC · 2 QUESTIONS · HIDDEN")).toBeInTheDocument();
+    expect(getSampleStore().questions.find((question) => question.id === id)).toMatchObject({
+      question: "Degree of curve?",
+      position: null,
+      removedAt: expect.any(String),
+    });
+  });
+
+  it("refuses a question with no correct choice, and an edit without the stamp its form opened with", async () => {
+    signInAs(EDITOR);
+    await withQuestions();
+    const [first] = getSampleStore().questions;
+
+    expect(
+      await addQuestion(IDLE, {
+        input: { topic: SPIRAL_CURVES, question: "Which?", ...FIELDS, correct: "" },
+      }),
+    ).toEqual({
+      status: "refused",
+      error: { kind: "invalid", fieldErrors: { correct: ["PICK THE CORRECT CHOICE TO SAVE"] } },
+    });
+    expect(
+      await saveQuestion(IDLE, { input: { id: first?.id, question: "Changed?", ...FIELDS } }),
+    ).toMatchObject({ status: "refused", error: { kind: "invalid" } });
+    expect(getSampleStore().questions.map((question) => question.question)).toEqual([
+      "Length of spiral $L_s$?",
+      "Spiral angle?",
+    ]);
   });
 });
 

@@ -1,12 +1,13 @@
 import "server-only";
 
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 
 import { adminWriteLock } from "@/lib/db/admin-locks";
 import { getDb } from "@/lib/db/client";
 import type { Database } from "@/lib/db/connect";
 import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
+import { fromExcluded } from "@/lib/db/upsert";
 import { isStorageConfigured } from "@/lib/supabase/admin";
 import { SEEDED_RECORD, staffActivityToRow, stampsFromRows } from "@/services/admin.rows";
 import type { RecordStamp } from "@/services/admin.types";
@@ -98,9 +99,6 @@ async function readDeck(db: Database | Transaction, key: DeckKey): Promise<Topic
     seededAt,
   };
 }
-
-/** One of a card's columns, as the row the upsert offered has it. */
-const fromExcluded = (column: string) => sql.raw(`excluded."${column}"`);
 
 const databaseDeckStore: DeckEditorStore = {
   read: async (key) => {

@@ -72,7 +72,14 @@ test.describe("an Editor", () => {
     await screen.getByRole("link", { name: "Open the quiz in Beams" }).click();
     await expect(page.getByRole("heading", { level: 2, name: "Beams quiz" })).toBeVisible();
     await expect(page.getByText("CE · PSAD · 2 QUESTIONS · HIDDEN")).toBeVisible();
-    const figure = page.getByRole("img", { name: "Figure for question 2" });
+    // The question editor (ticket 10) shows a question in full, figure and all, once it's opened.
+    await page
+      .getByRole("list", { name: "Questions in Beams" })
+      .getByRole("link", { name: /^Edit question 2:/ })
+      .click();
+    const figure = page
+      .getByRole("region", { name: "PREVIEW · AS MEMBERS SEE IT" })
+      .getByRole("img", { name: "Figure for the question" });
     await expect(figure).toBeVisible();
     await expect
       .poll(() => figure.evaluate((image: HTMLImageElement) => image.naturalWidth))

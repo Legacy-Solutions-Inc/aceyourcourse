@@ -1,13 +1,6 @@
 import { z } from "zod";
 
-import {
-  CARD_IMAGE_TYPES,
-  cardImagePath,
-  IMAGE_TOO_BIG,
-  MAX_CARD_IMAGE_BYTES,
-  WRONG_IMAGE_TYPE,
-} from "@/lib/cards/card-rules";
-import { hasFileSignature } from "@/lib/file-signature";
+import { cardImagePath } from "@/lib/cards/card-rules";
 import {
   type CardForm,
   cardFormSchema,
@@ -15,11 +8,9 @@ import {
   cardMoveInputSchema,
   deckFreePreviewInputSchema,
   deckVisibilityInputSchema,
-  invalidInput,
   type NewCardForm,
   newCardFormSchema,
   type ReviewMove,
-  roleRefusal,
 } from "@/services/admin.schema";
 import type {
   AdminCard,
@@ -33,6 +24,18 @@ import type {
   StaffActivity,
   StaffActor,
 } from "@/services/admin.types";
+import {
+  activityRecord,
+  formError,
+  NOT_FOUND,
+  refused,
+  renumbered,
+  saveThenTidy,
+  staffInput,
+  type StoredImage,
+  storeImageUpload,
+  swapped,
+} from "@/services/content-editor.core";
 import { visibilityAfterRemoval, visibilityRefusal } from "@/services/content.rules";
 import type { Card, ContentVisibility, Deck, Topic } from "@/services/content.types";
 import { nextStamp } from "@/services/mock/sample-store";
@@ -45,7 +48,8 @@ import type { ContentFiles } from "@/services/uploads";
 // change to them all or nothing), and this module does the rest the same way
 // for both. Any Staff User, Editor or Owner, may use it.
 //
-// Each write, in order:
+// Each write, in order (the steps both content editors share are in
+// content-editor.core.ts):
 //   1. checks the actor's Staff Role, and validates its input with zod (a
 //      card's text by src/lib/cards/card-fields.ts),
 //   2. reads the deck, answering not-found when the Topic, deck or card is
@@ -114,32 +118,13 @@ export interface DeckEditorStore {
   save<T>(key: DeckKey, plan: (current: TopicDeck | null) => DeckPlan<T>): Promise<DeckPlan<T>>;
 }
 
-/** A new back image, stored under its deck, and the upload it was copied from. */
-interface StoredImage {
-  path: string;
-  upload: string;
-}
-
 /** A card's record in the save stamps. */
 export const cardRecordOf = (cardId: string) => `card:${cardId}`;
 
 // ── Pure helpers ────────────────────────────────────────────────────────────
 
-const UPLOAD_AGAIN = "UPLOAD THE IMAGE AGAIN";
 const ALREADY_FIRST = "IT’S ALREADY THE FIRST CARD";
 const ALREADY_LAST = "IT’S ALREADY THE LAST CARD";
-
-const NOT_FOUND: { ok: false; error: AdminError } = { ok: false, error: { kind: "not-found" } };
-const refused = (error: AdminError): { ok: false; error: AdminError } => ({ ok: false, error });
-const formError = (message: string): AdminError => ({
-  kind: "invalid",
-  fieldErrors: {},
-  formError: message,
-});
-const imageError = (message: string): AdminError => ({
-  kind: "invalid",
-  fieldErrors: { image: [message] },
-});
 
 /** Pure: a card's stamp: its last save, or the data's, when nobody has saved it. */
 const stampOf = (deck: TopicDeck, cardId: string): RecordStamp =>
@@ -172,16 +157,11 @@ export function adminDeckOf(deck: TopicDeck): AdminDeck {
   };
 }
 
-/** Pure: the cards whose place changes when the deck takes this order, each with its new place. */
-const renumbered = (order: readonly Card[]): Card[] =>
-  order.flatMap((card, index) =>
-    card.position === index + 1 ? [] : [{ ...card, position: index + 1 }],
-  );
-
 /** A card's fields, as Staff Activity keeps them. */
 const fieldsOf = ({ front, back, note, image }: Card) => ({ front, back, note, image });
 
-function activity(
+/** A Staff Activity record of a change to a card or to the deck. */
+const activity = (
   actor: StaffActor,
   now: Date,
   entity: "card" | "deck",
@@ -189,18 +169,7 @@ function activity(
   action: string,
   before: unknown,
   after: unknown,
-): StaffActivity {
-  return {
-    id: crypto.randomUUID(),
-    at: now.toISOString(),
-    actor: { email: actor.email, name: actor.name },
-    entity,
-    entityId,
-    action,
-    before: structuredClone(before),
-    after: structuredClone(after),
-  };
-}
+) => activityRecord(actor, now, entity, entityId, action, before, after);
 
 const NO_WRITES: Omit<DeckWrites, "activity"> = { cards: [], removed: [], stamps: {} };
 
@@ -210,64 +179,22 @@ const uuid = z.string().uuid();
 
 /** The card editor's calls, on an arm's store. */
 export function deckEditorCalls(store: DeckEditorStore) {
-  /** Step 1: the role check and the input. */
-  function begin<Schema extends z.ZodTypeAny>(
-    actor: StaffActor,
-    schema: Schema,
-    input: unknown,
-  ): { ok: true; value: z.output<Schema> } | { ok: false; error: AdminError } {
-    const refusal = roleRefusal(actor, "staff");
-    if (refusal) return refused(refusal);
-    const parsed = schema.safeParse(input);
-    return parsed.success ? { ok: true, value: parsed.data } : refused(invalidInput(parsed.error));
-  }
+  /** Step 3: a new image's upload, checked and copied under its deck. */
+  const storeUpload = (upload: string, deckId: string) =>
+    storeImageUpload(
+      store.files,
+      upload,
+      (fileId, type) => cardImagePath(deckId, fileId, type),
+      "image",
+    );
 
-  /**
-   * Step 3: a new image's upload, checked and copied under its deck: the
-   * path it's stored at, or why it can't be. Only the server's own reading of
-   * the file counts: its size, and what its first bytes say it is.
-   */
-  async function storeUpload(
-    upload: string,
-    deckId: string,
-  ): Promise<({ ok: true } & StoredImage) | { ok: false; error: AdminError }> {
-    const bytes = await store.files.readUpload(upload, "card-image");
-    if (!bytes) return refused(imageError(UPLOAD_AGAIN));
-    if (bytes.byteLength > MAX_CARD_IMAGE_BYTES) return refused(imageError(IMAGE_TOO_BIG));
-    const type = CARD_IMAGE_TYPES.find((candidate) => hasFileSignature(bytes, candidate));
-    if (!type) return refused(imageError(WRONG_IMAGE_TYPE));
-    const path = cardImagePath(deckId, crypto.randomUUID(), type);
-    await store.files.put(path, bytes, type);
-    return { ok: true, path, upload };
-  }
-
-  /**
-   * Steps 4 and 5: saves under the lock, then deletes the files nothing uses:
-   * `stale(value)` once it saved; or, when it didn't, the image it stored and
-   * the upload it came from (the form uploads the file again to retry).
-   */
-  async function saveAndTidy<T>(
+  /** Steps 4 and 5: saves under the lock, then deletes the files nothing uses. */
+  const saveAndTidy = <T>(
     key: DeckKey,
     plan: (current: TopicDeck | null) => DeckPlan<T>,
     stored: StoredImage | null,
     stale: (value: T) => (string | null)[],
-  ): Promise<AdminResult<T>> {
-    const unsaved = stored ? [stored.path, stored.upload] : [];
-    let planned: DeckPlan<T>;
-    try {
-      planned = await store.save(key, plan);
-    } catch (error) {
-      if (unsaved.length > 0) await store.files.remove(unsaved);
-      throw error;
-    }
-    if (!planned.ok) {
-      if (unsaved.length > 0) await store.files.remove(unsaved);
-      return planned;
-    }
-    const unused = stale(planned.value).filter((path): path is string => path !== null);
-    if (unused.length > 0) await store.files.remove(unused);
-    return { ok: true, value: planned.value, tags: [] };
-  }
+  ) => saveThenTidy(store.files, () => store.save(key, plan), stored, stale);
 
   async function getDeckForAdmin(_actor: StaffActor, topicId: string): Promise<AdminDeck | null> {
     if (!uuid.safeParse(topicId).success) return null;
@@ -289,7 +216,7 @@ export function deckEditorCalls(store: DeckEditorStore) {
     actor: StaffActor,
     input: NewCardForm,
   ): Promise<AdminResult<AdminCard>> {
-    const form = begin(actor, newCardFormSchema, input);
+    const form = staffInput(actor, newCardFormSchema, input);
     if (!form.ok) return form;
     const { topic, front, back, note, image: upload } = form.value;
     const before = await store.read({ topic });
@@ -300,7 +227,7 @@ export function deckEditorCalls(store: DeckEditorStore) {
     if (upload) {
       const image = await storeUpload(upload, newDeckId);
       if (!image.ok) return image;
-      stored = { path: image.path, upload: image.upload };
+      stored = image.stored;
     }
 
     const now = new Date();
@@ -357,7 +284,7 @@ export function deckEditorCalls(store: DeckEditorStore) {
     input: CardForm,
     expected?: { savedAt: string },
   ): Promise<AdminResult<AdminCard>> {
-    const form = begin(actor, cardFormSchema, input);
+    const form = staffInput(actor, cardFormSchema, input);
     if (!form.ok) return form;
     const { id, front, back, note, image: wanted } = form.value;
     const before = await store.read({ card: id });
@@ -373,7 +300,7 @@ export function deckEditorCalls(store: DeckEditorStore) {
     if (wanted !== null && wanted !== old.image) {
       const image = await storeUpload(wanted, old.deckId);
       if (!image.ok) return image;
-      stored = { path: image.path, upload: image.upload };
+      stored = image.stored;
     }
     const image = wanted === old.image ? old.image : (stored?.path ?? null);
 
@@ -411,7 +338,7 @@ export function deckEditorCalls(store: DeckEditorStore) {
     direction: ReviewMove,
   ): Promise<AdminResult<string[]>> {
     // Like ▲▼ everywhere, it always saves: there's no form to go stale.
-    const form = begin(actor, cardMoveInputSchema, { id, direction });
+    const form = staffInput(actor, cardMoveInputSchema, { id, direction });
     if (!form.ok) return form;
     const now = new Date();
     return saveAndTidy(
@@ -421,10 +348,9 @@ export function deckEditorCalls(store: DeckEditorStore) {
         const index = order.findIndex((card) => card.id === id);
         const card = order[index];
         if (!current || !card) return NOT_FOUND;
-        const other = form.value.direction === "up" ? index - 1 : index + 1;
-        const swapped = order[other];
-        if (!swapped) return refused(formError(other < 0 ? ALREADY_FIRST : ALREADY_LAST));
-        const moved = order.map((c, i) => (i === index ? swapped : i === other ? card : c));
+        const { direction } = form.value;
+        const moved = swapped(order, index, direction);
+        if (!moved) return refused(formError(direction === "up" ? ALREADY_FIRST : ALREADY_LAST));
         const before = order.map((c) => c.id);
         const after = moved.map((c) => c.id);
         return {
@@ -443,7 +369,7 @@ export function deckEditorCalls(store: DeckEditorStore) {
   }
 
   async function deleteCard(actor: StaffActor, id: string): Promise<AdminResult<DeletedCard>> {
-    const form = begin(actor, cardIdInputSchema, { id });
+    const form = staffInput(actor, cardIdInputSchema, { id });
     if (!form.ok) return form;
     const now = new Date();
     return saveAndTidy(
@@ -539,7 +465,7 @@ export function deckEditorCalls(store: DeckEditorStore) {
     deckId: string,
     visible: boolean,
   ): Promise<AdminResult<AdminDeckSettings>> {
-    const form = begin(actor, deckVisibilityInputSchema, { deck: deckId, visible });
+    const form = staffInput(actor, deckVisibilityInputSchema, { deck: deckId, visible });
     if (!form.ok) return form;
     const visibility: ContentVisibility = form.value.visible ? "visible" : "hidden";
     return setDeckSetting(actor, form.value.deck, (deck, cards) => {
@@ -554,7 +480,7 @@ export function deckEditorCalls(store: DeckEditorStore) {
     deckId: string,
     freePreview: boolean,
   ): Promise<AdminResult<AdminDeckSettings>> {
-    const form = begin(actor, deckFreePreviewInputSchema, { deck: deckId, freePreview });
+    const form = staffInput(actor, deckFreePreviewInputSchema, { deck: deckId, freePreview });
     if (!form.ok) return form;
     return setDeckSetting(actor, form.value.deck, (deck) => ({
       deck: { ...deck, freePreview: form.value.freePreview },
