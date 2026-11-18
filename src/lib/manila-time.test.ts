@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatAsOf,
   formatDate,
+  formatDateTime,
   isCalendarDate,
   manilaDate,
   manilaDayStart,
@@ -26,6 +27,21 @@ describe("formatAsOf", () => {
 
   it("rejects an empty string", () => {
     expect(() => formatAsOf("")).toThrow(RangeError);
+  });
+});
+
+describe("formatDateTime", () => {
+  it("gives the Manila date and time of an instant, day first", () => {
+    // 03:42 UTC is 11:42 in Manila.
+    expect(formatDateTime("2026-11-17T03:42:00.000Z")).toBe("17 Nov 2026, 11:42 am");
+  });
+
+  it("moves to the next day after Manila midnight", () => {
+    expect(formatDateTime("2026-11-17T16:05:00.000Z")).toBe("18 Nov 2026, 12:05 am");
+  });
+
+  it("throws a RangeError for a non-date", () => {
+    expect(() => formatDateTime("not a date")).toThrow(RangeError);
   });
 });
 

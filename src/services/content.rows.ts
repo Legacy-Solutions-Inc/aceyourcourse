@@ -9,6 +9,9 @@ import type {
   Deck,
   Question,
   Quiz,
+  QuizAttempt,
+  QuizAttemptAnswer,
+  QuizAttemptScore,
   ReviewerPdf,
   Topic,
 } from "@/services/content.types";
@@ -25,6 +28,8 @@ type ReviewerPdfRow = typeof schema.reviewerPdfs.$inferSelect;
 type AccessPassRow = typeof schema.accessPasses.$inferSelect;
 type CardRow = typeof schema.cards.$inferSelect;
 type QuestionRow = typeof schema.questions.$inferSelect;
+type QuizAttemptRow = typeof schema.quizAttempts.$inferSelect;
+type QuizAttemptAnswerRow = typeof schema.quizAttemptAnswers.$inferSelect;
 
 /** Every content table's rows, as the records are. */
 export interface ContentRows {
@@ -34,12 +39,14 @@ export interface ContentRows {
   reviewerPdfs: ReviewerPdfRow[];
 }
 
+export const quizFromRow = (row: QuizRow): Quiz => ({ ...row });
+
 /** Pure: the records the rows hold. */
 export function contentFromRows(rows: ContentRows): ContentRecords {
   return {
     topics: rows.topics.map((row): Topic => ({ ...row })),
     decks: rows.decks.map((row): Deck => ({ ...row })),
-    quizzes: rows.quizzes.map((row): Quiz => ({ ...row })),
+    quizzes: rows.quizzes.map(quizFromRow),
     reviewerPdfs: rows.reviewerPdfs.map((row): ReviewerPdf => ({ ...row })),
   };
 }
@@ -143,4 +150,42 @@ export const questionToRow = (question: Question): QuestionRow => ({
   explanation: question.explanation,
   figurePath: question.figure,
   removedAt: question.removedAt === null ? null : new Date(question.removedAt),
+});
+
+export const quizAttemptFromRow = (row: QuizAttemptRow): QuizAttemptScore => ({
+  id: row.id,
+  userId: row.userId,
+  quizId: row.quizId,
+  submittedAt: row.submittedAt.toISOString(),
+  correctCount: row.correctCount,
+  questionCount: row.questionCount,
+  score: row.score,
+  passingScore: row.passingScore,
+});
+
+export const quizAttemptToRow = (attempt: QuizAttemptScore): QuizAttemptRow => ({
+  id: attempt.id,
+  userId: attempt.userId,
+  quizId: attempt.quizId,
+  submittedAt: new Date(attempt.submittedAt),
+  correctCount: attempt.correctCount,
+  questionCount: attempt.questionCount,
+  score: attempt.score,
+  passingScore: attempt.passingScore,
+});
+
+/** Pure: an attempt's answers as rows, numbered from 1 in the order the Member saw them. */
+export const quizAttemptAnswersToRows = (attempt: QuizAttempt): QuizAttemptAnswerRow[] =>
+  attempt.answers.map((answer, index) => ({
+    attemptId: attempt.id,
+    position: index + 1,
+    questionId: answer.questionId,
+    choice: answer.choice,
+    isCorrect: answer.isCorrect,
+  }));
+
+export const quizAttemptAnswerFromRow = (row: QuizAttemptAnswerRow): QuizAttemptAnswer => ({
+  questionId: row.questionId,
+  choice: row.choice,
+  isCorrect: row.isCorrect,
 });

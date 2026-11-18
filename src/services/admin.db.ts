@@ -293,6 +293,9 @@ async function load(
     get questions() {
       return notLoaded("the questions");
     },
+    get quizAttempts() {
+      return notLoaded("the Quiz Attempts");
+    },
     get quizzes() {
       return contentPart().quizzes;
     },

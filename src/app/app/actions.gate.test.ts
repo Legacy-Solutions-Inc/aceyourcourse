@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DEVICE_COOKIE, hashDeviceToken } from "@/lib/member-app/device-token";
-import { createCard } from "@/services/admin.mock";
+import { createCard, createQuestion } from "@/services/admin.mock";
 import {
   addTargetExam,
   claimDevice,
@@ -30,7 +30,7 @@ import * as signIn from "./sign-in/actions";
 // each one is listed here with who may call it, and called as a browser would
 // by everyone it must refuse:
 //   - "member": behind the gate, then consent, then the Active Device (the
-//     Target Exam actions, and the flashcard player's). Signed out goes to the sign-in screen, someone the
+//     Target Exam actions, the flashcard player's and the quiz screen's). Signed out goes to the sign-in screen, someone the
 //     gate doesn't let in goes to "Not open yet", with no Member record made,
 //     a Member who hasn't agreed to the current Terms and Privacy Policy goes
 //     to the consent screen, and a request that isn't from the Member's Active
@@ -82,6 +82,10 @@ const SIMPLE_CURVES = sampleTopicId("CE", "MSTC", "Simple Curves");
 const FREE_DECK = sampleContentId(SIMPLE_CURVES, "deck");
 /** A card in it, written for each test, that the player's actions would mark. */
 let freeCard = "";
+/** Hydrostatics' quiz is Free Preview: every Member past the checks could take it. */
+const FREE_QUIZ = sampleContentId(sampleTopicId("CE", "HPGE", "Hydrostatics"), "quiz");
+/** A question in it, written for each test, that the quiz screen's Submit would answer. */
+let freeQuestion = "";
 
 interface Entry {
   who: "member" | "before-device" | "before-consent" | "anyone";
@@ -141,6 +145,13 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     saveStudyPosition: member(() =>
       study.saveStudyPosition({ deckId: FREE_DECK, cardId: freeCard }),
     ),
+    submitQuizAttempt: member(() =>
+      study.submitQuizAttempt({
+        attemptId: "6a1f0e1c-5b55-4a51-9d0e-0a1b2c3d4e5f",
+        quizId: FREE_QUIZ,
+        answers: [{ questionId: freeQuestion, choice: "A" }],
+      }),
+    ),
   },
   "./(shell)/actions.ts": {
     addExam: member(() => targetExams.addExam({ error: null }, examForm("2099-04-18"))),
@@ -190,7 +201,7 @@ async function agreedTester() {
 const memberData = () => {
   const { members, memberConsents, memberTargetExams, selectedExams } = getSampleStore();
   const { memberActiveDevices, memberDeviceSwitches } = getSampleStore();
-  const { cardMarks, studyDays, deckPositions } = getSampleStore();
+  const { cardMarks, studyDays, deckPositions, quizAttempts } = getSampleStore();
   return structuredClone({
     members,
     memberConsents,
@@ -201,6 +212,7 @@ const memberData = () => {
     cardMarks,
     studyDays,
     deckPositions,
+    quizAttempts,
   });
 };
 
@@ -230,6 +242,16 @@ beforeEach(async () => {
   });
   if (!added.ok) throw new Error("The card wasn't written");
   freeCard = added.value.id;
+  const question = await createQuestion(sampleActor("editor"), {
+    topic: sampleTopicId("CE", "HPGE", "Hydrostatics"),
+    question: "Pressure at a depth h?",
+    choices: { A: "$\\rho g h$", B: "$\\rho h$", C: "$g h$", D: "$\\rho g$" },
+    correct: "A",
+    explanation: "Hydrostatic pressure.",
+    figure: null,
+  });
+  if (!question.ok) throw new Error("The question wasn't written");
+  freeQuestion = question.value.id;
 });
 
 describe("the Member App's Server Actions and the gate", () => {

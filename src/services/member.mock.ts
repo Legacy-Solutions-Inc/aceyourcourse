@@ -2,6 +2,7 @@ import { type DeviceStatus, deviceStatusFor } from "@/lib/member-app/device-toke
 import { contentItemOf, type ContentExam, libraryOf } from "@/services/content.rules";
 import type { AccessPass, ContentKind, ContentRecords } from "@/services/content.types";
 import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
+import { quizStudyCalls, type QuizStudyStore } from "@/services/quiz-study.core";
 import {
   agreedVersionsSchema,
   contentRefSchema,
@@ -40,8 +41,8 @@ import { sampleContentFiles } from "@/services/uploads.mock";
 // the Topics the Admin's sample arm edits, the Members, their consent
 // records, Target Exams, Active Devices and Access Passes, and their study
 // records. The Target Exam rules (member.rules.ts), the content rules
-// (content.rules.ts) and the study calls (deck-study.core.ts) are shared with
-// the database arm.
+// (content.rules.ts) and the study calls (deck-study.core.ts and
+// quiz-study.core.ts) are shared with the database arm.
 
 export async function isBetaTester(email: string): Promise<boolean> {
   const wanted = memberEmailSchema.safeParse(email);
@@ -227,6 +228,10 @@ function requireMemberRecord(userId: string): void {
   }
 }
 
+/** The sample bucket's signed URLs, for card images and quiz figures alike. */
+const signSampleImages = (paths: readonly string[], seconds: number) =>
+  sampleContentFiles.signedUrls(paths, seconds);
+
 const cardsOf = (deckId: string) => getSampleStore().cards.filter((card) => card.deckId === deckId);
 
 const sampleStudyStore: DeckStudyStore = {
@@ -281,8 +286,51 @@ const sampleStudyStore: DeckStudyStore = {
       .map((kept) => kept.day)
       .sort();
   },
-  signImages: (paths, seconds) => sampleContentFiles.signedUrls(paths, seconds),
+  signImages: signSampleImages,
 };
 
 export const { openDeck, markCard, saveDeckPosition, listStudyDays } =
   deckStudyCalls(sampleStudyStore);
+
+// ── Taking a quiz ───────────────────────────────────────────────────────────
+
+const sampleQuizStore: QuizStudyStore = {
+  async readQuizItem(quizId) {
+    const { exams, content } = contentOfStore();
+    return contentItemOf("quiz", quizId, exams, content);
+  },
+  async readQuiz(quizId) {
+    const store = getSampleStore();
+    const quiz = store.quizzes.find((candidate) => candidate.id === quizId);
+    if (!quiz) return null;
+    return structuredClone({
+      quiz,
+      questions: store.questions.filter((question) => question.quizId === quizId),
+    });
+  },
+  async readAttempts(userId, quizId) {
+    return getSampleStore()
+      .quizAttempts.filter((attempt) => attempt.userId === userId && attempt.quizId === quizId)
+      .map(({ answers: _answers, ...score }) => structuredClone(score))
+      .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt) || b.id.localeCompare(a.id));
+  },
+  async readAttempt(userId, attemptId) {
+    const found = getSampleStore().quizAttempts.find(
+      (attempt) => attempt.id === attemptId && attempt.userId === userId,
+    );
+    return found ? structuredClone(found) : null;
+  },
+  async saveAttempt(attempt, day) {
+    requireMemberRecord(attempt.userId);
+    const store = getSampleStore();
+    if (store.quizAttempts.some((saved) => saved.id === attempt.id)) return "exists";
+    store.quizAttempts = [...store.quizAttempts, structuredClone(attempt)];
+    if (!store.studyDays.some((kept) => kept.userId === attempt.userId && kept.day === day)) {
+      store.studyDays = [...store.studyDays, { userId: attempt.userId, day }];
+    }
+    return "saved";
+  },
+  signImages: signSampleImages,
+};
+
+export const { openQuiz, submitQuiz, reviewQuizAttempt } = quizStudyCalls(sampleQuizStore);

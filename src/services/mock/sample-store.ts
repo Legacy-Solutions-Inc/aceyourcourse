@@ -19,6 +19,7 @@ import type {
   DeckPosition,
   Question,
   Quiz,
+  QuizAttempt,
   ReviewerPdf,
   StudyDay,
   Topic,
@@ -132,6 +133,8 @@ export interface SampleStore {
   quizzes: Quiz[];
   /** Each quiz's questions (ticket 09), removed ones too, in no particular order: each has its position. */
   questions: Question[];
+  /** Every Member's Quiz Attempts with their answers, in the order submitted (ticket 11). */
+  quizAttempts: QuizAttempt[];
   reviewerPdfs: ReviewerPdf[];
   /** Every Member's Access Passes, at most one per Exam (Phase 3). */
   accessPasses: AccessPass[];
@@ -181,6 +184,7 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     cards: [],
     cardMarks: [],
     questions: [],
+    quizAttempts: [],
     studyDays: [],
     deckPositions: [],
     ...sampleAccessPasses(now, catalogue),

@@ -101,6 +101,7 @@ async function writeCards(name: string, ...fronts: string[]): Promise<AdminCard[
 const opening = async (id: string) =>
   (await import("./(shell)/library/[kind]/[id]/page")).default({
     params: Promise.resolve({ kind: "deck", id }),
+    searchParams: Promise.resolve({}),
   });
 
 /** The Member's marks, as the sample data holds them. */

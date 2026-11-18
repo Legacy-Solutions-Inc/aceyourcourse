@@ -3,7 +3,11 @@ import { asc } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import * as schema from "@/lib/db/schema";
 import { databaseArm as adminDatabaseArm } from "@/services/admin.db";
-import { accessPassToRow } from "@/services/content.rows";
+import {
+  accessPassToRow,
+  quizAttemptAnswerFromRow,
+  quizAttemptFromRow,
+} from "@/services/content.rows";
 import {
   consentFromRow,
   databaseArm,
@@ -57,4 +61,20 @@ export const MEMBER_DATABASE_ARM: MemberArm = {
   // The Admin's database arm uploads and reads them as the Member seam's does.
   uploadCardImage: (bytes, options) => ADMIN_DATABASE_ARM.uploadCardImage(bytes, options),
   cardMarks: () => ADMIN_DATABASE_ARM.cardMarks(),
+  quizAttempts: async () => {
+    const db = getDb();
+    const [attempts, answers] = await Promise.all([
+      db
+        .select()
+        .from(schema.quizAttempts)
+        .orderBy(asc(schema.quizAttempts.submittedAt), asc(schema.quizAttempts.id)),
+      db.select().from(schema.quizAttemptAnswers).orderBy(asc(schema.quizAttemptAnswers.position)),
+    ]);
+    return attempts.map((row) => ({
+      ...quizAttemptFromRow(row),
+      answers: answers
+        .filter((answer) => answer.attemptId === row.id)
+        .map(quizAttemptAnswerFromRow),
+    }));
+  },
 };

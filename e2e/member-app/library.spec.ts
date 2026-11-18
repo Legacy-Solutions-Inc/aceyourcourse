@@ -85,8 +85,9 @@ test.describe("the Beta Tester, with a CE pass", () => {
     await expect(page.getByText("🔒")).toHaveCount(0);
     await expectNoBlockingViolations(page);
 
-    await row(page, "Simple Curves").getByRole("link", { name: "Quiz" }).click();
-    await expect(page).toHaveURL(/\/app\/library\/quiz\/[0-9a-f-]{36}$/);
+    // A Reviewer PDF shows what the access decision answered until its reader comes (ticket 14).
+    await row(page, "Simple Curves").getByRole("link", { name: "Reviewer PDF" }).click();
+    await expect(page).toHaveURL(/\/app\/library\/reviewer-pdf\/[0-9a-f-]{36}$/);
     await expect(page.getByRole("heading", { level: 1, name: "Simple Curves" })).toBeVisible();
     await expect(page.getByRole("heading", { level: 2, name: "Opening soon" })).toBeVisible();
     await expectNoBlockingViolations(page);
@@ -162,7 +163,7 @@ test.describe("the lapsed tester", () => {
     await openLibrary(page);
 
     await row(page, "Simple Curves")
-      .getByRole("link", { name: "Quiz, locked: your CE All-Access ended" })
+      .getByRole("link", { name: "Reviewer PDF, locked: your CE All-Access ended" })
       .click();
     await expect(
       page.getByRole("heading", {

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { TOKEN_HASH_PATTERN } from "@/lib/member-app/device-token";
+import { QUIZ_CHOICES } from "@/lib/quizzes/quiz-rules";
 import { staffEmailSchema } from "@/services/admin.schema";
 import { CARD_MARK_VERDICTS, CONTENT_KINDS } from "@/services/content.types";
 import type { TargetExamRefusal } from "@/services/member.types";
@@ -128,3 +129,25 @@ export const studyPositionSchema = z.object({
 
 export type StudyMarkInput = z.input<typeof studyMarkSchema>;
 export type StudyPositionInput = z.input<typeof studyPositionSchema>;
+
+/** The most answers a submit may carry: far more than any quiz has questions. */
+export const MAX_QUIZ_ANSWERS = 1000;
+
+/**
+ * What the quiz screen sends on Submit (ticket 11): the attempt's own id,
+ * made when it started, so the same attempt posted twice is saved once; the
+ * quiz; and the Member's choice on each question, in the order they saw them
+ * (null for one left unanswered). The seam marks it against the quiz as it
+ * is: a question it doesn't name counts as wrong, and one that isn't the
+ * quiz's refuses the submit.
+ */
+export const quizSubmitSchema = z.object({
+  attemptId: z.string().uuid(),
+  quizId: sentId,
+  answers: z
+    .array(z.object({ questionId: sentId, choice: z.enum(QUIZ_CHOICES).nullable() }))
+    .max(MAX_QUIZ_ANSWERS),
+});
+
+/** One of the Member's past attempts at a quiz, as its address names it (ticket 11). */
+export const attemptRefSchema = z.object({ quizId: sentId, attemptId: sentId });

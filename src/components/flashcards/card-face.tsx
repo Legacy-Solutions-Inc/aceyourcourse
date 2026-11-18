@@ -1,6 +1,6 @@
 import { FormulaText } from "@/components/formula/formula-text";
+import { WatermarkOverlay } from "@/components/watermark-overlay";
 import { cn } from "@/lib/utils";
-import { watermarkBackground } from "@/lib/watermark";
 
 interface CardFaceProps {
   side: "front" | "back";
@@ -71,14 +71,7 @@ export function CardFace({
           />
         ) : null}
       </div>
-      {watermark ? (
-        <div
-          aria-hidden="true"
-          data-watermark=""
-          className="pointer-events-none absolute inset-0 select-none"
-          style={{ backgroundImage: watermarkBackground(watermark) }}
-        />
-      ) : null}
+      {watermark ? <WatermarkOverlay text={watermark} /> : null}
       {note ? (
         <p className="border-t border-ayc-ruled pt-1.5 text-xs text-muted-foreground">
           <FormulaText text={note} />

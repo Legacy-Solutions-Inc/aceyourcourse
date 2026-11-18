@@ -1,10 +1,5 @@
 import { manilaDate } from "@/lib/manila-time";
-import {
-  accessDecision,
-  type AllowedVia,
-  type MemberAccess,
-  type RefusedDecision,
-} from "@/lib/member-app/access";
+import type { MemberAccess, RefusedDecision } from "@/lib/member-app/access";
 import type { Card, CardMark, DeckPosition } from "@/services/content.types";
 import {
   cardMarkInputSchema,
@@ -20,6 +15,7 @@ import type {
   StudyCard,
   StudyResult,
 } from "@/services/member.types";
+import { decide } from "@/services/study-access";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Studying a deck (spec, Phase 3 → Progress storage, Resume and the Access
@@ -65,16 +61,6 @@ export interface DeckStudyStore {
   readStudyDays(userId: string): Promise<string[]>;
   /** Signed URLs for these card images, by path, working for `seconds`. A file that's gone has none. */
   signImages(paths: readonly string[], seconds: number): Promise<Record<string, string>>;
-}
-
-/** The access decision on a deck, refused or allowed. */
-type Decided = { allowed: false; decision: RefusedDecision } | { allowed: true; via: AllowedVia };
-
-function decide(item: ContentItem, access: MemberAccess): Decided {
-  const decision = accessDecision({ ...access, content: item });
-  return decision.outcome === "allowed"
-    ? { allowed: true, via: decision.via }
-    : { allowed: false, decision };
 }
 
 const NOT_FOUND = { ok: false, refusal: { reason: "not-found" } } as const;

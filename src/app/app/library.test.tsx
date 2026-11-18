@@ -50,6 +50,8 @@ const SPIRAL_CURVES = sampleTopicId("CE", "MSTC", "Spiral Curves");
 const FREE_DECK = sampleContentId(SIMPLE_CURVES, "deck");
 const QUIZ = sampleContentId(SIMPLE_CURVES, "quiz");
 const HIDDEN_QUIZ = sampleContentId(SPIRAL_CURVES, "quiz");
+/** Simple Curves' Reviewer PDF, Published: it shows the access decision until its reader comes (ticket 14). */
+const PDF = sampleContentId(SIMPLE_CURVES, "reviewer-pdf");
 
 const redirectsTo = (url: string) =>
   new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
@@ -83,6 +85,7 @@ const library = async (subject?: string) =>
 const opening = async (kind: string, id: string) =>
   (await import("./(shell)/library/[kind]/[id]/page")).default({
     params: Promise.resolve({ kind, id }),
+    searchParams: Promise.resolve({}),
   });
 
 const topics = (subject = "MSTC") => screen.getByRole("list", { name: `${subject} Topics` });
@@ -285,11 +288,11 @@ describe("the Library", () => {
 });
 
 describe("opening an item", () => {
-  it("shows the tester's quiz as opening soon", async () => {
+  it("shows the tester's Reviewer PDF as opening soon", async () => {
     await asTester();
-    render(await opening("quiz", QUIZ));
+    render(await opening("reviewer-pdf", PDF));
 
-    expect(screen.getByText("LIBRARY · MSTC · QUIZ")).toBeInTheDocument();
+    expect(screen.getByText("LIBRARY · MSTC · REVIEWER PDF")).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1, name: "Simple Curves" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 2, name: "Opening soon" })).toBeInTheDocument();
     expect(screen.getByText("OPENING SOON")).toBeInTheDocument();
@@ -300,9 +303,9 @@ describe("opening an item", () => {
   });
 
   it("goes back to the Library, not a Subject, from another Exam's item than the selected one", async () => {
-    // The tester studies for ME, and opens a CE quiz by its address: their CE pass opens it.
+    // The tester studies for ME, and opens a CE Reviewer PDF by its address: their CE pass opens it.
     await memberOnDevice("tester@example.com", "Bea Tester", "ME");
-    render(await opening("quiz", QUIZ));
+    render(await opening("reviewer-pdf", PDF));
 
     expect(screen.getByRole("heading", { level: 2, name: "Opening soon" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to the Library" })).toHaveAttribute(
@@ -333,7 +336,7 @@ describe("opening an item", () => {
 
   it("tells the lapsed tester their access ended, and that their progress is kept", async () => {
     await asLapsed();
-    render(await opening("quiz", QUIZ));
+    render(await opening("reviewer-pdf", PDF));
 
     expect(
       screen.getByRole("heading", { level: 2, name: "Your CE All-Access ended on 14 Nov 2026" }),
@@ -356,14 +359,16 @@ describe("opening an item", () => {
     ).toBeInTheDocument();
   });
 
-  it("says no longer available once content is hidden while a Member is on it", async () => {
+  it("says no longer available once content is unpublished while a Member is on it", async () => {
     await asTester();
-    render(await opening("quiz", QUIZ));
+    render(await opening("reviewer-pdf", PDF));
     expect(screen.getByRole("heading", { level: 2, name: "Opening soon" })).toBeInTheDocument();
 
     const store = getSampleStore();
-    store.quizzes = store.quizzes.map((q) => (q.id === QUIZ ? { ...q, visibility: "hidden" } : q));
-    render(await opening("quiz", QUIZ));
+    store.reviewerPdfs = store.reviewerPdfs.map((pdf) =>
+      pdf.id === PDF ? { ...pdf, status: "unpublished" } : pdf,
+    );
+    render(await opening("reviewer-pdf", PDF));
     expect(
       screen.getByRole("heading", { level: 2, name: "No longer available" }),
     ).toBeInTheDocument();

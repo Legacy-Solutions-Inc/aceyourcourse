@@ -8,8 +8,19 @@ import * as schema from "@/lib/db/schema";
 import { deviceStatusFor } from "@/lib/member-app/device-token";
 import { isStorageConfigured } from "@/lib/supabase/admin";
 import { type ContentExam, contentItemOf, libraryOf } from "@/services/content.rules";
-import { accessPassFromRow, cardFromRow, contentFromRows } from "@/services/content.rows";
+import {
+  accessPassFromRow,
+  cardFromRow,
+  contentFromRows,
+  questionFromRow,
+  quizAttemptAnswerFromRow,
+  quizAttemptAnswersToRows,
+  quizAttemptFromRow,
+  quizAttemptToRow,
+  quizFromRow,
+} from "@/services/content.rows";
 import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
+import { quizStudyCalls, type QuizStudyStore } from "@/services/quiz-study.core";
 import type { MemberService } from "@/services/member";
 import {
   agreedVersionsSchema,
@@ -38,8 +49,9 @@ import { storageArm } from "@/services/uploads.storage";
 // the app layer, to the User the Member App gate passes it (coding standards
 // §3): a Member's records are only ever read or made by their own User id.
 // The Target Exam rules (member.rules.ts), the content rules
-// (content.rules.ts), the study calls (deck-study.core.ts) and the Active
-// Device's comparison (device-token.ts) are shared with the sample arm.
+// (content.rules.ts), the study calls (deck-study.core.ts and
+// quiz-study.core.ts) and the Active Device's comparison (device-token.ts)
+// are shared with the sample arm.
 
 type MemberRow = typeof schema.members.$inferSelect;
 type ConsentRow = typeof schema.memberConsents.$inferSelect;
@@ -467,6 +479,13 @@ async function inDatabase<T>(work: () => Promise<T>): Promise<T> {
   }
 }
 
+/**
+ * The private bucket's signed URLs for card images and quiz figures: Storage
+ * when this server has it, as the Admin's editors store them there.
+ */
+const signContentImages = (paths: readonly string[], seconds: number) =>
+  (isStorageConfigured ? storageArm.contentFiles : sampleContentFiles).signedUrls(paths, seconds);
+
 const databaseStudyStore: DeckStudyStore = {
   readDeckItem: (deckId) => getContentItem("deck", deckId),
   readCards: (deckId) =>
@@ -567,9 +586,71 @@ const databaseStudyStore: DeckStudyStore = {
         .orderBy(asc(studyDays.day));
       return rows.map((row) => row.day);
     }),
-  // Storage when this server has it, as the Admin's card editor stores the images there.
-  signImages: (paths, seconds) =>
-    (isStorageConfigured ? storageArm.contentFiles : sampleContentFiles).signedUrls(paths, seconds),
+  signImages: signContentImages,
+};
+
+// ── Taking a quiz ───────────────────────────────────────────────────────────
+
+const databaseQuizStore: QuizStudyStore = {
+  readQuizItem: (quizId) => getContentItem("quiz", quizId),
+  readQuiz: (quizId) =>
+    inDatabase(async () => {
+      const { quizzes, questions } = schema;
+      const db = getDb();
+      const [quizRows, questionRows] = await Promise.all([
+        db.select().from(quizzes).where(eq(quizzes.id, quizId)),
+        db.select().from(questions).where(eq(questions.quizId, quizId)),
+      ]);
+      const [quiz] = quizRows;
+      return quiz
+        ? { quiz: quizFromRow(quiz), questions: questionRows.map(questionFromRow) }
+        : null;
+    }),
+  readAttempts: (userId, quizId) =>
+    inDatabase(async () => {
+      const { quizAttempts } = schema;
+      const rows = await getDb()
+        .select()
+        .from(quizAttempts)
+        .where(and(eq(quizAttempts.userId, userId), eq(quizAttempts.quizId, quizId)))
+        .orderBy(desc(quizAttempts.submittedAt), desc(quizAttempts.id));
+      return rows.map(quizAttemptFromRow);
+    }),
+  readAttempt: (userId, attemptId) =>
+    inDatabase(async () => {
+      const { quizAttempts, quizAttemptAnswers } = schema;
+      const db = getDb();
+      // Scoped to the Member: another Member's attempt reads as none.
+      const [row] = await db
+        .select()
+        .from(quizAttempts)
+        .where(and(eq(quizAttempts.id, attemptId), eq(quizAttempts.userId, userId)));
+      if (!row) return null;
+      const answers = await db
+        .select()
+        .from(quizAttemptAnswers)
+        .where(eq(quizAttemptAnswers.attemptId, row.id))
+        .orderBy(asc(quizAttemptAnswers.position));
+      return { ...quizAttemptFromRow(row), answers: answers.map(quizAttemptAnswerFromRow) };
+    }),
+  saveAttempt: (attempt, day) =>
+    inDatabase(() =>
+      getDb().transaction(async (tx) => {
+        const { quizAttempts, quizAttemptAnswers, studyDays } = schema;
+        // The attempt's id is its own: one saved already, by anyone, saves nothing.
+        // The foreign keys to members refuse a User the gate never let in.
+        const [inserted] = await tx
+          .insert(quizAttempts)
+          .values(quizAttemptToRow(attempt))
+          .onConflictDoNothing({ target: quizAttempts.id })
+          .returning({ id: quizAttempts.id });
+        if (!inserted) return "exists";
+        await tx.insert(quizAttemptAnswers).values(quizAttemptAnswersToRows(attempt));
+        await tx.insert(studyDays).values({ userId: attempt.userId, day }).onConflictDoNothing();
+        return "saved";
+      }),
+    ),
+  signImages: signContentImages,
 };
 
 export const databaseArm: MemberService = {
@@ -589,4 +670,5 @@ export const databaseArm: MemberService = {
   getContentItem,
   listAccessPasses,
   ...deckStudyCalls(databaseStudyStore),
+  ...quizStudyCalls(databaseQuizStore),
 };

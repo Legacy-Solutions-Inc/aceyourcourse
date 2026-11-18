@@ -807,6 +807,86 @@ export const questions = pgTable(
 ).enableRLS();
 
 /**
+ * Every Member's Quiz Attempts (CONTEXT.md; spec, Phase 3 → Progress storage,
+ * Quizzes are graded on the server; ticket 11): each submitted pass through a
+ * quiz, marked on the server and kept for good. The id is the attempt's own,
+ * made when it started, so the same attempt posted twice is saved once. The
+ * score is the right answers as a whole percentage of the questions in the
+ * quiz then, rounded down, which the check holds it to; the passing score is
+ * the quiz's then. A Member's Best Score on a quiz is the highest score of
+ * their attempts at it: no table keeps it, so a lower retake can't lower it
+ * and a correction can't change it. Deleting the Member or the quiz deletes
+ * them. The index on (user_id, quiz_id) serves each Member's attempts list;
+ * the one on quiz_id the cascade.
+ */
+export const quizAttempts = pgTable(
+  "quiz_attempts",
+  {
+    id: uuid("id").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => members.userId, { onDelete: "cascade" }),
+    quizId: uuid("quiz_id")
+      .notNull()
+      .references(() => quizzes.id, { onDelete: "cascade" }),
+    submittedAt: at("submitted_at").notNull(),
+    correctCount: integer("correct_count").notNull(),
+    questionCount: integer("question_count").notNull(),
+    score: integer("score").notNull(),
+    passingScore: integer("passing_score").notNull(),
+  },
+  (t) => [
+    index("quiz_attempts_user_id_quiz_id_idx").on(t.userId, t.quizId, t.submittedAt),
+    index("quiz_attempts_quiz_id_idx").on(t.quizId),
+    check(
+      "quiz_attempts_counts",
+      sql`${t.questionCount} > 0 and ${t.correctCount} between 0 and ${t.questionCount}`,
+    ),
+    check(
+      "quiz_attempts_score_rounded_down",
+      sql`${t.score} = (${t.correctCount} * 100) / ${t.questionCount}`,
+    ),
+    check(
+      "quiz_attempts_passing_score_range",
+      sql`${t.passingScore} between ${sql.raw(String(PASSING_SCORE_MIN))} and ${sql.raw(String(PASSING_SCORE_MAX))}`,
+    ),
+  ],
+).enableRLS();
+
+/**
+ * Each Quiz Attempt's answers, in the order the Member saw the questions
+ * (`position`): the choice they picked, or none for one left unanswered, and
+ * whether it was right when they submitted, kept as it was, so a later
+ * correction never changes the attempt. A question taken out of the quiz is
+ * kept, marked removed (`questions`), so its answers stay. Deleting the
+ * attempt deletes them.
+ */
+export const quizAttemptAnswers = pgTable(
+  "quiz_attempt_answers",
+  {
+    attemptId: uuid("attempt_id")
+      .notNull()
+      .references(() => quizAttempts.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    questionId: uuid("question_id")
+      .notNull()
+      .references(() => questions.id, { onDelete: "cascade" }),
+    choice: quizChoice("choice"),
+    isCorrect: boolean("is_correct").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.attemptId, t.position] }),
+    unique("quiz_attempt_answers_attempt_id_question_id_key").on(t.attemptId, t.questionId),
+    index("quiz_attempt_answers_question_id_idx").on(t.questionId),
+    check("quiz_attempt_answers_position_positive", sql`${t.position} > 0`),
+    check(
+      "quiz_attempt_answers_unanswered_is_wrong",
+      sql`${t.choice} is not null or not ${t.isCorrect}`,
+    ),
+  ],
+).enableRLS();
+
+/**
  * The Reviewer PDFs: at most one per Topic, and none until Staff place it
  * under one, which Publishing needs. Only the record and its status are here;
  * the upload, the job and the page images come with ticket 12.

@@ -144,6 +144,47 @@ export interface Question {
 }
 
 /**
+ * One answer in a Quiz Attempt (ticket 11): the question, the choice the
+ * Member picked (null when they left it unanswered, which is wrong), and
+ * whether it was right when they submitted. The verdict is kept as it was,
+ * so a later correction to the question never changes the attempt's score.
+ */
+export interface QuizAttemptAnswer {
+  questionId: string;
+  choice: QuizChoice | null;
+  isCorrect: boolean;
+}
+
+/**
+ * A Quiz Attempt (CONTEXT.md; spec, Phase 3 → Progress storage, Quizzes are
+ * graded on the server): one submitted pass through a quiz, graded on the
+ * server, kept for good. Its score is a whole percentage, rounded down, and
+ * the Member's Best Score on a quiz is the highest score of their attempts.
+ * Its id is the attempt's own, sent with the submit, so the same attempt
+ * posted twice is saved once.
+ */
+export interface QuizAttempt {
+  id: string;
+  /** The Member's User id. */
+  userId: string;
+  quizId: string;
+  /** ISO time it was submitted. */
+  submittedAt: string;
+  /** How many answers were right, out of `questionCount`: the questions in the quiz then. */
+  correctCount: number;
+  questionCount: number;
+  /** correctCount as a whole percentage of questionCount, rounded down. */
+  score: number;
+  /** The quiz's passing score when it was submitted, which it passed at or above. */
+  passingScore: number;
+  /** In the order the Member saw them. */
+  answers: QuizAttemptAnswer[];
+}
+
+/** A Quiz Attempt without its answers: what the attempts list and the Best Score read. */
+export type QuizAttemptScore = Omit<QuizAttempt, "answers">;
+
+/**
  * A Reviewer PDF: at most one per Topic. Until Staff place it under a Topic
  * it has none, and it can't be Published. Its file and page images come with
  * ticket 12.

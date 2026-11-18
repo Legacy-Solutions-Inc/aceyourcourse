@@ -31,7 +31,7 @@ import type { StudyCard } from "@/services/member.types";
 import type { ShownRefusal } from "@/lib/member-app/access";
 
 import { ContentState } from "./content-state";
-import { keptNote } from "./deck-states";
+import { keptNote } from "./study-states";
 
 /** The Server Actions the player calls (src/app/app/(shell)/library/actions.ts). */
 export interface DeckPlayerActions {
@@ -299,7 +299,7 @@ export function DeckPlayer({
           decision={refusal}
           kind="deck"
           // The count of what was saved shows when the deck is opened again.
-          keptNote={keptNote(refusal, 0)}
+          keptNote={keptNote(refusal, null)}
           examCode={examCode}
           contactEmail={contactEmail}
           back={back}

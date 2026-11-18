@@ -121,13 +121,16 @@ async function hasCatalogue(tx: Transaction): Promise<boolean> {
  * catalogue's Subjects, each Topic's deck, quiz and Reviewer PDF off it,
  * which keeps a Topic, and so its Subject, from being deleted under them,
  * each deck's cards off the deck, and the Members' Card Marks and deck
- * positions off the cards, and each quiz's questions off the quiz.
+ * positions off the cards, each quiz's questions off the quiz, and the
+ * Members' Quiz Attempts off the quiz, with their answers off the questions.
  */
 const CONTENT_TABLES = [
   schema.deckPositions,
   schema.cardMarks,
   schema.cards,
   schema.decks,
+  schema.quizAttemptAnswers,
+  schema.quizAttempts,
   schema.questions,
   schema.quizzes,
   schema.reviewerPdfs,

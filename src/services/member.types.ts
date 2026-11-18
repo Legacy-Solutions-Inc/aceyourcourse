@@ -2,8 +2,15 @@ import type { z } from "zod";
 
 import type { AllowedVia, RefusedDecision } from "@/lib/member-app/access";
 import type { ExamDateSetBy } from "@/lib/member-app/exam-date";
+import type { AttemptReview } from "@/lib/quizzes/grading";
+import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
 import type { CardMarkVerdict, ContentKind } from "@/services/content.types";
-import type { cardMarkInputSchema, deckPositionInputSchema } from "@/services/member.schema";
+import type {
+  attemptRefSchema,
+  cardMarkInputSchema,
+  deckPositionInputSchema,
+  quizSubmitSchema,
+} from "@/services/member.schema";
 
 // The Member seam's types (spec, Phase 3 → Phase 3 seams). A Member is a
 // person with a Member App account (CONTEXT.md), keyed by their User.
@@ -239,3 +246,94 @@ export type CardMarkInput = z.input<typeof cardMarkInputSchema>;
 
 /** Where the Member is in a deck: the card they're on, or null once they've finished it. */
 export type DeckPositionInput = z.input<typeof deckPositionInputSchema>;
+
+// Taking a quiz (spec, Phase 3 → Quizzes are graded on the server,
+// Corrections never cost progress; ticket 11). The seam decides each quiz
+// with the access decision before it reads a question, never sends a correct
+// choice or an explanation before the Member submits, and marks the submit
+// itself (src/lib/quizzes/grading.ts).
+
+/** A question as the quiz screen shows it before the Member submits: never its correct choice or explanation. */
+export interface QuizQuestion {
+  id: string;
+  /** The question and its four choices, in the formula notation. */
+  question: string;
+  choices: Record<QuizChoice, string>;
+  /** Its figure's signed URL, which stops working after about 10 minutes, or null. */
+  figureUrl: string | null;
+}
+
+/** One of the Member's Quiz Attempts, as the attempts list and the score screen show it. */
+export interface AttemptSummary {
+  id: string;
+  /** ISO time it was submitted. */
+  submittedAt: string;
+  correctCount: number;
+  questionCount: number;
+  /** A whole percentage, rounded down. */
+  score: number;
+  /** The quiz's passing score when it was submitted. */
+  passingScore: number;
+  /** At or above that passing score. */
+  passed: boolean;
+}
+
+/** A quiz the access decision opened, with the Member's own attempts on it. */
+export interface StudyQuiz {
+  passingScore: number;
+  shuffle: boolean;
+  showAnswers: boolean;
+  /** In the quiz's order. Empty while the quiz has no questions: it's still being prepared. */
+  questions: QuizQuestion[];
+  /** When the figure URLs stop working (ISO), or null when no question has a figure. */
+  imagesExpireAt: string | null;
+  /** The highest score of the Member's attempts, or null before their first. */
+  bestScore: number | null;
+  /** The Member's attempts, newest first. */
+  attempts: AttemptSummary[];
+}
+
+/** A quiz the access decision refused: nothing of it is read but the Member's own record on it, kept. */
+export interface RefusedQuiz {
+  status: "refused";
+  item: ContentItem;
+  decision: RefusedDecision;
+  /** How many attempts the Member has made at it. */
+  attemptCount: number;
+  bestScore: number | null;
+}
+
+/** What opening a quiz finds. */
+export type QuizOpening =
+  /** No such quiz: a wrong address, or one that was deleted. */
+  | { status: "not-found" }
+  | RefusedQuiz
+  | { status: "allowed"; item: ContentItem; via: AllowedVia; quiz: StudyQuiz };
+
+/** A submitted attempt, marked: its score, the Best Score with it, and the review. */
+export interface ScoredAttempt {
+  attempt: AttemptSummary;
+  bestScore: number;
+  review: AttemptReview;
+}
+
+/** What opening one of the Member's past attempts finds. */
+export type AttemptOpening =
+  /** No such attempt of the Member's at this quiz: another Member's reads the same. */
+  | { status: "not-found" }
+  | RefusedQuiz
+  | ({ status: "allowed"; item: ContentItem; via: AllowedVia } & ScoredAttempt);
+
+/** Why a submit was refused. A refused submit saves nothing. */
+export type QuizRefusal =
+  | StudyRefusal
+  /** It names a question that isn't in the quiz (one taken out of it since, too), or answers one twice. */
+  | { reason: "mismatch" };
+
+export type QuizResult<T> = { ok: true; value: T } | { ok: false; refusal: QuizRefusal };
+
+/** What Submit sends: the attempt's own id, the quiz, and the Member's answers in the order seen. */
+export type QuizSubmitInput = z.input<typeof quizSubmitSchema>;
+
+/** One of the Member's past attempts at a quiz, as its address names it. */
+export type AttemptRef = z.input<typeof attemptRefSchema>;

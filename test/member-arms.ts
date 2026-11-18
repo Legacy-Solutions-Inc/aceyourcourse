@@ -2,7 +2,7 @@ import type { AdminService } from "@/services/admin";
 import * as adminSampleArm from "@/services/admin.mock";
 import type { MemberService } from "@/services/member";
 import * as sampleArm from "@/services/member.mock";
-import type { AccessPass, CardMark } from "@/services/content.types";
+import type { AccessPass, CardMark, QuizAttempt } from "@/services/content.types";
 import type { ConsentRecord, DeviceSwitch, Member } from "@/services/member.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
@@ -46,6 +46,8 @@ export interface MemberArm {
   uploadCardImage(bytes: Uint8Array, options?: CardImageUpload): Promise<string>;
   /** Every Member's Card Marks as stored, by card then Member: one row per Member and card. */
   cardMarks(): Promise<CardMark[]>;
+  /** Every Member's Quiz Attempts as stored, with their answers, oldest first. */
+  quizAttempts(): Promise<QuizAttempt[]>;
 }
 
 /** An Active Device record as it is stored, for checking what is (and isn't) kept. */
@@ -77,6 +79,7 @@ const SAMPLE_ARM: MemberArm = {
   },
   uploadCardImage: uploadSampleCardImage,
   cardMarks: async () => byCardAndMember(structuredClone(getSampleStore().cardMarks)),
+  quizAttempts: async () => structuredClone(getSampleStore().quizAttempts),
 };
 
 export const MEMBER_ARMS: MemberArm[] =

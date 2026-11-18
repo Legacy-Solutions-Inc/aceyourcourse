@@ -8,6 +8,8 @@ import type {
   ActiveDevice,
   AddedTargetExam,
   AgreedVersions,
+  AttemptOpening,
+  AttemptRef,
   CardMarkInput,
   ConsentRecord,
   ContentItem,
@@ -20,6 +22,10 @@ import type {
   MemberUser,
   NewTargetExam,
   PickableExam,
+  QuizOpening,
+  QuizResult,
+  QuizSubmitInput,
+  ScoredAttempt,
   StudyResult,
   TargetExam,
   TargetExamResult,
@@ -202,6 +208,52 @@ export interface MemberService {
   ): Promise<StudyResult<DeckPosition | null>>;
   /** The Member's Study Days, oldest first, as Asia/Manila dates (YYYY-MM-DD). */
   listStudyDays(userId: string): Promise<string[]>;
+
+  // Taking a quiz (spec, Phase 3 → Quizzes are graded on the server,
+  // Corrections never cost progress; ticket 11; quiz-study.core.ts). Each call
+  // takes the signed-in Member's side of the access decision, as the study
+  // calls do, and decides the quiz with it first: a refused quiz's questions
+  // are never given out, and nothing is written. No question read carries a
+  // correct choice or an explanation. Each is scoped to the User id given:
+  // a Member only ever reads their own attempts.
+
+  /**
+   * Opens a quiz. When the access decision allows it: its settings, its
+   * questions in order without their correct choices or explanations, each
+   * figure as a signed URL that stops working after about 10 minutes, the
+   * Member's Best Score (the highest of their scores) and their attempts,
+   * newest first. Refused (locked, expired, Hidden, a replaced device): the
+   * decision, how many attempts they made and their Best Score, with no
+   * question. Not found for an id that isn't a quiz's.
+   */
+  openQuiz(userId: string, quizId: string, access: MemberAccess): Promise<QuizOpening>;
+  /**
+   * Marks a submit against the quiz as it is now, and saves it as a Quiz
+   * Attempt with its score and answers, recording the day, in Asia/Manila,
+   * as a Study Day. Every question in the quiz counts: one left unanswered or
+   * left out is wrong. Gives the attempt, the Best Score with it, and the
+   * review (the correct answers and explanations only when the quiz shows
+   * answers after). The same attempt id posted again saves nothing and gives
+   * the first marking. Refused, saving nothing, when the access decision
+   * refuses the quiz; a mismatch when it names a question that isn't in the
+   * quiz (one taken out of it since the attempt started, too) or answers one
+   * twice; not found for a quiz that isn't one or an
+   * attempt id another Member or quiz used. Throws for a submit the quiz
+   * screen can't send (an attempt id that isn't one, a choice that isn't
+   * A–D) and a User with no Member record.
+   */
+  submitQuiz(
+    userId: string,
+    input: QuizSubmitInput,
+    access: MemberAccess,
+  ): Promise<QuizResult<ScoredAttempt>>;
+  /**
+   * Opens one of the Member's past attempts at a quiz: its score, the Best
+   * Score, and its review under the quiz's "show answers after" as it is
+   * now, with a question removed since as removed. Refused like openQuiz;
+   * not found for an attempt that isn't the Member's at this quiz.
+   */
+  reviewQuizAttempt(userId: string, ref: AttemptRef, access: MemberAccess): Promise<AttemptOpening>;
 }
 
 const impl: MemberService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -228,3 +280,6 @@ export const openDeck = impl.openDeck;
 export const markCard = impl.markCard;
 export const saveDeckPosition = impl.saveDeckPosition;
 export const listStudyDays = impl.listStudyDays;
+export const openQuiz = impl.openQuiz;
+export const submitQuiz = impl.submitQuiz;
+export const reviewQuizAttempt = impl.reviewQuizAttempt;
