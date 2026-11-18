@@ -31,6 +31,7 @@ import type {
   RenameTopicForm,
   ReviewForm,
   ReviewMove,
+  ReviewerPdfRecordInput,
   SubjectNamesForm,
   TopicMove,
   WebsiteSettingsUpdate,
@@ -67,6 +68,9 @@ import type {
   DeletedFaq,
   DeletedProduct,
   DeletedQuestion,
+  AdminReviewerPdf,
+  ReviewerPdfRun,
+  StaleReviewerPdfJobs,
   DeletedReview,
   DeniedReason,
   DeniedSignIn,
@@ -83,6 +87,7 @@ import type {
   StaffMember,
 } from "@/services/admin.types";
 import type { Topic } from "@/services/content.types";
+import type { PdfRenderer } from "@/services/page-images.types";
 import type { Exam, ExamPageSection, SitePageKey } from "@/services/catalogue.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -714,6 +719,44 @@ export interface AdminService {
    */
   deleteQuestion(actor: StaffActor, id: string): Promise<AdminResult<DeletedQuestion>>;
 
+  // Reviewer PDFs (any Staff User; Phase 3, ticket 12; stories 114, 115).
+  // An Editor's browser uploads the PDF straight to the private Reviewer PDFs
+  // bucket (the upload seam's createReviewerPdfUpload); recording it starts a
+  // job that splits it into page images in short runs, which ends a Draft,
+  // or Failed with the fix to try. Each upload and delete appends one Staff
+  // Activity record; the job's own changes append none. No cache tags: the
+  // Member App reads its content fresh, and none of this is Published yet.
+
+  /** Every Reviewer PDF, newest upload first, then the sample data's ones from before uploads. */
+  listReviewerPdfsForAdmin(actor: StaffActor): Promise<AdminReviewerPdf[]>;
+  /**
+   * Records an uploaded PDF as a Processing Reviewer PDF, with the file's
+   * name and its size as stored. Refused while the upload hasn't arrived, and
+   * for a path that isn't a Reviewer PDF upload (or was recorded already).
+   */
+  recordReviewerPdf(
+    actor: StaffActor,
+    input: ReviewerPdfRecordInput,
+  ): Promise<AdminResult<AdminReviewerPdf>>;
+  /**
+   * Deletes a Reviewer PDF, whatever its status, with its job, its original
+   * and every page image. A run in flight stops, and deletes its pages.
+   */
+  deleteReviewerPdf(actor: StaffActor, id: string): Promise<AdminResult<AdminReviewerPdf>>;
+  /**
+   * One run of a Reviewer PDF's job (no Staff User: the run endpoint calls
+   * it): renders its next pages, at most PAGES_PER_RUN, with `renderer`, and
+   * stores them. Says whether another run is needed. Throws when the server
+   * fails, leaving the job for the cron to restart.
+   */
+  runReviewerPdfJob(id: string, renderer: PdfRenderer): Promise<ReviewerPdfRun>;
+  /**
+   * The cron's sweep (no Staff User): restarts each Processing job whose
+   * heartbeat has gone stale, and fails one restarted MAX_RESTARTS times.
+   * Says which it restarted, each needing a run started, and which it failed.
+   */
+  restartStaleReviewerPdfJobs(): Promise<StaleReviewerPdfJobs>;
+
   // Site pages (any Staff User; ticket 20; spec, Phase 2 → Site pages). Each
   // of the Website's five Site pages: its SEO title and description (blank
   // uses the text in code) and its share image, with an Exam page's rules.
@@ -879,6 +922,11 @@ export const createQuestion = impl.createQuestion;
 export const updateQuestion = impl.updateQuestion;
 export const moveQuestion = impl.moveQuestion;
 export const deleteQuestion = impl.deleteQuestion;
+export const listReviewerPdfsForAdmin = impl.listReviewerPdfsForAdmin;
+export const recordReviewerPdf = impl.recordReviewerPdf;
+export const deleteReviewerPdf = impl.deleteReviewerPdf;
+export const runReviewerPdfJob = impl.runReviewerPdfJob;
+export const restartStaleReviewerPdfJobs = impl.restartStaleReviewerPdfJobs;
 export const getSitePageForAdmin = impl.getSitePageForAdmin;
 export const updateSitePageSeo = impl.updateSitePageSeo;
 export const getAboutForAdmin = impl.getAboutForAdmin;

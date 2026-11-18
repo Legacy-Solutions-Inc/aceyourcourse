@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { emptyAbout } from "@/lib/catalogue/about-content";
+import { MAX_PDF_BYTES } from "@/lib/reviewer-pdfs/job";
 import type { StaffActor } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
@@ -36,6 +37,7 @@ function fakeBucket(
       paths: string[],
       seconds: number,
     ) => Answer<{ path: string | null; signedUrl: string; error: string | null }[]>;
+    info?: (path: string) => Answer<{ size?: number }>;
   } = {},
 ) {
   const bucket = {
@@ -62,6 +64,7 @@ function fakeBucket(
         })),
     ),
     upload: vi.fn(answers.upload ?? (async (path: string) => ({ data: { path }, error: null }))),
+    info: vi.fn(answers.info ?? (async () => ({ data: { size: 1234 }, error: null }))),
     createSignedUrls: vi.fn(
       answers.signMany ??
         (async (paths: string[]) => ({
@@ -76,7 +79,11 @@ function fakeBucket(
   };
   const from = vi.fn(() => bucket);
   const client = { storage: { from } } as unknown as SupabaseClient;
-  return { bucket, from, arm: createStorageArm(() => ({ client, supabaseUrl: SUPABASE })) };
+  return {
+    bucket,
+    from,
+    arm: createStorageArm(() => ({ client, supabaseUrl: SUPABASE }), undefined),
+  };
 }
 
 const PHOTO = { purpose: "product-photo", contentType: "image/png", size: 64 } as const;
@@ -754,5 +761,187 @@ describe("the Storage arm's signed card image URLs (ticket 08)", () => {
     await expect(arm.contentFiles.signedUrls([first], 600)).rejects.toThrow(
       "Storage couldn't sign card images: down",
     );
+  });
+});
+
+describe("the Storage arm's Reviewer PDFs (ticket 12)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const ID = "0b9f4a5e-8d3c-4f1a-9e2b-7c6d5e4f3a21";
+  const ORIGINAL = `${ID}/original.pdf`;
+
+  it("gives a resumable upload into the private Reviewer PDFs bucket, on a one-time token", async () => {
+    const { arm, bucket, from } = fakeBucket();
+
+    const result = await arm.createReviewerPdfUpload(EDITOR, {
+      contentType: "application/pdf",
+      size: MAX_PDF_BYTES,
+    });
+
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    const path = bucket.createSignedUploadUrl.mock.calls[0]?.[0];
+    expect(from).toHaveBeenCalledWith("reviewer-pdfs");
+    expect(path).toMatch(new RegExp(`^${UUID}/original\\.pdf$`));
+    expect(result.value).toEqual({
+      method: "tus",
+      endpoint: `${SUPABASE}/storage/v1/upload/resumable/sign`,
+      headers: { "x-signature": "t" },
+      metadata: {
+        bucketName: "reviewer-pdfs",
+        objectName: path,
+        contentType: "application/pdf",
+        cacheControl: "3600",
+      },
+      path,
+    });
+    // No public URL, ever.
+    expect(bucket.getPublicUrl).not.toHaveBeenCalled();
+  });
+
+  it("sends the project's publishable key with the token, as Supabase's clients do", async () => {
+    const { bucket } = fakeBucket();
+    const client = { storage: { from: () => bucket } } as unknown as SupabaseClient;
+    const arm = createStorageArm(() => ({ client, supabaseUrl: SUPABASE }), "sb_publishable_x");
+
+    const result = await arm.createReviewerPdfUpload(EDITOR, {
+      contentType: "application/pdf",
+      size: 10,
+    });
+    expect(result.ok && result.value.method === "tus" && result.value.headers).toEqual({
+      "x-signature": "t",
+      apikey: "sb_publishable_x",
+    });
+  });
+
+  it.each([
+    ["signed out", null, { contentType: "application/pdf", size: 10 }, "forbidden"],
+    ["not a PDF", EDITOR, { contentType: "image/png", size: 10 }, "invalid"],
+    ["over 200 MB", EDITOR, { contentType: "application/pdf", size: MAX_PDF_BYTES + 1 }, "invalid"],
+  ] as const)("refuses an upload %s, before asking Storage", async (_, actor, request, kind) => {
+    const { arm, from } = fakeBucket();
+    expect(await arm.createReviewerPdfUpload(actor, request as never)).toMatchObject({
+      ok: false,
+      error: { kind },
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("fails when Storage won't sign the upload", async () => {
+    const { arm } = fakeBucket({ sign: async () => ({ data: null, error: new Error("down") }) });
+    await expect(
+      arm.createReviewerPdfUpload(EDITOR, { contentType: "application/pdf", size: 10 }),
+    ).rejects.toThrow("Storage couldn't make an upload URL: down");
+  });
+
+  it("claims an uploaded original with its size as stored, from its path", async () => {
+    const { arm, bucket } = fakeBucket({
+      info: async () => ({ data: { size: 5555 }, error: null }),
+    });
+
+    expect(await arm.reviewerPdfFiles.claimUpload(ORIGINAL)).toEqual({ id: ID, size: 5555 });
+    expect(bucket.exists).toHaveBeenCalledWith(ORIGINAL);
+    expect(bucket.info).toHaveBeenCalledWith(ORIGINAL);
+  });
+
+  it("waits for an original that hasn't arrived, and claims nothing else", async () => {
+    const { arm, from } = fakeBucket({ exists: async () => ({ data: false, error: null }) });
+    expect(await arm.reviewerPdfFiles.claimUpload(ORIGINAL)).toBe("waiting");
+    expect(from).toHaveBeenCalledTimes(1);
+
+    from.mockClear();
+    expect(await arm.reviewerPdfFiles.claimUpload(`${ID}/pages/1.webp`)).toBeNull();
+    expect(await arm.reviewerPdfFiles.claimUpload(`card-images/${ID}.png`)).toBeNull();
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("fails when Storage can't say whether the original is there, or how big it is", async () => {
+    const down = fakeBucket({
+      exists: async () => {
+        throw new Error("down");
+      },
+    });
+    await expect(down.arm.reviewerPdfFiles.claimUpload(ORIGINAL)).rejects.toThrow(
+      "Storage couldn't check an upload: down",
+    );
+    const noInfo = fakeBucket({ info: async () => ({ data: null, error: new Error("gone") }) });
+    await expect(noInfo.arm.reviewerPdfFiles.claimUpload(ORIGINAL)).rejects.toThrow(
+      "Storage couldn't read an upload's size: gone",
+    );
+    const noSize = fakeBucket({ info: async () => ({ data: {}, error: null }) });
+    await expect(noSize.arm.reviewerPdfFiles.claimUpload(ORIGINAL)).rejects.toThrow(
+      "Storage couldn't read an upload's size",
+    );
+  });
+
+  it("reads an original back, and nothing for one that's gone", async () => {
+    const { arm, bucket } = fakeBucket();
+    expect(await arm.reviewerPdfFiles.readOriginal(ID)).toEqual(new Uint8Array([1, 2]));
+    expect(bucket.download).toHaveBeenCalledWith(ORIGINAL);
+
+    const gone = fakeBucket({ exists: async () => ({ data: false, error: null }) });
+    expect(await gone.arm.reviewerPdfFiles.readOriginal(ID)).toBeNull();
+    expect(gone.bucket.download).not.toHaveBeenCalled();
+  });
+
+  it("fails when Storage can't read an original", async () => {
+    const { arm } = fakeBucket({
+      download: async () => ({ data: null, error: new Error("down") }),
+    });
+    await expect(arm.reviewerPdfFiles.readOriginal(ID)).rejects.toThrow(
+      "Storage couldn't read a Reviewer PDF: down",
+    );
+    const unsure = fakeBucket({
+      exists: async () => {
+        throw new Error("down");
+      },
+    });
+    await expect(unsure.arm.reviewerPdfFiles.readOriginal(ID)).rejects.toThrow(
+      "Storage couldn't check a Reviewer PDF: down",
+    );
+  });
+
+  it("stores a page image as WebP, over one stored before", async () => {
+    const { arm, bucket } = fakeBucket();
+    const image = new Uint8Array([9]);
+    await arm.reviewerPdfFiles.putPage(ID, 7, image);
+    expect(bucket.upload).toHaveBeenCalledWith(`${ID}/pages/7.webp`, image, {
+      contentType: "image/webp",
+      upsert: true,
+    });
+
+    const down = fakeBucket({ upload: async () => ({ data: null, error: new Error("full") }) });
+    await expect(down.arm.reviewerPdfFiles.putPage(ID, 7, image)).rejects.toThrow(
+      "Storage couldn't store a page image: full",
+    );
+  });
+
+  it("deletes the original and every page, a thousand at a time", async () => {
+    const { arm, bucket } = fakeBucket();
+    await arm.reviewerPdfFiles.remove(ID, 1500);
+
+    const removed = bucket.remove.mock.calls.map(([paths]) => paths);
+    expect(removed.map((paths) => paths.length)).toEqual([1000, 501]);
+    expect(removed.flat()).toEqual([
+      ORIGINAL,
+      ...Array.from({ length: 1500 }, (_, i) => `${ID}/pages/${i + 1}.webp`),
+    ]);
+  });
+
+  it("logs, and never throws, when it can't delete them", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { arm } = fakeBucket({ remove: async () => ({ data: null, error: new Error("down") }) });
+    await expect(arm.reviewerPdfFiles.remove(ID, 2)).resolves.toBeUndefined();
+    expect(error).toHaveBeenCalledWith(
+      "Couldn't delete a Reviewer PDF's files; they stay in the bucket:",
+      ID,
+      expect.any(Error),
+    );
+
+    const noStorage = createStorageArm(() => {
+      throw new Error("Storage isn't configured on this server.");
+    });
+    await expect(noStorage.reviewerPdfFiles.remove(ID, 2)).resolves.toBeUndefined();
   });
 });

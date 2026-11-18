@@ -1,4 +1,5 @@
 import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
+import type { ReviewerPdfFailure } from "@/lib/reviewer-pdfs/job";
 
 // The Member App's content model (spec, Phase 3 → Content model; CONTEXT.md):
 // Exam → Subject → Topic, and each Topic's deck, quiz and Reviewer PDF, each
@@ -186,14 +187,35 @@ export type QuizAttemptScore = Omit<QuizAttempt, "answers">;
 
 /**
  * A Reviewer PDF: at most one per Topic. Until Staff place it under a Topic
- * it has none, and it can't be Published. Its file and page images come with
- * ticket 12.
+ * it has none, and it can't be Published. Its file and the job splitting it
+ * into page images are its ReviewerPdfUpload (ticket 12).
  */
 export interface ReviewerPdf {
   id: string;
   topicId: string | null;
   status: ReviewerPdfStatus;
   freePreview: boolean;
+}
+
+/**
+ * A Reviewer PDF's uploaded file, and the job splitting it into page images
+ * (ticket 12; ADR 0012): the PDF's page count once read, the pages done, the
+ * heartbeat each run beats after every page, how often the cron has
+ * restarted it, and why it failed. The sample data's Reviewer PDFs, from
+ * before uploads, have none.
+ */
+export interface ReviewerPdfUpload {
+  fileName: string;
+  /** In bytes, as Storage holds it. */
+  fileSize: number;
+  /** ISO time it was uploaded. */
+  uploadedAt: string;
+  pageCount: number | null;
+  pagesDone: number;
+  /** ISO time of the job's last heartbeat. */
+  heartbeatAt: string | null;
+  restarts: number;
+  failure: ReviewerPdfFailure | null;
 }
 
 /** Every Topic and its content, as both seams' rules read them. */

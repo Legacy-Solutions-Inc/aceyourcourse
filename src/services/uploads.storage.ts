@@ -1,20 +1,31 @@
 import "server-only";
 
+import { env } from "@/env";
 import { CARD_IMAGE_EXTENSIONS, CARD_IMAGE_TYPES } from "@/lib/cards/card-rules";
 import { ABOUT_PHOTO_SLOTS } from "@/lib/catalogue/about-content";
 import { bucketObjectPath, CATALOGUE_BUCKET } from "@/lib/catalogue-bucket";
 import { hasFileSignature } from "@/lib/file-signature";
+import {
+  idOfOriginal,
+  originalPath,
+  pagePath,
+  REVIEWER_PDFS_BUCKET,
+  reviewerPdfPaths,
+} from "@/lib/reviewer-pdfs/paths";
 import { getStorage, type StorageConnection } from "@/lib/supabase/admin";
 import { invalidInput } from "@/services/admin.schema";
 import type { AdminResult, StaffActor } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
-import type { ContentFiles, UploadService } from "@/services/uploads";
+import type { ContentFiles, ReviewerPdfFiles, UploadService } from "@/services/uploads";
 import {
   CONTENT_UPLOADS,
   type ContentUploadPurpose,
   type ContentUploadRequest,
   contentUploadRequestSchema,
   type ContentUploadTicket,
+  type ReviewerPdfUploadRequest,
+  reviewerPdfUploadRequestSchema,
+  type ReviewerPdfUploadTicket,
   UPLOAD_OWNER,
   UPLOAD_PURPOSES,
   type UploadContentType,
@@ -44,10 +55,23 @@ import {
 // import's CSV or zip, or a card's back image (ticket 07), and the card
 // import and card editor read it back, store each card's image and delete
 // what they no longer need through contentFiles.
+//
+// Reviewer PDFs (Phase 3, ticket 12) go to their own PRIVATE bucket,
+// `reviewer-pdfs` (supabase/migrations/…_reviewer_pdfs_bucket.sql), up to
+// 200 MB each: createReviewerPdfUpload signs a one-time token for a resumable
+// (TUS) upload straight from the browser, and the Reviewer PDF's record and
+// its job read the original and store the page images through
+// reviewerPdfFiles. Nothing there is ever given a public or signed URL.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** The private bucket: card images, and the files an import uploads. */
 export const CONTENT_BUCKET = "content";
+
+/** Supabase's TUS endpoint for uploads on a signed token (Storage → Resumable uploads). */
+const RESUMABLE_UPLOAD = "/storage/v1/upload/resumable/sign";
+
+/** How many files Storage deletes in one request. */
+const REMOVE_BATCH = 1000;
 
 const EXTENSIONS: Record<UploadContentType, string> = {
   "image/jpeg": "jpg",
@@ -159,6 +183,8 @@ export function imagesRemoved(before: CatalogueSeed, after: CatalogueSeed): stri
 export interface StorageArm extends UploadService {
   /** The private content bucket, for the card import (ticket 06). */
   contentFiles: ContentFiles;
+  /** The private Reviewer PDFs bucket, for the Reviewer PDFs screen and job (ticket 12). */
+  reviewerPdfFiles: ReviewerPdfFiles;
   /**
    * Asks Storage which of these upload paths have their file, and gives what
    * a save finds at each (sample-store.ts's uploadAt). Paths that aren't
@@ -173,10 +199,18 @@ export interface StorageArm extends UploadService {
   removeImages(srcs: readonly string[]): Promise<void>;
 }
 
-/** The Storage arm, on the Storage `connect` gives; it throws when there's none. */
-export function createStorageArm(connect: () => StorageConnection): StorageArm {
+/**
+ * The Storage arm, on the Storage `connect` gives; it throws when there's
+ * none. A resumable upload also sends the project's publishable key, which
+ * the browser may know anyway, as Supabase's own clients do.
+ */
+export function createStorageArm(
+  connect: () => StorageConnection,
+  publishableKey: string | undefined = env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+): StorageArm {
   const bucket = () => connect().client.storage.from(CATALOGUE_BUCKET);
   const contentBucket = () => connect().client.storage.from(CONTENT_BUCKET);
+  const pdfBucket = () => connect().client.storage.from(REVIEWER_PDFS_BUCKET);
 
   async function createUpload(
     actor: StaffActor | null,
@@ -338,7 +372,107 @@ export function createStorageArm(connect: () => StorageConnection): StorageArm {
     },
   };
 
-  return { createUpload, createContentUpload, lookupUploads, removeImages, contentFiles };
+  async function createReviewerPdfUpload(
+    actor: StaffActor | null,
+    request: ReviewerPdfUploadRequest,
+  ): Promise<AdminResult<ReviewerPdfUploadTicket>> {
+    if (!actor) {
+      return { ok: false, error: { kind: "forbidden", message: "SIGN IN TO UPLOAD FILES" } };
+    }
+    const parsed = reviewerPdfUploadRequestSchema.safeParse(request);
+    if (!parsed.success) return { ok: false, error: invalidInput(parsed.error) };
+
+    // A new Reviewer PDF's id names the file, which its record claims once it's there.
+    const path = originalPath(crypto.randomUUID());
+    const { client, supabaseUrl } = connect();
+    const { data, error } = await client.storage
+      .from(REVIEWER_PDFS_BUCKET)
+      .createSignedUploadUrl(path);
+    if (error) throw new Error(`Storage couldn't make an upload URL: ${error.message}`);
+    return {
+      ok: true,
+      value: {
+        method: "tus",
+        endpoint: `${supabaseUrl}${RESUMABLE_UPLOAD}`,
+        headers: {
+          "x-signature": data.token,
+          ...(publishableKey ? { apikey: publishableKey } : {}),
+        },
+        metadata: {
+          bucketName: REVIEWER_PDFS_BUCKET,
+          objectName: path,
+          contentType: parsed.data.contentType,
+          cacheControl: "3600",
+        },
+        path,
+      },
+      tags: [],
+    };
+  }
+
+  /** Whether a file is in the Reviewer PDFs bucket; throws, saying what was checked, when Storage can't say. */
+  async function inPdfBucket(path: string, what: string): Promise<boolean> {
+    // A file that isn't there is false, with its 404 as the error.
+    const exists = await pdfBucket()
+      .exists(path)
+      .catch((error: unknown) => {
+        const reason = error instanceof Error ? error.message : String(error);
+        throw new Error(`Storage couldn't check ${what}: ${reason}`);
+      });
+    return exists.data === true;
+  }
+
+  const reviewerPdfFiles: ReviewerPdfFiles = {
+    async claimUpload(path) {
+      const id = idOfOriginal(path);
+      if (!id) return null;
+      if (!(await inPdfBucket(path, "an upload"))) return "waiting";
+      const { data, error } = await pdfBucket().info(path);
+      if (error) throw new Error(`Storage couldn't read an upload's size: ${error.message}`);
+      if (typeof data.size !== "number") throw new Error("Storage couldn't read an upload's size");
+      return { id, size: data.size };
+    },
+    async readOriginal(id) {
+      const path = originalPath(id);
+      if (!(await inPdfBucket(path, "a Reviewer PDF"))) return null;
+      const { data, error } = await pdfBucket().download(path);
+      if (error) throw new Error(`Storage couldn't read a Reviewer PDF: ${error.message}`);
+      return new Uint8Array(await data.arrayBuffer());
+    },
+    async putPage(id, page, image) {
+      const { error } = await pdfBucket().upload(pagePath(id, page), image, {
+        contentType: "image/webp",
+        upsert: true,
+      });
+      if (error) throw new Error(`Storage couldn't store a page image: ${error.message}`);
+    },
+    async remove(id, pageCount) {
+      const paths = reviewerPdfPaths(id, pageCount);
+      try {
+        const files = pdfBucket();
+        for (let start = 0; start < paths.length; start += REMOVE_BATCH) {
+          const { error } = await files.remove(paths.slice(start, start + REMOVE_BATCH));
+          if (error) throw error;
+        }
+      } catch (error) {
+        console.error(
+          "Couldn't delete a Reviewer PDF's files; they stay in the bucket:",
+          id,
+          error,
+        );
+      }
+    },
+  };
+
+  return {
+    createUpload,
+    createContentUpload,
+    createReviewerPdfUpload,
+    lookupUploads,
+    removeImages,
+    contentFiles,
+    reviewerPdfFiles,
+  };
 }
 
 /** The Storage arm on this server's Storage (NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY). */

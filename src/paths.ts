@@ -169,5 +169,18 @@ export const paths = {
      * Admin runs on sample data.
      */
     sampleUpload: (id: string) => `/api/dev/uploads/${id}`,
+    /** Member App content: the Reviewer PDFs, their uploads and progress (ticket 12). */
+    reviewerPdfs: "/admin/content/reviewer-pdfs",
+  },
+  /**
+   * The Reviewer PDF job's endpoints (ticket 12), for the server itself and
+   * Vercel Cron only: each needs `Authorization: Bearer <CRON_SECRET>`, and
+   * answers 404 when the server has none.
+   */
+  jobs: {
+    /** POST {id}: one run of a Reviewer PDF's job, which starts the next. */
+    reviewerPdfRun: "/api/reviewer-pdfs/run",
+    /** GET, every minute (vercel.json): restarts the jobs whose runs have stopped. */
+    reviewerPdfCron: "/api/reviewer-pdfs/cron",
   },
 } as const;

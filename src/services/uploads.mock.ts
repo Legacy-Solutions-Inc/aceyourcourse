@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 
 import type { CardImageType } from "@/lib/cards/card-rules";
 import { hasFileSignature } from "@/lib/file-signature";
+import { originalPath, pagePath, reviewerPdfPaths } from "@/lib/reviewer-pdfs/paths";
 import { paths } from "@/paths";
 import { invalidInput } from "@/services/admin.schema";
 import type { AdminResult, StaffActor } from "@/services/admin.types";
@@ -10,7 +11,7 @@ import {
   type SampleContentFile,
   type SampleUpload,
 } from "@/services/mock/sample-store";
-import type { ContentFiles } from "@/services/uploads";
+import type { ContentFiles, ReviewerPdfFiles } from "@/services/uploads";
 import {
   CONTENT_UPLOAD_PURPOSES,
   CONTENT_UPLOADS,
@@ -18,6 +19,9 @@ import {
   type ContentUploadRequest,
   contentUploadRequestSchema,
   type ContentUploadTicket,
+  type ReviewerPdfUploadRequest,
+  reviewerPdfUploadRequestSchema,
+  type ReviewerPdfUploadTicket,
   UPLOAD_CONTENT_TYPES,
   type UploadContentType,
   type UploadRequest,
@@ -43,6 +47,10 @@ const PATH_PREFIX = "uploads/";
 
 const isContentPurpose = (purpose: SampleUpload["purpose"]): purpose is ContentUploadPurpose =>
   CONTENT_UPLOAD_PURPOSES.some((candidate) => candidate === purpose);
+
+/** Whether the upload route must never serve uploads of this purpose. */
+const isPrivatePurpose = (purpose: SampleUpload["purpose"]) =>
+  purpose === "reviewer-pdf" || isContentPurpose(purpose);
 
 const isUploadContentType = (type: SampleUpload["contentType"]): type is UploadContentType =>
   UPLOAD_CONTENT_TYPES.some((candidate) => candidate === type);
@@ -131,6 +139,37 @@ export async function createContentUpload(
   };
 }
 
+/** A one-time URL for a Reviewer PDF (ticket 12), kept like any other upload but never served by the route. */
+export async function createReviewerPdfUpload(
+  actor: StaffActor | null,
+  request: ReviewerPdfUploadRequest,
+): Promise<AdminResult<ReviewerPdfUploadTicket>> {
+  if (!actor)
+    return { ok: false, error: { kind: "forbidden", message: "SIGN IN TO UPLOAD FILES" } };
+  const parsed = reviewerPdfUploadRequestSchema.safeParse(request);
+  if (!parsed.success) return { ok: false, error: invalidInput(parsed.error) };
+
+  const store = getSampleStore();
+  const upload: SampleUpload = {
+    id: crypto.randomUUID(),
+    purpose: "reviewer-pdf",
+    contentType: parsed.data.contentType,
+    size: parsed.data.size,
+    token: newToken(),
+    bytes: null,
+  };
+  store.uploads = { ...store.uploads, [upload.id]: upload };
+  return {
+    ok: true,
+    value: {
+      method: "put",
+      uploadUrl: `${paths.admin.sampleUpload(upload.id)}?token=${encodeURIComponent(upload.token)}`,
+      path: pathOf(upload.id),
+    },
+    tags: [],
+  };
+}
+
 /** How the sample route answers a PUT. */
 export type SampleUploadAnswer =
   | "stored"
@@ -189,7 +228,7 @@ export function readSampleUpload(
   id: string,
 ): { contentType: UploadContentType; bytes: Uint8Array } | null {
   const upload = getSampleStore().uploads[id];
-  if (!upload?.bytes || isContentPurpose(upload.purpose)) return null;
+  if (!upload?.bytes || isPrivatePurpose(upload.purpose)) return null;
   const { contentType } = upload;
   return isUploadContentType(contentType) ? { contentType, bytes: upload.bytes } : null;
 }
@@ -277,3 +316,38 @@ export function readSignedSampleFile(
   const file = store.contentFiles[signed.path];
   return file ? { file, expiresAt: signed.expiresAt } : null;
 }
+
+/**
+ * The sample data's private Reviewer PDFs bucket (ticket 12): each Reviewer
+ * PDF's original, which its record claims from the upload, and the page
+ * images the job renders. Nothing here is ever served by a route.
+ */
+export const sampleReviewerPdfFiles: ReviewerPdfFiles = {
+  async claimUpload(path) {
+    if (!path.startsWith(PATH_PREFIX)) return null;
+    const uploadId = path.slice(PATH_PREFIX.length);
+    const store = getSampleStore();
+    const upload = Object.hasOwn(store.uploads, uploadId) ? store.uploads[uploadId] : undefined;
+    if (upload?.purpose !== "reviewer-pdf") return null;
+    if (!upload.bytes) return "waiting";
+    const id = crypto.randomUUID();
+    const { [uploadId]: _claimed, ...uploads } = store.uploads;
+    store.uploads = uploads;
+    store.reviewerPdfFiles = { ...store.reviewerPdfFiles, [originalPath(id)]: upload.bytes };
+    return { id, size: upload.bytes.byteLength };
+  },
+  async readOriginal(id) {
+    // A copy: pdf.js may take over the buffer it's given.
+    return getSampleStore().reviewerPdfFiles[originalPath(id)]?.slice() ?? null;
+  },
+  async putPage(id, page, image) {
+    const store = getSampleStore();
+    store.reviewerPdfFiles = { ...store.reviewerPdfFiles, [pagePath(id, page)]: image.slice() };
+  },
+  async remove(id, pageCount) {
+    const store = getSampleStore();
+    const files = { ...store.reviewerPdfFiles };
+    for (const path of reviewerPdfPaths(id, pageCount)) delete files[path];
+    store.reviewerPdfFiles = files;
+  },
+};

@@ -15,3 +15,4 @@ export * from "@/services/mock/admin/topics";
 export * from "@/services/mock/admin/content-import";
 export * from "@/services/mock/admin/deck";
 export * from "@/services/mock/admin/quiz";
+export * from "@/services/mock/admin/reviewer-pdfs";

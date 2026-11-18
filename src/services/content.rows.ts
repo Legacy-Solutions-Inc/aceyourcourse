@@ -36,7 +36,8 @@ export interface ContentRows {
   topics: TopicRow[];
   decks: DeckRow[];
   quizzes: QuizRow[];
-  reviewerPdfs: ReviewerPdfRow[];
+  /** A Reviewer PDF's record only: its upload and job (ticket 12) are read and written apart. */
+  reviewerPdfs: Pick<ReviewerPdfRow, keyof ReviewerPdf>[];
 }
 
 export const quizFromRow = (row: QuizRow): Quiz => ({ ...row });
@@ -47,7 +48,12 @@ export function contentFromRows(rows: ContentRows): ContentRecords {
     topics: rows.topics.map((row): Topic => ({ ...row })),
     decks: rows.decks.map((row): Deck => ({ ...row })),
     quizzes: rows.quizzes.map(quizFromRow),
-    reviewerPdfs: rows.reviewerPdfs.map((row): ReviewerPdf => ({ ...row })),
+    reviewerPdfs: rows.reviewerPdfs.map(({ id, topicId, status, freePreview }): ReviewerPdf => ({
+      id,
+      topicId,
+      status,
+      freePreview,
+    })),
   };
 }
 

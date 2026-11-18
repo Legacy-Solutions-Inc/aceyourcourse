@@ -49,6 +49,7 @@ import {
 } from "@/services/admin.content-import.db";
 import * as deckEditor from "@/services/admin.deck.db";
 import * as quizEditor from "@/services/admin.quiz.db";
+import * as reviewerPdfs from "@/services/admin.reviewer-pdfs.db";
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
@@ -307,6 +308,14 @@ async function load(
     },
     set reviewerPdfs(reviewerPdfs) {
       content = { ...contentPart(), reviewerPdfs };
+    },
+    // The Reviewer PDFs screen and job (admin.reviewer-pdfs.db.ts, ticket 12)
+    // read and write the uploads themselves, and their bucket is Storage's.
+    get reviewerPdfUploads() {
+      return notLoaded("the Reviewer PDF uploads");
+    },
+    get reviewerPdfFiles() {
+      return notLoaded("the Reviewer PDFs bucket");
     },
     // The Member seam reads the Access Passes itself; granting comes with ticket 17.
     get accessPasses() {
@@ -823,6 +832,12 @@ export const databaseArm: AdminService = {
   updateQuestion: quizEditor.updateQuestion,
   moveQuestion: quizEditor.moveQuestion,
   deleteQuestion: quizEditor.deleteQuestion,
+  // The Reviewer PDFs and their job (ticket 12), read and written by their own module.
+  listReviewerPdfsForAdmin: reviewerPdfs.listReviewerPdfsForAdmin,
+  recordReviewerPdf: reviewerPdfs.recordReviewerPdf,
+  deleteReviewerPdf: reviewerPdfs.deleteReviewerPdf,
+  runReviewerPdfJob: reviewerPdfs.runReviewerPdfJob,
+  restartStaleReviewerPdfJobs: reviewerPdfs.restartStaleReviewerPdfJobs,
 
   getSitePageForAdmin: read(CATALOGUE, sampleArm.getSitePageForAdmin),
   updateSitePageSeo: stampedWrite(sampleArm.updateSitePageSeo),

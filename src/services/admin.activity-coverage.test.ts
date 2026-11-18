@@ -10,6 +10,7 @@ import type { AdminService } from "@/services/admin";
 import type { AdminResult, StaffActor } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
+import { createFakeRenderer } from "@/services/page-images.fake";
 
 import {
   SAVES,
@@ -20,6 +21,7 @@ import {
 } from "../../test/admin-inputs";
 import { type AdminArm, ADMIN_ARMS } from "../../test/admin-arms";
 import { importCsv, quizCsv } from "../../test/import-files";
+import { pdfOfPages } from "../../test/reviewer-pdfs";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Staff Activity covers every Admin write (spec, Phase 2 → Staff Activity;
@@ -73,6 +75,18 @@ const READS = [
   "planQuizImport",
   "getQuizForAdmin",
   "getQuestionFigureForAdmin",
+  // The Reviewer PDFs screen (ticket 12).
+  "listReviewerPdfsForAdmin",
+] as const satisfies readonly (keyof AdminService)[];
+
+/**
+ * The Reviewer PDF job's runs and the cron's restarts (ticket 12): they
+ * change a job's progress, but they're no Staff User's doing, so they record
+ * no Staff Activity. The upload that started the job recorded it.
+ */
+const JOB_CALLS = [
+  "runReviewerPdfJob",
+  "restartStaleReviewerPdfJobs",
 ] as const satisfies readonly (keyof AdminService)[];
 
 /**
@@ -97,7 +111,7 @@ interface Write {
   /** The data it saves on, when the seed has nothing it can save: an edited copy of the seed. */
   seed?: (seed: CatalogueSeed) => void;
   /** What it saves on that the seed lacks, made through the seam before it's measured. */
-  setUp?: (seam: AdminService) => Promise<void>;
+  setUp?: (seam: AdminService, arm: AdminArm) => Promise<void>;
 }
 
 /** A Hidden deck with no cards in the seed, in CE's MSTC. */
@@ -200,6 +214,19 @@ async function promoForm(seam: AdminService) {
 }
 
 /** Every Admin write that takes a Staff User, with an input it saves and one it refuses. */
+/** The Reviewer PDF withReviewerPdf uploads. */
+const reviewerPdf = { id: "" };
+
+/** Uploads and records a Reviewer PDF through the seam. */
+async function withReviewerPdf(seam: AdminService, arm: AdminArm) {
+  const recorded = await seam.recordReviewerPdf(EDITOR, {
+    path: await arm.uploadReviewerPdf(pdfOfPages(2)),
+    fileName: "Old Reviewer.pdf",
+  });
+  if (!recorded.ok) throw new Error("The Reviewer PDF wasn't recorded");
+  reviewerPdf.id = recorded.value.id;
+}
+
 const WRITES: Record<string, Write> = {
   inviteStaff: {
     actor: OWNER,
@@ -820,6 +847,32 @@ const WRITES: Record<string, Write> = {
     refused: (seam, actor) => seam.deleteQuestion(actor, UNKNOWN_TOPIC),
     refusal: "not-found",
   },
+  recordReviewerPdf: {
+    actor: EDITOR,
+    entity: "reviewer-pdf",
+    entityId: null,
+    saves: async (seam, actor, arm) =>
+      seam.recordReviewerPdf(actor, {
+        path: await arm.uploadReviewerPdf(pdfOfPages(2)),
+        fileName: "MSTC Reviewer.pdf",
+      }),
+    // The browser never finished sending it.
+    refused: async (seam, actor, arm) =>
+      seam.recordReviewerPdf(actor, {
+        path: await arm.uploadReviewerPdf(pdfOfPages(2), { send: false }),
+        fileName: "MSTC Reviewer.pdf",
+      }),
+    refusal: "invalid",
+  },
+  deleteReviewerPdf: {
+    actor: EDITOR,
+    entity: "reviewer-pdf",
+    entityId: null,
+    setUp: withReviewerPdf,
+    saves: (seam, actor) => seam.deleteReviewerPdf(actor, reviewerPdf.id),
+    refused: (seam, actor) => seam.deleteReviewerPdf(actor, UNKNOWN_TOPIC),
+    refusal: "not-found",
+  },
   updatePromoBanner: {
     actor: EDITOR,
     entity: "promo-banner",
@@ -872,7 +925,13 @@ const ACTIVATION = "resolveSignIn";
 
 describe("the Staff Activity table", () => {
   it("knows every function of the Admin seam: a read, sign-in bookkeeping, or a write", () => {
-    const known = [...READS, ...SIGN_IN_RECORDS, ACTIVATION, ...Object.keys(WRITES)].sort();
+    const known = [
+      ...READS,
+      ...SIGN_IN_RECORDS,
+      ...JOB_CALLS,
+      ACTIVATION,
+      ...Object.keys(WRITES),
+    ].sort();
     expect(Object.keys(adminSeam).sort()).toEqual(known);
   });
 });
@@ -898,7 +957,7 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
     "%s appends exactly one record, with the values before and after",
     async (_name, write) => {
       if (write.seed) await arm.reset(write.seed);
-      await write.setUp?.(seam);
+      await write.setUp?.(seam, arm);
       const { result, appended } = await appendedBy(() => write.saves(seam, write.actor, arm));
 
       expect(result).toMatchObject({ ok: true });
@@ -923,7 +982,7 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
 
   it.each(writes)("%s appends nothing when it's refused", async (_name, write) => {
     if (write.seed) await arm.reset(write.seed);
-    await write.setUp?.(seam);
+    await write.setUp?.(seam, arm);
     const { result, appended } = await appendedBy(() => write.refused(seam, write.actor, arm));
 
     expect(result).toMatchObject({ ok: false, error: { kind: write.refusal } });
@@ -934,7 +993,7 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
     "%s appends nothing for an Editor, who isn't allowed it",
     async (_name, write) => {
       if (write.seed) await arm.reset(write.seed);
-      await write.setUp?.(seam);
+      await write.setUp?.(seam, arm);
       const { result, appended } = await appendedBy(() => write.saves(seam, EDITOR, arm));
 
       expect(result).toMatchObject({ ok: false, error: { kind: "forbidden" } });
@@ -964,6 +1023,15 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
 
     const signedInAgain = await appendedBy(() => seam.resolveSignIn(kim, new Date()));
     expect(signedInAgain.appended).toEqual([]);
+  });
+
+  it("records no Staff Activity for the Reviewer PDF job's runs or the cron's restarts", async () => {
+    await withReviewerPdf(seam, arm);
+    const { appended } = await appendedBy(async () => {
+      await seam.restartStaleReviewerPdfJobs();
+      await seam.runReviewerPdfJob(reviewerPdf.id, createFakeRenderer());
+    });
+    expect(appended).toEqual([]);
   });
 
   it("records no Staff Activity for sign-in bookkeeping", async () => {

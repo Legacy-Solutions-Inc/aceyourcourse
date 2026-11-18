@@ -7,6 +7,8 @@ import type {
   ContentUploadPurpose,
   ContentUploadRequest,
   ContentUploadTicket,
+  ReviewerPdfUploadRequest,
+  ReviewerPdfUploadTicket,
   UploadRequest,
   UploadTicket,
 } from "@/services/uploads.types";
@@ -51,6 +53,18 @@ export interface UploadService {
     actor: StaffActor | null,
     request: ContentUploadRequest,
   ): Promise<AdminResult<ContentUploadTicket>>;
+  /**
+   * Where the browser sends a Reviewer PDF of up to 200 MB (ticket 12), for
+   * any Staff User: with Storage, a resumable upload into the private
+   * Reviewer PDFs bucket on a one-time token; in the sample data, a one-time
+   * URL. It gives no public URL. Someone signed out is refused, as is a file
+   * that isn't a PDF, is empty or is over 200 MB, with the field's message.
+   * Clears no cache tags.
+   */
+  createReviewerPdfUpload(
+    actor: StaffActor | null,
+    request: ReviewerPdfUploadRequest,
+  ): Promise<AdminResult<ReviewerPdfUploadTicket>>;
 }
 
 /**
@@ -86,7 +100,36 @@ export interface ContentFiles {
   signedUrls(paths: readonly string[], seconds: number): Promise<Record<string, string>>;
 }
 
+/**
+ * The private Reviewer PDFs bucket (ticket 12), as the Admin's Reviewer PDFs
+ * screen and the job that splits each PDF into page images use it on the
+ * server. Never handed to the browser: no file in it is ever given a public
+ * or signed URL here (the Member App serves stamped pages, ticket 14).
+ */
+export interface ReviewerPdfFiles {
+  /**
+   * The uploaded PDF at a Reviewer PDF upload's path, filed under its new
+   * Reviewer PDF: that Reviewer PDF's id and the file's size as stored.
+   * "waiting" while the browser hasn't finished sending it, and null for a
+   * path that isn't a Reviewer PDF upload (in the sample data, one claimed
+   * already, too). Storage's stays where it is, so claiming it again gives
+   * the same Reviewer PDF: its record refuses to be made twice. Throws when
+   * Storage can't say.
+   */
+  claimUpload(path: string): Promise<{ id: string; size: number } | "waiting" | null>;
+  /** A Reviewer PDF's original, or null when there's none. Throws when Storage can't say. */
+  readOriginal(id: string): Promise<Uint8Array | null>;
+  /** Stores page `page`'s image, replacing any stored before. Throws when it can't. */
+  putPage(id: string, page: number, image: Uint8Array): Promise<void>;
+  /**
+   * Deletes a Reviewer PDF's original and its page images, 1 to `pageCount`.
+   * Logs a failure, and never throws.
+   */
+  remove(id: string, pageCount: number): Promise<void>;
+}
+
 const impl: UploadService = isDatabaseConfigured ? storageArm : mockImpl;
 
 export const createUpload = impl.createUpload;
 export const createContentUpload = impl.createContentUpload;
+export const createReviewerPdfUpload = impl.createReviewerPdfUpload;

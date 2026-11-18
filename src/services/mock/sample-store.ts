@@ -21,6 +21,7 @@ import type {
   Quiz,
   QuizAttempt,
   ReviewerPdf,
+  ReviewerPdfUpload,
   StudyDay,
   Topic,
 } from "@/services/content.types";
@@ -57,9 +58,13 @@ import type {
  */
 export interface SampleUpload {
   id: string;
-  /** A public catalogue image, or a private import file (ticket 06), which the route never serves. */
-  purpose: UploadRequest["purpose"] | ContentUploadPurpose;
-  contentType: UploadContentType | ContentUploadType;
+  /**
+   * A public catalogue image, or a private file the route never serves: an
+   * import's file (ticket 06), a card image (ticket 07) or a Reviewer PDF
+   * (ticket 12).
+   */
+  purpose: UploadRequest["purpose"] | ContentUploadPurpose | "reviewer-pdf";
+  contentType: UploadContentType | ContentUploadType | "application/pdf";
   /** The size the browser declared, in bytes; the file sent must match it. */
   size: number;
   token: string;
@@ -136,6 +141,10 @@ export interface SampleStore {
   /** Every Member's Quiz Attempts with their answers, in the order submitted (ticket 11). */
   quizAttempts: QuizAttempt[];
   reviewerPdfs: ReviewerPdf[];
+  /** Each uploaded Reviewer PDF's file and job, by its id (ticket 12). */
+  reviewerPdfUploads: Record<string, ReviewerPdfUpload>;
+  /** The private Reviewer PDFs bucket's files, by path (ticket 12): originals and page images. */
+  reviewerPdfFiles: Record<string, Uint8Array>;
   /** Every Member's Access Passes, at most one per Exam (Phase 3). */
   accessPasses: AccessPass[];
   /** The grants behind the Access Passes, oldest first (Phase 3; written from ticket 17). */
@@ -188,6 +197,8 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     studyDays: [],
     deckPositions: [],
     ...sampleAccessPasses(now, catalogue),
+    reviewerPdfUploads: {},
+    reviewerPdfFiles: {},
     uploads: {},
     contentFiles: {},
     signedFiles: {},

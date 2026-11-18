@@ -20,6 +20,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { REVIEWER_PDF_FAILURES } from "@/lib/reviewer-pdfs/job";
+import { PDF_NAME_MAX } from "@/lib/reviewer-pdfs/pdf-file";
 import {
   DEFAULT_QUIZ_SETTINGS,
   PASSING_SCORE_MAX,
@@ -567,6 +569,7 @@ export const memberDeviceSwitches = pgTable(
 
 export const contentVisibility = pgEnum("content_visibility", CONTENT_VISIBILITIES);
 export const reviewerPdfStatus = pgEnum("reviewer_pdf_status", REVIEWER_PDF_STATUSES);
+export const reviewerPdfFailure = pgEnum("reviewer_pdf_failure", REVIEWER_PDF_FAILURES);
 
 /**
  * The Topics (spec, Phase 3 → Content model): units of study within a
@@ -888,8 +891,18 @@ export const quizAttemptAnswers = pgTable(
 
 /**
  * The Reviewer PDFs: at most one per Topic, and none until Staff place it
- * under one, which Publishing needs. Only the record and its status are here;
- * the upload, the job and the page images come with ticket 12.
+ * under one, which Publishing needs.
+ *
+ * An Editor's upload (ticket 12) adds its file and its job: the file's name
+ * and size, when it was uploaded, and the job that splits it into page images
+ * (ADR 0012): the PDF's page count once read, the pages done, the heartbeat
+ * each run beats after every page, how often the cron has restarted it, and
+ * why it failed. The original and the page images are in the private
+ * `reviewer-pdfs` bucket, at paths made from the id
+ * (src/lib/reviewer-pdfs/paths.ts), so no row lists them: pages 1 to
+ * `pages_done` are there. A
+ * Reviewer PDF with no file (`uploaded_at` null) is the sample data's, from
+ * before uploads.
  */
 export const reviewerPdfs = pgTable(
   "reviewer_pdfs",
@@ -900,11 +913,45 @@ export const reviewerPdfs = pgTable(
       .references(() => topics.id, { onDelete: "restrict" }),
     status: reviewerPdfStatus("status").notNull().default("processing"),
     freePreview: boolean("free_preview").notNull().default(false),
+    fileName: text("file_name"),
+    fileSize: integer("file_size"),
+    uploadedAt: at("uploaded_at"),
+    pageCount: integer("page_count"),
+    pagesDone: integer("pages_done").notNull().default(0),
+    heartbeatAt: at("heartbeat_at"),
+    restarts: smallint("restarts").notNull().default(0),
+    failure: reviewerPdfFailure("failure"),
   },
   (t) => [
     check(
       "reviewer_pdfs_published_has_topic",
       sql`${t.status} <> 'published' or ${t.topicId} is not null`,
+    ),
+    // Its file comes whole: a name, a size and when, or none of them.
+    check(
+      "reviewer_pdfs_file_whole",
+      sql`(${t.fileName} is null) = (${t.uploadedAt} is null) and (${t.fileSize} is null) = (${t.uploadedAt} is null)`,
+    ),
+    check(
+      "reviewer_pdfs_file_name_length",
+      sql`${t.fileName} is null or char_length(${t.fileName}) between 1 and ${sql.raw(String(PDF_NAME_MAX))}`,
+    ),
+    check("reviewer_pdfs_file_size_positive", sql`${t.fileSize} is null or ${t.fileSize} > 0`),
+    check("reviewer_pdfs_page_count_positive", sql`${t.pageCount} is null or ${t.pageCount} > 0`),
+    check(
+      "reviewer_pdfs_pages_done_range",
+      sql`${t.pagesDone} between 0 and coalesce(${t.pageCount}, 0)`,
+    ),
+    // A Draft from an upload has every page.
+    check(
+      "reviewer_pdfs_draft_has_every_page",
+      sql`${t.status} <> 'draft' or ${t.pageCount} is null or ${t.pagesDone} = ${t.pageCount}`,
+    ),
+    check("reviewer_pdfs_restarts_positive", sql`${t.restarts} >= 0`),
+    // A failed one says why, and only a failed one.
+    check(
+      "reviewer_pdfs_failed_has_failure",
+      sql`(${t.status} = 'failed') = (${t.failure} is not null)`,
     ),
   ],
 ).enableRLS();

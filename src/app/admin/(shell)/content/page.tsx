@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { adminScreen } from "@/components/admin/admin-menu";
 import { AdminScreen } from "@/components/admin/admin-screen";
@@ -23,7 +24,8 @@ interface ContentPageProps {
  * picker, then that Subject's Topics, read fresh on every request. It opens on
  * the first Exam and its first Subject; an Exam or Subject the address names
  * that isn't one opens the first instead. Later tickets add each Topic's
- * deck, quiz and Reviewer PDF here.
+ * deck, quiz and Reviewer PDF here; the Reviewer PDFs' uploads have their own
+ * screen (ticket 12), linked at the top.
  */
 export default async function ContentPage({ searchParams }: ContentPageProps) {
   const actor = await requireStaff(paths.admin.content);
@@ -37,6 +39,12 @@ export default async function ContentPage({ searchParams }: ContentPageProps) {
 
   return (
     <AdminScreen screen="content">
+      <Link
+        href={paths.admin.reviewerPdfs}
+        className="w-fit text-[13px] font-semibold text-ayc-blue underline-offset-2 hover:underline"
+      >
+        Reviewer PDFs: upload, progress and delete →
+      </Link>
       {exam ? (
         <ContentPicker exams={exams} examCode={exam.code} subjectCode={subject?.code ?? null} />
       ) : null}

@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 import { storageImagePatterns } from "./src/lib/catalogue-bucket";
+import { paths } from "./src/paths";
 
 // Static security response headers applied to every route. CSP is intentionally
 // NOT here — it needs a per-request nonce and is set in src/middleware.ts.
@@ -31,6 +32,22 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // The Reviewer PDF job's renderer (ticket 12): pdf.js and its server-side
+  // canvas load from node_modules, not Next's server bundle, so the canvas's
+  // native binary and pdf.js's own modules load as they ship.
+  serverExternalPackages: ["pdfjs-dist", "@napi-rs/canvas"],
+  // …and the files pdf.js reads from disk as it renders (its standard fonts,
+  // CMaps, ICC profiles and wasm decoders, found from its package.json) go
+  // with the run endpoint, which file tracing can't tell on its own.
+  outputFileTracingIncludes: {
+    [paths.jobs.reviewerPdfRun]: [
+      "./node_modules/pdfjs-dist/package.json",
+      "./node_modules/pdfjs-dist/standard_fonts/**",
+      "./node_modules/pdfjs-dist/cmaps/**",
+      "./node_modules/pdfjs-dist/iccs/**",
+      "./node_modules/pdfjs-dist/wasm/**",
+    ],
+  },
   // Don't advertise the framework via the X-Powered-By header.
   poweredByHeader: false,
   // Product photos and share images in the Storage bucket (ticket 17), on the

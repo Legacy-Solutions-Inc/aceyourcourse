@@ -9,7 +9,7 @@ import { deniedSignInFromRow, staffActivityFromRow } from "@/services/admin.rows
 import { cardFromRow, contentFromRows, questionFromRow } from "@/services/content.rows";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
-import { sampleContentFiles } from "@/services/uploads.mock";
+import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
 import { CONTENT_BUCKET, storageArm } from "@/services/uploads.storage";
 import type { UploadRequest } from "@/services/uploads.types";
 
@@ -36,6 +36,12 @@ import { loadTestCatalogue } from "./catalogue-database";
 import { newContent } from "./content-inputs";
 import { imageBytes } from "./image-bytes";
 import { SHARE_IMAGE_OWNERS, uploadSamplePhoto } from "./sample-photo";
+import {
+  sampleReviewerPdfFile,
+  storageReviewerPdfFile,
+  uploadSampleReviewerPdf,
+  uploadStorageReviewerPdf,
+} from "./reviewer-pdf-uploads";
 import { putFile } from "./storage-database";
 
 /**
@@ -190,6 +196,23 @@ export const DATABASE_ARM: AdminArm = {
     ),
   questions: async () =>
     byQuizAndPosition((await getDb().select().from(schema.questions)).map(questionFromRow)),
+  // Storage when the database project has it, as the database arm does.
+  uploadReviewerPdf: isStorageConfigured ? uploadStorageReviewerPdf : uploadSampleReviewerPdf,
+  reviewerPdfFile: isStorageConfigured ? storageReviewerPdfFile : sampleReviewerPdfFile,
+  reviewerPdfFiles: isStorageConfigured ? storageArm.reviewerPdfFiles : sampleReviewerPdfFiles,
+  setReviewerPdfUpload: async (id, change) => {
+    const { heartbeatAt, uploadedAt, ...rest } = change;
+    await getDb()
+      .update(schema.reviewerPdfs)
+      .set({
+        ...rest,
+        ...(heartbeatAt === undefined
+          ? {}
+          : { heartbeatAt: heartbeatAt === null ? null : new Date(heartbeatAt) }),
+        ...(uploadedAt === undefined ? {} : { uploadedAt: new Date(uploadedAt) }),
+      })
+      .where(eq(schema.reviewerPdfs.id, id));
+  },
   // A trigger that refuses every Staff Activity row: the save's last write.
   // The database tests run one file at a time, so no other test meets it.
   breakStaffActivity: async () => {

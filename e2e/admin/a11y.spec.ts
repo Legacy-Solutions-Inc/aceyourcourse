@@ -270,6 +270,17 @@ const KEYBOARD_SCREENS: {
     ready: (page) => page.getByRole("form", { name: "SETTINGS" }),
   },
   {
+    name: "the Reviewer PDFs, with a Reviewer PDF's delete dialog",
+    who: "editor",
+    path: paths.admin.reviewerPdfs,
+    ready: (page) => page.getByRole("list", { name: "Reviewer PDFs" }),
+    dialog: {
+      open: (page) =>
+        page.getByRole("button", { name: "Delete Simple Curves Reviewer PDF" }).click(),
+      name: "Delete “Simple Curves Reviewer PDF”?",
+    },
+  },
+  {
     name: "Users, with the Beta Testers tab and its remove dialog",
     who: "owner",
     path: paths.admin.users,
@@ -350,6 +361,9 @@ for (const size of SIZES) {
     test("no serious or critical accessibility violations on the signed-in screens", async ({
       page,
     }) => {
+      // Every signed-in screen in one test: on a fresh dev server, each is
+      // compiled on its first visit, which takes the list past 30 seconds.
+      test.slow();
       await signInAs(page, "owner");
       await expect(page).toHaveURL(/\/admin$/, { timeout: 15_000 });
       for (const path of [
@@ -371,6 +385,8 @@ for (const size of SIZES) {
         // A Subject's quiz import, and a Topic's quiz with its settings (ticket 09).
         paths.admin.quizImport("CE", "MSTC"),
         paths.admin.quiz(SPIRAL_CURVES),
+        // The Reviewer PDFs (ticket 12).
+        paths.admin.reviewerPdfs,
         "/admin/users",
         "/admin/settings",
       ]) {

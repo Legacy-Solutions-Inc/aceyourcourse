@@ -2,11 +2,18 @@ import { DEFAULT_QUIZ_SETTINGS } from "@/lib/quizzes/quiz-rules";
 import type { AdminService } from "@/services/admin";
 import * as sampleArm from "@/services/admin.mock";
 import type { DeniedSignIn, StaffActivity } from "@/services/admin.types";
-import type { Card, CardMark, ContentKind, Question, Quiz } from "@/services/content.types";
+import type {
+  Card,
+  CardMark,
+  ContentKind,
+  Question,
+  Quiz,
+  ReviewerPdfUpload,
+} from "@/services/content.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
-import type { ContentFiles } from "@/services/uploads";
-import { sampleContentFiles } from "@/services/uploads.mock";
+import type { ContentFiles, ReviewerPdfFiles } from "@/services/uploads";
+import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
 import type { UploadRequest } from "@/services/uploads.types";
 
 import { DATABASE_ARM } from "./admin-database";
@@ -14,6 +21,11 @@ import { type CardImageUpload, uploadSampleCardImage } from "./card-images";
 import { type ImportFiles, type ImportPaths, uploadSampleImport } from "./import-files";
 import { newContent } from "./content-inputs";
 import { editSampleCatalogue } from "./catalogue-seed";
+import {
+  type ReviewerPdfUploadOptions,
+  sampleReviewerPdfFile,
+  uploadSampleReviewerPdf,
+} from "./reviewer-pdf-uploads";
 import { uploadSamplePhoto } from "./sample-photo";
 
 /**
@@ -85,6 +97,18 @@ export interface AdminArm {
   quizzes(): Promise<Quiz[]>;
   /** Every quiz's questions, removed ones too, read behind the seam's back (byQuizAndPosition). */
   questions(): Promise<Question[]>;
+  /**
+   * Uploads a Reviewer PDF through the upload seam, as the Reviewer PDFs
+   * screen does (ticket 12), and gives the path its record claims. With
+   * `send: false` the browser never sends the file.
+   */
+  uploadReviewerPdf(bytes: Uint8Array, options?: ReviewerPdfUploadOptions): Promise<string>;
+  /** The file at a path in the private Reviewer PDFs bucket the arm uses, or null. */
+  reviewerPdfFile(path: string): Promise<Uint8Array | null>;
+  /** The private Reviewer PDFs bucket the arm uses, for a test to change behind the seam's back. */
+  reviewerPdfFiles: ReviewerPdfFiles;
+  /** Changes an uploaded Reviewer PDF's job behind the seam's back, as a stalled or odd run might leave it. */
+  setReviewerPdfUpload(id: string, change: Partial<ReviewerPdfUpload>): Promise<void>;
 }
 
 /** Pure: Card Marks by card, then Member. */
@@ -155,6 +179,15 @@ const SAMPLE_ARM: AdminArm = {
   cardMarks: async () => byCardAndMember(structuredClone(getSampleStore().cardMarks)),
   quizzes: async () => byId(structuredClone(getSampleStore().quizzes)),
   questions: async () => byQuizAndPosition(structuredClone(getSampleStore().questions)),
+  uploadReviewerPdf: uploadSampleReviewerPdf,
+  reviewerPdfFile: sampleReviewerPdfFile,
+  reviewerPdfFiles: sampleReviewerPdfFiles,
+  setReviewerPdfUpload: async (id, change) => {
+    const store = getSampleStore();
+    const upload = store.reviewerPdfUploads[id];
+    if (!upload) throw new Error(`No uploaded Reviewer PDF ${id}`);
+    store.reviewerPdfUploads = { ...store.reviewerPdfUploads, [id]: { ...upload, ...change } };
+  },
   breakStaffActivity: async () => {
     const store = getSampleStore();
     const records = store.staffActivity;

@@ -10,6 +10,13 @@ import {
   WRONG_IMAGE_TYPE,
 } from "@/lib/cards/card-rules";
 import { ABOUT_PHOTO_SLOTS } from "@/lib/catalogue/about-content";
+import { MAX_PDF_BYTES } from "@/lib/reviewer-pdfs/job";
+import {
+  EMPTY_FILE as EMPTY_PDF,
+  NOT_A_PDF,
+  PDF_CONTENT_TYPE,
+  PDF_TOO_BIG,
+} from "@/lib/reviewer-pdfs/pdf-file";
 import { isSitePageKey } from "@/services/catalogue.schema";
 
 // The upload seam's inputs and outputs (CONVENTIONS §3; spec, Phase 2 → Seams:
@@ -199,3 +206,40 @@ export interface ContentUploadTicket {
   /** The type to PUT the file as. */
   contentType: ContentUploadType;
 }
+
+// ── Reviewer PDF uploads (Phase 3, ticket 12) ───────────────────────────────
+// An Editor's Reviewer PDF, up to 200 MB, goes from the browser straight to
+// the private Reviewer PDFs bucket, never through a Vercel request body
+// (about 4.5 MB at most). With Storage it's a resumable (TUS) upload, on a
+// one-time token signed with the secret key; the sample data takes it at a
+// one-time URL, as it does any other upload. Either way there's no public
+// URL: only the server reads the file back, to split it into page images.
+
+/** A Reviewer PDF as the browser asks to upload it: a PDF of up to 200 MB. */
+export const reviewerPdfUploadRequestSchema = z.object({
+  contentType: z.literal(PDF_CONTENT_TYPE, { errorMap: () => ({ message: NOT_A_PDF }) }),
+  size: z
+    .number({ invalid_type_error: EMPTY_PDF, required_error: EMPTY_PDF })
+    .int(EMPTY_PDF)
+    .positive(EMPTY_PDF)
+    .max(MAX_PDF_BYTES, PDF_TOO_BIG),
+});
+
+export type ReviewerPdfUploadRequest = z.input<typeof reviewerPdfUploadRequestSchema>;
+
+/**
+ * Where the browser sends a Reviewer PDF, and the path the Reviewer PDF's
+ * record then claims it at:
+ *   - "tus": a resumable upload to Storage's TUS endpoint, with these headers
+ *     (the one-time token) and metadata on every request;
+ *   - "put": one PUT to a one-time URL (the sample data).
+ */
+export type ReviewerPdfUploadTicket =
+  | {
+      method: "tus";
+      endpoint: string;
+      headers: Record<string, string>;
+      metadata: Record<string, string>;
+      path: string;
+    }
+  | { method: "put"; uploadUrl: string; path: string };

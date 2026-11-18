@@ -29,6 +29,8 @@ import type {
   ContentCounts,
   ContentVisibility,
   Question,
+  ReviewerPdfStatus,
+  ReviewerPdfUpload,
   TopicContent,
 } from "@/services/content.types";
 
@@ -611,6 +613,36 @@ export interface AdminQuestion {
 export interface DeletedQuestion {
   question: Question;
   quizHidden: boolean;
+}
+
+/**
+ * A Reviewer PDF as the Admin's Reviewer PDFs screen lists it (ticket 12):
+ * its status, its uploaded file and the job splitting it into page images,
+ * and the Topic it's placed under.
+ */
+export interface AdminReviewerPdf {
+  id: string;
+  status: ReviewerPdfStatus;
+  /** Its file and job, or null for the sample data's Reviewer PDFs, from before uploads. */
+  upload: ReviewerPdfUpload | null;
+  /** The Topic it's placed under, or null until an Editor places it (ticket 13). */
+  placement: { examCode: string; subjectCode: string; topicName: string } | null;
+}
+
+/**
+ * What one run of the Reviewer PDF job did: rendered its pages with more to
+ * come ("more", so the next run starts), rendered the last page ("done", a
+ * Draft now), failed it ("failed"), or found nothing for it to do
+ * ("stopped": it's not Processing, it's gone, or another run has its pages).
+ */
+export type ReviewerPdfRun = "more" | "done" | "failed" | "stopped";
+
+/** What the cron did with the Reviewer PDF jobs whose runs had stopped. */
+export interface StaleReviewerPdfJobs {
+  /** The ones it restarted: each needs a run started. */
+  restarted: string[];
+  /** The ones it failed, after too many restarts. */
+  failed: string[];
 }
 
 /** A Topic's quiz as its settings show it. */

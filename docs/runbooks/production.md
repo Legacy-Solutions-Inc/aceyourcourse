@@ -331,6 +331,7 @@ shows its value again.
 | `DATABASE_URL`                         | the Transaction pooler string, port **6543**, from step 4                       | **yes, Sensitive** |
 | `MEMBER_APP_LIVE`                      | leave **unset** (off) until the Member App launches                             | no                 |
 | `ADMIN_PASSWORD_SIGN_IN`               | `true` only while you test the deployed site (see step 6); **unset** at go-live | no                 |
+| `CRON_SECRET`                          | 16+ random characters (`openssl rand -hex 32`), for the Reviewer PDF job's cron | **yes, Sensitive** |
 | `NEXT_PUBLIC_LOG_LEVEL`                | `WARN` (unset logs everything)                                                  | no                 |
 | `NEXT_PUBLIC_AUTH_STRATEGY`            | leave unset (`SUPABASE`, the only one)                                          | no                 |
 | `NEXT_PUBLIC_SITE_VERSION`             | optional, e.g. the release's git sha                                            | no                 |

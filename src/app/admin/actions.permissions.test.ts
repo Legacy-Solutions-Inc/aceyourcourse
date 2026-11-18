@@ -34,8 +34,11 @@ import {
   uploadSampleImport,
 } from "../../../test/import-files";
 import { editSampleCatalogue } from "../../../test/catalogue-seed";
+import { pdfOfPages } from "../../../test/reviewer-pdfs";
+import { uploadSampleReviewerPdf } from "../../../test/reviewer-pdf-uploads";
 
 import * as content from "./(shell)/content/actions";
+import * as reviewerPdfs from "./(shell)/content/reviewer-pdfs/actions";
 import * as examPages from "./(shell)/exam-pages/actions";
 import * as products from "./(shell)/products/actions";
 import * as reviews from "./(shell)/reviews/actions";
@@ -61,9 +64,10 @@ import * as signIn from "./sign-in/actions";
 // registry fails the first test.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const { jar, mode } = vi.hoisted(() => ({
+const { jar, mode, afterTheResponse } = vi.hoisted(() => ({
   jar: new Map<string, string>(),
   mode: { current: "sample" as "sample" | "closed" },
+  afterTheResponse: [] as unknown[],
 }));
 
 vi.mock("next/headers", () => ({
@@ -79,6 +83,14 @@ vi.mock("next/navigation", () => ({
   },
   notFound: () => {
     throw new Error("NEXT_NOT_FOUND");
+  },
+}));
+// Work an action leaves for after its response (a Reviewer PDF's job) is
+// only noted: it's no caller's doing, and the store must stay as it was.
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  after: (task: unknown) => {
+    afterTheResponse.push(task);
   },
 }));
 // The mode as the server would compute it, which a test can force to closed.
@@ -111,6 +123,7 @@ const QUESTION_FIELDS = {
   explanation: "$L_s = 0.036 V^3/R$",
   figure: null,
 } as const;
+const REVIEWER_PDF = "9a1b2c3d-4e5f-4a6b-8c7d-8e9fa0b1c2d3";
 const CARD = "5d6e7f80-9a1b-4c2d-8e3f-4a5b6c7d8e9f";
 const SECOND_CARD = "6e7f8091-ab2c-4d3e-9f40-5b6c7d8e9fa0";
 
@@ -120,6 +133,8 @@ const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
 let cardImport: ImportPaths & { exam: string; subject: string; mode: "add"; basedOn: string };
 /** A quiz import's files, uploaded before each test, and the preview of them. */
 let quizImport: typeof cardImport;
+/** A Reviewer PDF uploaded to the sample data, and not yet recorded. */
+let reviewerPdfUpload: string;
 /** The stamp every record has before anyone saves it. */
 const opened = () => ({ savedAt: getSampleStore().bootedAt });
 
@@ -296,6 +311,21 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
       content.moveQuestionInQuiz(IDLE, { input: { id: SECOND_QUESTION, direction: "up" } }),
     ),
     removeQuestion: staff(() => content.removeQuestion(IDLE, { input: { id: QUESTION } })),
+  },
+  "./(shell)/content/reviewer-pdfs/actions.ts": {
+    createReviewerPdfUpload: staff(() =>
+      reviewerPdfs.createReviewerPdfUpload(IDLE, {
+        input: { contentType: "application/pdf", size: 2048 },
+      }),
+    ),
+    addReviewerPdf: staff(() =>
+      reviewerPdfs.addReviewerPdf(IDLE, {
+        input: { path: reviewerPdfUpload, fileName: "MSTC Reviewer.pdf" },
+      }),
+    ),
+    removeReviewerPdf: staff(() =>
+      reviewerPdfs.removeReviewerPdf(IDLE, { input: { id: REVIEWER_PDF } }),
+    ),
   },
   "./(shell)/products/actions.ts": {
     setProductFlag: staff(() =>
@@ -477,6 +507,26 @@ beforeEach(async () => {
   const plannedQuiz = await planQuizImport(READER, quizInput);
   if (!plannedQuiz.ok) throw new Error("The quiz import's files were refused");
   quizImport = { ...quizInput, basedOn: plannedQuiz.value.basedOn };
+  // A Reviewer PDF uploaded and not yet recorded, and a Draft one to delete.
+  afterTheResponse.length = 0;
+  reviewerPdfUpload = await uploadSampleReviewerPdf(pdfOfPages(2));
+  const store = getSampleStore();
+  store.reviewerPdfs = [
+    ...store.reviewerPdfs,
+    { id: REVIEWER_PDF, topicId: null, status: "draft", freePreview: false },
+  ];
+  store.reviewerPdfUploads = {
+    [REVIEWER_PDF]: {
+      fileName: "Old Reviewer.pdf",
+      fileSize: 2048,
+      uploadedAt: store.bootedAt,
+      pageCount: 2,
+      pagesDone: 2,
+      heartbeatAt: store.bootedAt,
+      restarts: 0,
+      failure: null,
+    },
+  };
 });
 
 describe("the action registry", () => {

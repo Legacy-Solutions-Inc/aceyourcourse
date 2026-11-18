@@ -49,7 +49,10 @@ export async function PUT(request: Request, { params }: RouteContext): Promise<R
   return new Response(text, { status });
 }
 
-/** Serves an uploaded file with its type. A private upload (an import's CSV or zip) is never served. */
+/**
+ * Serves an uploaded file with its type. A private upload (an import's CSV or
+ * zip, a card image, a Reviewer PDF) is never served.
+ */
 export async function GET(_request: Request, { params }: RouteContext): Promise<Response> {
   if (adminMode !== "sample") return notFound();
   const upload = readSampleUpload((await params).id);

@@ -10,6 +10,7 @@ import {
 } from "@/lib/catalogue/about-content";
 import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
 import { isCalendarDate } from "@/lib/manila-time";
+import { PDF_NAME_MAX } from "@/lib/reviewer-pdfs/pdf-file";
 import { variationLabel } from "@/lib/catalogue/price";
 import type { AdminError, RequiredRole, StaffActor } from "@/services/admin.types";
 import { IMPORT_MODES } from "@/lib/content-import/modes";
@@ -1809,3 +1810,34 @@ export const questionMoveInputSchema = reviewMoveSchema.extend({ id: questionId 
 
 /** Delete: the question, which is kept, marked removed, for Members' old attempts. */
 export const questionIdInputSchema = z.object({ id: questionId });
+
+// ── Reviewer PDFs (Phase 3, ticket 12) ──────────────────────────────────────
+
+/** A Reviewer PDF's file name, for the Admin's list: trimmed, cut to size, never empty. */
+const reviewerPdfFileName = z
+  .string({ invalid_type_error: "NAME THE FILE", required_error: "NAME THE FILE" })
+  .max(2000, "NAME THE FILE")
+  .transform((name) => {
+    const shown = name.replace(/[\u0000-\u001f\u007f]/g, "").trim();
+    return shown.slice(0, PDF_NAME_MAX).trim() || "Reviewer PDF";
+  });
+
+/**
+ * An uploaded Reviewer PDF, recorded: where the browser uploaded it (which
+ * the server checks is a Reviewer PDF upload, and has arrived) and the file's
+ * name. Its size is read from Storage, not taken from the browser.
+ */
+export const reviewerPdfRecordSchema = z.object({
+  path: z
+    .string({ invalid_type_error: "UPLOAD THE PDF AGAIN", required_error: "UPLOAD THE PDF AGAIN" })
+    .min(1, "UPLOAD THE PDF AGAIN")
+    .max(200, "UPLOAD THE PDF AGAIN"),
+  fileName: reviewerPdfFileName,
+});
+
+export type ReviewerPdfRecordInput = z.input<typeof reviewerPdfRecordSchema>;
+
+/** Delete: the Reviewer PDF, with its original and its page images. */
+export const reviewerPdfIdInputSchema = z.object({
+  id: z.string().uuid("THAT REVIEWER PDF ISN’T THERE · RELOAD THE PAGE"),
+});
