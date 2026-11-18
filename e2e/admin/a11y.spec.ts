@@ -5,7 +5,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
-import { sampleTopicId } from "../../src/services/mock/content";
+import { sampleContentId, sampleTopicId } from "../../src/services/mock/content";
 import {
   LIVE,
   openSignInAs,
@@ -26,6 +26,8 @@ const BLOCKING_IMPACTS = new Set(["serious", "critical"]);
 const ALGEBRA = sampleTopicId("CE", "MSTC", "Algebra");
 /** A sample Topic with a Hidden quiz and no questions, for the quiz screen (ticket 09). */
 const SPIRAL_CURVES = sampleTopicId("CE", "MSTC", "Spiral Curves");
+/** The sample Draft Reviewer PDF on Spiral Curves, from before uploads: no pages to publish. */
+const SPIRAL_CURVES_PDF = sampleContentId(SPIRAL_CURVES, "reviewer-pdf");
 
 const SIZES = [
   { name: "a desktop", viewport: { width: 1280, height: 800 } },
@@ -281,6 +283,17 @@ const KEYBOARD_SCREENS: {
     },
   },
   {
+    name: "a Reviewer PDF's screen, with an Owner's placement and its delete dialog",
+    who: "owner",
+    path: paths.admin.reviewerPdf(SPIRAL_CURVES_PDF),
+    ready: (page) => page.getByRole("region", { name: "PLACEMENT" }),
+    dialog: {
+      open: (page) =>
+        page.getByRole("button", { name: "Delete Spiral Curves Reviewer PDF" }).click(),
+      name: "Delete “Spiral Curves Reviewer PDF”?",
+    },
+  },
+  {
     name: "Users, with the Beta Testers tab and its remove dialog",
     who: "owner",
     path: paths.admin.users,
@@ -385,8 +398,9 @@ for (const size of SIZES) {
         // A Subject's quiz import, and a Topic's quiz with its settings (ticket 09).
         paths.admin.quizImport("CE", "MSTC"),
         paths.admin.quiz(SPIRAL_CURVES),
-        // The Reviewer PDFs (ticket 12).
+        // The Reviewer PDFs (ticket 12), and one Reviewer PDF's screen (ticket 13).
         paths.admin.reviewerPdfs,
+        paths.admin.reviewerPdf(SPIRAL_CURVES_PDF),
         "/admin/users",
         "/admin/settings",
       ]) {

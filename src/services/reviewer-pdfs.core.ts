@@ -8,19 +8,41 @@ import {
   statusAfter,
 } from "@/lib/reviewer-pdfs/job";
 import {
+  changeRefusal,
+  type ReviewerPdfChange,
+  reviewerPdfState,
+  statusAfterChange,
+  TOPIC_GONE,
+  TOPIC_TAKEN,
+} from "@/lib/reviewer-pdfs/status";
+import {
+  type ReviewerPdfPlacementForm,
   type ReviewerPdfRecordInput,
+  reviewerPdfFreePreviewInputSchema,
   reviewerPdfIdInputSchema,
+  reviewerPdfPlacementSchema,
+  reviewerPdfPublishedInputSchema,
   reviewerPdfRecordSchema,
 } from "@/services/admin.schema";
 import type {
+  AdminError,
   AdminResult,
   AdminReviewerPdf,
+  AdminReviewerPdfDetail,
+  AdminReviewerPdfScreen,
+  PlacementTopic,
+  RecordStamp,
   ReviewerPdfRun,
   StaffActivity,
   StaffActor,
   StaleReviewerPdfJobs,
 } from "@/services/admin.types";
-import type { ReviewerPdfStatus, ReviewerPdfUpload, Topic } from "@/services/content.types";
+import type {
+  ReviewerPdf,
+  ReviewerPdfStatus,
+  ReviewerPdfUpload,
+  Topic,
+} from "@/services/content.types";
 import {
   activityRecord,
   formError,
@@ -28,6 +50,7 @@ import {
   refused,
   staffInput,
 } from "@/services/content-editor.core";
+import { nextStamp } from "@/services/mock/sample-store";
 import { PdfProblemError, type PdfRenderer } from "@/services/page-images.types";
 import type { ReviewerPdfFiles } from "@/services/uploads";
 
@@ -50,6 +73,14 @@ import type { ReviewerPdfFiles } from "@/services/uploads";
 //   - Deleting removes the record and its Staff Activity together, then the
 //     original and every page image.
 // The job is no Staff User's change: it records no Staff Activity.
+// Ticket 13 adds its screen: an Editor places it under a Topic, one Reviewer
+// PDF per Topic (the placement form's save, with the conflict check against
+// the placement's stamp), publishes or unpublishes it (src/lib/reviewer-pdfs/
+// status.ts), flags it Free Preview, and previews its pages. Each write runs
+// under the content write lock (store.save), where the rules run again on
+// the Reviewer PDF as it is then, and records one Staff Activity record.
+// Publish, Unpublish and Free Preview are single actions: they always save,
+// and leave the placement's stamp as it is.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** A Reviewer PDF with an upload, as its job reads it. */
@@ -85,10 +116,51 @@ export interface ReviewerPdfJobs {
   restart(id: string, restarts: number, now: Date): Promise<boolean>;
 }
 
+/**
+ * One Reviewer PDF as its screen and its writes read it (ticket 13): its
+ * record, its upload, every Topic it could be placed under (with the
+ * Reviewer PDF on each), and its placement's last save.
+ */
+export interface ReviewerPdfRecord {
+  pdf: ReviewerPdf;
+  upload: ReviewerPdfUpload | null;
+  /** Every Topic, each with the Reviewer PDF on it, in no particular order. */
+  topics: PlacementTopic[];
+  /** Its placement's last save, or null when nobody has placed it. */
+  stamp: RecordStamp | null;
+  /** When the data was made: the stamp of a placement nobody has saved. */
+  seededAt: string;
+}
+
+/** What a write changes, worked out on the Reviewer PDF as it is under the lock. */
+export interface ReviewerPdfWrites {
+  /** The record as it now is: its Topic, status and Free Preview. */
+  pdf: ReviewerPdf;
+  /** The placement's new stamp, when the write placed it. */
+  stamp?: RecordStamp;
+  activity: StaffActivity;
+}
+
+/** A write's answer: refused, or its value and what it changes (null: nothing). */
+export type ReviewerPdfPlan<T> =
+  { ok: false; error: AdminError } | { ok: true; value: T; writes: ReviewerPdfWrites | null };
+
 export interface ReviewerPdfStore {
   /** The private Reviewer PDFs bucket. */
   files: ReviewerPdfFiles;
   jobs: ReviewerPdfJobs;
+  /** One Reviewer PDF, with every Topic and its stamp, or null when it isn't there. */
+  read(id: string): Promise<ReviewerPdfRecord | null>;
+  /**
+   * Holds off every other content write, reads the Reviewer PDF again, and
+   * saves the writes `plan` works out on it (its record, its stamp, its
+   * Staff Activity): all, or nothing. Gives plan's answer. Throws when the
+   * save fails.
+   */
+  save<T>(
+    id: string,
+    plan: (current: ReviewerPdfRecord | null) => ReviewerPdfPlan<T>,
+  ): Promise<ReviewerPdfPlan<T>>;
   /** Every Reviewer PDF, with its upload and where it's placed, in no particular order. */
   list(): Promise<AdminReviewerPdf[]>;
   /**
@@ -117,6 +189,38 @@ export function placementOf(
     : null;
 }
 
+/** A Reviewer PDF's placement in the save stamps. */
+export const reviewerPdfRecordOf = (id: string) => `reviewer-pdf:${id}`;
+
+/** Pure: its placement's stamp: its last save, or the data's, when nobody has placed it. */
+const stampOf = ({ stamp, seededAt }: ReviewerPdfRecord): RecordStamp =>
+  stamp ?? { savedAt: seededAt, savedBy: null };
+
+/** Pure: the Topic with this id, among a Reviewer PDF's record's. */
+const topicIn = ({ topics }: ReviewerPdfRecord, id: string | null) =>
+  topics.find((candidate) => candidate.id === id);
+
+/** Pure: a Reviewer PDF as its screen shows it. */
+export function adminPdfDetailOf(record: ReviewerPdfRecord): AdminReviewerPdfDetail {
+  const { pdf, upload } = record;
+  return {
+    id: pdf.id,
+    status: pdf.status,
+    upload: structuredClone(upload),
+    placement: placementOf(topicIn(record, pdf.topicId)),
+    topicId: pdf.topicId,
+    freePreview: pdf.freePreview,
+    stamp: stampOf(record),
+  };
+}
+
+/** Pure: Topics by Exam, then Subject, then place. */
+const byPlace = (a: PlacementTopic, b: PlacementTopic) =>
+  a.examCode.localeCompare(b.examCode) ||
+  a.subjectCode.localeCompare(b.subjectCode) ||
+  a.position - b.position ||
+  a.id.localeCompare(b.id);
+
 const UPLOAD_AGAIN = "UPLOAD THE PDF AGAIN";
 const NOT_ARRIVED = "THE PDF HASN’T FINISHED UPLOADING · UPLOAD IT AGAIN";
 
@@ -138,6 +242,160 @@ const snapshot = ({ status, upload, placement }: AdminReviewerPdf) => ({
 
 export function reviewerPdfCalls(store: ReviewerPdfStore) {
   const { files, jobs } = store;
+
+  /** A write under the lock, answering with what its plan gave. */
+  async function saved<T>(
+    id: string,
+    plan: (current: ReviewerPdfRecord | null) => ReviewerPdfPlan<T>,
+  ): Promise<AdminResult<T>> {
+    const planned = await store.save(id, plan);
+    return planned.ok ? { ok: true, value: planned.value, tags: [] } : planned;
+  }
+
+  /**
+   * A single action on a Reviewer PDF (Publish, Unpublish, Free Preview): it
+   * always saves, with no conflict check, and records the field it changed.
+   * Changing nothing saves and records nothing.
+   */
+  function singleChange(
+    actor: StaffActor,
+    id: string,
+    change: (
+      current: ReviewerPdfRecord,
+    ) => { error: string } | { pdf: ReviewerPdf; action: string; field: "status" | "freePreview" },
+  ): Promise<AdminResult<AdminReviewerPdfDetail>> {
+    const now = new Date();
+    return saved(id, (current): ReviewerPdfPlan<AdminReviewerPdfDetail> => {
+      if (!current) return NOT_FOUND;
+      const changed = change(current);
+      if ("error" in changed) return refused(formError(changed.error));
+      const { pdf, action, field } = changed;
+      const value = adminPdfDetailOf({ ...current, pdf });
+      if (pdf[field] === current.pdf[field]) return { ok: true, value, writes: null };
+      return {
+        ok: true,
+        value,
+        writes: {
+          pdf,
+          activity: activityRecord(
+            actor,
+            now,
+            "reviewer-pdf",
+            id,
+            action,
+            { [field]: current.pdf[field] },
+            { [field]: pdf[field] },
+          ),
+        },
+      };
+    });
+  }
+
+  async function getReviewerPdfForAdmin(
+    _actor: StaffActor,
+    id: string,
+  ): Promise<AdminReviewerPdfScreen | null> {
+    if (!isId(id)) return null;
+    const record = await store.read(id);
+    if (!record) return null;
+    return { pdf: adminPdfDetailOf(record), topics: [...record.topics].sort(byPlace) };
+  }
+
+  async function getReviewerPdfPageForAdmin(
+    _actor: StaffActor,
+    id: string,
+    page: number,
+  ): Promise<Uint8Array | null> {
+    if (!isId(id) || !Number.isSafeInteger(page) || page < 1) return null;
+    const job = await jobs.get(id);
+    // Only the pages its job has stored: all of a Draft's, a Processing one's so far.
+    if (!job || page > job.upload.pagesDone) return null;
+    return files.readPage(id, page);
+  }
+
+  async function placeReviewerPdf(
+    actor: StaffActor,
+    input: ReviewerPdfPlacementForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminReviewerPdfDetail>> {
+    const form = staffInput(actor, reviewerPdfPlacementSchema, input);
+    if (!form.ok) return form;
+    const { id, topic: topicId } = form.value;
+    const now = new Date();
+    const topicError = (message: string) =>
+      refused({ kind: "invalid", fieldErrors: { topic: [message] } });
+
+    return saved(id, (current): ReviewerPdfPlan<AdminReviewerPdfDetail> => {
+      if (!current) return NOT_FOUND;
+      const { pdf, upload } = current;
+      const stamp = stampOf(current);
+      if (expected && expected.savedAt !== stamp.savedAt) {
+        return refused({ kind: "conflict", ...stamp });
+      }
+      // Already there: nothing to save or record, and the form's stamp stays good.
+      if (pdf.topicId === topicId) {
+        return { ok: true, value: adminPdfDetailOf(current), writes: null };
+      }
+      const refusal = changeRefusal(reviewerPdfState(pdf, upload), "place");
+      if (refusal) return refused(formError(refusal));
+      const topic = topicIn(current, topicId);
+      if (!topic) return topicError(TOPIC_GONE);
+      if (topic.reviewerPdfId !== null && topic.reviewerPdfId !== id) {
+        return topicError(TOPIC_TAKEN);
+      }
+      const placed: ReviewerPdf = { ...pdf, topicId };
+      const next = nextStamp(stamp, actor.name, now);
+      const before = topicIn(current, pdf.topicId);
+      return {
+        ok: true,
+        value: adminPdfDetailOf({ ...current, pdf: placed, stamp: next }),
+        writes: {
+          pdf: placed,
+          stamp: next,
+          activity: activityRecord(
+            actor,
+            now,
+            "reviewer-pdf",
+            id,
+            "place",
+            { placement: placementOf(before) },
+            { placement: placementOf(topic) },
+          ),
+        },
+      };
+    });
+  }
+
+  async function setReviewerPdfPublished(
+    actor: StaffActor,
+    id: string,
+    published: boolean,
+  ): Promise<AdminResult<AdminReviewerPdfDetail>> {
+    const form = staffInput(actor, reviewerPdfPublishedInputSchema, { id, published });
+    if (!form.ok) return form;
+    const change: ReviewerPdfChange = form.value.published ? "publish" : "unpublish";
+    const status = statusAfterChange(change);
+    return singleChange(actor, form.value.id, ({ pdf, upload }) => {
+      // Pressed twice, or by two Editors, it's as they asked already: no change, never refused.
+      const refusal = changeRefusal(reviewerPdfState(pdf, upload), change);
+      if (refusal) return { error: refusal };
+      return { pdf: { ...pdf, status }, action: change, field: "status" };
+    });
+  }
+
+  async function setReviewerPdfFreePreview(
+    actor: StaffActor,
+    id: string,
+    freePreview: boolean,
+  ): Promise<AdminResult<AdminReviewerPdfDetail>> {
+    const form = staffInput(actor, reviewerPdfFreePreviewInputSchema, { id, freePreview });
+    if (!form.ok) return form;
+    return singleChange(actor, form.value.id, ({ pdf }) => ({
+      pdf: { ...pdf, freePreview: form.value.freePreview },
+      action: "free-preview",
+      field: "freePreview",
+    }));
+  }
 
   async function listReviewerPdfsForAdmin(_actor: StaffActor): Promise<AdminReviewerPdf[]> {
     return (await store.list()).sort(newestFirst);
@@ -285,5 +543,10 @@ export function reviewerPdfCalls(store: ReviewerPdfStore) {
     deleteReviewerPdf,
     runReviewerPdfJob,
     restartStaleReviewerPdfJobs,
+    getReviewerPdfForAdmin,
+    getReviewerPdfPageForAdmin,
+    placeReviewerPdf,
+    setReviewerPdfPublished,
+    setReviewerPdfFreePreview,
   };
 }

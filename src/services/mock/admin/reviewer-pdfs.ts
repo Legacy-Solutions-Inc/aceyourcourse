@@ -7,6 +7,8 @@ import {
   type ReviewerPdfJob,
   type ReviewerPdfJobs,
   reviewerPdfCalls,
+  type ReviewerPdfRecord,
+  reviewerPdfRecordOf,
   type ReviewerPdfStore,
 } from "@/services/reviewer-pdfs.core";
 import { sampleReviewerPdfFiles } from "@/services/uploads.mock";
@@ -18,7 +20,7 @@ import { sampleReviewerPdfFiles } from "@/services/uploads.mock";
 // upload and job in `reviewerPdfUploads`, by its id; the files are in the
 // sample data's private Reviewer PDFs bucket. Each write sets Staff Activity
 // first, so a write that fails there (a test's breakStaffActivity) changes
-// nothing.
+// nothing. A placement's stamp (ticket 13) is in the store's stamps.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Pure: a Reviewer PDF as the Admin lists it, with its upload and where it's placed. */
@@ -32,6 +34,25 @@ function adminPdfOf(store: SampleStore, pdf: ReviewerPdf): AdminReviewerPdf {
       : null,
     placement: placementOf(topic),
   };
+}
+
+/** Pure: one Reviewer PDF, with every Topic and its stamp, or null when it isn't there. */
+function recordOf(store: SampleStore, id: string): ReviewerPdfRecord | null {
+  const pdf = store.reviewerPdfs.find((candidate) => candidate.id === id);
+  if (!pdf) return null;
+  const onTopic = new Map(store.reviewerPdfs.map((each) => [each.topicId, each.id]));
+  return structuredClone({
+    pdf,
+    upload: Object.hasOwn(store.reviewerPdfUploads, id)
+      ? (store.reviewerPdfUploads[id] ?? null)
+      : null,
+    topics: store.topics.map((topic) => ({
+      ...topic,
+      reviewerPdfId: onTopic.get(topic.id) ?? null,
+    })),
+    stamp: store.stamps[reviewerPdfRecordOf(id)] ?? null,
+    seededAt: store.bootedAt,
+  });
 }
 
 /** A Reviewer PDF's job, or null when there's none with that id, or it has no upload. */
@@ -128,6 +149,21 @@ export const sampleReviewerPdfStore: ReviewerPdfStore = {
     const store = getSampleStore();
     return store.reviewerPdfs.map((pdf) => adminPdfOf(store, pdf));
   },
+  async read(id) {
+    return recordOf(getSampleStore(), id);
+  },
+  async save(id, plan) {
+    const store = getSampleStore();
+    const planned = plan(recordOf(store, id));
+    if (!planned.ok || !planned.writes) return planned;
+    const { pdf, stamp, activity } = planned.writes;
+    store.staffActivity = [...store.staffActivity, activity];
+    store.reviewerPdfs = store.reviewerPdfs.map((each) =>
+      each.id === id ? structuredClone(pdf) : each,
+    );
+    if (stamp) store.stamps = { ...store.stamps, [reviewerPdfRecordOf(id)]: stamp };
+    return planned;
+  },
   async add(id, upload, activity) {
     const store = getSampleStore();
     if (store.reviewerPdfs.some((pdf) => pdf.id === id)) return false;
@@ -148,6 +184,8 @@ export const sampleReviewerPdfStore: ReviewerPdfStore = {
     store.reviewerPdfs = store.reviewerPdfs.filter((candidate) => candidate.id !== id);
     const { [id]: _removed, ...uploads } = store.reviewerPdfUploads;
     store.reviewerPdfUploads = uploads;
+    const { [reviewerPdfRecordOf(id)]: _stamp, ...stamps } = store.stamps;
+    store.stamps = stamps;
     return deleted;
   },
 };
@@ -159,3 +197,8 @@ export const recordReviewerPdf = calls.recordReviewerPdf;
 export const deleteReviewerPdf = calls.deleteReviewerPdf;
 export const runReviewerPdfJob = calls.runReviewerPdfJob;
 export const restartStaleReviewerPdfJobs = calls.restartStaleReviewerPdfJobs;
+export const getReviewerPdfForAdmin = calls.getReviewerPdfForAdmin;
+export const getReviewerPdfPageForAdmin = calls.getReviewerPdfPageForAdmin;
+export const placeReviewerPdf = calls.placeReviewerPdf;
+export const setReviewerPdfPublished = calls.setReviewerPdfPublished;
+export const setReviewerPdfFreePreview = calls.setReviewerPdfFreePreview;

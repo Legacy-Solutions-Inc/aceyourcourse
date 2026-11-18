@@ -6,6 +6,7 @@ import { adminWriteLock } from "@/lib/db/admin-locks";
 import { getDb } from "@/lib/db/client";
 import type { Database } from "@/lib/db/connect";
 import { asDatabaseError } from "@/lib/db/errors";
+import { setStamp } from "@/lib/db/record-stamps";
 import * as schema from "@/lib/db/schema";
 import { fromExcluded } from "@/lib/db/upsert";
 import { isStorageConfigured } from "@/lib/supabase/admin";
@@ -153,18 +154,7 @@ const databaseDeckStore: DeckEditorStore = {
             });
         }
         for (const [cardId, stamp] of Object.entries(stamps)) {
-          const row = {
-            record: cardRecordOf(cardId),
-            updatedAt: new Date(stamp.savedAt),
-            updatedBy: stamp.savedBy,
-          };
-          await tx
-            .insert(recordStamps)
-            .values(row)
-            .onConflictDoUpdate({
-              target: recordStamps.record,
-              set: { updatedAt: row.updatedAt, updatedBy: row.updatedBy },
-            });
+          await setStamp(tx, cardRecordOf(cardId), stamp);
         }
         if (activity.length > 0) {
           await tx.insert(schema.staffActivity).values(activity.map(staffActivityToRow));

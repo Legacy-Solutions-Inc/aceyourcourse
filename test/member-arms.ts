@@ -10,6 +10,7 @@ import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import { byCardAndMember } from "./admin-arms";
 import { type CardImageUpload, uploadSampleCardImage } from "./card-images";
 import { editSampleCatalogue } from "./catalogue-seed";
+import { uploadSampleReviewerPdf } from "./reviewer-pdf-uploads";
 import { MEMBER_DATABASE_ARM } from "./member-database";
 
 /**
@@ -44,6 +45,8 @@ export interface MemberArm {
   putAccessPass(pass: AccessPass): Promise<void>;
   /** Uploads a card's back image as the Admin's card form does, and gives the path its save sends. */
   uploadCardImage(bytes: Uint8Array, options?: CardImageUpload): Promise<string>;
+  /** Uploads a Reviewer PDF as the Admin's Reviewer PDFs screen does, and gives the path its record claims. */
+  uploadReviewerPdf(bytes: Uint8Array): Promise<string>;
   /** Every Member's Card Marks as stored, by card then Member: one row per Member and card. */
   cardMarks(): Promise<CardMark[]>;
   /** Every Member's Quiz Attempts as stored, with their answers, oldest first. */
@@ -78,6 +81,7 @@ const SAMPLE_ARM: MemberArm = {
     store.accessPasses = [...store.accessPasses, structuredClone(pass)];
   },
   uploadCardImage: uploadSampleCardImage,
+  uploadReviewerPdf: (bytes) => uploadSampleReviewerPdf(bytes),
   cardMarks: async () => byCardAndMember(structuredClone(getSampleStore().cardMarks)),
   quizAttempts: async () => structuredClone(getSampleStore().quizAttempts),
 };

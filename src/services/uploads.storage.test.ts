@@ -917,6 +917,21 @@ describe("the Storage arm's Reviewer PDFs (ticket 12)", () => {
     );
   });
 
+  it("reads a page image back for the Admin's preview (ticket 13), and nothing for one not stored", async () => {
+    const { arm, bucket } = fakeBucket();
+    expect(await arm.reviewerPdfFiles.readPage(ID, 2)).toEqual(new Uint8Array([1, 2]));
+    expect(bucket.download).toHaveBeenCalledWith(`${ID}/pages/2.webp`);
+
+    const gone = fakeBucket({ exists: async () => ({ data: false, error: null }) });
+    expect(await gone.arm.reviewerPdfFiles.readPage(ID, 2)).toBeNull();
+    expect(gone.bucket.download).not.toHaveBeenCalled();
+
+    const down = fakeBucket({ download: async () => ({ data: null, error: new Error("down") }) });
+    await expect(down.arm.reviewerPdfFiles.readPage(ID, 2)).rejects.toThrow(
+      "Storage couldn't read a page image: down",
+    );
+  });
+
   it("deletes the original and every page, a thousand at a time", async () => {
     const { arm, bucket } = fakeBucket();
     await arm.reviewerPdfFiles.remove(ID, 1500);

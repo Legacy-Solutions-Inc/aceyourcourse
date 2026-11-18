@@ -10,13 +10,15 @@ import type { AdminError } from "@/services/admin.types";
 import { callAdminAction } from "./call-admin-action";
 import { showSaveFailedToast } from "./save-failed-toast";
 
-interface InstantSaveOptions {
+interface InstantSaveOptions<T> {
   /** What the "Couldn't save" toast names, e.g. the Product's short name. */
   what: string;
   /** What that toast says is kept, e.g. "The switch is back as it was.". */
   kept: string;
   /** What a refused save says, as a plain toast. */
   refused: (error: AdminError) => string;
+  /** What else a save does once it's saved, e.g. a toast saying what changed. */
+  onSaved?: (value: T) => void;
 }
 
 /**
@@ -30,7 +32,7 @@ interface InstantSaveOptions {
  */
 export function useInstantSave<T>(
   action: AdminAction<T>,
-  { what, kept, refused }: InstantSaveOptions,
+  { what, kept, refused, onSaved }: InstantSaveOptions<T>,
 ) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -39,7 +41,9 @@ export function useInstantSave<T>(
     startTransition(async () => {
       optimistic?.();
       const state = await callAdminAction(action, { input });
-      if (state.status === "failed") {
+      if (state.status === "saved") {
+        onSaved?.(state.value);
+      } else if (state.status === "failed") {
         showSaveFailedToast({ what, kept, onRetry: () => save(input, optimistic) });
       } else if (state.status === "refused") {
         toast(refused(state.error));

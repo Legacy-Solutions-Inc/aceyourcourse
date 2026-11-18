@@ -171,6 +171,11 @@ export const paths = {
     sampleUpload: (id: string) => `/api/dev/uploads/${id}`,
     /** Member App content: the Reviewer PDFs, their uploads and progress (ticket 12). */
     reviewerPdfs: "/admin/content/reviewer-pdfs",
+    /** One Reviewer PDF (ticket 13): its preview, placement, Free Preview and status. */
+    reviewerPdf: (id: string) => `/admin/content/reviewer-pdfs/${encodeURIComponent(id)}`,
+    /** One of a Reviewer PDF's clean page images, for its preview (Staff only, never cached). */
+    reviewerPdfPage: (id: string, page: number) =>
+      `/admin/content/reviewer-pdfs/${encodeURIComponent(id)}/pages/${page}`,
   },
   /**
    * The Reviewer PDF job's endpoints (ticket 12), for the server itself and

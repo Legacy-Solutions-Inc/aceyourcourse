@@ -60,6 +60,7 @@ export const MEMBER_DATABASE_ARM: MemberArm = {
   },
   // The Admin's database arm uploads and reads them as the Member seam's does.
   uploadCardImage: (bytes, options) => ADMIN_DATABASE_ARM.uploadCardImage(bytes, options),
+  uploadReviewerPdf: (bytes) => ADMIN_DATABASE_ARM.uploadReviewerPdf(bytes),
   cardMarks: () => ADMIN_DATABASE_ARM.cardMarks(),
   quizAttempts: async () => {
     const db = getDb();

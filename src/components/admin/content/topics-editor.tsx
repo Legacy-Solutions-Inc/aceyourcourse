@@ -10,11 +10,13 @@ import { callAdminAction } from "@/components/admin/call-admin-action";
 import { ConflictNotice } from "@/components/admin/conflict-notice";
 import { ConfirmDelete } from "@/components/admin/confirm-delete";
 import { MoveButtons } from "@/components/admin/move-buttons";
-import type { AdminAction, AdminActionState } from "@/lib/admin/action";
+import type { AdminAction } from "@/lib/admin/action";
 import { topicContentLabels } from "@/lib/admin/topics-view";
 import { paths } from "@/paths";
-import type { AdminError, AdminTopic, AdminTopicList } from "@/services/admin.types";
+import type { AdminTopic, AdminTopicList } from "@/services/admin.types";
 import type { Topic } from "@/services/content.types";
+
+import { nameError, refusalText, useAddTopic } from "./use-add-topic";
 
 export interface TopicsEditorActions {
   addTopic: AdminAction<AdminTopic>;
@@ -28,28 +30,6 @@ interface TopicsEditorProps {
   list: AdminTopicList;
   actions: TopicsEditorActions;
 }
-
-/** What a refused or failed save says, apart from the name field's own message and a conflict. */
-function refusalText(state: AdminActionState<unknown>): string {
-  if (state.status === "failed") return "COULDN’T SAVE · CHECK YOUR CONNECTION AND TRY AGAIN";
-  if (state.status !== "refused") return "";
-  const error: AdminError = state.error;
-  switch (error.kind) {
-    case "invalid":
-      return error.formError ?? "NOT SAVED · CHECK THE NAME";
-    case "forbidden":
-      return error.message;
-    case "not-found":
-      return "THAT TOPIC OR SUBJECT IS GONE · RELOAD THE PAGE";
-    case "conflict":
-      return "NOT SAVED · RELOAD THE PAGE AND TRY AGAIN";
-  }
-}
-
-const nameError = (state: AdminActionState<unknown>) =>
-  state.status === "refused" && state.error.kind === "invalid"
-    ? state.error.fieldErrors.name?.[0]
-    : undefined;
 
 const BUTTON =
   "min-h-9 cursor-pointer border-[1.5px] px-3 text-[13px] font-bold disabled:cursor-wait";
@@ -220,27 +200,14 @@ function TopicRow({
 export function TopicsEditor({ list, actions }: TopicsEditorProps) {
   const router = useRouter();
   const { exam, subject, topics } = list;
-  const [name, setName] = useState("");
-  const [error, setError] = useState<string>();
-  const [pending, startTransition] = useTransition();
-
-  function add(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (pending) return;
-    setError(undefined);
-    startTransition(async () => {
-      const state = await callAdminAction(actions.addTopic, {
-        input: { exam: exam.code, subject: subject.code, name },
-      });
-      if (state.status === "saved") {
-        setName("");
-        toast(`✓ ADDED · ${state.value.name.toUpperCase()}`);
-        router.refresh();
-      } else {
-        setError(nameError(state) ?? refusalText(state));
-      }
-    });
-  }
+  const adding = useAddTopic(
+    actions.addTopic,
+    { exam: exam.code, subject: subject.code },
+    (topic) => {
+      toast(`✓ ADDED · ${topic.name.toUpperCase()}`);
+      router.refresh();
+    },
+  );
 
   return (
     <section
@@ -292,22 +259,22 @@ export function TopicsEditor({ list, actions }: TopicsEditorProps) {
         </p>
       )}
 
-      <form noValidate onSubmit={add} className="flex flex-wrap items-start gap-2.5">
+      <form noValidate onSubmit={adding.submit} className="flex flex-wrap items-start gap-2.5">
         <AdminTextField
           label="NEW TOPIC"
           name="name"
-          value={name}
-          error={error}
+          value={adding.name}
+          error={adding.error}
           placeholder="e.g. Simple Curves"
-          onChange={(event) => setName(event.target.value)}
+          onChange={(event) => adding.setName(event.target.value)}
           className="flex-[1_1_260px]"
         />
         <button
           type="submit"
-          disabled={pending}
+          disabled={adding.pending}
           className={`${BUTTON} mt-[22px] min-h-10 bg-primary px-3.5 text-primary-foreground`}
         >
-          {pending ? "Saving…" : "+ Add topic"}
+          {adding.pending ? "Saving…" : "+ Add topic"}
         </button>
       </form>
       <p className="text-[13px] leading-[1.45]">

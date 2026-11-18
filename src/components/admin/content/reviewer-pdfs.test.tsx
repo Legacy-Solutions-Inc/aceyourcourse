@@ -8,7 +8,8 @@ import type { AdminReviewerPdf } from "@/services/admin.types";
 import type { ReviewerPdfUpload } from "@/services/content.types";
 import type { ReviewerPdfUploadTicket } from "@/services/uploads.types";
 
-import { REFRESH_MS, ReviewerPdfs, type ReviewerPdfsActions } from "./reviewer-pdfs";
+import { REFRESH_MS } from "./reviewer-pdf-parts";
+import { ReviewerPdfs, type ReviewerPdfsActions } from "./reviewer-pdfs";
 
 // The Reviewer PDFs screen (Phase 3, ticket 12; stories 114, 115), with stub
 // Server Actions and a stub upload: a PDF is checked in the browser before

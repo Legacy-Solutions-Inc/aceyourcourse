@@ -150,6 +150,9 @@ describe("sampleReviewerPdfFiles", () => {
       [originalPath(claimed.id), pagePath(claimed.id, 1), pagePath(claimed.id, 2)].sort(),
     );
     expect(getSampleStore().reviewerPdfFiles[pagePath(claimed.id, 2)]).toEqual(new Uint8Array([4]));
+    // The Admin's preview reads them back (ticket 13), and nothing for a page not stored.
+    expect(await sampleReviewerPdfFiles.readPage(claimed.id, 1)).toEqual(image);
+    expect(await sampleReviewerPdfFiles.readPage(claimed.id, 3)).toBeNull();
 
     await sampleReviewerPdfFiles.remove(claimed.id, 2);
     expect(getSampleStore().reviewerPdfFiles).toEqual({});

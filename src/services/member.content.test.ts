@@ -1,10 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { accessDecision } from "@/lib/member-app/access";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
 import { sampleUserId } from "@/services/mock/members";
+import { createFakeRenderer } from "@/services/page-images.fake";
 
 import { sampleActor, UNUSED_EXAM, withUnusedExam } from "../../test/admin-inputs";
 import { MEMBER_ARMS } from "../../test/member-arms";
+import { pdfOfPages } from "../../test/reviewer-pdfs";
 
 // The Member seam's content reads (spec, Phase 3 → Content model and Access
 // decision seam), run against every arm: an Exam's Library, one content item
@@ -147,6 +150,100 @@ describe.each(MEMBER_ARMS)("Member seam content ($name)", (arm) => {
       // A rename keeps the Topic's id, so its content (and later its progress) stays with it.
       const library = await seam.getLibrary("CE");
       expect(library[0]?.topics[0]).toMatchObject({ id: SPIRAL_CURVES, items: [{ kind: "deck" }] });
+    });
+  });
+
+  describe("the Library follows Reviewer PDF publishing (ticket 13)", () => {
+    /** An Editor's upload, split into every page by its job and placed under Surveying: a Draft. */
+    async function placedDraft(): Promise<string> {
+      const path = await arm.uploadReviewerPdf(pdfOfPages(2));
+      const recorded = await arm.admin.recordReviewerPdf(EDITOR, {
+        path,
+        fileName: "Surveying.pdf",
+      });
+      if (!recorded.ok) throw new Error("The Reviewer PDF wasn't recorded");
+      const { id } = recorded.value;
+      while ((await arm.admin.runReviewerPdfJob(id, createFakeRenderer())) === "more");
+      const placed = await arm.admin.placeReviewerPdf(EDITOR, { id, topic: SURVEYING });
+      if (!placed.ok) throw new Error("The Reviewer PDF wasn't placed");
+      return id;
+    }
+
+    const surveying = async () =>
+      (await seam.getLibrary("CE"))[0]?.topics.find((t) => t.id === SURVEYING)?.items;
+
+    /** The access decision for a Member on their Active Device, with no Access Pass. */
+    const decisionFor = (
+      item: Awaited<ReturnType<typeof seam.getContentItem>>,
+      { activeStaff = false } = {},
+    ) => {
+      if (!item) throw new Error("No such item");
+      return accessDecision({
+        gate: "open",
+        device: "active",
+        content: item,
+        activeStaff,
+        passes: [],
+        now: new Date(),
+      });
+    };
+
+    it("shows a Reviewer PDF once it's Published, hides it when Unpublished, and shows it again", async () => {
+      const id = await placedDraft();
+      expect(await surveying()).toEqual([]);
+
+      await arm.admin.setReviewerPdfPublished(EDITOR, id, true);
+      expect(await surveying()).toEqual([{ kind: "reviewer-pdf", id, freePreview: false }]);
+      expect(await seam.getContentItem("reviewer-pdf", id)).toMatchObject({
+        topicName: "Surveying",
+        available: true,
+      });
+
+      await arm.admin.setReviewerPdfPublished(EDITOR, id, false);
+      expect(await surveying()).toEqual([]);
+      expect(await seam.getContentItem("reviewer-pdf", id)).toMatchObject({ available: false });
+
+      await arm.admin.setReviewerPdfPublished(OWNER, id, true);
+      expect(await surveying()).toEqual([{ kind: "reviewer-pdf", id, freePreview: false }]);
+    });
+
+    it("never opens a Draft or an Unpublished one, even for active Staff", async () => {
+      const id = await placedDraft();
+      expect(
+        decisionFor(await seam.getContentItem("reviewer-pdf", id), { activeStaff: true }),
+      ).toEqual({ outcome: "unavailable" });
+
+      await arm.admin.setReviewerPdfPublished(EDITOR, id, true);
+      await arm.admin.setReviewerPdfPublished(EDITOR, id, false);
+      expect(
+        decisionFor(await seam.getContentItem("reviewer-pdf", id), { activeStaff: true }),
+      ).toEqual({ outcome: "unavailable" });
+    });
+
+    it("opens a Published Free Preview one to a Member with no Access Pass, and locks it again when the flag is off", async () => {
+      const id = await placedDraft();
+      await arm.admin.setReviewerPdfFreePreview(EDITOR, id, true);
+      await arm.admin.setReviewerPdfPublished(EDITOR, id, true);
+
+      expect(await surveying()).toEqual([{ kind: "reviewer-pdf", id, freePreview: true }]);
+      expect(decisionFor(await seam.getContentItem("reviewer-pdf", id))).toEqual({
+        outcome: "allowed",
+        via: "free-preview",
+      });
+
+      await arm.admin.setReviewerPdfFreePreview(EDITOR, id, false);
+      expect(decisionFor(await seam.getContentItem("reviewer-pdf", id))).toEqual({
+        outcome: "locked",
+      });
+    });
+
+    it("shows nothing for one placed under a Topic but never Published", async () => {
+      const id = await placedDraft();
+      expect(await seam.getContentItem("reviewer-pdf", id)).toMatchObject({
+        topicName: "Surveying",
+        available: false,
+      });
+      expect(await surveying()).toEqual([]);
     });
   });
 

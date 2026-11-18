@@ -41,16 +41,27 @@ const LABEL = "font-mono text-[11px] font-bold tracking-[0.06em] text-ayc-blue";
 const PLAIN_BUTTON =
   "min-h-8.5 cursor-pointer border-[1.5px] bg-ayc-paper px-3 text-[13px] font-bold hover:bg-ayc-sand";
 
+interface AddExamFormProps {
+  action: AdminAction<AdminExamPage>;
+  /**
+   * What saving does: by default it opens the new Exam's Header in Pages &
+   * promo. A Reviewer PDF's placement (ticket 13) picks the new Exam instead.
+   */
+  onSaved?: (saved: AdminExamPage) => void;
+  /** What Cancel does: by default it goes back to Pages & promo. */
+  onCancel?: () => void;
+}
+
 /** "+ Add exam" (story 80d): the codes, the Header's fields and at least one Subject. */
-export function AddExamForm({ action }: { action: AdminAction<AdminExamPage> }) {
+export function AddExamForm({ action, onSaved, onCancel }: AddExamFormProps) {
   const router = useRouter();
   const form = useAdminForm({
     action,
     initialValues: newExamFormValues(),
     savedAt: NEVER_SAVED,
     valuesFrom: () => newExamFormValues(),
-    // Saving opens the new Exam's Header.
-    onSaved: (saved: AdminExamPage) => router.push(examPagesHref({ exam: saved.exam.code })),
+    onSaved: (saved: AdminExamPage) =>
+      onSaved ? onSaved(saved) : router.push(examPagesHref({ exam: saved.exam.code })),
     title: "The new Exam",
     invalidMessage: INVALID,
   });
@@ -148,13 +159,23 @@ export function AddExamForm({ action }: { action: AdminAction<AdminExamPage> }) 
         savedMessage="✓ ADDED · NOT ON THE SITE UNTIL ONE OF ITS PRODUCTS IS"
         form={form}
         extra={
-          <Link
-            href={examPagesHref({})}
-            scroll={false}
-            className="text-[13px] font-semibold text-muted-foreground hover:underline"
-          >
-            Cancel
-          </Link>
+          onCancel ? (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="min-h-6 cursor-pointer text-[13px] font-semibold text-muted-foreground hover:underline"
+            >
+              Cancel
+            </button>
+          ) : (
+            <Link
+              href={examPagesHref({})}
+              scroll={false}
+              className="text-[13px] font-semibold text-muted-foreground hover:underline"
+            >
+              Cancel
+            </Link>
+          )
         }
       />
     </form>
@@ -163,21 +184,27 @@ export function AddExamForm({ action }: { action: AdminAction<AdminExamPage> }) 
 
 /** "+ Add subject" (story 80e): a Subject's code and name, added last. */
 export function AddSubjectForm({
-  opened,
+  exam,
   action,
+  onSaved,
 }: {
-  opened: AdminExamPage;
+  /** The Exam's code. */
+  exam: string;
   action: AdminAction<AdminExamPage>;
+  /** What else saving does, after reading the page again: a Reviewer PDF's placement picks the new Subject. */
+  onSaved?: (saved: AdminExamPage) => void;
 }) {
   const router = useRouter();
-  const exam = opened.exam.code;
   const blank = () => ({ exam, ...blankSubject() });
   const form = useAdminForm({
     action,
     initialValues: blank(),
     savedAt: NEVER_SAVED,
     valuesFrom: blank,
-    onSaved: () => router.refresh(),
+    onSaved: (saved: AdminExamPage) => {
+      router.refresh();
+      onSaved?.(saved);
+    },
     title: `A new ${exam} Subject`,
     invalidMessage: INVALID,
   });

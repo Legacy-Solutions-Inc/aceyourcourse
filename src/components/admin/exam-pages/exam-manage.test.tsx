@@ -188,7 +188,7 @@ describe("+ Add subject", () => {
   it("sends the Exam and the new Subject, clears the fields, and reads the page again", async () => {
     const user = userEvent.setup();
     const addSubject = answering<AdminExamPage>({ status: "saved", value: chePage() });
-    render(<AddSubjectForm opened={chePage()} action={addSubject} />);
+    render(<AddSubjectForm exam={chePage().exam.code} action={addSubject} />);
     const form = screen.getByRole("form", { name: "Add subject" });
 
     await user.type(within(form).getByLabelText("CODE"), "KIN");
@@ -210,7 +210,7 @@ describe("+ Add subject", () => {
       status: "refused",
       error: { kind: "invalid", fieldErrors: { code: ["PCHEM IS ALREADY A CHE SUBJECT"] } },
     });
-    render(<AddSubjectForm opened={chePage()} action={addSubject} />);
+    render(<AddSubjectForm exam={chePage().exam.code} action={addSubject} />);
 
     await user.type(screen.getByLabelText("CODE"), "pchem");
     await user.type(screen.getByLabelText("NAME"), "Physical Chemistry");

@@ -446,6 +446,13 @@ export function createStorageArm(
       });
       if (error) throw new Error(`Storage couldn't store a page image: ${error.message}`);
     },
+    async readPage(id, page) {
+      const path = pagePath(id, page);
+      if (!(await inPdfBucket(path, "a page image"))) return null;
+      const { data, error } = await pdfBucket().download(path);
+      if (error) throw new Error(`Storage couldn't read a page image: ${error.message}`);
+      return new Uint8Array(await data.arrayBuffer());
+    },
     async remove(id, pageCount) {
       const paths = reviewerPdfPaths(id, pageCount);
       try {

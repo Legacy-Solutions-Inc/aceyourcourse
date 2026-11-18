@@ -1837,7 +1837,32 @@ export const reviewerPdfRecordSchema = z.object({
 
 export type ReviewerPdfRecordInput = z.input<typeof reviewerPdfRecordSchema>;
 
+const reviewerPdfId = z.string().uuid("THAT REVIEWER PDF ISN’T THERE · RELOAD THE PAGE");
+
 /** Delete: the Reviewer PDF, with its original and its page images. */
-export const reviewerPdfIdInputSchema = z.object({
-  id: z.string().uuid("THAT REVIEWER PDF ISN’T THERE · RELOAD THE PAGE"),
+export const reviewerPdfIdInputSchema = z.object({ id: reviewerPdfId });
+
+// ── Reviewer PDFs: placing and publishing (Phase 3, ticket 13) ─────────────
+// An Editor places a Reviewer PDF under a Topic (one Reviewer PDF per Topic;
+// the form's save, with the conflict check), publishes or unpublishes it,
+// and flags it Free Preview (single actions, which always save). The status
+// rules are src/lib/reviewer-pdfs/status.ts.
+
+/** "Save placement": the Reviewer PDF, and the Topic it goes under. */
+export const reviewerPdfPlacementSchema = z.object({
+  id: reviewerPdfId,
+  topic: z
+    .string({ invalid_type_error: "CHOOSE A TOPIC", required_error: "CHOOSE A TOPIC" })
+    .uuid("CHOOSE A TOPIC"),
+});
+
+export type ReviewerPdfPlacementForm = z.input<typeof reviewerPdfPlacementSchema>;
+
+/** Publish (true) or Unpublish (false). */
+export const reviewerPdfPublishedInputSchema = z.object({ id: reviewerPdfId, published: onOrOff });
+
+/** "Free Preview": the Reviewer PDF, and whether Members with no Access Pass can read it. */
+export const reviewerPdfFreePreviewInputSchema = z.object({
+  id: reviewerPdfId,
+  freePreview: onOrOff,
 });

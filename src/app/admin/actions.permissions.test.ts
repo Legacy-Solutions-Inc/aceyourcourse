@@ -326,6 +326,20 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     removeReviewerPdf: staff(() =>
       reviewerPdfs.removeReviewerPdf(IDLE, { input: { id: REVIEWER_PDF } }),
     ),
+    saveReviewerPdfPlacement: editorSave("staff", reviewerPdfs.saveReviewerPdfPlacement, () => ({
+      id: REVIEWER_PDF,
+      topic: SURVEYING,
+    })),
+    saveReviewerPdfPublished: staff(() =>
+      reviewerPdfs.saveReviewerPdfPublished(IDLE, {
+        input: { id: REVIEWER_PDF, published: true },
+      }),
+    ),
+    saveReviewerPdfFreePreview: staff(() =>
+      reviewerPdfs.saveReviewerPdfFreePreview(IDLE, {
+        input: { id: REVIEWER_PDF, freePreview: true },
+      }),
+    ),
   },
   "./(shell)/products/actions.ts": {
     setProductFlag: staff(() =>
@@ -507,13 +521,14 @@ beforeEach(async () => {
   const plannedQuiz = await planQuizImport(READER, quizInput);
   if (!plannedQuiz.ok) throw new Error("The quiz import's files were refused");
   quizImport = { ...quizInput, basedOn: plannedQuiz.value.basedOn };
-  // A Reviewer PDF uploaded and not yet recorded, and a Draft one to delete.
+  // A Reviewer PDF uploaded and not yet recorded, and a Draft one, placed
+  // under Algebra, to move, publish, flag Free Preview and delete.
   afterTheResponse.length = 0;
   reviewerPdfUpload = await uploadSampleReviewerPdf(pdfOfPages(2));
   const store = getSampleStore();
   store.reviewerPdfs = [
     ...store.reviewerPdfs,
-    { id: REVIEWER_PDF, topicId: null, status: "draft", freePreview: false },
+    { id: REVIEWER_PDF, topicId: ALGEBRA, status: "draft", freePreview: false },
   ];
   store.reviewerPdfUploads = {
     [REVIEWER_PDF]: {

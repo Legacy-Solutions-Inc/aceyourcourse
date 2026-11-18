@@ -6,6 +6,7 @@ import { adminWriteLock } from "@/lib/db/admin-locks";
 import { getDb } from "@/lib/db/client";
 import type { Database } from "@/lib/db/connect";
 import { asDatabaseError } from "@/lib/db/errors";
+import { setStamp } from "@/lib/db/record-stamps";
 import * as schema from "@/lib/db/schema";
 import { QUESTION_UPSERT_SET } from "@/lib/db/upsert";
 import { isStorageConfigured } from "@/lib/supabase/admin";
@@ -106,18 +107,6 @@ async function readQuiz(db: Database | Transaction, key: QuizKey): Promise<Topic
     questionStamps,
     seededAt,
   };
-}
-
-/** Sets a record's stamp, as the save's own transaction. */
-async function setStamp(tx: Transaction, record: string, stamp: RecordStamp): Promise<void> {
-  const row = { record, updatedAt: new Date(stamp.savedAt), updatedBy: stamp.savedBy };
-  await tx
-    .insert(schema.recordStamps)
-    .values(row)
-    .onConflictDoUpdate({
-      target: schema.recordStamps.record,
-      set: { updatedAt: row.updatedAt, updatedBy: row.updatedBy },
-    });
 }
 
 const databaseQuizStore: QuizEditorStore = {

@@ -13,6 +13,7 @@ const ADMIN_SUITES = "src/services/admin.*.test.ts";
 /** The Member seam's suites, written over MEMBER_ARMS (test/member-arms.ts). */
 const MEMBER_SUITES = [
   "src/services/member.test.ts",
+  "src/services/member.content.test.ts",
   "src/services/member.target-exams.test.ts",
   "src/services/member.devices.test.ts",
   "src/services/member.study.test.ts",
@@ -127,6 +128,7 @@ export default defineConfig({
         // Drizzle DB layer: its query bodies only run against a live Postgres,
         // so the database tests (`pnpm test:db`) check them, not coverage.
         "src/lib/db/client.ts",
+        "src/lib/db/record-stamps.ts",
         "src/services/*.db.ts",
         "**/*.d.ts",
         // The seams' type-only modules (catalogue.types.ts, admin.types.ts):

@@ -31,6 +31,7 @@ import type {
   RenameTopicForm,
   ReviewForm,
   ReviewMove,
+  ReviewerPdfPlacementForm,
   ReviewerPdfRecordInput,
   SubjectNamesForm,
   TopicMove,
@@ -69,6 +70,8 @@ import type {
   DeletedProduct,
   DeletedQuestion,
   AdminReviewerPdf,
+  AdminReviewerPdfDetail,
+  AdminReviewerPdfScreen,
   ReviewerPdfRun,
   StaleReviewerPdfJobs,
   DeletedReview,
@@ -757,6 +760,52 @@ export interface AdminService {
    */
   restartStaleReviewerPdfJobs(): Promise<StaleReviewerPdfJobs>;
 
+  // Placing, previewing and publishing a Reviewer PDF (any Staff User; Phase
+  // 3, ticket 13; stories 116, 128, 133o). Statuses go Draft → Published ⇄
+  // Unpublished (src/lib/reviewer-pdfs/status.ts): publishing needs a Topic
+  // and a job that split every page. One Reviewer PDF per Topic. Only a
+  // Published one is in the Member App. Each change appends one Staff
+  // Activity record; placing runs the conflict check, while Publish,
+  // Unpublish and Free Preview always save. A new Topic for it is made with
+  // createTopic, by the Topics editor's rules.
+
+  /** One Reviewer PDF's screen, with every Topic it can be placed under, or null. */
+  getReviewerPdfForAdmin(actor: StaffActor, id: string): Promise<AdminReviewerPdfScreen | null>;
+  /**
+   * One of a Reviewer PDF's clean page images, for its preview (Staff only),
+   * or null for a page its job hasn't stored. Never for a Member.
+   */
+  getReviewerPdfPageForAdmin(
+    actor: StaffActor,
+    id: string,
+    page: number,
+  ): Promise<Uint8Array | null>;
+  /**
+   * Places a Reviewer PDF under a Topic, against the placement's stamp when
+   * its form opened. Refused for a Topic that has another Reviewer PDF, a
+   * Topic that's gone, and a Failed one.
+   */
+  placeReviewerPdf(
+    actor: StaffActor,
+    input: ReviewerPdfPlacementForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminReviewerPdfDetail>>;
+  /**
+   * Publishes (true) or unpublishes (false) a Reviewer PDF. Publishing is
+   * refused without a Topic, while Processing, once Failed, and with no pages.
+   */
+  setReviewerPdfPublished(
+    actor: StaffActor,
+    id: string,
+    published: boolean,
+  ): Promise<AdminResult<AdminReviewerPdfDetail>>;
+  /** Flags a Reviewer PDF Free Preview, or not: Members with no Access Pass read it once Published. */
+  setReviewerPdfFreePreview(
+    actor: StaffActor,
+    id: string,
+    freePreview: boolean,
+  ): Promise<AdminResult<AdminReviewerPdfDetail>>;
+
   // Site pages (any Staff User; ticket 20; spec, Phase 2 → Site pages). Each
   // of the Website's five Site pages: its SEO title and description (blank
   // uses the text in code) and its share image, with an Exam page's rules.
@@ -927,6 +976,11 @@ export const recordReviewerPdf = impl.recordReviewerPdf;
 export const deleteReviewerPdf = impl.deleteReviewerPdf;
 export const runReviewerPdfJob = impl.runReviewerPdfJob;
 export const restartStaleReviewerPdfJobs = impl.restartStaleReviewerPdfJobs;
+export const getReviewerPdfForAdmin = impl.getReviewerPdfForAdmin;
+export const getReviewerPdfPageForAdmin = impl.getReviewerPdfPageForAdmin;
+export const placeReviewerPdf = impl.placeReviewerPdf;
+export const setReviewerPdfPublished = impl.setReviewerPdfPublished;
+export const setReviewerPdfFreePreview = impl.setReviewerPdfFreePreview;
 export const getSitePageForAdmin = impl.getSitePageForAdmin;
 export const updateSitePageSeo = impl.updateSitePageSeo;
 export const getAboutForAdmin = impl.getAboutForAdmin;

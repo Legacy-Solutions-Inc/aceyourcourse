@@ -122,6 +122,11 @@ export interface ReviewerPdfFiles {
   /** Stores page `page`'s image, replacing any stored before. Throws when it can't. */
   putPage(id: string, page: number, image: Uint8Array): Promise<void>;
   /**
+   * Page `page`'s clean image (ticket 13), or null when it isn't stored.
+   * Never sent to a Member as it is. Throws when Storage can't say.
+   */
+  readPage(id: string, page: number): Promise<Uint8Array | null>;
+  /**
    * Deletes a Reviewer PDF's original and its page images, 1 to `pageCount`.
    * Logs a failure, and never throws.
    */

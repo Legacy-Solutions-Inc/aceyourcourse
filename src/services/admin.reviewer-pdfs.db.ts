@@ -1,15 +1,16 @@
 import "server-only";
 
-import { and, eq, isNotNull, isNull, lte, or } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, lte, or } from "drizzle-orm";
 
 import { adminWriteLock } from "@/lib/db/admin-locks";
 import { getDb } from "@/lib/db/client";
 import type { Database } from "@/lib/db/connect";
 import { asDatabaseError } from "@/lib/db/errors";
+import { setStamp } from "@/lib/db/record-stamps";
 import * as schema from "@/lib/db/schema";
 import { STALE_AFTER_MS } from "@/lib/reviewer-pdfs/job";
 import { isStorageConfigured } from "@/lib/supabase/admin";
-import { staffActivityToRow } from "@/services/admin.rows";
+import { SEEDED_RECORD, staffActivityToRow, stampsFromRows } from "@/services/admin.rows";
 import type { AdminReviewerPdf } from "@/services/admin.types";
 import type { ReviewerPdfUpload } from "@/services/content.types";
 import {
@@ -17,6 +18,8 @@ import {
   type ReviewerPdfJob,
   type ReviewerPdfJobs,
   reviewerPdfCalls,
+  type ReviewerPdfRecord,
+  reviewerPdfRecordOf,
 } from "@/services/reviewer-pdfs.core";
 import { sampleReviewerPdfFiles } from "@/services/uploads.mock";
 import { storageArm } from "@/services/uploads.storage";
@@ -32,7 +35,13 @@ import { storageArm } from "@/services/uploads.storage";
 // the row still says what the run expects (Processing, at that count), so
 // two runs, a run and a delete, or a run and the cron never both win. Times
 // come from the server's clock, never the database's, as the job's rules
-// read them.
+// read them. Ticket 13's writes (placing, publishing, Free Preview) take the
+// content write lock too, lock the row and read it, every Topic and the
+// placement's stamp again, and write only the columns they changed (its
+// Topic, status or Free Preview), the stamp and Staff Activity, in one
+// transaction. The job's runs don't take the content lock, so the row lock
+// and the changed-columns-only update keep a save from writing back a status
+// a run changed meanwhile.
 // Files are in Storage's private Reviewer PDFs bucket, or, without Storage
 // (database tests with no secret key), in the sample data's.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -76,6 +85,50 @@ async function readPdfs(db: Database | Transaction, id?: string): Promise<AdminR
     upload: uploadOf(pdf),
     placement: placementOf(topic),
   }));
+}
+
+/**
+ * One Reviewer PDF, with every Topic and its placement's stamp, read on `db`,
+ * or null. A save locks its row (`forUpdate`), so a job's run that would
+ * change it waits until the save is done.
+ */
+async function readRecord(
+  db: Database | Transaction,
+  id: string,
+  { forUpdate = false } = {},
+): Promise<ReviewerPdfRecord | null> {
+  const { reviewerPdfs, topics, recordStamps } = schema;
+  const selected = db.select().from(reviewerPdfs).where(eq(reviewerPdfs.id, id));
+  const [row] = await (forUpdate ? selected.for("update") : selected);
+  if (!row) return null;
+  const topicRows = await db
+    .select({ topic: topics, reviewerPdfId: reviewerPdfs.id })
+    .from(topics)
+    .leftJoin(reviewerPdfs, eq(reviewerPdfs.topicId, topics.id));
+  const stampRows = await db
+    .select()
+    .from(recordStamps)
+    .where(inArray(recordStamps.record, [SEEDED_RECORD, reviewerPdfRecordOf(id)]));
+  const { seededAt, stamps } = stampsFromRows(stampRows);
+  return {
+    pdf: { id: row.id, topicId: row.topicId, status: row.status, freePreview: row.freePreview },
+    upload: uploadOf(row),
+    topics: topicRows.map(({ topic, reviewerPdfId }) => ({ ...topic, reviewerPdfId })),
+    stamp: stamps[reviewerPdfRecordOf(id)] ?? null,
+    seededAt,
+  };
+}
+
+/** Pure: the record's columns a write changed: its Topic, status and Free Preview. */
+function changedColumns(
+  before: ReviewerPdfRecord["pdf"],
+  after: ReviewerPdfRecord["pdf"],
+): Partial<typeof schema.reviewerPdfs.$inferInsert> {
+  return {
+    ...(after.topicId !== before.topicId ? { topicId: after.topicId } : {}),
+    ...(after.status !== before.status ? { status: after.status } : {}),
+    ...(after.freePreview !== before.freePreview ? { freePreview: after.freePreview } : {}),
+  };
 }
 
 /** Runs a database call, naming an unreachable database for what it is. */
@@ -162,6 +215,32 @@ const calls = reviewerPdfCalls({
   files: isStorageConfigured ? storageArm.reviewerPdfFiles : sampleReviewerPdfFiles,
   jobs,
   list: () => onDatabase(() => readPdfs(getDb())),
+  read: (id) =>
+    onDatabase(() =>
+      getDb().transaction((tx) => readRecord(tx, id), {
+        isolationLevel: "repeatable read",
+        accessMode: "read only",
+      }),
+    ),
+  save: (id, plan) =>
+    onDatabase(() =>
+      getDb().transaction(async (tx) => {
+        await tx.execute(adminWriteLock("content"));
+        const current = await readRecord(tx, id, { forUpdate: true });
+        const planned = plan(current);
+        if (!planned.ok || !planned.writes || !current) return planned;
+        const { pdf, stamp, activity } = planned.writes;
+        // Only what the write changed: the job's own columns, and its status
+        // while it's Processing, stay the job's.
+        const changed = changedColumns(current.pdf, pdf);
+        if (Object.keys(changed).length > 0) {
+          await tx.update(reviewerPdfs).set(changed).where(eq(reviewerPdfs.id, id));
+        }
+        if (stamp) await setStamp(tx, reviewerPdfRecordOf(id), stamp);
+        await tx.insert(schema.staffActivity).values(staffActivityToRow(activity));
+        return planned;
+      }),
+    ),
   add: (id, upload, activity) =>
     onDatabase(() =>
       getDb().transaction(async (tx) => {
@@ -196,6 +275,9 @@ const calls = reviewerPdfCalls({
         const [pdf] = await readPdfs(tx, id);
         if (!pdf) return null;
         await tx.delete(reviewerPdfs).where(eq(reviewerPdfs.id, id));
+        await tx
+          .delete(schema.recordStamps)
+          .where(eq(schema.recordStamps.record, reviewerPdfRecordOf(id)));
         await tx.insert(schema.staffActivity).values(staffActivityToRow(activityOf(pdf)));
         return pdf;
       }),
@@ -208,4 +290,9 @@ export const {
   deleteReviewerPdf,
   runReviewerPdfJob,
   restartStaleReviewerPdfJobs,
+  getReviewerPdfForAdmin,
+  getReviewerPdfPageForAdmin,
+  placeReviewerPdf,
+  setReviewerPdfPublished,
+  setReviewerPdfFreePreview,
 } = calls;

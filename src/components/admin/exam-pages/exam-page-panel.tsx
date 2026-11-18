@@ -78,7 +78,9 @@ export function ExamPagePanel({ opened, selected, actions, today, manage }: Exam
             action={actions.saveSubjects}
             removeSubject={manage?.removeSubject}
           />
-          {manage ? <AddSubjectForm key={key} opened={opened} action={manage.addSubject} /> : null}
+          {manage ? (
+            <AddSubjectForm key={key} exam={opened.exam.code} action={manage.addSubject} />
+          ) : null}
         </>
       );
       break;

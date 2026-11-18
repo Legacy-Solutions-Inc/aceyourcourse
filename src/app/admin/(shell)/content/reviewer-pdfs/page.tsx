@@ -15,7 +15,8 @@ export const metadata: Metadata = { title: "Reviewer PDFs" };
  * The Reviewer PDFs, for any Staff User (Phase 3, ticket 12; stories 114,
  * 115; BUILD-MAP §3.5), read fresh on every request: upload one, follow each
  * job's progress until it's a Draft (or Failed, with the fix to try), and
- * delete one. Placing, previewing and publishing come with ticket 13.
+ * delete one. Each one's name opens its screen (ticket 13): placing,
+ * previewing and publishing.
  */
 export default async function ReviewerPdfsPage() {
   const actor = await requireStaff(paths.admin.reviewerPdfs);

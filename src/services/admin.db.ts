@@ -838,6 +838,11 @@ export const databaseArm: AdminService = {
   deleteReviewerPdf: reviewerPdfs.deleteReviewerPdf,
   runReviewerPdfJob: reviewerPdfs.runReviewerPdfJob,
   restartStaleReviewerPdfJobs: reviewerPdfs.restartStaleReviewerPdfJobs,
+  getReviewerPdfForAdmin: reviewerPdfs.getReviewerPdfForAdmin,
+  getReviewerPdfPageForAdmin: reviewerPdfs.getReviewerPdfPageForAdmin,
+  placeReviewerPdf: reviewerPdfs.placeReviewerPdf,
+  setReviewerPdfPublished: reviewerPdfs.setReviewerPdfPublished,
+  setReviewerPdfFreePreview: reviewerPdfs.setReviewerPdfFreePreview,
 
   getSitePageForAdmin: read(CATALOGUE, sampleArm.getSitePageForAdmin),
   updateSitePageSeo: stampedWrite(sampleArm.updateSitePageSeo),

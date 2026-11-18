@@ -344,6 +344,9 @@ export const sampleReviewerPdfFiles: ReviewerPdfFiles = {
     const store = getSampleStore();
     store.reviewerPdfFiles = { ...store.reviewerPdfFiles, [pagePath(id, page)]: image.slice() };
   },
+  async readPage(id, page) {
+    return getSampleStore().reviewerPdfFiles[pagePath(id, page)]?.slice() ?? null;
+  },
   async remove(id, pageCount) {
     const store = getSampleStore();
     const files = { ...store.reviewerPdfFiles };

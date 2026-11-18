@@ -630,6 +630,34 @@ export interface AdminReviewerPdf {
 }
 
 /**
+ * One Reviewer PDF as its screen shows it (ticket 13): as listed, with the
+ * Topic it's placed under by id, whether it's Free Preview, and its
+ * placement's last save, the stamp the placement form's conflict check reads.
+ */
+export interface AdminReviewerPdfDetail extends AdminReviewerPdf {
+  topicId: string | null;
+  freePreview: boolean;
+  stamp: RecordStamp;
+}
+
+/** A Topic a Reviewer PDF can be placed under, with the one already there (one per Topic). */
+export interface PlacementTopic {
+  id: string;
+  examCode: string;
+  subjectCode: string;
+  name: string;
+  position: number;
+  /** The Reviewer PDF placed under it, or null. */
+  reviewerPdfId: string | null;
+}
+
+/** A Reviewer PDF's screen: the Reviewer PDF, and every Topic it can be placed under. */
+export interface AdminReviewerPdfScreen {
+  pdf: AdminReviewerPdfDetail;
+  topics: PlacementTopic[];
+}
+
+/**
  * What one run of the Reviewer PDF job did: rendered its pages with more to
  * come ("more", so the next run starts), rendered the last page ("done", a
  * Draft now), failed it ("failed"), or found nothing for it to do

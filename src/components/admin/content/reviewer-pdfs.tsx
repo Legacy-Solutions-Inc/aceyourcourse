@@ -1,20 +1,28 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type DragEvent, useEffect, useId, useRef, useState, useTransition } from "react";
+import { type DragEvent, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { callAdminAction } from "@/components/admin/call-admin-action";
-import { TypedDeleteDialog } from "@/components/admin/typed-delete-dialog";
-import type { AdminAction, AdminActionState } from "@/lib/admin/action";
-import { formatDateTime } from "@/lib/manila-time";
-import { failureMessage, percentDone, progressLabel } from "@/lib/reviewer-pdfs/job";
-import { fileSizeLabel, PDF_CONTENT_TYPE, pdfFileProblem } from "@/lib/reviewer-pdfs/pdf-file";
+import type { AdminAction } from "@/lib/admin/action";
+import { percentDone, progressLabel } from "@/lib/reviewer-pdfs/job";
+import { PDF_CONTENT_TYPE, pdfFileProblem } from "@/lib/reviewer-pdfs/pdf-file";
 import { cn } from "@/lib/utils";
+import { paths } from "@/paths";
 import type { AdminReviewerPdf } from "@/services/admin.types";
-import type { ReviewerPdfStatus } from "@/services/content.types";
 import type { ReviewerPdfUploadTicket } from "@/services/uploads.types";
 
+import {
+  DeletePdf,
+  nameOf,
+  refusalOf,
+  SplitFailure,
+  StatusChip,
+  uploadLine,
+  useRefreshWhileProcessing,
+} from "./reviewer-pdf-parts";
 import { sendReviewerPdf } from "./send-reviewer-pdf";
 
 export interface ReviewerPdfsActions {
@@ -30,42 +38,12 @@ interface ReviewerPdfsProps {
   actions: ReviewerPdfsActions;
 }
 
-/** How often the list reads itself again while a job is Processing. */
-export const REFRESH_MS = 3000;
-
 const LABEL = "font-mono text-[11px] font-bold tracking-[0.06em]";
 const BUTTON =
   "inline-flex min-h-10 cursor-pointer items-center border-[1.5px] px-4 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60";
 
-const STATUS_STYLE: Record<ReviewerPdfStatus, string> = {
-  processing: "border-ayc-blue text-ayc-blue",
-  draft: "border-foreground text-foreground",
-  published: "border-ayc-success text-ayc-success",
-  unpublished: "border-muted-foreground text-muted-foreground",
-  failed: "border-destructive text-destructive",
-};
-
 const DIDNT_UPLOAD = "COULDN’T UPLOAD IT · CHECK YOUR CONNECTION AND TRY AGAIN";
 const UPLOAD_STOPPED = "THE UPLOAD STOPPED · CHECK YOUR CONNECTION AND UPLOAD IT AGAIN";
-
-/** Pure: what a refused or failed action says to the Editor. */
-function refusalOf(state: AdminActionState<unknown>, failed: string): string {
-  if (state.status !== "refused") return failed;
-  const { error } = state;
-  if (error.kind === "forbidden") return error.message;
-  if (error.kind === "invalid") {
-    const field = Object.values(error.fieldErrors).flat()[0];
-    return error.formError ?? field ?? failed;
-  }
-  return failed;
-}
-
-/**
- * Pure: a Reviewer PDF's name in the list: its file's, or, for the sample
- * data's (which have no file), its Topic's.
- */
-const nameOf = ({ upload, placement }: AdminReviewerPdf) =>
-  upload?.fileName ?? `${placement?.topicName ?? "Sample"} Reviewer PDF`;
 
 type UploadState =
   | { kind: "idle" }
@@ -228,69 +206,6 @@ function PdfUpload({
   );
 }
 
-/** Delete, behind the typed confirmation (BUILD-MAP §2: deleteReviewer). */
-function DeletePdf({
-  pdf,
-  remove,
-  onDeleted,
-}: {
-  pdf: AdminReviewerPdf;
-  remove: AdminAction<AdminReviewerPdf>;
-  onDeleted: () => void;
-}) {
-  const name = nameOf(pdf);
-  const [open, setOpen] = useState(false);
-  const [error, setError] = useState<string | undefined>();
-  const [pending, startTransition] = useTransition();
-
-  function confirm() {
-    setError(undefined);
-    startTransition(async () => {
-      const state = await callAdminAction(remove, { input: { id: pdf.id } });
-      if (state.status === "saved") {
-        setOpen(false);
-        toast(`✓ DELETED · ${name}`);
-        onDeleted();
-      } else if (state.status === "refused" && state.error.kind === "not-found") {
-        setError("IT’S ALREADY DELETED · RELOAD THE PAGE");
-      } else {
-        setError(refusalOf(state, "COULDN’T DELETE IT · CHECK YOUR CONNECTION AND TRY AGAIN"));
-      }
-    });
-  }
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => {
-          setError(undefined);
-          setOpen(true);
-        }}
-        aria-label={`Delete ${name}`}
-        className="min-h-6 cursor-pointer text-[13px] font-semibold text-destructive hover:underline"
-      >
-        Delete
-      </button>
-      <TypedDeleteDialog
-        open={open}
-        onOpenChange={setOpen}
-        tag="DELETE REVIEWER PDF"
-        title={`Delete “${name}”?`}
-        description={
-          pdf.status === "processing"
-            ? "Splitting it into pages stops. The original PDF and every page image are deleted from storage."
-            : "Its pages are removed from the Member App, and Members lose their place in it. The original PDF and every page image are deleted from storage."
-        }
-        confirmLabel="Delete Reviewer PDF"
-        onConfirm={confirm}
-        pending={pending}
-        error={error}
-      />
-    </>
-  );
-}
-
 /** One Reviewer PDF: its file, where it's placed, its status and progress, and why it failed. */
 function PdfRow({
   pdf,
@@ -308,33 +223,26 @@ function PdfRow({
     pageCount: upload?.pageCount ?? null,
     pagesDone: upload?.pagesDone ?? 0,
   });
-  const failure = status === "failed" && upload?.failure ? failureMessage(upload.failure) : null;
   const done = status === "processing" && upload ? percentDone(upload) : null;
 
   return (
     <li className="flex flex-col gap-2 border-b border-ayc-ruled px-3.5 py-3 last:border-b-0">
       <div className="flex flex-wrap items-start gap-x-3 gap-y-1">
         <div className="flex min-w-0 flex-[1_1_220px] flex-col gap-0.5">
-          <span className="text-sm font-semibold wrap-anywhere">{name}</span>
-          <span className="font-mono text-[11px] text-muted-foreground">
-            {upload
-              ? `${fileSizeLabel(upload.fileSize)} · UPLOADED ${formatDateTime(upload.uploadedAt).toUpperCase()}`
-              : "FROM THE SAMPLE DATA · NO FILE"}
-          </span>
+          <Link
+            href={paths.admin.reviewerPdf(pdf.id)}
+            className="w-fit text-sm font-semibold wrap-anywhere text-ayc-blue underline-offset-2 hover:underline"
+          >
+            {name}
+          </Link>
+          <span className="font-mono text-[11px] text-muted-foreground">{uploadLine(pdf)}</span>
           <span className="text-xs text-muted-foreground">
             {placement
               ? `${placement.examCode} › ${placement.subjectCode} › ${placement.topicName}`
               : "Not placed under a Topic yet"}
           </span>
         </div>
-        <span
-          className={cn(
-            "border-[1.5px] px-1.5 py-1 font-mono text-[10px] leading-none font-bold",
-            STATUS_STYLE[status],
-          )}
-        >
-          {status.toUpperCase()}
-        </span>
+        <StatusChip status={status} />
         <DeletePdf pdf={pdf} remove={actions.removeReviewerPdf} onDeleted={onChanged} />
       </div>
       <p className="font-mono text-xs font-medium">{progress}</p>
@@ -350,14 +258,7 @@ function PdfRow({
           <span className="block h-full bg-ayc-blue" style={{ width: `${done}%` }} />
         </div>
       ) : null}
-      {failure ? (
-        <div className="flex flex-col gap-1 border-[1.5px] border-destructive bg-white px-3 py-2.5">
-          <span className="text-sm font-bold text-destructive">Couldn’t split this PDF</span>
-          <span className="text-[13px] leading-normal">
-            {failure.reason} {failure.fix}
-          </span>
-        </div>
-      ) : null}
+      <SplitFailure pdf={pdf} />
     </li>
   );
 }
@@ -368,17 +269,12 @@ function PdfRow({
  * ("Processing · 75 of 312 pages"), which reads itself again every few
  * seconds while any is Processing, so the Editor sees each one become a Draft
  * or fail with the fix to try. Delete removes one, its original and its page
- * images. Placing, previewing and publishing come with ticket 13.
+ * images. Each one's name opens its own screen (ticket 13), where it's
+ * placed, previewed and published.
  */
 export function ReviewerPdfs({ pdfs, actions }: ReviewerPdfsProps) {
   const router = useRouter();
-  const processing = pdfs.some((pdf) => pdf.status === "processing");
-
-  useEffect(() => {
-    if (!processing) return;
-    const timer = setInterval(() => router.refresh(), REFRESH_MS);
-    return () => clearInterval(timer);
-  }, [processing, router]);
+  useRefreshWhileProcessing(pdfs.some((pdf) => pdf.status === "processing"));
 
   return (
     <div className="flex flex-col gap-4">

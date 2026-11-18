@@ -75,8 +75,10 @@ const READS = [
   "planQuizImport",
   "getQuizForAdmin",
   "getQuestionFigureForAdmin",
-  // The Reviewer PDFs screen (ticket 12).
+  // The Reviewer PDFs screen (ticket 12), and one Reviewer PDF's screen and preview (ticket 13).
   "listReviewerPdfsForAdmin",
+  "getReviewerPdfForAdmin",
+  "getReviewerPdfPageForAdmin",
 ] as const satisfies readonly (keyof AdminService)[];
 
 /**
@@ -225,6 +227,19 @@ async function withReviewerPdf(seam: AdminService, arm: AdminArm) {
   });
   if (!recorded.ok) throw new Error("The Reviewer PDF wasn't recorded");
   reviewerPdf.id = recorded.value.id;
+}
+
+/** Uploads a Reviewer PDF and splits it into pages: a Draft, ready to place. */
+async function withSplitReviewerPdf(seam: AdminService, arm: AdminArm) {
+  await withReviewerPdf(seam, arm);
+  while ((await seam.runReviewerPdfJob(reviewerPdf.id, createFakeRenderer())) === "more");
+}
+
+/** A Draft Reviewer PDF placed under Surveying: ready to publish. */
+async function withPlacedReviewerPdf(seam: AdminService, arm: AdminArm) {
+  await withSplitReviewerPdf(seam, arm);
+  const placed = await seam.placeReviewerPdf(EDITOR, { id: reviewerPdf.id, topic: SURVEYING });
+  if (!placed.ok) throw new Error("The Reviewer PDF wasn't placed");
 }
 
 const WRITES: Record<string, Write> = {
@@ -871,6 +886,33 @@ const WRITES: Record<string, Write> = {
     setUp: withReviewerPdf,
     saves: (seam, actor) => seam.deleteReviewerPdf(actor, reviewerPdf.id),
     refused: (seam, actor) => seam.deleteReviewerPdf(actor, UNKNOWN_TOPIC),
+    refusal: "not-found",
+  },
+  placeReviewerPdf: {
+    actor: EDITOR,
+    entity: "reviewer-pdf",
+    entityId: null,
+    setUp: withSplitReviewerPdf,
+    saves: (seam, actor) => seam.placeReviewerPdf(actor, { id: reviewerPdf.id, topic: SURVEYING }),
+    refused: (seam, actor) => seam.placeReviewerPdf(actor, { id: UNKNOWN_TOPIC, topic: SURVEYING }),
+    refusal: "not-found",
+  },
+  setReviewerPdfPublished: {
+    actor: EDITOR,
+    entity: "reviewer-pdf",
+    entityId: null,
+    setUp: withPlacedReviewerPdf,
+    saves: (seam, actor) => seam.setReviewerPdfPublished(actor, reviewerPdf.id, true),
+    refused: (seam, actor) => seam.setReviewerPdfPublished(actor, UNKNOWN_TOPIC, true),
+    refusal: "not-found",
+  },
+  setReviewerPdfFreePreview: {
+    actor: EDITOR,
+    entity: "reviewer-pdf",
+    entityId: null,
+    setUp: withReviewerPdf,
+    saves: (seam, actor) => seam.setReviewerPdfFreePreview(actor, reviewerPdf.id, true),
+    refused: (seam, actor) => seam.setReviewerPdfFreePreview(actor, UNKNOWN_TOPIC, true),
     refusal: "not-found",
   },
   updatePromoBanner: {
