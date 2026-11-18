@@ -15,6 +15,7 @@ const MEMBER_SUITES = [
   "src/services/member.test.ts",
   "src/services/member.target-exams.test.ts",
   "src/services/member.devices.test.ts",
+  "src/services/member.study.test.ts",
 ];
 /** Admin tests that aren't written over ADMIN_ARMS. */
 const NOT_ADMIN_SUITES = [

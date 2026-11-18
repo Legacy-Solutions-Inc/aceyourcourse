@@ -273,6 +273,16 @@ async function load(
     get contentFiles() {
       return notLoaded("the private content bucket");
     },
+    // The Member seam reads and writes the study records itself (ticket 08).
+    get studyDays() {
+      return notLoaded("the Study Days");
+    },
+    get deckPositions() {
+      return notLoaded("the deck positions");
+    },
+    get signedFiles() {
+      return notLoaded("the signed card image URLs");
+    },
     get quizzes() {
       return contentPart().quizzes;
     },

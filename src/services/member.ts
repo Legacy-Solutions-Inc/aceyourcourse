@@ -1,14 +1,18 @@
 import { isDatabaseConfigured } from "@/env.server";
+import type { MemberAccess } from "@/lib/member-app/access";
 import type { DeviceStatus } from "@/lib/member-app/device-token";
-import type { AccessPass, ContentKind } from "@/services/content.types";
+import type { AccessPass, CardMark, ContentKind, DeckPosition } from "@/services/content.types";
 import { databaseArm } from "@/services/member.db";
 import * as mockImpl from "@/services/member.mock";
 import type {
   ActiveDevice,
   AddedTargetExam,
   AgreedVersions,
+  CardMarkInput,
   ConsentRecord,
   ContentItem,
+  DeckOpening,
+  DeckPositionInput,
   DeviceClaim,
   DeviceSwitch,
   LibrarySubject,
@@ -16,6 +20,7 @@ import type {
   MemberUser,
   NewTargetExam,
   PickableExam,
+  StudyResult,
   TargetExam,
   TargetExamResult,
 } from "@/services/member.types";
@@ -31,7 +36,7 @@ import type {
 // The seam trusts its caller for who is signed in: the Member App gate
 // (src/lib/member-app/guard.ts) passes the User that sign-in verified, never
 // anything the browser sent. Each read and write is scoped to that User's own
-// records. Later tickets add the study records.
+// records, the study records too (Card Marks, Study Days and deck positions).
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** The seam's public contract, checked against each arm below. */
@@ -156,6 +161,47 @@ export interface MemberService {
    * ever their own. Throws for a User id that isn't one.
    */
   listAccessPasses(userId: string): Promise<AccessPass[]>;
+
+  // Studying a deck (spec, Phase 3 → Progress storage and Resume; ticket 08;
+  // deck-study.core.ts). Each call takes the signed-in Member's side of the
+  // access decision, which the server gathered for this request
+  // (src/lib/member-app/access-check.ts), and decides the deck with it first:
+  // a refused deck's cards are never given out, and nothing is written. Each
+  // is scoped to the User id given.
+
+  /**
+   * Opens a deck. When the access decision allows it: its cards in order, each
+   * back image as a signed URL from the private bucket that stops working
+   * after about 10 minutes, the Member's latest mark on each card, and the
+   * card they left the deck at. Refused (locked, expired, Hidden, a replaced
+   * device): the decision and how many of its cards they had marked, with no
+   * card. Not found for an id that isn't a deck's.
+   */
+  openDeck(userId: string, deckId: string, access: MemberAccess): Promise<DeckOpening>;
+  /**
+   * Saves the Member's mark on a card, replacing their earlier one (the latest
+   * wins), and records the day it's marked, in Asia/Manila, as a Study Day,
+   * once per day. Refused, changing nothing, when the access decision refuses
+   * the card's deck; not found for a card that isn't one. Throws for a
+   * verdict that isn't one, and a User with no Member record.
+   */
+  markCard(
+    userId: string,
+    input: CardMarkInput,
+    access: MemberAccess,
+  ): Promise<StudyResult<CardMark>>;
+  /**
+   * Saves the card the Member is on in a deck, which the deck then opens at;
+   * with no card, clears it, once they finish the deck. Refused like
+   * markCard; not found for a deck that isn't one or a card not in it.
+   */
+  saveDeckPosition(
+    userId: string,
+    input: DeckPositionInput,
+    access: MemberAccess,
+  ): Promise<StudyResult<DeckPosition | null>>;
+  /** The Member's Study Days, oldest first, as Asia/Manila dates (YYYY-MM-DD). */
+  listStudyDays(userId: string): Promise<string[]>;
 }
 
 const impl: MemberService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -178,3 +224,7 @@ export const deviceSwitchCount = impl.deviceSwitchCount;
 export const getLibrary = impl.getLibrary;
 export const getContentItem = impl.getContentItem;
 export const listAccessPasses = impl.listAccessPasses;
+export const openDeck = impl.openDeck;
+export const markCard = impl.markCard;
+export const saveDeckPosition = impl.saveDeckPosition;
+export const listStudyDays = impl.listStudyDays;

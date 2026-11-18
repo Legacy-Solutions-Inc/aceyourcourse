@@ -311,6 +311,18 @@ export function createStorageArm(connect: () => StorageConnection): StorageArm {
       const { error } = await contentBucket().upload(path, bytes, { contentType, upsert: false });
       if (error) throw new Error(`Storage couldn't store a card image: ${error.message}`);
     },
+    async signedUrls(paths, seconds) {
+      const wanted = [...new Set(paths)].filter(isCardImagePath);
+      if (wanted.length === 0) return {};
+      const { data, error } = await contentBucket().createSignedUrls(wanted, seconds);
+      if (error) throw new Error(`Storage couldn't sign card images: ${error.message}`);
+      // A file that's gone comes back with its own error, and gets no URL.
+      return Object.fromEntries(
+        data.flatMap(({ path, signedUrl, error: missing }) =>
+          path && !missing ? [[path, signedUrl]] : [],
+        ),
+      );
+    },
     async remove(paths) {
       if (paths.length === 0) return;
       try {

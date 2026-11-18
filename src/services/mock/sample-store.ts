@@ -16,8 +16,10 @@ import type {
   Card,
   CardMark,
   Deck,
+  DeckPosition,
   Quiz,
   ReviewerPdf,
+  StudyDay,
   Topic,
 } from "@/services/content.types";
 import type { TargetExamRecord } from "@/services/member.rules";
@@ -69,6 +71,13 @@ export interface SampleContentFile {
   bytes: Uint8Array;
 }
 
+/** A signed URL handed out for a card image in the sample data's private bucket (ticket 08). */
+export interface SignedSampleFile {
+  path: string;
+  /** ISO time the URL stops working. */
+  expiresAt: string;
+}
+
 /** A Member's Active Device record in the sample data. */
 export interface SampleActiveDevice {
   tokenHash: string;
@@ -115,6 +124,10 @@ export interface SampleStore {
   cards: Card[];
   /** Every Member's Card Marks, at most one per Member and card (ticket 07; written from ticket 08). */
   cardMarks: CardMark[];
+  /** Every Member's Study Days, at most one per Member and Manila date (ticket 08). */
+  studyDays: StudyDay[];
+  /** Where each Member left each deck, at most one per Member and deck (ticket 08). */
+  deckPositions: DeckPosition[];
   quizzes: Quiz[];
   reviewerPdfs: ReviewerPdf[];
   /** Every Member's Access Passes, at most one per Exam (Phase 3). */
@@ -125,6 +138,11 @@ export interface SampleStore {
   uploads: Record<string, SampleUpload>;
   /** The private content bucket's files, by path (ticket 06): card back images. */
   contentFiles: Record<string, SampleContentFile>;
+  /**
+   * The signed URLs handed out for the private bucket's card images, by their
+   * token (ticket 08): the file's path, and when the URL stops working.
+   */
+  signedFiles: Record<string, SignedSampleFile>;
   /**
    * What a save finds at an upload's path. Unset, it's the sample uploads'
    * (uploads.mock.ts); the Admin's database arm sets Storage's (ticket 17).
@@ -159,9 +177,12 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     ...sampleContent(catalogue),
     cards: [],
     cardMarks: [],
+    studyDays: [],
+    deckPositions: [],
     ...sampleAccessPasses(now, catalogue),
     uploads: {},
     contentFiles: {},
+    signedFiles: {},
   };
 }
 

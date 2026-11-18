@@ -32,6 +32,10 @@ function fakeBucket(
     remove?: (paths: string[]) => Answer<unknown[]>;
     download?: (path: string) => Answer<Blob>;
     upload?: (path: string, bytes: Uint8Array, options: unknown) => Answer<{ path: string }>;
+    signMany?: (
+      paths: string[],
+      seconds: number,
+    ) => Answer<{ path: string | null; signedUrl: string; error: string | null }[]>;
   } = {},
 ) {
   const bucket = {
@@ -58,6 +62,17 @@ function fakeBucket(
         })),
     ),
     upload: vi.fn(answers.upload ?? (async (path: string) => ({ data: { path }, error: null }))),
+    createSignedUrls: vi.fn(
+      answers.signMany ??
+        (async (paths: string[]) => ({
+          data: paths.map((path) => ({
+            path,
+            signedUrl: `${SUPABASE}/storage/v1/object/sign/content/${path}?token=t`,
+            error: null,
+          })),
+          error: null,
+        })),
+    ),
   };
   const from = vi.fn(() => bucket);
   const client = { storage: { from } } as unknown as SupabaseClient;
@@ -667,5 +682,57 @@ describe("the Storage arm's private uploads (ticket 06)", () => {
     await arm.contentFiles.remove([]);
 
     expect(from).not.toHaveBeenCalled();
+  });
+});
+
+describe("the Storage arm's signed card image URLs (ticket 08)", () => {
+  const first =
+    "decks/0b8f4b8e-6a2f-4b1e-9d3c-5e7f9a1b2c3d/1c9e2f4a-7b3d-4e5f-8a6b-9c0d1e2f3a4b.png";
+  const second =
+    "decks/0b8f4b8e-6a2f-4b1e-9d3c-5e7f9a1b2c3d/2d0f3a5b-8c4e-4f6a-9b7c-0d1e2f3a4b5c.webp";
+
+  it("signs each card image once, from the private bucket, for the time asked", async () => {
+    const { arm, bucket, from } = fakeBucket();
+
+    expect(await arm.contentFiles.signedUrls([first, second, first], 600)).toEqual({
+      [first]: `${SUPABASE}/storage/v1/object/sign/content/${first}?token=t`,
+      [second]: `${SUPABASE}/storage/v1/object/sign/content/${second}?token=t`,
+    });
+    expect(from).toHaveBeenCalledWith("content");
+    expect(bucket.createSignedUrls).toHaveBeenCalledWith([first, second], 600);
+  });
+
+  it("signs nothing that isn't a card image, asking Storage nothing", async () => {
+    const { arm, from } = fakeBucket();
+
+    expect(
+      await arm.contentFiles.signedUrls(["imports/x.csv", "decks/../imports/x.png"], 600),
+    ).toEqual({});
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("gives no URL for a file that's gone", async () => {
+    const { arm } = fakeBucket({
+      signMany: async () => ({
+        data: [
+          { path: first, signedUrl: "https://example.test/first", error: null },
+          { path: second, signedUrl: "", error: "Either the object does not exist" },
+        ],
+        error: null,
+      }),
+    });
+
+    expect(await arm.contentFiles.signedUrls([first, second], 600)).toEqual({
+      [first]: "https://example.test/first",
+    });
+  });
+
+  it("throws when Storage can't sign them", async () => {
+    const { arm } = fakeBucket({
+      signMany: async () => ({ data: null, error: new Error("down") }) as never,
+    });
+    await expect(arm.contentFiles.signedUrls([first], 600)).rejects.toThrow(
+      "Storage couldn't sign card images: down",
+    );
   });
 });

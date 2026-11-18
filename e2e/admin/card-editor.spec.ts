@@ -174,6 +174,9 @@ test.describe("the Member App", () => {
       "Flashcards · FREE PREVIEW",
     );
     await algebra.getByRole("link", { name: /^Flashcards/ }).click();
-    await expect(page.getByText("OPENING SOON · FREE PREVIEW")).toBeVisible();
+    // The flashcard player (ticket 08) opens on the card.
+    await expect(page.getByRole("figure", { name: "Card front" })).toContainText(
+      "Quadratic formula",
+    );
   });
 });

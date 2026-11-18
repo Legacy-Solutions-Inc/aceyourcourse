@@ -1,9 +1,11 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
+import { isFocusScreen } from "./member-menu";
 import { MemberSidebar, type ShellExams, type ShellUser } from "./member-sidebar";
 
 interface MemberDrawerProps extends ShellExams {
@@ -15,9 +17,12 @@ interface MemberDrawerProps extends ShellExams {
  * Below 760 px there is no sidebar: the "Menu" button at the bottom right
  * (mockup L693) opens it as a slide-in drawer over a scrim (mockup L89–113).
  * Escape, ✕, the scrim or a link close it, and focus goes back to the button.
+ * A focus screen (the flashcard player) has a back bar instead, and no Menu.
  */
 export function MemberDrawer({ user, exams, switchAction, signOutAction }: MemberDrawerProps) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  if (isFocusScreen(pathname)) return null;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

@@ -1,17 +1,11 @@
 import Link from "next/link";
 
-import { type AccessDecision, passEndDate } from "@/lib/member-app/access";
+import { type AccessDecision, passEndDate, type ShownRefusal } from "@/lib/member-app/access";
 import { cn } from "@/lib/utils";
 import type { ContentKind } from "@/services/content.types";
 
 /** What opening an item can show here: the gate and the Active Device have their own screens. */
-export type ShownDecision = Extract<
-  AccessDecision,
-  | { outcome: "allowed" }
-  | { outcome: "expired" }
-  | { outcome: "locked" }
-  | { outcome: "unavailable" }
->;
+export type ShownDecision = Extract<AccessDecision, { outcome: "allowed" }> | ShownRefusal;
 
 interface ContentStateProps {
   decision: ShownDecision;
@@ -21,6 +15,8 @@ interface ContentStateProps {
   contactEmail: string;
   /** Where Back goes: the item's Subject in the Library, or the Library. */
   back: { href: string; label: string };
+  /** The sentence on what's kept when access ends or the item goes: "Your progress is kept." unless given. */
+  keptNote?: string;
 }
 
 const OPENS_SOON: Record<ContentKind, string> = {
@@ -46,7 +42,13 @@ export function BetaAccessNote({ contactEmail }: { contactEmail: string }) {
 }
 
 /** What each decision shows: its tag, heading and text. */
-function stateOf({ decision, kind, examCode, contactEmail }: ContentStateProps): {
+function stateOf({
+  decision,
+  kind,
+  examCode,
+  contactEmail,
+  keptNote = "Your progress is kept.",
+}: ContentStateProps): {
   tag: string;
   tone: "plain" | "locked";
   heading: string;
@@ -79,7 +81,7 @@ function stateOf({ decision, kind, examCode, contactEmail }: ContentStateProps):
         heading: `Your ${examCode} All-Access ended on ${passEndDate(decision.passEndedAt)}`,
         body: (
           <>
-            Your access ended. Your progress is kept. <BetaAccessNote contactEmail={contactEmail} />
+            Your access ended. {keptNote} <BetaAccessNote contactEmail={contactEmail} />
           </>
         ),
       };
@@ -88,7 +90,7 @@ function stateOf({ decision, kind, examCode, contactEmail }: ContentStateProps):
         tag: "NO LONGER AVAILABLE",
         tone: "plain",
         heading: "No longer available",
-        body: "This is no longer available. Your progress is kept.",
+        body: `This is no longer available. ${keptNote}`,
       };
   }
 }

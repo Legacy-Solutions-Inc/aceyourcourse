@@ -77,6 +77,34 @@ export interface CardMark {
   markedAt: string;
 }
 
+/**
+ * A Study Day (CONTEXT.md; spec, Phase 3 → Progress storage): a Manila
+ * calendar day on which a Member studied, at most one per Member and day.
+ * Marking a card records the day it was marked (ticket 08); the Study Streak
+ * is counted from these (ticket 15).
+ */
+export interface StudyDay {
+  /** The Member's User id. */
+  userId: string;
+  /** The Asia/Manila date, YYYY-MM-DD. */
+  day: string;
+}
+
+/**
+ * Where a Member left a deck (spec, Phase 3 → Resume): the card they were on,
+ * at most one per Member and deck. Finishing the deck clears it, so the deck
+ * opens at its first card again; deleting the card clears it too.
+ */
+export interface DeckPosition {
+  /** The Member's User id. */
+  userId: string;
+  deckId: string;
+  /** The card to continue from. */
+  cardId: string;
+  /** ISO time it was saved. */
+  savedAt: string;
+}
+
 /** A Topic's quiz: at most one per Topic. Its questions come with ticket 09. */
 export interface Quiz {
   id: string;

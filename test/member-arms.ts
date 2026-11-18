@@ -2,11 +2,13 @@ import type { AdminService } from "@/services/admin";
 import * as adminSampleArm from "@/services/admin.mock";
 import type { MemberService } from "@/services/member";
 import * as sampleArm from "@/services/member.mock";
-import type { AccessPass } from "@/services/content.types";
+import type { AccessPass, CardMark } from "@/services/content.types";
 import type { ConsentRecord, DeviceSwitch, Member } from "@/services/member.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
+import { byCardAndMember } from "./admin-arms";
+import { type CardImageUpload, uploadSampleCardImage } from "./card-images";
 import { editSampleCatalogue } from "./catalogue-seed";
 import { MEMBER_DATABASE_ARM } from "./member-database";
 
@@ -40,6 +42,10 @@ export interface MemberArm {
   deviceSwitches(): Promise<DeviceSwitch[]>;
   /** Gives a Member an Access Pass behind the seam's back, as a grant (ticket 17) will. */
   putAccessPass(pass: AccessPass): Promise<void>;
+  /** Uploads a card's back image as the Admin's card form does, and gives the path its save sends. */
+  uploadCardImage(bytes: Uint8Array, options?: CardImageUpload): Promise<string>;
+  /** Every Member's Card Marks as stored, by card then Member: one row per Member and card. */
+  cardMarks(): Promise<CardMark[]>;
 }
 
 /** An Active Device record as it is stored, for checking what is (and isn't) kept. */
@@ -69,6 +75,8 @@ const SAMPLE_ARM: MemberArm = {
     const store = getSampleStore();
     store.accessPasses = [...store.accessPasses, structuredClone(pass)];
   },
+  uploadCardImage: uploadSampleCardImage,
+  cardMarks: async () => byCardAndMember(structuredClone(getSampleStore().cardMarks)),
 };
 
 export const MEMBER_ARMS: MemberArm[] =

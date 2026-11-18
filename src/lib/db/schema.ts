@@ -48,7 +48,8 @@ import {
  *
  * The Member App (Phase 3): the Beta Tester list, the Members and their
  * records (consent, Target Exams, Active Device), the content model (Topics
- * and their decks, quizzes and Reviewer PDFs), and the Access Passes.
+ * and their decks, quizzes and Reviewer PDFs), the Members' study records
+ * (Card Marks, Study Days, deck positions), and the Access Passes.
  */
 
 export const MARKETPLACES = [
@@ -665,6 +666,52 @@ export const cardMarks = pgTable(
   (t) => [
     primaryKey({ columns: [t.userId, t.cardId] }),
     index("card_marks_card_id_idx").on(t.cardId),
+  ],
+).enableRLS();
+
+/**
+ * The Study Days (CONTEXT.md; spec, Phase 3 → Progress storage): each Manila
+ * calendar day on which a Member studied, one row per Member and day. Marking
+ * a card records the day (ticket 08); the Study Streak is counted from them
+ * (ticket 15). Deleting the Member deletes theirs.
+ */
+export const studyDays = pgTable(
+  "study_days",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => members.userId, { onDelete: "cascade" }),
+    day: date("day").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.day] })],
+).enableRLS();
+
+/**
+ * Where each Member left each deck (spec, Phase 3 → Resume; ticket 08): the
+ * card to continue from, one row per Member and deck, replaced as they move
+ * through it and deleted when they finish it. Deleting the card, the deck or
+ * the Member deletes it, so the deck then opens at its first card. The
+ * indexes on deck_id and card_id serve those cascades, which the primary key,
+ * led by user_id, can't.
+ */
+export const deckPositions = pgTable(
+  "deck_positions",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => members.userId, { onDelete: "cascade" }),
+    deckId: uuid("deck_id")
+      .notNull()
+      .references(() => decks.id, { onDelete: "cascade" }),
+    cardId: uuid("card_id")
+      .notNull()
+      .references(() => cards.id, { onDelete: "cascade" }),
+    savedAt: at("saved_at").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.deckId] }),
+    index("deck_positions_deck_id_idx").on(t.deckId),
+    index("deck_positions_card_id_idx").on(t.cardId),
   ],
 ).enableRLS();
 

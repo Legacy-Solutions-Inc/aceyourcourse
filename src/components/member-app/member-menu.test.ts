@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { firstName, isCurrentItem, MEMBER_MENU, memberScreen } from "./member-menu";
+import { firstName, isCurrentItem, isFocusScreen, MEMBER_MENU, memberScreen } from "./member-menu";
 
 // The Member App's fixed menu (Member App BUILD-MAP §2): seven numbered items,
 // the same for every Member.
@@ -42,6 +42,17 @@ describe("isCurrentItem", () => {
     ["/app/plans", "/app/library", false],
   ])("on %s, %s is current: %s", (pathname, href, expected) => {
     expect(isCurrentItem(pathname, href)).toBe(expected);
+  });
+});
+
+describe("isFocusScreen", () => {
+  it.each([
+    ["/app/library/deck/3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b", true],
+    ["/app/library/quiz/3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b", false],
+    ["/app/library", false],
+    ["/app", false],
+  ])("%s is a focus screen: %s", (pathname, expected) => {
+    expect(isFocusScreen(pathname)).toBe(expected);
   });
 });
 

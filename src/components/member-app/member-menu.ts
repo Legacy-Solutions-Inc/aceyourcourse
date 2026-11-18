@@ -86,6 +86,15 @@ export function isCurrentItem(pathname: string, href: string): boolean {
 }
 
 /**
+ * Pure: whether a screen is a focus screen (BUILD-MAP §2), which has a back
+ * bar on mobile instead of the Menu button: a deck in the flashcard player
+ * so far; the quiz and the Reviewer PDF reader join it with their tickets.
+ */
+export function isFocusScreen(pathname: string): boolean {
+  return pathname.startsWith(paths.memberApp.content("deck", ""));
+}
+
+/**
  * Pure: what to call a Member in a greeting: the first word of their Google
  * name, or, when sign-in gave none, the part of their email before the @.
  */

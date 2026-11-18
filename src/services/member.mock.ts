@@ -1,6 +1,7 @@
 import { type DeviceStatus, deviceStatusFor } from "@/lib/member-app/device-token";
 import { contentItemOf, type ContentExam, libraryOf } from "@/services/content.rules";
 import type { AccessPass, ContentKind, ContentRecords } from "@/services/content.types";
+import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
 import {
   agreedVersionsSchema,
   contentRefSchema,
@@ -32,13 +33,15 @@ import type {
   TargetExam,
 } from "@/services/member.types";
 import { getSampleStore } from "@/services/mock/sample-store";
+import { sampleContentFiles } from "@/services/uploads.mock";
 
 // The Member seam's sample arm: over the in-memory sample store
 // (src/services/mock/sample-store.ts), which holds the Beta Tester list and
 // the Topics the Admin's sample arm edits, the Members, their consent
-// records, Target Exams, Active Devices and Access Passes. The Target Exam
-// rules (member.rules.ts) and the content rules (content.rules.ts) are shared
-// with the database arm.
+// records, Target Exams, Active Devices and Access Passes, and their study
+// records. The Target Exam rules (member.rules.ts), the content rules
+// (content.rules.ts) and the study calls (deck-study.core.ts) are shared with
+// the database arm.
 
 export async function isBetaTester(email: string): Promise<boolean> {
   const wanted = memberEmailSchema.safeParse(email);
@@ -214,3 +217,72 @@ export async function listAccessPasses(userId: string): Promise<AccessPass[]> {
   }
   return structuredClone(store.accessPasses.filter((pass) => pass.userId === wanted));
 }
+
+// ── Studying a deck ─────────────────────────────────────────────────────────
+
+/** Like the database's foreign keys: only a Member, someone the gate let in, has study records. */
+function requireMemberRecord(userId: string): void {
+  if (!getSampleStore().members.some((member) => member.userId === userId)) {
+    throw new Error("Only a Member has study records.");
+  }
+}
+
+const cardsOf = (deckId: string) => getSampleStore().cards.filter((card) => card.deckId === deckId);
+
+const sampleStudyStore: DeckStudyStore = {
+  async readDeckItem(deckId) {
+    const { exams, content } = contentOfStore();
+    return contentItemOf("deck", deckId, exams, content);
+  },
+  async readCards(deckId) {
+    return structuredClone(cardsOf(deckId).sort((a, b) => a.position - b.position));
+  },
+  async deckOfCard(cardId) {
+    return getSampleStore().cards.find((card) => card.id === cardId)?.deckId ?? null;
+  },
+  async readMarks(userId, deckId) {
+    const inDeck = new Set(cardsOf(deckId).map((card) => card.id));
+    return structuredClone(
+      getSampleStore().cardMarks.filter(
+        (mark) => mark.userId === userId && inDeck.has(mark.cardId),
+      ),
+    );
+  },
+  async readPosition(userId, deckId) {
+    const found = getSampleStore().deckPositions.find(
+      (position) => position.userId === userId && position.deckId === deckId,
+    );
+    return found?.cardId ?? null;
+  },
+  async saveMark(mark, day) {
+    requireMemberRecord(mark.userId);
+    if (!getSampleStore().cards.some((card) => card.id === mark.cardId)) return false;
+    const store = getSampleStore();
+    const others = store.cardMarks.filter(
+      (kept) => !(kept.userId === mark.userId && kept.cardId === mark.cardId),
+    );
+    store.cardMarks = [...others, structuredClone(mark)];
+    if (!store.studyDays.some((kept) => kept.userId === mark.userId && kept.day === day)) {
+      store.studyDays = [...store.studyDays, { userId: mark.userId, day }];
+    }
+    return true;
+  },
+  async savePosition(userId, deckId, position) {
+    requireMemberRecord(userId);
+    if (position && !cardsOf(deckId).some((card) => card.id === position.cardId)) return false;
+    const store = getSampleStore();
+    const others = store.deckPositions.filter((p) => !(p.userId === userId && p.deckId === deckId));
+    store.deckPositions = position ? [...others, structuredClone(position)] : others;
+    return true;
+  },
+  async readStudyDays(userId) {
+    return getSampleStore()
+      .studyDays.filter((kept) => kept.userId === userId)
+      .map((kept) => kept.day)
+      .sort();
+  },
+  signImages: (paths, seconds) => sampleContentFiles.signedUrls(paths, seconds),
+};
+
+export const { openDeck, markCard, saveDeckPosition, listStudyDays } =
+  deckStudyCalls(sampleStudyStore);

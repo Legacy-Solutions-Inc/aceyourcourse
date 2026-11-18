@@ -1,5 +1,9 @@
+import type { z } from "zod";
+
+import type { AllowedVia, RefusedDecision } from "@/lib/member-app/access";
 import type { ExamDateSetBy } from "@/lib/member-app/exam-date";
-import type { ContentKind } from "@/services/content.types";
+import type { CardMarkVerdict, ContentKind } from "@/services/content.types";
+import type { cardMarkInputSchema, deckPositionInputSchema } from "@/services/member.schema";
 
 // The Member seam's types (spec, Phase 3 → Phase 3 seams). A Member is a
 // person with a Member App account (CONTEXT.md), keyed by their User.
@@ -183,3 +187,55 @@ export interface ContentItem {
   available: boolean;
   freePreview: boolean;
 }
+
+// Studying a deck (spec, Phase 3 → Progress storage and Resume; ticket 08).
+// The seam decides each deck with the access decision before it reads a
+// card, and a refused deck's cards never leave it.
+
+/** A card as the flashcard player shows it. */
+export interface StudyCard {
+  id: string;
+  /** Its place in the deck's order, from 1. */
+  position: number;
+  /** The front, back and note, in the formula notation. */
+  front: string;
+  back: string;
+  note: string | null;
+  /** Its back image's signed URL, which stops working after about 10 minutes, or null. */
+  imageUrl: string | null;
+}
+
+/** A deck the access decision opened, with the Member's own progress on it. */
+export interface StudyDeck {
+  /** In the deck's order. Empty while the deck has no cards: it's still being prepared. */
+  cards: StudyCard[];
+  /** The Member's latest mark on each card they have marked, by card id. */
+  marks: Record<string, CardMarkVerdict>;
+  /** The card they were on when they left the deck, or null to start at the first. */
+  resumeAt: string | null;
+  /** When the image URLs stop working (ISO), or null when no card has an image. */
+  imagesExpireAt: string | null;
+}
+
+/** What opening a deck finds. */
+export type DeckOpening =
+  /** No such deck: a wrong address, or one that was deleted. */
+  | { status: "not-found" }
+  /** The access decision refused: no card is read. `marked` counts the Member's own Card Marks on it, kept. */
+  | { status: "refused"; item: ContentItem; decision: RefusedDecision; marked: number }
+  | { status: "allowed"; item: ContentItem; via: AllowedVia; deck: StudyDeck };
+
+/** Why a study write was refused. A refused write changes nothing. */
+export type StudyRefusal =
+  /** No such card or deck, or a card that isn't in the deck. */
+  | { reason: "not-found" }
+  /** The access decision refused the card's deck. */
+  | { reason: "refused"; decision: RefusedDecision };
+
+export type StudyResult<T> = { ok: true; value: T } | { ok: false; refusal: StudyRefusal };
+
+/** "Got it" or "Review again" on one card. */
+export type CardMarkInput = z.input<typeof cardMarkInputSchema>;
+
+/** Where the Member is in a deck: the card they're on, or null once they've finished it. */
+export type DeckPositionInput = z.input<typeof deckPositionInputSchema>;

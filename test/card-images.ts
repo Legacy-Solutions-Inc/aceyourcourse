@@ -1,5 +1,6 @@
 import { type CardImageType, MAX_CARD_IMAGE_BYTES } from "@/lib/cards/card-rules";
 import type { StaffActor } from "@/services/admin.types";
+import { GET as sampleCardImage } from "@/app/api/dev/card-images/[token]/route";
 import { getSampleStore } from "@/services/mock/sample-store";
 import { createContentUpload } from "@/services/uploads.mock";
 import type { ContentUploadTicket } from "@/services/uploads.types";
@@ -54,4 +55,19 @@ function storeSampleUpload(ticket: ContentUploadTicket, bytes: Uint8Array): void
   const upload = store.uploads[id];
   if (!upload) throw new Error("The sample upload isn't there");
   store.uploads = { ...store.uploads, [id]: { ...upload, bytes } };
+}
+
+/**
+ * Loads a card image from the signed URL a Member was handed (ticket 08), as
+ * their browser would: the sample data's through its development-only route,
+ * Storage's over the network. Null when it doesn't load (expired, say).
+ */
+export async function loadCardImage(url: string): Promise<Uint8Array | null> {
+  const sample = url.match(/^\/api\/dev\/card-images\/([^/?]+)$/);
+  const response = sample
+    ? await sampleCardImage(new Request(`http://localhost${url}`), {
+        params: Promise.resolve({ token: decodeURIComponent(sample[1] ?? "") }),
+      })
+    : await fetch(url);
+  return response.ok ? new Uint8Array(await response.arrayBuffer()) : null;
 }

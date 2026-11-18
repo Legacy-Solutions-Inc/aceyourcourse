@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MemberDrawer } from "./member-drawer";
 import { MemberSidebar } from "./member-sidebar";
@@ -9,7 +9,12 @@ import { NotOpenYet } from "./not-open-yet";
 // The Member App's shell (BUILD-MAP §2): the sidebar's seven numbered items
 // and its footer, the mobile drawer around it (the "Menu" button opens it;
 // Escape, ✕, the scrim or a link close it), and the "Not open yet" screen.
-vi.mock("next/navigation", () => ({ usePathname: () => "/app/library" }));
+const nav = vi.hoisted(() => ({ pathname: "/app/library" }));
+vi.mock("next/navigation", () => ({ usePathname: () => nav.pathname }));
+
+beforeEach(() => {
+  nav.pathname = "/app/library";
+});
 
 const BEA = { name: "Bea Tester", email: "tester@example.com" };
 const signOut = vi.fn(async () => {});
@@ -207,6 +212,12 @@ describe("MemberDrawer", () => {
     expect(scrim).not.toBeNull();
     await user.click(scrim as Element);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("has no Menu button on a focus screen, which has a back bar instead", () => {
+    nav.pathname = "/app/library/deck/3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b";
+    render(<MemberDrawer {...shell} exams={[CE, ME]} />);
+    expect(screen.queryByRole("button", { name: "Menu" })).toBeNull();
   });
 
   it("closes when a screen is chosen", async () => {

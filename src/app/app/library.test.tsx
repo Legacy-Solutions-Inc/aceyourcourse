@@ -311,10 +311,11 @@ describe("opening an item", () => {
     );
   });
 
-  it("opens a Free Preview deck for a tester with no pass, saying so", async () => {
+  it("opens a Free Preview deck for a tester with no pass: with no cards yet, it's being prepared", async () => {
+    // The flashcard player itself is in flashcards.test.tsx (ticket 08).
     await asNewTester();
     render(await opening("deck", FREE_DECK));
-    expect(screen.getByText("OPENING SOON · FREE PREVIEW")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Nothing here yet" })).toBeInTheDocument();
   });
 
   it("shows the unlock prompt for a locked quiz", async () => {

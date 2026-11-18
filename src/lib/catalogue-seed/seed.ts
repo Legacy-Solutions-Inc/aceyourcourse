@@ -120,9 +120,11 @@ async function hasCatalogue(tx: Transaction): Promise<boolean> {
  * The Member App's content, children before parents: Topics hang off the
  * catalogue's Subjects, each Topic's deck, quiz and Reviewer PDF off it,
  * which keeps a Topic, and so its Subject, from being deleted under them,
- * each deck's cards off the deck, and the Members' Card Marks off the cards.
+ * each deck's cards off the deck, and the Members' Card Marks and deck
+ * positions off the cards.
  */
 const CONTENT_TABLES = [
+  schema.deckPositions,
   schema.cardMarks,
   schema.cards,
   schema.decks,
@@ -135,8 +137,8 @@ const CONTENT_TABLES = [
  * The Admin's own tables. They describe the catalogue that is loaded (its
  * save stamps, who changed it), so a local load replaces them too. The Member
  * App's sample data (the Beta Tester list, the Access Passes, and the Members
- * "Sign in as" made, with their consent records, Target Exams and Active
- * Devices) starts again with them.
+ * "Sign in as" made, with their consent records, Target Exams, Active
+ * Devices and Study Days) starts again with them.
  */
 const ADMIN_TABLES = [
   schema.staffActivity,
@@ -150,6 +152,7 @@ const ADMIN_TABLES = [
   schema.memberTargetExams,
   schema.memberDeviceSwitches,
   schema.memberActiveDevices,
+  schema.studyDays,
   schema.members,
 ];
 

@@ -54,4 +54,7 @@ export const MEMBER_DATABASE_ARM: MemberArm = {
   putAccessPass: async (pass) => {
     await getDb().insert(schema.accessPasses).values(accessPassToRow(pass));
   },
+  // The Admin's database arm uploads and reads them as the Member seam's does.
+  uploadCardImage: (bytes, options) => ADMIN_DATABASE_ARM.uploadCardImage(bytes, options),
+  cardMarks: () => ADMIN_DATABASE_ARM.cardMarks(),
 };

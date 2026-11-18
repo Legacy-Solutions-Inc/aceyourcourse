@@ -1,10 +1,18 @@
 import "server-only";
 
+import { redirect } from "next/navigation";
 import { cache } from "react";
 
-import { type AccessDecision, type AccessInputs, accessDecision } from "@/lib/member-app/access";
+import {
+  type AccessDecision,
+  accessDecision,
+  type MemberAccess,
+  type RefusedDecision,
+  type ShownRefusal,
+} from "@/lib/member-app/access";
 import { checkDevice } from "@/lib/member-app/device";
 import { getMemberAppAccess } from "@/lib/member-app/guard";
+import { paths } from "@/paths";
 import { getStaffByEmail } from "@/services/admin";
 import type { ContentKind } from "@/services/content.types";
 import { getContentItem, listAccessPasses } from "@/services/member";
@@ -20,15 +28,13 @@ import type { ContentItem } from "@/services/member.types";
 // Staff Guard reads them, so removed Staff are Members again at once; the
 // device is this request's token; the passes are the Member's own.
 //
-// It answers, and never redirects, so a page, a Server Action or a Route
-// Handler (the Reviewer PDF pages, ticket 14) each shows the answer its way.
+// checkContentAccess answers, and never redirects, so a page, a Server Action
+// or a Route Handler (the Reviewer PDF pages, ticket 14) each shows the answer
+// its way; shownRefusal is the redirect pages and actions share.
 // It doesn't check consent, which isn't part of the rule: every caller runs
 // the Member App's own checks first (requireMember, or a Route Handler's
 // equivalent of it), as the Library and the item page do.
 // ─────────────────────────────────────────────────────────────────────────────
-
-/** The signed-in Member's side of the access decision: everything but the content. */
-export type MemberAccess = Omit<AccessInputs, "content">;
 
 /**
  * The signed-in Member's side of the access decision, read once per request
@@ -72,4 +78,18 @@ export async function checkContentAccess(kind: ContentKind, id: string): Promise
   const item = await getContentItem(kind, id);
   if (!item) return { status: "not-found" };
   return { status: "decided", item, decision: accessDecision({ ...member, content: item }) };
+}
+
+/**
+ * Where a refusal goes, for a page or a Server Action that was refused (a
+ * deck's player, ticket 08): the gate's refusal and the Active Device's have
+ * screens of their own, which this redirects to, coming back to `from`. The
+ * rest are shown in place of the content, so they're given back.
+ */
+export function shownRefusal(decision: RefusedDecision, from: string): ShownRefusal {
+  if (decision.outcome === "not-open-yet") redirect(paths.memberApp.notOpenYet);
+  if (decision.outcome === "no-token" || decision.outcome === "device-replaced") {
+    redirect(paths.memberApp.device(from));
+  }
+  return decision;
 }

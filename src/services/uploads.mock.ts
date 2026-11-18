@@ -5,7 +5,11 @@ import { hasFileSignature } from "@/lib/file-signature";
 import { paths } from "@/paths";
 import { invalidInput } from "@/services/admin.schema";
 import type { AdminResult, StaffActor } from "@/services/admin.types";
-import { getSampleStore, type SampleUpload } from "@/services/mock/sample-store";
+import {
+  getSampleStore,
+  type SampleContentFile,
+  type SampleUpload,
+} from "@/services/mock/sample-store";
 import type { ContentFiles } from "@/services/uploads";
 import {
   CONTENT_UPLOAD_PURPOSES,
@@ -30,7 +34,9 @@ import {
 //
 // A private upload (an import's CSV or zip, ticket 06) is kept the same way,
 // but the route never serves it: only the server reads it back. Card images
-// go to the sample data's private content bucket (sampleContentFiles).
+// go to the sample data's private content bucket (sampleContentFiles), which
+// Members only ever see through a signed URL that expires (ticket 08), served
+// by the development-only route /api/dev/card-images/[token].
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PATH_PREFIX = "uploads/";
@@ -224,6 +230,23 @@ export const sampleContentFiles: ContentFiles = {
     const store = getSampleStore();
     store.contentFiles = { ...store.contentFiles, [path]: { contentType, bytes } };
   },
+  async signedUrls(wanted, seconds) {
+    const store = getSampleStore();
+    const now = Date.now();
+    // Each URL carries a random token, good for any number of loads until it expires.
+    const signed = Object.fromEntries(
+      Object.entries(store.signedFiles).filter(([, file]) => Date.parse(file.expiresAt) > now),
+    );
+    const urls: Record<string, string> = {};
+    for (const path of new Set(wanted)) {
+      if (!store.contentFiles[path]) continue;
+      const token = newToken();
+      signed[token] = { path, expiresAt: new Date(now + seconds * 1000).toISOString() };
+      urls[path] = paths.memberApp.sampleCardImage(token);
+    }
+    store.signedFiles = signed;
+    return urls;
+  },
   async remove(paths) {
     const store = getSampleStore();
     const files = { ...store.contentFiles };
@@ -239,3 +262,18 @@ export const sampleContentFiles: ContentFiles = {
     store.uploads = uploads;
   },
 };
+
+/**
+ * The card image a signed sample URL gives, for the route's GET, or null once
+ * it has expired, for a token that was never handed out, and for a file
+ * that's gone. It stops working the instant it expires.
+ */
+export function readSignedSampleFile(
+  token: string,
+): { file: SampleContentFile; expiresAt: string } | null {
+  const store = getSampleStore();
+  const signed = Object.hasOwn(store.signedFiles, token) ? store.signedFiles[token] : undefined;
+  if (!signed || Date.parse(signed.expiresAt) <= Date.now()) return null;
+  const file = store.contentFiles[signed.path];
+  return file ? { file, expiresAt: signed.expiresAt } : null;
+}

@@ -55,7 +55,8 @@ export interface UploadService {
 
 /**
  * The private content bucket, as the Admin's card import (ticket 06) and card
- * editor (ticket 07) use it on the server. Never handed to the browser.
+ * editor (ticket 07) use it on the server, and the Member seam signs card
+ * images from (ticket 08). Never handed to the browser.
  */
 export interface ContentFiles {
   /**
@@ -73,6 +74,13 @@ export interface ContentFiles {
   put(path: string, bytes: Uint8Array, contentType: CardImageType): Promise<void>;
   /** Deletes these files, card images or uploads. Logs a failure, and never throws. */
   remove(paths: readonly string[]): Promise<void>;
+  /**
+   * Signed URLs for stored card images, by path, that stop working after
+   * `seconds` (ticket 08): only the Member seam asks, and only for a deck the
+   * access decision allowed. A path that isn't a card image's, or whose file
+   * is gone, gets none. Throws when Storage can't sign them.
+   */
+  signedUrls(paths: readonly string[], seconds: number): Promise<Record<string, string>>;
 }
 
 const impl: UploadService = isDatabaseConfigured ? storageArm : mockImpl;

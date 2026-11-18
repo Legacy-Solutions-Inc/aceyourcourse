@@ -66,6 +66,25 @@ export interface AccessInputs {
   now: Date;
 }
 
+/**
+ * The signed-in Member's side of the access decision: everything but the
+ * content. The server gathers it for each request (access-check.ts); the
+ * Member seam's study reads and writes take it, and decide each deck with it.
+ */
+export type MemberAccess = Omit<AccessInputs, "content">;
+
+/** A decision that refuses. */
+export type RefusedDecision = Exclude<AccessDecision, { outcome: "allowed" }>;
+
+/**
+ * A refusal the Member App shows in place of the content: locked, expired, or
+ * no longer available. The gate's and the Active Device's have screens of their own.
+ */
+export type ShownRefusal = Extract<
+  AccessDecision,
+  { outcome: "locked" } | { outcome: "expired" } | { outcome: "unavailable" }
+>;
+
 /** Pure: the access decision for one Member and one piece of content (see the order above). */
 export function accessDecision({
   gate,

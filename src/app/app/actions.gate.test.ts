@@ -5,16 +5,20 @@ import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DEVICE_COOKIE, hashDeviceToken } from "@/lib/member-app/device-token";
+import { createCard } from "@/services/admin.mock";
 import {
   addTargetExam,
   claimDevice,
   getOrCreateMember,
   recordConsent,
 } from "@/services/member.mock";
+import { sampleContentId, sampleTopicId } from "@/services/mock/content";
 import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
+import { sampleActor } from "../../../test/admin-inputs";
 import * as targetExams from "./(shell)/actions";
+import * as study from "./(shell)/library/actions";
 import * as root from "./actions";
 import * as consent from "./consent/actions";
 import * as device from "./device/actions";
@@ -26,7 +30,7 @@ import * as signIn from "./sign-in/actions";
 // each one is listed here with who may call it, and called as a browser would
 // by everyone it must refuse:
 //   - "member": behind the gate, then consent, then the Active Device (the
-//     Target Exam actions). Signed out goes to the sign-in screen, someone the
+//     Target Exam actions, and the flashcard player's). Signed out goes to the sign-in screen, someone the
 //     gate doesn't let in goes to "Not open yet", with no Member record made,
 //     a Member who hasn't agreed to the current Terms and Privacy Policy goes
 //     to the consent screen, and a request that isn't from the Member's Active
@@ -73,6 +77,11 @@ vi.mock("@/lib/admin/mode", async (importOriginal) => ({
 
 const STRANGER = "stranger@example.com";
 const TESTER = "tester@example.com";
+const SIMPLE_CURVES = sampleTopicId("CE", "MSTC", "Simple Curves");
+/** Simple Curves' deck is Free Preview: every Member past the checks could study it. */
+const FREE_DECK = sampleContentId(SIMPLE_CURVES, "deck");
+/** A card in it, written for each test, that the player's actions would mark. */
+let freeCard = "";
 
 interface Entry {
   who: "member" | "before-device" | "before-consent" | "anyone";
@@ -120,6 +129,19 @@ const APP_DIR = path.dirname(fileURLToPath(import.meta.url));
 
 /** Every exported Member App Server Action, by its module, relative to this folder. */
 const REGISTRY: Record<string, Record<string, Entry>> = {
+  "./(shell)/library/actions.ts": {
+    markStudyCard: member(() =>
+      study.markStudyCard({
+        deckId: FREE_DECK,
+        cardId: freeCard,
+        verdict: "got",
+        position: { cardId: null },
+      }),
+    ),
+    saveStudyPosition: member(() =>
+      study.saveStudyPosition({ deckId: FREE_DECK, cardId: freeCard }),
+    ),
+  },
   "./(shell)/actions.ts": {
     addExam: member(() => targetExams.addExam({ error: null }, examForm("2099-04-18"))),
     changeExamDate: member(() =>
@@ -168,6 +190,7 @@ async function agreedTester() {
 const memberData = () => {
   const { members, memberConsents, memberTargetExams, selectedExams } = getSampleStore();
   const { memberActiveDevices, memberDeviceSwitches } = getSampleStore();
+  const { cardMarks, studyDays, deckPositions } = getSampleStore();
   return structuredClone({
     members,
     memberConsents,
@@ -175,6 +198,9 @@ const memberData = () => {
     selectedExams,
     memberActiveDevices,
     memberDeviceSwitches,
+    cardMarks,
+    studyDays,
+    deckPositions,
   });
 };
 
@@ -193,10 +219,17 @@ function serverActionModules(): Record<string, string[]> {
   return found;
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   jar.clear();
   mode.current = "sample";
   resetSampleStore();
+  const added = await createCard(sampleActor("editor"), {
+    topic: SIMPLE_CURVES,
+    front: "Tangent distance",
+    back: "$T = R \\tan(I/2)$",
+  });
+  if (!added.ok) throw new Error("The card wasn't written");
+  freeCard = added.value.id;
 });
 
 describe("the Member App's Server Actions and the gate", () => {

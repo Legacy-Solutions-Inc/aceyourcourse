@@ -82,6 +82,11 @@ export const paths = {
       `/app/library?subject=${encodeURIComponent(subjectCode)}`,
     /** One deck, quiz or Reviewer PDF: opening it runs the access decision. */
     content: (kind: ContentKind, id: string) => `/app/library/${kind}/${encodeURIComponent(id)}`,
+    /**
+     * A card image's signed URL in the sample data (ticket 08): served by a
+     * development-only route until it expires, standing in for Storage's.
+     */
+    sampleCardImage: (token: string) => `/api/dev/card-images/${encodeURIComponent(token)}`,
     courses: "/app/courses",
     plans: "/app/plans",
     billing: "/app/billing",

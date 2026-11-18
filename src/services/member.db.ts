@@ -6,8 +6,10 @@ import { getDb } from "@/lib/db/client";
 import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
 import { deviceStatusFor } from "@/lib/member-app/device-token";
+import { isStorageConfigured } from "@/lib/supabase/admin";
 import { type ContentExam, contentItemOf, libraryOf } from "@/services/content.rules";
-import { accessPassFromRow, contentFromRows } from "@/services/content.rows";
+import { accessPassFromRow, cardFromRow, contentFromRows } from "@/services/content.rows";
+import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
 import type { MemberService } from "@/services/member";
 import {
   agreedVersionsSchema,
@@ -28,14 +30,16 @@ import {
 } from "@/services/member.rules";
 import type { ContentKind } from "@/services/content.types";
 import type { ConsentRecord, DeviceSwitch, Member } from "@/services/member.types";
+import { sampleContentFiles } from "@/services/uploads.mock";
+import { storageArm } from "@/services/uploads.storage";
 
 // The Member seam on Postgres, selected by src/services/member.ts when
 // DATABASE_URL is set. Drizzle bypasses RLS, so each call is scoped here, in
 // the app layer, to the User the Member App gate passes it (coding standards
 // §3): a Member's records are only ever read or made by their own User id.
 // The Target Exam rules (member.rules.ts), the content rules
-// (content.rules.ts) and the Active Device's comparison (device-token.ts) are
-// shared with the sample arm.
+// (content.rules.ts), the study calls (deck-study.core.ts) and the Active
+// Device's comparison (device-token.ts) are shared with the sample arm.
 
 type MemberRow = typeof schema.members.$inferSelect;
 type ConsentRow = typeof schema.memberConsents.$inferSelect;
@@ -443,6 +447,131 @@ const listAccessPasses: MemberService["listAccessPasses"] = async (userId) => {
   }
 };
 
+// ── Studying a deck ─────────────────────────────────────────────────────────
+
+type CardMarkRow = typeof schema.cardMarks.$inferSelect;
+
+const cardMarkFromRow = (row: CardMarkRow) => ({
+  userId: row.userId,
+  cardId: row.cardId,
+  verdict: row.verdict,
+  markedAt: row.markedAt.toISOString(),
+});
+
+/** Runs a store call, giving the database's errors as one error type. */
+async function inDatabase<T>(work: () => Promise<T>): Promise<T> {
+  try {
+    return await work();
+  } catch (error) {
+    throw asDatabaseError(error);
+  }
+}
+
+const databaseStudyStore: DeckStudyStore = {
+  readDeckItem: (deckId) => getContentItem("deck", deckId),
+  readCards: (deckId) =>
+    inDatabase(async () => {
+      const { cards } = schema;
+      const rows = await getDb()
+        .select()
+        .from(cards)
+        .where(eq(cards.deckId, deckId))
+        .orderBy(asc(cards.position));
+      return rows.map(cardFromRow);
+    }),
+  deckOfCard: (cardId) =>
+    inDatabase(async () => {
+      const { cards } = schema;
+      const [row] = await getDb()
+        .select({ deckId: cards.deckId })
+        .from(cards)
+        .where(eq(cards.id, cardId));
+      return row?.deckId ?? null;
+    }),
+  readMarks: (userId, deckId) =>
+    inDatabase(async () => {
+      const { cards, cardMarks } = schema;
+      const rows = await getDb()
+        .select({ mark: cardMarks })
+        .from(cardMarks)
+        .innerJoin(cards, eq(cards.id, cardMarks.cardId))
+        .where(and(eq(cardMarks.userId, userId), eq(cards.deckId, deckId)));
+      return rows.map(({ mark }) => cardMarkFromRow(mark));
+    }),
+  readPosition: (userId, deckId) =>
+    inDatabase(async () => {
+      const { deckPositions } = schema;
+      const [row] = await getDb()
+        .select({ cardId: deckPositions.cardId })
+        .from(deckPositions)
+        .where(and(eq(deckPositions.userId, userId), eq(deckPositions.deckId, deckId)));
+      return row?.cardId ?? null;
+    }),
+  saveMark: (mark, day) =>
+    inDatabase(() =>
+      getDb().transaction(async (tx) => {
+        const { cards, cardMarks, studyDays } = schema;
+        // Holding the card keeps it from being deleted until the mark is in.
+        const [card] = await tx
+          .select({ id: cards.id })
+          .from(cards)
+          .where(eq(cards.id, mark.cardId))
+          .for("share");
+        if (!card) return false;
+        const markedAt = new Date(mark.markedAt);
+        // The foreign keys to members refuse a User the gate never let in.
+        await tx
+          .insert(cardMarks)
+          .values({ userId: mark.userId, cardId: mark.cardId, verdict: mark.verdict, markedAt })
+          .onConflictDoUpdate({
+            target: [cardMarks.userId, cardMarks.cardId],
+            set: { verdict: mark.verdict, markedAt },
+          });
+        await tx.insert(studyDays).values({ userId: mark.userId, day }).onConflictDoNothing();
+        return true;
+      }),
+    ),
+  savePosition: (userId, deckId, position) =>
+    inDatabase(() =>
+      getDb().transaction(async (tx) => {
+        const { cards, deckPositions } = schema;
+        const mine = and(eq(deckPositions.userId, userId), eq(deckPositions.deckId, deckId));
+        if (!position) {
+          await tx.delete(deckPositions).where(mine);
+          return true;
+        }
+        const [card] = await tx
+          .select({ id: cards.id })
+          .from(cards)
+          .where(and(eq(cards.id, position.cardId), eq(cards.deckId, deckId)))
+          .for("share");
+        if (!card) return false;
+        const savedAt = new Date(position.savedAt);
+        await tx
+          .insert(deckPositions)
+          .values({ userId, deckId, cardId: position.cardId, savedAt })
+          .onConflictDoUpdate({
+            target: [deckPositions.userId, deckPositions.deckId],
+            set: { cardId: position.cardId, savedAt },
+          });
+        return true;
+      }),
+    ),
+  readStudyDays: (userId) =>
+    inDatabase(async () => {
+      const { studyDays } = schema;
+      const rows = await getDb()
+        .select({ day: studyDays.day })
+        .from(studyDays)
+        .where(eq(studyDays.userId, userId))
+        .orderBy(asc(studyDays.day));
+      return rows.map((row) => row.day);
+    }),
+  // Storage when this server has it, as the Admin's card editor stores the images there.
+  signImages: (paths, seconds) =>
+    (isStorageConfigured ? storageArm.contentFiles : sampleContentFiles).signedUrls(paths, seconds),
+};
+
 export const databaseArm: MemberService = {
   isBetaTester,
   getOrCreateMember,
@@ -459,4 +588,5 @@ export const databaseArm: MemberService = {
   getLibrary,
   getContentItem,
   listAccessPasses,
+  ...deckStudyCalls(databaseStudyStore),
 };

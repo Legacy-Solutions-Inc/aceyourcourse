@@ -99,6 +99,13 @@
       "when": 1794959983771,
       "tag": "20261117235943_card_marks",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794978507551,
+      "tag": "20261118050827_study_progress",
+      "breakpoints": true
     }
   ]
 }

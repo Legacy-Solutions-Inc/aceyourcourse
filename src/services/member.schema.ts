@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { TOKEN_HASH_PATTERN } from "@/lib/member-app/device-token";
 import { staffEmailSchema } from "@/services/admin.schema";
-import { CONTENT_KINDS } from "@/services/content.types";
+import { CARD_MARK_VERDICTS, CONTENT_KINDS } from "@/services/content.types";
 import type { TargetExamRefusal } from "@/services/member.types";
 
 // The Member seam's zod schemas, shared by its arms.
@@ -89,3 +89,42 @@ export const contentRefSchema = z.object({
   kind: z.enum(CONTENT_KINDS),
   id: z.string().uuid(),
 });
+
+/** Whether an id the browser sent is a record's id (a UUID): anything else names nothing. */
+export const isRecordId = (value: string): boolean => z.string().uuid().safeParse(value).success;
+
+/** An id as the browser sends it, unchecked: the seam finds nothing for one that isn't a record's. */
+const sentId = z.string().max(100);
+
+/** "Got it" or "Review again" on a card (ticket 08). Any other verdict is refused outright. */
+export const cardMarkInputSchema = z.object({
+  cardId: sentId,
+  verdict: z.enum(CARD_MARK_VERDICTS),
+});
+
+/** Where a Member is in a deck: the card they're on, or null once they finish it (ticket 08). */
+export const deckPositionInputSchema = z.object({
+  deckId: sentId,
+  cardId: sentId.nullable(),
+});
+
+/**
+ * What the flashcard player sends with a mark (ticket 08): the deck it's
+ * studying, the card and verdict, and where the Member is in the deck once
+ * it's marked (null while reviewing, which leaves the position alone).
+ */
+export const studyMarkSchema = z.object({
+  deckId: z.string().uuid(),
+  cardId: sentId,
+  verdict: z.enum(CARD_MARK_VERDICTS),
+  position: z.object({ cardId: sentId.nullable() }).nullable(),
+});
+
+/** What the flashcard player sends when the Member moves without marking, starts again or finishes. */
+export const studyPositionSchema = z.object({
+  deckId: z.string().uuid(),
+  cardId: sentId.nullable(),
+});
+
+export type StudyMarkInput = z.input<typeof studyMarkSchema>;
+export type StudyPositionInput = z.input<typeof studyPositionSchema>;

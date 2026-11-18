@@ -147,12 +147,12 @@ test.describe("a new tester with no pass", () => {
     ).toBeVisible();
     await expectNoBlockingViolations(page);
 
-    // The Free Preview deck opens.
+    // The Free Preview deck opens: with no cards yet, it's being prepared (ticket 08's player).
     await page.getByRole("link", { name: "Back to MSTC topics" }).click();
     await row(page, "Simple Curves")
       .getByRole("link", { name: /^Flashcards/ })
       .click();
-    await expect(page.getByText("OPENING SOON · FREE PREVIEW")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Nothing here yet" })).toBeVisible();
   });
 });
 
