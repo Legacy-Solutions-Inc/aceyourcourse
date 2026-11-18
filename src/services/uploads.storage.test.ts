@@ -586,6 +586,82 @@ describe("the Storage arm's private uploads (ticket 06)", () => {
     expect(logged).toHaveBeenCalled();
   });
 
+  it("files a card's back image in the private content bucket, by its type (ticket 07)", async () => {
+    const { arm, bucket, from } = fakeBucket();
+    const result = await arm.createContentUpload(EDITOR, {
+      purpose: "card-image",
+      contentType: "image/webp",
+      size: 64,
+    });
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+
+    expect(from).toHaveBeenCalledWith("content");
+    expect(result.value.path).toMatch(new RegExp(`^card-images/${UUID}\\.webp$`));
+    expect(result.value.contentType).toBe("image/webp");
+    expect(bucket.createSignedUploadUrl).toHaveBeenCalledWith(result.value.path);
+    expect(bucket.getPublicUrl).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["a GIF", { contentType: "image/gif", size: 64 }],
+    ["an image over 5 MB", { contentType: "image/png", size: 5 * 1024 * 1024 + 1 }],
+  ])("refuses a card image that's %s, asking Storage nothing", async (_, file) => {
+    const { arm, bucket } = fakeBucket();
+
+    expect(
+      await arm.createContentUpload(EDITOR, { purpose: "card-image", ...file } as never),
+    ).toMatchObject({ ok: false, error: { kind: "invalid" } });
+    expect(bucket.createSignedUploadUrl).not.toHaveBeenCalled();
+  });
+
+  const image = "card-images/0d6c1e0a-6f0e-4f43-9b8a-1f2a3b4c5d6e.png";
+
+  it("reads back a card image's upload, and only as a card image", async () => {
+    const { arm, bucket } = fakeBucket();
+
+    expect(await arm.contentFiles.readUpload(image, "card-image")).toEqual(new Uint8Array([1, 2]));
+    expect(bucket.download).toHaveBeenCalledWith(image);
+    expect(await arm.contentFiles.readUpload(image, "card-import-csv")).toBeNull();
+    expect(await arm.contentFiles.readUpload(csv, "card-image")).toBeNull();
+  });
+
+  const stored =
+    "decks/0d6c1e0a-6f0e-4f43-9b8a-1f2a3b4c5d6e/1b2c3d4e-5f6a-4b7c-8d9e-0f1a2b3c4d5e.png";
+  const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a]);
+
+  it("reads a stored card image with its type, for Staff (ticket 07)", async () => {
+    const { arm, bucket } = fakeBucket({
+      download: async () => ({
+        data: { arrayBuffer: async () => PNG.buffer } as Blob,
+        error: null,
+      }),
+    });
+
+    expect(await arm.contentFiles.read(stored)).toEqual({ contentType: "image/png", bytes: PNG });
+    expect(bucket.download).toHaveBeenCalledWith(stored);
+  });
+
+  it.each([
+    ["an import's upload", csv],
+    ["a card image's upload", image],
+    ["a path that climbs out", "decks/../imports/x.png"],
+  ])("reads no card image at %s", async (_, path) => {
+    const { arm, from } = fakeBucket();
+
+    expect(await arm.contentFiles.read(path)).toBeNull();
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("reads no card image that isn't there, or isn't really an image", async () => {
+    const missing = fakeBucket({
+      exists: async () => ({ data: false, error: new Error("Object not found") }) as never,
+    });
+    expect(await missing.arm.contentFiles.read(stored)).toBeNull();
+
+    const fake = fakeBucket();
+    expect(await fake.arm.contentFiles.read(stored)).toBeNull();
+  });
+
   it("asks Storage nothing when there's nothing to delete", async () => {
     const { arm, from } = fakeBucket();
     await arm.contentFiles.remove([]);

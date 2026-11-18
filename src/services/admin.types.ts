@@ -22,7 +22,13 @@ import type {
 } from "@/services/catalogue.types";
 import type { ImportCounts, ImportProblem } from "@/lib/card-import/plan";
 import type { ImportMode } from "@/lib/card-import/modes";
-import type { ContentCounts, ContentVisibility, TopicContent } from "@/services/content.types";
+import type { CardImageType } from "@/lib/cards/card-rules";
+import type {
+  Card,
+  ContentCounts,
+  ContentVisibility,
+  TopicContent,
+} from "@/services/content.types";
 
 export type StaffRole = "owner" | "editor";
 
@@ -530,4 +536,48 @@ export interface CardImportTopicResult {
 /** A confirmed card import: each Topic it changed, in the preview's order. */
 export interface CardImportResult {
   topics: CardImportTopicResult[];
+}
+
+// ── Member App content: the card editor (Phase 3, ticket 07) ────────────────
+
+/** A card as the deck screen and its form show it. */
+export interface AdminCard {
+  id: string;
+  /** Its place in its deck's order, from 1. */
+  position: number;
+  front: string;
+  back: string;
+  note: string | null;
+  /** Where its back image is in the private content bucket, or null. Staff see it through the Admin's image route. */
+  image: string | null;
+  /** Its last save, which an edit's conflict check compares. */
+  stamp: RecordStamp;
+}
+
+/** A Topic's deck as its settings show it: Visible or Hidden, and Free Preview. */
+export interface AdminDeckSettings {
+  id: string;
+  visibility: ContentVisibility;
+  freePreview: boolean;
+}
+
+/** A Topic's deck screen: where the Topic is, its deck (or null when it has none yet) and the cards in order. */
+export interface AdminDeck {
+  exam: { code: string; name: string };
+  subject: { code: string; name: string };
+  topic: { id: string; name: string; position: number };
+  deck: AdminDeckSettings | null;
+  cards: AdminCard[];
+}
+
+/** A deleted card, and whether deleting it made its Visible deck Hidden (it was the last card). */
+export interface DeletedCard {
+  card: Card;
+  deckHidden: boolean;
+}
+
+/** A card's back image, as the Admin's image route sends it to Staff. */
+export interface CardImageFile {
+  contentType: CardImageType;
+  bytes: Uint8Array;
 }

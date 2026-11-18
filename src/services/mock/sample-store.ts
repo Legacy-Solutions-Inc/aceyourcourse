@@ -14,6 +14,7 @@ import type {
   AccessPass,
   AccessPassGrant,
   Card,
+  CardMark,
   Deck,
   Quiz,
   ReviewerPdf,
@@ -112,6 +113,8 @@ export interface SampleStore {
   decks: Deck[];
   /** Each deck's cards (ticket 06), in no particular order: each has its position. */
   cards: Card[];
+  /** Every Member's Card Marks, at most one per Member and card (ticket 07; written from ticket 08). */
+  cardMarks: CardMark[];
   quizzes: Quiz[];
   reviewerPdfs: ReviewerPdf[];
   /** Every Member's Access Passes, at most one per Exam (Phase 3). */
@@ -155,6 +158,7 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     memberDeviceSwitches: [],
     ...sampleContent(catalogue),
     cards: [],
+    cardMarks: [],
     ...sampleAccessPasses(now, catalogue),
     uploads: {},
     contentFiles: {},

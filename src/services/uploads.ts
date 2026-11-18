@@ -1,6 +1,6 @@
 import { isDatabaseConfigured } from "@/env.server";
 import type { CardImageType } from "@/lib/cards/card-rules";
-import type { AdminResult, StaffActor } from "@/services/admin.types";
+import type { AdminResult, CardImageFile, StaffActor } from "@/services/admin.types";
 import * as mockImpl from "@/services/uploads.mock";
 import { storageArm } from "@/services/uploads.storage";
 import type {
@@ -41,9 +41,11 @@ export interface UploadService {
   ): Promise<AdminResult<UploadTicket>>;
   /**
    * A one-time upload URL for an import's CSV (up to 10 MB) or zip of images
-   * (up to 200 MB) in the private content bucket, for any Staff User. It
-   * gives no public URL. Someone signed out is refused, as is a file too big
-   * for its purpose, with the field's message. Clears no cache tags.
+   * (up to 200 MB), or a card's back image (a JPEG, PNG or WebP of up to
+   * 5 MB, ticket 07), in the private content bucket, for any Staff User. It
+   * gives no public URL. Someone signed out is refused, as is a file of the
+   * wrong type or too big for its purpose, with the field's message. Clears
+   * no cache tags.
    */
   createContentUpload(
     actor: StaffActor | null,
@@ -52,8 +54,8 @@ export interface UploadService {
 }
 
 /**
- * The private content bucket, as the Admin's card import uses it on the
- * server (ticket 06). Never handed to the browser.
+ * The private content bucket, as the Admin's card import (ticket 06) and card
+ * editor (ticket 07) use it on the server. Never handed to the browser.
  */
 export interface ContentFiles {
   /**
@@ -61,6 +63,12 @@ export interface ContentFiles {
    * one, or its file hasn't arrived. Throws when Storage can't say.
    */
   readUpload(path: string, purpose: ContentUploadPurpose): Promise<Uint8Array | null>;
+  /**
+   * A stored card image (decks/<deck>/<file>), with its type, for Staff to see
+   * through the Admin's image route (ticket 07), or null when there's none.
+   * Throws when Storage can't say.
+   */
+  read(path: string): Promise<CardImageFile | null>;
   /** Stores a card image at its path. Throws when it can't. */
   put(path: string, bytes: Uint8Array, contentType: CardImageType): Promise<void>;
   /** Deletes these files, card images or uploads. Logs a failure, and never throws. */

@@ -17,7 +17,7 @@ import { productFormValues } from "@/lib/admin/product-form";
 import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
 import { reviewFormValues } from "@/lib/admin/review-form";
 import { getExamPageForAdmin, planCardImport } from "@/services/admin";
-import { sampleTopicId } from "@/services/mock/content";
+import { sampleContentId, sampleTopicId } from "@/services/mock/content";
 import { getSampleStore } from "@/services/mock/sample-store";
 
 import {
@@ -91,6 +91,11 @@ const NOT_STAFF = sampleEmail("not-staff");
 const READER = sampleActor("editor");
 /** An empty sample Topic in CE's MSTC, which any Staff User may rename, move or delete. */
 const SURVEYING = sampleTopicId("CE", "MSTC", "Surveying");
+/** A Hidden deck, given two cards before each test, which any Staff User may edit. */
+const ALGEBRA = sampleTopicId("CE", "MSTC", "Algebra");
+const ALGEBRA_DECK = sampleContentId(ALGEBRA, "deck");
+const CARD = "5d6e7f80-9a1b-4c2d-8e3f-4a5b6c7d8e9f";
+const SECOND_CARD = "6e7f8091-ab2c-4d3e-9f40-5b6c7d8e9fa0";
 
 const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
 
@@ -214,6 +219,31 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
       return content.checkCardImport(IDLE, { input });
     }),
     importCards: staff(() => content.importCards(IDLE, { input: cardImport })),
+    createCardImageUpload: staff(() =>
+      content.createCardImageUpload(IDLE, { input: { contentType: "image/png", size: 2048 } }),
+    ),
+    addCard: staff(() =>
+      content.addCard(IDLE, {
+        input: { topic: ALGEBRA, front: "Slope", back: "$m = \\frac{\\Delta y}{\\Delta x}$" },
+      }),
+    ),
+    saveCard: editorSave("staff", content.saveCard, () => ({
+      id: CARD,
+      front: "Grade, edited",
+      back: "Rise over run",
+      note: "",
+      image: null,
+    })),
+    moveCardInDeck: staff(() =>
+      content.moveCardInDeck(IDLE, { input: { id: SECOND_CARD, direction: "up" } }),
+    ),
+    removeCard: staff(() => content.removeCard(IDLE, { input: { id: CARD } })),
+    saveDeckVisibility: staff(() =>
+      content.saveDeckVisibility(IDLE, { input: { deck: ALGEBRA_DECK, visible: true } }),
+    ),
+    saveDeckFreePreview: staff(() =>
+      content.saveDeckFreePreview(IDLE, { input: { deck: ALGEBRA_DECK, freePreview: true } }),
+    ),
   },
   "./(shell)/products/actions.ts": {
     setProductFlag: staff(() =>
@@ -362,6 +392,16 @@ beforeEach(async () => {
   mode.current = "sample";
   // The seed, with an Exam nothing uses yet, which the Exam and Subject deletes can delete.
   editSampleCatalogue(withUnusedExam);
+  // Two cards nobody has saved through the editor, so a card's stamp is the one opened() gives.
+  getSampleStore().cards = [CARD, SECOND_CARD].map((id, index) => ({
+    id,
+    deckId: ALGEBRA_DECK,
+    position: index + 1,
+    front: index === 0 ? "Grade" : "Slope",
+    back: "Rise over run",
+    note: null,
+    image: null,
+  }));
   vi.mocked(revalidateTag).mockClear();
   const paths = await uploadSampleImport({ csv: importCsv(["Highways,Grade,Rise over run,,"]) });
   const input = { exam: "ce", subject: "mstc", mode: "add" as const, ...paths };

@@ -44,7 +44,7 @@ const sampleCardImportStore: CardImportStore = {
     if (!current || subjectStateOf(current) !== state) return "conflict";
 
     const store = getSampleStore();
-    const { topics, decks, cards } = store;
+    const { topics, decks, cards, cardMarks } = store;
     const updated = new Map(writes.updated.map((card) => [card.id, card]));
     const removed = new Set(writes.removed);
     try {
@@ -56,11 +56,14 @@ const sampleCardImportStore: CardImportStore = {
           .map((card) => structuredClone(updated.get(card.id) ?? card)),
         ...structuredClone(writes.inserted),
       ];
+      // A removed card's marks go with it, as the database's cascade deletes them.
+      store.cardMarks = cardMarks.filter((mark) => !removed.has(mark.cardId));
       store.staffActivity = [...store.staffActivity, structuredClone(activity)];
     } catch (error) {
       store.topics = topics;
       store.decks = decks;
       store.cards = cards;
+      store.cardMarks = cardMarks;
       throw error;
     }
     return "saved";

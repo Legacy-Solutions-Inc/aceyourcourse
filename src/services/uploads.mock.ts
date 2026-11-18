@@ -99,8 +99,11 @@ export async function createContentUpload(
   const parsed = contentUploadRequestSchema.safeParse(request);
   if (!parsed.success) return { ok: false, error: invalidInput(parsed.error) };
 
-  const { purpose, size } = parsed.data;
-  const { contentType } = CONTENT_UPLOADS[purpose];
+  const asked = parsed.data;
+  const { purpose, size } = asked;
+  // A card's image is sent as the type the browser said; an import's file as its purpose's type.
+  const contentType =
+    asked.purpose === "card-image" ? asked.contentType : CONTENT_UPLOADS[asked.purpose].contentType;
   const store = getSampleStore();
   const upload: SampleUpload = {
     id: crypto.randomUUID(),
@@ -203,14 +206,19 @@ export function sampleUploadAt(
 
 /**
  * The sample data's private content bucket (ticket 06), for the Admin's card
- * import: a private upload's file, read back by its path and purpose, and the
- * card images, by path. Nothing here is ever served by the upload route.
+ * import and card editor: a private upload's file, read back by its path and
+ * purpose, and the card images, by path. Nothing here is ever served by the
+ * upload route.
  */
 export const sampleContentFiles: ContentFiles = {
   async readUpload(path, purpose) {
     if (!path.startsWith(PATH_PREFIX)) return null;
     const upload = getSampleStore().uploads[path.slice(PATH_PREFIX.length)];
     return upload?.purpose === purpose && upload.bytes ? upload.bytes : null;
+  },
+  async read(path) {
+    const file = getSampleStore().contentFiles[path];
+    return file ? { contentType: file.contentType, bytes: file.bytes } : null;
   },
   async put(path: string, bytes: Uint8Array, contentType: CardImageType) {
     const store = getSampleStore();

@@ -5,6 +5,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
+import { sampleTopicId } from "../../src/services/mock/content";
 import {
   LIVE,
   openSignInAs,
@@ -20,6 +21,9 @@ import {
 // scroll sideways. On every screen, with its editor and dialog open, the
 // keyboard alone reaches every control, each with a visible focus ring.
 const BLOCKING_IMPACTS = new Set(["serious", "critical"]);
+
+/** A sample Topic with a Hidden deck and no cards, for the card editor (ticket 07). */
+const ALGEBRA = sampleTopicId("CE", "MSTC", "Algebra");
 
 const SIZES = [
   { name: "a desktop", viewport: { width: 1280, height: 800 } },
@@ -246,6 +250,12 @@ const KEYBOARD_SCREENS: {
     ready: (page) => page.getByRole("region", { name: "CE · MSTC · IMPORT CARDS" }),
   },
   {
+    name: "a Topic's deck in the card editor",
+    who: "editor",
+    path: paths.admin.deck(ALGEBRA),
+    ready: (page) => page.getByRole("form", { name: "New card" }),
+  },
+  {
     name: "Users, with the Beta Testers tab and its remove dialog",
     who: "owner",
     path: paths.admin.users,
@@ -342,6 +352,8 @@ for (const size of SIZES) {
         // Member App content: a Subject's Topics (Phase 3, ticket 05), and its card import (ticket 06).
         "/admin/content",
         "/admin/content/import?exam=ce&subject=mstc",
+        // A Topic's deck in the card editor (ticket 07).
+        paths.admin.deck(ALGEBRA),
         "/admin/users",
         "/admin/settings",
       ]) {
@@ -349,6 +361,30 @@ for (const size of SIZES) {
         await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
         await expectNoBlockingViolations(page);
       }
+    });
+
+    test("no serious or critical accessibility violations on the card editor: a card, its messages, its preview and the delete dialog", async ({
+      page,
+    }) => {
+      await signInAs(page, "editor", paths.admin.deck(ALGEBRA));
+      const form = page.getByRole("form", { name: "New card" });
+      await expect(form).toBeVisible({ timeout: 15_000 });
+      await form.getByLabel(/^FRONT/).fill("Degree of curve");
+      await form.getByLabel(/^BACK/).fill("$D = \\frac{1145.916}{R}$");
+      await form.getByRole("button", { name: "Save & add next" }).click();
+      await expect(form.getByRole("status")).toContainText("WRITING THE NEXT ONE", {
+        timeout: 15_000,
+      });
+      // Every field's message, and a formula that won't render in the preview.
+      await form.getByLabel(/^BACK/).fill("$\\frac{1}{$");
+      await form.getByLabel(/^NOTE/).fill("n".repeat(1001));
+      await form.getByRole("button", { name: "Save", exact: true }).click();
+      await expect(form.getByText("ADD A FRONT TO SAVE")).toBeVisible();
+      await expectNoBlockingViolations(page);
+
+      await page.getByRole("button", { name: "Delete card 1" }).click();
+      await settled(page.getByRole("dialog", { name: /^Delete card 1/ }));
+      await expectNoBlockingViolations(page);
     });
 
     test("no serious or critical accessibility violations on Settings showing field messages", async ({

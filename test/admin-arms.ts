@@ -1,7 +1,7 @@
 import type { AdminService } from "@/services/admin";
 import * as sampleArm from "@/services/admin.mock";
 import type { DeniedSignIn, StaffActivity } from "@/services/admin.types";
-import type { Card, ContentKind } from "@/services/content.types";
+import type { Card, CardMark, ContentKind } from "@/services/content.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import type { ContentFiles } from "@/services/uploads";
@@ -9,6 +9,7 @@ import { sampleContentFiles } from "@/services/uploads.mock";
 import type { UploadRequest } from "@/services/uploads.types";
 
 import { DATABASE_ARM } from "./admin-database";
+import { type CardImageUpload, uploadSampleCardImage } from "./card-images";
 import { type ImportFiles, type ImportPaths, uploadSampleImport } from "./card-import-files";
 import { newContent } from "./content-inputs";
 import { editSampleCatalogue } from "./catalogue-seed";
@@ -69,7 +70,21 @@ export interface AdminArm {
    * save would, until the function it gives is called.
    */
   breakStaffActivity(): Promise<() => Promise<void>>;
+  /**
+   * Uploads a card's back image through the upload seam's private uploads, as
+   * the card form does (ticket 07), and gives the path its save sends. The
+   * file arrives as given, whatever it is, as Storage's bucket takes it.
+   */
+  uploadCardImage(bytes: Uint8Array, options?: CardImageUpload): Promise<string>;
+  /** Gives a Member a Card Mark, behind the seam's back, as the flashcard player will (ticket 08). */
+  putCardMark(mark: CardMark): Promise<void>;
+  /** Every Member's Card Marks, read behind the seam's back, by card then Member. */
+  cardMarks(): Promise<CardMark[]>;
 }
+
+/** Pure: Card Marks by card, then Member. */
+export const byCardAndMember = (marks: CardMark[]) =>
+  [...marks].sort((a, b) => a.cardId.localeCompare(b.cardId) || a.userId.localeCompare(b.userId));
 
 /** Pure: cards by deck, then by position. */
 export const byDeckAndPosition = (cards: Card[]) =>
@@ -110,6 +125,12 @@ const SAMPLE_ARM: AdminArm = {
   cards: async () => byDeckAndPosition(structuredClone(getSampleStore().cards)),
   storedFile: async (path) => getSampleStore().contentFiles[path]?.bytes ?? null,
   contentFiles: sampleContentFiles,
+  uploadCardImage: uploadSampleCardImage,
+  putCardMark: async (mark) => {
+    const store = getSampleStore();
+    store.cardMarks = [...store.cardMarks, structuredClone(mark)];
+  },
+  cardMarks: async () => byCardAndMember(structuredClone(getSampleStore().cardMarks)),
   breakStaffActivity: async () => {
     const store = getSampleStore();
     const records = store.staffActivity;

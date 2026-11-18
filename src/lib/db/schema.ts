@@ -22,7 +22,11 @@ import {
 
 import { FAQ_GROUPS, PRODUCT_FORMATS, SITE_PAGES } from "@/services/catalogue.schema";
 import type { AboutContent, Marketplace } from "@/services/catalogue.types";
-import { CONTENT_VISIBILITIES, REVIEWER_PDF_STATUSES } from "@/services/content.types";
+import {
+  CARD_MARK_VERDICTS,
+  CONTENT_VISIBILITIES,
+  REVIEWER_PDF_STATUSES,
+} from "@/services/content.types";
 
 /**
  * Drizzle schema, the typed data layer behind the service seams
@@ -632,6 +636,35 @@ export const cards = pgTable(
     check("cards_note_length", sql`char_length(${t.note}) between 1 and 1000`),
     check("cards_image_path_present", sql`${t.imagePath} <> ''`),
     check("cards_front_hash_format", sql`${t.frontHash} ~ '^[0-9a-f]{64}$'`),
+  ],
+).enableRLS();
+
+export const cardMarkVerdict = pgEnum("card_mark_verdict", CARD_MARK_VERDICTS);
+
+/**
+ * The Card Marks (CONTEXT.md; spec, Phase 3 → Progress storage): each
+ * Member's latest verdict on a card, Got it or Review again, as current state,
+ * one row per Member and card. Deleting the card deletes every Member's mark
+ * on it (the card editor, ticket 07; a Replace import's removed cards), and
+ * deleting the Member deletes theirs. The flashcard player writes them
+ * (ticket 08). The index on card_id serves that cascade, which the primary
+ * key, led by user_id, can't.
+ */
+export const cardMarks = pgTable(
+  "card_marks",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => members.userId, { onDelete: "cascade" }),
+    cardId: uuid("card_id")
+      .notNull()
+      .references(() => cards.id, { onDelete: "cascade" }),
+    verdict: cardMarkVerdict("verdict").notNull(),
+    markedAt: at("marked_at").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.cardId] }),
+    index("card_marks_card_id_idx").on(t.cardId),
   ],
 ).enableRLS();
 

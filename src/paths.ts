@@ -127,6 +127,16 @@ export const paths = {
     cardImportTemplate: "/admin/content/import/template",
     /** The zip of the template's example image, downloaded (Staff only). */
     cardImportExampleImages: "/admin/content/import/example-images",
+    /**
+     * A Topic's deck in the card editor (ticket 07), with one card open in the
+     * form, or "new" for a new card.
+     */
+    deck: (topicId: string, card?: string) =>
+      `/admin/content/deck?topic=${encodeURIComponent(topicId)}${
+        card ? `&card=${encodeURIComponent(card)}` : ""
+      }`,
+    /** A card's back image, from the private content bucket (Staff only). */
+    cardImage: (cardId: string) => `/admin/content/deck/image/${encodeURIComponent(cardId)}`,
     /** Development-only: POST resets the sample data; 404 unless the Admin runs on it. */
     resetSampleData: "/api/dev/sample-data/reset",
     /**

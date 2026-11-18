@@ -16,8 +16,10 @@ import type {
   NewProductForm,
   NewReviewForm,
   NewSubjectForm,
+  CardForm,
   CardImportInput,
   ConfirmCardImportInput,
+  NewCardForm,
   NewTopicForm,
   OfficialExamDateForm,
   ProductFlags,
@@ -33,6 +35,9 @@ import type {
 import type {
   AdminAbout,
   AdminAnnouncement,
+  AdminCard,
+  AdminDeck,
+  AdminDeckSettings,
   AdminExamPage,
   AdminSitePage,
   AdminFaq,
@@ -47,10 +52,12 @@ import type {
   AdminReviewList,
   AdminTopic,
   AdminTopicList,
+  CardImageFile,
   CardImportPreview,
   CardImportResult,
   AdminWebsiteSettings,
   BetaTester,
+  DeletedCard,
   DeletedFaq,
   DeletedProduct,
   DeletedReview,
@@ -548,6 +555,60 @@ export interface AdminService {
     input: ConfirmCardImportInput,
   ): Promise<AdminResult<CardImportResult>>;
 
+  // Member App content: the card editor (any Staff User; Phase 3, ticket 07;
+  // spec, Phase 3 → Content model; stories 125, 127, 128). A Topic's deck,
+  // one card at a time. A card's front and back are required, and each field
+  // is held to its length and must render (src/lib/cards/card-fields.ts). Its
+  // back image is the card's own, a finished "card-image" upload of a JPEG,
+  // PNG or WebP of at most 5 MB (copied under the deck in the private content
+  // bucket), or none. Each write appends one Staff Activity record per entity
+  // it changes ("card", "deck"); none returns a cache tag, since nothing
+  // cached reads cards or decks. src/services/deck-editor.core.ts has the
+  // steps.
+
+  /** A Topic's deck screen: the Topic, its deck (null until its first card) and the cards in order. */
+  getDeckForAdmin(actor: StaffActor, topicId: string): Promise<AdminDeck | null>;
+  /** A card's back image, for Staff, or null when it has none or isn't there. */
+  getCardImageForAdmin(actor: StaffActor, cardId: string): Promise<CardImageFile | null>;
+  /**
+   * "Save" or "Save & add next" on a new card: it goes last in its Topic's
+   * deck. A Topic with no deck gets one, Hidden and not Free Preview.
+   */
+  createCard(actor: StaffActor, input: NewCardForm): Promise<AdminResult<AdminCard>>;
+  /**
+   * Saves a card's fields and image, with the conflict check against the
+   * stamp its form opened with. A replaced or removed image's file is deleted.
+   */
+  updateCard(
+    actor: StaffActor,
+    input: CardForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminCard>>;
+  /** ▲▼: one place earlier or later in its deck. Gives the deck's new order of ids. */
+  moveCard(actor: StaffActor, id: string, direction: ReviewMove): Promise<AdminResult<string[]>>;
+  /**
+   * Deletes a card with every Member's Card Mark on it and its image, and
+   * closes the gap. The last card of a Visible deck makes the deck Hidden,
+   * which `deckHidden` says.
+   */
+  deleteCard(actor: StaffActor, id: string): Promise<AdminResult<DeletedCard>>;
+  /**
+   * "Visible to members", a single toggle: Visible is refused while the deck
+   * is empty ("ADD A CARD FIRST"); Hidden always saves. Hidden decks never
+   * show in the Member App.
+   */
+  setDeckVisibility(
+    actor: StaffActor,
+    deckId: string,
+    visible: boolean,
+  ): Promise<AdminResult<AdminDeckSettings>>;
+  /** "Free Preview", a single toggle: Members with no Access Pass can open a Visible deck. */
+  setDeckFreePreview(
+    actor: StaffActor,
+    deckId: string,
+    freePreview: boolean,
+  ): Promise<AdminResult<AdminDeckSettings>>;
+
   // Site pages (any Staff User; ticket 20; spec, Phase 2 → Site pages). Each
   // of the Website's five Site pages: its SEO title and description (blank
   // uses the text in code) and its share image, with an Exam page's rules.
@@ -694,6 +755,14 @@ export const moveTopic = impl.moveTopic;
 export const deleteTopic = impl.deleteTopic;
 export const planCardImport = impl.planCardImport;
 export const confirmCardImport = impl.confirmCardImport;
+export const getDeckForAdmin = impl.getDeckForAdmin;
+export const getCardImageForAdmin = impl.getCardImageForAdmin;
+export const createCard = impl.createCard;
+export const updateCard = impl.updateCard;
+export const moveCard = impl.moveCard;
+export const deleteCard = impl.deleteCard;
+export const setDeckVisibility = impl.setDeckVisibility;
+export const setDeckFreePreview = impl.setDeckFreePreview;
 export const getSitePageForAdmin = impl.getSitePageForAdmin;
 export const updateSitePageSeo = impl.updateSitePageSeo;
 export const getAboutForAdmin = impl.getAboutForAdmin;

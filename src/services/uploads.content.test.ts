@@ -129,7 +129,74 @@ describe("createContentUpload (sample data)", () => {
   });
 });
 
+describe("a card's back image (ticket 07, sample data)", () => {
+  const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+  async function uploadImage(bytes: Uint8Array, contentType = "image/png" as const) {
+    const created = await createContentUpload(EDITOR, {
+      purpose: "card-image",
+      contentType,
+      size: bytes.byteLength,
+    });
+    if (!created.ok) throw new Error(JSON.stringify(created.error));
+    return created.value;
+  }
+
+  it("takes a PNG once at its one-time URL, and the server reads it back by path", async () => {
+    const ticket = await uploadImage(PNG);
+
+    expect(ticket).toEqual({
+      uploadUrl: expect.stringMatching(/^\/api\/dev\/uploads\/[0-9a-f-]+\?token=/),
+      path: expect.stringMatching(/^uploads\/[0-9a-f-]+$/),
+      contentType: "image/png",
+    });
+    expect(await sampleContentFiles.readUpload(ticket.path, "card-image")).toBeNull();
+    expect(await send(ticket, PNG, "image/png")).toBe("stored");
+    expect(await sampleContentFiles.readUpload(ticket.path, "card-image")).toEqual(PNG);
+    expect(await sampleContentFiles.readUpload(ticket.path, "card-import-csv")).toBeNull();
+    // Private, like an import's files: the upload route never serves it.
+    expect(readSampleUpload(urlParts(ticket).id)).toBeNull();
+  });
+
+  it("refuses a file that isn't really the image it says", async () => {
+    const ticket = await uploadImage(CSV);
+
+    expect(await send(ticket, CSV, "image/png")).toBe("not-an-image");
+  });
+
+  it.each([
+    ["a GIF", { contentType: "image/gif", size: 10 }],
+    ["an image over 5 MB", { contentType: "image/png", size: 5 * 1024 * 1024 + 1 }],
+    ["an empty image", { contentType: "image/png", size: 0 }],
+  ])("refuses %s before handing out a URL", async (_, file) => {
+    expect(
+      await createContentUpload(EDITOR, { purpose: "card-image", ...file } as never),
+    ).toMatchObject({ ok: false, error: { kind: "invalid" } });
+    expect(getSampleStore().uploads).toEqual({});
+  });
+
+  it("takes an image of exactly 5 MB", async () => {
+    const created = await createContentUpload(EDITOR, {
+      purpose: "card-image",
+      contentType: "image/webp",
+      size: 5 * 1024 * 1024,
+    });
+    expect(created).toMatchObject({ ok: true, value: { contentType: "image/webp" } });
+  });
+});
+
 describe("sampleContentFiles", () => {
+  it("reads back a stored card image with its type, and nothing else", async () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+    await sampleContentFiles.put("decks/d/a.png", png, "image/png");
+
+    expect(await sampleContentFiles.read("decks/d/a.png")).toEqual({
+      contentType: "image/png",
+      bytes: png,
+    });
+    expect(await sampleContentFiles.read("decks/d/missing.png")).toBeNull();
+  });
+
   it("stores card images by path, and deletes them and the import's uploads", async () => {
     const ticket = await upload("card-import-csv", CSV);
     await send(ticket, CSV, "text/csv");

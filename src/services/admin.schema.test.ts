@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { fieldErrorsOf, passwordSignInSchema, websiteSettingsUpdateSchema } from "./admin.schema";
+import {
+  cardFormSchema,
+  fieldErrorsOf,
+  newCardFormSchema,
+  passwordSignInSchema,
+  websiteSettingsUpdateSchema,
+} from "./admin.schema";
 
 // The Settings schema reads what the form sends, which is text, as well as the
 // typed values the seam receives, so the Server Action and the seam parse with
@@ -96,5 +102,45 @@ describe("passwordSignInSchema", () => {
     ],
   ])("refuses %j", (input, expected) => {
     expect(signInErrors(input)).toEqual(expected);
+  });
+});
+
+// The card editor's forms (ticket 07): a Server Action parses its input, then
+// the seam parses what it got again, so parsing must give the same card twice.
+describe("the card forms", () => {
+  const TOPIC = "3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b";
+
+  it("gives the card as saved: trimmed, a blank note as none, no image", () => {
+    expect(
+      newCardFormSchema.parse({ topic: TOPIC, front: " Grade ", back: "$x$\n", note: " " }),
+    ).toEqual({ topic: TOPIC, front: "Grade", back: "$x$", note: null, image: null });
+  });
+
+  it.each([
+    [
+      "a new card",
+      newCardFormSchema,
+      { topic: TOPIC, front: "F", back: "B", note: "", image: null },
+    ],
+    [
+      "an edited card",
+      cardFormSchema,
+      { id: TOPIC, front: "F", back: "B", note: "  n ", image: "uploads/x" },
+    ],
+  ] as const)("parses %s's own output to the same card", (_, schema, input) => {
+    const once = schema.parse(input);
+    expect(schema.parse(once)).toEqual(once);
+  });
+
+  it("names each field it refuses", () => {
+    const parsed = cardFormSchema.safeParse({ id: TOPIC, front: "", back: "$x", note: 5 });
+    expect(parsed.success).toBe(false);
+    expect(parsed.error && fieldErrorsOf(parsed.error)).toEqual({ note: ["ENTER TEXT"] });
+
+    const blank = cardFormSchema.safeParse({ id: TOPIC, front: "", back: "$x" });
+    expect(blank.error && fieldErrorsOf(blank.error)).toEqual({
+      front: ["ADD A FRONT TO SAVE"],
+      back: ["The back has a $ with no closing $ (write a dollar sign as \\$)"],
+    });
   });
 });

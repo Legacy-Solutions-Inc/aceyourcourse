@@ -111,6 +111,15 @@ describe("TopicsEditor", () => {
     expect(screen.getByRole("list", { name: "What Surveying holds" })).toHaveTextContent("EMPTY");
   });
 
+  it("opens each Topic's deck in the card editor from “Flashcards”", () => {
+    renderEditor();
+
+    expect(screen.getByRole("link", { name: "Flashcards in Surveying" })).toHaveAttribute(
+      "href",
+      `/admin/content/deck?topic=${SURVEYING.id}`,
+    );
+  });
+
   it("opens the Subject's card import from “Import cards”", () => {
     renderEditor();
 

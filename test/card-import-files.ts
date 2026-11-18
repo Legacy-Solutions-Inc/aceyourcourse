@@ -2,7 +2,7 @@ import { zipSync } from "fflate";
 
 import type { StaffActor } from "@/services/admin.types";
 import { createContentUpload, receiveSampleUpload } from "@/services/uploads.mock";
-import type { ContentUploadPurpose, ContentUploadTicket } from "@/services/uploads.types";
+import type { ContentUploadTicket, ImportUploadPurpose } from "@/services/uploads.types";
 
 /** The card import template's header row. */
 export const IMPORT_HEADER = "topic,front,back,note,image";
@@ -37,11 +37,11 @@ export const IMPORT_UPLOADER: StaffActor = {
 /** Uploads one private file through an upload arm's createContentUpload, and the PUT the browser makes. */
 export async function uploadContent(
   create: (
-    purpose: ContentUploadPurpose,
+    purpose: ImportUploadPurpose,
     size: number,
   ) => Promise<{ ok: true; value: ContentUploadTicket } | { ok: false }>,
   put: (ticket: ContentUploadTicket, bytes: Uint8Array) => Promise<boolean>,
-  purpose: ContentUploadPurpose,
+  purpose: ImportUploadPurpose,
   bytes: Uint8Array,
   send: boolean,
 ): Promise<string> {
@@ -53,7 +53,7 @@ export async function uploadContent(
 
 /** Uploads an import's files to the sample data, as the import screen does. */
 export async function uploadSampleImport({ csv, zip = null, send = true }: ImportFiles) {
-  const create = (purpose: ContentUploadPurpose, size: number) =>
+  const create = (purpose: ImportUploadPurpose, size: number) =>
     createContentUpload(IMPORT_UPLOADER, { purpose, size });
   const put = async (ticket: ContentUploadTicket, bytes: Uint8Array) => {
     const url = new URL(ticket.uploadUrl, "http://localhost");

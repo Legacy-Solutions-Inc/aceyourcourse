@@ -119,10 +119,11 @@ async function hasCatalogue(tx: Transaction): Promise<boolean> {
 /**
  * The Member App's content, children before parents: Topics hang off the
  * catalogue's Subjects, each Topic's deck, quiz and Reviewer PDF off it,
- * which keeps a Topic, and so its Subject, from being deleted under them, and
- * each deck's cards off the deck.
+ * which keeps a Topic, and so its Subject, from being deleted under them,
+ * each deck's cards off the deck, and the Members' Card Marks off the cards.
  */
 const CONTENT_TABLES = [
+  schema.cardMarks,
   schema.cards,
   schema.decks,
   schema.quizzes,

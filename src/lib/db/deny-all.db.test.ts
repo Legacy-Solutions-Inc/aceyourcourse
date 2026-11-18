@@ -40,6 +40,7 @@ describeWithDatabase("Deny-all: the browser roles reach no table", database, (db
     "topics",
     "decks",
     "cards",
+    "card_marks",
     "quizzes",
     "reviewer_pdfs",
     "access_passes",

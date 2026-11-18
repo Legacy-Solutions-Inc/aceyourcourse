@@ -11,7 +11,7 @@ import {
   planCardImport as planImport,
 } from "@/lib/card-import/plan";
 import { listZipFile, readZipEntries } from "@/lib/card-import/zip";
-import { CARD_IMAGE_EXTENSIONS, type CardImageType, cardImageType } from "@/lib/cards/card-rules";
+import { cardImagePath, type CardImageType, cardImageType } from "@/lib/cards/card-rules";
 import { hasFileSignature } from "@/lib/file-signature";
 import {
   type CardImportInput,
@@ -303,7 +303,7 @@ function writesOf(
       if (planned.image) {
         const contentType = cardImageType(planned.image);
         if (!contentType) throw new Error(`“${planned.image}” isn’t an image the planner allows.`);
-        image = `decks/${deckId}/${newId()}.${CARD_IMAGE_EXTENSIONS[contentType]}`;
+        image = cardImagePath(deckId, newId(), contentType);
         writes.images.push({ path: image, entry: planned.image, contentType });
       }
       const card: Card = {

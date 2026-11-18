@@ -13,6 +13,7 @@ import { isCalendarDate } from "@/lib/manila-time";
 import { variationLabel } from "@/lib/catalogue/price";
 import type { AdminError, RequiredRole, StaffActor } from "@/services/admin.types";
 import { IMPORT_MODES } from "@/lib/card-import/modes";
+import { cardFieldProblems, cardFieldsOf } from "@/lib/cards/card-fields";
 import type { ContentCounts, TopicContent } from "@/services/content.types";
 import {
   EXAM_PAGE_SECTIONS,
@@ -1573,3 +1574,79 @@ export const confirmCardImportInputSchema = cardImportInputSchema.extend({
 });
 
 export type ConfirmCardImportInput = z.input<typeof confirmCardImportInputSchema>;
+
+// ── Member App content: the card editor (Phase 3, ticket 07) ────────────────
+// A Topic's deck, one card at a time (spec, Phase 3 → Content model; stories
+// 125, 127, 128): any Staff User adds, edits, moves and deletes cards, and
+// makes the deck Visible or Hidden and Free Preview. A card's text follows
+// src/lib/cards/card-fields.ts, which the browser checks first; its image is
+// the card's own, a finished "card-image" upload's path, or none.
+
+const cardId = z.string().uuid("THAT CARD ISN’T THERE · RELOAD THE PAGE");
+const deckId = z.string().uuid("THAT DECK ISN’T THERE · RELOAD THE PAGE");
+
+/** A card field from the form: text, held to a generous size before its own rules run. */
+const cardFieldText = z
+  .string({ invalid_type_error: "ENTER TEXT", required_error: "ENTER TEXT" })
+  .max(20_000, "THAT’S FAR TOO LONG FOR A CARD");
+
+/** The card form's fields: the front, back and note, and the back image. */
+const cardFieldShape = {
+  front: cardFieldText,
+  back: cardFieldText,
+  // A blank note is saved as none (null), and a saved card's form sends that back.
+  note: cardFieldText.nullish().transform((note) => note ?? ""),
+  image: z
+    .string({ invalid_type_error: "UPLOAD THE IMAGE AGAIN" })
+    .min(1, "UPLOAD THE IMAGE AGAIN")
+    .max(300, "UPLOAD THE IMAGE AGAIN")
+    .nullable()
+    .default(null),
+};
+
+/** Adds card-fields.ts's message to each field that can't be saved. */
+function checkCardFields(
+  card: { front: string; back: string; note: string },
+  ctx: z.RefinementCtx,
+) {
+  for (const [field, message] of Object.entries(cardFieldProblems(card))) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message });
+  }
+}
+
+/**
+ * "Save" or "Save & add next" on a new card: its Topic and its fields, as
+ * saved (trimmed, a blank note as none). The deck is made when it has none.
+ */
+export const newCardFormSchema = z
+  .object({ topic: topicId, ...cardFieldShape })
+  .superRefine(checkCardFields)
+  .transform(({ topic, image, ...text }) => ({ topic, ...cardFieldsOf(text), image }));
+
+export type NewCardForm = z.input<typeof newCardFormSchema>;
+
+/** "Save" on a card being edited: which card, and its fields, as saved. */
+export const cardFormSchema = z
+  .object({ id: cardId, ...cardFieldShape })
+  .superRefine(checkCardFields)
+  .transform(({ id, image, ...text }) => ({ id, ...cardFieldsOf(text), image }));
+
+export type CardForm = z.input<typeof cardFormSchema>;
+
+/** ▲▼ on a card: one place earlier or later in its deck. */
+export const cardMoveInputSchema = reviewMoveSchema.extend({ id: cardId });
+
+/** Delete: the card. */
+export const cardIdInputSchema = z.object({ id: cardId });
+
+/** "Visible to members": the deck, and whether Members see it. */
+export const deckVisibilityInputSchema = z.object({
+  deck: deckId,
+  visible: z.boolean({ invalid_type_error: "SHOULD BE ON OR OFF" }),
+});
+
+/** "Free Preview": the deck, and whether Members with no Access Pass can open it. */
+export const deckFreePreviewInputSchema = z.object({
+  deck: deckId,
+  freePreview: z.boolean({ invalid_type_error: "SHOULD BE ON OR OFF" }),
+});

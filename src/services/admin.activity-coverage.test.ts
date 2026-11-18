@@ -9,7 +9,7 @@ import * as adminSeam from "@/services/admin";
 import type { AdminService } from "@/services/admin";
 import type { AdminResult, StaffActor } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
-import { sampleTopicId } from "@/services/mock/content";
+import { sampleContentId, sampleTopicId } from "@/services/mock/content";
 
 import {
   SAVES,
@@ -66,6 +66,9 @@ const READS = [
   "listTopicsForAdmin",
   // "Check file" for a card import: a preview, which saves nothing.
   "planCardImport",
+  // The card editor's deck screen, and a card's image for Staff.
+  "getDeckForAdmin",
+  "getCardImageForAdmin",
 ] as const satisfies readonly (keyof AdminService)[];
 
 /**
@@ -89,6 +92,28 @@ interface Write {
   refusal: "invalid" | "not-found";
   /** The data it saves on, when the seed has nothing it can save: an edited copy of the seed. */
   seed?: (seed: CatalogueSeed) => void;
+  /** What it saves on that the seed lacks, made through the seam before it's measured. */
+  setUp?: (seam: AdminService) => Promise<void>;
+}
+
+/** A Hidden deck with no cards in the seed, in CE's MSTC. */
+const ALGEBRA = sampleTopicId("CE", "MSTC", "Algebra");
+const ALGEBRA_DECK = sampleContentId(ALGEBRA, "deck");
+/** The two cards withTwoCards adds to Algebra's deck, first and second. */
+const cards = { first: "", second: "" };
+
+/** Gives Algebra's deck two cards, for the card editor's writes. */
+async function withTwoCards(seam: AdminService) {
+  for (const key of ["first", "second"] as const) {
+    const added = await seam.createCard(EDITOR, {
+      topic: ALGEBRA,
+      front: key,
+      back: "$x^2$",
+      image: null,
+    });
+    if (!added.ok) throw new Error("The card wasn't added");
+    cards[key] = added.value.id;
+  }
 }
 
 /** The stamp every record has before anyone saves it. */
@@ -594,6 +619,67 @@ const WRITES: Record<string, Write> = {
       seam.confirmCardImport(actor, await checkedImport(seam, arm, ["Highways,Grade,$x,,"])),
     refusal: "invalid",
   },
+  createCard: {
+    actor: EDITOR,
+    entity: "card",
+    entityId: null,
+    saves: (seam, actor) =>
+      seam.createCard(actor, {
+        topic: ALGEBRA,
+        front: "Grade",
+        back: "Rise over run",
+        image: null,
+      }),
+    refused: (seam, actor) =>
+      seam.createCard(actor, { topic: ALGEBRA, front: " ", back: "Rise over run", image: null }),
+    refusal: "invalid",
+  },
+  updateCard: {
+    actor: EDITOR,
+    entity: "card",
+    entityId: null,
+    setUp: withTwoCards,
+    saves: (seam, actor) =>
+      seam.updateCard(actor, { id: cards.first, front: "First, edited", back: "$x$", image: null }),
+    refused: (seam, actor) =>
+      seam.updateCard(actor, { id: UNKNOWN_TOPIC, front: "F", back: "B", image: null }),
+    refusal: "not-found",
+  },
+  moveCard: {
+    actor: EDITOR,
+    entity: "card",
+    entityId: null,
+    setUp: withTwoCards,
+    saves: (seam, actor) => seam.moveCard(actor, cards.second, "up"),
+    refused: (seam, actor) => seam.moveCard(actor, UNKNOWN_TOPIC, "up"),
+    refusal: "not-found",
+  },
+  deleteCard: {
+    actor: EDITOR,
+    entity: "card",
+    entityId: null,
+    setUp: withTwoCards,
+    saves: (seam, actor) => seam.deleteCard(actor, cards.first),
+    refused: (seam, actor) => seam.deleteCard(actor, UNKNOWN_TOPIC),
+    refusal: "not-found",
+  },
+  setDeckVisibility: {
+    actor: EDITOR,
+    entity: "deck",
+    entityId: ALGEBRA_DECK,
+    setUp: withTwoCards,
+    saves: (seam, actor) => seam.setDeckVisibility(actor, ALGEBRA_DECK, true),
+    refused: (seam, actor) => seam.setDeckVisibility(actor, UNKNOWN_TOPIC, true),
+    refusal: "not-found",
+  },
+  setDeckFreePreview: {
+    actor: EDITOR,
+    entity: "deck",
+    entityId: ALGEBRA_DECK,
+    saves: (seam, actor) => seam.setDeckFreePreview(actor, ALGEBRA_DECK, true),
+    refused: (seam, actor) => seam.setDeckFreePreview(actor, UNKNOWN_TOPIC, true),
+    refusal: "not-found",
+  },
   updatePromoBanner: {
     actor: EDITOR,
     entity: "promo-banner",
@@ -672,6 +758,7 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
     "%s appends exactly one record, with the values before and after",
     async (_name, write) => {
       if (write.seed) await arm.reset(write.seed);
+      await write.setUp?.(seam);
       const { result, appended } = await appendedBy(() => write.saves(seam, write.actor, arm));
 
       expect(result).toMatchObject({ ok: true });
@@ -696,6 +783,7 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
 
   it.each(writes)("%s appends nothing when it's refused", async (_name, write) => {
     if (write.seed) await arm.reset(write.seed);
+    await write.setUp?.(seam);
     const { result, appended } = await appendedBy(() => write.refused(seam, write.actor, arm));
 
     expect(result).toMatchObject({ ok: false, error: { kind: write.refusal } });
@@ -706,6 +794,7 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
     "%s appends nothing for an Editor, who isn't allowed it",
     async (_name, write) => {
       if (write.seed) await arm.reset(write.seed);
+      await write.setUp?.(seam);
       const { result, appended } = await appendedBy(() => write.saves(seam, EDITOR, arm));
 
       expect(result).toMatchObject({ ok: false, error: { kind: "forbidden" } });

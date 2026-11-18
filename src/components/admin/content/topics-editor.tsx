@@ -162,6 +162,13 @@ function TopicRow({
         </form>
       ) : (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <Link
+            href={paths.admin.deck(topic.id)}
+            aria-label={`Flashcards in ${topic.name}`}
+            className={TEXT_BUTTON}
+          >
+            Flashcards
+          </Link>
           <button
             type="button"
             aria-label={`Rename ${topic.name}`}

@@ -3,6 +3,7 @@ import {
   type ContentCounts,
   type ContentKind,
   type ContentRecords,
+  type ContentVisibility,
   type Deck,
   type Quiz,
   type ReviewerPdf,
@@ -106,6 +107,35 @@ export function contentItemOf(
     available: isAvailable(record),
     freePreview: record.freePreview,
   };
+}
+
+/**
+ * Pure: why a deck or quiz holding `items` cards or questions can't be given
+ * this visibility, or null when it can: Visible is refused while it's empty
+ * (story 127), so Members never see empty content. Hidden always can.
+ */
+export function visibilityRefusal(
+  visibility: ContentVisibility,
+  items: number,
+  item: "card" | "question",
+): string | null {
+  return visibility === "visible" && items === 0 ? `ADD A ${item.toUpperCase()} FIRST` : null;
+}
+
+/**
+ * Pure: a deck's or quiz's visibility once items are removed and `itemsLeft`
+ * remain: a Visible one with nothing left becomes Hidden, which `hidden` says,
+ * for the screen to tell the Editor. The card editor (ticket 07) and the
+ * question editor (ticket 10) both apply it, so neither leaves empty content
+ * Visible.
+ */
+export function visibilityAfterRemoval(
+  visibility: ContentVisibility,
+  itemsLeft: number,
+): { visibility: ContentVisibility; hidden: boolean } {
+  return visibility === "visible" && itemsLeft === 0
+    ? { visibility: "hidden", hidden: true }
+    : { visibility, hidden: false };
 }
 
 /** Pure: what a Topic holds. */

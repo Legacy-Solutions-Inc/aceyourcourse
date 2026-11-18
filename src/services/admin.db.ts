@@ -42,6 +42,7 @@ import type {
   StaffMember,
 } from "@/services/admin.types";
 import { confirmCardImport, planCardImport } from "@/services/admin.card-import.db";
+import * as deckEditor from "@/services/admin.deck.db";
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
@@ -264,6 +265,10 @@ async function load(
     // cards itself, and the private bucket is Storage's.
     get cards() {
       return notLoaded("the cards");
+    },
+    // The card editor (admin.deck.db.ts) deletes a card's marks with it.
+    get cardMarks() {
+      return notLoaded("the Card Marks");
     },
     get contentFiles() {
       return notLoaded("the private content bucket");
@@ -773,6 +778,15 @@ export const databaseArm: AdminService = {
   // One Subject's cards, read and saved by the import itself.
   planCardImport,
   confirmCardImport,
+  // One Topic's deck and cards, read and saved by the card editor itself.
+  getDeckForAdmin: deckEditor.getDeckForAdmin,
+  getCardImageForAdmin: deckEditor.getCardImageForAdmin,
+  createCard: deckEditor.createCard,
+  updateCard: deckEditor.updateCard,
+  moveCard: deckEditor.moveCard,
+  deleteCard: deckEditor.deleteCard,
+  setDeckVisibility: deckEditor.setDeckVisibility,
+  setDeckFreePreview: deckEditor.setDeckFreePreview,
 
   getSitePageForAdmin: read(CATALOGUE, sampleArm.getSitePageForAdmin),
   updateSitePageSeo: stampedWrite(sampleArm.updateSitePageSeo),

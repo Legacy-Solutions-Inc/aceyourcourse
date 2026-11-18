@@ -1,7 +1,9 @@
 import "server-only";
 
+import { CARD_IMAGE_EXTENSIONS, CARD_IMAGE_TYPES } from "@/lib/cards/card-rules";
 import { ABOUT_PHOTO_SLOTS } from "@/lib/catalogue/about-content";
 import { bucketObjectPath, CATALOGUE_BUCKET } from "@/lib/catalogue-bucket";
+import { hasFileSignature } from "@/lib/file-signature";
 import { getStorage, type StorageConnection } from "@/lib/supabase/admin";
 import { invalidInput } from "@/services/admin.schema";
 import type { AdminResult, StaffActor } from "@/services/admin.types";
@@ -9,6 +11,7 @@ import type { CatalogueSeed } from "@/services/catalogue.schema";
 import type { ContentFiles, UploadService } from "@/services/uploads";
 import {
   CONTENT_UPLOADS,
+  type ContentUploadPurpose,
   type ContentUploadRequest,
   contentUploadRequestSchema,
   type ContentUploadTicket,
@@ -38,8 +41,9 @@ import {
 // Private uploads and card images (Phase 3, ticket 06) go to the PRIVATE
 // `content` bucket (supabase/migrations/…_content_bucket.sql), which has no
 // public URLs: createContentUpload signs a one-time upload URL for an
-// import's CSV or zip, and the card import reads it back, stores each card's
-// image and deletes what it no longer needs through contentFiles.
+// import's CSV or zip, or a card's back image (ticket 07), and the card
+// import and card editor read it back, store each card's image and delete
+// what they no longer need through contentFiles.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** The private bucket: card images, and the files an import uploads. */
@@ -79,9 +83,22 @@ const FOLDERS: Record<
   "about-photo": (slot, file) => `site-pages/about/${slot}-${file}`,
 };
 
-/** Pure: whether a path is where a private upload of this purpose is filed: imports/<uuid>.<extension>. */
-const isContentUploadPath = (path: string, purpose: keyof typeof CONTENT_UPLOADS) =>
-  new RegExp(`^imports/${UPLOAD_ID}\\.${CONTENT_UPLOADS[purpose].extension}$`).test(path);
+/**
+ * Pure: whether a path is where a private upload of this purpose is filed: an
+ * import's file at imports/<uuid>.<extension>, a card's back image at
+ * card-images/<uuid>.<jpg|png|webp>.
+ */
+function isContentUploadPath(path: string, purpose: ContentUploadPurpose): boolean {
+  const pattern =
+    purpose === "card-image"
+      ? `^card-images/${UPLOAD_ID}\\.${EXTENSION}$`
+      : `^imports/${UPLOAD_ID}\\.${CONTENT_UPLOADS[purpose].extension}$`;
+  return new RegExp(pattern).test(path);
+}
+
+/** Pure: whether a path is where a card's image is stored: decks/<deck uuid>/<uuid>.<jpg|png|webp>. */
+const isCardImagePath = (path: string) =>
+  new RegExp(`^decks/${UPLOAD_ID}/${UPLOAD_ID}\\.${EXTENSION}$`).test(path);
 
 /** Pure: the purpose of the upload filed at this path, or null when no upload is. */
 function uploadPurposeAt(path: string): UploadRequest["purpose"] | null {
@@ -240,9 +257,17 @@ export function createStorageArm(connect: () => StorageConnection): StorageArm {
     const parsed = contentUploadRequestSchema.safeParse(request);
     if (!parsed.success) return { ok: false, error: invalidInput(parsed.error) };
 
-    const { purpose } = parsed.data;
-    const { extension, contentType } = CONTENT_UPLOADS[purpose];
-    const path = `imports/${crypto.randomUUID()}.${extension}`;
+    const asked = parsed.data;
+    const { contentType, path } =
+      asked.purpose === "card-image"
+        ? {
+            contentType: asked.contentType,
+            path: `card-images/${crypto.randomUUID()}.${CARD_IMAGE_EXTENSIONS[asked.contentType]}`,
+          }
+        : {
+            contentType: CONTENT_UPLOADS[asked.purpose].contentType,
+            path: `imports/${crypto.randomUUID()}.${CONTENT_UPLOADS[asked.purpose].extension}`,
+          };
     const { data, error } = await contentBucket().createSignedUploadUrl(path);
     if (error) throw new Error(`Storage couldn't make an upload URL: ${error.message}`);
     return {
@@ -265,6 +290,22 @@ export function createStorageArm(connect: () => StorageConnection): StorageArm {
       const { data, error } = await files.download(path);
       if (error) throw new Error(`Storage couldn't read an upload: ${error.message}`);
       return new Uint8Array(await data.arrayBuffer());
+    },
+    async read(path) {
+      if (!isCardImagePath(path)) return null;
+      const files = contentBucket();
+      // A file that isn't there is false, with its 404 as the error.
+      const exists = await files.exists(path).catch((error: unknown) => {
+        const reason = error instanceof Error ? error.message : String(error);
+        throw new Error(`Storage couldn't check a card image: ${reason}`);
+      });
+      if (exists.data !== true) return null;
+      const { data, error } = await files.download(path);
+      if (error) throw new Error(`Storage couldn't read a card image: ${error.message}`);
+      const bytes = new Uint8Array(await data.arrayBuffer());
+      // Its type from its first bytes, so only an image is ever sent as one.
+      const contentType = CARD_IMAGE_TYPES.find((type) => hasFileSignature(bytes, type));
+      return contentType ? { contentType, bytes } : null;
     },
     async put(path, bytes, contentType) {
       const { error } = await contentBucket().upload(path, bytes, { contentType, upsert: false });

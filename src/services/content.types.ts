@@ -58,6 +58,25 @@ export interface Card {
   image: string | null;
 }
 
+/** A Member's verdict on a card: Got it, or Review again. */
+export const CARD_MARK_VERDICTS = ["got", "again"] as const;
+export type CardMarkVerdict = (typeof CARD_MARK_VERDICTS)[number];
+
+/**
+ * A Card Mark (CONTEXT.md; spec, Phase 3 → Progress storage): a Member's
+ * latest verdict on one card, kept as current state, at most one per Member
+ * and card. Deleting the card deletes every Member's mark on it (ticket 07);
+ * the flashcard player writes them (ticket 08).
+ */
+export interface CardMark {
+  /** The Member's User id. */
+  userId: string;
+  cardId: string;
+  verdict: CardMarkVerdict;
+  /** ISO time of the latest mark. */
+  markedAt: string;
+}
+
 /** A Topic's quiz: at most one per Topic. Its questions come with ticket 09. */
 export interface Quiz {
   id: string;

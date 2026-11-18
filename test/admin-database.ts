@@ -12,7 +12,13 @@ import { sampleContentFiles } from "@/services/uploads.mock";
 import { CONTENT_BUCKET, storageArm } from "@/services/uploads.storage";
 import type { UploadRequest } from "@/services/uploads.types";
 
-import { type AdminArm, byDeckAndPosition } from "./admin-arms";
+import { type AdminArm, byCardAndMember, byDeckAndPosition } from "./admin-arms";
+import {
+  type CardImageUpload,
+  declaredSize,
+  IMAGE_UPLOADER,
+  uploadSampleCardImage,
+} from "./card-images";
 import {
   IMPORT_UPLOADER,
   type ImportFiles,
@@ -60,6 +66,27 @@ async function uploadStorageImport({ csv, zip = null, send = true }: ImportFiles
     csv: await uploadContent(create, put, "card-import-csv", csv, send),
     zip: zip ? await uploadContent(create, put, "card-import-zip", zip, send) : null,
   };
+}
+
+/**
+ * Uploads a card image to local Supabase's private content bucket, as the card
+ * form does: a one-time URL for the declared size, then the file as given,
+ * which the bucket takes whatever it is.
+ */
+async function uploadStorageCardImage(
+  bytes: Uint8Array,
+  { contentType = "image/png", send = true }: CardImageUpload = {},
+): Promise<string> {
+  const created = await storageArm.createContentUpload(IMAGE_UPLOADER, {
+    purpose: "card-image",
+    contentType,
+    size: declaredSize(bytes),
+  });
+  if (!created.ok) throw new Error("The card image upload was refused");
+  if (send && !(await putFile(created.value.uploadUrl, contentType, bytes)).ok) {
+    throw new Error("The card image wasn't stored");
+  }
+  return created.value.path;
 }
 
 /** The file at a path in the sample data's private content bucket, or null. */
@@ -123,6 +150,26 @@ export const DATABASE_ARM: AdminArm = {
     byDeckAndPosition((await getDb().select().from(schema.cards)).map(cardFromRow)),
   storedFile: isStorageConfigured ? storedStorageFile : async (path) => getSampleStoreFile(path),
   contentFiles: isStorageConfigured ? storageArm.contentFiles : sampleContentFiles,
+  uploadCardImage: isStorageConfigured ? uploadStorageCardImage : uploadSampleCardImage,
+  putCardMark: async ({ userId, cardId, verdict, markedAt }) => {
+    // A Card Mark is a Member's: their row first, if the test hasn't made one.
+    await getDb()
+      .insert(schema.members)
+      .values({ userId, email: `${userId.slice(0, 8)}@example.com`, joinedAt: new Date() })
+      .onConflictDoNothing();
+    await getDb()
+      .insert(schema.cardMarks)
+      .values({ userId, cardId, verdict, markedAt: new Date(markedAt) });
+  },
+  cardMarks: async () =>
+    byCardAndMember(
+      (await getDb().select().from(schema.cardMarks)).map((row) => ({
+        userId: row.userId,
+        cardId: row.cardId,
+        verdict: row.verdict,
+        markedAt: row.markedAt.toISOString(),
+      })),
+    ),
   // A trigger that refuses every Staff Activity row: the save's last write.
   // The database tests run one file at a time, so no other test meets it.
   breakStaffActivity: async () => {
