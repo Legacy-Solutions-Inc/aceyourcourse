@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, type Column, count, desc, eq } from "drizzle-orm";
+import { and, asc, type Column, count, desc, eq, isNotNull } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import type { Transaction } from "@/lib/db/connect";
@@ -23,6 +23,7 @@ import {
   quizFromRow,
 } from "@/services/content.rows";
 import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
+import { progressCalls, progressSubjectsOf, type ProgressStore } from "@/services/progress.core";
 import { quizStudyCalls, type QuizStudyStore } from "@/services/quiz-study.core";
 import { reviewerStudyCalls, type ReviewerStudyStore } from "@/services/reviewer-study.core";
 import type { MemberService } from "@/services/member";
@@ -378,30 +379,45 @@ async function readContentExams(db: Reader, examCode?: string): Promise<ContentE
   return [...found.values()];
 }
 
+/** Joins a record's Topic, when it's in this Exam: what scopes each kind's records to an Exam. */
+const topicInExam = (topicId: Column, examCode: string) =>
+  and(eq(topicId, schema.topics.id), eq(schema.topics.examCode, examCode));
+
+/** An Exam's Topics and each kind's records in them, Hidden and Draft ones too. */
+async function readExamRecords(db: Reader, examCode: string) {
+  const { topics, decks, quizzes, reviewerPdfs } = schema;
+  const [topicRows, deckRows, quizRows, pdfRows] = await Promise.all([
+    db.select().from(topics).where(eq(topics.examCode, examCode)),
+    db.select({ row: decks }).from(decks).innerJoin(topics, topicInExam(decks.topicId, examCode)),
+    db
+      .select({ row: quizzes })
+      .from(quizzes)
+      .innerJoin(topics, topicInExam(quizzes.topicId, examCode)),
+    db
+      .select({ row: reviewerPdfs })
+      .from(reviewerPdfs)
+      .innerJoin(topics, topicInExam(reviewerPdfs.topicId, examCode)),
+  ]);
+  const pdfs = pdfRows.map(({ row }) => row);
+  return {
+    content: contentFromRows({
+      topics: topicRows,
+      decks: deckRows.map(({ row }) => row),
+      quizzes: quizRows.map(({ row }) => row),
+      reviewerPdfs: pdfs,
+    }),
+    /** How many pages a Member can read in each Reviewer PDF, by its id. */
+    pageCounts: new Map(pdfs.map((pdf) => [pdf.id, readablePageCount(pdf)])),
+  };
+}
+
 const getLibrary: MemberService["getLibrary"] = async (examCode) => {
   const wanted = examCode.trim().toUpperCase();
-  const { topics, decks, quizzes, reviewerPdfs } = schema;
   try {
     const db = getDb();
     const [exam] = await readContentExams(db, wanted);
     if (!exam) return [];
-    // Each kind's records whose Topic is in this Exam.
-    const inExam = (topicId: Column) => and(eq(topicId, topics.id), eq(topics.examCode, wanted));
-    const [topicRows, deckRows, quizRows, pdfRows] = await Promise.all([
-      db.select().from(topics).where(eq(topics.examCode, wanted)),
-      db.select({ row: decks }).from(decks).innerJoin(topics, inExam(decks.topicId)),
-      db.select({ row: quizzes }).from(quizzes).innerJoin(topics, inExam(quizzes.topicId)),
-      db
-        .select({ row: reviewerPdfs })
-        .from(reviewerPdfs)
-        .innerJoin(topics, inExam(reviewerPdfs.topicId)),
-    ]);
-    const content = contentFromRows({
-      topics: topicRows,
-      decks: deckRows.map(({ row }) => row),
-      quizzes: quizRows.map(({ row }) => row),
-      reviewerPdfs: pdfRows.map(({ row }) => row),
-    });
+    const { content } = await readExamRecords(db, wanted);
     return libraryOf(exam, content);
   } catch (error) {
     throw asDatabaseError(error);
@@ -755,6 +771,107 @@ const databaseReviewerStore: ReviewerStudyStore = {
     }),
 };
 
+// ── Progress ────────────────────────────────────────────────────────────────
+
+const databaseProgressStore: ProgressStore = {
+  readExamContent: (examCode) =>
+    inDatabase(async () => {
+      const db = getDb();
+      const [exam] = await readContentExams(db, examCode);
+      if (!exam) return [];
+      const { cards, decks, questions, quizzes, topics } = schema;
+      const [{ content, pageCounts }, cardRows, questionRows] = await Promise.all([
+        readExamRecords(db, examCode),
+        db
+          .select({ id: cards.id, deckId: cards.deckId, position: cards.position })
+          .from(cards)
+          .innerJoin(decks, eq(decks.id, cards.deckId))
+          .innerJoin(topics, topicInExam(decks.topicId, examCode)),
+        // A removed question has no place: it's no longer in its quiz.
+        db
+          .select({ quizId: questions.quizId, questions: count() })
+          .from(questions)
+          .innerJoin(quizzes, eq(quizzes.id, questions.quizId))
+          .innerJoin(topics, topicInExam(quizzes.topicId, examCode))
+          .where(isNotNull(questions.position))
+          .groupBy(questions.quizId),
+      ]);
+      return progressSubjectsOf(exam, content, {
+        cards: cardRows,
+        questionCounts: new Map(questionRows.map((row) => [row.quizId, row.questions])),
+        pageCounts,
+      });
+    }),
+  readRecords: (userId, examCode) =>
+    inDatabase(async () => {
+      const db = getDb();
+      const { cardMarks, cards, decks, quizAttempts, quizzes, reviewerPageViews, reviewerPdfs } =
+        schema;
+      const { deckPositions, readerPositions, studyDays, topics } = schema;
+      // Each record is the Member's own, of content in this Exam.
+      const [marks, scores, views, deckPlaces, readerPlaces, days] = await Promise.all([
+        db
+          .select({ cardId: cardMarks.cardId, verdict: cardMarks.verdict, at: cardMarks.markedAt })
+          .from(cardMarks)
+          .innerJoin(cards, eq(cards.id, cardMarks.cardId))
+          .innerJoin(decks, eq(decks.id, cards.deckId))
+          .innerJoin(topics, topicInExam(decks.topicId, examCode))
+          .where(eq(cardMarks.userId, userId)),
+        db
+          .select({
+            quizId: quizAttempts.quizId,
+            score: quizAttempts.score,
+            at: quizAttempts.submittedAt,
+          })
+          .from(quizAttempts)
+          .innerJoin(quizzes, eq(quizzes.id, quizAttempts.quizId))
+          .innerJoin(topics, topicInExam(quizzes.topicId, examCode))
+          .where(eq(quizAttempts.userId, userId)),
+        db
+          .select({ reviewerPdfId: reviewerPageViews.reviewerPdfId, page: reviewerPageViews.page })
+          .from(reviewerPageViews)
+          .innerJoin(reviewerPdfs, eq(reviewerPdfs.id, reviewerPageViews.reviewerPdfId))
+          .innerJoin(topics, topicInExam(reviewerPdfs.topicId, examCode))
+          .where(eq(reviewerPageViews.userId, userId)),
+        db
+          .select({
+            deckId: deckPositions.deckId,
+            cardId: deckPositions.cardId,
+            at: deckPositions.savedAt,
+          })
+          .from(deckPositions)
+          .innerJoin(decks, eq(decks.id, deckPositions.deckId))
+          .innerJoin(topics, topicInExam(decks.topicId, examCode))
+          .where(eq(deckPositions.userId, userId)),
+        db
+          .select({
+            reviewerPdfId: readerPositions.reviewerPdfId,
+            page: readerPositions.page,
+            at: readerPositions.savedAt,
+          })
+          .from(readerPositions)
+          .innerJoin(reviewerPdfs, eq(reviewerPdfs.id, readerPositions.reviewerPdfId))
+          .innerJoin(topics, topicInExam(reviewerPdfs.topicId, examCode))
+          .where(eq(readerPositions.userId, userId)),
+        db.select({ day: studyDays.day }).from(studyDays).where(eq(studyDays.userId, userId)),
+      ]);
+      return {
+        cardMarks: marks.map(({ at, ...mark }) => ({ ...mark, markedAt: at.toISOString() })),
+        quizScores: scores.map(({ at, ...score }) => ({ ...score, submittedAt: at.toISOString() })),
+        pageViews: views,
+        deckPositions: deckPlaces.map(({ at, ...place }) => ({
+          ...place,
+          savedAt: at.toISOString(),
+        })),
+        readerPositions: readerPlaces.map(({ at, ...place }) => ({
+          ...place,
+          savedAt: at.toISOString(),
+        })),
+        studyDays: days.map(({ day }) => day),
+      };
+    }),
+};
+
 export const databaseArm: MemberService = {
   isBetaTester,
   getOrCreateMember,
@@ -774,4 +891,5 @@ export const databaseArm: MemberService = {
   ...deckStudyCalls(databaseStudyStore),
   ...quizStudyCalls(databaseQuizStore),
   ...reviewerStudyCalls(databaseReviewerStore),
+  ...progressCalls(databaseProgressStore),
 };

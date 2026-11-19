@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemberDrawer } from "./member-drawer";
 import { MemberSidebar } from "./member-sidebar";
 import { NotOpenYet } from "./not-open-yet";
+import { ShareStreak, ShellStreakProvider, type StreakRead } from "./shell-streak";
 
 // The Member App's shell (BUILD-MAP §2): the sidebar's seven numbered items
 // and its footer, the mobile drawer around it (the "Menu" button opens it;
@@ -83,6 +84,86 @@ describe("MemberSidebar", () => {
     expect(screen.queryByText(/STUDYING FOR/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Studying for/)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Close menu" })).not.toBeInTheDocument();
+  });
+});
+
+// The sidebar's streak button (mockup L132; story 90): the Member's current
+// Study Streak, account-wide, and whether today is done, linking to Home.
+// The shell's layout reads it once, and stays as it is while the Member moves
+// between screens, so Home's dashboard, which reads it afresh, shares its
+// read: the button and the streak card never disagree.
+describe("the streak button", () => {
+  const withExam = { ...shell, exams: [CE] };
+  /** A read of the streak, made `at` ms after the layout's. */
+  const read = (current: number, studiedToday: boolean, at = 0): StreakRead => ({
+    current,
+    studiedToday,
+    readAt: Date.parse("2026-11-17T03:42:00.000Z") + at,
+  });
+  const renderWith = (initial: StreakRead, children?: React.ReactNode) =>
+    render(
+      <ShellStreakProvider initial={initial}>
+        <MemberSidebar {...withExam} />
+        {children}
+      </ShellStreakProvider>,
+    );
+
+  it("says the current streak and to study today, linking to Home", () => {
+    renderWith(read(6, false));
+
+    expect(screen.getByRole("link", { name: "6-DAY STREAK STUDY TODAY" })).toHaveAttribute(
+      "href",
+      "/app",
+    );
+  });
+
+  it("says today is done once it's a Study Day", () => {
+    renderWith(read(7, true));
+
+    expect(screen.getByRole("link", { name: "7-DAY STREAK DONE TODAY" })).toBeInTheDocument();
+  });
+
+  it("invites a Member with no streak to start one, rather than a 0-day streak", () => {
+    renderWith(read(0, false));
+
+    expect(screen.getByRole("link", { name: "START A STREAK STUDY TODAY" })).toBeInTheDocument();
+    expect(screen.queryByText(/0-DAY/)).not.toBeInTheDocument();
+  });
+
+  it("follows the dashboard's newer read of the streak", () => {
+    renderWith(read(0, false), <ShareStreak read={read(1, true, 60_000)} />);
+
+    expect(screen.getByRole("link", { name: "1-DAY STREAK DONE TODAY" })).toBeInTheDocument();
+  });
+
+  it("keeps the layout's read over an older one shared before it", () => {
+    const { rerender } = renderWith(read(0, false), <ShareStreak read={read(1, true, 60_000)} />);
+    expect(screen.getByRole("link", { name: "1-DAY STREAK DONE TODAY" })).toBeInTheDocument();
+
+    // A day later the layout redraws (a Target Exam switch, say) with its own read.
+    rerender(
+      <ShellStreakProvider initial={read(1, false, 24 * 60 * 60_000)}>
+        <MemberSidebar {...withExam} />
+        <ShareStreak read={read(1, true, 60_000)} />
+      </ShellStreakProvider>,
+    );
+    expect(screen.getByRole("link", { name: "1-DAY STREAK STUDY TODAY" })).toBeInTheDocument();
+  });
+
+  it("isn't shown while the Member is onboarding", () => {
+    render(
+      <ShellStreakProvider initial={read(3, false)}>
+        <MemberSidebar {...shell} />
+      </ShellStreakProvider>,
+    );
+
+    expect(screen.queryByRole("link", { name: /STREAK/ })).not.toBeInTheDocument();
+  });
+
+  it("isn't shown outside the shell", () => {
+    render(<MemberSidebar {...withExam} />);
+
+    expect(screen.queryByRole("link", { name: /STREAK/ })).not.toBeInTheDocument();
   });
 });
 

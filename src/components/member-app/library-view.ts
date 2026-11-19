@@ -32,6 +32,8 @@ export interface LibraryTopicView {
   /** "01", "02"…: its place in its Subject. */
   number: string;
   name: string;
+  /** The Member's % done (the progress calculator's), or null while it has nothing to study. */
+  percent: number | null;
   /** Empty while nothing in it is Visible or Published: still being prepared. */
   items: LibraryItemView[];
   /** Whether any item is locked or expired, so the row says how to unlock it. */
@@ -50,10 +52,11 @@ export function itemState(decision: AccessDecision): LibraryItemState {
   return decision.outcome === "expired" ? "expired" : "locked";
 }
 
-/** Pure: one Topic's row, with each item's state from `decide`. */
+/** Pure: one Topic's row, with each item's state from `decide`, and the Member's % done. */
 export function topicView(
   topic: LibraryTopic,
   decide: (item: LibraryTopic["items"][number]) => AccessDecision,
+  percent: number | null,
 ): LibraryTopicView {
   const items = topic.items.map((item) => ({
     kind: item.kind,
@@ -66,6 +69,7 @@ export function topicView(
     id: topic.id,
     number: String(topic.position).padStart(2, "0"),
     name: topic.name,
+    percent,
     items,
     locked: items.some((item) => isLocked(item.state)),
   };

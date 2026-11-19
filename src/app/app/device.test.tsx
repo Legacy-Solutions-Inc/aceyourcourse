@@ -121,7 +121,7 @@ function form(fields: Record<string, string>) {
 }
 
 const home = async () =>
-  (await import("./(shell)/page")).default({ searchParams: Promise.resolve({}) });
+  (await import("./(shell)/(home)/page")).default({ searchParams: Promise.resolve({}) });
 const shell = async (children: React.ReactNode) =>
   (await import("./(shell)/layout")).default({ children });
 const devicePage = async (query: { next?: string; error?: string } = {}) =>

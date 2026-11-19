@@ -8,9 +8,11 @@ import { SheetClose } from "@/components/ui/sheet";
 import { BrandLogo } from "@/components/website/brand-logo";
 import { config } from "@/config";
 import { cn } from "@/lib/utils";
+import { paths } from "@/paths";
 
 import { ExamSwitcher } from "./exam-switcher";
 import { isCurrentItem, MEMBER_MENU } from "./member-menu";
+import { type ShellStreak, streakButtonWords, useShellStreak } from "./shell-streak";
 import type { SwitcherExam } from "./target-exam-view";
 
 /** The signed-in Member, as the shell's footer shows them. */
@@ -39,10 +41,12 @@ interface MemberSidebarProps extends ShellExams {
  * The sidebar's contents (mockup L119–139; BUILD-MAP §2): the logo, the exam
  * switcher, the seven numbered nav items, and a footer with the Member's
  * name, email, a badge for the selected Target Exam and Sign out. The desktop
- * sidebar and the mobile drawer (mockup L89–113) both use it. A Member who is
- * still onboarding has no Target Exam, so no switcher and no badge. The
- * streak button, and what the badge says about access, come with the tickets
- * that give them something true to say.
+ * sidebar and the mobile drawer (mockup L89–113) both use it. Under the nav,
+ * the streak button (mockup L132) says the Member's Study Streak, as the
+ * shell knows it (shell-streak.tsx), and links to Home. A Member who is
+ * still onboarding has no Target Exam, so no switcher, no streak button and
+ * no badge. What the badge says about access comes with the ticket that
+ * gives it something true to say.
  */
 export function MemberSidebar({
   user,
@@ -56,6 +60,7 @@ export function MemberSidebar({
   const closesDrawer = (link: React.ReactElement) =>
     inDrawer ? <SheetClose asChild>{link}</SheetClose> : link;
   const selected = exams.find((exam) => exam.selected);
+  const streak = useShellStreak();
 
   return (
     <div className="flex min-h-full flex-1 flex-col gap-4.5 px-3.5 pt-4 pb-5.5">
@@ -120,6 +125,8 @@ export function MemberSidebar({
         </ul>
       </nav>
 
+      {streak && selected ? <StreakButton streak={streak} wrapLink={closesDrawer} /> : null}
+
       <div className="mt-auto flex flex-col gap-2 border-t-[1.5px] pt-3.5">
         {user.name ? <p className="text-[15px] font-bold">{user.name}</p> : null}
         <p className="font-mono text-[11px] wrap-anywhere text-muted-foreground">{user.email}</p>
@@ -141,5 +148,26 @@ export function MemberSidebar({
         </form>
       </div>
     </div>
+  );
+}
+
+/** The streak button (mockup L132): "▲ 6-DAY STREAK … STUDY TODAY", linking to Home's streak card. */
+function StreakButton({
+  streak,
+  wrapLink,
+}: {
+  streak: ShellStreak;
+  wrapLink: (link: React.ReactElement) => React.ReactNode;
+}) {
+  const { label, hint } = streakButtonWords(streak);
+  return wrapLink(
+    <Link
+      href={paths.memberApp.home}
+      className="flex items-center gap-2.5 border-[1.5px] bg-ayc-orange px-3 py-2.5 font-mono text-xs font-bold tracking-[0.04em] text-ayc-navy"
+    >
+      <span aria-hidden="true">▲</span>
+      <span className="whitespace-nowrap">{label}</span>{" "}
+      <span className="ml-auto text-[11px] font-medium whitespace-nowrap">{hint}</span>
+    </Link>,
   );
 }

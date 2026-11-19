@@ -304,7 +304,11 @@ test.describe("on a phone", () => {
     const drawer = page.getByRole("dialog", { name: "Menu" });
 
     await menu.click();
-    await expect(drawer.getByRole("link")).toHaveCount(7);
+    await expect(
+      drawer.getByRole("navigation", { name: "Member App" }).getByRole("link"),
+    ).toHaveCount(7);
+    // The streak button (ticket 15) is in the drawer too.
+    await expect(drawer.getByRole("link", { name: "START A STREAK STUDY TODAY" })).toBeVisible();
     await expect(drawer.getByText(TESTER, { exact: true })).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(drawer).toBeHidden();

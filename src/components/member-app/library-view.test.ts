@@ -31,13 +31,17 @@ describe("topicView", () => {
   };
 
   it("numbers the Topic and labels, links and states each item", () => {
-    const view = topicView(topic, (item) =>
-      item.freePreview ? { outcome: "allowed", via: "free-preview" } : { outcome: "locked" },
+    const view = topicView(
+      topic,
+      (item) =>
+        item.freePreview ? { outcome: "allowed", via: "free-preview" } : { outcome: "locked" },
+      25,
     );
     expect(view).toEqual({
       id: "t1",
       number: "03",
       name: "Simple Curves",
+      percent: 25,
       locked: true,
       items: [
         {
@@ -59,15 +63,23 @@ describe("topicView", () => {
     });
   });
 
+  it("carries the Member's % for the Topic, or none while it has nothing to study", () => {
+    const open = () => ({ outcome: "allowed", via: "pass" }) as const;
+    expect(topicView(topic, open, 42).percent).toBe(42);
+    expect(topicView(topic, open, 0).percent).toBe(0);
+    expect(topicView(topic, open, null).percent).toBeNull();
+  });
+
   it("isn't locked when everything opens", () => {
-    expect(topicView(topic, () => ({ outcome: "allowed", via: "pass" })).locked).toBe(false);
+    expect(topicView(topic, () => ({ outcome: "allowed", via: "pass" }), null).locked).toBe(false);
   });
 
   it("is locked when a pass has ended", () => {
-    const view = topicView(topic, () => ({
-      outcome: "expired",
-      passEndedAt: "2026-11-14T00:00:00Z",
-    }));
+    const view = topicView(
+      topic,
+      () => ({ outcome: "expired", passEndedAt: "2026-11-14T00:00:00Z" }),
+      null,
+    );
     expect(view.locked).toBe(true);
   });
 });

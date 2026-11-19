@@ -3,6 +3,7 @@ import { readablePageCount } from "@/lib/reviewer-pdfs/status";
 import { contentItemOf, type ContentExam, libraryOf } from "@/services/content.rules";
 import type { AccessPass, ContentKind, ContentRecords } from "@/services/content.types";
 import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
+import { progressCalls, progressSubjectsOf, type ProgressStore } from "@/services/progress.core";
 import { quizStudyCalls, type QuizStudyStore } from "@/services/quiz-study.core";
 import { reviewerStudyCalls, type ReviewerStudyStore } from "@/services/reviewer-study.core";
 import {
@@ -397,3 +398,48 @@ const sampleReviewerStore: ReviewerStudyStore = {
 
 export const { openReviewerPdf, readReviewerPage, saveReaderPosition } =
   reviewerStudyCalls(sampleReviewerStore);
+
+// ── Progress ────────────────────────────────────────────────────────────────
+
+const sampleProgressStore: ProgressStore = {
+  async readExamContent(examCode) {
+    const { exams, content } = contentOfStore();
+    const exam = exams.find((candidate) => candidate.code === examCode);
+    if (!exam) return [];
+    const store = getSampleStore();
+    const questionCounts = new Map<string, number>();
+    for (const question of store.questions) {
+      if (question.position === null) continue;
+      questionCounts.set(question.quizId, (questionCounts.get(question.quizId) ?? 0) + 1);
+    }
+    return progressSubjectsOf(exam, content, {
+      cards: store.cards.map(({ id, deckId, position }) => ({ id, deckId, position })),
+      questionCounts,
+      pageCounts: new Map(
+        content.reviewerPdfs.map((pdf) => [
+          pdf.id,
+          readablePageCount(store.reviewerPdfUploads[pdf.id] ?? null),
+        ]),
+      ),
+    });
+  },
+  async readRecords(userId) {
+    const store = getSampleStore();
+    const own = <T extends { userId: string }>(records: readonly T[]) =>
+      structuredClone(records.filter((record) => record.userId === userId));
+    return {
+      cardMarks: own(store.cardMarks),
+      quizScores: own(store.quizAttempts).map(({ quizId, score, submittedAt }) => ({
+        quizId,
+        score,
+        submittedAt,
+      })),
+      pageViews: own(store.reviewerPageViews),
+      deckPositions: own(store.deckPositions),
+      readerPositions: own(store.readerPositions),
+      studyDays: own(store.studyDays).map(({ day }) => day),
+    };
+  },
+};
+
+export const { getProgress, getTopicPercents } = progressCalls(sampleProgressStore);

@@ -60,9 +60,9 @@ function ItemLink({ item, exam }: { item: LibraryItemView; exam: string }) {
 /**
  * The Library (mockup `library`, BUILD-MAP §3; stories 93, 94 and 103): the
  * selected Target Exam's Subjects as tabs, then the open Subject's Topics in
- * order. Each Topic shows the content Members can see, each open, Free
- * Preview or locked; an empty one says its content is still being prepared.
- * Per-Topic progress is a placeholder until the dashboard ticket fills it.
+ * order. Each Topic shows the Member's % done (story 93), kept when their
+ * access ends, and the content Members can see, each open, Free Preview or
+ * locked; an empty one says its content is still being prepared.
  */
 export function Library({ exam, subjects, subject, topics, contactEmail }: LibraryProps) {
   const anyLocked = topics.some((topic) => topic.locked);
@@ -115,12 +115,19 @@ export function Library({ exam, subjects, subject, topics, contactEmail }: Libra
                       <span className="text-[17px] font-bold">{topic.name}</span>
                     </h3>
                     {topic.items.length > 0 ? (
-                      <p className="flex items-center gap-2.5">
-                        <span aria-hidden="true" className="h-1.5 max-w-55 flex-1 bg-ayc-sand" />
-                        <span className="font-mono text-[11px] text-muted-foreground">
-                          PROGRESS SOON
-                        </span>
-                      </p>
+                      topic.percent === null ? null : (
+                        <p className="flex items-center gap-2.5">
+                          <span aria-hidden="true" className="h-1.5 max-w-55 flex-1 bg-ayc-sand">
+                            <span
+                              className="block h-full bg-ayc-blue"
+                              style={{ width: `${topic.percent}%` }}
+                            />
+                          </span>
+                          <span className="font-mono text-[11px] text-muted-foreground">
+                            {topic.percent}% DONE
+                          </span>
+                        </p>
+                      )
                     ) : (
                       <p className="text-sm text-muted-foreground">
                         Content for this Topic is still being prepared.

@@ -376,3 +376,10 @@ export type ReviewerPageInput = z.input<typeof reviewerPageInputSchema>;
 
 /** Where the Member is in a Reviewer PDF, as the reader saves it: its page and zoom. */
 export type ReaderPositionInput = z.input<typeof readerPositionInputSchema>;
+
+// A Member's progress (spec, Phase 3 → Progress calculator; ticket 15). The
+// dashboard's read gives MemberProgress (src/lib/member-app/progress.ts);
+// the Library's, each Topic's % on its own.
+
+/** Each of an Exam's Topics' % done for a Member, by Topic id: null while a Topic has nothing to study. */
+export type TopicPercents = Record<string, number | null>;

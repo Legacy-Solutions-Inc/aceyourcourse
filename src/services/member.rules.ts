@@ -88,7 +88,8 @@ export function pickableExams(exams: readonly MemberExam[]): PickableExam[] {
   return exams.filter((exam) => exam.onWebsite).map(({ onWebsite: _onWebsite, ...exam }) => exam);
 }
 
-const examCodeOf = (code: string) => code.trim().toUpperCase();
+/** Pure: an Exam code as a Member sent it, as the catalogue holds it: "ce " → "CE". */
+export const examCodeOf = (code: string) => code.trim().toUpperCase();
 
 /** The Member's Target Exams that aren't removed and whose Exam still exists, in the order added. */
 function active(state: MemberExams): { record: TargetExamRecord; exam: MemberExam }[] {

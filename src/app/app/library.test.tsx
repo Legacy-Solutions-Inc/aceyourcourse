@@ -2,8 +2,20 @@ import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DEVICE_COOKIE } from "@/lib/member-app/device-token";
-import { addBetaTester, createTopic, moveTopic, renameTopic } from "@/services/admin.mock";
-import { addTargetExam, getOrCreateMember, recordConsent } from "@/services/member.mock";
+import {
+  addBetaTester,
+  createCard,
+  createTopic,
+  moveTopic,
+  renameTopic,
+} from "@/services/admin.mock";
+import {
+  addTargetExam,
+  getOrCreateMember,
+  listAccessPasses,
+  markCard,
+  recordConsent,
+} from "@/services/member.mock";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
 import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
@@ -76,6 +88,36 @@ const asLapsed = () => memberOnDevice("lapsed@example.com", "Lou Lapsed");
 async function asNewTester() {
   await addBetaTester(OWNER, { email: "stranger@example.com" });
   await memberOnDevice("stranger@example.com", "Sam Stranger");
+}
+
+/** An Editor writes cards in a Topic's deck, in the Admin. */
+async function writeCards(topicId: string, count: number) {
+  const cards = [];
+  for (let index = 1; index <= count; index += 1) {
+    const added = await createCard(EDITOR, {
+      topic: topicId,
+      front: `Card ${index}`,
+      back: `Back ${index}`,
+      note: "",
+    });
+    if (!added.ok) throw new Error(`Not added: ${JSON.stringify(added)}`);
+    cards.push(added.value);
+  }
+  return cards;
+}
+
+/** A Member marks cards in order, as the flashcard player does, with their access now. */
+async function marks(email: string, cards: { id: string }[], verdicts: ("got" | "again")[]) {
+  const userId = sampleUserId(email);
+  const passes = await listAccessPasses(userId);
+  for (const [index, verdict] of verdicts.entries()) {
+    const marked = await markCard(
+      userId,
+      { cardId: cards[index]?.id ?? "", verdict },
+      { gate: "open", device: "active", activeStaff: false, passes, now: new Date() },
+    );
+    if (!marked.ok) throw new Error(`Not marked: ${JSON.stringify(marked)}`);
+  }
 }
 
 const library = async (subject?: string) =>
@@ -214,6 +256,41 @@ describe("the Library", () => {
         name: "Quiz, locked: your CE All-Access ended",
       }),
     ).toBeInTheDocument();
+  });
+
+  it("shows each Topic's % done for the Member, and none for a Topic with nothing to count yet", async () => {
+    const cards = await writeCards(SPIRAL_CURVES, 4);
+    await asTester();
+    await marks("tester@example.com", cards, ["got", "got", "again"]);
+    render(await library());
+
+    // Spiral Curves: its deck is all it has, 2 of 4 cards got it.
+    expect(within(row("Spiral Curves")).getByText("50% DONE")).toBeInTheDocument();
+    // Simple Curves has nothing to count yet: no cards, questions or pages.
+    expect(within(row("Simple Curves")).queryByText(/% DONE/)).not.toBeInTheDocument();
+    expect(screen.queryByText("PROGRESS SOON")).not.toBeInTheDocument();
+  });
+
+  it("keeps a Member's % in view once their access has ended", async () => {
+    const cards = await writeCards(SPIRAL_CURVES, 2);
+    await asTester();
+    await marks("tester@example.com", cards, ["got"]);
+    // 100 days on, the tester's CE pass has ended: Spiral Curves is locked, its % kept.
+    vi.setSystemTime(new Date(BOOT.getTime() + 100 * 24 * 60 * 60 * 1000));
+    render(await library());
+
+    expect(itemsIn("Spiral Curves")).toEqual(["🔒Flashcards"]);
+    expect(within(row("Spiral Curves")).getByText("50% DONE")).toBeInTheDocument();
+  });
+
+  it("never counts another Member's progress", async () => {
+    const cards = await writeCards(SPIRAL_CURVES, 2);
+    await asTester();
+    await marks("tester@example.com", cards, ["got", "got"]);
+    await asLapsed();
+    render(await library());
+
+    expect(within(row("Spiral Curves")).getByText("0% DONE")).toBeInTheDocument();
   });
 
   it("never shows Hidden or unpublished items, and says an empty Topic is still being prepared", async () => {

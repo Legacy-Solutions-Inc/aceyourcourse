@@ -1,5 +1,6 @@
 import { isDatabaseConfigured } from "@/env.server";
 import type { MemberAccess } from "@/lib/member-app/access";
+import type { MemberProgress } from "@/lib/member-app/progress";
 import type { DeviceStatus } from "@/lib/member-app/device-token";
 import type { ReaderPlace } from "@/lib/reviewer-pdfs/reader";
 import type { AccessPass, CardMark, ContentKind, DeckPosition } from "@/services/content.types";
@@ -35,6 +36,7 @@ import type {
   StudyResult,
   TargetExam,
   TargetExamResult,
+  TopicPercents,
 } from "@/services/member.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -311,6 +313,25 @@ export interface MemberService {
     input: ReaderPositionInput,
     access: MemberAccess,
   ): Promise<StudyResult<ReaderPlace>>;
+
+  // Progress (spec, Phase 3 → Progress calculator, Progress storage, Resume,
+  // Corrections never cost progress; ticket 15; progress.core.ts). Reads
+  // only, with every number from the pure calculator
+  // (src/lib/member-app/progress.ts) over the Member's own records. There's
+  // no access decision: progress is the Member's own, still shown when their
+  // access ends, and Hidden or Draft content counts nowhere. Each is scoped to
+  // the User id given, and throws for one that isn't a User id.
+
+  /**
+   * The dashboard's read: the Member's progress in one Exam (each Subject's
+   * and Topic's %, cards got, the quiz average, the 3 weakest Topics, the last
+   * deck and Reviewer PDF page to continue) and their Study Streak, which is
+   * account-wide. Nothing for a code that isn't an Exam's. The Member detail
+   * page (ticket 16) can show the same, per Target Exam.
+   */
+  getProgress(userId: string, examCode: string): Promise<MemberProgress>;
+  /** The Library's read: each of the Exam's Topics' % done for the Member, by Topic id. */
+  getTopicPercents(userId: string, examCode: string): Promise<TopicPercents>;
 }
 
 const impl: MemberService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -343,3 +364,5 @@ export const reviewQuizAttempt = impl.reviewQuizAttempt;
 export const openReviewerPdf = impl.openReviewerPdf;
 export const readReviewerPage = impl.readReviewerPage;
 export const saveReaderPosition = impl.saveReaderPosition;
+export const getProgress = impl.getProgress;
+export const getTopicPercents = impl.getTopicPercents;

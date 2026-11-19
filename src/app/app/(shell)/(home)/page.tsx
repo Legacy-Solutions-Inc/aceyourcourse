@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 
-import { ExamCountdown } from "@/components/member-app/exam-countdown";
+import { Dashboard } from "@/components/member-app/dashboard";
 import { firstName } from "@/components/member-app/member-menu";
 import { MemberScreen } from "@/components/member-app/member-screen";
 import { Onboarding } from "@/components/member-app/onboarding";
 import { readTargetExams, requireMember } from "@/lib/member-app/guard";
 import { manilaDate } from "@/lib/manila-time";
 import { paths } from "@/paths";
-import { listPickableExams } from "@/services/member";
+import { getProgress, listPickableExams } from "@/services/member";
 
-import { addExam } from "./actions";
+import { addExam } from "../actions";
 
 export const metadata: Metadata = { title: "Home" };
 
@@ -19,10 +19,13 @@ interface MemberHomePageProps {
 
 /**
  * Home. A Member with no Target Exam yet sees onboarding here (story 84).
- * Everyone else sees the countdown for their selected Target Exam (story 88);
- * the rest of the dashboard comes with its own ticket. `restored` comes back
- * from the add form when the Exam was one the Member had removed. The gate
- * and consent run here, on every load.
+ * Everyone else sees the dashboard for their selected Target Exam (stories
+ * 88–92): the countdown, the streak, where they left off, progress by
+ * Subject and weak Topics, from their own progress, read after the gate,
+ * consent and the Active Device let them in, on every load. Home has its own
+ * route group so its loading skeleton (loading.tsx) shows on Home alone.
+ * `restored` comes back from the add form when the Exam was one the Member
+ * had removed.
  */
 export default async function MemberHomePage({ searchParams }: MemberHomePageProps) {
   const member = await requireMember(paths.memberApp.home);
@@ -41,7 +44,10 @@ export default async function MemberHomePage({ searchParams }: MemberHomePagePro
     );
   }
 
-  const { restored } = await searchParams;
+  const [{ restored }, progress] = await Promise.all([
+    searchParams,
+    getProgress(member.userId, selected.examCode),
+  ]);
   const wasRestored = selected.examCode === restored;
   return (
     <MemberScreen
@@ -57,11 +63,7 @@ export default async function MemberHomePage({ searchParams }: MemberHomePagePro
           if you need to.
         </p>
       ) : null}
-      <ExamCountdown exam={selected} now={now} />
-      <p className="max-w-prose border border-dashed border-ayc-rule p-3.5 text-sm leading-[1.45] text-muted-foreground">
-        You’re in the Member App beta. Your streak and progress will show here, and each screen in
-        the menu opens as soon as it’s ready.
-      </p>
+      <Dashboard exam={selected} now={now} progress={progress} />
     </MemberScreen>
   );
 }

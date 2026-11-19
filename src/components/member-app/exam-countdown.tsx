@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { examCountdown } from "@/lib/member-app/exam-date";
+import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
 import type { TargetExam } from "@/services/member.types";
 
@@ -11,6 +12,8 @@ interface ExamCountdownProps {
   exam: TargetExam;
   /** The time the page was made: days left count Asia/Manila calendar days from it. */
   now: Date;
+  /** Where it sits in its row, such as the dashboard's. */
+  className?: string;
 }
 
 /**
@@ -18,7 +21,7 @@ interface ExamCountdownProps {
  * Exam's board, the days left to its Exam Date, and whose date that is. On
  * the day it reads "Exam day"; after it, "Exam passed", pointing at Account.
  */
-export function ExamCountdown({ exam, now }: ExamCountdownProps) {
+export function ExamCountdown({ exam, now, className }: ExamCountdownProps) {
   const countdown = examCountdown(exam.examDate, now);
   const { big, small } = countdownWords(countdown);
   const setBy = dateSetByLabel(exam);
@@ -27,7 +30,10 @@ export function ExamCountdown({ exam, now }: ExamCountdownProps) {
   return (
     <section
       aria-label={`${exam.board} board exam countdown`}
-      className="flex max-w-xl flex-col gap-3.5 border-[1.5px] bg-primary p-5.5 text-primary-foreground shadow-hard-md shadow-ayc-orange"
+      className={cn(
+        "flex max-w-xl flex-col gap-3.5 border-[1.5px] bg-primary p-5.5 text-primary-foreground shadow-hard-md shadow-ayc-orange",
+        className,
+      )}
     >
       <div className="flex justify-between gap-3 font-mono text-xs font-bold tracking-[0.06em]">
         <span className="text-ayc-orange">{exam.board} BOARD EXAM</span>

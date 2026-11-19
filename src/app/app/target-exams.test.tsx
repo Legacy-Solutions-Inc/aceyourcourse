@@ -75,7 +75,7 @@ function form(fields: Record<string, string>) {
 
 const actions = () => import("./(shell)/actions");
 const home = async (query: { restored?: string } = {}) =>
-  (await import("./(shell)/page")).default({ searchParams: Promise.resolve(query) });
+  (await import("./(shell)/(home)/page")).default({ searchParams: Promise.resolve(query) });
 const account = async () => (await import("./(shell)/account/page")).default();
 const addExamPage = async () => (await import("./(shell)/add-exam/page")).default();
 const library = async () =>
