@@ -101,14 +101,17 @@ export function accessDecision({
 
   const exam = content.examCode.toUpperCase();
   const pass = passes.find((candidate) => candidate.examCode.toUpperCase() === exam);
-  // End later than now: the instant it ends, it has ended.
-  const passActive = pass !== undefined && new Date(pass.endsAt).getTime() > now.getTime();
+  const passActive = pass !== undefined && isPassActive(pass.endsAt, now);
 
   if (activeStaff) return { outcome: "allowed", via: "staff" };
   if (passActive) return { outcome: "allowed", via: "pass" };
   if (content.freePreview) return { outcome: "allowed", via: "free-preview" };
   return pass ? { outcome: "expired", passEndedAt: pass.endsAt } : { outcome: "locked" };
 }
+
+/** Pure: whether a pass ending at `endsAt` is active at `now`: its end is later. The instant it ends, it has ended. */
+export const isPassActive = (endsAt: string, now: Date): boolean =>
+  new Date(endsAt).getTime() > now.getTime();
 
 /**
  * Pure: the day a pass ends, as people read it: its calendar date in Manila,

@@ -4,6 +4,7 @@ import { matchingFront } from "@/lib/cards/card-rules";
 import type * as schema from "@/lib/db/schema";
 import type {
   AccessPass,
+  AccessPassGrant,
   Card,
   ContentRecords,
   Deck,
@@ -26,6 +27,7 @@ type DeckRow = typeof schema.decks.$inferSelect;
 type QuizRow = typeof schema.quizzes.$inferSelect;
 type ReviewerPdfRow = typeof schema.reviewerPdfs.$inferSelect;
 type AccessPassRow = typeof schema.accessPasses.$inferSelect;
+type AccessPassGrantRow = typeof schema.accessPassGrants.$inferSelect;
 type CardRow = typeof schema.cards.$inferSelect;
 type QuestionRow = typeof schema.questions.$inferSelect;
 type QuizAttemptRow = typeof schema.quizAttempts.$inferSelect;
@@ -103,6 +105,30 @@ export const accessPassToRow = (pass: AccessPass): AccessPassRow => ({
   userId: pass.userId,
   examCode: pass.examCode,
   endsAt: new Date(pass.endsAt),
+});
+
+export const accessPassGrantFromRow = (row: AccessPassGrantRow): AccessPassGrant => ({
+  userId: row.userId,
+  examCode: row.examCode,
+  days: row.days,
+  startsAt: row.startsAt.toISOString(),
+  endsAt: row.endsAt.toISOString(),
+  reason: row.reason,
+  grantedBy: { email: row.grantedByEmail, name: row.grantedByName },
+  grantedAt: row.grantedAt.toISOString(),
+});
+
+/** A grant as a row to add: its `seq` is the table's to give. */
+export const accessPassGrantToRow = (grant: AccessPassGrant): Omit<AccessPassGrantRow, "seq"> => ({
+  userId: grant.userId,
+  examCode: grant.examCode,
+  days: grant.days,
+  startsAt: new Date(grant.startsAt),
+  endsAt: new Date(grant.endsAt),
+  reason: grant.reason,
+  grantedByEmail: grant.grantedBy.email,
+  grantedByName: grant.grantedBy.name,
+  grantedAt: new Date(grant.grantedAt),
 });
 
 /** Pure: the SHA-256 of a front as a re-import matches it, which the cards table keeps. */

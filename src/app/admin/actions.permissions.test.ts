@@ -17,6 +17,7 @@ import { productFormValues } from "@/lib/admin/product-form";
 import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
 import { reviewFormValues } from "@/lib/admin/review-form";
 import { getExamPageForAdmin, planCardImport, planQuizImport } from "@/services/admin";
+import { claimDevice, getOrCreateMember } from "@/services/member.mock";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
 import { getSampleStore } from "@/services/mock/sample-store";
 
@@ -126,6 +127,17 @@ const QUESTION_FIELDS = {
 const REVIEWER_PDF = "9a1b2c3d-4e5f-4a6b-8c7d-8e9fa0b1c2d3";
 const CARD = "5d6e7f80-9a1b-4c2d-8e3f-4a5b6c7d8e9f";
 const SECOND_CARD = "6e7f8091-ab2c-4d3e-9f40-5b6c7d8e9fa0";
+/** A Member on their Active Device, whom an Owner may force-sign-out. */
+const BEA = {
+  userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
+  email: "tester@example.com",
+  name: "Bea Tester",
+};
+/**
+ * Bea's phone's token hash, as the Member App stores it. A literal: nothing in
+ * the Admin uses the Active Device modules (src/app/app/device.test.tsx).
+ */
+const BEA_PHONE = "b".repeat(64);
 
 const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
 
@@ -232,6 +244,9 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
   "./(shell)/users/actions.ts": {
     addTester: owner(() => users.addTester(IDLE, { input: { email: SAVES.betaTester } })),
     removeTester: owner(() => users.removeTester(IDLE, { input: { email: "tester@example.com" } })),
+    forceSignOutMember: owner(() =>
+      users.forceSignOutMember(IDLE, { input: { userId: BEA.userId, reason: "Shared" } }),
+    ),
   },
   "./(shell)/content/actions.ts": {
     addTopic: staff(() =>
@@ -542,6 +557,12 @@ beforeEach(async () => {
       failure: null,
     },
   };
+  // A Member signed in to the Member App on one device.
+  await getOrCreateMember(BEA);
+  await claimDevice(BEA.userId, {
+    tokenHash: BEA_PHONE,
+    deviceLabel: "Chrome on Android",
+  });
 });
 
 describe("the action registry", () => {

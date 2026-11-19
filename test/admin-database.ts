@@ -6,7 +6,14 @@ import * as schema from "@/lib/db/schema";
 import { getStorage, isStorageConfigured } from "@/lib/supabase/admin";
 import { databaseArm } from "@/services/admin.db";
 import { deniedSignInFromRow, staffActivityFromRow } from "@/services/admin.rows";
-import { cardFromRow, contentFromRows, questionFromRow } from "@/services/content.rows";
+import {
+  accessPassGrantToRow,
+  accessPassToRow,
+  cardFromRow,
+  contentFromRows,
+  questionFromRow,
+} from "@/services/content.rows";
+import { databaseArm as memberDatabaseArm } from "@/services/member.db";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
@@ -120,6 +127,7 @@ async function storedStorageFile(path: string): Promise<Uint8Array | null> {
 export const DATABASE_ARM: AdminArm = {
   name: "database",
   seam: databaseArm,
+  member: memberDatabaseArm,
   reset: async (edit) => {
     const seed = structuredClone(CATALOGUE_SEED);
     edit?.(seed);
@@ -212,6 +220,12 @@ export const DATABASE_ARM: AdminArm = {
         ...(uploadedAt === undefined ? {} : { uploadedAt: new Date(uploadedAt) }),
       })
       .where(eq(schema.reviewerPdfs.id, id));
+  },
+  putAccessPass: async (pass, grants = []) => {
+    await getDb().insert(schema.accessPasses).values(accessPassToRow(pass));
+    if (grants.length) {
+      await getDb().insert(schema.accessPassGrants).values(grants.map(accessPassGrantToRow));
+    }
   },
   // A trigger that refuses every Staff Activity row: the save's last write.
   // The database tests run one file at a time, so no other test meets it.

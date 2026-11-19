@@ -10,6 +10,7 @@ import type { AdminService } from "@/services/admin";
 import type { AdminResult, StaffActor } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
+import { hashDeviceToken } from "@/lib/member-app/device-token";
 import { createFakeRenderer } from "@/services/page-images.fake";
 
 import {
@@ -39,6 +40,12 @@ const KIM = sampleEmail("invited");
 const EXPIRED = sampleEmail("expired");
 /** The Beta Tester the sample data starts with. */
 const SAMPLE_TESTER = "tester@example.com";
+/** A Member signed in to the Member App on one device. */
+const BEA = {
+  userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
+  email: SAMPLE_TESTER,
+  name: "Bea Tester",
+};
 /** An empty sample Topic, in CE's MSTC. */
 const SURVEYING = sampleTopicId("CE", "MSTC", "Surveying");
 const UNKNOWN_TOPIC = "3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b";
@@ -49,6 +56,9 @@ const READS = [
   "getLatestDeniedSignIn",
   "listStaff",
   "listBetaTesters",
+  // The Users list and a Member's detail page (ticket 16).
+  "listUsers",
+  "getMemberForAdmin",
   "getOverview",
   "getSettingsForAdmin",
   "listProductsForAdmin",
@@ -300,6 +310,21 @@ const WRITES: Record<string, Write> = {
     saves: (seam, actor) => seam.removeBetaTester(actor, SAMPLE_TESTER),
     refused: (seam, actor) => seam.removeBetaTester(actor, SAVES.betaTester),
     refusal: "not-found",
+  },
+  forceSignOut: {
+    actor: OWNER,
+    entity: "member",
+    entityId: BEA.userId,
+    saves: (seam, actor) => seam.forceSignOut(actor, { userId: BEA.userId, reason: "Shared" }),
+    refused: (seam, actor) => seam.forceSignOut(actor, { userId: BEA.userId, reason: " " }),
+    refusal: "invalid",
+    setUp: async (_seam, arm) => {
+      await arm.member.getOrCreateMember(BEA);
+      await arm.member.claimDevice(BEA.userId, {
+        tokenHash: hashDeviceToken("bea-phone"),
+        deviceLabel: "Chrome on Android",
+      });
+    },
   },
   updateWebsiteSettings: {
     actor: OWNER,

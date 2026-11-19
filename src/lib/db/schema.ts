@@ -519,8 +519,9 @@ export const memberConsents = pgTable(
  * Each Member's Active Device (spec, Phase 3 → Active Device; ADR 0011): one
  * row per Member, replaced by every claim. It holds the SHA-256 hash of the
  * token in the device's cookie, never the token itself, with the device's
- * label from its User-Agent and when it was claimed. The Admin never reads or
- * sets it. Deleting the Member deletes it.
+ * label from its User-Agent and when it was claimed. The Admin never checks
+ * its own requests against it: Users shows its label and when it was claimed,
+ * and force sign-out deletes it (ticket 16). Deleting the Member deletes it.
  */
 export const memberActiveDevices = pgTable(
   "member_active_devices",

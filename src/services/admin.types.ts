@@ -24,7 +24,10 @@ import type { ImportCounts, ImportProblem } from "@/lib/content-import/plan";
 import type { ImportMode } from "@/lib/content-import/modes";
 import type { CardImageType } from "@/lib/cards/card-rules";
 import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
+import type { MemberProgress } from "@/lib/member-app/progress";
 import type {
+  AccessPass,
+  AccessPassGrant,
   Card,
   ContentCounts,
   ContentVisibility,
@@ -33,6 +36,13 @@ import type {
   ReviewerPdfUpload,
   TopicContent,
 } from "@/services/content.types";
+import type {
+  ActiveDevice,
+  ConsentRecord,
+  DeviceSwitch,
+  Member,
+  TargetExam,
+} from "@/services/member.types";
 
 export type StaffRole = "owner" | "editor";
 
@@ -695,4 +705,92 @@ export interface AdminQuiz {
   quiz: AdminQuizSettings | null;
   /** The questions in the quiz, in order; removed ones aren't shown. */
   questions: AdminQuestion[];
+}
+
+// ── Users (Owners only; Phase 3, ticket 16) ─────────────────────────────────
+
+/**
+ * The Users list's filters (story 129): everyone, an Access Pass active now,
+ * passes that have all ended, no pass at all, active Staff, or Beta Testers.
+ * Active, Expired and None never overlap.
+ */
+export const USER_FILTERS = ["all", "active", "expired", "none", "staff", "beta"] as const;
+
+export type UserFilter = (typeof USER_FILTERS)[number];
+
+/** The Users list's search, filter and page, as its URL holds them. */
+export interface UserListQuery {
+  /** Part of a name or an email, matched ignoring case; null for none. */
+  q: string | null;
+  filter: UserFilter;
+  /** The page, from 1. */
+  page: number;
+}
+
+/** A User's role in the list: a Member, or a Member who is also active Staff. */
+export type UserRole = "member" | StaffRole;
+
+/** One Member in the Users list. */
+export interface AdminUserRow {
+  userId: string;
+  name: string | null;
+  email: string;
+  /** ISO time of their first pass through the Member App gate. */
+  joinedAt: string;
+  /** Their Target Exams' codes, in the order first added; removed ones aren't shown. */
+  targetExams: string[];
+  /** Their Access Passes, at most one per Exam, by Exam code. */
+  accessPasses: Pick<AccessPass, "examCode" | "endsAt">[];
+  /** Their Active Device, or null before their first claim or after a forced sign-out. */
+  activeDevice: ActiveDevice | null;
+  role: UserRole;
+  betaTester: boolean;
+}
+
+/** One page of the Users list, newest Member first. */
+export interface AdminUserList {
+  /** The query as applied: a page past the last shows the last. */
+  query: UserListQuery;
+  rows: AdminUserRow[];
+  /** The Members the search and filter match, on every page. */
+  matching: number;
+  /** Every Member. */
+  total: number;
+  /** How many pages the matching Members fill, at least 1. */
+  pageCount: number;
+}
+
+/** One of a Member's Access Passes, with every grant that made or extended it, oldest first. */
+export interface AdminAccessPass extends Pick<AccessPass, "examCode" | "endsAt"> {
+  grants: Omit<AccessPassGrant, "userId" | "examCode">[];
+}
+
+/** A Member's progress in one of their Target Exams (ticket 15's calculator). */
+export interface AdminExamProgress {
+  examCode: string;
+  progress: MemberProgress;
+}
+
+/** A Member's detail page (story 130), read fresh. */
+export interface AdminMemberDetail {
+  member: Member;
+  role: UserRole;
+  betaTester: boolean;
+  /** Their Target Exams with their Exam Dates, in the order first added. */
+  targetExams: TargetExam[];
+  accessPasses: AdminAccessPass[];
+  /** Their progress in each Target Exam, in the same order. */
+  progress: AdminExamProgress[];
+  activeDevice: ActiveDevice | null;
+  /** Every Active Device claim, the first one too, newest first. */
+  deviceSwitches: Omit<DeviceSwitch, "userId">[];
+  /** Every agreement to the Terms and Privacy Policy, newest first. */
+  consents: Omit<ConsentRecord, "userId">[];
+}
+
+/** What a forced sign-out did: the Active Device it cleared, and why. */
+export interface ForcedSignOut {
+  userId: string;
+  signedOut: ActiveDevice;
+  reason: string;
 }

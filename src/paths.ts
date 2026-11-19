@@ -128,8 +128,15 @@ export const paths = {
     products: "/admin/products",
     reviews: "/admin/reviews",
     settings: "/admin/settings",
-    /** Users (Owners only): the Beta Testers tab for now; the rest comes with ticket 16. */
+    /**
+     * Users (Owners only): the Users list (ticket 16), with its search, filter
+     * and page in the search params (src/lib/admin/users-list.ts).
+     */
     users: "/admin/users",
+    /** The Users screen's Beta Testers tab (ticket 01). */
+    betaTesters: "/admin/users?tab=beta-testers",
+    /** A Member's detail page in Users, by their User id (ticket 16). */
+    user: (userId: string) => `/admin/users/${encodeURIComponent(userId)}`,
     /** Member App content (Phase 3): each Subject's Topics, picked by Exam and Subject. */
     content: "/admin/content",
     /** Member App content open on one Subject's Topics list. */

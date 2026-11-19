@@ -2,7 +2,11 @@ import { DEFAULT_QUIZ_SETTINGS } from "@/lib/quizzes/quiz-rules";
 import type { AdminService } from "@/services/admin";
 import * as sampleArm from "@/services/admin.mock";
 import type { DeniedSignIn, StaffActivity } from "@/services/admin.types";
+import type { MemberService } from "@/services/member";
+import * as memberSampleArm from "@/services/member.mock";
 import type {
+  AccessPass,
+  AccessPassGrant,
   Card,
   CardMark,
   ContentKind,
@@ -42,6 +46,11 @@ import { uploadSamplePhoto } from "./sample-photo";
 export interface AdminArm {
   name: string;
   seam: AdminService;
+  /**
+   * The Member seam's matching arm, for the Member App's side of a test:
+   * signing in, claiming a device, agreeing, Target Exams, progress.
+   */
+  member: MemberService;
   /**
    * Restores the seed data, or an edited copy of it for states the seed lacks.
    * Times in it are relative to the current (possibly fake) time.
@@ -110,6 +119,11 @@ export interface AdminArm {
   reviewerPdfFiles: ReviewerPdfFiles;
   /** Changes an uploaded Reviewer PDF's job behind the seam's back, as a stalled or odd run might leave it. */
   setReviewerPdfUpload(id: string, change: Partial<ReviewerPdfUpload>): Promise<void>;
+  /**
+   * Gives a Member an Access Pass, with the grants that made it, behind the
+   * seam's back, as a grant (ticket 17) will.
+   */
+  putAccessPass(pass: AccessPass, grants?: AccessPassGrant[]): Promise<void>;
 }
 
 /** Pure: Card Marks by card, then Member. */
@@ -146,6 +160,7 @@ export const byDeckAndPosition = (cards: Card[]) =>
 const SAMPLE_ARM: AdminArm = {
   name: "sample data",
   seam: sampleArm,
+  member: memberSampleArm,
   reset: async (edit) => {
     if (edit) editSampleCatalogue(edit);
     else resetSampleStore();
@@ -197,6 +212,11 @@ const SAMPLE_ARM: AdminArm = {
     const upload = store.reviewerPdfUploads[id];
     if (!upload) throw new Error(`No uploaded Reviewer PDF ${id}`);
     store.reviewerPdfUploads = { ...store.reviewerPdfUploads, [id]: { ...upload, ...change } };
+  },
+  putAccessPass: async (pass, grants = []) => {
+    const store = getSampleStore();
+    store.accessPasses = [...store.accessPasses, structuredClone(pass)];
+    store.accessPassGrants = [...store.accessPassGrants, ...structuredClone(grants)];
   },
   breakStaffActivity: async () => {
     const store = getSampleStore();

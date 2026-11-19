@@ -50,6 +50,7 @@ import {
 import * as deckEditor from "@/services/admin.deck.db";
 import * as quizEditor from "@/services/admin.quiz.db";
 import * as reviewerPdfs from "@/services/admin.reviewer-pdfs.db";
+import * as users from "@/services/admin.users.db";
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
@@ -750,6 +751,10 @@ export const databaseArm: AdminService = {
   listBetaTesters: read(BETA_TESTERS, sampleArm.listBetaTesters),
   addBetaTester,
   removeBetaTester: write(BETA_TESTERS, sampleArm.removeBetaTester),
+  // The Members and their records, read and written by their own module (ticket 16).
+  listUsers: users.listUsers,
+  getMemberForAdmin: users.getMemberForAdmin,
+  forceSignOut: users.forceSignOut,
 
   getOverview: read(CATALOGUE, sampleArm.getOverview),
 

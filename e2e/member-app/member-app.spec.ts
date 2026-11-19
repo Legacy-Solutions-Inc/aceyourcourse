@@ -181,7 +181,7 @@ test.describe("a Beta Tester", () => {
 
     const owner = await anotherPerson(browser);
     try {
-      await signInToAdmin(owner.page, "owner", paths.admin.users);
+      await signInToAdmin(owner.page, "owner", paths.admin.betaTesters);
       const testers = owner.page.getByRole("region", { name: "BETA TESTERS" });
       await testers.getByRole("button", { name: `Remove ${TESTER}` }).click();
       await owner.page
@@ -397,7 +397,7 @@ test.describe("someone who is neither Staff nor a Beta Tester", () => {
 
     const owner = await anotherPerson(browser);
     try {
-      await signInToAdmin(owner.page, "owner", paths.admin.users);
+      await signInToAdmin(owner.page, "owner", paths.admin.betaTesters);
       const testers = owner.page.getByRole("region", { name: "BETA TESTERS" });
       await testers.getByLabel("GOOGLE ACCOUNT EMAIL").fill("Late.Joiner@Example.com");
       await testers.getByRole("button", { name: "Add Beta Tester" }).click();

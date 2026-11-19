@@ -125,7 +125,7 @@ async function ownerAddsTester(browser: Browser, email: string) {
   const context = await browser.newContext();
   try {
     const page = await context.newPage();
-    await signInAs(page, "owner", paths.admin.users);
+    await signInAs(page, "owner", paths.admin.betaTesters);
     const testers = page.getByRole("region", { name: "BETA TESTERS" });
     await testers.getByLabel("GOOGLE ACCOUNT EMAIL").fill(email);
     await testers.getByRole("button", { name: "Add Beta Tester" }).click();

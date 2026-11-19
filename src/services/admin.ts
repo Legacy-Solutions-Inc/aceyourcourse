@@ -11,6 +11,7 @@ import type {
   ExamSeoForm,
   FaqForm,
   FaqMove,
+  ForceSignOutInput,
   InviteStaffInput,
   NewExamForm,
   NewProductForm,
@@ -47,6 +48,7 @@ import type {
   AdminSitePage,
   AdminFaq,
   AdminFaqList,
+  AdminMemberDetail,
   AdminOverview,
   AdminProduct,
   AdminQuestion,
@@ -60,6 +62,7 @@ import type {
   AdminReviewList,
   AdminTopic,
   AdminTopicList,
+  AdminUserList,
   CardImageFile,
   ImportPreview,
   ImportResult,
@@ -78,6 +81,7 @@ import type {
   DeniedReason,
   DeniedSignIn,
   FaqListQuery,
+  ForcedSignOut,
   Invite,
   ProductDeletePreview,
   ProductListQuery,
@@ -88,6 +92,7 @@ import type {
   StaffActor,
   StaffList,
   StaffMember,
+  UserListQuery,
 } from "@/services/admin.types";
 import type { Topic } from "@/services/content.types";
 import type { PdfRenderer } from "@/services/page-images.types";
@@ -191,6 +196,34 @@ export interface AdminService {
    * Beta Tester.
    */
   removeBetaTester(actor: StaffActor, email: string): Promise<AdminResult<BetaTester>>;
+
+  // Users (Owners only; Phase 3, ticket 16; stories 129, 130 and 132): the
+  // Members, each Member's detail, and force sign-out. An Editor is refused
+  // each call. None touches the Catalogue, so none returns a cache tag.
+
+  /**
+   * One page of the Members, newest first: those whose name or email holds
+   * the search (ignoring case), in the filter (an Access Pass active now, all
+   * ended, none; active Staff; Beta Testers), each with their Target Exams,
+   * passes, Active Device and role. A page past the last gives the last.
+   */
+  listUsers(actor: StaffActor, query: UserListQuery): Promise<AdminResult<AdminUserList>>;
+  /**
+   * A Member's detail page: profile, role, Target Exams with Exam Dates,
+   * Access Passes with their grants, progress per Target Exam (ticket 15's
+   * calculator), the Active Device and its switch log, and every agreement to
+   * the Terms and Privacy Policy. A User id that isn't a Member's, or isn't a
+   * User id, is not-found.
+   */
+  getMemberForAdmin(actor: StaffActor, userId: string): Promise<AdminResult<AdminMemberDetail>>;
+  /**
+   * Force sign-out: clears the Member's Active Device, so their device's next
+   * Member App request lands on "Session ended", and records the reason and
+   * the device in Staff Activity. Their passes, progress and switch log stay.
+   * A blank reason is refused on the reason field; a Member with no Active
+   * Device is refused with a message, recording nothing.
+   */
+  forceSignOut(actor: StaffActor, input: ForceSignOutInput): Promise<AdminResult<ForcedSignOut>>;
 
   /**
    * The Overview's read (any Staff User): every Product, the Exams, the Exam
@@ -909,6 +942,9 @@ export const removeStaff = impl.removeStaff;
 export const listBetaTesters = impl.listBetaTesters;
 export const addBetaTester = impl.addBetaTester;
 export const removeBetaTester = impl.removeBetaTester;
+export const listUsers = impl.listUsers;
+export const getMemberForAdmin = impl.getMemberForAdmin;
+export const forceSignOut = impl.forceSignOut;
 export const getOverview = impl.getOverview;
 export const getSettingsForAdmin = impl.getSettingsForAdmin;
 export const updateWebsiteSettings = impl.updateWebsiteSettings;

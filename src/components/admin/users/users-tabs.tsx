@@ -1,18 +1,18 @@
 import Link from "next/link";
 
+import type { UsersTab } from "@/lib/admin/users-list";
 import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
 
-export type UsersTab = "beta-testers";
-
 const TABS: { tab: UsersTab; label: string; href: string }[] = [
-  { tab: "beta-testers", label: "BETA TESTERS", href: paths.admin.users },
+  { tab: "users", label: "USERS", href: paths.admin.users },
+  { tab: "beta-testers", label: "BETA TESTERS", href: paths.admin.betaTesters },
 ];
 
 /**
  * The Users screen's tabs, styled as Reviews & FAQs' are. Each is its own
- * address, so they're links, the current one marked as the page. Only Beta
- * Testers exists so far; ticket 16 adds the Users list beside it.
+ * address, so they're links, the current one marked as the page: the Users
+ * list (ticket 16), and the Beta Testers beside it (ticket 01).
  */
 export function UsersTabs({ tab }: { tab: UsersTab }) {
   return (

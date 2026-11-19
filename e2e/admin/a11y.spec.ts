@@ -296,7 +296,7 @@ const KEYBOARD_SCREENS: {
   {
     name: "Users, with the Beta Testers tab and its remove dialog",
     who: "owner",
-    path: paths.admin.users,
+    path: paths.admin.betaTesters,
     ready: (page) => page.getByRole("region", { name: "BETA TESTERS" }),
     dialog: {
       open: (page) =>
@@ -401,7 +401,9 @@ for (const size of SIZES) {
         // The Reviewer PDFs (ticket 12), and one Reviewer PDF's screen (ticket 13).
         paths.admin.reviewerPdfs,
         paths.admin.reviewerPdf(SPIRAL_CURVES_PDF),
+        // Users: the Users list (ticket 16) and the Beta Testers tab (ticket 01).
         "/admin/users",
+        paths.admin.betaTesters,
         "/admin/settings",
       ]) {
         await page.goto(path);

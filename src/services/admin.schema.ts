@@ -8,11 +8,17 @@ import {
   ABOUT_PHOTO_SLOTS,
   ABOUT_SPEC_MAX,
 } from "@/lib/catalogue/about-content";
+import { MAX_QUERY_LENGTH } from "@/lib/catalogue/product-filters";
 import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
 import { isCalendarDate } from "@/lib/manila-time";
 import { PDF_NAME_MAX } from "@/lib/reviewer-pdfs/pdf-file";
 import { variationLabel } from "@/lib/catalogue/price";
-import type { AdminError, RequiredRole, StaffActor } from "@/services/admin.types";
+import {
+  type AdminError,
+  type RequiredRole,
+  type StaffActor,
+  USER_FILTERS,
+} from "@/services/admin.types";
 import { IMPORT_MODES } from "@/lib/content-import/modes";
 import { cardFieldProblems, cardFieldsOf } from "@/lib/cards/card-fields";
 import {
@@ -267,6 +273,47 @@ export type ChangeStaffRoleInput = z.infer<typeof changeStaffRoleSchema>;
 export const betaTesterInputSchema = staffEmailInputSchema;
 
 export type BetaTesterInput = z.input<typeof betaTesterInputSchema>;
+
+// ── Users (Owners only; Phase 3, ticket 16) ─────────────────────────────────
+
+/** The Users list's search, filter and page, as src/lib/admin/users-list.ts reads them from the URL. */
+export const userListQuerySchema = z.object({
+  // The URL's own limit, so a search parseUsersParams keeps is never refused.
+  q: z
+    .string()
+    .trim()
+    .max(MAX_QUERY_LENGTH)
+    .nullable()
+    .transform((q) => q || null),
+  filter: z.enum(USER_FILTERS),
+  page: z.number().int().min(1),
+});
+
+/** A Member's User id, as the Users screens address them. Anything else is no Member's. */
+export const memberIdSchema = z.string().uuid();
+
+/** The longest reason Staff Activity keeps for a Users action. */
+export const REASON_MAX = 500;
+export const REASON_MISSING = "ENTER A REASON · IT’S SAVED IN STAFF ACTIVITY";
+export const REASON_TOO_LONG = `KEEP THE REASON TO ${REASON_MAX} CHARACTERS`;
+
+/** Why an Owner does something to a Member, kept in Staff Activity: trimmed, never blank. */
+const reasonSchema = z
+  .string({ required_error: REASON_MISSING, invalid_type_error: REASON_MISSING })
+  .trim()
+  .min(1, REASON_MISSING)
+  .max(REASON_MAX, REASON_TOO_LONG);
+
+/**
+ * Force sign-out (story 132): the Member, and why. The Member's id is any
+ * text, so one that isn't a Member's answers not-found, as a page for it does.
+ */
+export const forceSignOutInputSchema = z.object({
+  userId: z.string().max(100),
+  reason: reasonSchema,
+});
+
+export type ForceSignOutInput = z.input<typeof forceSignOutInputSchema>;
 
 // ── Products ────────────────────────────────────────────────────────────────
 

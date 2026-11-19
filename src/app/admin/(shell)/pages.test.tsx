@@ -55,7 +55,7 @@ const SCREENS = [
     "/admin/reviews",
     "WEBSITE",
   ],
-  ["Users", UsersPage, "/admin/users", "MEMBER APP"],
+  ["Users", () => UsersPage({ searchParams: Promise.resolve({}) }), "/admin/users", "MEMBER APP"],
   ["Settings", SettingsPage, "/admin/settings", "SETTINGS"],
 ] as const;
 
@@ -135,12 +135,14 @@ describe("Admin screens", () => {
 
   it("refuses an Editor Users with the owners-only 403 screen", async () => {
     signInAs("content@aceyourcourse.ph");
-    await expect(UsersPage()).rejects.toThrow("NEXT_REDIRECT /admin/denied?reason=owners-only");
+    await expect(UsersPage({ searchParams: Promise.resolve({}) })).rejects.toThrow(
+      "NEXT_REDIRECT /admin/denied?reason=owners-only",
+    );
   });
 
   it("shows the Owner the Beta Testers tab, with the sample data's testers", async () => {
     signInAs("angel@aceyourcourse.ph");
-    render(await UsersPage());
+    render(await UsersPage({ searchParams: Promise.resolve({ tab: "beta-testers" }) }));
 
     expect(screen.getByRole("link", { name: "BETA TESTERS" })).toHaveAttribute(
       "aria-current",

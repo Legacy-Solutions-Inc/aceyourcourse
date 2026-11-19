@@ -4,8 +4,8 @@ import { paths } from "../../src/paths";
 import { resetSampleData, signInAs } from "./helpers";
 
 // Beta Testers in the Admin (Phase 3, ticket 01; stories 133a and 133b): an
-// Owner opens Users, adds a Google email to the Beta Tester list and removes
-// one, and an Editor has no Users screen at all. The sample data starts with
+// Owner opens Users' Beta Testers tab, adds a Google email to the Beta Tester
+// list and removes one, and an Editor has no Users screen at all. The sample data starts with
 // one Beta Tester, tester@example.com.
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
@@ -21,8 +21,8 @@ const rows = (page: Page) =>
 const row = (page: Page, email: string) => rows(page).filter({ hasText: email });
 
 async function openUsers(page: Page) {
-  await signInAs(page, "owner", paths.admin.users);
-  await expect(page).toHaveURL(/\/admin\/users$/);
+  await signInAs(page, "owner", paths.admin.betaTesters);
+  await expect(page).toHaveURL(/\/admin\/users\?tab=beta-testers$/);
   await expect(testers(page)).toBeVisible();
 }
 
@@ -36,7 +36,7 @@ test.beforeEach(async ({ request }) => {
 });
 
 test.describe("the Owner", () => {
-  test("opens Users from the menu, on the Beta Testers tab, with the sample tester", async ({
+  test("opens Users from the menu, then the Beta Testers tab, with the sample tester", async ({
     page,
   }) => {
     await signInAs(page, "owner");
@@ -49,6 +49,12 @@ test.describe("the Owner", () => {
 
     await expect(page).toHaveURL(/\/admin\/users$/);
     await expect(page.getByRole("banner").getByRole("heading", { level: 1 })).toHaveText("Users");
+    await expect(page.getByRole("link", { name: "USERS", exact: true })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await page.getByRole("link", { name: "BETA TESTERS" }).click();
+    await expect(page).toHaveURL(/\/admin\/users\?tab=beta-testers$/);
     await expect(page.getByRole("link", { name: "BETA TESTERS" })).toHaveAttribute(
       "aria-current",
       "page",
