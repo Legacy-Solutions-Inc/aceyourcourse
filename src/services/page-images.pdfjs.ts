@@ -1,11 +1,11 @@
 import "server-only";
 
-import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 
 import { createCanvas } from "@napi-rs/canvas";
 
 import { PAGE_WEBP_QUALITY, PAGE_WIDTH } from "@/lib/reviewer-pdfs/job";
+import { PDFJS_DATA_FOLDERS, PDFJS_DIR } from "@/lib/reviewer-pdfs/pdfjs-files";
 import { type PdfProblem, PdfProblemError, type PdfRenderer } from "@/services/page-images.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -14,8 +14,9 @@ import { type PdfProblem, PdfProblemError, type PdfRenderer } from "@/services/p
 // each page on a server-side canvas (@napi-rs/canvas, MIT), which encodes it
 // as WebP. Both are permissive; no AGPL MuPDF. Both are left out of Next's
 // server bundle (serverExternalPackages, next.config.ts), so the canvas's
-// native binary and pdf.js's font, CMap and wasm files load from
-// node_modules, which the run route's file tracing includes.
+// native binary and pdf.js's own modules load from node_modules. pdf.js's
+// font, CMap and wasm files are read from the app's folder, where the run
+// route's file tracing puts them (src/lib/reviewer-pdfs/pdfjs-files.ts).
 //
 // pdf.js runs in the server's own thread: importing its worker module first
 // gives it the worker's code in place of a separate worker file. Fonts are
@@ -43,10 +44,13 @@ function problemOf(error: unknown): PdfProblem | null {
   return Object.hasOwn(PROBLEMS, error.name) ? (PROBLEMS[error.name] ?? null) : null;
 }
 
-/** Where pdf.js's data files are: its standard fonts, CMaps, ICC profiles and wasm decoders. */
+/**
+ * Where pdf.js's data files are: its standard fonts, CMaps, ICC profiles and
+ * wasm decoders, in the app's folder (src/lib/reviewer-pdfs/pdfjs-files.ts).
+ */
 function dataFolders() {
-  const root = dirname(createRequire(import.meta.url).resolve("pdfjs-dist/package.json"));
-  const folder = (name: string) => `${join(root, name)}/`;
+  const folder = (name: (typeof PDFJS_DATA_FOLDERS)[number]) =>
+    `${join(process.cwd(), PDFJS_DIR, name)}/`;
   return {
     standardFontDataUrl: folder("standard_fonts"),
     cMapUrl: folder("cmaps"),

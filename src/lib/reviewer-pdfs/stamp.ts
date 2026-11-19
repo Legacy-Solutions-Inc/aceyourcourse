@@ -14,6 +14,9 @@
 // the page, so no strip of the page can be cut out without one.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Relative, not "@/": next.config.ts loads this module, without the alias.
+import { PDFJS_DIR } from "./pdfjs-files";
+
 /** What a page is stamped with: the Member's email and short Member ID. */
 export interface PageStamp {
   email: string;
@@ -26,7 +29,7 @@ export interface PageStamp {
  * A server has no fonts of its own; next.config.ts sends this one with the
  * page endpoint.
  */
-export const STAMP_FONT_PATH = "node_modules/pdfjs-dist/standard_fonts/LiberationSans-Bold.ttf";
+export const STAMP_FONT_PATH = `${PDFJS_DIR}/standard_fonts/LiberationSans-Bold.ttf`;
 
 /** How many rows of the stamp each page carries. */
 export const STAMP_ROWS = 6;

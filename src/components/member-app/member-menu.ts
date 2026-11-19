@@ -1,4 +1,5 @@
 import { paths } from "@/paths";
+import { CONTENT_KINDS } from "@/services/content.types";
 
 // The Member App's fixed menu (Member App BUILD-MAP §2; mockup L794): seven
 // numbered items, the same for every Member. Only Home is built so far; the
@@ -87,13 +88,12 @@ export function isCurrentItem(pathname: string, href: string): boolean {
 
 /**
  * Pure: whether a screen is a focus screen (BUILD-MAP §2), which has a back
- * bar on mobile instead of the Menu button: a deck in the flashcard player,
- * and a Reviewer PDF in the reader (ticket 14).
+ * bar on mobile instead of the Menu button: every deck, quiz and Reviewer PDF
+ * opened from the Library (the flashcard player, the quiz screen and its past
+ * attempts, and the reader), each shown in a FocusScreen.
  */
 export function isFocusScreen(pathname: string): boolean {
-  return (["deck", "reviewer-pdf"] as const).some((kind) =>
-    pathname.startsWith(paths.memberApp.content(kind, "")),
-  );
+  return CONTENT_KINDS.some((kind) => pathname.startsWith(paths.memberApp.content(kind, "")));
 }
 
 /**

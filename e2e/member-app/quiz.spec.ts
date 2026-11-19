@@ -204,5 +204,14 @@ test.describe("a Member with no pass, on a Free Preview quiz", () => {
     await expectNoBlockingViolations(page);
     await page.getByRole("link", { name: "Back to the quiz" }).click();
     await expect(page.getByRole("button", { name: "Start quiz" })).toBeVisible();
+
+    // On a phone the quiz is a focus screen: a back bar, and no Menu button.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(
+      page
+        .getByRole("navigation", { name: "Back" })
+        .getByRole("link", { name: "Back to HPGE topics" }),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Menu" })).toHaveCount(0);
   });
 });

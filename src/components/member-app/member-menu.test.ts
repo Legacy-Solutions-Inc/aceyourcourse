@@ -49,7 +49,8 @@ describe("isFocusScreen", () => {
   it.each([
     ["/app/library/deck/3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b", true],
     ["/app/library/reviewer-pdf/3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b", true],
-    ["/app/library/quiz/3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b", false],
+    // A quiz, and one of its past attempts (?attempt= is the query, not the path).
+    ["/app/library/quiz/3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b", true],
     ["/app/library", false],
     ["/app", false],
   ])("%s is a focus screen: %s", (pathname, expected) => {

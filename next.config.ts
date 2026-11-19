@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 import { storageImagePatterns } from "./src/lib/catalogue-bucket";
+import { tracedPdfjsFiles } from "./src/lib/reviewer-pdfs/pdfjs-files";
 import { STAMP_FONT_PATH } from "./src/lib/reviewer-pdfs/stamp";
 import { paths } from "./src/paths";
 
@@ -38,16 +39,10 @@ const nextConfig: NextConfig = {
   // native binary and pdf.js's own modules load as they ship.
   serverExternalPackages: ["pdfjs-dist", "@napi-rs/canvas"],
   // …and the files pdf.js reads from disk as it renders (its standard fonts,
-  // CMaps, ICC profiles and wasm decoders, found from its package.json) go
+  // CMaps, ICC profiles and wasm decoders, read from the app's folder) go
   // with the run endpoint, which file tracing can't tell on its own.
   outputFileTracingIncludes: {
-    [paths.jobs.reviewerPdfRun]: [
-      "./node_modules/pdfjs-dist/package.json",
-      "./node_modules/pdfjs-dist/standard_fonts/**",
-      "./node_modules/pdfjs-dist/cmaps/**",
-      "./node_modules/pdfjs-dist/iccs/**",
-      "./node_modules/pdfjs-dist/wasm/**",
-    ],
+    [paths.jobs.reviewerPdfRun]: tracedPdfjsFiles(),
     // The Member App's page endpoint (ticket 14, every route under it) stamps
     // each page with sharp, drawing the text in a font file read from the
     // app's folder (src/services/page-images.sharp.ts).
