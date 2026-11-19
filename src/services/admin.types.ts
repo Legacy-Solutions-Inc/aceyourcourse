@@ -794,3 +794,25 @@ export interface ForcedSignOut {
   signedOut: ActiveDevice;
   reason: string;
 }
+
+/**
+ * What a grant, an extension or "End access now" did to a Member's Access
+ * Pass for an Exam (ticket 17; stories 131, 133h and 133j).
+ */
+export interface AccessPassChange {
+  userId: string;
+  examCode: string;
+  /** ISO end before the change, or null when the Member held no pass for the Exam. */
+  endsBefore: string | null;
+  /** ISO end after it: for "End access now", the time it ended. */
+  endsAt: string;
+  /** The days it added, or null for "End access now". */
+  days: number | null;
+  reason: string;
+  /**
+   * What a grant did to the Member's Target Exams: added the Exam, brought
+   * back one they removed, or nothing when it was theirs already. Always
+   * null for an extension or an end.
+   */
+  targetExam: "added" | "restored" | null;
+}

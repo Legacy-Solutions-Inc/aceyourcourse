@@ -22,6 +22,7 @@ import type {
   DeviceSwitch,
   LibrarySubject,
   Member,
+  MemberNotice,
   MemberUser,
   NewTargetExam,
   PickableExam,
@@ -332,6 +333,27 @@ export interface MemberService {
   getProgress(userId: string, examCode: string): Promise<MemberProgress>;
   /** The Library's read: each of the Exam's Topics' % done for the Member, by Topic id. */
   getTopicPercents(userId: string, examCode: string): Promise<TopicPercents>;
+
+  // In-app notices (ticket 17; spec, Phase 3 planning decisions → In-app
+  // notices): what an Owner's grant, extension or end of the Member's Access
+  // Pass tells them, as one dismissible banner each. The Admin seam writes
+  // them (access-passes.core.ts). There's no email and no notification
+  // centre. Each call is scoped to the User id given, and throws for one
+  // that isn't a User id.
+
+  /**
+   * The notices the Member App shows this Member: each Exam's latest, unless
+   * they dismissed it, newest first (src/lib/member-app/notices.ts). Only
+   * ever their own.
+   */
+  listNotices(userId: string): Promise<MemberNotice[]>;
+  /**
+   * Dismisses one of this Member's notices, for good and on every device.
+   * True when it's theirs, dismissed before too (the first time is kept);
+   * false, changing nothing, for an id no notice of theirs has: another
+   * Member's above all.
+   */
+  dismissNotice(userId: string, noticeId: string): Promise<boolean>;
 }
 
 const impl: MemberService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -366,3 +388,5 @@ export const readReviewerPage = impl.readReviewerPage;
 export const saveReaderPosition = impl.saveReaderPosition;
 export const getProgress = impl.getProgress;
 export const getTopicPercents = impl.getTopicPercents;
+export const listNotices = impl.listNotices;
+export const dismissNotice = impl.dismissNotice;

@@ -5,8 +5,18 @@ import { redirect } from "next/navigation";
 
 import { requireMember } from "@/lib/member-app/guard";
 import { paths } from "@/paths";
-import { addTargetExam, removeTargetExam, selectTargetExam, setExamDate } from "@/services/member";
-import { TARGET_EXAM_REFUSALS, targetExamFormSchema } from "@/services/member.schema";
+import {
+  addTargetExam,
+  dismissNotice,
+  removeTargetExam,
+  selectTargetExam,
+  setExamDate,
+} from "@/services/member";
+import {
+  noticeIdSchema,
+  TARGET_EXAM_REFUSALS,
+  targetExamFormSchema,
+} from "@/services/member.schema";
 
 // The Member App's Target Exam actions (spec, Phase 3 → Target Exams). Each
 // one runs the Member App's server checks first (the gate, then consent), and
@@ -91,4 +101,19 @@ export async function switchExam(formData: FormData): Promise<void> {
   const member = await requireMember(paths.memberApp.home);
   await selectTargetExam(member.userId, sent(formData).examCode);
   redrawShell();
+}
+
+/**
+ * "Dismiss" on an in-app notice (ticket 17): dismisses it for good, on every
+ * device. Only the signed-in Member's own notice is dismissed: who they are
+ * comes from the session, and the seam changes nothing for another's. The
+ * shell redraws without it.
+ */
+export async function dismissMemberNotice(noticeId: unknown): Promise<{ ok: boolean }> {
+  const member = await requireMember(paths.memberApp.home);
+  const sent = noticeIdSchema.safeParse(noticeId);
+  if (!sent.success) return { ok: false };
+  const ok = await dismissNotice(member.userId, sent.data);
+  if (ok) redrawShell();
+  return { ok };
 }

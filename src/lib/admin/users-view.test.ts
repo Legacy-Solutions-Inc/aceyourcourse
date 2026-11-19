@@ -5,6 +5,7 @@ import type { MemberProgress } from "@/lib/member-app/progress";
 import {
   memberInitials,
   pageSummary,
+  passChangeText,
   passEnd,
   progressFigures,
   roleLabel,
@@ -163,5 +164,45 @@ describe("progressFigures", () => {
         progress({ quizzesTaken: 1, streak: { ...progress().streak, current: 1, best: 1 } }),
       ),
     ).toMatchObject({ quizzes: "1 QUIZ TAKEN", streak: "1 DAY · BEST 1" });
+  });
+});
+
+describe("passChangeText", () => {
+  const change = {
+    userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
+    examCode: "CE",
+    endsBefore: null,
+    endsAt: "2026-12-19T16:30:00.000Z",
+    days: 30,
+    reason: "Beta tester",
+    targetExam: null,
+  } as const;
+
+  it("says a grant's end in Manila, with no payment collected", () => {
+    // 16:30 UTC on 19 Dec is 00:30 on 20 Dec in Manila.
+    expect(passChangeText("grant", change)).toBe(
+      "✓ GRANTED CE UNTIL 20 DEC 2026 · NO PAYMENT COLLECTED",
+    );
+  });
+
+  it("says a grant added the Exam to the Member's Target Exams, or brought it back", () => {
+    expect(passChangeText("grant", { ...change, targetExam: "added" })).toBe(
+      "✓ GRANTED CE UNTIL 20 DEC 2026 · NO PAYMENT COLLECTED · ADDED TO THEIR TARGET EXAMS",
+    );
+    expect(passChangeText("grant", { ...change, targetExam: "restored" })).toBe(
+      "✓ GRANTED CE UNTIL 20 DEC 2026 · NO PAYMENT COLLECTED · BACK IN THEIR TARGET EXAMS",
+    );
+  });
+
+  it("says the days an extension added and the new end", () => {
+    expect(passChangeText("extend", { ...change, days: 7 })).toBe(
+      "✓ ADDED 7 DAYS · CE UNTIL 20 DEC 2026",
+    );
+  });
+
+  it("says ending access shows the Member the expired state", () => {
+    expect(passChangeText("end", { ...change, days: null })).toBe(
+      "✓ ENDED CE ACCESS · THEY SEE THE EXPIRED STATE",
+    );
   });
 });

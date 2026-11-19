@@ -169,3 +169,6 @@ export const readerPositionInputSchema = z.object({
   page: z.number().int(),
   zoom: z.number().refine(isReaderZoom, "must be one of the reader's zooms"),
 });
+
+/** A notice's id, as the Member App's "Dismiss" sends it. Anything else is no notice. */
+export const noticeIdSchema = z.string().uuid();

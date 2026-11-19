@@ -11,8 +11,9 @@ import { AdminTextField } from "@/components/admin/admin-text-field";
 import { useStaffAction } from "@/components/admin/settings/use-staff-action";
 import type { AdminAction } from "@/lib/admin/action";
 import { formatLoggedAt } from "@/lib/admin/time";
+import { refusalText, UNREACHABLE } from "@/lib/admin/users-refusal";
 import { cn } from "@/lib/utils";
-import type { AdminError, ForcedSignOut } from "@/services/admin.types";
+import type { ForcedSignOut } from "@/services/admin.types";
 import type { ActiveDevice } from "@/services/member.types";
 
 interface ForceSignOutProps {
@@ -23,22 +24,6 @@ interface ForceSignOutProps {
 }
 
 type Notice = { tone: "done" | "refused"; text: string };
-
-const FAILED = "Couldn’t reach the server, so nothing was changed.";
-
-/** Pure: what the panel says about a refusal that isn't the reason field's. */
-function refusalText(error: AdminError): string {
-  switch (error.kind) {
-    case "invalid":
-      return error.formError ?? "Nothing was changed.";
-    case "forbidden":
-      return error.message;
-    case "not-found":
-      return "This Member isn’t there any more, so nothing was changed.";
-    case "conflict":
-      return "Nothing was changed. Reload the page and try again.";
-  }
-}
 
 /**
  * ACTIVE DEVICE on a Member's detail page, with "Sign out this device"
@@ -165,7 +150,7 @@ export function ForceSignOut({ member, device, action }: ForceSignOutProps) {
             />
             {failed ? (
               <p role="alert" className="text-sm font-semibold text-destructive">
-                {FAILED}
+                {UNREACHABLE}
               </p>
             ) : null}
             <AdminDialogButtons>

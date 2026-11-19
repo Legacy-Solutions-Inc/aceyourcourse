@@ -2,7 +2,7 @@ import { formatCount } from "@/lib/catalogue/figures";
 import { formatDate } from "@/lib/manila-time";
 import { isPassActive, passEndDate } from "@/lib/member-app/access";
 import type { MemberProgress } from "@/lib/member-app/progress";
-import type { AdminUserList, UserFilter, UserRole } from "@/services/admin.types";
+import type { AccessPassChange, AdminUserList, UserFilter, UserRole } from "@/services/admin.types";
 
 import { USERS_PAGE_SIZE } from "./users-list";
 
@@ -26,6 +26,29 @@ export function passEnd(endsAt: string, now: Date): { date: string; expired: boo
     date: passEndDate(endsAt).toUpperCase(),
     expired: !isPassActive(endsAt, now),
   };
+}
+
+/** Pure: what the ACCESS PASSES panel says once a grant, an extension or an end is done. */
+export function passChangeText(
+  action: "grant" | "extend" | "end",
+  { examCode, endsAt, days, targetExam }: AccessPassChange,
+): string {
+  const until = passEndDate(endsAt).toUpperCase();
+  switch (action) {
+    case "grant": {
+      const added =
+        targetExam === "added"
+          ? " · ADDED TO THEIR TARGET EXAMS"
+          : targetExam === "restored"
+            ? " · BACK IN THEIR TARGET EXAMS"
+            : "";
+      return `✓ GRANTED ${examCode} UNTIL ${until} · NO PAYMENT COLLECTED${added}`;
+    }
+    case "extend":
+      return `✓ ADDED ${days ?? 0} DAYS · ${examCode} UNTIL ${until}`;
+    case "end":
+      return `✓ ENDED ${examCode} ACCESS · THEY SEE THE EXPIRED STATE`;
+  }
 }
 
 /** Pure: the ROLE column. */

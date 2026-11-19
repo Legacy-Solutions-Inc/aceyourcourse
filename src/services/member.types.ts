@@ -383,3 +383,29 @@ export type ReaderPositionInput = z.input<typeof readerPositionInputSchema>;
 
 /** Each of an Exam's Topics' % done for a Member, by Topic id: null while a Topic has nothing to study. */
 export type TopicPercents = Record<string, number | null>;
+
+// ── In-app notices (ticket 17) ──────────────────────────────────────────────
+
+/** What a notice tells the Member: a grant, an extension, or the end of their access. */
+export const NOTICE_KINDS = ["granted", "extended", "ended"] as const;
+export type NoticeKind = (typeof NOTICE_KINDS)[number];
+
+/**
+ * One in-app notice (spec, Phase 3 planning decisions → In-app notices): an
+ * Owner's grant, extension or end of a Member's Access Pass, shown as a
+ * dismissible banner until the Member dismisses it. No email is sent.
+ */
+export interface MemberNotice {
+  id: string;
+  /** The Member's User id: a notice is only ever shown to them. */
+  userId: string;
+  /** The Exam whose Access Pass changed. */
+  examCode: string;
+  kind: NoticeKind;
+  /** ISO time the pass ends after the change (for "ended", when it ended). */
+  endsAt: string;
+  /** ISO time the Owner made the change. */
+  createdAt: string;
+  /** ISO time the Member dismissed it, or null while it shows. */
+  dismissedAt: string | null;
+}

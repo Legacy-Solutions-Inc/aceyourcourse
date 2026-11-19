@@ -37,6 +37,7 @@ import {
   CONTENT_VISIBILITIES,
   REVIEWER_PDF_STATUSES,
 } from "@/services/content.types";
+import { NOTICE_KINDS } from "@/services/member.types";
 
 /**
  * Drizzle schema, the typed data layer behind the service seams
@@ -1068,5 +1069,38 @@ export const accessPassGrants = pgTable(
     check("access_pass_grants_days_range", sql`${t.days} between 1 and 365`),
     check("access_pass_grants_ends_after_start", sql`${t.endsAt} > ${t.startsAt}`),
     check("access_pass_grants_reason_present", sql`btrim(${t.reason}) <> ''`),
+  ],
+).enableRLS();
+
+// ── In-app notices ──────────────────────────────────────────────────────────
+
+export const memberNoticeKind = pgEnum("member_notice_kind", NOTICE_KINDS);
+
+/**
+ * Each Member's in-app notices (ticket 17; spec, Phase 3 planning decisions →
+ * In-app notices): one per grant, extension or end of an Access Pass, in the
+ * order made (`seq`), shown as a dismissible banner until `dismissed_at` is
+ * set. `ends_at` is the pass's end after the change. Deleting the Member or
+ * the Exam deletes their notices. No email is sent.
+ */
+export const memberNotices = pgTable(
+  "member_notices",
+  {
+    id: uuid("id").primaryKey(),
+    seq: bigint("seq", { mode: "number" }).generatedAlwaysAsIdentity(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => members.userId, { onDelete: "cascade" }),
+    examCode: text("exam_code")
+      .notNull()
+      .references(() => exams.code, { onDelete: "cascade", onUpdate: "cascade" }),
+    kind: memberNoticeKind("kind").notNull(),
+    endsAt: at("ends_at").notNull(),
+    createdAt: at("created_at").notNull(),
+    dismissedAt: at("dismissed_at"),
+  },
+  (t) => [
+    index("member_notices_user_id_seq_idx").on(t.userId, t.seq),
+    index("member_notices_exam_code_idx").on(t.examCode),
   ],
 ).enableRLS();

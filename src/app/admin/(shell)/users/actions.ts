@@ -1,8 +1,21 @@
 "use server";
 
 import { adminAction } from "@/lib/admin/action";
-import { addBetaTester, forceSignOut, removeBetaTester } from "@/services/admin";
-import { betaTesterInputSchema, forceSignOutInputSchema } from "@/services/admin.schema";
+import {
+  addBetaTester,
+  endAccess,
+  extendAccess,
+  forceSignOut,
+  grantAccess,
+  removeBetaTester,
+} from "@/services/admin";
+import {
+  betaTesterInputSchema,
+  endAccessInputSchema,
+  extendAccessInputSchema,
+  forceSignOutInputSchema,
+  grantAccessInputSchema,
+} from "@/services/admin.schema";
 
 // Users' Server Actions, all Owners-only (spec, Phase 3 → The beta gate, Beta
 // access). Their own rules decide them, not the conflict check, so they ignore
@@ -29,4 +42,30 @@ export const removeTester = adminAction(
 export const forceSignOutMember = adminAction(
   { role: "owner", schema: forceSignOutInputSchema },
   forceSignOut,
+);
+
+/**
+ * "Grant Access Pass" (ticket 17; story 131): an Exam, its days and a reason.
+ * The days add from the pass's end, or from now when it has ended; an Exam
+ * the Member doesn't have joins their Target Exams. The Member gets an in-app
+ * notice, never an email.
+ */
+export const grantAccessPass = adminAction(
+  { role: "owner", schema: grantAccessInputSchema },
+  grantAccess,
+);
+
+/** "Extend access" (story 131): 3, 7, 14 or 30 days more on a pass the Member holds, with a reason. */
+export const extendAccessPass = adminAction(
+  { role: "owner", schema: extendAccessInputSchema },
+  extendAccess,
+);
+
+/**
+ * "End access now" (story 133j): ends the pass now, with a reason. The
+ * Member sees the expired state; their progress stays.
+ */
+export const endAccessPass = adminAction(
+  { role: "owner", schema: endAccessInputSchema },
+  endAccess,
 );

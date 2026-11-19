@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DEVICE_COOKIE, hashDeviceToken } from "@/lib/member-app/device-token";
-import { removeBetaTester } from "@/services/admin.mock";
+import { grantAccess, removeBetaTester } from "@/services/admin.mock";
 import {
   addTargetExam,
   claimDevice,
@@ -313,6 +313,29 @@ describe("the shell", () => {
     expect(screen.queryByRole("button", { name: "Menu" })).not.toBeInTheDocument();
     expect(members()).toEqual([]);
     expect(consents()).toEqual([]);
+  });
+
+  it("shows the Member's own in-app notices above the screen, never another Member's", async () => {
+    const owner = sampleActor("owner");
+    await agreedAs(TESTER, "Bea Tester");
+    await agreedAs("lapsed@example.com", "Lou Lapsed");
+    const grant = (email: string) =>
+      grantAccess(owner, { userId: sampleUserId(email), examCode: "ME", days: 30, reason: "Beta" });
+    await grant("lapsed@example.com");
+    signedInAs(TESTER);
+
+    const { unmount } = render(await shell(<p>the screen</p>));
+    expect(screen.queryByRole("region", { name: "Notices" })).not.toBeInTheDocument();
+    unmount();
+
+    await grant(TESTER);
+    render(await shell(<p>the screen</p>));
+    const notices = within(screen.getByRole("region", { name: "Notices" })).getAllByRole(
+      "listitem",
+    );
+    expect(notices).toHaveLength(1);
+    expect(notices[0]).toHaveTextContent(/You now have ME All-Access until \d{1,2} \w{3} \d{4}/);
+    expect(screen.getByRole("button", { name: /^Dismiss: You now have ME/ })).toBeInTheDocument();
   });
 
   it("shows a Member whose agreement is out of date no menu", async () => {

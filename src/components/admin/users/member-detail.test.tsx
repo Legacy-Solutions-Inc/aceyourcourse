@@ -8,7 +8,8 @@ import { MemberDetail } from "./member-detail";
 
 // A Member's detail page (story 130; BUILD-MAP §3.10, detail): every section
 // an Owner needs to answer a question or spot a shared account. The detail
-// comes from the seam; force sign-out has its own test.
+// comes from the seam; force sign-out and the Access Pass panels have their
+// own tests.
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
   unstable_rethrow: () => {},
@@ -97,7 +98,15 @@ const EMPTY: AdminMemberDetail = {
 const section = (name: string) => screen.getByRole("region", { name });
 
 function renderDetail(detail = DETAIL) {
-  render(<MemberDetail detail={detail} now={NOW} forceSignOut={vi.fn()} />);
+  render(
+    <MemberDetail
+      detail={detail}
+      now={NOW}
+      exams={[{ code: "CE", name: "Civil Engineering" }]}
+      forceSignOut={vi.fn()}
+      passActions={{ grant: vi.fn(), extend: vi.fn(), end: vi.fn() }}
+    />,
+  );
 }
 
 describe("MemberDetail", () => {

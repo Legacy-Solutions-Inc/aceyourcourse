@@ -201,6 +201,32 @@ function planAdd(state: MemberExams, input: NewTargetExam, now: Date): Planned<A
   };
 }
 
+/**
+ * Pure: what an Owner's grant for `examCode` does to a Member's Target Exams
+ * (spec, Phase 3 planning decisions → Target Exams; story 133h), at `now`:
+ * adds the Exam when they never had it, following its Official Exam Date;
+ * brings back one they removed, as re-adding it would (planAdd): with their
+ * own date if they had set one, otherwise following the Official Exam Date,
+ * and with its progress, which is never deleted; or nothing when it's theirs
+ * now. Their selection stays as it is. Any Exam in
+ * the catalogue can be granted, on the Website or not, so this doesn't ask.
+ */
+export function grantedTargetExam(
+  records: readonly TargetExamRecord[],
+  examCode: string,
+  now: Date,
+): { record: TargetExamRecord; change: "added" | "restored" } | null {
+  const existing = records.find((record) => record.examCode === examCode);
+  if (!existing) {
+    return {
+      record: { examCode, memberExamDate: null, addedAt: now.toISOString(), removedAt: null },
+      change: "added",
+    };
+  }
+  if (existing.removedAt === null) return null;
+  return { record: { ...existing, removedAt: null }, change: "restored" };
+}
+
 /** The Member's own Target Exam for `code`, when it's one of theirs now. */
 const ownActive = (state: MemberExams, code: string) =>
   active(state).find(({ exam }) => exam.code === examCodeOf(code));

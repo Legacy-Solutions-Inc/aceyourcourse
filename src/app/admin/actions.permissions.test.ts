@@ -247,6 +247,21 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     forceSignOutMember: owner(() =>
       users.forceSignOutMember(IDLE, { input: { userId: BEA.userId, reason: "Shared" } }),
     ),
+    grantAccessPass: owner(() =>
+      users.grantAccessPass(IDLE, {
+        input: { userId: BEA.userId, examCode: "CE", days: 30, reason: "Beta" },
+      }),
+    ),
+    extendAccessPass: owner(() =>
+      users.extendAccessPass(IDLE, {
+        input: { userId: BEA.userId, examCode: "CE", days: 7, reason: "Late" },
+      }),
+    ),
+    endAccessPass: owner(() =>
+      users.endAccessPass(IDLE, {
+        input: { userId: BEA.userId, examCode: "CE", reason: "Mistake" },
+      }),
+    ),
   },
   "./(shell)/content/actions.ts": {
     addTopic: staff(() =>
@@ -557,12 +572,20 @@ beforeEach(async () => {
       failure: null,
     },
   };
-  // A Member signed in to the Member App on one device.
+  // A Member signed in to the Member App on one device, with a CE pass for 30 more days.
   await getOrCreateMember(BEA);
   await claimDevice(BEA.userId, {
     tokenHash: BEA_PHONE,
     deviceLabel: "Chrome on Android",
   });
+  store.accessPasses = [
+    ...store.accessPasses,
+    {
+      userId: BEA.userId,
+      examCode: "CE",
+      endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ];
 });
 
 describe("the action registry", () => {

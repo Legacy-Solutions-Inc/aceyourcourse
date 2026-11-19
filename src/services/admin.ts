@@ -7,11 +7,14 @@ import type {
   BetaTesterInput,
   BundleOfferForm,
   ChangeStaffRoleInput,
+  EndAccessInput,
   ExamHeaderForm,
+  ExtendAccessInput,
   ExamSeoForm,
   FaqForm,
   FaqMove,
   ForceSignOutInput,
+  GrantAccessInput,
   InviteStaffInput,
   NewExamForm,
   NewProductForm,
@@ -39,6 +42,7 @@ import type {
   WebsiteSettingsUpdate,
 } from "@/services/admin.schema";
 import type {
+  AccessPassChange,
   AdminAbout,
   AdminAnnouncement,
   AdminCard,
@@ -224,6 +228,35 @@ export interface AdminService {
    * Device is refused with a message, recording nothing.
    */
   forceSignOut(actor: StaffActor, input: ForceSignOutInput): Promise<AdminResult<ForcedSignOut>>;
+
+  // Access Passes (Owners only; Phase 3, ticket 17; stories 131, 133h and
+  // 133j): grant, extend and end a Member's Access Pass for an Exam, from
+  // their detail page. Each needs a reason, which Staff Activity keeps with
+  // the pass's end before and after, and leaves the Member an in-app notice
+  // (no email). An Editor is refused each call. None touches the Catalogue,
+  // so none returns a cache tag.
+
+  /**
+   * Grant Access Pass: 30, 90, 180 or 365 days, or a custom 1–365, added from
+   * the pass's end, or from now when it has ended or there is none, and kept
+   * as a history row. A grant for an Exam the Member doesn't have adds it to
+   * their Target Exams with its Official Exam Date (or brings back one they
+   * removed, with its date and progress), leaving their selection. Refused
+   * for an Exam that isn't in the catalogue.
+   */
+  grantAccess(actor: StaffActor, input: GrantAccessInput): Promise<AdminResult<AccessPassChange>>;
+  /**
+   * Extend access: 3, 7, 14 or 30 days on a pass the Member holds, from its
+   * end or from now when it has ended, kept as a history row. Refused with a
+   * message when they hold no pass for the Exam.
+   */
+  extendAccess(actor: StaffActor, input: ExtendAccessInput): Promise<AdminResult<AccessPassChange>>;
+  /**
+   * End access now: sets the pass's end to now, so the Member sees the
+   * expired state; their progress and the pass's history stay. A pass that
+   * has already ended, or none, is refused with a message, recording nothing.
+   */
+  endAccess(actor: StaffActor, input: EndAccessInput): Promise<AdminResult<AccessPassChange>>;
 
   /**
    * The Overview's read (any Staff User): every Product, the Exams, the Exam
@@ -945,6 +978,9 @@ export const removeBetaTester = impl.removeBetaTester;
 export const listUsers = impl.listUsers;
 export const getMemberForAdmin = impl.getMemberForAdmin;
 export const forceSignOut = impl.forceSignOut;
+export const grantAccess = impl.grantAccess;
+export const extendAccess = impl.extendAccess;
+export const endAccess = impl.endAccess;
 export const getOverview = impl.getOverview;
 export const getSettingsForAdmin = impl.getSettingsForAdmin;
 export const updateWebsiteSettings = impl.updateWebsiteSettings;

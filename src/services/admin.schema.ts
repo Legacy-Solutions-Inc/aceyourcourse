@@ -11,6 +11,7 @@ import {
 import { MAX_QUERY_LENGTH } from "@/lib/catalogue/product-filters";
 import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
 import { isCalendarDate } from "@/lib/manila-time";
+import { EXTEND_DAYS, GRANT_MAX_DAYS } from "@/lib/member-app/access-pass";
 import { PDF_NAME_MAX } from "@/lib/reviewer-pdfs/pdf-file";
 import { variationLabel } from "@/lib/catalogue/price";
 import {
@@ -314,6 +315,69 @@ export const forceSignOutInputSchema = z.object({
 });
 
 export type ForceSignOutInput = z.input<typeof forceSignOutInputSchema>;
+
+// ── Access Passes (Owners only; Phase 3, ticket 17) ─────────────────────────
+// Grant, extend and end a Member's Access Pass for an Exam (spec, Phase 3
+// planning decisions → Grants and ending access), each with a reason Staff
+// Activity keeps. The days come typed, or as the custom box's text.
+
+export const GRANT_DAYS_ERROR = `GRANT 1 TO ${GRANT_MAX_DAYS} WHOLE DAYS`;
+export const EXTEND_DAYS_ERROR = `PICK ${EXTEND_DAYS.slice(0, -1).join(", ")} OR ${EXTEND_DAYS.at(-1)} DAYS`;
+export const EXAM_MISSING = "PICK AN EXAM";
+
+/** The days as sent: a number, or the box's text of digits ("45", " 45 "). Anything else is refused. */
+const typedDays = (value: unknown) =>
+  typeof value === "string" && /^\s*\d{1,4}\s*$/.test(value) ? Number(value) : value;
+
+const days = (message: string) =>
+  z.number({ invalid_type_error: message, required_error: message }).int(message);
+
+/** An Exam code as an Owner picked it, as the catalogue holds it: " ce " is CE. */
+const passExamCode = z
+  .string({ required_error: EXAM_MISSING, invalid_type_error: EXAM_MISSING })
+  .trim()
+  .min(1, EXAM_MISSING)
+  .max(20, EXAM_MISSING)
+  .transform((code) => code.toUpperCase());
+
+/** The Member's User id: any text, so one that isn't a Member's answers not-found. */
+const passMemberId = z.string().max(100);
+
+/** "Grant Access Pass": an Exam, 30, 90, 180 or 365 days or a custom whole number up to 365, and why. */
+export const grantAccessInputSchema = z.object({
+  userId: passMemberId,
+  examCode: passExamCode,
+  days: z.preprocess(
+    typedDays,
+    days(GRANT_DAYS_ERROR).min(1, GRANT_DAYS_ERROR).max(GRANT_MAX_DAYS, GRANT_DAYS_ERROR),
+  ),
+  reason: reasonSchema,
+});
+
+/** "Extend access": 3, 7, 14 or 30 days more on a pass the Member holds, and why. */
+export const extendAccessInputSchema = z.object({
+  userId: passMemberId,
+  examCode: passExamCode,
+  days: z.preprocess(
+    typedDays,
+    days(EXTEND_DAYS_ERROR).refine(
+      (value) => (EXTEND_DAYS as readonly number[]).includes(value),
+      EXTEND_DAYS_ERROR,
+    ),
+  ),
+  reason: reasonSchema,
+});
+
+/** "End access now": the pass to end, and why. */
+export const endAccessInputSchema = z.object({
+  userId: passMemberId,
+  examCode: passExamCode,
+  reason: reasonSchema,
+});
+
+export type GrantAccessInput = z.input<typeof grantAccessInputSchema>;
+export type ExtendAccessInput = z.input<typeof extendAccessInputSchema>;
+export type EndAccessInput = z.input<typeof endAccessInputSchema>;
 
 // ── Products ────────────────────────────────────────────────────────────────
 

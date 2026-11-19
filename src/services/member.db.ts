@@ -1,12 +1,13 @@
 import "server-only";
 
-import { and, asc, type Column, count, desc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, type Column, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import type { Transaction } from "@/lib/db/connect";
 import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
 import { deviceStatusFor } from "@/lib/member-app/device-token";
+import { noticesToShow } from "@/lib/member-app/notices";
 import { isReaderZoom } from "@/lib/reviewer-pdfs/reader";
 import { readablePageCount } from "@/lib/reviewer-pdfs/status";
 import { isStorageConfigured } from "@/lib/supabase/admin";
@@ -34,6 +35,7 @@ import {
   memberEmailSchema,
   memberUserIdSchema,
   memberUserSchema,
+  noticeIdSchema,
 } from "@/services/member.schema";
 import {
   examsForMembers,
@@ -45,7 +47,7 @@ import {
   type WithMemberExams,
 } from "@/services/member.rules";
 import type { ContentKind } from "@/services/content.types";
-import type { ConsentRecord, DeviceSwitch, Member } from "@/services/member.types";
+import type { ConsentRecord, DeviceSwitch, Member, MemberNotice } from "@/services/member.types";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
 import { storageArm } from "@/services/uploads.storage";
 
@@ -145,7 +147,7 @@ const recordConsent: MemberService["recordConsent"] = async (userId, versions) =
 
 type TargetExamRow = typeof schema.memberTargetExams.$inferSelect;
 
-const targetExamFromRow = (row: TargetExamRow): TargetExamRecord => ({
+export const targetExamFromRow = (row: TargetExamRow): TargetExamRecord => ({
   examCode: row.examCode,
   memberExamDate: row.memberExamDate,
   addedAt: row.addedAt.toISOString(),
@@ -213,8 +215,29 @@ const listTargetExams: MemberService["listTargetExams"] = async (userId) => {
   }
 };
 
+/**
+ * Writes one of a Member's Target Exam records, added or replacing theirs for
+ * its Exam: the Target Exam rules' change (member.rules.ts), or a grant's
+ * (admin.access-passes.db.ts). The first-added time stays the first one.
+ */
+export async function writeTargetExam(
+  tx: Transaction,
+  userId: string,
+  { examCode, memberExamDate, addedAt, removedAt }: TargetExamRecord,
+): Promise<void> {
+  const { memberTargetExams } = schema;
+  const removed = removedAt === null ? null : new Date(removedAt);
+  await tx
+    .insert(memberTargetExams)
+    .values({ userId, examCode, memberExamDate, addedAt: new Date(addedAt), removedAt: removed })
+    .onConflictDoUpdate({
+      target: [memberTargetExams.userId, memberTargetExams.examCode],
+      set: { memberExamDate, removedAt: removed },
+    });
+}
+
 const withMemberExams: WithMemberExams = async (userId, work) => {
-  const { members, memberTargetExams } = schema;
+  const { members } = schema;
   try {
     return await getDb().transaction(async (tx) => {
       // Locking the Member's row makes their changes take turns, so two
@@ -231,23 +254,7 @@ const withMemberExams: WithMemberExams = async (userId, work) => {
         selectedExamCode: member.selectedExamCode,
         exams: await readExams(tx),
       });
-      if (change?.record) {
-        const { examCode, memberExamDate, addedAt, removedAt } = change.record;
-        const removed = removedAt === null ? null : new Date(removedAt);
-        await tx
-          .insert(memberTargetExams)
-          .values({
-            userId,
-            examCode,
-            memberExamDate,
-            addedAt: new Date(addedAt),
-            removedAt: removed,
-          })
-          .onConflictDoUpdate({
-            target: [memberTargetExams.userId, memberTargetExams.examCode],
-            set: { memberExamDate, removedAt: removed },
-          });
-      }
+      if (change?.record) await writeTargetExam(tx, userId, change.record);
       if (change && change.selectedExamCode !== undefined) {
         await tx
           .update(members)
@@ -872,6 +879,61 @@ const databaseProgressStore: ProgressStore = {
     }),
 };
 
+// ── In-app notices ──────────────────────────────────────────────────────────
+
+type NoticeRow = typeof schema.memberNotices.$inferSelect;
+
+export const noticeFromRow = (row: NoticeRow): MemberNotice => ({
+  id: row.id,
+  userId: row.userId,
+  examCode: row.examCode,
+  kind: row.kind,
+  endsAt: row.endsAt.toISOString(),
+  createdAt: row.createdAt.toISOString(),
+  dismissedAt: row.dismissedAt?.toISOString() ?? null,
+});
+
+/** A notice as a row to add: its `seq` is the table's to give. */
+export const noticeToRow = (notice: MemberNotice): Omit<NoticeRow, "seq"> => ({
+  id: notice.id,
+  userId: notice.userId,
+  examCode: notice.examCode,
+  kind: notice.kind,
+  endsAt: new Date(notice.endsAt),
+  createdAt: new Date(notice.createdAt),
+  dismissedAt: notice.dismissedAt === null ? null : new Date(notice.dismissedAt),
+});
+
+const listNotices: MemberService["listNotices"] = async (userId) => {
+  const wanted = memberUserIdSchema.parse(userId);
+  const { memberNotices } = schema;
+  return inDatabase(async () => {
+    const rows = await getDb()
+      .select()
+      .from(memberNotices)
+      .where(eq(memberNotices.userId, wanted))
+      .orderBy(asc(memberNotices.seq));
+    return noticesToShow(rows.map(noticeFromRow));
+  });
+};
+
+const dismissNotice: MemberService["dismissNotice"] = async (userId, noticeId) => {
+  const wanted = memberUserIdSchema.parse(userId);
+  const id = noticeIdSchema.safeParse(noticeId);
+  if (!id.success) return false;
+  const { memberNotices } = schema;
+  return inDatabase(async () => {
+    const owned = and(eq(memberNotices.id, id.data), eq(memberNotices.userId, wanted));
+    // Only the first dismissal is kept: one dismissed before matches nothing here.
+    await getDb()
+      .update(memberNotices)
+      .set({ dismissedAt: new Date() })
+      .where(and(owned, isNull(memberNotices.dismissedAt)));
+    const [found] = await getDb().select({ id: memberNotices.id }).from(memberNotices).where(owned);
+    return found !== undefined;
+  });
+};
+
 export const databaseArm: MemberService = {
   isBetaTester,
   getOrCreateMember,
@@ -892,4 +954,6 @@ export const databaseArm: MemberService = {
   ...quizStudyCalls(databaseQuizStore),
   ...reviewerStudyCalls(databaseReviewerStore),
   ...progressCalls(databaseProgressStore),
+  listNotices,
+  dismissNotice,
 };

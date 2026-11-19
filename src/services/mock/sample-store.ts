@@ -28,7 +28,7 @@ import type {
   Topic,
 } from "@/services/content.types";
 import type { TargetExamRecord } from "@/services/member.rules";
-import type { ConsentRecord, DeviceSwitch, Member } from "@/services/member.types";
+import type { ConsentRecord, DeviceSwitch, Member, MemberNotice } from "@/services/member.types";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { sampleContent } from "@/services/mock/content";
 import { sampleAccessPasses, sampleBetaTesters } from "@/services/mock/members";
@@ -155,6 +155,8 @@ export interface SampleStore {
   accessPasses: AccessPass[];
   /** The grants behind the Access Passes, oldest first (Phase 3; written from ticket 17). */
   accessPassGrants: AccessPassGrant[];
+  /** Every Member's in-app notices, in the order made (ticket 17): grants, extensions and ends. */
+  memberNotices: MemberNotice[];
   /** The upload seam's files, by upload id. */
   uploads: Record<string, SampleUpload>;
   /** The private content bucket's files, by path (ticket 06): card back images. */
@@ -205,6 +207,7 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     reviewerPageViews: [],
     readerPositions: [],
     ...sampleAccessPasses(now, catalogue),
+    memberNotices: [],
     reviewerPdfUploads: {},
     reviewerPdfFiles: {},
     uploads: {},

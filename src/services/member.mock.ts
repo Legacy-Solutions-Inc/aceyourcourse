@@ -1,4 +1,5 @@
 import { type DeviceStatus, deviceStatusFor } from "@/lib/member-app/device-token";
+import { noticesToShow } from "@/lib/member-app/notices";
 import { readablePageCount } from "@/lib/reviewer-pdfs/status";
 import { contentItemOf, type ContentExam, libraryOf } from "@/services/content.rules";
 import type { AccessPass, ContentKind, ContentRecords } from "@/services/content.types";
@@ -13,6 +14,7 @@ import {
   memberEmailSchema,
   memberUserIdSchema,
   memberUserSchema,
+  noticeIdSchema,
 } from "@/services/member.schema";
 import {
   applyChange,
@@ -32,6 +34,7 @@ import type {
   DeviceSwitch,
   LibrarySubject,
   Member,
+  MemberNotice,
   MemberUser,
   PickableExam,
   TargetExam,
@@ -443,3 +446,26 @@ const sampleProgressStore: ProgressStore = {
 };
 
 export const { getProgress, getTopicPercents } = progressCalls(sampleProgressStore);
+
+// ── In-app notices ──────────────────────────────────────────────────────────
+
+export async function listNotices(userId: string): Promise<MemberNotice[]> {
+  const wanted = memberUserIdSchema.parse(userId);
+  return structuredClone(
+    noticesToShow(getSampleStore().memberNotices.filter((notice) => notice.userId === wanted)),
+  );
+}
+
+export async function dismissNotice(userId: string, noticeId: string): Promise<boolean> {
+  const wanted = memberUserIdSchema.parse(userId);
+  const id = noticeIdSchema.safeParse(noticeId);
+  if (!id.success) return false;
+  const store = getSampleStore();
+  const notice = store.memberNotices.find((n) => n.id === id.data && n.userId === wanted);
+  if (!notice) return false;
+  if (notice.dismissedAt === null) {
+    const dismissed = { ...notice, dismissedAt: new Date().toISOString() };
+    store.memberNotices = store.memberNotices.map((n) => (n === notice ? dismissed : n));
+  }
+  return true;
+}

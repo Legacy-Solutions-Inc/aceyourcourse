@@ -2,11 +2,10 @@ import type { ReactNode } from "react";
 
 import type { AdminAction } from "@/lib/admin/action";
 import { formatChangedOn, formatLoggedAt } from "@/lib/admin/time";
-import { memberInitials, passEnd, progressFigures } from "@/lib/admin/users-view";
+import { memberInitials, progressFigures } from "@/lib/admin/users-view";
 import { formatDate } from "@/lib/manila-time";
 import { cn } from "@/lib/utils";
 import type {
-  AdminAccessPass,
   AdminExamProgress,
   AdminMemberDetail,
   ForcedSignOut,
@@ -14,13 +13,17 @@ import type {
 } from "@/services/admin.types";
 import type { TargetExam } from "@/services/member.types";
 
+import { AccessPasses, type PassActions } from "./access-passes";
 import { ForceSignOut } from "./force-sign-out";
 
 interface MemberDetailProps {
   detail: AdminMemberDetail;
   /** The time of this request, for which passes have ended. */
   now: Date;
+  /** Every Exam in the catalogue, which "Grant Access Pass" offers. */
+  exams: { code: string; name: string }[];
   forceSignOut: AdminAction<ForcedSignOut>;
+  passActions: PassActions;
 }
 
 const ROLES: Record<UserRole, string> = {
@@ -56,11 +59,11 @@ function DetailSection({
 /**
  * A Member's detail page (mockup 787–825; BUILD-MAP §3.10; story 130): the
  * profile with the Active Device and force sign-out, then their Target Exams,
- * Access Passes with their grants, progress per Target Exam (ticket 15's
- * calculator), device switches, consent and purchase history. Grant and
- * Extend come with ticket 17; purchases with Payments.
+ * Access Passes with their grants and Grant, Extend and End access now
+ * (ticket 17), progress per Target Exam (ticket 15's calculator), device
+ * switches, consent and purchase history. Purchases come with Payments.
  */
-export function MemberDetail({ detail, now, forceSignOut }: MemberDetailProps) {
+export function MemberDetail({ detail, now, exams, forceSignOut, passActions }: MemberDetailProps) {
   const { member, role, betaTester, activeDevice, deviceSwitches, consents } = detail;
   const shownName = member.name ?? member.email;
   return (
@@ -109,17 +112,13 @@ export function MemberDetail({ detail, now, forceSignOut }: MemberDetailProps) {
           )}
         </DetailSection>
 
-        <DetailSection id="member-access-passes" title="ACCESS PASSES">
-          {detail.accessPasses.length > 0 ? (
-            <ul>
-              {detail.accessPasses.map((pass) => (
-                <PassRow key={pass.examCode} pass={pass} now={now} />
-              ))}
-            </ul>
-          ) : (
-            <p className={empty}>No Access Pass. They see Free Preview content only.</p>
-          )}
-        </DetailSection>
+        <AccessPasses
+          member={{ userId: member.userId, name: member.name, email: member.email }}
+          passes={detail.accessPasses}
+          exams={exams}
+          now={now}
+          actions={passActions}
+        />
 
         <section aria-labelledby="member-progress" className="flex min-w-0 flex-col gap-2">
           <h2 id="member-progress" className={label}>
@@ -199,45 +198,6 @@ function TargetExamRow({ exam }: { exam: TargetExam }) {
       <span className="font-mono text-[11px] text-muted-foreground">
         {exam.examDate ? `EXAM DATE ${formatDate(exam.examDate)} · ${setBy}` : "NO EXAM DATE"}
       </span>
-    </li>
-  );
-}
-
-/** One Access Pass: its end in Manila, ACTIVE or ENDED, and each grant that made it. */
-function PassRow({ pass, now }: { pass: AdminAccessPass; now: Date }) {
-  const { date, expired } = passEnd(pass.endsAt, now);
-  return (
-    <li
-      aria-label={`${pass.examCode} pass`}
-      className="flex flex-col gap-1.5 border-b border-ayc-ruled px-3.5 py-3 last:border-b-0"
-    >
-      <span className="flex flex-wrap items-center justify-between gap-2.5 text-sm">
-        <span className="font-mono font-bold text-ayc-blue">{pass.examCode}</span>
-        <span>{expired ? `ENDED ${date}` : `UNTIL ${date}`}</span>
-        <span
-          className={cn(
-            "border-[1.5px] px-1.5 py-1 font-mono text-[10px] leading-none font-bold",
-            expired ? "border-destructive text-destructive" : "border-ayc-success text-ayc-success",
-          )}
-        >
-          {expired ? "ENDED" : "ACTIVE"}
-        </span>
-      </span>
-      {pass.grants.length > 0 ? (
-        <ul className="flex flex-col gap-1">
-          {pass.grants.map((grant) => (
-            <li key={grant.grantedAt + grant.endsAt} className="text-xs leading-normal">
-              <span className="font-mono text-[11px] text-muted-foreground">
-                +{grant.days} DAYS · {formatChangedOn(grant.grantedAt)} · BY{" "}
-                {grant.grantedBy.name.toUpperCase()}
-              </span>{" "}
-              “{grant.reason}”
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <span className="text-xs text-muted-foreground">No grants recorded</span>
-      )}
     </li>
   );
 }

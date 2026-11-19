@@ -50,6 +50,9 @@ const BEA = {
 const SURVEYING = sampleTopicId("CE", "MSTC", "Surveying");
 const UNKNOWN_TOPIC = "3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b";
 
+/** An ISO time `days` from now. */
+const inDays = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+
 /** The seam's reads: they change nothing. */
 const READS = [
   "getStaffByEmail",
@@ -324,6 +327,48 @@ const WRITES: Record<string, Write> = {
         tokenHash: hashDeviceToken("bea-phone"),
         deviceLabel: "Chrome on Android",
       });
+    },
+  },
+  // Grant, extend and end a Member's Access Pass (ticket 17).
+  grantAccess: {
+    actor: OWNER,
+    entity: "access-pass",
+    entityId: `${BEA.userId}/CE`,
+    saves: (seam, actor) =>
+      seam.grantAccess(actor, { userId: BEA.userId, examCode: "CE", days: 30, reason: "Beta" }),
+    refused: (seam, actor) =>
+      seam.grantAccess(actor, { userId: BEA.userId, examCode: "CE", days: 0, reason: "Beta" }),
+    refusal: "invalid",
+    setUp: async (_seam, arm) => {
+      await arm.member.getOrCreateMember(BEA);
+    },
+  },
+  extendAccess: {
+    actor: OWNER,
+    entity: "access-pass",
+    entityId: `${BEA.userId}/CE`,
+    saves: (seam, actor) =>
+      seam.extendAccess(actor, { userId: BEA.userId, examCode: "CE", days: 7, reason: "Late" }),
+    refused: (seam, actor) =>
+      seam.extendAccess(actor, { userId: BEA.userId, examCode: "ME", days: 7, reason: "Late" }),
+    refusal: "invalid",
+    setUp: async (_seam, arm) => {
+      await arm.member.getOrCreateMember(BEA);
+      await arm.putAccessPass({ userId: BEA.userId, examCode: "CE", endsAt: inDays(30) });
+    },
+  },
+  endAccess: {
+    actor: OWNER,
+    entity: "access-pass",
+    entityId: `${BEA.userId}/CE`,
+    saves: (seam, actor) =>
+      seam.endAccess(actor, { userId: BEA.userId, examCode: "CE", reason: "Mistake" }),
+    refused: (seam, actor) =>
+      seam.endAccess(actor, { userId: BEA.userId, examCode: "ME", reason: "Mistake" }),
+    refusal: "invalid",
+    setUp: async (_seam, arm) => {
+      await arm.member.getOrCreateMember(BEA);
+      await arm.putAccessPass({ userId: BEA.userId, examCode: "CE", endsAt: inDays(30) });
     },
   },
   updateWebsiteSettings: {

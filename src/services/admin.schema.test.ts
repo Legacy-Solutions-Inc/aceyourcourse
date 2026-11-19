@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   cardFormSchema,
+  endAccessInputSchema,
+  extendAccessInputSchema,
   fieldErrorsOf,
+  grantAccessInputSchema,
   newCardFormSchema,
   passwordSignInSchema,
   websiteSettingsUpdateSchema,
@@ -141,6 +144,110 @@ describe("the card forms", () => {
     expect(blank.error && fieldErrorsOf(blank.error)).toEqual({
       front: ["ADD A FRONT TO SAVE"],
       back: ["The back has a $ with no closing $ (write a dollar sign as \\$)"],
+    });
+  });
+});
+
+// Grant, extend and end an Access Pass (ticket 17; spec, Phase 3 planning
+// decisions → Grants and ending access). The panels send typed values or the
+// custom days box's text; the seam parses with the same schemas.
+describe("the Access Pass inputs", () => {
+  const BEA = "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21";
+  const grant = { userId: BEA, examCode: "CE", days: 30, reason: "Beta tester" };
+  const errorsOf = (result: { success: boolean; error?: Parameters<typeof fieldErrorsOf>[0] }) =>
+    !result.success && result.error ? fieldErrorsOf(result.error) : {};
+
+  describe("grantAccessInputSchema", () => {
+    it.each([30, 90, 180, 365, 1, 45, 364])("grants %i days", (days) => {
+      expect(grantAccessInputSchema.parse({ ...grant, days })).toMatchObject({ days });
+    });
+
+    it("reads a custom number typed in the box", () => {
+      expect(grantAccessInputSchema.parse({ ...grant, days: " 45 " })).toMatchObject({ days: 45 });
+    });
+
+    it.each([
+      ["0 days", 0],
+      ["366 days", 366],
+      ["a part of a day", 1.5],
+      ["a negative number", -30],
+      ["text that isn't a number", "thirty"],
+      ["an empty box", ""],
+      ["no days", undefined],
+    ])("refuses %s on the days field", (_, days) => {
+      expect(errorsOf(grantAccessInputSchema.safeParse({ ...grant, days }))).toEqual({
+        days: ["GRANT 1 TO 365 WHOLE DAYS"],
+      });
+    });
+
+    it("reads the Exam as the catalogue holds it", () => {
+      expect(grantAccessInputSchema.parse({ ...grant, examCode: " ce " })).toMatchObject({
+        examCode: "CE",
+      });
+    });
+
+    it("refuses no Exam on the Exam field", () => {
+      expect(errorsOf(grantAccessInputSchema.safeParse({ ...grant, examCode: "" }))).toEqual({
+        examCode: ["PICK AN EXAM"],
+      });
+    });
+
+    it.each([
+      ["no reason", undefined],
+      ["an empty reason", ""],
+      ["a reason of spaces", "   "],
+    ])("refuses %s on the reason field", (_, reason) => {
+      expect(errorsOf(grantAccessInputSchema.safeParse({ ...grant, reason }))).toEqual({
+        reason: ["ENTER A REASON · IT’S SAVED IN STAFF ACTIVITY"],
+      });
+    });
+
+    it("keeps the reason trimmed", () => {
+      expect(grantAccessInputSchema.parse({ ...grant, reason: "  Beta  " })).toMatchObject({
+        reason: "Beta",
+      });
+    });
+  });
+
+  describe("extendAccessInputSchema", () => {
+    it.each([3, 7, 14, 30])("extends by %i days", (days) => {
+      expect(extendAccessInputSchema.parse({ ...grant, days })).toMatchObject({ days });
+    });
+
+    it.each([
+      ["12 days", 12],
+      ["90 days, a grant's", 90],
+      ["0 days", 0],
+      ["text that isn't a number", "seven"],
+      ["no days", undefined],
+    ])("refuses %s on the days field", (_, days) => {
+      expect(errorsOf(extendAccessInputSchema.safeParse({ ...grant, days }))).toEqual({
+        days: ["PICK 3, 7, 14 OR 30 DAYS"],
+      });
+    });
+
+    it("refuses a reason of spaces", () => {
+      expect(
+        errorsOf(extendAccessInputSchema.safeParse({ ...grant, days: 7, reason: " " })),
+      ).toEqual({ reason: ["ENTER A REASON · IT’S SAVED IN STAFF ACTIVITY"] });
+    });
+  });
+
+  describe("endAccessInputSchema", () => {
+    it("takes the Member, the Exam and a reason", () => {
+      expect(
+        endAccessInputSchema.parse({ userId: BEA, examCode: "ce", reason: " Granted by mistake " }),
+      ).toEqual({ userId: BEA, examCode: "CE", reason: "Granted by mistake" });
+    });
+
+    it.each([
+      ["an empty reason", ""],
+      ["a reason of spaces", "  "],
+      ["a reason over 500 characters", "x".repeat(501)],
+    ])("refuses %s on the reason field", (_, reason) => {
+      expect(
+        errorsOf(endAccessInputSchema.safeParse({ userId: BEA, examCode: "CE", reason })),
+      ).toEqual({ reason: [expect.any(String)] });
     });
   });
 });

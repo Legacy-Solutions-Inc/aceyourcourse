@@ -165,6 +165,10 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     ),
     removeExam: member(() => targetExams.removeExam({ error: null }, examForm())),
     switchExam: member(() => targetExams.switchExam(examForm())),
+    // An in-app notice (ticket 17): no notice of theirs has this id, so nothing changes.
+    dismissMemberNotice: member(() =>
+      targetExams.dismissMemberNotice("6a0c8f8e-3f43-4c4a-9d5e-0b2f6c1d7e01"),
+    ),
   },
   "./actions.ts": {
     signOut: anyone(() => root.signOut()),

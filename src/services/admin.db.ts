@@ -51,6 +51,7 @@ import * as deckEditor from "@/services/admin.deck.db";
 import * as quizEditor from "@/services/admin.quiz.db";
 import * as reviewerPdfs from "@/services/admin.reviewer-pdfs.db";
 import * as users from "@/services/admin.users.db";
+import * as passes from "@/services/admin.access-passes.db";
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
@@ -324,12 +325,16 @@ async function load(
     get reviewerPdfFiles() {
       return notLoaded("the Reviewer PDFs bucket");
     },
-    // The Member seam reads the Access Passes itself; granting comes with ticket 17.
+    // The Member seam reads the Access Passes and notices itself, and
+    // admin.access-passes.db.ts grants, extends and ends them (ticket 17).
     get accessPasses() {
       return notLoaded("the Access Passes");
     },
     get accessPassGrants() {
       return notLoaded("the Access Pass grants");
+    },
+    get memberNotices() {
+      return notLoaded("the Members' notices");
     },
     // Read only: a rollback couldn't undo a change to the sample data's uploads.
     get uploads() {
@@ -755,6 +760,10 @@ export const databaseArm: AdminService = {
   listUsers: users.listUsers,
   getMemberForAdmin: users.getMemberForAdmin,
   forceSignOut: users.forceSignOut,
+  // A Member's Access Passes, granted, extended and ended by their own module (ticket 17).
+  grantAccess: passes.grantAccess,
+  extendAccess: passes.extendAccess,
+  endAccess: passes.endAccess,
 
   getOverview: read(CATALOGUE, sampleArm.getOverview),
 
