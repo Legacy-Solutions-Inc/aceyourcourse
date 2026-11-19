@@ -287,6 +287,12 @@ async function load(
     get deckPositions() {
       return notLoaded("the deck positions");
     },
+    get reviewerPageViews() {
+      return notLoaded("the Reviewer PDF pages viewed");
+    },
+    get readerPositions() {
+      return notLoaded("the Reviewer PDF reader positions");
+    },
     get signedFiles() {
       return notLoaded("the signed card image URLs");
     },

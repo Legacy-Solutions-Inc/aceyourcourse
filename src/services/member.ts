@@ -1,7 +1,9 @@
 import { isDatabaseConfigured } from "@/env.server";
 import type { MemberAccess } from "@/lib/member-app/access";
 import type { DeviceStatus } from "@/lib/member-app/device-token";
+import type { ReaderPlace } from "@/lib/reviewer-pdfs/reader";
 import type { AccessPass, CardMark, ContentKind, DeckPosition } from "@/services/content.types";
+import type { PageStamper } from "@/services/page-images.types";
 import { databaseArm } from "@/services/member.db";
 import * as mockImpl from "@/services/member.mock";
 import type {
@@ -25,6 +27,10 @@ import type {
   QuizOpening,
   QuizResult,
   QuizSubmitInput,
+  ReaderPositionInput,
+  ReviewerPage,
+  ReviewerPageInput,
+  ReviewerPdfOpening,
   ScoredAttempt,
   StudyResult,
   TargetExam,
@@ -42,7 +48,8 @@ import type {
 // The seam trusts its caller for who is signed in: the Member App gate
 // (src/lib/member-app/guard.ts) passes the User that sign-in verified, never
 // anything the browser sent. Each read and write is scoped to that User's own
-// records, the study records too (Card Marks, Study Days and deck positions).
+// records, the study records too (Card Marks, Study Days, deck positions,
+// Quiz Attempts, Reviewer PDF pages viewed and places).
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** The seam's public contract, checked against each arm below. */
@@ -254,6 +261,56 @@ export interface MemberService {
    * not found for an attempt that isn't the Member's at this quiz.
    */
   reviewQuizAttempt(userId: string, ref: AttemptRef, access: MemberAccess): Promise<AttemptOpening>;
+
+  // Reading a Reviewer PDF (spec, Phase 3 → Burned-in watermark, Reviewer PDF
+  // reader, Progress storage and Resume; ticket 14; reviewer-study.core.ts).
+  // Each call takes the signed-in Member's side of the access decision, as
+  // the study calls do, and decides the Reviewer PDF with it first: a refused
+  // one's pages are never read, and nothing is written. A page is only ever
+  // given out stamped with the Member's own email and short Member ID, never
+  // clean. Each is scoped to the User id given.
+
+  /**
+   * Opens a Reviewer PDF. When the access decision allows it: how many pages
+   * it has (0 for one with none yet), and the page and zoom the Member left
+   * it at. Refused (locked, expired, Draft or
+   * Unpublished, a replaced device): the decision and how many pages they
+   * viewed, with no page. Not found for an id that isn't a placed Reviewer
+   * PDF's.
+   */
+  openReviewerPdf(
+    userId: string,
+    reviewerPdfId: string,
+    access: MemberAccess,
+  ): Promise<ReviewerPdfOpening>;
+  /**
+   * One page, for the page endpoint: when the access decision allows its
+   * Reviewer PDF, the page's image stamped by `stamper` with the Member's
+   * email and short Member ID. Records the page as viewed, once per Member
+   * and page, and the day, in Asia/Manila, as a Study Day. Refused, reading
+   * and recording nothing, when the decision refuses; not found for a
+   * Reviewer PDF that isn't one, a page below 1 or past its last (or not a
+   * whole number), or one whose image is gone. Throws for a User with no
+   * Member record.
+   */
+  readReviewerPage(
+    userId: string,
+    input: ReviewerPageInput,
+    access: MemberAccess,
+    stamper: PageStamper,
+  ): Promise<ReviewerPage>;
+  /**
+   * Saves the page and zoom the Member is at in a Reviewer PDF, which it then
+   * reopens at, replacing their earlier place in it. Refused, saving nothing,
+   * when the access decision refuses; not found for a Reviewer PDF that
+   * isn't one or a page it doesn't have. Throws for a zoom the reader doesn't
+   * offer, and a User with no Member record.
+   */
+  saveReaderPosition(
+    userId: string,
+    input: ReaderPositionInput,
+    access: MemberAccess,
+  ): Promise<StudyResult<ReaderPlace>>;
 }
 
 const impl: MemberService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -283,3 +340,6 @@ export const listStudyDays = impl.listStudyDays;
 export const openQuiz = impl.openQuiz;
 export const submitQuiz = impl.submitQuiz;
 export const reviewQuizAttempt = impl.reviewQuizAttempt;
+export const openReviewerPdf = impl.openReviewerPdf;
+export const readReviewerPage = impl.readReviewerPage;
+export const saveReaderPosition = impl.saveReaderPosition;

@@ -3,20 +3,13 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
-import {
-  type AccessDecision,
-  accessDecision,
-  type MemberAccess,
-  type RefusedDecision,
-  type ShownRefusal,
-} from "@/lib/member-app/access";
+import type { MemberAccess, RefusedDecision, ShownRefusal } from "@/lib/member-app/access";
 import { checkDevice } from "@/lib/member-app/device";
-import { getMemberAppAccess } from "@/lib/member-app/guard";
+import { getMemberAppAccess, requireMember } from "@/lib/member-app/guard";
 import { paths } from "@/paths";
 import { getStaffByEmail } from "@/services/admin";
-import type { ContentKind } from "@/services/content.types";
-import { getContentItem, listAccessPasses } from "@/services/member";
-import type { ContentItem } from "@/services/member.types";
+import { listAccessPasses } from "@/services/member";
+import type { Member } from "@/services/member.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The access decision on the server (spec, Phase 3 → Access decision seam):
@@ -28,12 +21,11 @@ import type { ContentItem } from "@/services/member.types";
 // Staff Guard reads them, so removed Staff are Members again at once; the
 // device is this request's token; the passes are the Member's own.
 //
-// checkContentAccess answers, and never redirects, so a page, a Server Action
-// or a Route Handler (the Reviewer PDF pages, ticket 14) each shows the answer
-// its way; shownRefusal is the redirect pages and actions share.
-// It doesn't check consent, which isn't part of the rule: every caller runs
-// the Member App's own checks first (requireMember, or a Route Handler's
-// equivalent of it), as the Library and the item page do.
+// The Member seam's study calls take readMemberAccess's answer and decide each
+// item with it (src/services/study-access.ts). requireMemberAccess runs the
+// Member App's own checks first (consent isn't part of the rule), for the
+// study actions and the Reviewer PDF page endpoint (ticket 14); shownRefusal
+// is the redirect pages and actions share.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -60,24 +52,19 @@ export const readMemberAccess = cache(async (): Promise<MemberAccess | null> => 
   };
 });
 
-/** What opening one deck, quiz or Reviewer PDF finds. */
-export type ContentAccess =
-  | { status: "signed-out" }
-  /** No such content: a wrong address, or one that was deleted. */
-  | { status: "not-found" }
-  | { status: "decided"; item: ContentItem; decision: AccessDecision };
-
 /**
- * The access decision for the signed-in Member opening one deck, quiz or
- * Reviewer PDF, with the item as it is now. The address is the browser's, so
- * a kind or id that isn't one is simply not found.
+ * The signed-in Member, past the Member App's checks (the gate, consent and
+ * the Active Device, which redirect anyone they stop), and their side of the
+ * access decision now: what the study actions and the Reviewer PDF page
+ * endpoint start with. `from` is where the checks' screens come back to.
  */
-export async function checkContentAccess(kind: ContentKind, id: string): Promise<ContentAccess> {
-  const member = await readMemberAccess();
-  if (!member) return { status: "signed-out" };
-  const item = await getContentItem(kind, id);
-  if (!item) return { status: "not-found" };
-  return { status: "decided", item, decision: accessDecision({ ...member, content: item }) };
+export async function requireMemberAccess(
+  from: string,
+): Promise<{ member: Member; access: MemberAccess }> {
+  const member = await requireMember(from);
+  const access = await readMemberAccess();
+  if (!access) redirect(paths.memberApp.signIn(from));
+  return { member, access };
 }
 
 /**

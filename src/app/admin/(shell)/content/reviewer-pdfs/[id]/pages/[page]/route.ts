@@ -1,4 +1,5 @@
 import { requireStaff } from "@/lib/admin/guard";
+import { pageFromAddress } from "@/lib/reviewer-pdfs/reader";
 import { paths } from "@/paths";
 import { getReviewerPdfPageForAdmin } from "@/services/admin";
 
@@ -13,17 +14,12 @@ import { getReviewerPdfPageForAdmin } from "@/services/admin";
 
 const PRIVATE = { "cache-control": "private, no-store", "x-content-type-options": "nosniff" };
 
-/** Pure: a page number as the address gives it ("1", "12"), or null for anything else. */
-function pageNumber(page: string): number | null {
-  return /^[1-9]\d{0,5}$/.test(page) ? Number(page) : null;
-}
-
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string; page: string }> },
 ): Promise<Response> {
   const { id, page } = await params;
-  const number = pageNumber(page);
+  const number = pageFromAddress(page);
   const actor = await requireStaff(paths.admin.reviewerPdf(id));
   const image = number === null ? null : await getReviewerPdfPageForAdmin(actor, id, number);
   if (!image) return new Response("Not found", { status: 404, headers: PRIVATE });

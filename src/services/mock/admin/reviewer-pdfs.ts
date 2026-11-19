@@ -186,6 +186,9 @@ export const sampleReviewerPdfStore: ReviewerPdfStore = {
     store.reviewerPdfUploads = uploads;
     const { [reviewerPdfRecordOf(id)]: _stamp, ...stamps } = store.stamps;
     store.stamps = stamps;
+    // Like the database's cascades: the Members' pages viewed and places in it go with it.
+    store.reviewerPageViews = store.reviewerPageViews.filter((view) => view.reviewerPdfId !== id);
+    store.readerPositions = store.readerPositions.filter((place) => place.reviewerPdfId !== id);
     return deleted;
   },
 };

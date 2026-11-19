@@ -1,3 +1,5 @@
+import type { PageStamp } from "@/lib/reviewer-pdfs/stamp";
+
 // The page-images interface (Phase 3, ticket 12; spec, Testing Decisions →
 // Page images): the Reviewer PDF job renders an Editor's PDF a few pages at a
 // time through a PdfRenderer, and stores each page image through the files
@@ -8,6 +10,9 @@
 //   - the fake (page-images.fake.ts) reads a PDF's page count and renders
 //     each page as the same small WebP, for the seam tests, the sample data
 //     and the e2e.
+// The Member App's page endpoint (ticket 14) stamps each page it sends
+// through a PageStamper: sharp for real (page-images.sharp.ts), tested on
+// tiny fixture images, and a fake for the Member seam's tests.
 
 /** Why a PDF can't be split into pages: a password, or a file pdf.js can't read. */
 export type PdfProblem = "password" | "corrupt";
@@ -43,4 +48,14 @@ export class PdfProblemError extends Error {
     super(`The PDF can't be split into pages: ${problem}.`);
     this.name = "PdfProblemError";
   }
+}
+
+/** Stamps a Member's details into a page image (spec, Phase 3 → Burned-in watermark). */
+export interface PageStamper {
+  /**
+   * The page with the stamp burned in (src/lib/reviewer-pdfs/stamp.ts), as a
+   * WebP the page's size. Never gives the clean page back. Throws when the
+   * image can't be read or the server fails.
+   */
+  stamp(image: Uint8Array, stamp: PageStamp): Promise<Uint8Array>;
 }

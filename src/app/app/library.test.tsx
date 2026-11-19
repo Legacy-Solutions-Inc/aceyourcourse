@@ -50,7 +50,7 @@ const SPIRAL_CURVES = sampleTopicId("CE", "MSTC", "Spiral Curves");
 const FREE_DECK = sampleContentId(SIMPLE_CURVES, "deck");
 const QUIZ = sampleContentId(SIMPLE_CURVES, "quiz");
 const HIDDEN_QUIZ = sampleContentId(SPIRAL_CURVES, "quiz");
-/** Simple Curves' Reviewer PDF, Published: it shows the access decision until its reader comes (ticket 14). */
+/** Simple Curves' Reviewer PDF, Published, from before uploads: it has no pages (the reader is reviewer-reader.test.tsx). */
 const PDF = sampleContentId(SIMPLE_CURVES, "reviewer-pdf");
 
 const redirectsTo = (url: string) =>
@@ -288,18 +288,21 @@ describe("the Library", () => {
 });
 
 describe("opening an item", () => {
-  it("shows the tester's Reviewer PDF as opening soon", async () => {
+  it("opens the tester's Reviewer PDF: with no pages yet, it's being prepared", async () => {
     await asTester();
     render(await opening("reviewer-pdf", PDF));
 
-    expect(screen.getByText("LIBRARY · MSTC · REVIEWER PDF")).toBeInTheDocument();
+    expect(screen.getAllByText("MSTC · REVIEWER PDF").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { level: 1, name: "Simple Curves" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "Opening soon" })).toBeInTheDocument();
-    expect(screen.getByText("OPENING SOON")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Back to MSTC topics" })).toHaveAttribute(
-      "href",
-      "/app/library?subject=MSTC",
-    );
+    expect(screen.getByRole("heading", { level: 2, name: "Nothing here yet" })).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "This reviewer is still being prepared. Its pages will show up here automatically.",
+      ),
+    ).toBeInTheDocument();
+    for (const back of screen.getAllByRole("link", { name: "Back to MSTC topics" })) {
+      expect(back).toHaveAttribute("href", "/app/library?subject=MSTC");
+    }
   });
 
   it("goes back to the Library, not a Subject, from another Exam's item than the selected one", async () => {
@@ -307,11 +310,10 @@ describe("opening an item", () => {
     await memberOnDevice("tester@example.com", "Bea Tester", "ME");
     render(await opening("reviewer-pdf", PDF));
 
-    expect(screen.getByRole("heading", { level: 2, name: "Opening soon" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Back to the Library" })).toHaveAttribute(
-      "href",
-      "/app/library",
-    );
+    expect(screen.getByRole("heading", { level: 2, name: "Nothing here yet" })).toBeInTheDocument();
+    for (const back of screen.getAllByRole("link", { name: "Back to the Library" })) {
+      expect(back).toHaveAttribute("href", "/app/library");
+    }
   });
 
   it("opens a Free Preview deck for a tester with no pass: with no cards yet, it's being prepared", async () => {
@@ -341,7 +343,9 @@ describe("opening an item", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "Your CE All-Access ended on 14 Nov 2026" }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Your access ended\. Your progress is kept\./)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Your access ended\. Renew to keep reviewing\. Your progress is kept\./),
+    ).toBeInTheDocument();
   });
 
   it.each([
@@ -362,7 +366,7 @@ describe("opening an item", () => {
   it("says no longer available once content is unpublished while a Member is on it", async () => {
     await asTester();
     render(await opening("reviewer-pdf", PDF));
-    expect(screen.getByRole("heading", { level: 2, name: "Opening soon" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Nothing here yet" })).toBeInTheDocument();
 
     const store = getSampleStore();
     store.reviewerPdfs = store.reviewerPdfs.map((pdf) =>

@@ -20,6 +20,8 @@ import type {
   Question,
   Quiz,
   QuizAttempt,
+  ReaderPosition,
+  ReviewerPageView,
   ReviewerPdf,
   ReviewerPdfUpload,
   StudyDay,
@@ -135,6 +137,10 @@ export interface SampleStore {
   studyDays: StudyDay[];
   /** Where each Member left each deck, at most one per Member and deck (ticket 08). */
   deckPositions: DeckPosition[];
+  /** The Reviewer PDF pages each Member viewed, at most one per Member, Reviewer PDF and page (ticket 14). */
+  reviewerPageViews: ReviewerPageView[];
+  /** Where each Member left each Reviewer PDF, at most one per Member and Reviewer PDF (ticket 14). */
+  readerPositions: ReaderPosition[];
   quizzes: Quiz[];
   /** Each quiz's questions (ticket 09), removed ones too, in no particular order: each has its position. */
   questions: Question[];
@@ -196,6 +202,8 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     quizAttempts: [],
     studyDays: [],
     deckPositions: [],
+    reviewerPageViews: [],
+    readerPositions: [],
     ...sampleAccessPasses(now, catalogue),
     reviewerPdfUploads: {},
     reviewerPdfFiles: {},

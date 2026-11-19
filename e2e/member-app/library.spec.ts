@@ -85,11 +85,11 @@ test.describe("the Beta Tester, with a CE pass", () => {
     await expect(page.getByText("🔒")).toHaveCount(0);
     await expectNoBlockingViolations(page);
 
-    // A Reviewer PDF shows what the access decision answered until its reader comes (ticket 14).
+    // The sample data's Reviewer PDF, from before uploads, has no pages yet (the reader is reviewer-reader.spec.ts).
     await row(page, "Simple Curves").getByRole("link", { name: "Reviewer PDF" }).click();
     await expect(page).toHaveURL(/\/app\/library\/reviewer-pdf\/[0-9a-f-]{36}$/);
     await expect(page.getByRole("heading", { level: 1, name: "Simple Curves" })).toBeVisible();
-    await expect(page.getByRole("heading", { level: 2, name: "Opening soon" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Nothing here yet" })).toBeVisible();
     await expectNoBlockingViolations(page);
 
     await page.getByRole("link", { name: "Back to MSTC topics" }).click();
@@ -171,7 +171,9 @@ test.describe("the lapsed tester", () => {
         name: /^Your CE All-Access ended on \d{1,2} [A-Z][a-z]{2} \d{4}$/,
       }),
     ).toBeVisible();
-    await expect(page.getByText(/Your access ended\. Your progress is kept\./)).toBeVisible();
+    await expect(
+      page.getByText(/Your access ended\. Renew to keep reviewing\. Your progress is kept\./),
+    ).toBeVisible();
     await expectNoBlockingViolations(page);
   });
 });

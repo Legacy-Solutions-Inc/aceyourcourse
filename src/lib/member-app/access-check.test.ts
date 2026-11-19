@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DEVICE_COOKIE } from "@/lib/member-app/device-token";
 import { addBetaTester, removeStaff } from "@/services/admin.mock";
-import { getOrCreateMember } from "@/services/member.mock";
+import { accessDecision } from "@/lib/member-app/access";
+import { getContentItem, getOrCreateMember } from "@/services/member.mock";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
 import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
@@ -10,7 +11,7 @@ import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import { sampleActor } from "../../../test/admin-inputs";
 import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 
-import { checkContentAccess } from "./access-check";
+import { readMemberAccess } from "./access-check";
 
 // The access decision on the server (spec, Phase 3 → Access decision seam),
 // on sample data: who is signed in, the gate, the staff list, this request's
@@ -51,9 +52,11 @@ async function onDevice(email: string, name: string) {
   return userId;
 }
 
+/** The access decision on one item, with the signed-in Member's side as the server gathers it now. */
 const decisionOf = async (kind: "deck" | "quiz", id: string) => {
-  const access = await checkContentAccess(kind, id);
-  return access.status === "decided" ? access.decision : access;
+  const [member, item] = await Promise.all([readMemberAccess(), getContentItem(kind, id)]);
+  if (!member || !item) throw new Error("Nobody signed in, or no such item");
+  return accessDecision({ ...member, content: item });
 };
 
 beforeEach(() => {
@@ -67,15 +70,18 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("checkContentAccess", () => {
-  it("opens the tester's CE content with their pass, and gives the item as it is", async () => {
+describe("readMemberAccess", () => {
+  it("gives the tester's side, now: the gate open, this device active, their own passes", async () => {
     await onDevice("tester@example.com", "Bea Tester");
 
-    expect(await checkContentAccess("quiz", LOCKED_QUIZ)).toEqual({
-      status: "decided",
-      item: expect.objectContaining({ kind: "quiz", examCode: "CE", topicName: "Simple Curves" }),
-      decision: { outcome: "allowed", via: "pass" },
+    expect(await readMemberAccess()).toEqual({
+      gate: "open",
+      device: "active",
+      activeStaff: false,
+      passes: [{ examCode: "CE", endsAt: new Date(BOOT.getTime() + 90 * DAY).toISOString() }],
+      now: BOOT,
     });
+    expect(await decisionOf("quiz", LOCKED_QUIZ)).toEqual({ outcome: "allowed", via: "pass" });
   });
 
   it("tells the tester a Hidden quiz is no longer available", async () => {
@@ -165,16 +171,7 @@ describe("checkContentAccess", () => {
     expect(await decisionOf("quiz", LOCKED_QUIZ)).toEqual({ outcome: "device-replaced" });
   });
 
-  it("says when nobody is signed in", async () => {
-    expect(await checkContentAccess("deck", FREE_DECK)).toEqual({ status: "signed-out" });
-  });
-
-  it.each([
-    ["an unknown id", "deck", "3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b"],
-    ["an id that isn't one", "deck", "../../etc"],
-    ["a kind that isn't one", "video", FREE_DECK],
-  ])("finds nothing for %s", async (_case, kind, id) => {
-    await onDevice("tester@example.com", "Bea Tester");
-    expect(await checkContentAccess(kind as "deck", id)).toEqual({ status: "not-found" });
+  it("is null when nobody is signed in", async () => {
+    expect(await readMemberAccess()).toBeNull();
   });
 });

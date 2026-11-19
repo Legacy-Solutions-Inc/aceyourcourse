@@ -15,6 +15,7 @@ import {
   memberFromRow,
 } from "@/services/member.db";
 
+import { byMemberAndPage } from "./admin-arms";
 import { DATABASE_ARM as ADMIN_DATABASE_ARM } from "./admin-database";
 import type { MemberArm } from "./member-arms";
 
@@ -62,6 +63,13 @@ export const MEMBER_DATABASE_ARM: MemberArm = {
   uploadCardImage: (bytes, options) => ADMIN_DATABASE_ARM.uploadCardImage(bytes, options),
   uploadReviewerPdf: (bytes) => ADMIN_DATABASE_ARM.uploadReviewerPdf(bytes),
   cardMarks: () => ADMIN_DATABASE_ARM.cardMarks(),
+  pageViews: async () =>
+    byMemberAndPage(
+      (await getDb().select().from(schema.reviewerPageViews)).map((row) => ({
+        ...row,
+        viewedAt: row.viewedAt.toISOString(),
+      })),
+    ),
   quizAttempts: async () => {
     const db = getDb();
     const [attempts, answers] = await Promise.all([

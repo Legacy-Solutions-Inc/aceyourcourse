@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { hasFileSignature } from "@/lib/file-signature";
-import { createFakeRenderer } from "@/services/page-images.fake";
+import { createFakeRenderer, FAKE_PAGE_IMAGE, fakeStamper } from "@/services/page-images.fake";
 
 import { pdfOfPages, reviewerPdfFixture } from "../../test/reviewer-pdfs";
 
@@ -72,5 +72,18 @@ describe("the fake page renderer", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("the fake stamper", () => {
+  it("gives the page's bytes, then whose stamp it carries", async () => {
+    const stamped = await fakeStamper.stamp(FAKE_PAGE_IMAGE, {
+      email: "tester@example.com",
+      memberId: "3F1A5C2E",
+    });
+    expect(stamped.slice(0, FAKE_PAGE_IMAGE.byteLength)).toEqual(FAKE_PAGE_IMAGE);
+    expect(new TextDecoder().decode(stamped.slice(FAKE_PAGE_IMAGE.byteLength))).toBe(
+      " STAMPED tester@example.com · 3F1A5C2E",
+    );
   });
 });

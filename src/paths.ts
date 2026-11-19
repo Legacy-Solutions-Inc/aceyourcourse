@@ -82,6 +82,13 @@ export const paths = {
       `/app/library?subject=${encodeURIComponent(subjectCode)}`,
     /** One deck, quiz or Reviewer PDF: opening it runs the access decision. */
     content: (kind: ContentKind, id: string) => `/app/library/${kind}/${encodeURIComponent(id)}`,
+    /**
+     * One page of a Reviewer PDF, stamped for the signed-in Member (ticket
+     * 14): the protected page endpoint, which runs the access decision on
+     * every request. `retry` counts the Member's Try agains, each a new request.
+     */
+    reviewerPage: (id: string, page: number, retry = 0) =>
+      `/app/reviewer-pdfs/${encodeURIComponent(id)}/pages/${page}${retry > 0 ? `?retry=${retry}` : ""}`,
     /** One of the Member's past attempts at a quiz, reviewed on the quiz's page (ticket 11). */
     quizAttempt: (quizId: string, attemptId: string) =>
       `/app/library/quiz/${encodeURIComponent(quizId)}?attempt=${encodeURIComponent(attemptId)}`,

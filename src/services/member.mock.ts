@@ -1,8 +1,10 @@
 import { type DeviceStatus, deviceStatusFor } from "@/lib/member-app/device-token";
+import { readablePageCount } from "@/lib/reviewer-pdfs/status";
 import { contentItemOf, type ContentExam, libraryOf } from "@/services/content.rules";
 import type { AccessPass, ContentKind, ContentRecords } from "@/services/content.types";
 import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
 import { quizStudyCalls, type QuizStudyStore } from "@/services/quiz-study.core";
+import { reviewerStudyCalls, type ReviewerStudyStore } from "@/services/reviewer-study.core";
 import {
   agreedVersionsSchema,
   contentRefSchema,
@@ -34,15 +36,16 @@ import type {
   TargetExam,
 } from "@/services/member.types";
 import { getSampleStore } from "@/services/mock/sample-store";
-import { sampleContentFiles } from "@/services/uploads.mock";
+import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
 
 // The Member seam's sample arm: over the in-memory sample store
 // (src/services/mock/sample-store.ts), which holds the Beta Tester list and
 // the Topics the Admin's sample arm edits, the Members, their consent
 // records, Target Exams, Active Devices and Access Passes, and their study
 // records. The Target Exam rules (member.rules.ts), the content rules
-// (content.rules.ts) and the study calls (deck-study.core.ts and
-// quiz-study.core.ts) are shared with the database arm.
+// (content.rules.ts) and the study calls (deck-study.core.ts,
+// quiz-study.core.ts and reviewer-study.core.ts) are shared with the
+// database arm.
 
 export async function isBetaTester(email: string): Promise<boolean> {
   const wanted = memberEmailSchema.safeParse(email);
@@ -228,6 +231,14 @@ function requireMemberRecord(userId: string): void {
   }
 }
 
+/** Records a Study Day for a Member, once per day. */
+function recordStudyDay(userId: string, day: string): void {
+  const store = getSampleStore();
+  if (!store.studyDays.some((kept) => kept.userId === userId && kept.day === day)) {
+    store.studyDays = [...store.studyDays, { userId, day }];
+  }
+}
+
 /** The sample bucket's signed URLs, for card images and quiz figures alike. */
 const signSampleImages = (paths: readonly string[], seconds: number) =>
   sampleContentFiles.signedUrls(paths, seconds);
@@ -267,9 +278,7 @@ const sampleStudyStore: DeckStudyStore = {
       (kept) => !(kept.userId === mark.userId && kept.cardId === mark.cardId),
     );
     store.cardMarks = [...others, structuredClone(mark)];
-    if (!store.studyDays.some((kept) => kept.userId === mark.userId && kept.day === day)) {
-      store.studyDays = [...store.studyDays, { userId: mark.userId, day }];
-    }
+    recordStudyDay(mark.userId, day);
     return true;
   },
   async savePosition(userId, deckId, position) {
@@ -325,12 +334,66 @@ const sampleQuizStore: QuizStudyStore = {
     const store = getSampleStore();
     if (store.quizAttempts.some((saved) => saved.id === attempt.id)) return "exists";
     store.quizAttempts = [...store.quizAttempts, structuredClone(attempt)];
-    if (!store.studyDays.some((kept) => kept.userId === attempt.userId && kept.day === day)) {
-      store.studyDays = [...store.studyDays, { userId: attempt.userId, day }];
-    }
+    recordStudyDay(attempt.userId, day);
     return "saved";
   },
   signImages: signSampleImages,
 };
 
 export const { openQuiz, submitQuiz, reviewQuizAttempt } = quizStudyCalls(sampleQuizStore);
+
+// ── Reading a Reviewer PDF ──────────────────────────────────────────────────
+
+const hasReviewerPdf = (id: string) => getSampleStore().reviewerPdfs.some((pdf) => pdf.id === id);
+
+const sampleReviewerStore: ReviewerStudyStore = {
+  async readReviewerPdfItem(reviewerPdfId) {
+    const { exams, content } = contentOfStore();
+    return contentItemOf("reviewer-pdf", reviewerPdfId, exams, content);
+  },
+  async readPageCount(reviewerPdfId) {
+    return readablePageCount(getSampleStore().reviewerPdfUploads[reviewerPdfId] ?? null);
+  },
+  readPage: (reviewerPdfId, page) => sampleReviewerPdfFiles.readPage(reviewerPdfId, page),
+  async readMemberEmail(userId) {
+    return getSampleStore().members.find((member) => member.userId === userId)?.email ?? null;
+  },
+  async countPagesViewed(userId, reviewerPdfId) {
+    return getSampleStore().reviewerPageViews.filter(
+      (view) => view.userId === userId && view.reviewerPdfId === reviewerPdfId,
+    ).length;
+  },
+  async readPosition(userId, reviewerPdfId) {
+    const found = getSampleStore().readerPositions.find(
+      (place) => place.userId === userId && place.reviewerPdfId === reviewerPdfId,
+    );
+    return found ? { page: found.page, zoom: found.zoom } : null;
+  },
+  async saveView(view, day) {
+    requireMemberRecord(view.userId);
+    if (!hasReviewerPdf(view.reviewerPdfId)) return false;
+    const store = getSampleStore();
+    const seen = store.reviewerPageViews.some(
+      (kept) =>
+        kept.userId === view.userId &&
+        kept.reviewerPdfId === view.reviewerPdfId &&
+        kept.page === view.page,
+    );
+    if (!seen) store.reviewerPageViews = [...store.reviewerPageViews, structuredClone(view)];
+    recordStudyDay(view.userId, day);
+    return true;
+  },
+  async savePosition(position) {
+    requireMemberRecord(position.userId);
+    if (!hasReviewerPdf(position.reviewerPdfId)) return false;
+    const store = getSampleStore();
+    const others = store.readerPositions.filter(
+      (kept) => !(kept.userId === position.userId && kept.reviewerPdfId === position.reviewerPdfId),
+    );
+    store.readerPositions = [...others, structuredClone(position)];
+    return true;
+  },
+};
+
+export const { openReviewerPdf, readReviewerPage, saveReaderPosition } =
+  reviewerStudyCalls(sampleReviewerStore);

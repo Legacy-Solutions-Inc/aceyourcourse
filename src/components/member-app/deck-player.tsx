@@ -297,7 +297,6 @@ export function DeckPlayer({
       {refusal ? (
         <ContentState
           decision={refusal}
-          kind="deck"
           // The count of what was saved shows when the deck is opened again.
           keptNote={keptNote(refusal, null)}
           examCode={examCode}

@@ -3,30 +3,34 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { AttemptReview, ScoreLines, ScoreTally } from "@/components/member-app/attempt-review";
-import { ContentState } from "@/components/member-app/content-state";
 import { DeckPlayer } from "@/components/member-app/deck-player";
 import { QuizPlayer } from "@/components/member-app/quiz-player";
+import { ReviewerReader } from "@/components/member-app/reviewer-reader";
 import {
   cardsKept,
   EmptyStudy,
+  pagesKept,
   quizKept,
   RefusedStudy,
 } from "@/components/member-app/study-states";
 import { FocusScreen } from "@/components/member-app/focus-screen";
-import { CONTENT_LABELS } from "@/components/member-app/library-view";
-import { MemberScreen } from "@/components/member-app/member-screen";
 import { formatDateTime } from "@/lib/manila-time";
 import type { MemberAccess } from "@/lib/member-app/access";
-import { checkContentAccess, readMemberAccess, shownRefusal } from "@/lib/member-app/access-check";
+import { readMemberAccess, shownRefusal } from "@/lib/member-app/access-check";
 import { requireMemberWithExam } from "@/lib/member-app/guard";
 import { memberWatermark } from "@/lib/member-app/member-id";
 import { paths } from "@/paths";
 import { getWebsiteSettings } from "@/services/catalogue";
-import { openDeck, openQuiz, reviewQuizAttempt } from "@/services/member";
+import { openDeck, openQuiz, openReviewerPdf, reviewQuizAttempt } from "@/services/member";
 import { contentRefSchema } from "@/services/member.schema";
 import type { ContentItem, Member, RefusedQuiz, TargetExam } from "@/services/member.types";
 
-import { markStudyCard, saveStudyPosition, submitQuizAttempt } from "../../actions";
+import {
+  markStudyCard,
+  saveReadingPosition,
+  saveStudyPosition,
+  submitQuizAttempt,
+} from "../../actions";
 
 export const metadata: Metadata = { title: "Library" };
 
@@ -55,14 +59,15 @@ function backFrom(item: ContentItem, selected: TargetExam) {
  * learns nothing about the item; should the access decision still say so,
  * their screens take over. An address that names no item is a 404.
  *
- * A deck opens in the flashcard player (ticket 08), and a quiz in the quiz
+ * A deck opens in the flashcard player (ticket 08), a quiz in the quiz
  * screen (ticket 11), or one of the Member's past attempts at it with
- * `?attempt=`: the Member seam runs the access decision before it reads a
- * card or a question, so a refused deck's cards and a refused quiz's
- * questions never reach the browser, which gets the unlock prompt, renew or
- * "no longer available" instead; nor does a correct choice before the Member
- * submits. A Reviewer PDF shows what the decision answered until its screen
- * replaces it (ticket 14).
+ * `?attempt=`, and a Reviewer PDF in the reader (ticket 14): the Member seam
+ * runs the access decision before it reads a card, a question or a page, so
+ * a refused deck's cards, a refused quiz's questions and a refused Reviewer
+ * PDF's pages never reach the browser, which gets the unlock prompt, renew
+ * or "no longer available" instead; nor does a correct choice before the
+ * Member submits. The reader's pages come one at a time from the protected
+ * page endpoint, stamped for the Member (src/app/app/reviewer-pdfs).
  */
 export default async function ContentPage({ params, searchParams }: ContentPageProps) {
   // The kind and id are the browser's: one that isn't an item's is not found.
@@ -78,36 +83,11 @@ export default async function ContentPage({ params, searchParams }: ContentPageP
   const { member, selected } = await requireMemberWithExam(from);
   if (!ref.success) notFound();
   if (ref.data.kind === "deck") return deckScreen({ id: ref.data.id, member, selected, from });
-  if (ref.data.kind === "quiz") {
-    const access = await readMemberAccess();
-    if (!access) redirect(paths.memberApp.signIn(from));
-    const screen = { id: ref.data.id, member, selected, from, access };
-    return attemptId === null ? quizScreen(screen) : attemptScreen({ ...screen, attemptId });
-  }
-
-  const access = await checkContentAccess(ref.data.kind, ref.data.id);
-  if (access.status === "signed-out") redirect(paths.memberApp.signIn(from));
-  if (access.status === "not-found") notFound();
-
-  const { item } = access;
-  const decision =
-    access.decision.outcome === "allowed" ? access.decision : shownRefusal(access.decision, from);
-  const { contactEmail } = await getWebsiteSettings();
-
-  return (
-    <MemberScreen
-      eyebrow={`LIBRARY · ${item.subjectCode} · ${CONTENT_LABELS[item.kind].toUpperCase()}`}
-      title={item.topicName}
-    >
-      <ContentState
-        decision={decision}
-        kind={item.kind}
-        examCode={item.examCode}
-        contactEmail={contactEmail}
-        back={backFrom(item, selected)}
-      />
-    </MemberScreen>
-  );
+  const access = await readMemberAccess();
+  if (!access) redirect(paths.memberApp.signIn(from));
+  const screen = { id: ref.data.id, member, selected, from, access };
+  if (ref.data.kind === "reviewer-pdf") return reviewerScreen(screen);
+  return attemptId === null ? quizScreen(screen) : attemptScreen({ ...screen, attemptId });
 }
 
 interface DeckScreenProps {
@@ -137,7 +117,6 @@ async function deckScreen({ id, member, selected, from }: DeckScreenProps) {
     screen = (
       <RefusedStudy
         {...heading}
-        kind="deck"
         decision={shownRefusal(opening.decision, from)}
         kept={cardsKept(opening.marked)}
         examCode={item.examCode}
@@ -173,7 +152,8 @@ async function deckScreen({ id, member, selected, from }: DeckScreenProps) {
   );
 }
 
-interface QuizScreenProps {
+/** What the quiz, attempt and Reviewer PDF screens need: the item's id, who's opening it, and their side of the access decision. */
+interface StudyScreenProps {
   id: string;
   member: Member;
   selected: TargetExam;
@@ -192,7 +172,6 @@ async function refusedQuizScreen(opening: RefusedQuiz, selected: TargetExam, fro
       <RefusedStudy
         crumb={crumb}
         title={item.topicName}
-        kind="quiz"
         decision={shownRefusal(opening.decision, from)}
         kept={quizKept(opening.attemptCount, opening.bestScore)}
         examCode={item.examCode}
@@ -204,7 +183,7 @@ async function refusedQuizScreen(opening: RefusedQuiz, selected: TargetExam, fro
 }
 
 /** A quiz, as a focus screen: the quiz screen, or why it won't open, or that it's still being prepared. */
-async function quizScreen({ id, member, selected, from, access }: QuizScreenProps) {
+async function quizScreen({ id, member, selected, from, access }: StudyScreenProps) {
   const [opening, { contactEmail }] = await Promise.all([
     openQuiz(member.userId, id, access),
     getWebsiteSettings(),
@@ -244,7 +223,7 @@ async function attemptScreen({
   from,
   access,
   attemptId,
-}: QuizScreenProps & { attemptId: string }) {
+}: StudyScreenProps & { attemptId: string }) {
   const opening = await reviewQuizAttempt(member.userId, { quizId: id, attemptId }, access);
   if (opening.status === "not-found") notFound();
   if (opening.status === "refused") return refusedQuizScreen(opening, selected, from);
@@ -278,6 +257,56 @@ async function attemptScreen({
       <div className="mx-auto w-full max-w-160">
         <AttemptReview review={review} watermark={memberWatermark(member.email, member.userId)} />
       </div>
+    </FocusScreen>
+  );
+}
+
+/** A Reviewer PDF, as a focus screen: the reader, or why it won't open, or that it's still being prepared. */
+async function reviewerScreen({ id, member, selected, from, access }: StudyScreenProps) {
+  const [opening, { contactEmail }] = await Promise.all([
+    openReviewerPdf(member.userId, id, access),
+    getWebsiteSettings(),
+  ]);
+  if (opening.status === "not-found") notFound();
+
+  const { item } = opening;
+  const back = backFrom(item, selected);
+  const crumb = `${item.subjectCode} · REVIEWER PDF`;
+  const heading = { crumb, title: item.topicName };
+
+  let screen: React.ReactNode;
+  if (opening.status === "refused") {
+    screen = (
+      <RefusedStudy
+        {...heading}
+        decision={shownRefusal(opening.decision, from)}
+        kept={pagesKept(opening.viewed)}
+        examCode={item.examCode}
+        contactEmail={contactEmail}
+        back={back}
+      />
+    );
+  } else if (opening.reviewerPdf.pageCount === 0) {
+    screen = <EmptyStudy {...heading} kind="reviewer-pdf" back={back} />;
+  } else {
+    screen = (
+      <ReviewerReader
+        reviewerPdfId={item.id}
+        title={item.topicName}
+        label={`${item.subjectCode} Reviewer · ${item.topicName}`}
+        pageCount={opening.reviewerPdf.pageCount}
+        resumeAt={opening.reviewerPdf.resumeAt}
+        examCode={item.examCode}
+        contactEmail={contactEmail}
+        back={back}
+        actions={{ savePosition: saveReadingPosition }}
+      />
+    );
+  }
+
+  return (
+    <FocusScreen back={back} crumb={crumb} title={item.topicName}>
+      {screen}
     </FocusScreen>
   );
 }

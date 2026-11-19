@@ -4,12 +4,15 @@ import type { AllowedVia, RefusedDecision } from "@/lib/member-app/access";
 import type { ExamDateSetBy } from "@/lib/member-app/exam-date";
 import type { AttemptReview } from "@/lib/quizzes/grading";
 import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
+import type { ReaderPlace } from "@/lib/reviewer-pdfs/reader";
 import type { CardMarkVerdict, ContentKind } from "@/services/content.types";
 import type {
   attemptRefSchema,
   cardMarkInputSchema,
   deckPositionInputSchema,
   quizSubmitSchema,
+  readerPositionInputSchema,
+  reviewerPageInputSchema,
 } from "@/services/member.schema";
 
 // The Member seam's types (spec, Phase 3 → Phase 3 seams). A Member is a
@@ -337,3 +340,39 @@ export type QuizSubmitInput = z.input<typeof quizSubmitSchema>;
 
 /** One of the Member's past attempts at a quiz, as its address names it. */
 export type AttemptRef = z.input<typeof attemptRefSchema>;
+
+// Reading a Reviewer PDF (spec, Phase 3 → Burned-in watermark, Reviewer PDF
+// reader, Progress storage and Resume; ticket 14). The seam decides each
+// Reviewer PDF with the access decision before it reads a page, and only ever
+// gives a page out stamped with the Member's own details: never clean.
+
+/** A Reviewer PDF the access decision opened, with where the Member left it. */
+export interface StudyReviewerPdf {
+  /** How many pages it has: 0 while it has none yet (the sample data's, from before uploads). */
+  pageCount: number;
+  /** The page and zoom they left it at, or null to open at page 1, 100%. */
+  resumeAt: ReaderPlace | null;
+}
+
+/** What opening a Reviewer PDF finds. */
+export type ReviewerPdfOpening =
+  /** No such Reviewer PDF, or one not placed under a Topic. */
+  | { status: "not-found" }
+  /** The access decision refused: no page is read. `viewed` counts the pages the Member viewed, kept. */
+  | { status: "refused"; item: ContentItem; decision: RefusedDecision; viewed: number }
+  | { status: "allowed"; item: ContentItem; via: AllowedVia; reviewerPdf: StudyReviewerPdf };
+
+/** What asking for one page of a Reviewer PDF gives. */
+export type ReviewerPage =
+  /** No such Reviewer PDF or page: a page below 1 or past its last, or one whose image is gone. */
+  | { status: "not-found" }
+  /** The access decision refused: no page is read, and nothing is recorded. */
+  | { status: "refused"; decision: RefusedDecision }
+  /** The page, as a WebP stamped with the Member's email and short Member ID. */
+  | { status: "page"; image: Uint8Array };
+
+/** One page of a Reviewer PDF, as the page endpoint's address names it. */
+export type ReviewerPageInput = z.input<typeof reviewerPageInputSchema>;
+
+/** Where the Member is in a Reviewer PDF, as the reader saves it: its page and zoom. */
+export type ReaderPositionInput = z.input<typeof readerPositionInputSchema>;

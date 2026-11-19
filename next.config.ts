@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 import { storageImagePatterns } from "./src/lib/catalogue-bucket";
+import { STAMP_FONT_PATH } from "./src/lib/reviewer-pdfs/stamp";
 import { paths } from "./src/paths";
 
 // Static security response headers applied to every route. CSP is intentionally
@@ -47,6 +48,10 @@ const nextConfig: NextConfig = {
       "./node_modules/pdfjs-dist/iccs/**",
       "./node_modules/pdfjs-dist/wasm/**",
     ],
+    // The Member App's page endpoint (ticket 14, every route under it) stamps
+    // each page with sharp, drawing the text in a font file read from the
+    // app's folder (src/services/page-images.sharp.ts).
+    "/app/reviewer-pdfs/**": [`./${STAMP_FONT_PATH}`],
   },
   // Don't advertise the framework via the X-Powered-By header.
   poweredByHeader: false,

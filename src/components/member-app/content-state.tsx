@@ -1,15 +1,11 @@
 import Link from "next/link";
 
-import { type AccessDecision, passEndDate, type ShownRefusal } from "@/lib/member-app/access";
+import { passEndDate, type ShownRefusal } from "@/lib/member-app/access";
 import { cn } from "@/lib/utils";
-import type { ContentKind } from "@/services/content.types";
-
-/** What opening an item can show here: the gate and the Active Device have their own screens. */
-export type ShownDecision = Extract<AccessDecision, { outcome: "allowed" }> | ShownRefusal;
 
 interface ContentStateProps {
-  decision: ShownDecision;
-  kind: ContentKind;
+  /** What the access decision refused: the gate and the Active Device have their own screens. */
+  decision: ShownRefusal;
   examCode: string;
   /** Where Members ask AYC for access during the beta. */
   contactEmail: string;
@@ -18,12 +14,6 @@ interface ContentStateProps {
   /** The sentence on what's kept when access ends or the item goes: "Your progress is kept." unless given. */
   keptNote?: string;
 }
-
-const OPENS_SOON: Record<ContentKind, string> = {
-  deck: "These flashcards open here soon.",
-  quiz: "This quiz opens here soon.",
-  "reviewer-pdf": "This Reviewer PDF opens here soon.",
-};
 
 /** How Members get access before Plans exist (Phase 4): "During the beta, access comes from AYC…". */
 export function BetaAccessNote({ contactEmail }: { contactEmail: string }) {
@@ -44,7 +34,6 @@ export function BetaAccessNote({ contactEmail }: { contactEmail: string }) {
 /** What each decision shows: its tag, heading and text. */
 function stateOf({
   decision,
-  kind,
   examCode,
   contactEmail,
   keptNote = "Your progress is kept.",
@@ -55,13 +44,6 @@ function stateOf({
   body: React.ReactNode;
 } {
   switch (decision.outcome) {
-    case "allowed":
-      return {
-        tag: decision.via === "free-preview" ? "OPENING SOON · FREE PREVIEW" : "OPENING SOON",
-        tone: "plain",
-        heading: "Opening soon",
-        body: `${OPENS_SOON[kind]} It’s part of the beta, still being built.`,
-      };
     case "locked":
       return {
         tag: "🔒 LOCKED",
@@ -96,11 +78,10 @@ function stateOf({
 }
 
 /**
- * Opening a deck, quiz or Reviewer PDF (spec, Phase 3 → Access decision
- * seam; mockups `expired` and `emptyTopic`): what the access decision
- * answered. Allowed shows "Opening soon" until the study screens replace it
- * (tickets 08, 11 and 14); locked shows the unlock prompt; expired says the
- * pass ended and progress is kept; unavailable says it's no longer available.
+ * A deck, quiz or Reviewer PDF the access decision refused (spec, Phase 3 →
+ * Access decision seam; mockup `expired`), in place of its study screen:
+ * locked shows the unlock prompt; expired says the pass ended and progress is
+ * kept; unavailable says it's no longer available.
  */
 export function ContentState(props: ContentStateProps) {
   const { tag, tone, heading, body } = stateOf(props);

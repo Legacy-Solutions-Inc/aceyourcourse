@@ -87,11 +87,13 @@ export function isCurrentItem(pathname: string, href: string): boolean {
 
 /**
  * Pure: whether a screen is a focus screen (BUILD-MAP §2), which has a back
- * bar on mobile instead of the Menu button: a deck in the flashcard player
- * so far; the quiz and the Reviewer PDF reader join it with their tickets.
+ * bar on mobile instead of the Menu button: a deck in the flashcard player,
+ * and a Reviewer PDF in the reader (ticket 14).
  */
 export function isFocusScreen(pathname: string): boolean {
-  return pathname.startsWith(paths.memberApp.content("deck", ""));
+  return (["deck", "reviewer-pdf"] as const).some((kind) =>
+    pathname.startsWith(paths.memberApp.content(kind, "")),
+  );
 }
 
 /**

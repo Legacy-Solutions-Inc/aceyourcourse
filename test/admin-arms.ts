@@ -8,6 +8,7 @@ import type {
   ContentKind,
   Question,
   Quiz,
+  ReviewerPageView,
   ReviewerPdfUpload,
 } from "@/services/content.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
@@ -114,6 +115,15 @@ export interface AdminArm {
 /** Pure: Card Marks by card, then Member. */
 export const byCardAndMember = (marks: CardMark[]) =>
   [...marks].sort((a, b) => a.cardId.localeCompare(b.cardId) || a.userId.localeCompare(b.userId));
+
+/** Pure: Reviewer PDF pages viewed by Member, then Reviewer PDF, then page. */
+export const byMemberAndPage = (views: ReviewerPageView[]) =>
+  [...views].sort(
+    (a, b) =>
+      a.userId.localeCompare(b.userId) ||
+      a.reviewerPdfId.localeCompare(b.reviewerPdfId) ||
+      a.page - b.page,
+  );
 
 /** Pure: quizzes by id. */
 export const byId = <T extends { id: string }>(records: T[]) =>

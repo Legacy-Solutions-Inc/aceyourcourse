@@ -2,12 +2,12 @@ import type { AdminService } from "@/services/admin";
 import * as adminSampleArm from "@/services/admin.mock";
 import type { MemberService } from "@/services/member";
 import * as sampleArm from "@/services/member.mock";
-import type { AccessPass, CardMark, QuizAttempt } from "@/services/content.types";
+import type { AccessPass, CardMark, QuizAttempt, ReviewerPageView } from "@/services/content.types";
 import type { ConsentRecord, DeviceSwitch, Member } from "@/services/member.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
-import { byCardAndMember } from "./admin-arms";
+import { byCardAndMember, byMemberAndPage } from "./admin-arms";
 import { type CardImageUpload, uploadSampleCardImage } from "./card-images";
 import { editSampleCatalogue } from "./catalogue-seed";
 import { uploadSampleReviewerPdf } from "./reviewer-pdf-uploads";
@@ -51,6 +51,8 @@ export interface MemberArm {
   cardMarks(): Promise<CardMark[]>;
   /** Every Member's Quiz Attempts as stored, with their answers, oldest first. */
   quizAttempts(): Promise<QuizAttempt[]>;
+  /** Every Member's Reviewer PDF pages viewed as stored, by Member, Reviewer PDF and page. */
+  pageViews(): Promise<ReviewerPageView[]>;
 }
 
 /** An Active Device record as it is stored, for checking what is (and isn't) kept. */
@@ -84,6 +86,7 @@ const SAMPLE_ARM: MemberArm = {
   uploadReviewerPdf: (bytes) => uploadSampleReviewerPdf(bytes),
   cardMarks: async () => byCardAndMember(structuredClone(getSampleStore().cardMarks)),
   quizAttempts: async () => structuredClone(getSampleStore().quizAttempts),
+  pageViews: async () => byMemberAndPage(structuredClone(getSampleStore().reviewerPageViews)),
 };
 
 export const MEMBER_ARMS: MemberArm[] =

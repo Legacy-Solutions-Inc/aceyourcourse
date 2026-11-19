@@ -48,6 +48,8 @@ describeWithDatabase("Deny-all: the browser roles reach no table", database, (db
     "quiz_attempts",
     "quiz_attempt_answers",
     "reviewer_pdfs",
+    "reviewer_page_views",
+    "reader_positions",
     "access_passes",
     "access_pass_grants",
   ])("has the Member App's %s table, with RLS on and no policy", async (table) => {

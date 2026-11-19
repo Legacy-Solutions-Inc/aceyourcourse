@@ -3,9 +3,12 @@ import "server-only";
 import { and, asc, type Column, count, desc, eq } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
+import type { Transaction } from "@/lib/db/connect";
 import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
 import { deviceStatusFor } from "@/lib/member-app/device-token";
+import { isReaderZoom } from "@/lib/reviewer-pdfs/reader";
+import { readablePageCount } from "@/lib/reviewer-pdfs/status";
 import { isStorageConfigured } from "@/lib/supabase/admin";
 import { type ContentExam, contentItemOf, libraryOf } from "@/services/content.rules";
 import {
@@ -21,6 +24,7 @@ import {
 } from "@/services/content.rows";
 import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
 import { quizStudyCalls, type QuizStudyStore } from "@/services/quiz-study.core";
+import { reviewerStudyCalls, type ReviewerStudyStore } from "@/services/reviewer-study.core";
 import type { MemberService } from "@/services/member";
 import {
   agreedVersionsSchema,
@@ -41,7 +45,7 @@ import {
 } from "@/services/member.rules";
 import type { ContentKind } from "@/services/content.types";
 import type { ConsentRecord, DeviceSwitch, Member } from "@/services/member.types";
-import { sampleContentFiles } from "@/services/uploads.mock";
+import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
 import { storageArm } from "@/services/uploads.storage";
 
 // The Member seam on Postgres, selected by src/services/member.ts when
@@ -49,8 +53,8 @@ import { storageArm } from "@/services/uploads.storage";
 // the app layer, to the User the Member App gate passes it (coding standards
 // §3): a Member's records are only ever read or made by their own User id.
 // The Target Exam rules (member.rules.ts), the content rules
-// (content.rules.ts), the study calls (deck-study.core.ts and
-// quiz-study.core.ts) and the Active Device's comparison (device-token.ts)
+// (content.rules.ts), the study calls (deck-study.core.ts,
+// quiz-study.core.ts and reviewer-study.core.ts) and the Active Device's comparison (device-token.ts)
 // are shared with the sample arm.
 
 type MemberRow = typeof schema.members.$inferSelect;
@@ -653,6 +657,104 @@ const databaseQuizStore: QuizStudyStore = {
   signImages: signContentImages,
 };
 
+// ── Reading a Reviewer PDF ──────────────────────────────────────────────────
+
+/** The private Reviewer PDFs bucket: Storage when this server has it, as the Admin's job stores pages there. */
+const reviewerPdfFiles = isStorageConfigured ? storageArm.reviewerPdfFiles : sampleReviewerPdfFiles;
+
+/**
+ * Runs a Member's write in a transaction that holds the Reviewer PDF, so it
+ * can't be deleted until the write is in. False, writing nothing, when it's
+ * gone. The foreign keys to members refuse a User the gate never let in.
+ */
+const whileReviewerPdfHeld = (reviewerPdfId: string, write: (tx: Transaction) => Promise<void>) =>
+  inDatabase(() =>
+    getDb().transaction(async (tx) => {
+      const { reviewerPdfs } = schema;
+      const [pdf] = await tx
+        .select({ id: reviewerPdfs.id })
+        .from(reviewerPdfs)
+        .where(eq(reviewerPdfs.id, reviewerPdfId))
+        .for("share");
+      if (!pdf) return false;
+      await write(tx);
+      return true;
+    }),
+  );
+
+const databaseReviewerStore: ReviewerStudyStore = {
+  readReviewerPdfItem: (reviewerPdfId) => getContentItem("reviewer-pdf", reviewerPdfId),
+  readPageCount: (reviewerPdfId) =>
+    inDatabase(async () => {
+      const { reviewerPdfs } = schema;
+      const [row] = await getDb()
+        .select({ pageCount: reviewerPdfs.pageCount, pagesDone: reviewerPdfs.pagesDone })
+        .from(reviewerPdfs)
+        .where(eq(reviewerPdfs.id, reviewerPdfId));
+      return readablePageCount(row ?? null);
+    }),
+  readPage: (reviewerPdfId, page) => reviewerPdfFiles.readPage(reviewerPdfId, page),
+  readMemberEmail: (userId) =>
+    inDatabase(async () => {
+      const { members } = schema;
+      const [row] = await getDb()
+        .select({ email: members.email })
+        .from(members)
+        .where(eq(members.userId, userId));
+      return row?.email ?? null;
+    }),
+  countPagesViewed: (userId, reviewerPdfId) =>
+    inDatabase(async () => {
+      const { reviewerPageViews } = schema;
+      const [row] = await getDb()
+        .select({ viewed: count() })
+        .from(reviewerPageViews)
+        .where(
+          and(
+            eq(reviewerPageViews.userId, userId),
+            eq(reviewerPageViews.reviewerPdfId, reviewerPdfId),
+          ),
+        );
+      return row?.viewed ?? 0;
+    }),
+  readPosition: (userId, reviewerPdfId) =>
+    inDatabase(async () => {
+      const { readerPositions } = schema;
+      const [row] = await getDb()
+        .select({ page: readerPositions.page, zoom: readerPositions.zoom })
+        .from(readerPositions)
+        .where(
+          and(eq(readerPositions.userId, userId), eq(readerPositions.reviewerPdfId, reviewerPdfId)),
+        );
+      if (!row) return null;
+      // The table's check keeps the zoom one of the reader's.
+      if (!isReaderZoom(row.zoom)) throw new Error(`A reader position has zoom ${row.zoom}.`);
+      return { page: row.page, zoom: row.zoom };
+    }),
+  saveView: (view, day) =>
+    whileReviewerPdfHeld(view.reviewerPdfId, async (tx) => {
+      const { reviewerPageViews, studyDays } = schema;
+      // The first view stays.
+      await tx
+        .insert(reviewerPageViews)
+        .values({ ...view, viewedAt: new Date(view.viewedAt) })
+        .onConflictDoNothing();
+      await tx.insert(studyDays).values({ userId: view.userId, day }).onConflictDoNothing();
+    }),
+  savePosition: (position) =>
+    whileReviewerPdfHeld(position.reviewerPdfId, async (tx) => {
+      const { readerPositions } = schema;
+      const savedAt = new Date(position.savedAt);
+      await tx
+        .insert(readerPositions)
+        .values({ ...position, savedAt })
+        .onConflictDoUpdate({
+          target: [readerPositions.userId, readerPositions.reviewerPdfId],
+          set: { page: position.page, zoom: position.zoom, savedAt },
+        });
+    }),
+};
+
 export const databaseArm: MemberService = {
   isBetaTester,
   getOrCreateMember,
@@ -671,4 +773,5 @@ export const databaseArm: MemberService = {
   listAccessPasses,
   ...deckStudyCalls(databaseStudyStore),
   ...quizStudyCalls(databaseQuizStore),
+  ...reviewerStudyCalls(databaseReviewerStore),
 };

@@ -1,11 +1,9 @@
 import Link from "next/link";
 
 import type { ShownRefusal } from "@/lib/member-app/access";
+import type { ContentKind } from "@/services/content.types";
 
 import { ContentState } from "./content-state";
-
-/** The study screens that show these states: the flashcard player's deck, and a quiz. */
-export type StudyKind = "deck" | "quiz";
 
 /** Pure: what a refused deck keeps (mockup `expired`): the Member's marks on it, when they have any. */
 export const cardsKept = (marked: number): string | null =>
@@ -17,8 +15,12 @@ export const quizKept = (attemptCount: number, bestScore: number | null): string
     ? null
     : `${attemptCount} ${attemptCount === 1 ? "attempt" : "attempts"}, best score ${bestScore}%`;
 
+/** Pure: what a refused Reviewer PDF keeps: the pages the Member viewed in it, when they viewed any. */
+export const pagesKept = (viewed: number): string | null =>
+  viewed === 0 ? null : `${viewed} ${viewed === 1 ? "page" : "pages"} viewed`;
+
 /**
- * Pure: what a refused deck or quiz says is kept (mockup `expired`): the
+ * Pure: what a refused deck, quiz or Reviewer PDF says is kept (mockup `expired`): the
  * Member's own progress on it, when they have any, and to renew when their
  * pass ended.
  */
@@ -44,20 +46,22 @@ function StudyHeading({ crumb, title }: StudyHeadingProps) {
   );
 }
 
-const BEING_PREPARED: Record<StudyKind, string> = {
+const BEING_PREPARED: Record<ContentKind, string> = {
   deck: "These flashcards are still being prepared. They’ll show up here automatically.",
   quiz: "This quiz is still being prepared. Its questions will show up here automatically.",
+  "reviewer-pdf":
+    "This reviewer is still being prepared. Its pages will show up here automatically.",
 };
 
 interface EmptyStudyProps extends StudyHeadingProps {
-  kind: StudyKind;
+  kind: ContentKind;
   back: { href: string; label: string };
 }
 
 /**
- * A deck with no cards yet, or a quiz with no questions (mockup
- * `emptyTopic`; story 103): still being prepared, and showing up by itself
- * once Staff add them.
+ * A deck with no cards yet, a quiz with no questions, or a Reviewer PDF with
+ * no pages (mockup `emptyTopic`; story 103): still being prepared, and
+ * showing up by itself once Staff add them.
  */
 export function EmptyStudy({ crumb, title, kind, back }: EmptyStudyProps) {
   return (
@@ -89,7 +93,6 @@ export function EmptyStudy({ crumb, title, kind, back }: EmptyStudyProps) {
 }
 
 interface RefusedStudyProps extends StudyHeadingProps {
-  kind: StudyKind;
   decision: ShownRefusal;
   /** What of the Member's progress on it is kept, such as "3 cards marked", or null for none. */
   kept: string | null;
@@ -99,10 +102,10 @@ interface RefusedStudyProps extends StudyHeadingProps {
 }
 
 /**
- * A deck or quiz the access decision refused (mockup `expired`): the unlock
- * prompt when it's locked, renew when the pass ended, or no longer available
- * when it's Hidden, each keeping the Member's progress. None of its cards or
- * questions is read.
+ * A deck, quiz or Reviewer PDF the access decision refused (mockup
+ * `expired`): the unlock prompt when it's locked, renew when the pass ended,
+ * or no longer available when it's Hidden or Unpublished, each keeping the
+ * Member's progress. None of its cards, questions or pages is read.
  */
 export function RefusedStudy({ crumb, title, decision, kept, ...state }: RefusedStudyProps) {
   return (

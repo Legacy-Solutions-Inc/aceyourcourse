@@ -86,6 +86,8 @@ let freeCard = "";
 const FREE_QUIZ = sampleContentId(sampleTopicId("CE", "HPGE", "Hydrostatics"), "quiz");
 /** A question in it, written for each test, that the quiz screen's Submit would answer. */
 let freeQuestion = "";
+/** Simple Curves' Reviewer PDF is Published: the tester's CE pass would open it in the reader. */
+const PUBLISHED_PDF = sampleContentId(SIMPLE_CURVES, "reviewer-pdf");
 
 interface Entry {
   who: "member" | "before-device" | "before-consent" | "anyone";
@@ -145,6 +147,9 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     saveStudyPosition: member(() =>
       study.saveStudyPosition({ deckId: FREE_DECK, cardId: freeCard }),
     ),
+    saveReadingPosition: member(() =>
+      study.saveReadingPosition({ reviewerPdfId: PUBLISHED_PDF, page: 1, zoom: 100 }),
+    ),
     submitQuizAttempt: member(() =>
       study.submitQuizAttempt({
         attemptId: "6a1f0e1c-5b55-4a51-9d0e-0a1b2c3d4e5f",
@@ -202,6 +207,7 @@ const memberData = () => {
   const { members, memberConsents, memberTargetExams, selectedExams } = getSampleStore();
   const { memberActiveDevices, memberDeviceSwitches } = getSampleStore();
   const { cardMarks, studyDays, deckPositions, quizAttempts } = getSampleStore();
+  const { reviewerPageViews, readerPositions } = getSampleStore();
   return structuredClone({
     members,
     memberConsents,
@@ -213,6 +219,8 @@ const memberData = () => {
     studyDays,
     deckPositions,
     quizAttempts,
+    reviewerPageViews,
+    readerPositions,
   });
 };
 

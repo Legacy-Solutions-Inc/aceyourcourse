@@ -39,9 +39,21 @@ export const UNPUBLISH_TO_MOVE = "IT’S PUBLISHED · UNPUBLISH IT BEFORE MOVING
 export const TOPIC_TAKEN = "THIS TOPIC ALREADY HAS A REVIEWER PDF · CHOOSE ANOTHER";
 export const TOPIC_GONE = "THAT TOPIC ISN’T THERE ANY MORE · CHOOSE ANOTHER";
 
+/** What the page rules read of a Reviewer PDF's job: its page count once read, and the pages done. */
+type JobPages = Pick<ReviewerPdfUpload, "pageCount" | "pagesDone">;
+
 /** Pure: whether a Reviewer PDF's job has split every page of its PDF. */
-export function hasEveryPage(upload: ReviewerPdfUpload | null): boolean {
+export function hasEveryPage(upload: JobPages | null): boolean {
   return upload !== null && upload.pageCount !== null && upload.pagesDone === upload.pageCount;
+}
+
+/**
+ * Pure: how many pages a Member can read in a Reviewer PDF (ticket 14): all
+ * of them once its job split every page, or none (the sample data's, from
+ * before uploads, have no job).
+ */
+export function readablePageCount(upload: JobPages | null): number {
+  return upload && hasEveryPage(upload) ? (upload.pageCount ?? 0) : 0;
 }
 
 /** Pure: what the rules read of a Reviewer PDF, from its record and its upload. */

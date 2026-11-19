@@ -17,6 +17,9 @@ export const PAGES_PER_RUN = 25;
 /** How wide each page image is, in pixels: the reader zooms it in the browser. */
 export const PAGE_WIDTH = 1600;
 
+/** The WebP quality page images are saved and sent at: sharp text, at a third of PNG's size. */
+export const PAGE_WEBP_QUALITY = 80;
+
 /**
  * How long a Processing job can go without a heartbeat before the cron
  * restarts it. A run beats as it starts and after every page, which takes a

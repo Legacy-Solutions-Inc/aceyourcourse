@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 
 import { createCanvas } from "@napi-rs/canvas";
 
-import { PAGE_WIDTH } from "@/lib/reviewer-pdfs/job";
+import { PAGE_WEBP_QUALITY, PAGE_WIDTH } from "@/lib/reviewer-pdfs/job";
 import { type PdfProblem, PdfProblemError, type PdfRenderer } from "@/services/page-images.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -21,9 +21,6 @@ import { type PdfProblem, PdfProblemError, type PdfRenderer } from "@/services/p
 // gives it the worker's code in place of a separate worker file. Fonts are
 // drawn as paths (no FontFace in Node), and no system font is read.
 // ─────────────────────────────────────────────────────────────────────────────
-
-/** The quality WebP pages are saved at: sharp text, at a third of PNG's size. */
-const WEBP_QUALITY = 80;
 
 /**
  * The tallest page image, in pixels. A page far taller than it is wide (a
@@ -106,7 +103,7 @@ export const pdfjsRenderer: PdfRenderer = {
                 canvas: canvas as unknown as HTMLCanvasElement,
                 viewport,
               }).promise;
-              return new Uint8Array(await canvas.encode("webp", WEBP_QUALITY));
+              return new Uint8Array(await canvas.encode("webp", PAGE_WEBP_QUALITY));
             } finally {
               page.cleanup();
             }

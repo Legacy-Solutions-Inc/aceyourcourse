@@ -22,6 +22,7 @@ import {
 
 import { REVIEWER_PDF_FAILURES } from "@/lib/reviewer-pdfs/job";
 import { PDF_NAME_MAX } from "@/lib/reviewer-pdfs/pdf-file";
+import { READER_ZOOMS } from "@/lib/reviewer-pdfs/reader";
 import {
   DEFAULT_QUIZ_SETTINGS,
   PASSING_SCORE_MAX,
@@ -953,6 +954,61 @@ export const reviewerPdfs = pgTable(
       "reviewer_pdfs_failed_has_failure",
       sql`(${t.status} = 'failed') = (${t.failure} is not null)`,
     ),
+  ],
+).enableRLS();
+
+/**
+ * The Reviewer PDF pages each Member has viewed (spec, Phase 3 → Progress
+ * storage; ticket 14): one row per Member, Reviewer PDF and page, kept from
+ * the first time the page's stamped image was sent to them. Topic % counts
+ * the share of a Reviewer PDF's pages viewed (ticket 15). Deleting the
+ * Reviewer PDF or the Member deletes them; the index on reviewer_pdf_id
+ * serves that cascade, which the primary key, led by user_id, can't.
+ */
+export const reviewerPageViews = pgTable(
+  "reviewer_page_views",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => members.userId, { onDelete: "cascade" }),
+    reviewerPdfId: uuid("reviewer_pdf_id")
+      .notNull()
+      .references(() => reviewerPdfs.id, { onDelete: "cascade" }),
+    page: integer("page").notNull(),
+    viewedAt: at("viewed_at").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.reviewerPdfId, t.page] }),
+    index("reviewer_page_views_reviewer_pdf_id_idx").on(t.reviewerPdfId),
+    check("reviewer_page_views_page_positive", sql`${t.page} > 0`),
+  ],
+).enableRLS();
+
+/**
+ * Where each Member left each Reviewer PDF (spec, Phase 3 → Resume; ticket
+ * 14): the page they were on and their zoom, one of the reader's 75, 100, 125
+ * and 150 (src/lib/reviewer-pdfs/reader.ts), one row per Member and Reviewer
+ * PDF, replaced as they read. Deleting the Reviewer PDF or the Member deletes
+ * it; the index on reviewer_pdf_id serves that cascade.
+ */
+export const readerPositions = pgTable(
+  "reader_positions",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => members.userId, { onDelete: "cascade" }),
+    reviewerPdfId: uuid("reviewer_pdf_id")
+      .notNull()
+      .references(() => reviewerPdfs.id, { onDelete: "cascade" }),
+    page: integer("page").notNull(),
+    zoom: smallint("zoom").notNull(),
+    savedAt: at("saved_at").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.reviewerPdfId] }),
+    index("reader_positions_reviewer_pdf_id_idx").on(t.reviewerPdfId),
+    check("reader_positions_page_positive", sql`${t.page} > 0`),
+    check("reader_positions_zoom_step", sql`${t.zoom} in (${sql.raw(READER_ZOOMS.join(", "))})`),
   ],
 ).enableRLS();
 

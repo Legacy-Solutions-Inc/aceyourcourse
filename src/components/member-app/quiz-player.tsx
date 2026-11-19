@@ -206,7 +206,6 @@ export function QuizPlayer({
           </h1>
           <ContentState
             decision={screen.decision}
-            kind="quiz"
             // What was saved shows when the quiz is opened again.
             keptNote={keptNote(screen.decision, null)}
             examCode={examCode}

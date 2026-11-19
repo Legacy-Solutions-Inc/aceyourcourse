@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { TOKEN_HASH_PATTERN } from "@/lib/member-app/device-token";
 import { QUIZ_CHOICES } from "@/lib/quizzes/quiz-rules";
+import { isReaderZoom } from "@/lib/reviewer-pdfs/reader";
 import { staffEmailSchema } from "@/services/admin.schema";
 import { CARD_MARK_VERDICTS, CONTENT_KINDS } from "@/services/content.types";
 import type { TargetExamRefusal } from "@/services/member.types";
@@ -151,3 +152,20 @@ export const quizSubmitSchema = z.object({
 
 /** One of the Member's past attempts at a quiz, as its address names it (ticket 11). */
 export const attemptRefSchema = z.object({ quizId: sentId, attemptId: sentId });
+
+/**
+ * One page of a Reviewer PDF, as the page endpoint asks for it (ticket 14),
+ * from its address: a Reviewer PDF or page that isn't one is no page.
+ */
+export const reviewerPageInputSchema = z.object({
+  reviewerPdfId: sentId,
+  // Any number: one that isn't a page is refused after the access decision.
+  page: z.number(),
+});
+
+/** Where the Member is in a Reviewer PDF, as the reader saves it: the page and one of the reader's zooms. */
+export const readerPositionInputSchema = z.object({
+  reviewerPdfId: sentId,
+  page: z.number().int(),
+  zoom: z.number().refine(isReaderZoom, "must be one of the reader's zooms"),
+});

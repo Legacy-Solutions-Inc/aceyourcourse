@@ -1,5 +1,6 @@
 import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
 import type { ReviewerPdfFailure } from "@/lib/reviewer-pdfs/job";
+import type { ReaderZoom } from "@/lib/reviewer-pdfs/reader";
 
 // The Member App's content model (spec, Phase 3 → Content model; CONTEXT.md):
 // Exam → Subject → Topic, and each Topic's deck, quiz and Reviewer PDF, each
@@ -104,6 +105,37 @@ export interface DeckPosition {
   deckId: string;
   /** The card to continue from. */
   cardId: string;
+  /** ISO time it was saved. */
+  savedAt: string;
+}
+
+/**
+ * A Reviewer PDF page a Member has viewed (spec, Phase 3 → Progress storage;
+ * ticket 14): one per Member, Reviewer PDF and page, kept from the first
+ * time its stamped image was sent to them. Deleting the Reviewer PDF deletes
+ * them.
+ */
+export interface ReviewerPageView {
+  /** The Member's User id. */
+  userId: string;
+  reviewerPdfId: string;
+  /** From 1. */
+  page: number;
+  /** ISO time it was first viewed. */
+  viewedAt: string;
+}
+
+/**
+ * Where a Member left a Reviewer PDF (spec, Phase 3 → Resume; ticket 14): the
+ * page they were on and their zoom, at most one per Member and Reviewer PDF.
+ */
+export interface ReaderPosition {
+  /** The Member's User id. */
+  userId: string;
+  reviewerPdfId: string;
+  /** From 1. */
+  page: number;
+  zoom: ReaderZoom;
   /** ISO time it was saved. */
   savedAt: string;
 }

@@ -1,7 +1,9 @@
-import type { OpenedPdf, PdfRenderer } from "@/services/page-images.types";
+import { type PageStamp, stampText } from "@/lib/reviewer-pdfs/stamp";
+import type { OpenedPdf, PageStamper, PdfRenderer } from "@/services/page-images.types";
 
 // The fake page renderer (ticket 12): the seam tests, the sample data and the
-// e2e use it in place of pdf.js. It reads what pdf.js would from a PDF's
+// e2e use it in place of pdf.js. The fake stamper (ticket 14) stands in for
+// sharp in the Member seam's tests. It reads what pdf.js would from a PDF's
 // bytes, roughly: a file that doesn't start as a PDF, or has no page objects,
 // is corrupt, and one with an /Encrypt entry needs a password. Every page
 // "renders" as the same small blank WebP. The sample data's takes its time
@@ -55,3 +57,22 @@ export function createFakeRenderer({ msPerPage = 0 }: { msPerPage?: number } = {
     },
   };
 }
+
+/**
+ * Pure: what the fake stamper makes of a page: its bytes, then the stamp's
+ * text, so a test sees which page was stamped for which Member. Not an image.
+ */
+export function fakeStamped(image: Uint8Array, stamp: PageStamp): Uint8Array {
+  const text = new TextEncoder().encode(` STAMPED ${stampText(stamp)}`);
+  const stamped = new Uint8Array(image.byteLength + text.byteLength);
+  stamped.set(image);
+  stamped.set(text, image.byteLength);
+  return stamped;
+}
+
+/** The fake stamper, for the Member seam's tests. */
+export const fakeStamper: PageStamper = {
+  async stamp(image, stamp) {
+    return fakeStamped(image, stamp);
+  },
+};
