@@ -82,7 +82,9 @@ function fakeBucket(
   return {
     bucket,
     from,
-    arm: createStorageArm(() => ({ client, supabaseUrl: SUPABASE }), undefined),
+    // No publishable key: "" rather than undefined, which would take the
+    // environment's (CI sets one), adding an apikey header to every ticket.
+    arm: createStorageArm(() => ({ client, supabaseUrl: SUPABASE }), ""),
   };
 }
 
