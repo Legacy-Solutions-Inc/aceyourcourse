@@ -206,7 +206,7 @@ export const paths = {
   jobs: {
     /** POST {id}: one run of a Reviewer PDF's job, which starts the next. */
     reviewerPdfRun: "/api/reviewer-pdfs/run",
-    /** GET, every minute (vercel.json): restarts the jobs whose runs have stopped. */
+    /** GET, once a day (vercel.json): restarts the jobs whose runs have stopped. */
     reviewerPdfCron: "/api/reviewer-pdfs/cron",
   },
 } as const;

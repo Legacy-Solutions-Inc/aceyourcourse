@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 // The Reviewer PDF job's endpoints (ticket 12; ADR 0012): POST …/run does one
 // run of a job after answering, and starts the next when pages are left; GET
-// …/cron (Vercel Cron, every minute) restarts the jobs whose runs have
+// …/cron (Vercel Cron, once a day) restarts the jobs whose runs have
 // stopped. Both are for the server itself and Vercel Cron only: without the
 // server's CRON_SECRET as a bearer token they're refused, and while the
 // server has none they don't exist. The seam and the run starter are
@@ -179,12 +179,14 @@ describe("the cron endpoint", () => {
 });
 
 describe("Vercel Cron's schedule", () => {
-  it("calls the cron endpoint every minute", async () => {
+  // Once a day, at 18:00 UTC (02:00 in Manila): Vercel's Hobby plan allows
+  // no more, and runs it at some point within that hour.
+  it("calls the cron endpoint once a day", async () => {
     const { readFileSync } = await import("node:fs");
     const { paths } = await import("@/paths");
     const config = JSON.parse(readFileSync("vercel.json", "utf8")) as {
       crons?: { path: string; schedule: string }[];
     };
-    expect(config.crons).toEqual([{ path: paths.jobs.reviewerPdfCron, schedule: "* * * * *" }]);
+    expect(config.crons).toEqual([{ path: paths.jobs.reviewerPdfCron, schedule: "0 18 * * *" }]);
   });
 });

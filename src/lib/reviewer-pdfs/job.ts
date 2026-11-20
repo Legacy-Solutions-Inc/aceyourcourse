@@ -24,8 +24,9 @@ export const PAGE_WEBP_QUALITY = 80;
  * How long a Processing job can go without a heartbeat before the cron
  * restarts it. A run beats as it starts and after every page, which takes a
  * second or two, so two minutes of silence means the run has died (a crash,
- * a time-out, a deploy), not that it's slow; with the cron every minute, a
- * dead run is restarted within about three minutes.
+ * a time-out, a deploy), not that it's slow. The cron runs once a day (the
+ * Vercel Hobby plan allows no more), so a dead run waits up to a day for its
+ * restart; every minute, on Pro, would restart it within about three minutes.
  */
 export const STALE_AFTER_MS = 2 * 60 * 1000;
 
@@ -34,8 +35,9 @@ export const STALE_AFTER_MS = 2 * 60 * 1000;
  * between, before failing it: each page done starts the count again. Three
  * covers a deploy or a passing Storage outage, each of which stops a run
  * once; a PDF that stops every run at the same page (one that runs the
- * function out of memory, say) then fails within about ten minutes, rather
- * than being retried forever, while a long PDF's occasional stops never add up.
+ * function out of memory, say) then fails after three restarts (about three
+ * days with the daily cron), rather than being retried forever, while a long
+ * PDF's occasional stops never add up.
  */
 export const MAX_RESTARTS = 3;
 
