@@ -1,0 +1,60 @@
+{
+  "nodes": [
+    {
+      "id": "docs_adr_0004_rsc_server_actions_first",
+      "label": "ADR 0004: RSC + Server Actions as default data pattern",
+      "file_type": "document",
+      "source_file": "docs/adr/0004-rsc-server-actions-first.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "One default so every contributor writes screens the same way; minimal client bundle, no client query library by default."
+    },
+    {
+      "id": "docs_adr_0004_rsc_server_actions_first_rsc_reads_server_action_writes",
+      "label": "Reads in RSC, writes in zod-validated Server Actions",
+      "file_type": "concept",
+      "source_file": "docs/adr/0004-rsc-server-actions-first.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_adr_0004_rsc_server_actions_first",
+      "target": "docs_adr_0004_rsc_server_actions_first_rsc_reads_server_action_writes",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0004-rsc-server-actions-first.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0004_rsc_server_actions_first",
+      "target": "context_service_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0004-rsc-server-actions-first.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0004_rsc_server_actions_first",
+      "target": "context_reference_feature",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0004-rsc-server-actions-first.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,141 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_ticket",
+      "label": "Ticket 09: Quiz Import and Quiz Settings",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_quiz_import_planner",
+      "label": "Quiz Import Planner (extends card planner)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_quiz_settings",
+      "label": "Quiz Settings (passing score, shuffle, show answers after)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_quiz_import_template",
+      "label": "Quiz Import CSV Template",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_ticket",
+      "target": "_scratch_ayc_member_app_issues_06_card_import_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_ticket",
+      "target": "_scratch_ayc_member_app_readme_ayc_v1_spec",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_ticket",
+      "target": "_scratch_ayc_member_app_readme_vertical_slice_ticket",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/issues/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_ticket",
+      "target": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_quiz_import_planner",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_ticket",
+      "target": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_quiz_settings",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_ticket",
+      "target": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_quiz_import_template",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_quiz_import_planner",
+      "target": "_scratch_ayc_member_app_issues_06_card_import_card_import_planner",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_ticket",
+      "target": "_scratch_ayc_member_app_grilling_notes_quiz_replace_keeps_scores",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_ticket",
+      "target": "_scratch_ayc_member_app_readme_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/09-quiz-import-and-settings.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

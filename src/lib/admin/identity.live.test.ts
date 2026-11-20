@@ -502,6 +502,52 @@ describe("the identity module, live mode", () => {
     });
   });
 
+  describe("getSignedInUser (the Member App's User)", () => {
+    it("gives the Supabase User's id with their verified email and Google name", async () => {
+      auth.getUser.mockResolvedValue(user(googleUser({ email: "Angel@AceYourCourse.ph" })));
+      const { getSignedInUser } = await loadIdentity();
+
+      expect(await getSignedInUser()).toEqual({
+        userId: USER_ID,
+        email: OWNER,
+        name: "Angel Rose L. Lepaña",
+      });
+    });
+
+    it("is nobody for an email neither Supabase nor Google verified", async () => {
+      auth.getUser.mockResolvedValue(
+        user(googleUser({ email_confirmed_at: undefined }, { email_verified: false })),
+      );
+      const { getSignedInUser } = await loadIdentity();
+
+      expect(await getSignedInUser()).toBeNull();
+    });
+
+    it("is nobody when signed out", async () => {
+      auth.getUser.mockResolvedValue(user(null));
+      const { getSignedInUser } = await loadIdentity();
+
+      expect(await getSignedInUser()).toBeNull();
+    });
+
+    it("is nobody for a password session, which doesn't count outside `pnpm dev`", async () => {
+      auth.getUser.mockResolvedValue(user(googleUser()));
+      signedInWith("password");
+      const { getSignedInUser } = await loadIdentity();
+
+      expect(await getSignedInUser()).toBeNull();
+    });
+
+    it("never reads user_metadata, which the User can change", async () => {
+      auth.getUser.mockResolvedValue(
+        user(googleUser({ user_metadata: { full_name: "Not Me", email: "other@example.com" } })),
+      );
+      const { getSignedInUser } = await loadIdentity();
+
+      expect(await getSignedInUser()).toMatchObject({ email: OWNER, name: "Angel Rose L. Lepaña" });
+    });
+  });
+
   describe("getSignInAttempt", () => {
     it("is unverified for an email neither Supabase nor Google verified", async () => {
       auth.getUser.mockResolvedValue(
@@ -568,6 +614,25 @@ describe("the identity module, live mode", () => {
         "http://localhost:3000/auth/callback?next=%2Fadmin",
       );
     });
+
+    it.each([
+      ["a Member App path", "/app/library?topic=x", "%2Fapp%2Flibrary%3Ftopic%3Dx"],
+      ["the Admin", "/admin/products", "%2Fapp"],
+      ["another site", "//evil.example/app", "%2Fapp"],
+      ["nothing", undefined, "%2Fapp"],
+    ])(
+      "for the Member App, sends `next` back as %s names it, or as Home",
+      async (_label, next, sent) => {
+        vi.stubGlobal("fetch", settings(true));
+        auth.signInWithOAuth.mockResolvedValue({ data: { url: "https://x.invalid" }, error: null });
+        const { startGoogleSignIn } = await loadIdentity();
+
+        await startGoogleSignIn(next, "member-app");
+        expect(auth.signInWithOAuth.mock.calls[0]?.[0].options.redirectTo).toBe(
+          `http://localhost:3000/auth/callback?next=${sent}`,
+        );
+      },
+    );
 
     it("still starts Google when the settings don't mention Email", async () => {
       vi.stubGlobal(

@@ -1,0 +1,319 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_executer_prompt",
+      "label": "Executer prompt 19: Privacy Request fulfilment in the Admin",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": "L1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_member_data_export",
+      "label": "Member data JSON export",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": "L35",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Attachment with Cache-Control no-store, Owners only, logged as exported; Owner emails it manually."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_account_deletion",
+      "label": "Account deletion (app data transaction, then Supabase user)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": "L40",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Safe order: delete app data in one transaction then the Supabase user; on failure leave the request open so retry is safe."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_auth_admin_interface",
+      "label": "Auth-admin interface with fake (secret-key client)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": "L34",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Uses server-only SUPABASE_SECRET_KEY client from src/lib/supabase/admin.ts; never NEXT_PUBLIC_."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_staff_deletion_guards",
+      "label": "Staff and last-Owner deletion guards",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": "L46",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Refuse deleting active Staff or pending Invites; reuse the existing last-Owner rule rather than writing a second one."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_mark_done",
+      "label": "Mark done (date and by whom)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": "L47",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_pii_free_staff_activity",
+      "label": "PII-free Staff Activity for deletions",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": "L44",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Records only request ID and an opaque Member ID, never email or name."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_member_data_export",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_account_deletion",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_auth_admin_interface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_staff_deletion_guards",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_mark_done",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_pii_free_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_privacy_request",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_admin_privacy_requests_list",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_member_detail_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_admin_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_guardrails",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_member_data_export",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_data_copy_request",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_account_deletion",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_deletion_request",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_account_deletion",
+      "target": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_auth_admin_interface",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_account_deletion",
+      "target": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_staff_deletion_guards",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_account_deletion",
+      "target": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_pii_free_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_pii_free_staff_activity",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_member_data_export",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_quiz_attempt",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_member_data_export",
+      "target": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_pages_viewed_record",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_member_data_export",
+      "target": "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_grant_history_rows",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_mark_done",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_due_dates_and_overdue",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_auth_admin_interface",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_page_images_interface",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/prompts/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

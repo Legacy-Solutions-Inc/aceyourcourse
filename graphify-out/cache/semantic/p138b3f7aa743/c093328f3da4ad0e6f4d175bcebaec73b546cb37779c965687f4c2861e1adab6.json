@@ -1,0 +1,269 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_ticket",
+      "label": "Ticket 15: Dashboard and Progress",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_progress_calculator",
+      "label": "Progress Calculator (pure)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_dashboard",
+      "label": "Dashboard (Home)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_study_streak",
+      "label": "Study Streak",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_weak_topic",
+      "label": "Weak Topic",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_continue_where_left_off",
+      "label": "Continue Where You Left Off",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_ticket",
+      "target": "_scratch_ayc_member_app_issues_08_flashcard_study_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_ticket",
+      "target": "_scratch_ayc_member_app_issues_11_quiz_taking_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_ticket",
+      "target": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_ticket",
+      "target": "_scratch_ayc_member_app_readme_ayc_v1_spec",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_ticket",
+      "target": "_scratch_ayc_member_app_readme_vertical_slice_ticket",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_ticket",
+      "target": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_progress_calculator",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_ticket",
+      "target": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_dashboard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_ticket",
+      "target": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_study_streak",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_ticket",
+      "target": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_weak_topic",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_ticket",
+      "target": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_continue_where_left_off",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_progress_calculator",
+      "target": "_scratch_ayc_member_app_grilling_notes_current_state_progress",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_progress_calculator",
+      "target": "_scratch_ayc_member_app_grilling_notes_card_mark",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_progress_calculator",
+      "target": "_scratch_ayc_member_app_grilling_notes_quiz_attempt",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_study_streak",
+      "target": "_scratch_ayc_member_app_grilling_notes_study_day",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_weak_topic",
+      "target": "_scratch_ayc_member_app_issues_11_quiz_taking_best_score",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_continue_where_left_off",
+      "target": "_scratch_ayc_member_app_issues_08_flashcard_study_deck_resume",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_dashboard",
+      "target": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_progress_calculator",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_15_dashboard_and_progress_ticket",
+      "target": "_scratch_ayc_member_app_issues_05_content_model_topics_library_access_library",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "progress_current_state_records",
+      "label": "Current-state progress records feeding the progress calculator",
+      "nodes": [
+        "_scratch_ayc_member_app_grilling_notes_card_mark",
+        "_scratch_ayc_member_app_grilling_notes_quiz_attempt",
+        "_scratch_ayc_member_app_grilling_notes_study_day",
+        "_scratch_ayc_member_app_issues_15_dashboard_and_progress_progress_calculator",
+        "_scratch_ayc_member_app_grilling_notes_current_state_progress"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/15-dashboard-and-progress.md"
+    }
+  ]
+}

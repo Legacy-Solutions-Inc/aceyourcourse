@@ -1,0 +1,209 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_ticket",
+      "label": "Ticket 19: Privacy Request Fulfilment in the Admin",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_member_data_export",
+      "label": "Member Data Export (JSON)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_delete_account",
+      "label": "Delete This Account",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Refused while on the staff list; the last Owner can never be deleted; Staff Activity records deletion without personal data."
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_mark_request_done",
+      "label": "Mark Privacy Request Done (due dates, overdue flag)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_ticket",
+      "target": "_scratch_ayc_member_app_issues_16_users_and_member_detail_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_ticket",
+      "target": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_ticket",
+      "target": "_scratch_ayc_member_app_readme_ayc_v1_spec",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_ticket",
+      "target": "_scratch_ayc_member_app_readme_vertical_slice_ticket",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_ticket",
+      "target": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_member_data_export",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_ticket",
+      "target": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_delete_account",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_ticket",
+      "target": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_mark_request_done",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_ticket",
+      "target": "_scratch_ayc_member_app_grilling_notes_privacy_requests_decision",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_member_data_export",
+      "target": "_scratch_ayc_member_app_issues_04_active_device_device_switch_log",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_member_data_export",
+      "target": "_scratch_ayc_member_app_grilling_notes_card_mark",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_member_data_export",
+      "target": "_scratch_ayc_member_app_grilling_notes_quiz_attempt",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_delete_account",
+      "target": "_scratch_ayc_member_app_readme_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_delete_account",
+      "target": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_deletion_request",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_member_data_export",
+      "target": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_data_copy_request",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "privacy_request_flow",
+      "label": "Privacy Request flow (Member request to Owner fulfilment)",
+      "nodes": [
+        "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_data_copy_request",
+        "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_deletion_request",
+        "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_privacy_requests_admin_list",
+        "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_member_data_export",
+        "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_delete_account",
+        "_scratch_ayc_member_app_issues_19_privacy_request_fulfilment_mark_request_done"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/19-privacy-request-fulfilment.md"
+    }
+  ]
+}

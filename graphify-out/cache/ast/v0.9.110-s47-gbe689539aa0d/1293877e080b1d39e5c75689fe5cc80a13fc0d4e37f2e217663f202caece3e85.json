@@ -1,0 +1,12 @@
+{
+  "nodes": [
+    {
+      "id": "$graphify-root$_supabase_migrations_20261103130415_catalogue_bucket_sql",
+      "label": "20261103130415_catalogue_bucket.sql",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261103130415_catalogue_bucket.sql",
+      "source_location": null
+    }
+  ],
+  "edges": []
+}

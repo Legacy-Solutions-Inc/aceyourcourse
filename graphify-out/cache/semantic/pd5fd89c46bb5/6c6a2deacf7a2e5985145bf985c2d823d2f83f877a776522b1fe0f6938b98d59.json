@@ -1,0 +1,512 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "label": "Executer prompt 13: Local Supabase foundation",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_13_local_supabase_foundation",
+      "label": "Ticket 13-local-supabase-foundation",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_conventions",
+      "label": "Phase 2 CONVENTIONS.md",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1",
+      "label": "AYC v1 spec (2026-10-29)",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "agents",
+      "label": "AGENTS.md",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "context",
+      "label": "CONTEXT.md (domain glossary)",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_0006_drizzle_data_layer",
+      "label": "ADR 0006 Drizzle data layer",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_0012_vercel_and_supabase_singapore",
+      "label": "ADR 0012 Vercel and Supabase Singapore",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_executer_no_commit_guardrail",
+      "label": "Executer must not commit/push; leave changes uncommitted on docs/ayc-v1-planning",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Overrides commit rules in CLAUDE.md/AGENTS.md so the planner/user reviews each ticket before committing"
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_staff_guard_server_authorisation",
+      "label": "Every Admin page and Server Action calls the Staff Guard; authorisation never from client or user_metadata",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_scratchpad_copy_build_gotcha",
+      "label": "pnpm build breaks a running :3000 dev server; build/e2e in a scratchpad copy with cp -cR node_modules",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Turbopack refuses a symlinked node_modules; never kill the user's server"
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_next_public_supabase_publishable_key",
+      "label": "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (renamed from ANON_KEY, no fallback)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Supabase publishable keys (sb_publishable_) replace the legacy anon key"
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_supabase_secret_key",
+      "label": "SUPABASE_SECRET_KEY (server-only)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Secret keys (sb_secret_) replace service_role and must never be NEXT_PUBLIC_"
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_revoke_default_privileges_migration",
+      "label": "First migration: revoke default privileges on public from anon/authenticated",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "New public tables get default grants for anon and authenticated in Supabase; access is checked on the server"
+    },
+    {
+      "id": "src_lib_db_deny_all_db_test",
+      "label": "deny-all.db.test.ts (browser roles can't touch any table)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_lib_db_test_database",
+      "label": "test-database.ts (TEST_DATABASE_URL helper, skips when unreachable)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_test_database_url_convention",
+      "label": "TEST_DATABASE_URL database test convention",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Never DATABASE_URL, so unit tests never switch the app's arm; skip with a clear reason when unset"
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_drizzle_kit_supabase_migrations",
+      "label": "drizzle-kit writes migrations into supabase/migrations with Supabase prefixes",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_pnpm_test_db",
+      "label": "pnpm test:db (*.db.test.ts, node env)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_local_and_production_decision",
+      "label": ".env holds LOCAL Supabase values; hosted values only in Vercel",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_env",
+      "label": "src/env.ts (public env schema)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_env_server",
+      "label": "src/env.server.ts (server-only env)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "_scratch_ayc_admin_issues_13_local_supabase_foundation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "agents",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "docs_adr_0006_drizzle_data_layer",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "docs_adr_0012_vercel_and_supabase_singapore",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_executer_no_commit_guardrail",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_scratchpad_copy_build_gotcha",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_staff_guard_server_authorisation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_next_public_supabase_publishable_key",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_supabase_secret_key",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_revoke_default_privileges_migration",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "src_lib_db_deny_all_db_test",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "src_lib_db_test_database",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_drizzle_kit_supabase_migrations",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_pnpm_test_db",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_local_and_production_decision",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_lib_db_test_database",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_test_database_url_convention",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_lib_db_deny_all_db_test",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_revoke_default_privileges_migration",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_supabase_secret_key",
+      "target": "src_env_server",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_next_public_supabase_publishable_key",
+      "target": "src_env",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_drizzle_kit_supabase_migrations",
+      "target": "docs_adr_0006_drizzle_data_layer",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_pnpm_test_db",
+      "target": "src_lib_db_deny_all_db_test",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "stage_b_database_migration",
+      "label": "Stage B: Admin moves from sample data to Supabase (tickets 13-18)",
+      "nodes": [
+        "_scratch_ayc_admin_prompts_13_local_supabase_foundation",
+        "_scratch_ayc_admin_prompts_14_catalogue_on_the_database",
+        "_scratch_ayc_admin_prompts_15_admin_writes_on_the_database",
+        "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+        "_scratch_ayc_admin_prompts_17_photo_storage",
+        "_scratch_ayc_admin_prompts_18_production_go_live"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/13-local-supabase-foundation.md"
+    }
+  ]
+}

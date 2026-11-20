@@ -1,0 +1,1080 @@
+{
+  "nodes": [
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1",
+      "label": "Spec: Ace Your Course v1",
+      "file_type": "document",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_three_surfaces_one_app",
+      "label": "One app, three Surfaces, one Supabase project",
+      "file_type": "rationale",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L290",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Website at root, Member App under /app, Admin under /admin; Vercel Pro + Supabase Pro in Singapore."
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_website_surface",
+      "label": "Website Surface",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L33",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_admin_surface",
+      "label": "Admin Surface",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L41",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_member_app_surface",
+      "label": "Member App Surface",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L48",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_no_tenancy",
+      "label": "No tenancy; staff list keyed by email (Owner/Editor)",
+      "file_type": "rationale",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L294",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "ADR 0008 supersedes 0005: every User is a Member, staff are a DB list; the server makes every access decision."
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_rls_deny_all",
+      "label": "RLS on every table with no anon/authenticated policies (server via Drizzle)",
+      "file_type": "rationale",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L298",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "The browser's publishable key reads and writes nothing; all access decisions happen server-side."
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_template_cleanup",
+      "label": "Template cleanup (remove tenancy, email/password auth, demo screens)",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L303",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_google_oauth_only",
+      "label": "Google OAuth only via Supabase",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L315",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_service_seam_everywhere",
+      "label": "Service Seam everywhere (typed contract, mock + database arms)",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L319",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_catalogue_seam",
+      "label": "Catalogue Service Seam (new Reference Feature)",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L311",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_access_decision_seam",
+      "label": "Access decision seam",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L1018",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_progress_calculator",
+      "label": "Progress calculator",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L1027",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_order_ledger",
+      "label": "Order ledger (PayMongo webhooks)",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L1036",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_access_pass",
+      "label": "Access Pass / Plan (fixed period, never auto-renews)",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L54",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_paymongo_integration",
+      "label": "PayMongo integration",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L925",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_active_device",
+      "label": "Active Device (one per Member)",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L818",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_burned_in_watermark",
+      "label": "Burned-in watermark",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L818",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_member_app_switch",
+      "label": "Member App switch",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L347",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_brand_design_system",
+      "label": "AYC brand design system (light-only tokens, Schibsted Grotesk + JetBrains Mono)",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L332",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_asia_manila_time",
+      "label": "Asia/Manila day boundaries",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L343",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_money_in_centavos",
+      "label": "Money stored as integer centavos",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L345",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_five_phases",
+      "label": "Five build phases (Website, Admin, Member App, Payments, Video)",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L1121",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_executer_guardrails",
+      "label": "Executer guardrails (happy+sad paths, no commit, green gates)",
+      "file_type": "rationale",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L1153",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Every ticket must specify and test happy and sad paths and leave changes uncommitted for review."
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_coming_soon_rules",
+      "label": "Coming Soon rules (never \u20b10)",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L347",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_free_preview",
+      "label": "Free Preview content",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L52",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_spreadsheet_import",
+      "label": "Spreadsheet import (Replace vs Add)",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L818",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_10_29_ayc_v1_staff_guard",
+      "label": "Staff Guard / Staff Role permissions",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L439",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_three_surfaces_one_app",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_website_surface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_admin_surface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_member_app_surface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_no_tenancy",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_rls_deny_all",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_template_cleanup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_google_oauth_only",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_service_seam_everywhere",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_catalogue_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_access_decision_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_progress_calculator",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_order_ledger",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_access_pass",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_paymongo_integration",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_active_device",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_burned_in_watermark",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_member_app_switch",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_brand_design_system",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_asia_manila_time",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_money_in_centavos",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_five_phases",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_executer_guardrails",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_coming_soon_rules",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_free_preview",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_spreadsheet_import",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_specs_2026_10_29_ayc_v1_staff_guard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_three_surfaces_one_app",
+      "target": "docs_specs_2026_10_29_ayc_v1_website_surface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_three_surfaces_one_app",
+      "target": "docs_specs_2026_10_29_ayc_v1_admin_surface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_three_surfaces_one_app",
+      "target": "docs_specs_2026_10_29_ayc_v1_member_app_surface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_catalogue_seam",
+      "target": "docs_specs_2026_10_29_ayc_v1_service_seam_everywhere",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_no_tenancy",
+      "target": "docs_specs_2026_10_29_ayc_v1_rls_deny_all",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_template_cleanup",
+      "target": "docs_specs_2026_10_29_ayc_v1_no_tenancy",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_order_ledger",
+      "target": "docs_specs_2026_10_29_ayc_v1_paymongo_integration",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_order_ledger",
+      "target": "docs_specs_2026_10_29_ayc_v1_access_pass",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_access_decision_seam",
+      "target": "docs_specs_2026_10_29_ayc_v1_access_pass",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_access_decision_seam",
+      "target": "docs_specs_2026_10_29_ayc_v1_free_preview",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_access_decision_seam",
+      "target": "docs_specs_2026_10_29_ayc_v1_active_device",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L1018",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_mockup_readme",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_adr_0008_single_brand_members_and_staff",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_adr_0009_cookieless_website_analytics",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_adr_0010_access_follows_the_exam",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_adr_0011_one_active_device_member_app_only",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "docs_adr_0012_vercel_and_supabase_singapore",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_no_tenancy",
+      "target": "docs_adr_0005_multi_tenancy",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L294",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_service_seam_everywhere",
+      "target": "docs_adr_0003_mock_first_service_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L319",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_active_device",
+      "target": "docs_adr_0011_one_active_device_member_app_only",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_access_pass",
+      "target": "docs_adr_0010_access_follows_the_exam",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_no_tenancy",
+      "target": "docs_specs_2026_07_15_multi_tenancy",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_template_cleanup",
+      "target": "docs_specs_2026_07_15_multi_tenancy_organization",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L305",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_template_cleanup",
+      "target": "docs_specs_2026_07_15_multi_tenancy_workspace_switcher",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L305",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_template_cleanup",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_customers_reference_feature",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_template_cleanup",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_supabase_auth_screens",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_template_cleanup",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_mock_rbac_screens",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_catalogue_seam",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_customers_reference_feature",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": "L311",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_service_seam_everywhere",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_mock_first_service_seam",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_specs_2026_07_31_coding_standards_drizzle_bypasses_rls",
+      "target": "docs_specs_2026_10_29_ayc_v1_rls_deny_all",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_specs_2026_07_31_coding_standards_in_action_authz",
+      "target": "docs_specs_2026_10_29_ayc_v1_staff_guard",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_admin_build_map_admin_roles",
+      "target": "docs_specs_2026_10_29_ayc_v1_staff_guard",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_admin_build_map_admin_roles",
+      "target": "docs_specs_2026_10_29_ayc_v1_no_tenancy",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_admin_build_map_content_protection",
+      "target": "docs_specs_2026_10_29_ayc_v1_burned_in_watermark",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_admin_build_map_digital_access_rules",
+      "target": "docs_specs_2026_10_29_ayc_v1_access_decision_seam",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_admin_build_map_store_link_fallback",
+      "target": "docs_specs_2026_10_29_ayc_v1_website_surface",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_member_app_build_map_single_session",
+      "target": "docs_specs_2026_10_29_ayc_v1_active_device",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_member_app_build_map_consent_gate",
+      "target": "docs_specs_2026_10_29_ayc_v1_member_app_surface",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_member_app_build_map_paymongo_implied",
+      "target": "docs_specs_2026_10_29_ayc_v1_paymongo_integration",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_member_app_build_map_physical_digital_gap",
+      "target": "docs_specs_2026_10_29_ayc_v1_access_pass",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_website_build_map_catalogue_not_store",
+      "target": "docs_specs_2026_10_29_ayc_v1_website_surface",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_website_build_map_neo_brutalist_style",
+      "target": "docs_specs_2026_10_29_ayc_v1_brand_design_system",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_member_app_surface",
+      "target": "docs_mockup_member_app_build_map",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_admin_surface",
+      "target": "docs_mockup_admin_build_map",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_10_29_ayc_v1_website_surface",
+      "target": "docs_mockup_website_build_map",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "ayc_v1_test_seams",
+      "label": "AYC v1 behaviour-tested seams",
+      "nodes": [
+        "docs_specs_2026_10_29_ayc_v1_catalogue_seam",
+        "docs_specs_2026_10_29_ayc_v1_access_decision_seam",
+        "docs_specs_2026_10_29_ayc_v1_progress_calculator",
+        "docs_specs_2026_10_29_ayc_v1_order_ledger"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md"
+    },
+    {
+      "id": "ayc_three_surfaces_and_mockups",
+      "label": "Three Surfaces and their mockup build maps",
+      "nodes": [
+        "docs_specs_2026_10_29_ayc_v1_website_surface",
+        "docs_specs_2026_10_29_ayc_v1_admin_surface",
+        "docs_specs_2026_10_29_ayc_v1_member_app_surface",
+        "docs_mockup_website_build_map",
+        "docs_mockup_admin_build_map",
+        "docs_mockup_member_app_build_map"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/specs/2026-10-29-ayc-v1.md"
+    }
+  ]
+}

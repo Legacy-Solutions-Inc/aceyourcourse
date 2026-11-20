@@ -2,9 +2,12 @@ import { paths } from "@/paths";
 import type { StaffRole } from "@/services/admin.types";
 
 // The Admin's fixed menu (spec Phase 2, Menu; mockup lines 14–38). Each screen
-// keeps its number whoever is signed in. Later phases add their own groups.
+// keeps its number whoever is signed in. Later phases add their own groups:
+// Phase 3 starts with Users, before Settings, which stays last as in the
+// mockup.
 
-export type AdminScreenKey = "overview" | "exam-pages" | "products" | "reviews" | "settings";
+export type AdminScreenKey =
+  "overview" | "exam-pages" | "products" | "reviews" | "content" | "users" | "settings";
 
 export interface AdminMenuItem {
   key: AdminScreenKey;
@@ -59,11 +62,30 @@ const MENU: readonly AdminMenuGroup[] = [
     ],
   },
   {
+    label: "MEMBER APP",
+    items: [
+      {
+        key: "content",
+        code: "05",
+        label: "Member App content",
+        href: paths.admin.content,
+        ownerOnly: false,
+      },
+      {
+        key: "users",
+        code: "06",
+        label: "Users",
+        href: paths.admin.users,
+        ownerOnly: true,
+      },
+    ],
+  },
+  {
     label: "SETTINGS",
     items: [
       {
         key: "settings",
-        code: "05",
+        code: "07",
         label: "Settings",
         href: paths.admin.settings,
         ownerOnly: true,

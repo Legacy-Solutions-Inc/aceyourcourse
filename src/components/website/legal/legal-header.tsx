@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 import { legalContainer } from "@/components/website/legal/legal-container";
 import { legalPageCopy } from "@/content/legal/copy";
 import type { LegalDocument } from "@/content/legal/types";
@@ -10,9 +12,13 @@ interface LegalHeaderProps {
   switcher: React.ReactNode;
 }
 
-/** The document's title, version and effective date, with a draft label until it's final. */
+/**
+ * The document's title, version and effective date, with a visible "Draft,
+ * pending legal review" notice under them until the document is final.
+ */
 export function LegalHeader({ document, switcher }: LegalHeaderProps) {
   const { title, version, effectiveDate, status } = document;
+  const draftId = useId();
   return (
     <section className="border-b-[1.5px] border-ayc-navy">
       <div
@@ -31,8 +37,22 @@ export function LegalHeader({ document, switcher }: LegalHeaderProps) {
         >
           Version {version} · Effective{" "}
           <time dateTime={effectiveDate}>{formatDate(effectiveDate)}</time>
-          {status === "draft" ? ` · ${legalPageCopy.draftLabel}` : null}
         </p>
+        {status === "draft" ? (
+          <div
+            role="note"
+            aria-labelledby={draftId}
+            className="flex max-w-[68ch] flex-col gap-1 border-[1.5px] border-dashed border-ayc-navy bg-ayc-paper px-4 py-3"
+          >
+            <p
+              id={draftId}
+              className="font-mono text-xs font-bold tracking-[0.06em] text-ayc-blue uppercase"
+            >
+              {legalPageCopy.draftLabel}
+            </p>
+            <p className="text-sm leading-normal">{legalPageCopy.draftNote}</p>
+          </div>
+        ) : null}
       </div>
     </section>
   );

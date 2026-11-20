@@ -45,8 +45,9 @@ describe("the legal page", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "Privacy Policy" })).toBeInTheDocument();
     expect(screen.getByTestId("legal-version")).toHaveTextContent(
-      "Version 1.0 · Effective 1 Dec 2026 · Draft for legal review",
+      "Version 2.0 · Effective 17 Nov 2026",
     );
+    expect(screen.getByRole("note", { name: "Draft, pending legal review" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -57,13 +58,13 @@ describe("the legal page", () => {
     );
     expect(
       within(screen.getByRole("region", { name: "In short" })).getAllByRole("listitem"),
-    ).toHaveLength(5);
+    ).toHaveLength(6);
 
     const contents = within(screen.getByRole("navigation", { name: "Contents" })).getAllByRole(
       "link",
     );
     expect(contents.map((link) => link.getAttribute("href"))).toEqual(
-      ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8"].map((id) => `#${id}`),
+      Array.from({ length: 15 }, (_, index) => `#s${index + 1}`),
     );
     for (const link of contents) {
       const id = link.getAttribute("href")?.slice(1) ?? "";
@@ -85,6 +86,10 @@ describe("the legal page", () => {
     render(await LegalPage(props("terms")));
 
     expect(screen.getByRole("heading", { level: 1, name: "Terms of Use" })).toBeInTheDocument();
+    expect(screen.getByTestId("legal-version")).toHaveTextContent(
+      "Version 2.0 · Effective 17 Nov 2026",
+    );
+    expect(screen.getByRole("note", { name: "Draft, pending legal review" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Terms of Use" })).toHaveAttribute(
       "aria-current",
       "page",

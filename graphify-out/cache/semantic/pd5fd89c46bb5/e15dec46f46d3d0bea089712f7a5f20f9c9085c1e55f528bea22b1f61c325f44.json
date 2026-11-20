@@ -1,0 +1,111 @@
+{
+  "nodes": [
+    {
+      "id": "_claude_skills_testing_e2e_skill_testing_e2e_skill",
+      "label": "testing-e2e Skill (Playwright + axe)",
+      "file_type": "document",
+      "source_file": ".claude/skills/testing-e2e/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_testing_e2e_skill_user_facing_locators",
+      "label": "User-Facing Locators + Web-First Assertions",
+      "file_type": "concept",
+      "source_file": ".claude/skills/testing-e2e/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_testing_e2e_skill_axe_a11y_gate",
+      "label": "axe Serious/Critical Accessibility Gate",
+      "file_type": "concept",
+      "source_file": ".claude/skills/testing-e2e/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_testing_e2e_skill_placeholder_supabase_webserver",
+      "label": "webServer with Placeholder Supabase Env",
+      "file_type": "concept",
+      "source_file": ".claude/skills/testing-e2e/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_claude_skills_testing_e2e_skill_testing_e2e_skill",
+      "target": "_claude_skills_testing_e2e_skill_user_facing_locators",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/testing-e2e/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_testing_e2e_skill_testing_e2e_skill",
+      "target": "_claude_skills_testing_e2e_skill_axe_a11y_gate",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/testing-e2e/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_testing_e2e_skill_testing_e2e_skill",
+      "target": "_claude_skills_testing_e2e_skill_placeholder_supabase_webserver",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/testing-e2e/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_testing_e2e_skill_placeholder_supabase_webserver",
+      "target": "_claude_skills_supabase_auth_skill_middleware_session_refresh",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/testing-e2e/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_testing_e2e_skill_testing_e2e_skill",
+      "target": "_claude_skills_testing_unit_skill_testing_unit_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/testing-e2e/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_testing_e2e_skill_user_facing_locators",
+      "target": "_claude_skills_testing_unit_skill_accessible_queries",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".claude/skills/testing-e2e/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

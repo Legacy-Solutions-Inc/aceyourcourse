@@ -130,4 +130,20 @@ describe("parseServerEnv", () => {
       );
     },
   );
+
+  // The Reviewer PDF job's cron secret (ticket 12): optional, so local and e2e runs need none.
+  it("leaves CRON_SECRET unset by default, and reads an empty one as unset", () => {
+    expect(parseServerEnv({}).CRON_SECRET).toBeUndefined();
+    expect(parseServerEnv({ CRON_SECRET: "" }).CRON_SECRET).toBeUndefined();
+  });
+
+  it("accepts a CRON_SECRET of at least 16 characters", () => {
+    const secret = "0123456789abcdef";
+    expect(parseServerEnv({ CRON_SECRET: secret }).CRON_SECRET).toBe(secret);
+  });
+
+  it("throws on a CRON_SECRET too short to guess at, naming the key but not the value", () => {
+    expect(() => parseServerEnv({ CRON_SECRET: "short-secret" })).toThrow(/CRON_SECRET/);
+    expect(() => parseServerEnv({ CRON_SECRET: "short-secret" })).not.toThrow(/short-secret/);
+  });
 });

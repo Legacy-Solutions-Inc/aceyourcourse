@@ -1,0 +1,120 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_16_real_staff_sign_in",
+      "label": "Ticket 16: Real Staff sign-in",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_16_real_staff_sign_in_live_mode_google_oauth",
+      "label": "Live mode: Google OAuth via Supabase (PKCE, /auth/callback)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_16_real_staff_sign_in_staff_add_owner",
+      "label": "pnpm staff:add-owner (idempotent first Owner, actor deployment)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/16-real-staff-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_issues_16_real_staff_sign_in_live_mode_google_oauth",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_issues_16_real_staff_sign_in_staff_add_owner",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_16_real_staff_sign_in_live_mode_google_oauth",
+      "target": "_scratch_ayc_admin_conventions_computeadminmode",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_16_real_staff_sign_in_live_mode_google_oauth",
+      "target": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in_next_sanitising",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_16_real_staff_sign_in",
+      "target": "_scratch_ayc_admin_conventions_staff_guard",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_16_real_staff_sign_in_staff_add_owner",
+      "target": "_scratch_ayc_admin_conventions_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/16-real-staff-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

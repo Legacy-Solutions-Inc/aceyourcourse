@@ -1,0 +1,173 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_ticket",
+      "label": "Ticket 18: Account, Support and Privacy Requests",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_account_page",
+      "label": "Account Page",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_data_copy_request",
+      "label": "Data Copy Privacy Request",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_deletion_request",
+      "label": "Deletion Privacy Request",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_support_page",
+      "label": "Support Page",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_privacy_requests_admin_list",
+      "label": "Privacy Requests Admin List",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_ticket",
+      "target": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_ticket",
+      "target": "_scratch_ayc_member_app_readme_ayc_v1_spec",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_ticket",
+      "target": "_scratch_ayc_member_app_readme_vertical_slice_ticket",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_ticket",
+      "target": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_account_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_ticket",
+      "target": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_data_copy_request",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_ticket",
+      "target": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_deletion_request",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_ticket",
+      "target": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_support_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_ticket",
+      "target": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_privacy_requests_admin_list",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_account_page",
+      "target": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_consent_record",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_18_account_support_privacy_requests_account_page",
+      "target": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_target_exam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

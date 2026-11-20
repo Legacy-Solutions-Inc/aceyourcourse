@@ -12,6 +12,9 @@ import * as schema from "@/lib/db/schema";
 
 export type Database = PostgresJsDatabase<typeof schema>;
 
+/** The transaction a `db.transaction` callback is given. */
+export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+
 /** How long connecting waits for Postgres to answer before the query fails, in seconds. A query on a working connection has no limit here. */
 export const CONNECT_TIMEOUT_SECONDS = 10;
 

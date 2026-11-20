@@ -1,0 +1,112 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_website_issues_05_home_top_half",
+      "label": "Ticket 05: Home, top half",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-website/issues/05-home-top-half.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_05_home_top_half_hero_promo_video",
+      "label": "Self-hosted hero promo video (no download on mobile until tap)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-website/issues/05-home-top-half.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Mobile visitors should not download video bytes; reduced motion and Save-Data disable autoplay."
+    },
+    {
+      "id": "_scratch_ayc_website_issues_05_home_top_half_best_sellers_carousel",
+      "label": "Best sellers carousel (top 6 by units sold)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/05-home-top-half.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_05_home_top_half_try_a_card_flip_widget",
+      "label": "Try a card flip widget",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/05-home-top-half.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_website_issues_05_home_top_half",
+      "target": "_scratch_ayc_website_issues_02_product_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/05-home-top-half.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_05_home_top_half",
+      "target": "_scratch_ayc_website_issues_05_home_top_half_hero_promo_video",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/05-home-top-half.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_05_home_top_half",
+      "target": "_scratch_ayc_website_issues_05_home_top_half_best_sellers_carousel",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/05-home-top-half.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_05_home_top_half",
+      "target": "_scratch_ayc_website_issues_05_home_top_half_try_a_card_flip_widget",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/05-home-top-half.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_05_home_top_half",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell_member_app_switch",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/05-home-top-half.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_05_home_top_half_best_sellers_carousel",
+      "target": "_scratch_ayc_website_issues_02_product_page_shared_website_components",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-website/issues/05-home-top-half.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

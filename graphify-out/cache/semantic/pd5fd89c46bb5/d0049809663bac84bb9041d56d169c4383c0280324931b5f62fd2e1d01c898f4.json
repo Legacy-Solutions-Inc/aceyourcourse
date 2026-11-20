@@ -1,0 +1,426 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_website_readme",
+      "label": "Phase 1 Website tickets and executer prompts (README)",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_readme_ticket_order",
+      "label": "Phase 1 ticket run order (01,02,13,08,10,03,04,05,06,07,09,12,11)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Each ticket starts only when its blockers are committed on docs/ayc-v1-planning; parallel lanes after 01 and 02; 12 blocked by 02 for the Product/Review model, 09 blocked by 02 for Product count and store buttons."
+    },
+    {
+      "id": "_scratch_ayc_website_readme_risen_prompt_structure",
+      "label": "RISEN executer prompt structure (prompt-architect)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Role / Instructions (Goal, Context) / Steps (Approach) / End goal (Acceptance, Report back) / Narrowing (Scope, Guardrails) so each prompt is a self-contained brief for a memoryless executer."
+    },
+    {
+      "id": "_scratch_ayc_website_readme_executer_never_commits",
+      "label": "Executers never commit; shared branch docs/ayc-v1-planning",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "The user reviews and commits each ticket before the next starts; every prompt requires happy and sad paths with a test per sad path and reports lint/type/test/build/coverage/e2e evidence."
+    },
+    {
+      "id": "_scratch_ayc_website_readme_merge_conflict_hotspots",
+      "label": "Merge-conflict hotspots (Catalogue seam files, paths.ts, a11y.spec.ts, Home page.tsx)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_readme_phase1_launch_checklist",
+      "label": "Phase 1 launch checklist",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Non-blocking launch items: client catalogue spreadsheet import, lawyer review of Legal v1.0, client copy confirmations, PostHog discard-IP, NEXT_PUBLIC_SITE_URL, MEMBER_APP_LIVE unset, Vercel sin1."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_prompts_01_branded_website_shell",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_issues_02_product_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_prompts_02_product_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_issues_03_products_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_prompts_03_products_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_issues_04_exam_pages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_prompts_04_exam_pages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_issues_05_home_top_half",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_prompts_05_home_top_half",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_issues_06_home_bottom_half",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_prompts_06_home_bottom_half",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_issues_07_reviews_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_prompts_07_reviews_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_issues_08_faq_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_prompts_08_faq_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_issues_09_about_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_prompts_09_about_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_issues_10_legal_pages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_prompts_10_legal_pages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_issues_11_sitemap_and_site_checks",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_prompts_11_sitemap_and_site_checks",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_issues_12_catalogue_spreadsheet",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_prompts_12_catalogue_spreadsheet",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_issues_13_template_cleanup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_prompts_13_template_cleanup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_readme_ticket_order",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_readme_risen_prompt_structure",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_readme_executer_never_commits",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_readme_merge_conflict_hotspots",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme",
+      "target": "_scratch_ayc_website_readme_phase1_launch_checklist",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme_phase1_launch_checklist",
+      "target": "_scratch_ayc_website_issues_12_catalogue_spreadsheet",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_readme_phase1_launch_checklist",
+      "target": "_scratch_ayc_website_issues_10_legal_pages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "catalogue_seam_consumers",
+      "label": "Website pages consuming the Catalogue Service Seam and Product/Review contract",
+      "nodes": [
+        "_scratch_ayc_website_issues_01_branded_website_shell_catalogue_service_seam",
+        "_scratch_ayc_website_issues_02_product_page_product_review_read_contract",
+        "_scratch_ayc_website_issues_03_products_page",
+        "_scratch_ayc_website_issues_04_exam_pages",
+        "_scratch_ayc_website_issues_05_home_top_half",
+        "_scratch_ayc_website_issues_07_reviews_page",
+        "_scratch_ayc_website_issues_09_about_page",
+        "_scratch_ayc_website_issues_11_sitemap_and_site_checks"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-website/README.md"
+    }
+  ]
+}

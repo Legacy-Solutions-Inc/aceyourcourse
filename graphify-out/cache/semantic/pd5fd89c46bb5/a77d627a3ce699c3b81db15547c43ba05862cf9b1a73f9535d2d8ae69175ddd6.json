@@ -1,0 +1,186 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_website_issues_02_product_page",
+      "label": "Ticket 02: Product page",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_02_product_page_product_review_read_contract",
+      "label": "Complete Product and Review read contract",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Defined once in ticket 02 so tickets 03-07 only consume it and parallel tickets do not collide."
+    },
+    {
+      "id": "_scratch_ayc_website_issues_02_product_page_coming_soon_rules",
+      "label": "Coming Soon Product rules (no price, never P0, no buy buttons)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_02_product_page_store_buttons",
+      "label": "Store buttons (Listing, then shop page, else hidden)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_02_product_page_seed_validation",
+      "label": "Catalogue seed validation",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_02_product_page_shared_website_components",
+      "label": "Shared ProductCard, ReviewCard, StoreButton and Marquee",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Built in 02 together with the /products URL builder so 03-06 do not build competing copies in parallel."
+    },
+    {
+      "id": "_scratch_ayc_website_issues_02_product_page_no_rating_review_markup",
+      "label": "No rating or review structured data",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_website_issues_02_product_page",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_02_product_page",
+      "target": "_scratch_ayc_website_issues_02_product_page_product_review_read_contract",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_02_product_page",
+      "target": "_scratch_ayc_website_issues_02_product_page_coming_soon_rules",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_02_product_page",
+      "target": "_scratch_ayc_website_issues_02_product_page_store_buttons",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_02_product_page",
+      "target": "_scratch_ayc_website_issues_02_product_page_seed_validation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_02_product_page",
+      "target": "_scratch_ayc_website_issues_02_product_page_shared_website_components",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_02_product_page",
+      "target": "_scratch_ayc_website_issues_02_product_page_no_rating_review_markup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_02_product_page_product_review_read_contract",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell_catalogue_service_seam",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_02_product_page_store_buttons",
+      "target": "_scratch_ayc_website_issues_01_branded_website_shell_marketplace_click_event",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_01_branded_website_shell_member_app_switch",
+      "target": "_scratch_ayc_website_issues_02_product_page",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-website/issues/02-product-page.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

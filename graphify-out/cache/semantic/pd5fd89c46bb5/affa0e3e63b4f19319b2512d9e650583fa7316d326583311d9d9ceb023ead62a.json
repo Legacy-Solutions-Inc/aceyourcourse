@@ -1,0 +1,123 @@
+{
+  "nodes": [
+    {
+      "id": "docs_mockup_website_build_map",
+      "label": "Website mockup BUILD-MAP",
+      "file_type": "document",
+      "source_file": "docs/mockup/website/BUILD-MAP.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_mockup_website_build_map_catalogue_not_store",
+      "label": "Website is a catalogue and funnel, not a store",
+      "file_type": "rationale",
+      "source_file": "docs/mockup/website/BUILD-MAP.md",
+      "source_location": "L31",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Physical sales go out to Shopee/Lazada/TikTok Shop; digital sales go to the Member App."
+    },
+    {
+      "id": "docs_mockup_website_build_map_neo_brutalist_style",
+      "label": "Neo-brutalist visual style (cream/navy/orange)",
+      "file_type": "concept",
+      "source_file": "docs/mockup/website/BUILD-MAP.md",
+      "source_location": "L29",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_mockup_website_build_map_sitemap",
+      "label": "Website sitemap (Home, Products, Product, Exam, Reviews, FAQ, About, Legal)",
+      "file_type": "concept",
+      "source_file": "docs/mockup/website/BUILD-MAP.md",
+      "source_location": "L33",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_mockup_website_build_map_made_by_passers_positioning",
+      "label": "Positioning: made by board passers, IPOPHIL-registered originals",
+      "file_type": "concept",
+      "source_file": "docs/mockup/website/BUILD-MAP.md",
+      "source_location": "L15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_mockup_website_build_map",
+      "target": "docs_mockup_website_build_map_catalogue_not_store",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/website/BUILD-MAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_website_build_map",
+      "target": "docs_mockup_website_build_map_neo_brutalist_style",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/website/BUILD-MAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_website_build_map",
+      "target": "docs_mockup_website_build_map_sitemap",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/website/BUILD-MAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_website_build_map",
+      "target": "docs_mockup_website_build_map_made_by_passers_positioning",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/website/BUILD-MAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_website_build_map",
+      "target": "docs_mockup_readme_aycdata_js",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/mockup/website/BUILD-MAP.md",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_mockup_website_build_map",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/mockup/website/BUILD-MAP.md",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

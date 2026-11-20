@@ -1,0 +1,355 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "label": "Executer prompt 18: Production go-live",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_18_production_go_live",
+      "label": "Ticket 18-production-go-live",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_runbooks_production",
+      "label": "docs/runbooks/production.md (production runbook)",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_lib_db_check",
+      "label": "src/lib/db/check.ts (pnpm db:check logic, read-only)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_18_production_go_live_seed_production_check_flag",
+      "label": "catalogue:seed --production --check dry run",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_repo_secrets_test",
+      "label": "repo-secrets.test.ts (secret scan of tracked files)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_18_production_go_live_transaction_pooler_production",
+      "label": "Production uses the transaction pooler on port 6543 with prepare:false",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_18_production_go_live_smoke_checklist",
+      "label": "Production smoke checklist",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "_scratch_ayc_admin_issues_18_production_go_live",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "agents",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "docs_adr_0012_vercel_and_supabase_singapore",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_executer_no_commit_guardrail",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_scratchpad_copy_build_gotcha",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_staff_guard_server_authorisation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "docs_runbooks_production",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "src_lib_db_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "_scratch_ayc_admin_prompts_18_production_go_live_seed_production_check_flag",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "src_repo_secrets_test",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "_scratch_ayc_admin_prompts_18_production_go_live_transaction_pooler_production",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "_scratch_ayc_admin_prompts_18_production_go_live_smoke_checklist",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_lib_db_check",
+      "target": "src_lib_db_deny_all_db_test",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_lib_db_check",
+      "target": "_scratch_ayc_admin_prompts_17_photo_storage_catalogue_storage_bucket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live_seed_production_check_flag",
+      "target": "_scratch_ayc_admin_prompts_14_catalogue_on_the_database_catalogue_seed_production_refusal",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_runbooks_production",
+      "target": "_scratch_ayc_admin_prompts_18_production_go_live_smoke_checklist",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_runbooks_production",
+      "target": "src_lib_db_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_runbooks_production",
+      "target": "scripts_staff_add_owner",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live_transaction_pooler_production",
+      "target": "src_lib_db_client",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live_transaction_pooler_production",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_session_pooler_locally",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live_transaction_pooler_production",
+      "target": "docs_adr_0012_vercel_and_supabase_singapore",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_18_production_go_live",
+      "target": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/18-production-go-live.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

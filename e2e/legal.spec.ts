@@ -1,27 +1,30 @@
 import { expect, type Page, test } from "@playwright/test";
 
-// The Privacy Policy and Terms of Use on a real browser, with the Member App
-// switch off (the launch default). Expected copy is src/content/legal/.
+// The Privacy Policy and Terms of Use (v2.0, a draft pending legal review) on
+// a real browser, with the Member App switch off (the launch default).
+// Expected copy is src/content/legal/.
 
 const EMAIL = "aceyourcourseinc@gmail.com";
-const SECTION_IDS = ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8"];
+const sectionIds = (count: number) => Array.from({ length: count }, (_, index) => `s${index + 1}`);
 
 const switcher = (page: Page) => page.getByRole("navigation", { name: "Legal documents" });
 const contents = (page: Page) => page.getByRole("navigation", { name: "Contents" });
 const summary = (page: Page) => page.getByRole("region", { name: "In short" });
 
-for (const { path, title, other, otherPath } of [
+for (const { path, title, other, otherPath, sections } of [
   {
     path: "/legal/privacy",
     title: "Privacy Policy",
     other: "Terms of Use",
     otherPath: "/legal/terms",
+    sections: 15,
   },
   {
     path: "/legal/terms",
     title: "Terms of Use",
     other: "Privacy Policy",
     otherPath: "/legal/privacy",
+    sections: 13,
   },
 ]) {
   test.describe(`the ${title}`, () => {
@@ -37,23 +40,37 @@ for (const { path, title, other, otherPath } of [
       );
 
       await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
-      await expect(
-        page.getByText("Version 1.0 · Effective 1 Dec 2026 · Draft for legal review"),
-      ).toBeVisible();
-      await expect(summary(page).getByRole("listitem")).toHaveCount(5);
+      await expect(page.getByText("Version 2.0 · Effective 17 Nov 2026")).toBeVisible();
+      await expect(summary(page).getByRole("listitem")).toHaveCount(6);
       await expect(
         summary(page).getByText("This summary isn’t a replacement for the full text below."),
       ).toBeVisible();
 
       const links = contents(page).getByRole("link");
-      await expect(links).toHaveCount(SECTION_IDS.length);
-      for (const [index, id] of SECTION_IDS.entries()) {
+      await expect(links).toHaveCount(sections);
+      for (const [index, id] of sectionIds(sections).entries()) {
         await expect(links.nth(index)).toHaveAttribute("href", `#${id}`);
         await expect(links.nth(index)).toHaveText(new RegExp(`^${index + 1}\\. `));
         await expect(page.locator(`#${id}`).getByRole("heading", { level: 2 })).toHaveText(
           new RegExp(`^${index + 1} `),
         );
       }
+    });
+
+    test("shows the “Draft, pending legal review” notice under the header", async ({ page }) => {
+      await page.goto(path);
+
+      const notice = page.getByRole("note", { name: "Draft, pending legal review" });
+      await expect(notice).toBeVisible();
+      await expect(notice).toContainText("hasn’t been reviewed by our lawyer yet");
+      // Under the header, before the summary.
+      const noticeBottom = await notice.evaluate(
+        (element) => element.getBoundingClientRect().bottom,
+      );
+      const summaryTop = await summary(page).evaluate(
+        (element) => element.getBoundingClientRect().top,
+      );
+      expect(noticeBottom).toBeLessThan(summaryTop);
     });
 
     test("marks itself current in the switcher and links to the other document", async ({
@@ -118,7 +135,7 @@ test("the Privacy Policy describes the Website's anonymous analytics and its con
 
   await expect(main.getByText(/anonymous analytics with PostHog/)).toBeVisible();
   await expect(main.getByText(/The analytics are cookieless/)).toBeVisible();
-  await expect(main.getByText(/PostHog discards your IP address/)).toBeVisible();
+  await expect(main.getByText(/^PostHog discards your IP address/)).toBeVisible();
   await expect(
     main.getByText(/no accounts, no sign-in, no forms, no cart and no payments/),
   ).toBeVisible();
@@ -129,6 +146,46 @@ test("the Privacy Policy describes the Website's anonymous analytics and its con
     "href",
     `mailto:${EMAIL}`,
   );
+});
+
+test("the Privacy Policy covers the Member App: sign-in, progress, device log, watermarks and requests", async ({
+  page,
+}) => {
+  await page.goto("/legal/privacy");
+  const main = page.getByRole("main");
+
+  for (const heading of [
+    "Your Member App account and Google sign-in",
+    "Your study data and progress",
+    "Your Active Device and its device log",
+    "Watermarks on Reviewer PDF pages",
+    "Access Passes and grants",
+    "Analytics in the Member App",
+    "Privacy Requests: a copy of your data, or deleting your account",
+  ]) {
+    await expect(main.getByRole("heading", { level: 2, name: heading })).toBeVisible();
+  }
+  await expect(main.getByText(/stamped with your email address and Member ID/)).toBeVisible();
+  await expect(main.getByText(/within 30 days, we delete your account/)).toBeVisible();
+  await expect(main.getByText(/Version 2\.0, effective 17 November 2026/)).toBeVisible();
+});
+
+test("the Terms of Use cover the Member App account, Active Device, Access Passes and content", async ({
+  page,
+}) => {
+  await page.goto("/legal/terms");
+  const main = page.getByRole("main");
+
+  for (const heading of [
+    "The Member App and your account",
+    "One Active Device",
+    "Access Passes, Free Preview and grants",
+    "Member App content and watermarks",
+    "Ending your access, and deleting your account",
+  ]) {
+    await expect(main.getByRole("heading", { level: 2, name: heading })).toBeVisible();
+  }
+  await expect(main.getByText(/Access you paid for isn’t refunded/)).toBeVisible();
 });
 
 test("the Terms of Use cover Marketplace purchases, as-of figures and IPOPHIL", async ({

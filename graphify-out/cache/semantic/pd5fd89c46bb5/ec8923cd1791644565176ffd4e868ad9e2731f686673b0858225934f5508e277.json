@@ -1,0 +1,89 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_25_not_on_site_instructions",
+      "label": "Ticket 25: Say how to put an Exam on the Website",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/25-not-on-site-instructions.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_25_not_on_site_instructions_not_on_site_note",
+      "label": "NOT ON SITE note with steps and Products link (/admin/products?exam=)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/25-not-on-site-instructions.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_25_not_on_site_instructions",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/issues/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_25_not_on_site_instructions",
+      "target": "_scratch_ayc_admin_issues_23_add_exams_and_subjects",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_25_not_on_site_instructions",
+      "target": "_scratch_ayc_admin_issues_25_not_on_site_instructions_not_on_site_note",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_25_not_on_site_instructions_not_on_site_note",
+      "target": "_scratch_ayc_admin_issues_23_add_exams_and_subjects_not_on_site_rule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_25_not_on_site_instructions_not_on_site_note",
+      "target": "_scratch_ayc_admin_issues_04_products_list_products_list",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_25_not_on_site_instructions_not_on_site_note",
+      "target": "_scratch_ayc_admin_issues_04_products_list_app_site_toggles",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/issues/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

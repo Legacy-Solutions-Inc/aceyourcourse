@@ -1,0 +1,251 @@
+{
+  "nodes": [
+    {
+      "id": "_claude_skills_readme_project_skills_index",
+      "label": "Project Convention Skills Index",
+      "file_type": "document",
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_readme_convention_skill_format",
+      "label": "Convention Skill Format (When to use, Version, Core standards, In this template, Red flags, Sources)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_readme_global_skills_reliance",
+      "label": "Reliance on Global Skills (superpowers, prompt-architect, code-review)",
+      "file_type": "rationale",
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Repo relies on global workflow skills rather than duplicating them; add project skills only for genuinely local needs."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_readme_convention_skill_format",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_readme_global_skills_reliance",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_tailwind_v4_skill_tailwind_v4_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_shadcn_ui_skill_shadcn_ui_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_supabase_auth_skill_supabase_auth_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_drizzle_data_skill_drizzle_data_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_forms_validation_skill_forms_validation_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_data_tables_skill_data_tables_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_testing_unit_skill_testing_unit_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_testing_e2e_skill_testing_e2e_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_anime_js_skill_anime_js_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_posthog_skill_posthog_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_clean_architecture_skill_clean_architecture_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_nextjs_app_router_references_react_19_react_19_reference",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_nextjs_app_router_references_server_actions_server_actions_reference",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_tailwind_v4_references_theming_theming_reference",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_drizzle_data_references_drizzle_rls_drizzle_rls_reference",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_global_skills_reliance",
+      "target": "_claude_readme_prompt_architect_standing_rule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_readme_project_skills_index",
+      "target": "_claude_skills_anime_js_skill_install_on_demand",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

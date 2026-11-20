@@ -1,0 +1,204 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_ticket",
+      "label": "Ticket 12: Reviewer PDF Upload and Processing Job",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_resumable_upload",
+      "label": "Resumable Upload to Private Storage",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_reviewer_pdf_job",
+      "label": "Reviewer PDF Job Row and Batch Renderer",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_stale_job_cron",
+      "label": "Stale Job Restart Cron",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_page_images_interface",
+      "label": "Page-Images Interface (renderer + storage seam)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_job_failure_reasons",
+      "label": "Job Failure Reasons with Fixes",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_adr_0012",
+      "label": "ADR 0012",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_ticket",
+      "target": "_scratch_ayc_member_app_issues_05_content_model_topics_library_access_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_ticket",
+      "target": "_scratch_ayc_member_app_readme_ayc_v1_spec",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_ticket",
+      "target": "_scratch_ayc_member_app_readme_vertical_slice_ticket",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_ticket",
+      "target": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_resumable_upload",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_ticket",
+      "target": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_reviewer_pdf_job",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_ticket",
+      "target": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_stale_job_cron",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_ticket",
+      "target": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_page_images_interface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_ticket",
+      "target": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_job_failure_reasons",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_ticket",
+      "target": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_adr_0012",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_ticket",
+      "target": "_scratch_ayc_member_app_grilling_notes_pdf_job_design",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_reviewer_pdf_job",
+      "target": "_scratch_ayc_member_app_grilling_notes_page_image_rendering",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_stale_job_cron",
+      "target": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_reviewer_pdf_job",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/12-reviewer-pdf-upload-and-job.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

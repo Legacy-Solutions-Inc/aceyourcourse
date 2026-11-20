@@ -94,6 +94,13 @@ const comingSoonOrder = (exams: readonly Exam[]) => {
 const visible = (products: readonly Product[]) => products.filter((p) => p.showOnWebsite);
 const live = (products: readonly Product[]) => visible(products).filter((p) => p.state === "live");
 
+/** Pure: the codes of the Exams on the Website: those with a Product shown there, Live or Coming Soon. */
+export function examCodesOnWebsite(
+  products: readonly Pick<Product, "examCode" | "showOnWebsite">[],
+): Set<string> {
+  return new Set(products.filter((p) => p.showOnWebsite).map((p) => p.examCode));
+}
+
 /** Everything a Visitor's search is matched against, lowercased. */
 function searchText(p: Product, exams: readonly Exam[]): string {
   const exam = exams.find((e) => e.code === p.examCode);
@@ -247,7 +254,7 @@ export function catalogueReads(load: LoadCatalogue) {
   /** Exams with at least one Product on the Website, Live or Coming Soon. */
   async function listExams(): Promise<Exam[]> {
     const { exams, products } = await load(["exams", "products"]);
-    const shown = new Set(visible(products).map((p) => p.examCode));
+    const shown = examCodesOnWebsite(products);
     return exams.filter((e) => shown.has(e.code));
   }
 

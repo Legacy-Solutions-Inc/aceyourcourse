@@ -9,6 +9,10 @@ import * as adminSeam from "@/services/admin";
 import type { AdminService } from "@/services/admin";
 import type { AdminResult, StaffActor } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
+import { sampleContentId, sampleTopicId } from "@/services/mock/content";
+import { hashDeviceToken } from "@/lib/member-app/device-token";
+import { createFakeAuthAdmin } from "@/services/auth-admin.fake";
+import { createFakeRenderer } from "@/services/page-images.fake";
 
 import {
   SAVES,
@@ -17,7 +21,9 @@ import {
   UNUSED_EXAM,
   withUnusedExam,
 } from "../../test/admin-inputs";
-import { ADMIN_ARMS } from "../../test/admin-arms";
+import { type AdminArm, ADMIN_ARMS } from "../../test/admin-arms";
+import { importCsv, quizCsv } from "../../test/import-files";
+import { pdfOfPages } from "../../test/reviewer-pdfs";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Staff Activity covers every Admin write (spec, Phase 2 → Staff Activity;
@@ -33,12 +39,33 @@ const OWNER = sampleActor("owner");
 const EDITOR = sampleActor("editor");
 const KIM = sampleEmail("invited");
 const EXPIRED = sampleEmail("expired");
+/** The Beta Tester the sample data starts with. */
+const SAMPLE_TESTER = "tester@example.com";
+/** A Member signed in to the Member App on one device. */
+const BEA = {
+  userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
+  email: SAMPLE_TESTER,
+  name: "Bea Tester",
+};
+/** An empty sample Topic, in CE's MSTC. */
+const SURVEYING = sampleTopicId("CE", "MSTC", "Surveying");
+const UNKNOWN_TOPIC = "3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b";
+
+/** An ISO time `days` from now. */
+const inDays = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
 /** The seam's reads: they change nothing. */
 const READS = [
   "getStaffByEmail",
   "getLatestDeniedSignIn",
   "listStaff",
+  "listBetaTesters",
+  // The Users list and a Member's detail page (ticket 16).
+  "listUsers",
+  "getMemberForAdmin",
+  // The Privacy Requests list (ticket 18), and one request's screen (ticket 19).
+  "listPrivacyRequests",
+  "getPrivacyRequestForAdmin",
   "getOverview",
   "getSettingsForAdmin",
   "listProductsForAdmin",
@@ -55,6 +82,30 @@ const READS = [
   "getAboutForAdmin",
   "getPromoForAdmin",
   "getAnnouncementForAdmin",
+  "listTopicsForAdmin",
+  // "Check file" for a card import: a preview, which saves nothing.
+  "planCardImport",
+  // The card editor's deck screen, and a card's image for Staff.
+  "getDeckForAdmin",
+  "getCardImageForAdmin",
+  // "Check file" for a quiz import, the quiz screen, and a question's figure for Staff.
+  "planQuizImport",
+  "getQuizForAdmin",
+  "getQuestionFigureForAdmin",
+  // The Reviewer PDFs screen (ticket 12), and one Reviewer PDF's screen and preview (ticket 13).
+  "listReviewerPdfsForAdmin",
+  "getReviewerPdfForAdmin",
+  "getReviewerPdfPageForAdmin",
+] as const satisfies readonly (keyof AdminService)[];
+
+/**
+ * The Reviewer PDF job's runs and the cron's restarts (ticket 12): they
+ * change a job's progress, but they're no Staff User's doing, so they record
+ * no Staff Activity. The upload that started the job recorded it.
+ */
+const JOB_CALLS = [
+  "runReviewerPdfJob",
+  "restartStaleReviewerPdfJobs",
 ] as const satisfies readonly (keyof AdminService)[];
 
 /**
@@ -72,12 +123,46 @@ interface Write {
   entity: string;
   /** The changed entity's id, or any id for a new one. */
   entityId: string | null;
-  saves: (seam: AdminService, actor: StaffActor) => Promise<AdminResult<unknown>>;
+  saves: (seam: AdminService, actor: StaffActor, arm: AdminArm) => Promise<AdminResult<unknown>>;
   /** An input it refuses, and why. */
-  refused: (seam: AdminService, actor: StaffActor) => Promise<AdminResult<unknown>>;
+  refused: (seam: AdminService, actor: StaffActor, arm: AdminArm) => Promise<AdminResult<unknown>>;
   refusal: "invalid" | "not-found";
   /** The data it saves on, when the seed has nothing it can save: an edited copy of the seed. */
   seed?: (seed: CatalogueSeed) => void;
+  /** What it saves on that the seed lacks, made through the seam before it's measured. */
+  setUp?: (seam: AdminService, arm: AdminArm) => Promise<void>;
+}
+
+/** A Hidden deck with no cards in the seed, in CE's MSTC. */
+const ALGEBRA = sampleTopicId("CE", "MSTC", "Algebra");
+const ALGEBRA_DECK = sampleContentId(ALGEBRA, "deck");
+/** The two cards withTwoCards adds to Algebra's deck, first and second. */
+const cards = { first: "", second: "" };
+/** An id no Privacy Request has. */
+const NO_SUCH_REQUEST = "5d2c1b0a-9e8f-4a7b-8c6d-0e1f2a3b4c5d";
+/** The Privacy Request a write's setUp has Bea make (ticket 19). */
+const requests = { made: "" };
+
+/** Bea joins and asks for a data copy or a deletion, from Account. */
+function beaAsksFor(type: "data-copy" | "deletion") {
+  return async (_seam: AdminService, arm: AdminArm) => {
+    await arm.member.getOrCreateMember(BEA);
+    requests.made = (await arm.member.requestPrivacy(BEA.userId, type)).request.id;
+  };
+}
+
+/** Gives Algebra's deck two cards, for the card editor's writes. */
+async function withTwoCards(seam: AdminService) {
+  for (const key of ["first", "second"] as const) {
+    const added = await seam.createCard(EDITOR, {
+      topic: ALGEBRA,
+      front: key,
+      back: "$x^2$",
+      image: null,
+    });
+    if (!added.ok) throw new Error("The card wasn't added");
+    cards[key] = added.value.id;
+  }
 }
 
 /** The stamp every record has before anyone saves it. */
@@ -109,11 +194,83 @@ async function cePage(seam: AdminService) {
   return found;
 }
 
+/** A card import's files, uploaded and checked, ready to confirm. */
+async function checkedImport(seam: AdminService, arm: AdminArm, rows: string[]) {
+  const paths = await arm.uploadImport({ csv: importCsv(rows) });
+  const input = { exam: "ce", subject: "mstc", mode: "add", ...paths } as const;
+  const planned = await seam.planCardImport(EDITOR, input);
+  if (!planned.ok) throw new Error("The import's files were refused");
+  return { ...input, basedOn: planned.value.basedOn };
+}
+
+/** A quiz import's files, uploaded and checked, ready to confirm. */
+async function checkedQuizImport(seam: AdminService, arm: AdminArm, rows: string[]) {
+  const paths = await arm.uploadImport({ csv: quizCsv(rows) });
+  const input = { exam: "ce", subject: "mstc", mode: "add", ...paths } as const;
+  const planned = await seam.planQuizImport(EDITOR, input);
+  if (!planned.ok) throw new Error("The import's files were refused");
+  return { ...input, basedOn: planned.value.basedOn };
+}
+
+/** The Visible quiz with no questions in the seed, and the Hidden one, in CE's MSTC. */
+const SIMPLE_CURVES_QUIZ = sampleContentId(sampleTopicId("CE", "MSTC", "Simple Curves"), "quiz");
+const SPIRAL_CURVES = sampleTopicId("CE", "MSTC", "Spiral Curves");
+const SPIRAL_CURVES_QUIZ = sampleContentId(SPIRAL_CURVES, "quiz");
+
+/** A question's fields that save. */
+const QUESTION = {
+  choices: { A: "1", B: "2", C: "3", D: "4" },
+  correct: "B",
+  explanation: "$L_s = 0.036 V^3/R$",
+  figure: null,
+} as const;
+/** The two questions withTwoQuestions adds to Spiral Curves' Hidden quiz, first and second. */
+const questions = { first: "", second: "" };
+
+/** Gives Spiral Curves' Hidden quiz two questions, for the question editor's writes. */
+async function withTwoQuestions(seam: AdminService) {
+  for (const key of ["first", "second"] as const) {
+    const added = await seam.createQuestion(EDITOR, {
+      topic: SPIRAL_CURVES,
+      question: key,
+      ...QUESTION,
+    });
+    if (!added.ok) throw new Error("The question wasn't added");
+    questions[key] = added.value.id;
+  }
+}
+
 async function promoForm(seam: AdminService) {
   return promoBannerFormValues((await seam.getPromoForAdmin(EDITOR)).banner);
 }
 
 /** Every Admin write that takes a Staff User, with an input it saves and one it refuses. */
+/** The Reviewer PDF withReviewerPdf uploads. */
+const reviewerPdf = { id: "" };
+
+/** Uploads and records a Reviewer PDF through the seam. */
+async function withReviewerPdf(seam: AdminService, arm: AdminArm) {
+  const recorded = await seam.recordReviewerPdf(EDITOR, {
+    path: await arm.uploadReviewerPdf(pdfOfPages(2)),
+    fileName: "Old Reviewer.pdf",
+  });
+  if (!recorded.ok) throw new Error("The Reviewer PDF wasn't recorded");
+  reviewerPdf.id = recorded.value.id;
+}
+
+/** Uploads a Reviewer PDF and splits it into pages: a Draft, ready to place. */
+async function withSplitReviewerPdf(seam: AdminService, arm: AdminArm) {
+  await withReviewerPdf(seam, arm);
+  while ((await seam.runReviewerPdfJob(reviewerPdf.id, createFakeRenderer())) === "more");
+}
+
+/** A Draft Reviewer PDF placed under Surveying: ready to publish. */
+async function withPlacedReviewerPdf(seam: AdminService, arm: AdminArm) {
+  await withSplitReviewerPdf(seam, arm);
+  const placed = await seam.placeReviewerPdf(EDITOR, { id: reviewerPdf.id, topic: SURVEYING });
+  if (!placed.ok) throw new Error("The Reviewer PDF wasn't placed");
+}
+
 const WRITES: Record<string, Write> = {
   inviteStaff: {
     actor: OWNER,
@@ -156,6 +313,117 @@ const WRITES: Record<string, Write> = {
     saves: (seam, actor) => seam.removeStaff(actor, EDITOR.email),
     refused: (seam, actor) => seam.removeStaff(actor, "not-an-email"),
     refusal: "invalid",
+  },
+  addBetaTester: {
+    actor: OWNER,
+    entity: "beta-tester",
+    entityId: SAVES.betaTester,
+    saves: (seam, actor) => seam.addBetaTester(actor, { email: SAVES.betaTester }),
+    refused: (seam, actor) => seam.addBetaTester(actor, { email: "not-an-email" }),
+    refusal: "invalid",
+  },
+  removeBetaTester: {
+    actor: OWNER,
+    entity: "beta-tester",
+    entityId: SAMPLE_TESTER,
+    saves: (seam, actor) => seam.removeBetaTester(actor, SAMPLE_TESTER),
+    refused: (seam, actor) => seam.removeBetaTester(actor, SAVES.betaTester),
+    refusal: "not-found",
+  },
+  forceSignOut: {
+    actor: OWNER,
+    entity: "member",
+    entityId: BEA.userId,
+    saves: (seam, actor) => seam.forceSignOut(actor, { userId: BEA.userId, reason: "Shared" }),
+    refused: (seam, actor) => seam.forceSignOut(actor, { userId: BEA.userId, reason: " " }),
+    refusal: "invalid",
+    setUp: async (_seam, arm) => {
+      await arm.member.getOrCreateMember(BEA);
+      await arm.member.claimDevice(BEA.userId, {
+        tokenHash: hashDeviceToken("bea-phone"),
+        deviceLabel: "Chrome on Android",
+      });
+    },
+  },
+  // Grant, extend and end a Member's Access Pass (ticket 17).
+  grantAccess: {
+    actor: OWNER,
+    entity: "access-pass",
+    entityId: `${BEA.userId}/CE`,
+    saves: (seam, actor) =>
+      seam.grantAccess(actor, { userId: BEA.userId, examCode: "CE", days: 30, reason: "Beta" }),
+    refused: (seam, actor) =>
+      seam.grantAccess(actor, { userId: BEA.userId, examCode: "CE", days: 0, reason: "Beta" }),
+    refusal: "invalid",
+    setUp: async (_seam, arm) => {
+      await arm.member.getOrCreateMember(BEA);
+    },
+  },
+  extendAccess: {
+    actor: OWNER,
+    entity: "access-pass",
+    entityId: `${BEA.userId}/CE`,
+    saves: (seam, actor) =>
+      seam.extendAccess(actor, { userId: BEA.userId, examCode: "CE", days: 7, reason: "Late" }),
+    refused: (seam, actor) =>
+      seam.extendAccess(actor, { userId: BEA.userId, examCode: "ME", days: 7, reason: "Late" }),
+    refusal: "invalid",
+    setUp: async (_seam, arm) => {
+      await arm.member.getOrCreateMember(BEA);
+      await arm.putAccessPass({ userId: BEA.userId, examCode: "CE", endsAt: inDays(30) });
+    },
+  },
+  endAccess: {
+    actor: OWNER,
+    entity: "access-pass",
+    entityId: `${BEA.userId}/CE`,
+    saves: (seam, actor) =>
+      seam.endAccess(actor, { userId: BEA.userId, examCode: "CE", reason: "Mistake" }),
+    refused: (seam, actor) =>
+      seam.endAccess(actor, { userId: BEA.userId, examCode: "ME", reason: "Mistake" }),
+    refusal: "invalid",
+    setUp: async (_seam, arm) => {
+      await arm.member.getOrCreateMember(BEA);
+      await arm.putAccessPass({ userId: BEA.userId, examCode: "CE", endsAt: inDays(30) });
+    },
+  },
+  // Carry out a Privacy Request (ticket 19). The Supabase User goes through the fake auth admin.
+  exportMemberData: {
+    actor: OWNER,
+    entity: "privacy-request",
+    entityId: null,
+    saves: (seam, actor) => seam.exportMemberData(actor, requests.made),
+    refused: (seam, actor) => seam.exportMemberData(actor, NO_SUCH_REQUEST),
+    refusal: "not-found",
+    setUp: beaAsksFor("data-copy"),
+  },
+  deleteMemberAccount: {
+    actor: OWNER,
+    entity: "privacy-request",
+    entityId: null,
+    saves: (seam, actor) =>
+      seam.deleteMemberAccount(
+        actor,
+        { requestId: requests.made, confirmation: BEA.email },
+        createFakeAuthAdmin(),
+      ),
+    refused: (seam, actor) =>
+      seam.deleteMemberAccount(
+        actor,
+        { requestId: requests.made, confirmation: "someone.else@example.com" },
+        createFakeAuthAdmin(),
+      ),
+    refusal: "invalid",
+    setUp: beaAsksFor("deletion"),
+  },
+  markPrivacyRequestDone: {
+    actor: OWNER,
+    entity: "privacy-request",
+    entityId: null,
+    saves: (seam, actor) => seam.markPrivacyRequestDone(actor, { requestId: requests.made }),
+    refused: (seam, actor) => seam.markPrivacyRequestDone(actor, { requestId: NO_SUCH_REQUEST }),
+    refusal: "not-found",
+    setUp: beaAsksFor("data-copy"),
   },
   updateWebsiteSettings: {
     actor: OWNER,
@@ -510,6 +778,267 @@ const WRITES: Record<string, Write> = {
     refused: (seam, actor) => seam.deleteExam(actor, "zz"),
     refusal: "not-found",
   },
+  createTopic: {
+    actor: EDITOR,
+    entity: "topic",
+    entityId: null,
+    saves: (seam, actor) =>
+      seam.createTopic(actor, { exam: "ce", subject: "mstc", name: "Highways" }),
+    refused: (seam, actor) => seam.createTopic(actor, { exam: "ce", subject: "mstc", name: " " }),
+    refusal: "invalid",
+  },
+  renameTopic: {
+    actor: EDITOR,
+    entity: "topic",
+    entityId: SURVEYING,
+    saves: (seam, actor) => seam.renameTopic(actor, { id: SURVEYING, name: "Leveling" }),
+    refused: (seam, actor) => seam.renameTopic(actor, { id: UNKNOWN_TOPIC, name: "Leveling" }),
+    refusal: "not-found",
+  },
+  moveTopic: {
+    actor: EDITOR,
+    entity: "topic",
+    entityId: SURVEYING,
+    saves: (seam, actor) => seam.moveTopic(actor, SURVEYING, "up"),
+    refused: (seam, actor) => seam.moveTopic(actor, UNKNOWN_TOPIC, "up"),
+    refusal: "not-found",
+  },
+  deleteTopic: {
+    actor: EDITOR,
+    entity: "topic",
+    entityId: SURVEYING,
+    saves: (seam, actor) => seam.deleteTopic(actor, SURVEYING),
+    // Simple Curves has a deck, a quiz and a Reviewer PDF.
+    refused: (seam, actor) => seam.deleteTopic(actor, sampleTopicId("CE", "MSTC", "Simple Curves")),
+    refusal: "invalid",
+  },
+  confirmCardImport: {
+    actor: EDITOR,
+    entity: "card-import",
+    entityId: "CE:MSTC",
+    saves: async (seam, actor, arm) =>
+      seam.confirmCardImport(
+        actor,
+        await checkedImport(seam, arm, ["Highways,Grade,Rise over run,,"]),
+      ),
+    // A formula that won't render.
+    refused: async (seam, actor, arm) =>
+      seam.confirmCardImport(actor, await checkedImport(seam, arm, ["Highways,Grade,$x,,"])),
+    refusal: "invalid",
+  },
+  createCard: {
+    actor: EDITOR,
+    entity: "card",
+    entityId: null,
+    saves: (seam, actor) =>
+      seam.createCard(actor, {
+        topic: ALGEBRA,
+        front: "Grade",
+        back: "Rise over run",
+        image: null,
+      }),
+    refused: (seam, actor) =>
+      seam.createCard(actor, { topic: ALGEBRA, front: " ", back: "Rise over run", image: null }),
+    refusal: "invalid",
+  },
+  updateCard: {
+    actor: EDITOR,
+    entity: "card",
+    entityId: null,
+    setUp: withTwoCards,
+    saves: (seam, actor) =>
+      seam.updateCard(actor, { id: cards.first, front: "First, edited", back: "$x$", image: null }),
+    refused: (seam, actor) =>
+      seam.updateCard(actor, { id: UNKNOWN_TOPIC, front: "F", back: "B", image: null }),
+    refusal: "not-found",
+  },
+  moveCard: {
+    actor: EDITOR,
+    entity: "card",
+    entityId: null,
+    setUp: withTwoCards,
+    saves: (seam, actor) => seam.moveCard(actor, cards.second, "up"),
+    refused: (seam, actor) => seam.moveCard(actor, UNKNOWN_TOPIC, "up"),
+    refusal: "not-found",
+  },
+  deleteCard: {
+    actor: EDITOR,
+    entity: "card",
+    entityId: null,
+    setUp: withTwoCards,
+    saves: (seam, actor) => seam.deleteCard(actor, cards.first),
+    refused: (seam, actor) => seam.deleteCard(actor, UNKNOWN_TOPIC),
+    refusal: "not-found",
+  },
+  setDeckVisibility: {
+    actor: EDITOR,
+    entity: "deck",
+    entityId: ALGEBRA_DECK,
+    setUp: withTwoCards,
+    saves: (seam, actor) => seam.setDeckVisibility(actor, ALGEBRA_DECK, true),
+    refused: (seam, actor) => seam.setDeckVisibility(actor, UNKNOWN_TOPIC, true),
+    refusal: "not-found",
+  },
+  setDeckFreePreview: {
+    actor: EDITOR,
+    entity: "deck",
+    entityId: ALGEBRA_DECK,
+    saves: (seam, actor) => seam.setDeckFreePreview(actor, ALGEBRA_DECK, true),
+    refused: (seam, actor) => seam.setDeckFreePreview(actor, UNKNOWN_TOPIC, true),
+    refusal: "not-found",
+  },
+  confirmQuizImport: {
+    actor: EDITOR,
+    entity: "quiz-import",
+    entityId: "CE:MSTC",
+    saves: async (seam, actor, arm) =>
+      seam.confirmQuizImport(
+        actor,
+        await checkedQuizImport(seam, arm, ["Highways,Grade?,1,2,3,4,A,Rise over run.,"]),
+      ),
+    // A correct answer that isn't A–D.
+    refused: async (seam, actor, arm) =>
+      seam.confirmQuizImport(
+        actor,
+        await checkedQuizImport(seam, arm, ["Highways,Grade?,1,2,3,4,E,Rise over run.,"]),
+      ),
+    refusal: "invalid",
+  },
+  updateQuizSettings: {
+    actor: EDITOR,
+    entity: "quiz",
+    entityId: SPIRAL_CURVES_QUIZ,
+    saves: (seam, actor) =>
+      seam.updateQuizSettings(actor, {
+        id: SPIRAL_CURVES_QUIZ,
+        passingScore: 85,
+        shuffle: false,
+        showAnswers: true,
+      }),
+    refused: (seam, actor) =>
+      seam.updateQuizSettings(actor, {
+        id: SPIRAL_CURVES_QUIZ,
+        passingScore: 101,
+        shuffle: false,
+        showAnswers: true,
+      }),
+    refusal: "invalid",
+  },
+  setQuizVisibility: {
+    actor: EDITOR,
+    entity: "quiz",
+    entityId: SIMPLE_CURVES_QUIZ,
+    // The seed's Simple Curves quiz is Visible, with no questions: Hidden always saves.
+    saves: (seam, actor) => seam.setQuizVisibility(actor, SIMPLE_CURVES_QUIZ, false),
+    refused: (seam, actor) => seam.setQuizVisibility(actor, UNKNOWN_TOPIC, false),
+    refusal: "not-found",
+  },
+  setQuizFreePreview: {
+    actor: EDITOR,
+    entity: "quiz",
+    entityId: SPIRAL_CURVES_QUIZ,
+    saves: (seam, actor) => seam.setQuizFreePreview(actor, SPIRAL_CURVES_QUIZ, true),
+    refused: (seam, actor) => seam.setQuizFreePreview(actor, UNKNOWN_TOPIC, true),
+    refusal: "not-found",
+  },
+  createQuestion: {
+    actor: EDITOR,
+    entity: "question",
+    entityId: null,
+    saves: (seam, actor) =>
+      seam.createQuestion(actor, { topic: SPIRAL_CURVES, question: "Grade?", ...QUESTION }),
+    // No correct choice picked.
+    refused: (seam, actor) =>
+      seam.createQuestion(actor, {
+        topic: SPIRAL_CURVES,
+        question: "Grade?",
+        ...QUESTION,
+        correct: "",
+      }),
+    refusal: "invalid",
+  },
+  updateQuestion: {
+    actor: EDITOR,
+    entity: "question",
+    entityId: null,
+    setUp: withTwoQuestions,
+    saves: (seam, actor) =>
+      seam.updateQuestion(actor, { id: questions.first, question: "First, edited", ...QUESTION }),
+    refused: (seam, actor) =>
+      seam.updateQuestion(actor, { id: UNKNOWN_TOPIC, question: "Gone?", ...QUESTION }),
+    refusal: "not-found",
+  },
+  moveQuestion: {
+    actor: EDITOR,
+    entity: "question",
+    entityId: null,
+    setUp: withTwoQuestions,
+    saves: (seam, actor) => seam.moveQuestion(actor, questions.second, "up"),
+    refused: (seam, actor) => seam.moveQuestion(actor, UNKNOWN_TOPIC, "up"),
+    refusal: "not-found",
+  },
+  deleteQuestion: {
+    actor: EDITOR,
+    entity: "question",
+    entityId: null,
+    setUp: withTwoQuestions,
+    saves: (seam, actor) => seam.deleteQuestion(actor, questions.first),
+    refused: (seam, actor) => seam.deleteQuestion(actor, UNKNOWN_TOPIC),
+    refusal: "not-found",
+  },
+  recordReviewerPdf: {
+    actor: EDITOR,
+    entity: "reviewer-pdf",
+    entityId: null,
+    saves: async (seam, actor, arm) =>
+      seam.recordReviewerPdf(actor, {
+        path: await arm.uploadReviewerPdf(pdfOfPages(2)),
+        fileName: "MSTC Reviewer.pdf",
+      }),
+    // The browser never finished sending it.
+    refused: async (seam, actor, arm) =>
+      seam.recordReviewerPdf(actor, {
+        path: await arm.uploadReviewerPdf(pdfOfPages(2), { send: false }),
+        fileName: "MSTC Reviewer.pdf",
+      }),
+    refusal: "invalid",
+  },
+  deleteReviewerPdf: {
+    actor: EDITOR,
+    entity: "reviewer-pdf",
+    entityId: null,
+    setUp: withReviewerPdf,
+    saves: (seam, actor) => seam.deleteReviewerPdf(actor, reviewerPdf.id),
+    refused: (seam, actor) => seam.deleteReviewerPdf(actor, UNKNOWN_TOPIC),
+    refusal: "not-found",
+  },
+  placeReviewerPdf: {
+    actor: EDITOR,
+    entity: "reviewer-pdf",
+    entityId: null,
+    setUp: withSplitReviewerPdf,
+    saves: (seam, actor) => seam.placeReviewerPdf(actor, { id: reviewerPdf.id, topic: SURVEYING }),
+    refused: (seam, actor) => seam.placeReviewerPdf(actor, { id: UNKNOWN_TOPIC, topic: SURVEYING }),
+    refusal: "not-found",
+  },
+  setReviewerPdfPublished: {
+    actor: EDITOR,
+    entity: "reviewer-pdf",
+    entityId: null,
+    setUp: withPlacedReviewerPdf,
+    saves: (seam, actor) => seam.setReviewerPdfPublished(actor, reviewerPdf.id, true),
+    refused: (seam, actor) => seam.setReviewerPdfPublished(actor, UNKNOWN_TOPIC, true),
+    refusal: "not-found",
+  },
+  setReviewerPdfFreePreview: {
+    actor: EDITOR,
+    entity: "reviewer-pdf",
+    entityId: null,
+    setUp: withReviewerPdf,
+    saves: (seam, actor) => seam.setReviewerPdfFreePreview(actor, reviewerPdf.id, true),
+    refused: (seam, actor) => seam.setReviewerPdfFreePreview(actor, UNKNOWN_TOPIC, true),
+    refusal: "not-found",
+  },
   updatePromoBanner: {
     actor: EDITOR,
     entity: "promo-banner",
@@ -562,7 +1091,13 @@ const ACTIVATION = "resolveSignIn";
 
 describe("the Staff Activity table", () => {
   it("knows every function of the Admin seam: a read, sign-in bookkeeping, or a write", () => {
-    const known = [...READS, ...SIGN_IN_RECORDS, ACTIVATION, ...Object.keys(WRITES)].sort();
+    const known = [
+      ...READS,
+      ...SIGN_IN_RECORDS,
+      ...JOB_CALLS,
+      ACTIVATION,
+      ...Object.keys(WRITES),
+    ].sort();
     expect(Object.keys(adminSeam).sort()).toEqual(known);
   });
 });
@@ -588,7 +1123,8 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
     "%s appends exactly one record, with the values before and after",
     async (_name, write) => {
       if (write.seed) await arm.reset(write.seed);
-      const { result, appended } = await appendedBy(() => write.saves(seam, write.actor));
+      await write.setUp?.(seam, arm);
+      const { result, appended } = await appendedBy(() => write.saves(seam, write.actor, arm));
 
       expect(result).toMatchObject({ ok: true });
       expect(appended).toHaveLength(1);
@@ -612,7 +1148,8 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
 
   it.each(writes)("%s appends nothing when it's refused", async (_name, write) => {
     if (write.seed) await arm.reset(write.seed);
-    const { result, appended } = await appendedBy(() => write.refused(seam, write.actor));
+    await write.setUp?.(seam, arm);
+    const { result, appended } = await appendedBy(() => write.refused(seam, write.actor, arm));
 
     expect(result).toMatchObject({ ok: false, error: { kind: write.refusal } });
     expect(appended).toEqual([]);
@@ -622,7 +1159,8 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
     "%s appends nothing for an Editor, who isn't allowed it",
     async (_name, write) => {
       if (write.seed) await arm.reset(write.seed);
-      const { result, appended } = await appendedBy(() => write.saves(seam, EDITOR));
+      await write.setUp?.(seam, arm);
+      const { result, appended } = await appendedBy(() => write.saves(seam, EDITOR, arm));
 
       expect(result).toMatchObject({ ok: false, error: { kind: "forbidden" } });
       expect(appended).toEqual([]);
@@ -651,6 +1189,15 @@ describe.each(ADMIN_ARMS)("Staff Activity on every Admin write ($name)", (arm) =
 
     const signedInAgain = await appendedBy(() => seam.resolveSignIn(kim, new Date()));
     expect(signedInAgain.appended).toEqual([]);
+  });
+
+  it("records no Staff Activity for the Reviewer PDF job's runs or the cron's restarts", async () => {
+    await withReviewerPdf(seam, arm);
+    const { appended } = await appendedBy(async () => {
+      await seam.restartStaleReviewerPdfJobs();
+      await seam.runReviewerPdfJob(reviewerPdf.id, createFakeRenderer());
+    });
+    expect(appended).toEqual([]);
   });
 
   it("records no Staff Activity for sign-in bookkeeping", async () => {

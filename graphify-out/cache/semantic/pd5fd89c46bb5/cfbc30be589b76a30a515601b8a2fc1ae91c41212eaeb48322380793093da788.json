@@ -1,0 +1,363 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "label": "Executer prompt 24: Password sign-in in production (temporary)",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_24_password_sign_in_in_production",
+      "label": "Ticket 24-password-sign-in-in-production",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_admin_password_sign_in_switch",
+      "label": "ADMIN_PASSWORD_SIGN_IN server-only switch (temporary)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Lets Staff test the deployed Admin with password sign-in; user removes it after testing, so keep it small"
+    },
+    {
+      "id": "src_lib_admin_identity_passwordsigninallowed",
+      "label": "passwordSignInAllowed",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_member_app_live_prior_art",
+      "label": "MEMBER_APP_LIVE (prior art for server-only deploy switch)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_testing_only_label",
+      "label": "Box heading 'TESTING ONLY' outside pnpm dev",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_pure_password_decision",
+      "label": "One pure decision (adminMode, NODE_ENV, switch) shared by the box and the Guard",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "So the Guard and the box can never disagree"
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "_scratch_ayc_admin_issues_24_password_sign_in_in_production",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "agents",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_executer_no_commit_guardrail",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_scratchpad_copy_build_gotcha",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_staff_guard_server_authorisation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_admin_password_sign_in_switch",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "src_lib_admin_identity_passwordsigninallowed",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_member_app_live_prior_art",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_testing_only_label",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_pure_password_decision",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "src_lib_admin_sign_in_method",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "src_env_server",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "src_components_admin_password_sign_in_form",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "docs_runbooks_production",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_admin_password_sign_in_switch",
+      "target": "src_env_server",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_admin_password_sign_in_switch",
+      "target": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_member_app_live_prior_art",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_lib_admin_identity_passwordsigninallowed",
+      "target": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_pure_password_decision",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_lib_admin_sign_in_method",
+      "target": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_pure_password_decision",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_components_admin_password_sign_in_form",
+      "target": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_testing_only_label",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_admin_password_sign_in_switch",
+      "target": "_scratch_ayc_admin_prompts_19_development_password_sign_in_development_password_sign_in",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_admin_password_sign_in_switch",
+      "target": "_scratch_ayc_admin_prompts_19_development_password_sign_in_amr_method_rule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_lib_admin_identity",
+      "target": "src_lib_admin_identity_passwordsigninallowed",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_24_password_sign_in_in_production",
+      "target": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "staff_sign_in_method_policy",
+      "label": "Staff sign-in method policy (live mode, amr rule, dev box, production switch)",
+      "nodes": [
+        "_scratch_ayc_admin_prompts_16_real_staff_sign_in_live_mode",
+        "_scratch_ayc_admin_prompts_19_development_password_sign_in_amr_method_rule",
+        "_scratch_ayc_admin_prompts_19_development_password_sign_in_development_password_sign_in",
+        "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_admin_password_sign_in_switch",
+        "src_lib_admin_sign_in_method",
+        "_scratch_ayc_admin_prompts_24_password_sign_in_in_production_pure_password_decision"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/24-password-sign-in-in-production.md"
+    }
+  ]
+}

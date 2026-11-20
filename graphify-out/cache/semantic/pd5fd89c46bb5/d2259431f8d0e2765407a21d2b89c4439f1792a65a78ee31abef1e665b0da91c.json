@@ -1,0 +1,327 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "label": "Executer prompt 22: Summary for AI assistants",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_22_summary_for_ai_assistants",
+      "label": "Ticket 22-summary-for-ai-assistants",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_app_llms_txt_route",
+      "label": "src/app/llms.txt/route.ts (GET /llms.txt)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants_llmstxt_convention",
+      "label": "llms.txt convention (llmstxt.org)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Proposed convention, not a standard; adds the mockup's 'Summary for AI assistants' for GEO/AEO"
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants_build_llms_txt",
+      "label": "Pure llms.txt builder (buildLlmsTxt)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_app_sitemap",
+      "label": "src/app/sitemap.ts (force-dynamic sitemap)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants_set_up_automatically_list",
+      "label": "SET_UP_AUTOMATICALLY list ('Summary for AI assistants: ON')",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants_public_content_rules",
+      "label": "Public content rules: no Review text/ratings, no Coming Soon price, hidden items never shown",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_lib_seo",
+      "label": "src/lib/seo.ts (buildSitemap, buildRobots)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "target": "_scratch_ayc_admin_issues_22_summary_for_ai_assistants",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "target": "agents",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_executer_no_commit_guardrail",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_scratchpad_copy_build_gotcha",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "target": "src_app_llms_txt_route",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "target": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants_llmstxt_convention",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "target": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants_build_llms_txt",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "target": "src_app_sitemap",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "target": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants_set_up_automatically_list",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "target": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants_public_content_rules",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "target": "src_lib_seo",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_app_llms_txt_route",
+      "target": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants_build_llms_txt",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants_build_llms_txt",
+      "target": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants_llmstxt_convention",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_app_llms_txt_route",
+      "target": "src_services_catalogue",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_app_llms_txt_route",
+      "target": "src_app_sitemap",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants_set_up_automatically_list",
+      "target": "src_components_admin_exam_pages_exam_seo_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants_build_llms_txt",
+      "target": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants_public_content_rules",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo_contract_milestone_2",
+      "target": "src_app_llms_txt_route",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_22_summary_for_ai_assistants",
+      "target": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,226 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_03_staff_and_invites",
+      "label": "Executer prompt 03: Staff and Invites",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "context",
+      "label": "CONTEXT.md domain glossary",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_03_staff_and_invites",
+      "label": "Ticket 03-staff-and-invites",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_03_staff_and_invites_invite_lifecycle",
+      "label": "Invite lifecycle: invite, renew, cancel, 7-day expiry",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_03_staff_and_invites_last_owner_rule",
+      "label": "Last-Owner and no-self-removal rules",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "There must always be at least one Owner; nobody can remove or demote themselves."
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_03_staff_and_invites_copy_invite_message",
+      "label": "Copy invite message (src/lib/admin/copy-invite.ts, clipboard fallback)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "No email is sent; the Invite itself is the permission and the Admin address isn't secret."
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_03_staff_and_invites_staff_writes",
+      "label": "Staff area writes (listStaff, inviteStaff, renewInvite, cancelInvite, changeStaffRole, removeStaff)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_03_staff_and_invites",
+      "target": "_scratch_ayc_admin_issues_03_staff_and_invites",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_03_staff_and_invites",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_03_staff_and_invites",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_03_staff_and_invites",
+      "target": "docs_mockup_admin_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_03_staff_and_invites",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_03_staff_and_invites",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_03_staff_and_invites",
+      "target": "_scratch_ayc_admin_prompts_03_staff_and_invites_invite_lifecycle",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_03_staff_and_invites",
+      "target": "_scratch_ayc_admin_prompts_03_staff_and_invites_last_owner_rule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_03_staff_and_invites",
+      "target": "_scratch_ayc_admin_prompts_03_staff_and_invites_copy_invite_message",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_03_staff_and_invites",
+      "target": "_scratch_ayc_admin_prompts_03_staff_and_invites_staff_writes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_03_staff_and_invites_invite_lifecycle",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_invite_activation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_03_staff_and_invites_staff_writes",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_03_staff_and_invites_staff_writes",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_staff_guard",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_03_staff_and_invites_invite_lifecycle",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/03-staff-and-invites.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

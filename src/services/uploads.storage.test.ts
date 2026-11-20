@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { emptyAbout } from "@/lib/catalogue/about-content";
+import { MAX_PDF_BYTES } from "@/lib/reviewer-pdfs/job";
 import type { StaffActor } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
@@ -30,6 +31,13 @@ function fakeBucket(
     sign?: (path: string) => Answer<{ signedUrl: string; token: string; path: string }>;
     exists?: (path: string) => Answer<boolean>;
     remove?: (paths: string[]) => Answer<unknown[]>;
+    download?: (path: string) => Answer<Blob>;
+    upload?: (path: string, bytes: Uint8Array, options: unknown) => Answer<{ path: string }>;
+    signMany?: (
+      paths: string[],
+      seconds: number,
+    ) => Answer<{ path: string | null; signedUrl: string; error: string | null }[]>;
+    info?: (path: string) => Answer<{ size?: number }>;
   } = {},
 ) {
   const bucket = {
@@ -47,10 +55,37 @@ function fakeBucket(
     getPublicUrl: vi.fn((path: string) => ({ data: { publicUrl: `${PUBLIC}${path}` } })),
     exists: vi.fn(answers.exists ?? (async () => ({ data: true, error: null }))),
     remove: vi.fn(answers.remove ?? (async (paths: string[]) => ({ data: paths, error: null }))),
+    download: vi.fn(
+      answers.download ??
+        // Node's Blob, as storage-js gives it; the test environment's lacks arrayBuffer().
+        (async () => ({
+          data: { arrayBuffer: async () => new Uint8Array([1, 2]).buffer } as Blob,
+          error: null,
+        })),
+    ),
+    upload: vi.fn(answers.upload ?? (async (path: string) => ({ data: { path }, error: null }))),
+    info: vi.fn(answers.info ?? (async () => ({ data: { size: 1234 }, error: null }))),
+    createSignedUrls: vi.fn(
+      answers.signMany ??
+        (async (paths: string[]) => ({
+          data: paths.map((path) => ({
+            path,
+            signedUrl: `${SUPABASE}/storage/v1/object/sign/content/${path}?token=t`,
+            error: null,
+          })),
+          error: null,
+        })),
+    ),
   };
   const from = vi.fn(() => bucket);
   const client = { storage: { from } } as unknown as SupabaseClient;
-  return { bucket, from, arm: createStorageArm(() => ({ client, supabaseUrl: SUPABASE })) };
+  return {
+    bucket,
+    from,
+    // No publishable key: "" rather than undefined, which would take the
+    // environment's (CI sets one), adding an apikey header to every ticket.
+    arm: createStorageArm(() => ({ client, supabaseUrl: SUPABASE }), ""),
+  };
 }
 
 const PHOTO = { purpose: "product-photo", contentType: "image/png", size: 64 } as const;
@@ -440,5 +475,490 @@ describe("the clean-up after a save", () => {
 
     await expect(arm.removeImages([`${PUBLIC}a.webp`])).resolves.toBeUndefined();
     expect(logged).toHaveBeenCalled();
+  });
+});
+
+describe("the Storage arm's private uploads (ticket 06)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it.each([
+    ["import-csv", "csv", "text/csv"],
+    ["import-zip", "zip", "application/zip"],
+  ] as const)(
+    "files a %s in the private content bucket, with no public URL",
+    async (purpose, extension, contentType) => {
+      const { arm, bucket, from } = fakeBucket();
+      const result = await arm.createContentUpload(EDITOR, { purpose, size: 64 });
+      if (!result.ok) throw new Error(JSON.stringify(result.error));
+
+      expect(from).toHaveBeenCalledWith("content");
+      expect(result.value.path).toMatch(new RegExp(`^imports/${UUID}\\.${extension}$`));
+      expect(bucket.createSignedUploadUrl).toHaveBeenCalledWith(result.value.path);
+      expect(result.value).toEqual({
+        uploadUrl: expect.stringContaining("token="),
+        path: result.value.path,
+        contentType,
+      });
+      expect(bucket.getPublicUrl).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    ["signed out", null, { purpose: "import-csv", size: 64 }, "forbidden"],
+    ["a CSV over 10 MB", EDITOR, { purpose: "import-csv", size: 10 * 1024 * 1024 + 1 }, "invalid"],
+    [
+      "a zip over 200 MB",
+      EDITOR,
+      { purpose: "import-zip", size: 200 * 1024 * 1024 + 1 },
+      "invalid",
+    ],
+    ["an unknown purpose", EDITOR, { purpose: "product-photo", size: 64 }, "invalid"],
+  ] as const)("refuses %s, asking Storage nothing", async (_, actor, request, kind) => {
+    const { arm, bucket } = fakeBucket();
+
+    expect(await arm.createContentUpload(actor, request as never)).toMatchObject({
+      ok: false,
+      error: { kind },
+    });
+    expect(bucket.createSignedUploadUrl).not.toHaveBeenCalled();
+  });
+
+  const csv = "imports/0d6c1e0a-6f0e-4f43-9b8a-1f2a3b4c5d6e.csv";
+
+  it("reads back an import's file from the content bucket", async () => {
+    const { arm, bucket, from } = fakeBucket();
+
+    expect(await arm.contentFiles.readUpload(csv, "import-csv")).toEqual(new Uint8Array([1, 2]));
+    expect(from).toHaveBeenCalledWith("content");
+    expect(bucket.download).toHaveBeenCalledWith(csv);
+  });
+
+  it.each([
+    ["a CSV read as the zip", csv, "import-zip"],
+    ["a card image", "decks/0d6c1e0a-6f0e-4f43-9b8a-1f2a3b4c5d6e/a.png", "import-csv"],
+    ["a path that climbs out", "imports/../decks/x.csv", "import-csv"],
+    [
+      "a catalogue photo",
+      "products/prd-001/0d6c1e0a-6f0e-4f43-9b8a-1f2a3b4c5d6e.png",
+      "import-csv",
+    ],
+  ] as const)("reads nothing for %s", async (_, path, purpose) => {
+    const { arm, from } = fakeBucket();
+
+    expect(await arm.contentFiles.readUpload(path, purpose)).toBeNull();
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("reads nothing while the file hasn't arrived", async () => {
+    const { arm, bucket } = fakeBucket({
+      exists: async () => ({ data: false, error: new Error("Object not found") }) as never,
+    });
+
+    expect(await arm.contentFiles.readUpload(csv, "import-csv")).toBeNull();
+    expect(bucket.download).not.toHaveBeenCalled();
+  });
+
+  it("fails when Storage can't read the file", async () => {
+    const { arm } = fakeBucket({
+      download: async () => ({ data: null, error: new Error("timeout") }),
+    });
+
+    await expect(arm.contentFiles.readUpload(csv, "import-csv")).rejects.toThrow(
+      "Storage couldn't read an upload: timeout",
+    );
+  });
+
+  it("stores a card image in the content bucket, never over another file", async () => {
+    const { arm, bucket } = fakeBucket();
+    const bytes = new Uint8Array([0x89, 0x50]);
+
+    await arm.contentFiles.put("decks/d/i.png", bytes, "image/png");
+
+    expect(bucket.upload).toHaveBeenCalledWith("decks/d/i.png", bytes, {
+      contentType: "image/png",
+      upsert: false,
+    });
+  });
+
+  it("fails when Storage won't store a card image", async () => {
+    const { arm } = fakeBucket({
+      upload: async () => ({ data: null, error: new Error("too big") }),
+    });
+
+    await expect(
+      arm.contentFiles.put("decks/d/i.png", new Uint8Array([1]), "image/png"),
+    ).rejects.toThrow("Storage couldn't store a card image: too big");
+  });
+
+  it("deletes files from the content bucket, logging and never throwing when it can't", async () => {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { arm, bucket } = fakeBucket({
+      remove: async () => ({ data: null, error: new Error("nope") }),
+    });
+
+    await expect(arm.contentFiles.remove([csv, "decks/d/i.png"])).resolves.toBeUndefined();
+    expect(bucket.remove).toHaveBeenCalledWith([csv, "decks/d/i.png"]);
+    expect(logged).toHaveBeenCalled();
+  });
+
+  it("files a card's back image in the private content bucket, by its type (ticket 07)", async () => {
+    const { arm, bucket, from } = fakeBucket();
+    const result = await arm.createContentUpload(EDITOR, {
+      purpose: "card-image",
+      contentType: "image/webp",
+      size: 64,
+    });
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+
+    expect(from).toHaveBeenCalledWith("content");
+    expect(result.value.path).toMatch(new RegExp(`^card-images/${UUID}\\.webp$`));
+    expect(result.value.contentType).toBe("image/webp");
+    expect(bucket.createSignedUploadUrl).toHaveBeenCalledWith(result.value.path);
+    expect(bucket.getPublicUrl).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["a GIF", { contentType: "image/gif", size: 64 }],
+    ["an image over 5 MB", { contentType: "image/png", size: 5 * 1024 * 1024 + 1 }],
+  ])("refuses a card image that's %s, asking Storage nothing", async (_, file) => {
+    const { arm, bucket } = fakeBucket();
+
+    expect(
+      await arm.createContentUpload(EDITOR, { purpose: "card-image", ...file } as never),
+    ).toMatchObject({ ok: false, error: { kind: "invalid" } });
+    expect(bucket.createSignedUploadUrl).not.toHaveBeenCalled();
+  });
+
+  const image = "card-images/0d6c1e0a-6f0e-4f43-9b8a-1f2a3b4c5d6e.png";
+
+  it("reads back a card image's upload, and only as a card image", async () => {
+    const { arm, bucket } = fakeBucket();
+
+    expect(await arm.contentFiles.readUpload(image, "card-image")).toEqual(new Uint8Array([1, 2]));
+    expect(bucket.download).toHaveBeenCalledWith(image);
+    expect(await arm.contentFiles.readUpload(image, "import-csv")).toBeNull();
+    expect(await arm.contentFiles.readUpload(csv, "card-image")).toBeNull();
+  });
+
+  const stored =
+    "decks/0d6c1e0a-6f0e-4f43-9b8a-1f2a3b4c5d6e/1b2c3d4e-5f6a-4b7c-8d9e-0f1a2b3c4d5e.png";
+  const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a]);
+
+  it("reads a stored card image with its type, for Staff (ticket 07)", async () => {
+    const { arm, bucket } = fakeBucket({
+      download: async () => ({
+        data: { arrayBuffer: async () => PNG.buffer } as Blob,
+        error: null,
+      }),
+    });
+
+    expect(await arm.contentFiles.read(stored)).toEqual({ contentType: "image/png", bytes: PNG });
+    expect(bucket.download).toHaveBeenCalledWith(stored);
+  });
+
+  it("reads a stored quiz figure with its type, for Staff (ticket 09)", async () => {
+    const figure =
+      "quizzes/0d6c1e0a-6f0e-4f43-9b8a-1f2a3b4c5d6e/1b2c3d4e-5f6a-4b7c-8d9e-0f1a2b3c4d5e.png";
+    const { arm, bucket } = fakeBucket({
+      download: async () => ({
+        data: { arrayBuffer: async () => PNG.buffer } as Blob,
+        error: null,
+      }),
+    });
+
+    expect(await arm.contentFiles.read(figure)).toEqual({ contentType: "image/png", bytes: PNG });
+    expect(bucket.download).toHaveBeenCalledWith(figure);
+  });
+
+  it.each([
+    ["an import's upload", csv],
+    ["a card image's upload", image],
+    ["a path that climbs out", "decks/../imports/x.png"],
+    ["a quiz path that climbs out", "quizzes/../imports/x.png"],
+    ["another folder", "products/0d6c1e0a-6f0e-4f43-9b8a-1f2a3b4c5d6e/a.png"],
+  ])("reads no card image at %s", async (_, path) => {
+    const { arm, from } = fakeBucket();
+
+    expect(await arm.contentFiles.read(path)).toBeNull();
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("reads no card image that isn't there, or isn't really an image", async () => {
+    const missing = fakeBucket({
+      exists: async () => ({ data: false, error: new Error("Object not found") }) as never,
+    });
+    expect(await missing.arm.contentFiles.read(stored)).toBeNull();
+
+    const fake = fakeBucket();
+    expect(await fake.arm.contentFiles.read(stored)).toBeNull();
+  });
+
+  it("asks Storage nothing when there's nothing to delete", async () => {
+    const { arm, from } = fakeBucket();
+    await arm.contentFiles.remove([]);
+
+    expect(from).not.toHaveBeenCalled();
+  });
+});
+
+describe("the Storage arm's signed card image URLs (ticket 08)", () => {
+  const first =
+    "decks/0b8f4b8e-6a2f-4b1e-9d3c-5e7f9a1b2c3d/1c9e2f4a-7b3d-4e5f-8a6b-9c0d1e2f3a4b.png";
+  const second =
+    "decks/0b8f4b8e-6a2f-4b1e-9d3c-5e7f9a1b2c3d/2d0f3a5b-8c4e-4f6a-9b7c-0d1e2f3a4b5c.webp";
+
+  it("signs each card image once, from the private bucket, for the time asked", async () => {
+    const { arm, bucket, from } = fakeBucket();
+
+    expect(await arm.contentFiles.signedUrls([first, second, first], 600)).toEqual({
+      [first]: `${SUPABASE}/storage/v1/object/sign/content/${first}?token=t`,
+      [second]: `${SUPABASE}/storage/v1/object/sign/content/${second}?token=t`,
+    });
+    expect(from).toHaveBeenCalledWith("content");
+    expect(bucket.createSignedUrls).toHaveBeenCalledWith([first, second], 600);
+  });
+
+  it("signs a quiz figure, as the quiz will ask (ticket 11)", async () => {
+    const figure =
+      "quizzes/0b8f4b8e-6a2f-4b1e-9d3c-5e7f9a1b2c3d/3e1a4b6c-9d5f-4a7b-8c8d-1e2f3a4b5c6d.jpg";
+    const { arm, bucket } = fakeBucket();
+
+    expect(await arm.contentFiles.signedUrls([figure], 600)).toEqual({
+      [figure]: `${SUPABASE}/storage/v1/object/sign/content/${figure}?token=t`,
+    });
+    expect(bucket.createSignedUrls).toHaveBeenCalledWith([figure], 600);
+  });
+
+  it("signs nothing that isn't a card image, asking Storage nothing", async () => {
+    const { arm, from } = fakeBucket();
+
+    expect(
+      await arm.contentFiles.signedUrls(["imports/x.csv", "decks/../imports/x.png"], 600),
+    ).toEqual({});
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("gives no URL for a file that's gone", async () => {
+    const { arm } = fakeBucket({
+      signMany: async () => ({
+        data: [
+          { path: first, signedUrl: "https://example.test/first", error: null },
+          { path: second, signedUrl: "", error: "Either the object does not exist" },
+        ],
+        error: null,
+      }),
+    });
+
+    expect(await arm.contentFiles.signedUrls([first, second], 600)).toEqual({
+      [first]: "https://example.test/first",
+    });
+  });
+
+  it("throws when Storage can't sign them", async () => {
+    const { arm } = fakeBucket({
+      signMany: async () => ({ data: null, error: new Error("down") }) as never,
+    });
+    await expect(arm.contentFiles.signedUrls([first], 600)).rejects.toThrow(
+      "Storage couldn't sign card images: down",
+    );
+  });
+});
+
+describe("the Storage arm's Reviewer PDFs (ticket 12)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const ID = "0b9f4a5e-8d3c-4f1a-9e2b-7c6d5e4f3a21";
+  const ORIGINAL = `${ID}/original.pdf`;
+
+  it("gives a resumable upload into the private Reviewer PDFs bucket, on a one-time token", async () => {
+    const { arm, bucket, from } = fakeBucket();
+
+    const result = await arm.createReviewerPdfUpload(EDITOR, {
+      contentType: "application/pdf",
+      size: MAX_PDF_BYTES,
+    });
+
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    const path = bucket.createSignedUploadUrl.mock.calls[0]?.[0];
+    expect(from).toHaveBeenCalledWith("reviewer-pdfs");
+    expect(path).toMatch(new RegExp(`^${UUID}/original\\.pdf$`));
+    expect(result.value).toEqual({
+      method: "tus",
+      endpoint: `${SUPABASE}/storage/v1/upload/resumable/sign`,
+      headers: { "x-signature": "t" },
+      metadata: {
+        bucketName: "reviewer-pdfs",
+        objectName: path,
+        contentType: "application/pdf",
+        cacheControl: "3600",
+      },
+      path,
+    });
+    // No public URL, ever.
+    expect(bucket.getPublicUrl).not.toHaveBeenCalled();
+  });
+
+  it("sends the project's publishable key with the token, as Supabase's clients do", async () => {
+    const { bucket } = fakeBucket();
+    const client = { storage: { from: () => bucket } } as unknown as SupabaseClient;
+    const arm = createStorageArm(() => ({ client, supabaseUrl: SUPABASE }), "sb_publishable_x");
+
+    const result = await arm.createReviewerPdfUpload(EDITOR, {
+      contentType: "application/pdf",
+      size: 10,
+    });
+    expect(result.ok && result.value.method === "tus" && result.value.headers).toEqual({
+      "x-signature": "t",
+      apikey: "sb_publishable_x",
+    });
+  });
+
+  it.each([
+    ["signed out", null, { contentType: "application/pdf", size: 10 }, "forbidden"],
+    ["not a PDF", EDITOR, { contentType: "image/png", size: 10 }, "invalid"],
+    ["over 200 MB", EDITOR, { contentType: "application/pdf", size: MAX_PDF_BYTES + 1 }, "invalid"],
+  ] as const)("refuses an upload %s, before asking Storage", async (_, actor, request, kind) => {
+    const { arm, from } = fakeBucket();
+    expect(await arm.createReviewerPdfUpload(actor, request as never)).toMatchObject({
+      ok: false,
+      error: { kind },
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("fails when Storage won't sign the upload", async () => {
+    const { arm } = fakeBucket({ sign: async () => ({ data: null, error: new Error("down") }) });
+    await expect(
+      arm.createReviewerPdfUpload(EDITOR, { contentType: "application/pdf", size: 10 }),
+    ).rejects.toThrow("Storage couldn't make an upload URL: down");
+  });
+
+  it("claims an uploaded original with its size as stored, from its path", async () => {
+    const { arm, bucket } = fakeBucket({
+      info: async () => ({ data: { size: 5555 }, error: null }),
+    });
+
+    expect(await arm.reviewerPdfFiles.claimUpload(ORIGINAL)).toEqual({ id: ID, size: 5555 });
+    expect(bucket.exists).toHaveBeenCalledWith(ORIGINAL);
+    expect(bucket.info).toHaveBeenCalledWith(ORIGINAL);
+  });
+
+  it("waits for an original that hasn't arrived, and claims nothing else", async () => {
+    const { arm, from } = fakeBucket({ exists: async () => ({ data: false, error: null }) });
+    expect(await arm.reviewerPdfFiles.claimUpload(ORIGINAL)).toBe("waiting");
+    expect(from).toHaveBeenCalledTimes(1);
+
+    from.mockClear();
+    expect(await arm.reviewerPdfFiles.claimUpload(`${ID}/pages/1.webp`)).toBeNull();
+    expect(await arm.reviewerPdfFiles.claimUpload(`card-images/${ID}.png`)).toBeNull();
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("fails when Storage can't say whether the original is there, or how big it is", async () => {
+    const down = fakeBucket({
+      exists: async () => {
+        throw new Error("down");
+      },
+    });
+    await expect(down.arm.reviewerPdfFiles.claimUpload(ORIGINAL)).rejects.toThrow(
+      "Storage couldn't check an upload: down",
+    );
+    const noInfo = fakeBucket({ info: async () => ({ data: null, error: new Error("gone") }) });
+    await expect(noInfo.arm.reviewerPdfFiles.claimUpload(ORIGINAL)).rejects.toThrow(
+      "Storage couldn't read an upload's size: gone",
+    );
+    const noSize = fakeBucket({ info: async () => ({ data: {}, error: null }) });
+    await expect(noSize.arm.reviewerPdfFiles.claimUpload(ORIGINAL)).rejects.toThrow(
+      "Storage couldn't read an upload's size",
+    );
+  });
+
+  it("reads an original back, and nothing for one that's gone", async () => {
+    const { arm, bucket } = fakeBucket();
+    expect(await arm.reviewerPdfFiles.readOriginal(ID)).toEqual(new Uint8Array([1, 2]));
+    expect(bucket.download).toHaveBeenCalledWith(ORIGINAL);
+
+    const gone = fakeBucket({ exists: async () => ({ data: false, error: null }) });
+    expect(await gone.arm.reviewerPdfFiles.readOriginal(ID)).toBeNull();
+    expect(gone.bucket.download).not.toHaveBeenCalled();
+  });
+
+  it("fails when Storage can't read an original", async () => {
+    const { arm } = fakeBucket({
+      download: async () => ({ data: null, error: new Error("down") }),
+    });
+    await expect(arm.reviewerPdfFiles.readOriginal(ID)).rejects.toThrow(
+      "Storage couldn't read a Reviewer PDF: down",
+    );
+    const unsure = fakeBucket({
+      exists: async () => {
+        throw new Error("down");
+      },
+    });
+    await expect(unsure.arm.reviewerPdfFiles.readOriginal(ID)).rejects.toThrow(
+      "Storage couldn't check a Reviewer PDF: down",
+    );
+  });
+
+  it("stores a page image as WebP, over one stored before", async () => {
+    const { arm, bucket } = fakeBucket();
+    const image = new Uint8Array([9]);
+    await arm.reviewerPdfFiles.putPage(ID, 7, image);
+    expect(bucket.upload).toHaveBeenCalledWith(`${ID}/pages/7.webp`, image, {
+      contentType: "image/webp",
+      upsert: true,
+    });
+
+    const down = fakeBucket({ upload: async () => ({ data: null, error: new Error("full") }) });
+    await expect(down.arm.reviewerPdfFiles.putPage(ID, 7, image)).rejects.toThrow(
+      "Storage couldn't store a page image: full",
+    );
+  });
+
+  it("reads a page image back for the Admin's preview (ticket 13), and nothing for one not stored", async () => {
+    const { arm, bucket } = fakeBucket();
+    expect(await arm.reviewerPdfFiles.readPage(ID, 2)).toEqual(new Uint8Array([1, 2]));
+    expect(bucket.download).toHaveBeenCalledWith(`${ID}/pages/2.webp`);
+
+    const gone = fakeBucket({ exists: async () => ({ data: false, error: null }) });
+    expect(await gone.arm.reviewerPdfFiles.readPage(ID, 2)).toBeNull();
+    expect(gone.bucket.download).not.toHaveBeenCalled();
+
+    const down = fakeBucket({ download: async () => ({ data: null, error: new Error("down") }) });
+    await expect(down.arm.reviewerPdfFiles.readPage(ID, 2)).rejects.toThrow(
+      "Storage couldn't read a page image: down",
+    );
+  });
+
+  it("deletes the original and every page, a thousand at a time", async () => {
+    const { arm, bucket } = fakeBucket();
+    await arm.reviewerPdfFiles.remove(ID, 1500);
+
+    const removed = bucket.remove.mock.calls.map(([paths]) => paths);
+    expect(removed.map((paths) => paths.length)).toEqual([1000, 501]);
+    expect(removed.flat()).toEqual([
+      ORIGINAL,
+      ...Array.from({ length: 1500 }, (_, i) => `${ID}/pages/${i + 1}.webp`),
+    ]);
+  });
+
+  it("logs, and never throws, when it can't delete them", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { arm } = fakeBucket({ remove: async () => ({ data: null, error: new Error("down") }) });
+    await expect(arm.reviewerPdfFiles.remove(ID, 2)).resolves.toBeUndefined();
+    expect(error).toHaveBeenCalledWith(
+      "Couldn't delete a Reviewer PDF's files; they stay in the bucket:",
+      ID,
+      expect.any(Error),
+    );
+
+    const noStorage = createStorageArm(() => {
+      throw new Error("Storage isn't configured on this server.");
+    });
+    await expect(noStorage.reviewerPdfFiles.remove(ID, 2)).resolves.toBeUndefined();
   });
 });

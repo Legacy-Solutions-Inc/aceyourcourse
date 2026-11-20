@@ -1,0 +1,123 @@
+{
+  "nodes": [
+    {
+      "id": "docs_adr_0007_analytics_posthog",
+      "label": "ADR 0007: PostHog analytics, opt-in, reverse-proxied, privacy-first",
+      "file_type": "document",
+      "source_file": "docs/adr/0007-analytics-posthog.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Analytics must be inert without a key, must not weaken the nonce CSP; same-origin /relay proxy keeps CSP unchanged and dodges ad-blockers."
+    },
+    {
+      "id": "docs_adr_0007_analytics_posthog_relay_proxy",
+      "label": "/relay same-origin PostHog reverse proxy",
+      "file_type": "concept",
+      "source_file": "docs/adr/0007-analytics-posthog.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Must stay in sync in three places: next.config rewrites, client api_host, and middleware matcher exclusion; if middleware intercepts /relay ingestion silently breaks."
+    },
+    {
+      "id": "docs_adr_0007_analytics_posthog_inert_by_default",
+      "label": "Analytics inert unless NEXT_PUBLIC_POSTHOG_KEY set (isAnalyticsConfigured)",
+      "file_type": "concept",
+      "source_file": "docs/adr/0007-analytics-posthog.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_adr_0007_analytics_posthog_session_replay_worker_src",
+      "label": "Session Replay CSP worker-src blob: flag",
+      "file_type": "concept",
+      "source_file": "docs/adr/0007-analytics-posthog.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_adr_0007_analytics_posthog",
+      "target": "docs_adr_0003_mock_first_service_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0007-analytics-posthog.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0007_analytics_posthog",
+      "target": "docs_adr_0009_cookieless_website_analytics",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0007-analytics-posthog.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0007_analytics_posthog",
+      "target": "docs_adr_0007_analytics_posthog_relay_proxy",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0007-analytics-posthog.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0007_analytics_posthog",
+      "target": "docs_adr_0007_analytics_posthog_inert_by_default",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0007-analytics-posthog.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0007_analytics_posthog",
+      "target": "docs_adr_0007_analytics_posthog_session_replay_worker_src",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0007-analytics-posthog.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0007_analytics_posthog_inert_by_default",
+      "target": "docs_adr_0006_drizzle_data_layer_mock_db_selector",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "docs/adr/0007-analytics-posthog.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0007_analytics_posthog_inert_by_default",
+      "target": "docs_adr_0003_mock_first_service_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0007-analytics-posthog.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

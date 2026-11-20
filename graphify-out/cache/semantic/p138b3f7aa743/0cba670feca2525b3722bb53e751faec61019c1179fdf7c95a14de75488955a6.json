@@ -1,0 +1,151 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_ticket",
+      "label": "Ticket 13: Reviewer PDF Placement, Preview and Publishing",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/13-reviewer-pdf-placement-and-publishing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_reviewer_pdf_placement",
+      "label": "Reviewer PDF Placement (Exam/Subject/Topic)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/13-reviewer-pdf-placement-and-publishing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_reviewer_pdf_statuses",
+      "label": "Reviewer PDF Statuses (Draft/Published/Unpublished)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/13-reviewer-pdf-placement-and-publishing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_staff_preview",
+      "label": "Staff Reader Preview",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/13-reviewer-pdf-placement-and-publishing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_ticket",
+      "target": "_scratch_ayc_member_app_issues_12_reviewer_pdf_upload_and_job_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/13-reviewer-pdf-placement-and-publishing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_ticket",
+      "target": "_scratch_ayc_member_app_readme_ayc_v1_spec",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/13-reviewer-pdf-placement-and-publishing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_ticket",
+      "target": "_scratch_ayc_member_app_readme_vertical_slice_ticket",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/issues/13-reviewer-pdf-placement-and-publishing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_ticket",
+      "target": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_reviewer_pdf_placement",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/13-reviewer-pdf-placement-and-publishing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_ticket",
+      "target": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_reviewer_pdf_statuses",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/13-reviewer-pdf-placement-and-publishing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_ticket",
+      "target": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_staff_preview",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/13-reviewer-pdf-placement-and-publishing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_reviewer_pdf_placement",
+      "target": "_scratch_ayc_member_app_issues_05_content_model_topics_library_access_topic",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/13-reviewer-pdf-placement-and-publishing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_ticket",
+      "target": "_scratch_ayc_member_app_readme_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/13-reviewer-pdf-placement-and-publishing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_ticket",
+      "target": "_scratch_ayc_member_app_grilling_notes_free_preview",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/13-reviewer-pdf-placement-and-publishing.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_staff_preview",
+      "target": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_reviewer_reader",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/13-reviewer-pdf-placement-and-publishing.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

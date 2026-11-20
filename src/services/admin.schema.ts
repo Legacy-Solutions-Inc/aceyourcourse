@@ -8,10 +8,32 @@ import {
   ABOUT_PHOTO_SLOTS,
   ABOUT_SPEC_MAX,
 } from "@/lib/catalogue/about-content";
+import { MAX_QUERY_LENGTH } from "@/lib/catalogue/product-filters";
 import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
 import { isCalendarDate } from "@/lib/manila-time";
+import { EXTEND_DAYS, GRANT_MAX_DAYS } from "@/lib/member-app/access-pass";
+import { PDF_NAME_MAX } from "@/lib/reviewer-pdfs/pdf-file";
 import { variationLabel } from "@/lib/catalogue/price";
-import type { AdminError, RequiredRole, StaffActor } from "@/services/admin.types";
+import {
+  type AdminError,
+  type RequiredRole,
+  type StaffActor,
+  USER_FILTERS,
+} from "@/services/admin.types";
+import { IMPORT_MODES } from "@/lib/content-import/modes";
+import { cardFieldProblems, cardFieldsOf } from "@/lib/cards/card-fields";
+import {
+  PICK_THE_CORRECT_CHOICE,
+  questionFieldProblems,
+  questionFieldsOf,
+} from "@/lib/quizzes/question-fields";
+import {
+  PASSING_SCORE_MAX,
+  PASSING_SCORE_MIN,
+  QUIZ_CHOICES,
+  type QuizChoice,
+} from "@/lib/quizzes/quiz-rules";
+import type { ContentCounts, TopicContent } from "@/services/content.types";
 import {
   EXAM_PAGE_SECTIONS,
   FAQ_ANSWER_MAX,
@@ -247,6 +269,141 @@ export const staffEmailInputSchema = z.object({ email: typedStaffEmail });
 export const changeStaffRoleSchema = staffEmailAndRoleSchema;
 
 export type ChangeStaffRoleInput = z.infer<typeof changeStaffRoleSchema>;
+
+/** A Beta Tester's Google email, as the Beta Testers tab sends it: stored lowercase. */
+export const betaTesterInputSchema = staffEmailInputSchema;
+
+export type BetaTesterInput = z.input<typeof betaTesterInputSchema>;
+
+// ── Users (Owners only; Phase 3, ticket 16) ─────────────────────────────────
+
+/** The Users list's search, filter and page, as src/lib/admin/users-list.ts reads them from the URL. */
+export const userListQuerySchema = z.object({
+  // The URL's own limit, so a search parseUsersParams keeps is never refused.
+  q: z
+    .string()
+    .trim()
+    .max(MAX_QUERY_LENGTH)
+    .nullable()
+    .transform((q) => q || null),
+  filter: z.enum(USER_FILTERS),
+  page: z.number().int().min(1),
+});
+
+/** A Member's User id, as the Users screens address them. Anything else is no Member's. */
+export const memberIdSchema = z.string().uuid();
+
+/** The longest reason Staff Activity keeps for a Users action. */
+export const REASON_MAX = 500;
+export const REASON_MISSING = "ENTER A REASON · IT’S SAVED IN STAFF ACTIVITY";
+export const REASON_TOO_LONG = `KEEP THE REASON TO ${REASON_MAX} CHARACTERS`;
+
+/** Why an Owner does something to a Member, kept in Staff Activity: trimmed, never blank. */
+const reasonSchema = z
+  .string({ required_error: REASON_MISSING, invalid_type_error: REASON_MISSING })
+  .trim()
+  .min(1, REASON_MISSING)
+  .max(REASON_MAX, REASON_TOO_LONG);
+
+/**
+ * Force sign-out (story 132): the Member, and why. The Member's id is any
+ * text, so one that isn't a Member's answers not-found, as a page for it does.
+ */
+export const forceSignOutInputSchema = z.object({
+  userId: z.string().max(100),
+  reason: reasonSchema,
+});
+
+export type ForceSignOutInput = z.input<typeof forceSignOutInputSchema>;
+
+// ── Access Passes (Owners only; Phase 3, ticket 17) ─────────────────────────
+// Grant, extend and end a Member's Access Pass for an Exam (spec, Phase 3
+// planning decisions → Grants and ending access), each with a reason Staff
+// Activity keeps. The days come typed, or as the custom box's text.
+
+export const GRANT_DAYS_ERROR = `GRANT 1 TO ${GRANT_MAX_DAYS} WHOLE DAYS`;
+export const EXTEND_DAYS_ERROR = `PICK ${EXTEND_DAYS.slice(0, -1).join(", ")} OR ${EXTEND_DAYS.at(-1)} DAYS`;
+export const EXAM_MISSING = "PICK AN EXAM";
+
+/** The days as sent: a number, or the box's text of digits ("45", " 45 "). Anything else is refused. */
+const typedDays = (value: unknown) =>
+  typeof value === "string" && /^\s*\d{1,4}\s*$/.test(value) ? Number(value) : value;
+
+const days = (message: string) =>
+  z.number({ invalid_type_error: message, required_error: message }).int(message);
+
+/** An Exam code as an Owner picked it, as the catalogue holds it: " ce " is CE. */
+const passExamCode = z
+  .string({ required_error: EXAM_MISSING, invalid_type_error: EXAM_MISSING })
+  .trim()
+  .min(1, EXAM_MISSING)
+  .max(20, EXAM_MISSING)
+  .transform((code) => code.toUpperCase());
+
+/** The Member's User id: any text, so one that isn't a Member's answers not-found. */
+const passMemberId = z.string().max(100);
+
+/** "Grant Access Pass": an Exam, 30, 90, 180 or 365 days or a custom whole number up to 365, and why. */
+export const grantAccessInputSchema = z.object({
+  userId: passMemberId,
+  examCode: passExamCode,
+  days: z.preprocess(
+    typedDays,
+    days(GRANT_DAYS_ERROR).min(1, GRANT_DAYS_ERROR).max(GRANT_MAX_DAYS, GRANT_DAYS_ERROR),
+  ),
+  reason: reasonSchema,
+});
+
+/** "Extend access": 3, 7, 14 or 30 days more on a pass the Member holds, and why. */
+export const extendAccessInputSchema = z.object({
+  userId: passMemberId,
+  examCode: passExamCode,
+  days: z.preprocess(
+    typedDays,
+    days(EXTEND_DAYS_ERROR).refine(
+      (value) => (EXTEND_DAYS as readonly number[]).includes(value),
+      EXTEND_DAYS_ERROR,
+    ),
+  ),
+  reason: reasonSchema,
+});
+
+/** "End access now": the pass to end, and why. */
+export const endAccessInputSchema = z.object({
+  userId: passMemberId,
+  examCode: passExamCode,
+  reason: reasonSchema,
+});
+
+export type GrantAccessInput = z.input<typeof grantAccessInputSchema>;
+export type ExtendAccessInput = z.input<typeof extendAccessInputSchema>;
+export type EndAccessInput = z.input<typeof endAccessInputSchema>;
+
+// ── Privacy Requests (Owners only; Phase 3, ticket 19) ──────────────────────
+// Carrying out a Member's request: its id, and for "Delete this account" the
+// Member's email typed to confirm. Whether what was typed is that email is
+// the seam's to decide, as only it reads the Member.
+
+/** The longest confirmation taken: an email address is at most 320 characters. */
+const CONFIRMATION_MAX = 320;
+export const CONFIRMATION_WRONG = "TYPE THIS MEMBER’S EMAIL EXACTLY TO CONFIRM";
+
+/** A Privacy Request's id: anything else is no request (not-found). */
+export const privacyRequestIdSchema = z.string().uuid();
+
+/** A Privacy Request to carry out: "Mark done". */
+export const privacyRequestInputSchema = z.object({ requestId: z.string().max(100) });
+
+/** "Delete this account": the deletion request, and what the Owner typed to confirm. */
+export const deleteAccountInputSchema = z.object({
+  requestId: z.string().max(100),
+  confirmation: z
+    .string({ required_error: CONFIRMATION_WRONG, invalid_type_error: CONFIRMATION_WRONG })
+    .max(CONFIRMATION_MAX, CONFIRMATION_WRONG),
+});
+
+export type PrivacyRequestInput = z.input<typeof privacyRequestInputSchema>;
+export type DeleteAccountInput = z.input<typeof deleteAccountInputSchema>;
 
 // ── Products ────────────────────────────────────────────────────────────────
 
@@ -963,31 +1120,69 @@ export const deleteSubjectInputSchema = subjectCodeInputSchema.extend({ exam: ex
 /** Pure: "1 Product", "3 Products". */
 export const productCount = (count: number) => `${count} ${count === 1 ? "Product" : "Products"}`;
 
+/** Pure: "1 deck", "2 quizzes": a count of one kind of Member App content. */
+function contentCount(count: number, one: string, many: string): string {
+  return `${count} ${count === 1 ? one : many}`;
+}
+
+/**
+ * Pure: the Member App content the counts hold, by kind, such as "2 decks,
+ * 1 quiz and 1 Reviewer PDF", or null when they hold none.
+ */
+export function contentList({ decks, quizzes, reviewerPdfs }: ContentCounts): string | null {
+  return andList([
+    decks > 0 ? contentCount(decks, "deck", "decks") : null,
+    quizzes > 0 ? contentCount(quizzes, "quiz", "quizzes") : null,
+    reviewerPdfs > 0 ? contentCount(reviewerPdfs, "Reviewer PDF", "Reviewer PDFs") : null,
+  ]);
+}
+
+/** Pure: "a, b and c" from the parts given, skipping nulls; null when there are none. */
+function andList(parts: readonly (string | null)[]): string | null {
+  const given = parts.filter((part) => part !== null);
+  const last = given.pop();
+  if (last === undefined) return null;
+  return given.length > 0 ? `${given.join(", ")} and ${last}` : last;
+}
+
 /**
  * Pure: why the Exam can't be deleted, or null when it can: while any Product
- * belongs to it, Live, Coming Soon or hidden.
+ * belongs to it, Live, Coming Soon or hidden, or while any of its Topics has
+ * a deck, quiz or Reviewer PDF (Phase 3; Hidden and Draft ones too).
  */
-export function examDeleteBlocker(exam: string, count: number): string | null {
-  if (count === 0) return null;
-  const belong = count === 1 ? "belongs" : "belong";
-  const them = count === 1 ? "it" : "them";
-  return `${productCount(count)} ${belong} to ${exam}. Move or delete ${them} first.`;
+export function examDeleteBlocker(
+  exam: string,
+  count: number,
+  content: ContentCounts,
+): string | null {
+  if (count > 0) {
+    const belong = count === 1 ? "belongs" : "belong";
+    const them = count === 1 ? "it" : "them";
+    return `${productCount(count)} ${belong} to ${exam}. Move or delete ${them} first.`;
+  }
+  const held = contentList(content);
+  return held ? `${exam} has Member App content: ${held}. Delete it first.` : null;
 }
 
 /**
  * Pure: why the Subject can't be deleted, or null when it can: while a
- * Product is tagged with it, or while it's its Exam's only Subject.
+ * Product is tagged with it, while any of its Topics has a deck, quiz or
+ * Reviewer PDF (Phase 3), or while it's its Exam's only Subject. Its empty
+ * Topics go with it.
  */
 export function subjectDeleteBlocker({
   exam,
   subject,
   products: count,
+  content,
   subjects,
 }: {
   exam: string;
   subject: string;
   /** How many Products are tagged with the Subject. */
   products: number;
+  /** The Member App content its Topics hold, Hidden and Draft included. */
+  content: ContentCounts;
   /** How many Subjects the Exam has. */
   subjects: number;
 }): string | null {
@@ -996,6 +1191,8 @@ export function subjectDeleteBlocker({
     const those = count === 1 ? "that Product" : "those Products";
     return `${productCount(count)} ${use} ${subject}. Remove it from ${those} first.`;
   }
+  const held = contentList(content);
+  if (held) return `${subject} has Member App content: ${held}. Delete it first.`;
   return subjects <= 1
     ? `${exam} needs at least one Subject. Add another before deleting this one.`
     : null;
@@ -1427,3 +1624,382 @@ export const announcementFormSchema = announcementFormFields
 
 /** "Save announcement": its messages, their shape checked. */
 export const saveAnnouncementInputSchema = announcementFormFields;
+
+// ── Member App content: Topics (Phase 3, ticket 05) ─────────────────────────
+// Each Subject's Topics list in the Admin (spec, Phase 3 planning decisions →
+// Topics editor): any Staff User adds, renames, moves and deletes Topics. A
+// name is unique within its Subject, ignoring case; that rule needs the
+// Topics, so it's the seam's, with the message below.
+
+export const TOPIC_NAME_MAX = 120;
+
+/** A Topic's name as saved: trimmed, with single spaces, 1–120 characters. */
+const topicName = z
+  .string()
+  .max(2000, `KEEP IT TO ${TOPIC_NAME_MAX} CHARACTERS`)
+  .transform((text) => text.trim().replace(/\s+/g, " "))
+  .pipe(
+    z
+      .string()
+      .min(1, "ENTER THE TOPIC’S NAME")
+      .max(TOPIC_NAME_MAX, `KEEP IT TO ${TOPIC_NAME_MAX} CHARACTERS`),
+  );
+
+/** A Topic, as its row's buttons name it. */
+const topicId = z.string().uuid("THAT TOPIC ISN’T THERE · RELOAD THE PAGE");
+
+/** "+ Add topic": the Subject (its Exam's code and its own) and the new Topic's name. */
+export const newTopicFormSchema = z.object({
+  exam: examCode.transform(typedCode),
+  subject: subjectCodeInputSchema.shape.code,
+  name: topicName,
+});
+
+export type NewTopicForm = z.input<typeof newTopicFormSchema>;
+
+/** Rename: the Topic and its new name. */
+export const renameTopicFormSchema = z.object({ id: topicId, name: topicName });
+
+export type RenameTopicForm = z.input<typeof renameTopicFormSchema>;
+
+/** ▲▼ on a Topic: one place earlier or later in its Subject's order. */
+export const topicMoveSchema = reviewMoveSchema;
+
+export type TopicMove = z.infer<typeof topicMoveSchema>["direction"];
+
+/** ▲▼, as its Server Action takes it: the Topic and the way it moves. */
+export const topicMoveInputSchema = topicMoveSchema.extend({ id: topicId });
+
+/** Delete: the Topic. */
+export const topicIdInputSchema = z.object({ id: topicId });
+
+/** "<SUBJECT> ALREADY HAS A TOPIC CALLED “<name>”", on the name field. */
+export const alreadyATopic = (name: string, subject: string) =>
+  `${subject} ALREADY HAS A TOPIC CALLED “${name}”`;
+
+/**
+ * Pure: why the Topic can't be deleted, or null when it can: while it has a
+ * deck, quiz or Reviewer PDF, Hidden and Draft ones too.
+ */
+export function topicDeleteBlocker({ deck, quiz, reviewerPdf }: TopicContent): string | null {
+  const held = andList([
+    deck ? "a deck" : null,
+    quiz ? "a quiz" : null,
+    reviewerPdf ? "a Reviewer PDF" : null,
+  ]);
+  return held ? `It has ${held}. Only an empty Topic can be deleted.` : null;
+}
+
+// ── Member App content: card import (Phase 3, ticket 06) ────────────────────
+// An Editor imports a Subject's cards from a CSV and a zip of images, which
+// the browser has uploaded to the private content bucket (the upload seam's
+// createContentUpload): the import names them by their paths. Checking the
+// file gives a preview; confirming sends back what the preview was based on,
+// for the conflict check.
+
+/** An uploaded import file's path, as the upload seam gave it. Only the server reads it. */
+const importFilePath = (missing: string) =>
+  z
+    .string({ required_error: missing, invalid_type_error: missing })
+    .min(1, missing)
+    .max(200, missing);
+
+/** "Check file": the Subject, the uploaded CSV and zip (optional), and Replace or Add. */
+export const importInputSchema = z.object({
+  exam: examCode.transform(typedCode),
+  subject: subjectCodeInputSchema.shape.code,
+  csv: importFilePath("CHOOSE THE CSV FILE"),
+  zip: importFilePath("CHOOSE THE ZIP OF IMAGES AGAIN").nullable(),
+  mode: z.enum(IMPORT_MODES, { errorMap: () => ({ message: "CHOOSE REPLACE OR ADD" }) }),
+});
+
+export type ImportInput = z.input<typeof importInputSchema>;
+
+/** "Import": the same, with what the preview was based on. */
+export const confirmImportInputSchema = importInputSchema.extend({
+  basedOn: z
+    .string({ required_error: "CHECK THE FILE AGAIN", invalid_type_error: "CHECK THE FILE AGAIN" })
+    .regex(/^[0-9a-f]{64}$/, "CHECK THE FILE AGAIN"),
+});
+
+export type ConfirmImportInput = z.input<typeof confirmImportInputSchema>;
+
+// ── Member App content: the card editor (Phase 3, ticket 07) ────────────────
+// A Topic's deck, one card at a time (spec, Phase 3 → Content model; stories
+// 125, 127, 128): any Staff User adds, edits, moves and deletes cards, and
+// makes the deck Visible or Hidden and Free Preview. A card's text follows
+// src/lib/cards/card-fields.ts, which the browser checks first; its image is
+// the card's own, a finished "card-image" upload's path, or none.
+
+const cardId = z.string().uuid("THAT CARD ISN’T THERE · RELOAD THE PAGE");
+const deckId = z.string().uuid("THAT DECK ISN’T THERE · RELOAD THE PAGE");
+
+/** A card field from the form: text, held to a generous size before its own rules run. */
+const cardFieldText = z
+  .string({ invalid_type_error: "ENTER TEXT", required_error: "ENTER TEXT" })
+  .max(20_000, "THAT’S FAR TOO LONG FOR A CARD");
+
+/**
+ * An image on a card or question, as its form sends it: the path it has, a
+ * finished "card-image" upload's path, or none. The seam checks which.
+ */
+const imageUpload = z
+  .string({ invalid_type_error: "UPLOAD THE IMAGE AGAIN" })
+  .min(1, "UPLOAD THE IMAGE AGAIN")
+  .max(300, "UPLOAD THE IMAGE AGAIN")
+  .nullable()
+  .default(null);
+
+/** The card form's fields: the front, back and note, and the back image. */
+const cardFieldShape = {
+  front: cardFieldText,
+  back: cardFieldText,
+  // A blank note is saved as none (null), and a saved card's form sends that back.
+  note: cardFieldText.nullish().transform((note) => note ?? ""),
+  image: imageUpload,
+};
+
+/** Adds card-fields.ts's message to each field that can't be saved. */
+function checkCardFields(
+  card: { front: string; back: string; note: string },
+  ctx: z.RefinementCtx,
+) {
+  for (const [field, message] of Object.entries(cardFieldProblems(card))) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message });
+  }
+}
+
+/**
+ * "Save" or "Save & add next" on a new card: its Topic and its fields, as
+ * saved (trimmed, a blank note as none). The deck is made when it has none.
+ */
+export const newCardFormSchema = z
+  .object({ topic: topicId, ...cardFieldShape })
+  .superRefine(checkCardFields)
+  .transform(({ topic, image, ...text }) => ({ topic, ...cardFieldsOf(text), image }));
+
+export type NewCardForm = z.input<typeof newCardFormSchema>;
+
+/** "Save" on a card being edited: which card, and its fields, as saved. */
+export const cardFormSchema = z
+  .object({ id: cardId, ...cardFieldShape })
+  .superRefine(checkCardFields)
+  .transform(({ id, image, ...text }) => ({ id, ...cardFieldsOf(text), image }));
+
+export type CardForm = z.input<typeof cardFormSchema>;
+
+/** ▲▼ on a card: one place earlier or later in its deck. */
+export const cardMoveInputSchema = reviewMoveSchema.extend({ id: cardId });
+
+/** Delete: the card. */
+export const cardIdInputSchema = z.object({ id: cardId });
+
+/** "Visible to members": the deck, and whether Members see it. */
+export const deckVisibilityInputSchema = z.object({
+  deck: deckId,
+  visible: z.boolean({ invalid_type_error: "SHOULD BE ON OR OFF" }),
+});
+
+/** "Free Preview": the deck, and whether Members with no Access Pass can open it. */
+export const deckFreePreviewInputSchema = z.object({
+  deck: deckId,
+  freePreview: z.boolean({ invalid_type_error: "SHOULD BE ON OR OFF" }),
+});
+
+// ── Member App content: quiz settings (Phase 3, ticket 09) ──────────────────
+// A Topic's quiz (spec, Phase 3 → Content model; stories 126–128): any Staff
+// User sets its passing score, shuffle and "show answers after" (one form,
+// with the conflict check), and makes it Visible or Hidden and Free Preview
+// (single toggles). Visible needs a question, which the seam checks.
+
+const quizId = z.string().uuid("THAT QUIZ ISN’T THERE · RELOAD THE PAGE");
+
+export const PASSING_SCORE_ERROR = "ENTER A WHOLE NUMBER FROM 1 TO 100";
+
+const onOrOff = z.boolean({
+  invalid_type_error: "SHOULD BE ON OR OFF",
+  required_error: "SHOULD BE ON OR OFF",
+});
+
+/**
+ * The passing score as the form holds it ("70", " 85 ", "85%") or as sent
+ * (85): a whole number from 1 to 100. "0", "101", "70.5" and "abc" are
+ * refused.
+ */
+const passingScore = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") return value;
+    const typed = value.trim().replace(/\s*%$/, "");
+    return /^\d{1,4}$/.test(typed) ? Number(typed) : value;
+  },
+  z
+    .number({ invalid_type_error: PASSING_SCORE_ERROR, required_error: PASSING_SCORE_ERROR })
+    .int(PASSING_SCORE_ERROR)
+    .min(PASSING_SCORE_MIN, PASSING_SCORE_ERROR)
+    .max(PASSING_SCORE_MAX, PASSING_SCORE_ERROR),
+);
+
+/** "Save settings": the quiz, its passing score, and whether it shuffles and shows answers after. */
+export const quizSettingsFormSchema = z.object({
+  id: quizId,
+  passingScore,
+  shuffle: onOrOff,
+  showAnswers: onOrOff,
+});
+
+export type QuizSettingsForm = z.input<typeof quizSettingsFormSchema>;
+
+/** "Visible to members": the quiz, and whether Members see it. */
+export const quizVisibilityInputSchema = z.object({ quiz: quizId, visible: onOrOff });
+
+/** "Free Preview": the quiz, and whether Members with no Access Pass can open it. */
+export const quizFreePreviewInputSchema = z.object({ quiz: quizId, freePreview: onOrOff });
+
+// ── Member App content: the question editor (Phase 3, ticket 10) ────────────
+// A Topic's quiz, one question at a time (spec, Phase 3 → Content model;
+// stories 125, 127, 133l): any Staff User adds, edits, moves and deletes
+// questions, as the card editor does cards. A question's text follows
+// src/lib/quizzes/question-fields.ts, which the browser checks first; its
+// figure is the question's own, a finished "card-image" upload's path (a
+// figure has a card image's rules), or none.
+
+const questionId = z.string().uuid("THAT QUESTION ISN’T THERE · RELOAD THE PAGE");
+
+/** A question's text field from the form, held to a generous size before its own rules run. */
+const questionFieldText = z
+  .string({ invalid_type_error: "ENTER TEXT", required_error: "ENTER TEXT" })
+  .max(20_000, "THAT’S FAR TOO LONG FOR A QUESTION");
+
+/** The correct choice: A–D, or none picked yet ("", null or missing), which the rules refuse. */
+const correctChoice = z.preprocess(
+  (value) => (value === "" || value === undefined ? null : value),
+  z.enum(QUIZ_CHOICES, { errorMap: () => ({ message: PICK_THE_CORRECT_CHOICE }) }).nullable(),
+);
+
+/** The question form's fields: the question, four choices, the correct one, the explanation and the figure. */
+const questionFieldShape = {
+  question: questionFieldText,
+  choices: z.object({
+    A: questionFieldText,
+    B: questionFieldText,
+    C: questionFieldText,
+    D: questionFieldText,
+  }),
+  correct: correctChoice,
+  explanation: questionFieldText,
+  figure: imageUpload,
+};
+
+type QuestionShape = z.output<z.ZodObject<typeof questionFieldShape>>;
+
+/** Adds question-fields.ts's message to each field that can't be saved. */
+function checkQuestionFields(form: QuestionShape, ctx: z.RefinementCtx) {
+  for (const [field, message] of Object.entries(questionFieldProblems(form))) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: field.split("."), message });
+  }
+}
+
+/**
+ * The correct choice as saved. The transform after checkQuestionFields runs
+ * only when it refused nothing, so a choice is always picked: this narrows it.
+ */
+function pickedChoice(correct: QuizChoice | null, ctx: z.RefinementCtx): QuizChoice {
+  if (correct !== null) return correct;
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    path: ["correct"],
+    message: PICK_THE_CORRECT_CHOICE,
+  });
+  return z.NEVER;
+}
+
+/**
+ * "Save" or "Save & add next" on a new question: its Topic and its fields, as
+ * saved (trimmed). The quiz is made when the Topic has none.
+ */
+export const newQuestionFormSchema = z
+  .object({ topic: topicId, ...questionFieldShape })
+  .superRefine(checkQuestionFields)
+  .transform((form, ctx) => ({
+    topic: form.topic,
+    ...questionFieldsOf(form),
+    correct: pickedChoice(form.correct, ctx),
+    figure: form.figure,
+  }));
+
+export type NewQuestionForm = z.input<typeof newQuestionFormSchema>;
+
+/** "Save" on a question being edited: which question, and its fields, as saved. */
+export const questionFormSchema = z
+  .object({ id: questionId, ...questionFieldShape })
+  .superRefine(checkQuestionFields)
+  .transform((form, ctx) => ({
+    id: form.id,
+    ...questionFieldsOf(form),
+    correct: pickedChoice(form.correct, ctx),
+    figure: form.figure,
+  }));
+
+export type QuestionForm = z.input<typeof questionFormSchema>;
+
+/** ▲▼ on a question: one place earlier or later in its quiz. */
+export const questionMoveInputSchema = reviewMoveSchema.extend({ id: questionId });
+
+/** Delete: the question, which is kept, marked removed, for Members' old attempts. */
+export const questionIdInputSchema = z.object({ id: questionId });
+
+// ── Reviewer PDFs (Phase 3, ticket 12) ──────────────────────────────────────
+
+/** A Reviewer PDF's file name, for the Admin's list: trimmed, cut to size, never empty. */
+const reviewerPdfFileName = z
+  .string({ invalid_type_error: "NAME THE FILE", required_error: "NAME THE FILE" })
+  .max(2000, "NAME THE FILE")
+  .transform((name) => {
+    const shown = name.replace(/[\u0000-\u001f\u007f]/g, "").trim();
+    return shown.slice(0, PDF_NAME_MAX).trim() || "Reviewer PDF";
+  });
+
+/**
+ * An uploaded Reviewer PDF, recorded: where the browser uploaded it (which
+ * the server checks is a Reviewer PDF upload, and has arrived) and the file's
+ * name. Its size is read from Storage, not taken from the browser.
+ */
+export const reviewerPdfRecordSchema = z.object({
+  path: z
+    .string({ invalid_type_error: "UPLOAD THE PDF AGAIN", required_error: "UPLOAD THE PDF AGAIN" })
+    .min(1, "UPLOAD THE PDF AGAIN")
+    .max(200, "UPLOAD THE PDF AGAIN"),
+  fileName: reviewerPdfFileName,
+});
+
+export type ReviewerPdfRecordInput = z.input<typeof reviewerPdfRecordSchema>;
+
+const reviewerPdfId = z.string().uuid("THAT REVIEWER PDF ISN’T THERE · RELOAD THE PAGE");
+
+/** Delete: the Reviewer PDF, with its original and its page images. */
+export const reviewerPdfIdInputSchema = z.object({ id: reviewerPdfId });
+
+// ── Reviewer PDFs: placing and publishing (Phase 3, ticket 13) ─────────────
+// An Editor places a Reviewer PDF under a Topic (one Reviewer PDF per Topic;
+// the form's save, with the conflict check), publishes or unpublishes it,
+// and flags it Free Preview (single actions, which always save). The status
+// rules are src/lib/reviewer-pdfs/status.ts.
+
+/** "Save placement": the Reviewer PDF, and the Topic it goes under. */
+export const reviewerPdfPlacementSchema = z.object({
+  id: reviewerPdfId,
+  topic: z
+    .string({ invalid_type_error: "CHOOSE A TOPIC", required_error: "CHOOSE A TOPIC" })
+    .uuid("CHOOSE A TOPIC"),
+});
+
+export type ReviewerPdfPlacementForm = z.input<typeof reviewerPdfPlacementSchema>;
+
+/** Publish (true) or Unpublish (false). */
+export const reviewerPdfPublishedInputSchema = z.object({ id: reviewerPdfId, published: onOrOff });
+
+/** "Free Preview": the Reviewer PDF, and whether Members with no Access Pass can read it. */
+export const reviewerPdfFreePreviewInputSchema = z.object({
+  id: reviewerPdfId,
+  freePreview: onOrOff,
+});

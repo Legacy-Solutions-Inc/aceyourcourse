@@ -1,0 +1,89 @@
+{
+  "nodes": [
+    {
+      "id": "docs_superpowers_handoffs_2026_07_31_coding_standards_skill",
+      "label": "Handoff: coding-standards skill rewrite",
+      "file_type": "document",
+      "source_file": "docs/superpowers/handoffs/2026-07-31-coding-standards-skill.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_handoffs_2026_07_31_coding_standards_skill_coding_standards_skill",
+      "label": "coding-standards checker SKILL.md (12 categories, red flags)",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/handoffs/2026-07-31-coding-standards-skill.md",
+      "source_location": "L1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_coding_standards_skill",
+      "target": "docs_superpowers_handoffs_2026_07_31_coding_standards_skill_coding_standards_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-coding-standards-skill.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_coding_standards_skill",
+      "target": "docs_superpowers_specs_2026_07_31_coding_standards",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-coding-standards-skill.md",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_coding_standards_skill_coding_standards_skill",
+      "target": "docs_superpowers_specs_2026_07_31_coding_standards_twelve_categories",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-coding-standards-skill.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_coding_standards_skill",
+      "target": "agents",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-coding-standards-skill.md",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_coding_standards_skill_coding_standards_skill",
+      "target": "docs_superpowers_specs_2026_07_31_coding_standards_in_action_authz",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-coding-standards-skill.md",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_handoffs_2026_07_31_coding_standards_skill_coding_standards_skill",
+      "target": "docs_superpowers_specs_2026_07_31_coding_standards_getuser_not_getsession",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/handoffs/2026-07-31-coding-standards-skill.md",
+      "source_location": "L38",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

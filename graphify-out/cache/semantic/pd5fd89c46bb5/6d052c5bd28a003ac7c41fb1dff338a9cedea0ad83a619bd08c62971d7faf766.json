@@ -1,0 +1,112 @@
+{
+  "nodes": [
+    {
+      "id": "_claude_skills_drizzle_data_references_drizzle_rls_drizzle_rls_reference",
+      "label": "Drizzle + RLS Future Tenancy Postures (reference-only)",
+      "file_type": "document",
+      "source_file": ".claude/skills/drizzle-data/references/drizzle-rls.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_drizzle_data_references_drizzle_rls_posture_a",
+      "label": "Posture A: Seam-Scoped, RLS as Defense-in-Depth",
+      "file_type": "rationale",
+      "source_file": ".claude/skills/drizzle-data/references/drizzle-rls.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Supabase already owns auth and RLS policies; keeping RLS on the Supabase side avoids two tools writing the same policies."
+    },
+    {
+      "id": "_claude_skills_drizzle_data_references_drizzle_rls_posture_b",
+      "label": "Posture B: RLS-Primary Policies in Drizzle (pgPolicy)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/drizzle-data/references/drizzle-rls.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_drizzle_data_references_drizzle_rls_adr_0005",
+      "label": "ADR 0005 Multi-Tenancy (retired track)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/drizzle-data/references/drizzle-rls.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_claude_skills_drizzle_data_references_drizzle_rls_drizzle_rls_reference",
+      "target": "_claude_skills_drizzle_data_references_drizzle_rls_posture_a",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/drizzle-data/references/drizzle-rls.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_drizzle_data_references_drizzle_rls_drizzle_rls_reference",
+      "target": "_claude_skills_drizzle_data_references_drizzle_rls_posture_b",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/drizzle-data/references/drizzle-rls.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_drizzle_data_references_drizzle_rls_posture_a",
+      "target": "_claude_skills_drizzle_data_references_drizzle_rls_adr_0005",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/drizzle-data/references/drizzle-rls.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_drizzle_data_references_drizzle_rls_posture_a",
+      "target": "_claude_skills_drizzle_data_skill_adr_0006",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/drizzle-data/references/drizzle-rls.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_drizzle_data_references_drizzle_rls_posture_a",
+      "target": "_claude_skills_clean_architecture_skill_service_seam",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".claude/skills/drizzle-data/references/drizzle-rls.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_drizzle_data_references_drizzle_rls_adr_0005",
+      "target": "_claude_skills_supabase_auth_skill_adr_0008",
+      "relation": "conceptually_related_to",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.25,
+      "source_file": ".claude/skills/drizzle-data/references/drizzle-rls.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

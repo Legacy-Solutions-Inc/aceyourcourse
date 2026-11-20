@@ -1,0 +1,91 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_website_issues_12_catalogue_spreadsheet",
+      "label": "Ticket 12: Catalogue spreadsheet template and seed converter",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-website/issues/12-catalogue-spreadsheet.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_12_catalogue_spreadsheet_catalogue_import_converter",
+      "label": "Catalogue spreadsheet seed converter (pnpm catalogue:import)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-website/issues/12-catalogue-spreadsheet.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Client fills CSV sheets; check mode reports sheet/row/column errors and writes nothing on error; output passes the seam's own seed validation."
+    },
+    {
+      "id": "_scratch_ayc_website_issues_12_catalogue_spreadsheet_peso_to_centavo_conversion",
+      "label": "Peso-to-centavo price conversion",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/12-catalogue-spreadsheet.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_website_issues_12_catalogue_spreadsheet",
+      "target": "_scratch_ayc_website_issues_02_product_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/12-catalogue-spreadsheet.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_12_catalogue_spreadsheet",
+      "target": "_scratch_ayc_website_issues_12_catalogue_spreadsheet_catalogue_import_converter",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/12-catalogue-spreadsheet.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_12_catalogue_spreadsheet",
+      "target": "_scratch_ayc_website_issues_12_catalogue_spreadsheet_peso_to_centavo_conversion",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/12-catalogue-spreadsheet.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_12_catalogue_spreadsheet_catalogue_import_converter",
+      "target": "_scratch_ayc_website_issues_02_product_page_seed_validation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/12-catalogue-spreadsheet.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_12_catalogue_spreadsheet_peso_to_centavo_conversion",
+      "target": "_scratch_ayc_website_prompts_01_branded_website_shell_formatpeso",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-website/issues/12-catalogue-spreadsheet.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,70 @@
+{
+  "nodes": [
+    {
+      "id": "docs_adr_0009_cookieless_website_analytics",
+      "label": "ADR 0009: Cookieless anonymous Website analytics, no consent banner",
+      "file_type": "document",
+      "source_file": "docs/adr/0009-cookieless-website-analytics.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Anonymous cookieless data is not personal information under the Data Privacy Act of 2012; a banner would lose 30-60% of visitors for no compliance gain."
+    },
+    {
+      "id": "docs_adr_0009_cookieless_website_analytics_cookieless_mode",
+      "label": "Cookieless anonymous PostHog mode with marketplace_click event",
+      "file_type": "concept",
+      "source_file": "docs/adr/0009-cookieless-website-analytics.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_adr_0009_cookieless_website_analytics",
+      "target": "docs_adr_0007_analytics_posthog",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0009-cookieless-website-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0009_cookieless_website_analytics",
+      "target": "docs_adr_0009_cookieless_website_analytics_cookieless_mode",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0009-cookieless-website-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0009_cookieless_website_analytics_cookieless_mode",
+      "target": "context_website",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0009-cookieless-website-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0009_cookieless_website_analytics_cookieless_mode",
+      "target": "context_marketplace",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0009-cookieless-website-analytics.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

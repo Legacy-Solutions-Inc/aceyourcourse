@@ -1,0 +1,130 @@
+{
+  "nodes": [
+    {
+      "id": "docs_adr_0006_drizzle_data_layer",
+      "label": "ADR 0006: Drizzle as the typed data layer behind the seam",
+      "file_type": "document",
+      "source_file": "docs/adr/0006-drizzle-data-layer.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Typed queries and migrations behind unchanged seam signatures, mock-by-default, no DB connection at import/build time; prepare:false for the Supabase transaction pooler."
+    },
+    {
+      "id": "docs_adr_0006_drizzle_data_layer_lazy_db_client",
+      "label": "Lazy singleton Drizzle client (getDb, prepare:false)",
+      "file_type": "concept",
+      "source_file": "docs/adr/0006-drizzle-data-layer.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Connection built on first getDb() call, never at module eval, so next build needs no database; prepare:false required by Supabase transaction pooler (port 6543)."
+    },
+    {
+      "id": "docs_adr_0006_drizzle_data_layer_mock_db_selector",
+      "label": "Seam selector: DB impl when isDatabaseConfigured, else mock",
+      "file_type": "concept",
+      "source_file": "docs/adr/0006-drizzle-data-layer.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_adr_0006_drizzle_data_layer",
+      "target": "docs_adr_0003_mock_first_service_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0006-drizzle-data-layer.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0006_drizzle_data_layer",
+      "target": "docs_adr_0002_supabase_only_auth",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0006-drizzle-data-layer.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0006_drizzle_data_layer",
+      "target": "docs_adr_0005_multi_tenancy",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0006-drizzle-data-layer.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0006_drizzle_data_layer",
+      "target": "docs_adr_0006_drizzle_data_layer_lazy_db_client",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0006-drizzle-data-layer.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0006_drizzle_data_layer",
+      "target": "docs_adr_0006_drizzle_data_layer_mock_db_selector",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0006-drizzle-data-layer.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0006_drizzle_data_layer_mock_db_selector",
+      "target": "context_service_seam",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/adr/0006-drizzle-data-layer.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0006_drizzle_data_layer_lazy_db_client",
+      "target": "docs_adr_0006_drizzle_data_layer_mock_db_selector",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/adr/0006-drizzle-data-layer.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "mock_first_data_architecture",
+      "label": "Mock-first data architecture behind the Service Seam",
+      "nodes": [
+        "context_service_seam",
+        "docs_adr_0003_mock_first_service_seam",
+        "docs_adr_0006_drizzle_data_layer",
+        "docs_adr_0006_drizzle_data_layer_mock_db_selector",
+        "docs_adr_0006_drizzle_data_layer_lazy_db_client",
+        "docs_adr_0004_rsc_server_actions_first_rsc_reads_server_action_writes",
+        "context_reference_feature"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/adr/0006-drizzle-data-layer.md"
+    }
+  ]
+}

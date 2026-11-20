@@ -1,0 +1,388 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "label": "Executer prompt 02: Settings and shared save path",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "label": "Ticket 02-settings-and-save-path",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_02_settings_and_save_path_shared_save_path",
+      "label": "Shared Admin save path reused by tickets 03-10",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Built once carefully so later editors copy it: validation, conflict check, Staff Activity, cache tags."
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_02_settings_and_save_path_admin_action",
+      "label": "adminAction wrapper (Guard before zod, revalidateTag with returned tags)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_02_settings_and_save_path_conflict_check",
+      "label": "Conflict check on record savedAt stamp",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Each editor holds the savedAt it opened; a stale save returns {kind:'conflict', savedBy, savedAt} and keeps the form values."
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_02_settings_and_save_path_staff_activity",
+      "label": "Staff Activity record (before/after values)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_02_settings_and_save_path_catalogue_cache_tags",
+      "label": "Catalogue cache tags with unstable_cache (catalogue.tags.ts)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Every page is dynamic because of the nonce CSP, so speed comes from caching seam reads with tags; sample-store generation in the key parts."
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_02_settings_and_save_path_sample_data_reset",
+      "label": "Sample data Reset (header button and POST /api/dev/sample-data/reset)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_02_settings_and_save_path_save_state_line",
+      "label": "Save-state line, conflict notice and Couldn't save toast",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_02_settings_and_save_path_website_settings_editor",
+      "label": "Settings editor: contact email, shop links, social links, trust figures",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_services_catalogue_schema",
+      "label": "src/services/catalogue.schema.ts",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "target": "docs_mockup_admin_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_shared_save_path",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_admin_action",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_conflict_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_catalogue_cache_tags",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_sample_data_reset",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_save_state_line",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_website_settings_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "target": "src_services_catalogue_schema",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path_admin_action",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_shared_save_path",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path_conflict_check",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_shared_save_path",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path_staff_activity",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_shared_save_path",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path_catalogue_cache_tags",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_shared_save_path",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path_save_state_line",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_shared_save_path",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path_admin_action",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_staff_guard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path_website_settings_editor",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_admin_action",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path_sample_data_reset",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_sample_store",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path_sample_data_reset",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_admin_closed_in_production",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_02_settings_and_save_path_shared_save_path",
+      "target": "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_sample_store",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "admin_shared_save_path_flow",
+      "label": "Shared Admin save path (Guard, adminAction, conflict check, Staff Activity, cache tags)",
+      "nodes": [
+        "_scratch_ayc_admin_prompts_01_admin_shell_and_sign_in_staff_guard",
+        "_scratch_ayc_admin_prompts_02_settings_and_save_path_admin_action",
+        "_scratch_ayc_admin_prompts_02_settings_and_save_path_conflict_check",
+        "_scratch_ayc_admin_prompts_02_settings_and_save_path_staff_activity",
+        "_scratch_ayc_admin_prompts_02_settings_and_save_path_catalogue_cache_tags",
+        "_scratch_ayc_admin_prompts_02_settings_and_save_path_save_state_line"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/02-settings-and-save-path.md"
+    }
+  ]
+}

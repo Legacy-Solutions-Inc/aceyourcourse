@@ -42,3 +42,12 @@ Every access check therefore answers one of three questions:
   content-type scope to Plan and Access Pass then.
 - **A per-item "Included in" list.** Rejected. Content belongs to an Exam, so
   access follows the Exam.
+
+## Amendment (2026-11-17, Phase 3 planning)
+
+Active Staff (Owners and Editors) can open every Exam's Visible or Published
+content in the Member App without an Access Pass, so they can check the real
+Member experience. This adds a fourth answer to the access check: "Is this
+Member active Staff?" Staff are still subject to the Active Device, and
+Hidden or Draft content is never shown in the Member App. Staff already have
+the originals in the Admin, so this adds no leak risk.

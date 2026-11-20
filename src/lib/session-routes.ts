@@ -23,3 +23,8 @@ export function needsSession(pathname: string): boolean {
 export function isAdminPath(pathname: string): boolean {
   return isUnder(pathname, paths.admin.overview);
 }
+
+/** Pure: is this pathname in the Member App? "/app" and "/app/x" are; "/application" isn't. */
+export function isMemberAppPath(pathname: string): boolean {
+  return isUnder(pathname, paths.memberApp.home);
+}

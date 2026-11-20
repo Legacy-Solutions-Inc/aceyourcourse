@@ -1,0 +1,70 @@
+{
+  "nodes": [
+    {
+      "id": "docs_adr_0005_multi_tenancy",
+      "label": "ADR 0005: Multi-tenancy with organizations, memberships and RLS (superseded)",
+      "file_type": "document",
+      "source_file": "docs/adr/0005-multi-tenancy.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Originally a B2B SaaS starter needed real RLS-isolated tenant data; superseded by ADR 0008 because AYC is single-brand."
+    },
+    {
+      "id": "docs_adr_0005_multi_tenancy_tenancy_model",
+      "label": "Organizations / Memberships / Org Roles tenancy model (retired)",
+      "file_type": "concept",
+      "source_file": "docs/adr/0005-multi-tenancy.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_adr_0005_multi_tenancy",
+      "target": "docs_adr_0003_mock_first_service_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0005-multi-tenancy.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0005_multi_tenancy",
+      "target": "docs_adr_0002_supabase_only_auth",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0005-multi-tenancy.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0005_multi_tenancy",
+      "target": "docs_adr_0008_single_brand_members_and_staff",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0005-multi-tenancy.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_adr_0005_multi_tenancy",
+      "target": "docs_adr_0005_multi_tenancy_tenancy_model",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/adr/0005-multi-tenancy.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

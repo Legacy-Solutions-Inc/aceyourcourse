@@ -1,0 +1,437 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "label": "Executer prompt 20: Site page SEO",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_20_site_page_seo",
+      "label": "Ticket 20-site-page-seo",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_mockup_admin_build_map",
+      "label": "Admin mockup BUILD-MAP.md",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_20_site_page_seo_site_page",
+      "label": "Site page (Home, Products, Reviews, About, FAQ)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_20_site_page_seo_pages_and_promo_rename",
+      "label": "Menu 'Exam pages & promo' renamed 'Pages & promo'",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_components_admin_exam_pages_exam_seo_editor",
+      "label": "exam-seo-editor.tsx (Search & AI visibility panel)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_lib_admin_seo_check",
+      "label": "seo-check.ts (GOOD or CHECK)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_lib_admin_exam_pages_view",
+      "label": "exam-pages-view.ts (parseExamPagesParams, examPagesHref)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_components_admin_exam_pages_exam_pages_columns",
+      "label": "exam-pages-columns.tsx (PAGES column, Exam chips)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_20_site_page_seo_catalogue_site_pages_tag",
+      "label": "catalogue:site-pages cache tag",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_20_site_page_seo_contract_milestone_2",
+      "label": "Client contract Milestone 2: client edits all content",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Drives tickets 20-23: SEO, About, llms.txt, adding Exams"
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_20_site_page_seo_seo_override_fallback",
+      "label": "Title/description overrides; blank falls back to today's src/content text",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_20_site_page_seo_site_pages_storage_path",
+      "label": "Storage path site-pages/{page}/share-{uuid}.{ext}",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "_scratch_ayc_admin_issues_20_site_page_seo",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "agents",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "docs_mockup_admin_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_executer_no_commit_guardrail",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_scratchpad_copy_build_gotcha",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_staff_guard_server_authorisation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "_scratch_ayc_admin_prompts_20_site_page_seo_site_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "_scratch_ayc_admin_prompts_20_site_page_seo_pages_and_promo_rename",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "src_components_admin_exam_pages_exam_seo_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "src_lib_admin_seo_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "src_lib_admin_exam_pages_view",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "src_components_admin_exam_pages_exam_pages_columns",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "_scratch_ayc_admin_prompts_20_site_page_seo_catalogue_site_pages_tag",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "_scratch_ayc_admin_prompts_20_site_page_seo_contract_milestone_2",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "_scratch_ayc_admin_prompts_20_site_page_seo_seo_override_fallback",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "_scratch_ayc_admin_prompts_20_site_page_seo_site_pages_storage_path",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo_site_page",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_components_admin_exam_pages_exam_seo_editor",
+      "target": "src_lib_admin_seo_check",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo_site_pages_storage_path",
+      "target": "src_services_uploads_storage",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo_contract_milestone_2",
+      "target": "_scratch_ayc_admin_prompts_20_site_page_seo_site_page",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo_site_page",
+      "target": "src_services_catalogue_schema_validatecatalogueseed",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo_site_page",
+      "target": "_scratch_ayc_admin_prompts_17_photo_storage_after_commit_storage_cleanup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "_scratch_ayc_admin_prompts_15_admin_writes_on_the_database",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "target": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "milestone_2_content_editing",
+      "label": "Milestone 2 self-editable content (Site page SEO, About editor, llms.txt, add Exams)",
+      "nodes": [
+        "_scratch_ayc_admin_prompts_20_site_page_seo_contract_milestone_2",
+        "_scratch_ayc_admin_prompts_20_site_page_seo_site_page",
+        "_scratch_ayc_admin_prompts_21_about_page_editor_about_page_editor",
+        "src_app_llms_txt_route",
+        "_scratch_ayc_admin_prompts_23_add_exams_and_subjects_add_exam_owner_only"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/20-site-page-seo.md"
+    }
+  ]
+}

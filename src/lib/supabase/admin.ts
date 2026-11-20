@@ -6,9 +6,11 @@ import { env } from "@/env";
 import { serverEnv } from "@/env.server";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Supabase with the secret key (spec Phase 2: Keys), for Storage only: the
-// upload seam's signed upload URLs and the clean-up of removed photos
-// (src/services/uploads.storage.ts). The secret key bypasses RLS, so it stays
+// Supabase with the secret key (spec Phase 2: Keys), for Storage and Auth's
+// admin API only: the upload seam's signed upload URLs and the clean-up of
+// removed photos (src/services/uploads.storage.ts), and deleting a Member's
+// Supabase User when an Owner deletes their account (ticket 19,
+// src/lib/supabase/auth-admin.ts). The secret key bypasses RLS, so it stays
 // on the server: this module is server-only, and reads the key from the
 // server env. Data goes through Drizzle, never through this client.
 // ─────────────────────────────────────────────────────────────────────────────

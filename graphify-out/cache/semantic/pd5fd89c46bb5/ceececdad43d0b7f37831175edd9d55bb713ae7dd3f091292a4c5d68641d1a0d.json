@@ -1,0 +1,253 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_25_not_on_site_instructions",
+      "label": "Executer prompt 25: Say how to put an Exam on the Website",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_25_not_on_site_instructions",
+      "label": "Ticket 25-not-on-site-instructions",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_25_not_on_site_instructions_not_on_site_note",
+      "label": "NOT ON SITE note with steps and a link to the Exam's Products",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Staff saw NOT ON SITE and couldn't tell how to clear it: it's driven by Products' showOnWebsite, not an Exam switch"
+    },
+    {
+      "id": "src_lib_admin_product_list_productlisthref",
+      "label": "productListHref",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_25_not_on_site_instructions_not_on_site_wording",
+      "label": "Pure wording function (exam code, Product count) to sentence and link label",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions",
+      "target": "_scratch_ayc_admin_issues_25_not_on_site_instructions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions",
+      "target": "agents",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_executer_no_commit_guardrail",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_scratchpad_copy_build_gotcha",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_staff_guard_server_authorisation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions",
+      "target": "_scratch_ayc_admin_prompts_25_not_on_site_instructions_not_on_site_note",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions",
+      "target": "src_lib_admin_product_list_productlisthref",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions",
+      "target": "_scratch_ayc_admin_prompts_25_not_on_site_instructions_not_on_site_wording",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions",
+      "target": "src_components_admin_exam_pages_exam_pages_columns",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions",
+      "target": "src_lib_admin_exam_pages_view",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions",
+      "target": "src_services_catalogue_rules_listexams",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions_not_on_site_note",
+      "target": "_scratch_ayc_admin_prompts_23_add_exams_and_subjects_not_on_site_label",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions_not_on_site_note",
+      "target": "src_lib_admin_product_list_productlisthref",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions_not_on_site_wording",
+      "target": "_scratch_ayc_admin_prompts_25_not_on_site_instructions_not_on_site_note",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_components_admin_exam_pages_exam_pages_columns",
+      "target": "_scratch_ayc_admin_prompts_25_not_on_site_instructions_not_on_site_note",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions_not_on_site_note",
+      "target": "_scratch_ayc_admin_prompts_23_add_exams_and_subjects_delete_guards",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_25_not_on_site_instructions",
+      "target": "_scratch_ayc_admin_prompts_23_add_exams_and_subjects",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/25-not-on-site-instructions.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

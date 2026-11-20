@@ -5,6 +5,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
+import { sampleContentId, sampleTopicId } from "../../src/services/mock/content";
 import {
   LIVE,
   openSignInAs,
@@ -20,6 +21,13 @@ import {
 // scroll sideways. On every screen, with its editor and dialog open, the
 // keyboard alone reaches every control, each with a visible focus ring.
 const BLOCKING_IMPACTS = new Set(["serious", "critical"]);
+
+/** A sample Topic with a Hidden deck and no cards, for the card editor (ticket 07). */
+const ALGEBRA = sampleTopicId("CE", "MSTC", "Algebra");
+/** A sample Topic with a Hidden quiz and no questions, for the quiz screen (ticket 09). */
+const SPIRAL_CURVES = sampleTopicId("CE", "MSTC", "Spiral Curves");
+/** The sample Draft Reviewer PDF on Spiral Curves, from before uploads: no pages to publish. */
+const SPIRAL_CURVES_PDF = sampleContentId(SPIRAL_CURVES, "reviewer-pdf");
 
 const SIZES = [
   { name: "a desktop", viewport: { width: 1280, height: 800 } },
@@ -230,6 +238,76 @@ const KEYBOARD_SCREENS: {
     ready: (page) => page.getByRole("form", { name: "Announcement bar" }),
   },
   {
+    name: "Member App content, with a Topic's delete dialog",
+    who: "editor",
+    path: paths.admin.contentTopics("CE", "MSTC"),
+    ready: (page) => page.getByRole("region", { name: "CE · MSTC · TOPICS" }),
+    dialog: {
+      open: (page) => page.getByRole("button", { name: "Delete Surveying" }).click(),
+      name: "Delete “Surveying” from MSTC?",
+    },
+  },
+  {
+    name: "a Subject's card import",
+    who: "editor",
+    path: paths.admin.cardImport("CE", "MSTC"),
+    ready: (page) => page.getByRole("region", { name: "CE · MSTC · IMPORT CARDS" }),
+  },
+  {
+    name: "a Topic's deck in the card editor",
+    who: "editor",
+    path: paths.admin.deck(ALGEBRA),
+    ready: (page) => page.getByRole("form", { name: "New card" }),
+  },
+  {
+    name: "a Subject's quiz import",
+    who: "editor",
+    path: paths.admin.quizImport("CE", "MSTC"),
+    ready: (page) => page.getByRole("region", { name: "CE · MSTC · IMPORT QUIZZES" }),
+  },
+  {
+    name: "a Topic's quiz, with its settings",
+    who: "editor",
+    path: paths.admin.quiz(SPIRAL_CURVES),
+    ready: (page) => page.getByRole("form", { name: "SETTINGS" }),
+  },
+  {
+    name: "the Reviewer PDFs, with a Reviewer PDF's delete dialog",
+    who: "editor",
+    path: paths.admin.reviewerPdfs,
+    ready: (page) => page.getByRole("list", { name: "Reviewer PDFs" }),
+    dialog: {
+      open: (page) =>
+        page.getByRole("button", { name: "Delete Simple Curves Reviewer PDF" }).click(),
+      name: "Delete “Simple Curves Reviewer PDF”?",
+    },
+  },
+  {
+    name: "a Reviewer PDF's screen, with an Owner's placement and its delete dialog",
+    who: "owner",
+    path: paths.admin.reviewerPdf(SPIRAL_CURVES_PDF),
+    ready: (page) => page.getByRole("region", { name: "PLACEMENT" }),
+    dialog: {
+      open: (page) =>
+        page.getByRole("button", { name: "Delete Spiral Curves Reviewer PDF" }).click(),
+      name: "Delete “Spiral Curves Reviewer PDF”?",
+    },
+  },
+  {
+    name: "Users, with the Beta Testers tab and its remove dialog",
+    who: "owner",
+    path: paths.admin.betaTesters,
+    ready: (page) => page.getByRole("region", { name: "BETA TESTERS" }),
+    dialog: {
+      open: (page) =>
+        page
+          .getByRole("region", { name: "BETA TESTERS" })
+          .getByRole("button", { name: "Remove tester@example.com" })
+          .click(),
+      name: "Remove tester@example.com from the beta?",
+    },
+  },
+  {
     name: "Settings, with the add-invite modal",
     who: "owner",
     path: paths.admin.settings,
@@ -296,6 +374,9 @@ for (const size of SIZES) {
     test("no serious or critical accessibility violations on the signed-in screens", async ({
       page,
     }) => {
+      // Every signed-in screen in one test: on a fresh dev server, each is
+      // compiled on its first visit, which takes the list past 30 seconds.
+      test.slow();
       await signInAs(page, "owner");
       await expect(page).toHaveURL(/\/admin$/, { timeout: 15_000 });
       for (const path of [
@@ -309,12 +390,50 @@ for (const size of SIZES) {
         "/admin/exam-pages?page=site&site=about&section=seo",
         "/admin/products",
         "/admin/reviews",
+        // Member App content: a Subject's Topics (Phase 3, ticket 05), and its card import (ticket 06).
+        "/admin/content",
+        "/admin/content/import?exam=ce&subject=mstc",
+        // A Topic's deck in the card editor (ticket 07).
+        paths.admin.deck(ALGEBRA),
+        // A Subject's quiz import, and a Topic's quiz with its settings (ticket 09).
+        paths.admin.quizImport("CE", "MSTC"),
+        paths.admin.quiz(SPIRAL_CURVES),
+        // The Reviewer PDFs (ticket 12), and one Reviewer PDF's screen (ticket 13).
+        paths.admin.reviewerPdfs,
+        paths.admin.reviewerPdf(SPIRAL_CURVES_PDF),
+        // Users: the Users list (ticket 16) and the Beta Testers tab (ticket 01).
+        "/admin/users",
+        paths.admin.betaTesters,
         "/admin/settings",
       ]) {
         await page.goto(path);
         await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
         await expectNoBlockingViolations(page);
       }
+    });
+
+    test("no serious or critical accessibility violations on the card editor: a card, its messages, its preview and the delete dialog", async ({
+      page,
+    }) => {
+      await signInAs(page, "editor", paths.admin.deck(ALGEBRA));
+      const form = page.getByRole("form", { name: "New card" });
+      await expect(form).toBeVisible({ timeout: 15_000 });
+      await form.getByLabel(/^FRONT/).fill("Degree of curve");
+      await form.getByLabel(/^BACK/).fill("$D = \\frac{1145.916}{R}$");
+      await form.getByRole("button", { name: "Save & add next" }).click();
+      await expect(form.getByRole("status")).toContainText("WRITING THE NEXT ONE", {
+        timeout: 15_000,
+      });
+      // Every field's message, and a formula that won't render in the preview.
+      await form.getByLabel(/^BACK/).fill("$\\frac{1}{$");
+      await form.getByLabel(/^NOTE/).fill("n".repeat(1001));
+      await form.getByRole("button", { name: "Save", exact: true }).click();
+      await expect(form.getByText("ADD A FRONT TO SAVE")).toBeVisible();
+      await expectNoBlockingViolations(page);
+
+      await page.getByRole("button", { name: "Delete card 1" }).click();
+      await settled(page.getByRole("dialog", { name: /^Delete card 1/ }));
+      await expectNoBlockingViolations(page);
     });
 
     test("no serious or critical accessibility violations on Settings showing field messages", async ({

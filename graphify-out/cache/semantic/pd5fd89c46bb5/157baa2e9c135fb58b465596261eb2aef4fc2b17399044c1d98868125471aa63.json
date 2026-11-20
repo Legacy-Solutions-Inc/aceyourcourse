@@ -1,0 +1,110 @@
+{
+  "nodes": [
+    {
+      "id": "_claude_skills_nextjs_app_router_references_server_actions_server_actions_reference",
+      "label": "Server Actions Repo Pattern Reference",
+      "file_type": "document",
+      "source_file": ".claude/skills/nextjs-app-router/references/server-actions.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_nextjs_app_router_references_server_actions_server_action_write_pattern",
+      "label": "Server Action Write Pattern (safeParse, authz, seam, revalidatePath, redirect)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/nextjs-app-router/references/server-actions.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_nextjs_app_router_references_server_actions_customerformstate",
+      "label": "CustomerFormState",
+      "file_type": "concept",
+      "source_file": ".claude/skills/nextjs-app-router/references/server-actions.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_claude_skills_nextjs_app_router_references_server_actions_server_actions_reference",
+      "target": "_claude_skills_nextjs_app_router_references_server_actions_server_action_write_pattern",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/references/server-actions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_references_server_actions_server_action_write_pattern",
+      "target": "_claude_skills_nextjs_app_router_references_server_actions_customerformstate",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/references/server-actions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_references_server_actions_server_action_write_pattern",
+      "target": "_claude_skills_clean_architecture_skill_service_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/references/server-actions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_references_server_actions_server_action_write_pattern",
+      "target": "_claude_skills_nextjs_app_router_skill_paths_registry",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/references/server-actions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_references_server_actions_server_action_write_pattern",
+      "target": "_claude_skills_drizzle_data_skill_retired_template_commit_aea34ea",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/references/server-actions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_references_server_actions_server_action_write_pattern",
+      "target": "_claude_skills_nextjs_app_router_skill_reads_rsc_writes_actions",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".claude/skills/nextjs-app-router/references/server-actions.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_references_server_actions_customerformstate",
+      "target": "_claude_skills_nextjs_app_router_references_react_19_useactionstate",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/references/server-actions.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

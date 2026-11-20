@@ -1,0 +1,111 @@
+{
+  "nodes": [
+    {
+      "id": "_claude_skills_tailwind_v4_skill_tailwind_v4_skill",
+      "label": "tailwind-v4 Skill",
+      "file_type": "document",
+      "source_file": ".claude/skills/tailwind-v4/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_tailwind_v4_skill_css_first_config",
+      "label": "CSS-First Config (@theme, no tailwind.config.js)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/tailwind-v4/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_tailwind_v4_skill_class_based_dark_mode",
+      "label": "Class-Based Dark Mode (@custom-variant + next-themes)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/tailwind-v4/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_tailwind_v4_skill_tw_animate_css",
+      "label": "tw-animate-css Animation Utilities",
+      "file_type": "concept",
+      "source_file": ".claude/skills/tailwind-v4/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_claude_skills_tailwind_v4_skill_tailwind_v4_skill",
+      "target": "_claude_skills_tailwind_v4_skill_css_first_config",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/tailwind-v4/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_tailwind_v4_skill_tailwind_v4_skill",
+      "target": "_claude_skills_tailwind_v4_skill_class_based_dark_mode",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/tailwind-v4/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_tailwind_v4_skill_tailwind_v4_skill",
+      "target": "_claude_skills_tailwind_v4_skill_tw_animate_css",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/tailwind-v4/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_tailwind_v4_skill_tailwind_v4_skill",
+      "target": "_claude_skills_tailwind_v4_references_theming_theming_reference",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/tailwind-v4/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_tailwind_v4_skill_tailwind_v4_skill",
+      "target": "_claude_skills_shadcn_ui_skill_shadcn_ui_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/tailwind-v4/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_tailwind_v4_skill_tailwind_v4_skill",
+      "target": "_claude_skills_shadcn_ui_skill_cn_cva_composition",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/tailwind-v4/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,369 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "label": "Executer prompt 19: Development password sign-in",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_19_development_password_sign_in",
+      "label": "Ticket 19-development-password-sign-in",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_19_development_password_sign_in_development_password_sign_in",
+      "label": "DEVELOPMENT ONLY email/password sign-in box (pnpm dev, live mode, Email on)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Google not set up yet; test Owner/Editor roles with plus-addresses without several Google accounts"
+    },
+    {
+      "id": "src_lib_admin_sign_in_method",
+      "label": "src/lib/admin/sign-in-method.ts (signInMethodCounts)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_19_development_password_sign_in_amr_method_rule",
+      "label": "Fail-closed amr rule: dev counts oauth|password, elsewhere only oauth (via getClaims)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "amr from verified getClaims(), never decoded cookie; missing/unreadable amr = signed-out"
+    },
+    {
+      "id": "src_components_admin_password_sign_in_form",
+      "label": "password-sign-in-form.tsx",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_lib_admin_guard_continuesignin",
+      "label": "continueSignIn (Staff Guard)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_19_development_password_sign_in_supabase_auth_error_mapping",
+      "label": "Supabase auth error code to message mapping (invalid_credentials, 429, ...)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_19_development_password_sign_in_auth_settings_reader",
+      "label": "Public /auth/v1/settings reader { google, email } (generalised googleEnabled)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_services_admin_schema",
+      "label": "admin.schema.ts (zod schemas)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "_scratch_ayc_admin_issues_19_development_password_sign_in",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "agents",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_executer_no_commit_guardrail",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_scratchpad_copy_build_gotcha",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_staff_guard_server_authorisation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "_scratch_ayc_admin_prompts_19_development_password_sign_in_development_password_sign_in",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "src_lib_admin_sign_in_method",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "_scratch_ayc_admin_prompts_19_development_password_sign_in_amr_method_rule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "src_components_admin_password_sign_in_form",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "src_lib_admin_guard_continuesignin",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "_scratch_ayc_admin_prompts_19_development_password_sign_in_supabase_auth_error_mapping",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "_scratch_ayc_admin_prompts_19_development_password_sign_in_auth_settings_reader",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "src_services_admin_schema",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_lib_admin_sign_in_method",
+      "target": "_scratch_ayc_admin_prompts_19_development_password_sign_in_amr_method_rule",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_lib_admin_identity",
+      "target": "src_lib_admin_sign_in_method",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_components_admin_password_sign_in_form",
+      "target": "_scratch_ayc_admin_prompts_19_development_password_sign_in_development_password_sign_in",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_app_auth_callback",
+      "target": "src_lib_admin_guard_continuesignin",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_lib_admin_identity",
+      "target": "_scratch_ayc_admin_prompts_19_development_password_sign_in_auth_settings_reader",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in_development_password_sign_in",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_live_mode",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in_development_password_sign_in",
+      "target": "docs_runbooks_production",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in_amr_method_rule",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in_getuser_not_getsession",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_19_development_password_sign_in",
+      "target": "_scratch_ayc_admin_prompts_16_real_staff_sign_in",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/19-development-password-sign-in.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

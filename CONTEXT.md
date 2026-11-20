@@ -148,6 +148,12 @@ Ace Your Course is one application with three Surfaces.
   shared with is not secret.
   _Avoid_: invitation link, invite token.
 
+- **Beta Tester** — a person an Owner lets into the Member App before it
+  opens to the public, added by their Google email address before their
+  account exists. Until the Member App is live, only Staff and Beta Testers
+  get in. Everyone else is told it isn't open yet.
+  _Avoid_: early access user, tester (unqualified), whitelist.
+
 - **Staff Role** — a Staff User's level of Admin access: **Owner** (everything,
   including Plans and their prices, orders, Members' data, Settings and Staff
   management) or **Editor** (Website and Member App content, including Product

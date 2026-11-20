@@ -1,0 +1,270 @@
+{
+  "nodes": [
+    {
+      "id": "$graphify-root$_supabase_migrations_20261117142846_member_content_sql",
+      "label": "20261117142846_member_content.sql",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": null
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261117142846_member_content_access_pass_grants",
+      "label": "\"access_pass_grants\"",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L3"
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261117142846_member_content_access_passes",
+      "label": "\"access_passes\"",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L20"
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261117142846_member_content_decks",
+      "label": "\"decks\"",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L28"
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261117142846_member_content_quizzes",
+      "label": "\"quizzes\"",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L37"
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261117142846_member_content_reviewer_pdfs",
+      "label": "\"reviewer_pdfs\"",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L46"
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261117142846_member_content_topics",
+      "label": "\"topics\"",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L56"
+    },
+    {
+      "id": "public_access_passes",
+      "label": "\"public\".\"access_passes\"",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "origin_file": "$graphify-root$/supabase/migrations/20261117142846_member_content.sql"
+    },
+    {
+      "id": "public_exams",
+      "label": "\"public\".\"exams\"",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "origin_file": "$graphify-root$/supabase/migrations/20261117142846_member_content.sql"
+    },
+    {
+      "id": "public_topics",
+      "label": "\"public\".\"topics\"",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "origin_file": "$graphify-root$/supabase/migrations/20261117142846_member_content.sql"
+    },
+    {
+      "id": "public_subjects",
+      "label": "\"public\".\"subjects\"",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "origin_file": "$graphify-root$/supabase/migrations/20261117142846_member_content.sql"
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261117142846_member_content_access_pass_grants_user_id_exam_code_seq_idx",
+      "label": "access_pass_grants_user_id_exam_code_seq_idx",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L74"
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261117142846_member_content_access_passes_exam_code_idx",
+      "label": "access_passes_exam_code_idx",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L75"
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261117142846_member_content_topics_subject_name_key",
+      "label": "topics_subject_name_key",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L76"
+    }
+  ],
+  "edges": [
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_sql",
+      "target": "$graphify-root$_supabase_migrations_20261117142846_member_content_access_pass_grants",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_sql",
+      "target": "$graphify-root$_supabase_migrations_20261117142846_member_content_access_passes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_sql",
+      "target": "$graphify-root$_supabase_migrations_20261117142846_member_content_decks",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_sql",
+      "target": "$graphify-root$_supabase_migrations_20261117142846_member_content_quizzes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_sql",
+      "target": "$graphify-root$_supabase_migrations_20261117142846_member_content_reviewer_pdfs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_sql",
+      "target": "$graphify-root$_supabase_migrations_20261117142846_member_content_topics",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_access_pass_grants",
+      "target": "public_access_passes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L68",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_access_passes",
+      "target": "public_exams",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_decks",
+      "target": "public_topics",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_quizzes",
+      "target": "public_topics",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L71",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_reviewer_pdfs",
+      "target": "public_topics",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L72",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_topics",
+      "target": "public_subjects",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L73",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_sql",
+      "target": "$graphify-root$_supabase_migrations_20261117142846_member_content_access_pass_grants_user_id_exam_code_seq_idx",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_access_pass_grants_user_id_exam_code_seq_idx",
+      "target": "$graphify-root$_supabase_migrations_20261117142846_member_content_access_pass_grants",
+      "relation": "indexes",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_sql",
+      "target": "$graphify-root$_supabase_migrations_20261117142846_member_content_access_passes_exam_code_idx",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_access_passes_exam_code_idx",
+      "target": "$graphify-root$_supabase_migrations_20261117142846_member_content_access_passes",
+      "relation": "indexes",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_sql",
+      "target": "$graphify-root$_supabase_migrations_20261117142846_member_content_topics_subject_name_key",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261117142846_member_content_topics_subject_name_key",
+      "target": "$graphify-root$_supabase_migrations_20261117142846_member_content_topics",
+      "relation": "indexes",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261117142846_member_content.sql",
+      "source_location": "L76",
+      "weight": 1.0
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "nodes": [
+    {
+      "id": "$graphify-root$_supabase_migrations_20261103110901_admin_sql",
+      "label": "20261103110901_admin.sql",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261103110901_admin.sql",
+      "source_location": null
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261103110901_admin_denied_sign_ins",
+      "label": "\"denied_sign_ins\"",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261103110901_admin.sql",
+      "source_location": "L4"
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261103110901_admin_record_stamps",
+      "label": "\"record_stamps\"",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261103110901_admin.sql",
+      "source_location": "L13"
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261103110901_admin_staff",
+      "label": "\"staff\"",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261103110901_admin.sql",
+      "source_location": "L20"
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261103110901_admin_staff_activity",
+      "label": "\"staff_activity\"",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261103110901_admin.sql",
+      "source_location": "L36"
+    },
+    {
+      "id": "$graphify-root$_supabase_migrations_20261103110901_admin_denied_sign_ins_email_at_idx",
+      "label": "denied_sign_ins_email_at_idx",
+      "file_type": "code",
+      "source_file": "supabase/migrations/20261103110901_admin.sql",
+      "source_location": "L50"
+    }
+  ],
+  "edges": [
+    {
+      "source": "$graphify-root$_supabase_migrations_20261103110901_admin_sql",
+      "target": "$graphify-root$_supabase_migrations_20261103110901_admin_denied_sign_ins",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261103110901_admin.sql",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261103110901_admin_sql",
+      "target": "$graphify-root$_supabase_migrations_20261103110901_admin_record_stamps",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261103110901_admin.sql",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261103110901_admin_sql",
+      "target": "$graphify-root$_supabase_migrations_20261103110901_admin_staff",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261103110901_admin.sql",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261103110901_admin_sql",
+      "target": "$graphify-root$_supabase_migrations_20261103110901_admin_staff_activity",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261103110901_admin.sql",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261103110901_admin_sql",
+      "target": "$graphify-root$_supabase_migrations_20261103110901_admin_denied_sign_ins_email_at_idx",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261103110901_admin.sql",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_supabase_migrations_20261103110901_admin_denied_sign_ins_email_at_idx",
+      "target": "$graphify-root$_supabase_migrations_20261103110901_admin_denied_sign_ins",
+      "relation": "indexes",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/migrations/20261103110901_admin.sql",
+      "source_location": "L50",
+      "weight": 1.0
+    }
+  ]
+}

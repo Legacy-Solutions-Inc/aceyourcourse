@@ -4,48 +4,93 @@ import * as mockImpl from "@/services/admin.mock";
 import type {
   AboutSectionForm,
   AnnouncementForm,
+  BetaTesterInput,
   BundleOfferForm,
   ChangeStaffRoleInput,
+  EndAccessInput,
   ExamHeaderForm,
+  ExtendAccessInput,
   ExamSeoForm,
   FaqForm,
   FaqMove,
+  ForceSignOutInput,
+  GrantAccessInput,
   InviteStaffInput,
   NewExamForm,
   NewProductForm,
+  NewQuestionForm,
   NewReviewForm,
   NewSubjectForm,
+  CardForm,
+  ImportInput,
+  ConfirmImportInput,
+  DeleteAccountInput,
+  NewCardForm,
+  NewTopicForm,
   OfficialExamDateForm,
+  QuestionForm,
+  QuizSettingsForm,
+  PrivacyRequestInput,
   ProductFlags,
   ProductForm,
   PromoBannerForm,
+  RenameTopicForm,
   ReviewForm,
   ReviewMove,
+  ReviewerPdfPlacementForm,
+  ReviewerPdfRecordInput,
   SubjectNamesForm,
+  TopicMove,
   WebsiteSettingsUpdate,
 } from "@/services/admin.schema";
 import type {
+  AccessPassChange,
   AdminAbout,
   AdminAnnouncement,
+  AdminCard,
+  AdminDeck,
+  AdminDeckSettings,
   AdminExamPage,
   AdminSitePage,
   AdminFaq,
   AdminFaqList,
+  AdminMemberDetail,
   AdminOverview,
+  AdminPrivacyRequest,
+  AdminPrivacyRequestDetail,
   AdminProduct,
+  AdminQuestion,
+  AdminQuiz,
+  AdminQuizSettings,
   AdminProductList,
   AdminProductRow,
   AdminPromoBanner,
   AdminResult,
   AdminReview,
   AdminReviewList,
+  AdminTopic,
+  AdminTopicList,
+  AdminUserList,
+  CardImageFile,
+  ImportPreview,
+  ImportResult,
   AdminWebsiteSettings,
+  BetaTester,
+  DeletedCard,
   DeletedFaq,
   DeletedProduct,
+  DeletedQuestion,
+  AdminReviewerPdf,
+  AdminReviewerPdfDetail,
+  AdminReviewerPdfScreen,
+  ReviewerPdfRun,
+  StaleReviewerPdfJobs,
   DeletedReview,
   DeniedReason,
   DeniedSignIn,
   FaqListQuery,
+  ForcedSignOut,
+  MemberDataFile,
   Invite,
   ProductDeletePreview,
   ProductListQuery,
@@ -56,7 +101,11 @@ import type {
   StaffActor,
   StaffList,
   StaffMember,
+  UserListQuery,
 } from "@/services/admin.types";
+import type { Topic } from "@/services/content.types";
+import type { AuthAdmin } from "@/services/auth-admin.types";
+import type { PdfRenderer } from "@/services/page-images.types";
 import type { Exam, ExamPageSection, SitePageKey } from "@/services/catalogue.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -137,6 +186,138 @@ export interface AdminService {
    * next request. Their Staff Activity stays. Gives the removed Staff User.
    */
   removeStaff(actor: StaffActor, email: string): Promise<AdminResult<StaffMember>>;
+
+  // Beta Testers (Owners only; spec, Phase 3 → The beta gate): the Google
+  // emails let into the Member App while its switch is off, matched by
+  // verified email like an Invite, with no expiry and no role. Each write
+  // appends one Staff Activity record and clears no cache tags.
+
+  /** The Beta Tester list, in the order they were added, each with the date and who added them. */
+  listBetaTesters(actor: StaffActor): Promise<AdminResult<BetaTester[]>>;
+  /**
+   * Adds a Google email, trimmed and lowercased, before the person has an
+   * account. A malformed email, or one already on the list, is refused with
+   * the email field's message. Adding grants nothing but the way in.
+   */
+  addBetaTester(actor: StaffActor, input: BetaTesterInput): Promise<AdminResult<BetaTester>>;
+  /**
+   * Takes an email off the list: while the switch is off, they're refused at
+   * their next request. Their Member record and data stay. Gives the removed
+   * Beta Tester.
+   */
+  removeBetaTester(actor: StaffActor, email: string): Promise<AdminResult<BetaTester>>;
+
+  // Users (Owners only; Phase 3, ticket 16; stories 129, 130 and 132): the
+  // Members, each Member's detail, and force sign-out. An Editor is refused
+  // each call. None touches the Catalogue, so none returns a cache tag.
+
+  /**
+   * One page of the Members, newest first: those whose name or email holds
+   * the search (ignoring case), in the filter (an Access Pass active now, all
+   * ended, none; active Staff; Beta Testers), each with their Target Exams,
+   * passes, Active Device and role. A page past the last gives the last.
+   */
+  listUsers(actor: StaffActor, query: UserListQuery): Promise<AdminResult<AdminUserList>>;
+  /**
+   * A Member's detail page: profile, role, Target Exams with Exam Dates,
+   * Access Passes with their grants, progress per Target Exam (ticket 15's
+   * calculator), the Active Device and its switch log, and every agreement to
+   * the Terms and Privacy Policy. A User id that isn't a Member's, or isn't a
+   * User id, is not-found.
+   */
+  getMemberForAdmin(actor: StaffActor, userId: string): Promise<AdminResult<AdminMemberDetail>>;
+  /**
+   * Force sign-out: clears the Member's Active Device, so their device's next
+   * Member App request lands on "Session ended", and records the reason and
+   * the device in Staff Activity. Their passes, progress and switch log stay.
+   * A blank reason is refused on the reason field; a Member with no Active
+   * Device is refused with a message, recording nothing.
+   */
+  forceSignOut(actor: StaffActor, input: ForceSignOutInput): Promise<AdminResult<ForcedSignOut>>;
+
+  // Access Passes (Owners only; Phase 3, ticket 17; stories 131, 133h and
+  // 133j): grant, extend and end a Member's Access Pass for an Exam, from
+  // their detail page. Each needs a reason, which Staff Activity keeps with
+  // the pass's end before and after, and leaves the Member an in-app notice
+  // (no email). An Editor is refused each call. None touches the Catalogue,
+  // so none returns a cache tag.
+
+  /**
+   * Grant Access Pass: 30, 90, 180 or 365 days, or a custom 1–365, added from
+   * the pass's end, or from now when it has ended or there is none, and kept
+   * as a history row. A grant for an Exam the Member doesn't have adds it to
+   * their Target Exams with its Official Exam Date (or brings back one they
+   * removed, with its date and progress), leaving their selection. Refused
+   * for an Exam that isn't in the catalogue.
+   */
+  grantAccess(actor: StaffActor, input: GrantAccessInput): Promise<AdminResult<AccessPassChange>>;
+  /**
+   * Extend access: 3, 7, 14 or 30 days on a pass the Member holds, from its
+   * end or from now when it has ended, kept as a history row. Refused with a
+   * message when they hold no pass for the Exam.
+   */
+  extendAccess(actor: StaffActor, input: ExtendAccessInput): Promise<AdminResult<AccessPassChange>>;
+  /**
+   * End access now: sets the pass's end to now, so the Member sees the
+   * expired state; their progress and the pass's history stay. A pass that
+   * has already ended, or none, is refused with a message, recording nothing.
+   */
+  endAccess(actor: StaffActor, input: EndAccessInput): Promise<AdminResult<AccessPassChange>>;
+
+  // Privacy Requests (Owners only; Phase 3, tickets 18 and 19; stories 133,
+  // 133q and 133r): what Members asked for from Account, and carrying it
+  // out. An Editor is refused every call. Each write appends one Staff
+  // Activity record naming the request and an opaque User id, never the
+  // Member's email or name. None touches the Catalogue, so none returns a
+  // cache tag. Nothing is emailed.
+
+  /**
+   * Every Member's Privacy Requests (data copy or deletion), soonest due
+   * first, each with its Member (none once their account is deleted), the
+   * day it was asked for, the Manila date it's due, its status, when and by
+   * whom it was marked done, and whether it's still open after its due date.
+   */
+  listPrivacyRequests(actor: StaffActor): Promise<AdminResult<AdminPrivacyRequest[]>>;
+  /**
+   * One request, as its screen shows it: the list's fields, why deleting the
+   * account is refused now (the staff list, the last Owner), whether a
+   * deletion is half done, and whether the Member is a Beta Tester. An id
+   * that isn't a request's is not-found.
+   */
+  getPrivacyRequestForAdmin(
+    actor: StaffActor,
+    requestId: string,
+  ): Promise<AdminResult<AdminPrivacyRequestDetail>>;
+  /**
+   * "Download this Member's data", from a data-copy request: every record
+   * kept about the Member, only theirs, as a JSON file, and the download
+   * logged in Staff Activity. A Member whose account is gone is refused as
+   * "Already deleted"; a deletion request has no file.
+   */
+  exportMemberData(actor: StaffActor, requestId: string): Promise<AdminResult<MemberDataFile>>;
+  /**
+   * "Delete this account", from an open deletion request, after typing the
+   * Member's email: deletes their Member data and Access Passes (no refund)
+   * in one step, taking their email out of earlier Staff Activity, then their
+   * Supabase User with `authAdmin`, then marks the request done. Refused for
+   * an email on the staff list (active or invited) and for the last Owner,
+   * and for a wrong typed email. If Supabase fails, the request stays open
+   * and deleting again (no typed email needed) finishes it.
+   */
+  deleteMemberAccount(
+    actor: StaffActor,
+    input: DeleteAccountInput,
+    authAdmin: AuthAdmin,
+  ): Promise<AdminResult<AdminPrivacyRequest>>;
+  /**
+   * "Mark done", with the date and who. A deletion request is done once its
+   * account is deleted: refused while the account is still there, or half
+   * deleted. A request already done is refused.
+   */
+  markPrivacyRequestDone(
+    actor: StaffActor,
+    input: PrivacyRequestInput,
+  ): Promise<AdminResult<AdminPrivacyRequest>>;
 
   /**
    * The Overview's read (any Staff User): every Product, the Exams, the Exam
@@ -452,8 +633,305 @@ export interface AdminService {
    * Deletes an Exam no Product belongs to, Live, Coming Soon or hidden, with
    * its Subjects and its page record. Otherwise the refusal's message is the
    * reason. Gives the deleted Exam, and clears the exams and exam-pages tags.
+   * From Phase 3, Topic content (a deck, quiz or Reviewer PDF, Hidden and
+   * Draft ones too) blocks deleting an Exam or Subject as well, and the empty
+   * Topics of a deleted Exam or Subject go with it.
    */
   deleteExam(actor: StaffActor, code: string): Promise<AdminResult<Exam>>;
+
+  // Member App content: Topics (any Staff User; Phase 3, ticket 05; spec,
+  // Phase 3 planning decisions → Topics editor). Each Subject's Topics, in
+  // order. A name is 1–120 characters, unique within its Subject ignoring
+  // case. Each write appends one Staff Activity record (entity "topic"); none
+  // returns a cache tag, since nothing cached reads Topics.
+
+  /** A Subject's Topics list, or null when the Exam or Subject isn't in the catalogue. */
+  listTopicsForAdmin(
+    actor: StaffActor,
+    examCode: string,
+    subjectCode: string,
+  ): Promise<AdminTopicList | null>;
+  /** "+ Add topic": a new, empty Topic, last in its Subject. */
+  createTopic(actor: StaffActor, input: NewTopicForm): Promise<AdminResult<AdminTopic>>;
+  /** Renames a Topic, with the conflict check. Its progress is tied to it, not its name. */
+  renameTopic(
+    actor: StaffActor,
+    input: RenameTopicForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminTopic>>;
+  /** ▲▼: one place earlier or later in its Subject. Gives the Subject's new order of ids. */
+  moveTopic(actor: StaffActor, id: string, direction: TopicMove): Promise<AdminResult<string[]>>;
+  /**
+   * Deletes an empty Topic; one with a deck, quiz or Reviewer PDF, Hidden or
+   * Draft ones too, is refused with the reason. Gives the deleted Topic.
+   */
+  deleteTopic(actor: StaffActor, id: string): Promise<AdminResult<Topic>>;
+
+  // Member App content: card import (any Staff User; Phase 3, ticket 06; spec,
+  // Phase 3 → Spreadsheet import). The browser uploads the CSV and zip to the
+  // private content bucket (the upload seam's createContentUpload) and names
+  // them here by their paths. Nothing cached reads Topics or cards, so neither
+  // returns a cache tag. src/services/card-import.core.ts has the steps.
+
+  /**
+   * "Check file": the preview of importing the CSV (and zip) into a Subject:
+   * each Topic the CSV names (created or matched by name) with the cards to
+   * add, replace, keep and remove, and every problem with its row and column.
+   * Saves nothing. Not found when the Exam or Subject isn't there; invalid
+   * when a file hasn't been uploaded.
+   */
+  planCardImport(actor: StaffActor, input: ImportInput): Promise<AdminResult<ImportPreview>>;
+  /**
+   * "Import": saves a preview with no problems in one go, or nothing: the new
+   * Topics (after the existing ones), their decks (Hidden), the cards and
+   * their images (in the private content bucket), and one Staff Activity
+   * record with each Topic's counts. A conflict when the Subject's Topics or
+   * cards changed since the preview (`basedOn`); invalid when the files now
+   * have problems.
+   */
+  confirmCardImport(
+    actor: StaffActor,
+    input: ConfirmImportInput,
+  ): Promise<AdminResult<ImportResult>>;
+
+  // Member App content: quiz import (any Staff User; Phase 3, ticket 09; spec,
+  // Phase 3 → Spreadsheet import, Corrections never cost progress). The same
+  // import as cards, with quiz rows: src/services/quiz-import.core.ts.
+
+  /**
+   * "Check file": the preview of importing a quiz CSV (and zip of figures)
+   * into a Subject: each Topic the CSV names with the questions to add,
+   * replace, keep and remove, and every problem with its row and column.
+   * Saves nothing.
+   */
+  planQuizImport(actor: StaffActor, input: ImportInput): Promise<AdminResult<ImportPreview>>;
+  /**
+   * "Import": saves a preview with no problems in one go, or nothing: the new
+   * Topics, their quizzes (Hidden, with the default settings), the questions
+   * and their figures, and one Staff Activity record with each Topic's
+   * counts. Replace never deletes a question: one it takes out is kept,
+   * marked removed, so Members' attempts and Best Scores keep it.
+   */
+  confirmQuizImport(
+    actor: StaffActor,
+    input: ConfirmImportInput,
+  ): Promise<AdminResult<ImportResult>>;
+
+  // Member App content: the card editor (any Staff User; Phase 3, ticket 07;
+  // spec, Phase 3 → Content model; stories 125, 127, 128). A Topic's deck,
+  // one card at a time. A card's front and back are required, and each field
+  // is held to its length and must render (src/lib/cards/card-fields.ts). Its
+  // back image is the card's own, a finished "card-image" upload of a JPEG,
+  // PNG or WebP of at most 5 MB (copied under the deck in the private content
+  // bucket), or none. Each write appends one Staff Activity record per entity
+  // it changes ("card", "deck"); none returns a cache tag, since nothing
+  // cached reads cards or decks. src/services/deck-editor.core.ts has the
+  // steps.
+
+  /** A Topic's deck screen: the Topic, its deck (null until its first card) and the cards in order. */
+  getDeckForAdmin(actor: StaffActor, topicId: string): Promise<AdminDeck | null>;
+  /** A card's back image, for Staff, or null when it has none or isn't there. */
+  getCardImageForAdmin(actor: StaffActor, cardId: string): Promise<CardImageFile | null>;
+  /**
+   * "Save" or "Save & add next" on a new card: it goes last in its Topic's
+   * deck. A Topic with no deck gets one, Hidden and not Free Preview.
+   */
+  createCard(actor: StaffActor, input: NewCardForm): Promise<AdminResult<AdminCard>>;
+  /**
+   * Saves a card's fields and image, with the conflict check against the
+   * stamp its form opened with. A replaced or removed image's file is deleted.
+   */
+  updateCard(
+    actor: StaffActor,
+    input: CardForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminCard>>;
+  /** ▲▼: one place earlier or later in its deck. Gives the deck's new order of ids. */
+  moveCard(actor: StaffActor, id: string, direction: ReviewMove): Promise<AdminResult<string[]>>;
+  /**
+   * Deletes a card with every Member's Card Mark on it and its image, and
+   * closes the gap. The last card of a Visible deck makes the deck Hidden,
+   * which `deckHidden` says.
+   */
+  deleteCard(actor: StaffActor, id: string): Promise<AdminResult<DeletedCard>>;
+  /**
+   * "Visible to members", a single toggle: Visible is refused while the deck
+   * is empty ("ADD A CARD FIRST"); Hidden always saves. Hidden decks never
+   * show in the Member App.
+   */
+  setDeckVisibility(
+    actor: StaffActor,
+    deckId: string,
+    visible: boolean,
+  ): Promise<AdminResult<AdminDeckSettings>>;
+  /** "Free Preview", a single toggle: Members with no Access Pass can open a Visible deck. */
+  setDeckFreePreview(
+    actor: StaffActor,
+    deckId: string,
+    freePreview: boolean,
+  ): Promise<AdminResult<AdminDeckSettings>>;
+
+  // Member App content: quizzes (any Staff User; Phase 3, ticket 09; spec,
+  // Phase 3 → Content model; stories 126–128). A Topic's quiz screen: its
+  // settings, its Visible and Free Preview toggles, and its questions (the
+  // question editor comes with ticket 10). Each write appends one Staff
+  // Activity record (entity "quiz"); none returns a cache tag, since nothing
+  // cached reads quizzes. src/services/quiz-editor.core.ts has the steps.
+
+  /** A Topic's quiz screen: the Topic, its quiz (null when it has none) and its questions in order. */
+  getQuizForAdmin(actor: StaffActor, topicId: string): Promise<AdminQuiz | null>;
+  /** A question's figure, for Staff, or null when it has none or isn't in a quiz. */
+  getQuestionFigureForAdmin(actor: StaffActor, questionId: string): Promise<CardImageFile | null>;
+  /**
+   * "Save settings": the passing score (a whole number from 1 to 100),
+   * shuffle and "show answers after", with the conflict check against the
+   * settings' stamp when the form opened.
+   */
+  updateQuizSettings(
+    actor: StaffActor,
+    input: QuizSettingsForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminQuizSettings>>;
+  /**
+   * "Visible to members", a single toggle: Visible is refused while the quiz
+   * has no questions ("ADD A QUESTION FIRST"); Hidden always saves.
+   */
+  setQuizVisibility(
+    actor: StaffActor,
+    quizId: string,
+    visible: boolean,
+  ): Promise<AdminResult<AdminQuizSettings>>;
+  /** "Free Preview", a single toggle: Members with no Access Pass can open a Visible quiz. */
+  setQuizFreePreview(
+    actor: StaffActor,
+    quizId: string,
+    freePreview: boolean,
+  ): Promise<AdminResult<AdminQuizSettings>>;
+
+  // Member App content: the question editor (any Staff User; Phase 3, ticket
+  // 10; spec, Phase 3 → Content model, Corrections never cost progress;
+  // stories 125, 127, 133l). A Topic's quiz, one question at a time, as the
+  // card editor does cards. A question, each of its four choices and its
+  // explanation are required, each held to its length and must render, and
+  // one of A–D is correct (src/lib/quizzes/question-fields.ts). Its figure is
+  // the question's own, a finished "card-image" upload (a JPEG, PNG or WebP
+  // of at most 5 MB, copied under the quiz in the private content bucket), or
+  // none. Each write appends one Staff Activity record per entity it changes
+  // ("question", "quiz"); none returns a cache tag.
+
+  /**
+   * "Save" or "Save & add next" on a new question: it goes last in its
+   * Topic's quiz. A Topic with no quiz gets one, Hidden, not Free Preview,
+   * with the default settings.
+   */
+  createQuestion(actor: StaffActor, input: NewQuestionForm): Promise<AdminResult<AdminQuestion>>;
+  /**
+   * Saves a question's fields and figure, with the conflict check against the
+   * stamp its form opened with. A replaced or removed figure's file is
+   * deleted. Members' old attempts and Best Scores aren't recalculated.
+   */
+  updateQuestion(
+    actor: StaffActor,
+    input: QuestionForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminQuestion>>;
+  /** ▲▼: one place earlier or later in its quiz. Gives the quiz's new order of ids. */
+  moveQuestion(
+    actor: StaffActor,
+    id: string,
+    direction: ReviewMove,
+  ): Promise<AdminResult<string[]>>;
+  /**
+   * Takes a question out of its quiz and closes the gap. It's never erased:
+   * it's kept, marked removed, with its figure, so Members' old attempts show
+   * it as removed and their Best Scores stay. The last question of a Visible
+   * quiz makes the quiz Hidden, which `quizHidden` says.
+   */
+  deleteQuestion(actor: StaffActor, id: string): Promise<AdminResult<DeletedQuestion>>;
+
+  // Reviewer PDFs (any Staff User; Phase 3, ticket 12; stories 114, 115).
+  // An Editor's browser uploads the PDF straight to the private Reviewer PDFs
+  // bucket (the upload seam's createReviewerPdfUpload); recording it starts a
+  // job that splits it into page images in short runs, which ends a Draft,
+  // or Failed with the fix to try. Each upload and delete appends one Staff
+  // Activity record; the job's own changes append none. No cache tags: the
+  // Member App reads its content fresh, and none of this is Published yet.
+
+  /** Every Reviewer PDF, newest upload first, then the sample data's ones from before uploads. */
+  listReviewerPdfsForAdmin(actor: StaffActor): Promise<AdminReviewerPdf[]>;
+  /**
+   * Records an uploaded PDF as a Processing Reviewer PDF, with the file's
+   * name and its size as stored. Refused while the upload hasn't arrived, and
+   * for a path that isn't a Reviewer PDF upload (or was recorded already).
+   */
+  recordReviewerPdf(
+    actor: StaffActor,
+    input: ReviewerPdfRecordInput,
+  ): Promise<AdminResult<AdminReviewerPdf>>;
+  /**
+   * Deletes a Reviewer PDF, whatever its status, with its job, its original
+   * and every page image. A run in flight stops, and deletes its pages.
+   */
+  deleteReviewerPdf(actor: StaffActor, id: string): Promise<AdminResult<AdminReviewerPdf>>;
+  /**
+   * One run of a Reviewer PDF's job (no Staff User: the run endpoint calls
+   * it): renders its next pages, at most PAGES_PER_RUN, with `renderer`, and
+   * stores them. Says whether another run is needed. Throws when the server
+   * fails, leaving the job for the cron to restart.
+   */
+  runReviewerPdfJob(id: string, renderer: PdfRenderer): Promise<ReviewerPdfRun>;
+  /**
+   * The cron's sweep (no Staff User): restarts each Processing job whose
+   * heartbeat has gone stale, and fails one restarted MAX_RESTARTS times.
+   * Says which it restarted, each needing a run started, and which it failed.
+   */
+  restartStaleReviewerPdfJobs(): Promise<StaleReviewerPdfJobs>;
+
+  // Placing, previewing and publishing a Reviewer PDF (any Staff User; Phase
+  // 3, ticket 13; stories 116, 128, 133o). Statuses go Draft → Published ⇄
+  // Unpublished (src/lib/reviewer-pdfs/status.ts): publishing needs a Topic
+  // and a job that split every page. One Reviewer PDF per Topic. Only a
+  // Published one is in the Member App. Each change appends one Staff
+  // Activity record; placing runs the conflict check, while Publish,
+  // Unpublish and Free Preview always save. A new Topic for it is made with
+  // createTopic, by the Topics editor's rules.
+
+  /** One Reviewer PDF's screen, with every Topic it can be placed under, or null. */
+  getReviewerPdfForAdmin(actor: StaffActor, id: string): Promise<AdminReviewerPdfScreen | null>;
+  /**
+   * One of a Reviewer PDF's clean page images, for its preview (Staff only),
+   * or null for a page its job hasn't stored. Never for a Member.
+   */
+  getReviewerPdfPageForAdmin(
+    actor: StaffActor,
+    id: string,
+    page: number,
+  ): Promise<Uint8Array | null>;
+  /**
+   * Places a Reviewer PDF under a Topic, against the placement's stamp when
+   * its form opened. Refused for a Topic that has another Reviewer PDF, a
+   * Topic that's gone, and a Failed one.
+   */
+  placeReviewerPdf(
+    actor: StaffActor,
+    input: ReviewerPdfPlacementForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminReviewerPdfDetail>>;
+  /**
+   * Publishes (true) or unpublishes (false) a Reviewer PDF. Publishing is
+   * refused without a Topic, while Processing, once Failed, and with no pages.
+   */
+  setReviewerPdfPublished(
+    actor: StaffActor,
+    id: string,
+    published: boolean,
+  ): Promise<AdminResult<AdminReviewerPdfDetail>>;
+  /** Flags a Reviewer PDF Free Preview, or not: Members with no Access Pass read it once Published. */
+  setReviewerPdfFreePreview(
+    actor: StaffActor,
+    id: string,
+    freePreview: boolean,
+  ): Promise<AdminResult<AdminReviewerPdfDetail>>;
 
   // Site pages (any Staff User; ticket 20; spec, Phase 2 → Site pages). Each
   // of the Website's five Site pages: its SEO title and description (blank
@@ -555,6 +1033,20 @@ export const renewInvite = impl.renewInvite;
 export const cancelInvite = impl.cancelInvite;
 export const changeStaffRole = impl.changeStaffRole;
 export const removeStaff = impl.removeStaff;
+export const listBetaTesters = impl.listBetaTesters;
+export const addBetaTester = impl.addBetaTester;
+export const removeBetaTester = impl.removeBetaTester;
+export const listUsers = impl.listUsers;
+export const getMemberForAdmin = impl.getMemberForAdmin;
+export const forceSignOut = impl.forceSignOut;
+export const grantAccess = impl.grantAccess;
+export const extendAccess = impl.extendAccess;
+export const endAccess = impl.endAccess;
+export const listPrivacyRequests = impl.listPrivacyRequests;
+export const getPrivacyRequestForAdmin = impl.getPrivacyRequestForAdmin;
+export const exportMemberData = impl.exportMemberData;
+export const deleteMemberAccount = impl.deleteMemberAccount;
+export const markPrivacyRequestDone = impl.markPrivacyRequestDone;
 export const getOverview = impl.getOverview;
 export const getSettingsForAdmin = impl.getSettingsForAdmin;
 export const updateWebsiteSettings = impl.updateWebsiteSettings;
@@ -591,6 +1083,42 @@ export const createExam = impl.createExam;
 export const addSubject = impl.addSubject;
 export const deleteSubject = impl.deleteSubject;
 export const deleteExam = impl.deleteExam;
+export const listTopicsForAdmin = impl.listTopicsForAdmin;
+export const createTopic = impl.createTopic;
+export const renameTopic = impl.renameTopic;
+export const moveTopic = impl.moveTopic;
+export const deleteTopic = impl.deleteTopic;
+export const planCardImport = impl.planCardImport;
+export const confirmCardImport = impl.confirmCardImport;
+export const planQuizImport = impl.planQuizImport;
+export const confirmQuizImport = impl.confirmQuizImport;
+export const getDeckForAdmin = impl.getDeckForAdmin;
+export const getCardImageForAdmin = impl.getCardImageForAdmin;
+export const createCard = impl.createCard;
+export const updateCard = impl.updateCard;
+export const moveCard = impl.moveCard;
+export const deleteCard = impl.deleteCard;
+export const setDeckVisibility = impl.setDeckVisibility;
+export const setDeckFreePreview = impl.setDeckFreePreview;
+export const getQuizForAdmin = impl.getQuizForAdmin;
+export const getQuestionFigureForAdmin = impl.getQuestionFigureForAdmin;
+export const updateQuizSettings = impl.updateQuizSettings;
+export const setQuizVisibility = impl.setQuizVisibility;
+export const setQuizFreePreview = impl.setQuizFreePreview;
+export const createQuestion = impl.createQuestion;
+export const updateQuestion = impl.updateQuestion;
+export const moveQuestion = impl.moveQuestion;
+export const deleteQuestion = impl.deleteQuestion;
+export const listReviewerPdfsForAdmin = impl.listReviewerPdfsForAdmin;
+export const recordReviewerPdf = impl.recordReviewerPdf;
+export const deleteReviewerPdf = impl.deleteReviewerPdf;
+export const runReviewerPdfJob = impl.runReviewerPdfJob;
+export const restartStaleReviewerPdfJobs = impl.restartStaleReviewerPdfJobs;
+export const getReviewerPdfForAdmin = impl.getReviewerPdfForAdmin;
+export const getReviewerPdfPageForAdmin = impl.getReviewerPdfPageForAdmin;
+export const placeReviewerPdf = impl.placeReviewerPdf;
+export const setReviewerPdfPublished = impl.setReviewerPdfPublished;
+export const setReviewerPdfFreePreview = impl.setReviewerPdfFreePreview;
 export const getSitePageForAdmin = impl.getSitePageForAdmin;
 export const updateSitePageSeo = impl.updateSitePageSeo;
 export const getAboutForAdmin = impl.getAboutForAdmin;

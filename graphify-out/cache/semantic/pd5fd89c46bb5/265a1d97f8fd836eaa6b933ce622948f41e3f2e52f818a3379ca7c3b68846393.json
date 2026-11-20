@@ -1,0 +1,111 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_05_product_editor",
+      "label": "Ticket 05: Product editor",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/05-product-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_05_product_editor_product_editor",
+      "label": "Product editor panel (fields, Listings, SEO, Coming Soon, Deal)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/05-product-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_05_product_editor_typed_delete_dialog",
+      "label": "Typed-DELETE dialog with exact cascade counts",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/05-product-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_05_product_editor_product_slug",
+      "label": "Product slug generated from full name, unique, fixed after first save",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/05-product-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_05_product_editor",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_05_product_editor",
+      "target": "_scratch_ayc_admin_issues_04_products_list",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_05_product_editor",
+      "target": "_scratch_ayc_admin_issues_05_product_editor_product_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_05_product_editor",
+      "target": "_scratch_ayc_admin_issues_05_product_editor_typed_delete_dialog",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_05_product_editor",
+      "target": "_scratch_ayc_admin_issues_05_product_editor_product_slug",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_05_product_editor_product_editor",
+      "target": "_scratch_ayc_admin_issues_04_products_list_products_list",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

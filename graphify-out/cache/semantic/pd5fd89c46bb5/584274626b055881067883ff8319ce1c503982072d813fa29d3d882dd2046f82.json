@@ -1,0 +1,80 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_22_summary_for_ai_assistants",
+      "label": "Ticket 22: Summary for AI assistants",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_22_summary_for_ai_assistants_llms_txt",
+      "label": "/llms.txt summary for AI assistants (built from the Catalogue seam)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/issues/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "GEO/AEO setup for contract Milestone 2; excludes Reviews, ratings, hidden items and Coming Soon prices."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_22_summary_for_ai_assistants",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/issues/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_22_summary_for_ai_assistants",
+      "target": "_scratch_ayc_admin_issues_20_site_page_seo",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_22_summary_for_ai_assistants",
+      "target": "_scratch_ayc_admin_issues_22_summary_for_ai_assistants_llms_txt",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_22_summary_for_ai_assistants_llms_txt",
+      "target": "_scratch_ayc_admin_conventions_catalogue_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_22_summary_for_ai_assistants_llms_txt",
+      "target": "_scratch_ayc_admin_issues_09_exam_pages_search_ai_visibility_helper",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-admin/issues/22-summary-for-ai-assistants.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

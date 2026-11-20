@@ -1,0 +1,330 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_06_card_import",
+      "label": "Executer prompt 06: Card import",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_06_card_import_card_import_planner",
+      "label": "Card import planner (pure)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": "L41",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Input: existing Topics/cards, parsed CSV rows, zip entries, Replace/Add mode; output: Topics to create, per-Topic counts, row/column errors. Confirm re-plans, refuses on errors or conflict, saves all-or-nothing in one transaction."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_06_card_import_formula_module",
+      "label": "Shared formula module (splitter + KaTeX validation)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": "L49",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Plain text with $...$ inline and $$...$$ block, \\$ literal; shared by import, editors and Member App so previews match what Members see."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_06_card_import_cards",
+      "label": "cards table (front_hash, cascade from decks)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": "L38",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_06_card_import_replace_vs_add",
+      "label": "Replace vs Add import modes",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": "L51",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Replace keeps a card's id when its normalised front matches, so Card Marks keyed by card id survive automatically; Add appends."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_06_card_import_private_content_bucket",
+      "label": "Private 'content' Storage bucket",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": "L56",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Import files and card images uploaded via one-time URLs because Vercel caps request bodies at ~4.5 MB; never public, later read through signed URLs."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_06_card_import_card_import_template",
+      "label": "Card import CSV template",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": "L40",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_06_card_import_rename_hint",
+      "label": "'Did you rename it?' Topic hint",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": "L50",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_06_card_import_catalogue_importer",
+      "label": "Catalogue importer (src/lib/catalogue-import/) prior art",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": "L29",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_06_card_import_upload_seam",
+      "label": "Upload seam (one-time signed upload URLs)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": "L30",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_06_card_import_dependency_request",
+      "label": "Dependency request (csv-parse to deps, fflate, KaTeX)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": "L32",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_06_card_import_conflict_check",
+      "label": "Conflict check (record_stamps)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": "L58",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_card_import_planner",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_formula_module",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_cards",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_replace_vs_add",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_private_content_bucket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_card_import_template",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_rename_hint",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_dependency_request",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import_card_import_planner",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_formula_module",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import_card_import_planner",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_replace_vs_add",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import_card_import_planner",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_rename_hint",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import_card_import_planner",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_catalogue_importer",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import_private_content_bucket",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_upload_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import_card_import_planner",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_conflict_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import_cards",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_content_tables",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import_card_import_planner",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_topics",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import_card_import_planner",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "admin_content_authoring_pipeline",
+      "label": "Admin content authoring (imports and editors sharing formula, bucket, conflict check)",
+      "nodes": [
+        "_scratch_ayc_member_app_prompts_06_card_import_card_import_planner",
+        "_scratch_ayc_member_app_prompts_09_quiz_import_and_settings_quiz_import",
+        "_scratch_ayc_member_app_prompts_07_card_editor_card_editor",
+        "_scratch_ayc_member_app_prompts_10_question_editor_question_editor",
+        "_scratch_ayc_member_app_prompts_06_card_import_formula_module",
+        "_scratch_ayc_member_app_prompts_06_card_import_conflict_check"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/06-card-import.md"
+    }
+  ]
+}

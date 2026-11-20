@@ -2,9 +2,12 @@ import { sql } from "drizzle-orm";
 
 import type { Database } from "@/lib/db/connect";
 import * as schema from "@/lib/db/schema";
-import { SEEDED_RECORD, staffToRows } from "@/services/admin.rows";
+import { betaTesterToRow, SEEDED_RECORD, staffToRows } from "@/services/admin.rows";
 import { catalogueToRows } from "@/services/catalogue.rows";
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
+import { accessPassToRow, contentToRows } from "@/services/content.rows";
+import { sampleContent } from "@/services/mock/content";
+import { sampleAccessPasses, sampleBetaTesters } from "@/services/mock/members";
 import { sampleStaff } from "@/services/mock/staff";
 
 import { type SeedPhotos, seedPhotoPlan } from "./photos";
@@ -14,9 +17,10 @@ import { type SeedPhotos, seedPhotoPlan } from "./photos";
 // (scripts/catalogue-seed.ts) and the database tests. The seed is validated
 // before anything is written, then written in one transaction, so a failure
 // leaves the catalogue as it was. Locally the seed replaces the catalogue and
-// the Admin's data, adding the sample Staff for "Sign in as" (CONVENTIONS §5);
-// in production it loads only into an empty catalogue, never deletes, and
-// never adds Staff. With Storage (the command), every seed photo is read from
+// the Admin's data, adding the sample Staff for "Sign in as" (CONVENTIONS §5)
+// and the Member App's sample Topics and Access Passes; in production it
+// loads only into an empty catalogue, never deletes, and never adds Staff or
+// sample content. With Storage (the command), every seed photo is read from
 // public/ before anything is written, then uploaded into the bucket inside
 // the transaction, and the Products are loaded with the bucket URLs.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -113,18 +117,60 @@ async function hasCatalogue(tx: Transaction): Promise<boolean> {
 }
 
 /**
+ * The Member App's content, children before parents: Topics hang off the
+ * catalogue's Subjects, each Topic's deck, quiz and Reviewer PDF off it,
+ * which keeps a Topic, and so its Subject, from being deleted under them,
+ * each deck's cards off the deck, and the Members' Card Marks and deck
+ * positions off the cards, each quiz's questions off the quiz, and the
+ * Members' Quiz Attempts off the quiz, with their answers off the questions,
+ * and the Members' pages viewed and places in each Reviewer PDF off it.
+ */
+const CONTENT_TABLES = [
+  schema.readerPositions,
+  schema.reviewerPageViews,
+  schema.deckPositions,
+  schema.cardMarks,
+  schema.cards,
+  schema.decks,
+  schema.quizAttemptAnswers,
+  schema.quizAttempts,
+  schema.questions,
+  schema.quizzes,
+  schema.reviewerPdfs,
+  schema.topics,
+];
+
+/**
  * The Admin's own tables. They describe the catalogue that is loaded (its
- * save stamps, who changed it), so a local load replaces them too.
+ * save stamps, who changed it), so a local load replaces them too. The Member
+ * App's sample data (the Beta Tester list, the Access Passes, and the Members
+ * "Sign in as" made, with their notices, Privacy Requests, consent records,
+ * Target Exams, Active Devices and Study Days) starts again with them.
  */
 const ADMIN_TABLES = [
   schema.staffActivity,
   schema.deniedSignIns,
   schema.recordStamps,
   schema.staff,
+  schema.betaTesters,
+  schema.privacyRequests,
+  schema.memberNotices,
+  schema.accessPassGrants,
+  schema.accessPasses,
+  schema.memberConsents,
+  schema.memberTargetExams,
+  schema.memberDeviceSwitches,
+  schema.memberActiveDevices,
+  schema.studyDays,
+  schema.members,
 ];
 
-/** Deletes every Catalogue row, children before parents. */
+/**
+ * Deletes every Catalogue row, children before parents, with the Member App
+ * content that hangs off its Subjects.
+ */
 export async function clearCatalogue(db: Database | Transaction): Promise<void> {
+  for (const table of CONTENT_TABLES) await db.delete(table);
   for (const table of [...TABLES].reverse()) await db.delete(table);
 }
 
@@ -139,12 +185,33 @@ async function stampSeed(tx: Transaction, now: Date): Promise<void> {
     });
 }
 
-/** Replaces the Admin's data with the sample staff list, timed from `now`. */
+/** Replaces the Admin's data with the sample staff list and Beta Tester list, timed from `now`. */
 async function writeSampleStaff(tx: Transaction, now: Date): Promise<SampleStaffCounts> {
   for (const table of ADMIN_TABLES) await tx.delete(table);
   const list = sampleStaff(now);
   await tx.insert(schema.staff).values(staffToRows(list));
+  await tx.insert(schema.betaTesters).values(sampleBetaTesters(now).map(betaTesterToRow));
   return { staff: list.staff.length, invites: list.invites.length };
+}
+
+/**
+ * Adds the Member App's sample Topics with their content, and the sample
+ * Access Passes, timed from `now`, for the catalogue just written.
+ */
+async function writeSampleMemberApp(
+  tx: Transaction,
+  seed: CatalogueSeed,
+  now: Date,
+): Promise<void> {
+  const rows = contentToRows(sampleContent(seed));
+  if (rows.topics.length) await tx.insert(schema.topics).values(rows.topics);
+  if (rows.decks.length) await tx.insert(schema.decks).values(rows.decks);
+  if (rows.quizzes.length) await tx.insert(schema.quizzes).values(rows.quizzes);
+  if (rows.reviewerPdfs.length) await tx.insert(schema.reviewerPdfs).values(rows.reviewerPdfs);
+  const { accessPasses } = sampleAccessPasses(now, seed);
+  if (accessPasses.length) {
+    await tx.insert(schema.accessPasses).values(accessPasses.map(accessPassToRow));
+  }
 }
 
 async function writeCatalogue(tx: Transaction, seed: CatalogueSeed): Promise<void> {
@@ -259,6 +326,7 @@ export async function seedCatalogue(
     const loaded = photos && files ? await uploadSeedPhotos(valid, photos, files) : null;
     await writeCatalogue(tx, loaded?.seed ?? valid);
     const staff = production ? null : await writeSampleStaff(tx, now);
+    if (!production) await writeSampleMemberApp(tx, loaded?.seed ?? valid, now);
     await stampSeed(tx, now);
     return {
       ok: true,

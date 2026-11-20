@@ -67,6 +67,8 @@ function ce(): AdminExamPage {
       { id: "prd-008", shortName: "CE Review Bundle 3-in-1", state: "live", showOnWebsite: true },
     ],
     subjectProducts: { MSTC: 2, HPGE: 2, PSAD: 2 },
+    subjectContent: {},
+    content: { decks: 0, quizzes: 0, reviewerPdfs: 0 },
     examsOnWebsite: ["CE", "ME", "EE", "MT", "CPA"],
   });
 }

@@ -16,16 +16,22 @@ import {
 } from "@/lib/admin/sign-in-method";
 import { googleProblem, type PasswordProblem, passwordProblem } from "@/lib/admin/sign-in-problem";
 import { getSession } from "@/lib/auth/session";
+import { safeMemberAppNext } from "@/lib/member-app/safe-next";
 import { createClient } from "@/lib/supabase/server";
 import { paths } from "@/paths";
 import { staffEmailSchema } from "@/services/admin.schema";
 import type { SignInIdentity } from "@/services/admin.types";
+import type { MemberUser } from "@/services/member.types";
+import { SAMPLE_MEMBERS, type SampleMember, sampleUserId } from "@/services/mock/members";
 import { SAMPLE_USERS, type SampleUser } from "@/services/mock/staff";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Who is signed in to the Admin (CONVENTIONS §3). The Staff Guard asks this
 // module for the signed-in User's email and name, then checks the staff list
-// itself: nothing here grants access.
+// itself: nothing here grants access. The Member App (Phase 3) signs in the
+// same way, with the same session: its gate asks getSignedInUser(), which
+// adds the User's id, and checks the staff list and the Beta Tester list
+// itself (src/lib/member-app/guard.ts).
 //
 // Two arms, by the Admin's mode:
 // - sample: the development-only "Sign in as" list sets the ayc_admin_sample
@@ -53,7 +59,7 @@ export type SignInAttempt =
 const SIGNED_OUT: SignInAttempt = { status: "signed-out" };
 
 function sampleName(email: string): string | null {
-  return SAMPLE_USERS.find((user) => user.email === email)?.name ?? null;
+  return [...SAMPLE_USERS, ...SAMPLE_MEMBERS].find((user) => user.email === email)?.name ?? null;
 }
 
 const text = (value: unknown): string | null =>
@@ -104,10 +110,13 @@ async function sessionMethodCounts(userId: string): Promise<boolean> {
  * out. A session that signed in a way that doesn't count here is signed out
  * too: not recorded, and not a 403.
  */
-async function supabaseAttempt(): Promise<SignInAttempt> {
+async function supabaseUser(): Promise<User | null> {
   const user = await getSession();
-  if (!user || !(await sessionMethodCounts(user.id))) return SIGNED_OUT;
-  return attemptFromUser(user);
+  return user && (await sessionMethodCounts(user.id)) ? user : null;
+}
+
+async function supabaseAttempt(): Promise<SignInAttempt> {
+  return attemptFromUser(await supabaseUser());
 }
 
 async function sampleAttempt(): Promise<SignInAttempt> {
@@ -132,6 +141,32 @@ export async function getSignInAttempt(): Promise<SignInAttempt> {
 export async function getIdentity(): Promise<SignInIdentity | null> {
   const attempt = await getSignInAttempt();
   return attempt.status === "verified" ? attempt.identity : null;
+}
+
+/**
+ * The signed-in User for the Member App: their id, verified email (trimmed
+ * and lowercased) and name, or null when signed out or their email isn't
+ * verified. Live, the id is the Supabase User's. With sample data, where
+ * "Sign in as" stands in for Google, it is made from the email, the same
+ * every time.
+ */
+export async function getSignedInUser(): Promise<MemberUser | null> {
+  if (adminMode === "live") {
+    const user = await supabaseUser();
+    const attempt = attemptFromUser(user);
+    return user && attempt.status === "verified" ? { userId: user.id, ...attempt.identity } : null;
+  }
+  if (adminMode === "sample") {
+    const attempt = await sampleAttempt();
+    if (attempt.status !== "verified") return null;
+    return { userId: sampleUserId(attempt.identity.email), ...attempt.identity };
+  }
+  return null;
+}
+
+/** The Member App's "Sign in as" list: the sample Members in sample mode, and nobody otherwise. */
+export function listSampleMembers(): readonly SampleMember[] {
+  return adminMode === "sample" ? SAMPLE_MEMBERS : [];
 }
 
 /** The "Sign in as" list: the sample Users in sample mode, and nobody otherwise. */
@@ -195,17 +230,25 @@ async function authProviders(): Promise<AuthProviders | null> {
  * Live mode only: where to send the browser to sign in with Google. Supabase's
  * server client runs the PKCE flow: it keeps the code verifier in a cookie,
  * and Google returns through /auth/callback, which exchanges the code and
- * goes on to `next` (sanitised to an Admin path). Google always asks which
- * account to use, so "Use another account" can pick another one.
+ * goes on to `next`, sanitised to a path on the Surface that asked: the Admin's
+ * sign-in never lands in the Member App, nor the Member App's in the Admin.
+ * Google always asks which account to use, so "Use another account" can pick
+ * another one.
  */
-export async function startGoogleSignIn(next: unknown): Promise<GoogleSignInStart> {
+export async function startGoogleSignIn(
+  next: unknown,
+  surface: "admin" | "member-app" = "admin",
+): Promise<GoogleSignInStart> {
   if (adminMode !== "live") throw new Error("Google sign-in runs in live mode only.");
   const providers = await authProviders();
   if (providers === null) return { ok: false, reason: "unreachable" };
   if (!providers.google) return { ok: false, reason: "not-set-up" };
 
   const redirectTo = new URL(paths.auth.callback, config.site.url);
-  redirectTo.searchParams.set("next", safeAdminNext(next));
+  redirectTo.searchParams.set(
+    "next",
+    surface === "member-app" ? safeMemberAppNext(next) : safeAdminNext(next),
+  );
   const { data, error } = await createClient(cookies()).auth.signInWithOAuth({
     provider: "google",
     options: {
@@ -297,7 +340,10 @@ export async function finishGoogleSignIn(code: string): Promise<boolean> {
   }
 }
 
-/** Signs out of the Admin: the Supabase session in live mode, the sample cookie otherwise. */
+/**
+ * Signs out, of the Admin and the Member App alike (they share the session):
+ * the Supabase session in live mode, the sample cookie otherwise.
+ */
 export async function endSession(): Promise<void> {
   if (adminMode === "live") {
     try {

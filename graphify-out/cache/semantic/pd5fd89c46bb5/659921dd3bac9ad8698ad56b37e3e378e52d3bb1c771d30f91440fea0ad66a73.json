@@ -1,0 +1,185 @@
+{
+  "nodes": [
+    {
+      "id": "docs_runbooks_production",
+      "label": "Production go-live runbook",
+      "file_type": "document",
+      "source_file": "docs/runbooks/production.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_runbooks_production_go_live_procedure",
+      "label": "Production go-live procedure (link, migrate, seed catalogue, first Owner, Google/Supabase Auth, Vercel env, deploy)",
+      "file_type": "concept",
+      "source_file": "docs/runbooks/production.md",
+      "source_location": "L38",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_runbooks_production_secrets_out_of_files",
+      "label": "Keep secrets out of files (read -s shell vars, unset at cleanup)",
+      "file_type": "rationale",
+      "source_file": "docs/runbooks/production.md",
+      "source_location": "L25",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Scripts read .env but shell vars win; production values live only in the shell session so nothing is committed or kept in history."
+    },
+    {
+      "id": "docs_runbooks_production_first_owner",
+      "label": "Add the first Owner to the staff list",
+      "file_type": "concept",
+      "source_file": "docs/runbooks/production.md",
+      "source_location": "L176",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_runbooks_production_smoke_checklist",
+      "label": "Production smoke checklist",
+      "file_type": "concept",
+      "source_file": "docs/runbooks/production.md",
+      "source_location": "L360",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_runbooks_production_rollback",
+      "label": "Rollback procedure",
+      "file_type": "concept",
+      "source_file": "docs/runbooks/production.md",
+      "source_location": "L421",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_runbooks_production_load_catalogue_once",
+      "label": "Load the catalogue once",
+      "file_type": "concept",
+      "source_file": "docs/runbooks/production.md",
+      "source_location": "L136",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_runbooks_production",
+      "target": "docs_runbooks_production_go_live_procedure",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/runbooks/production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_runbooks_production",
+      "target": "docs_runbooks_production_secrets_out_of_files",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/runbooks/production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_runbooks_production",
+      "target": "docs_runbooks_production_first_owner",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/runbooks/production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_runbooks_production",
+      "target": "docs_runbooks_production_smoke_checklist",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/runbooks/production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_runbooks_production",
+      "target": "docs_runbooks_production_rollback",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/runbooks/production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_runbooks_production",
+      "target": "docs_runbooks_production_load_catalogue_once",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/runbooks/production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_runbooks_production",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/runbooks/production.md",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_runbooks_production",
+      "target": "docs_adr_0012_vercel_and_supabase_singapore",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/runbooks/production.md",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_runbooks_production_first_owner",
+      "target": "docs_specs_2026_10_29_ayc_v1_no_tenancy",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/runbooks/production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_runbooks_production_load_catalogue_once",
+      "target": "docs_specs_2026_10_29_ayc_v1_catalogue_seam",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "docs/runbooks/production.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

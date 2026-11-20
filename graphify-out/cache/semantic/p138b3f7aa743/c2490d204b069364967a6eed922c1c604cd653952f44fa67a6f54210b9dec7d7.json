@@ -1,0 +1,236 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_08_flashcard_study",
+      "label": "Executer prompt 08: Flashcard study",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_08_flashcard_study_deck_player",
+      "label": "Flashcard deck player (flip, swipe/arrow marking, summary)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": "L11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_08_flashcard_study_card_mark",
+      "label": "Card Mark (latest verdict per Member and card)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": "L45",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Stored as current state, not an event log; Free Preview marks carry over when a pass starts since they are the same records."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_08_flashcard_study_study_day",
+      "label": "Study Day (Asia/Manila date, once per day)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": "L46",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_08_flashcard_study_deck_resume_position",
+      "label": "Deck resume position (per Member)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": "L48",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_08_flashcard_study_signed_image_urls",
+      "label": "Signed card image URLs (~10 min, allowed reads only)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": "L52",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Clean images are never public; locked deck cards never reach the browser; overlay watermark with email and short Member ID, text not selectable."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_08_flashcard_study_review_the_n",
+      "label": "'Review the N' summary drill",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": "L47",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_08_flashcard_study",
+      "target": "_scratch_ayc_member_app_prompts_08_flashcard_study_deck_player",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_08_flashcard_study",
+      "target": "_scratch_ayc_member_app_prompts_08_flashcard_study_card_mark",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_08_flashcard_study",
+      "target": "_scratch_ayc_member_app_prompts_08_flashcard_study_study_day",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_08_flashcard_study",
+      "target": "_scratch_ayc_member_app_prompts_08_flashcard_study_deck_resume_position",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_08_flashcard_study",
+      "target": "_scratch_ayc_member_app_prompts_08_flashcard_study_signed_image_urls",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_08_flashcard_study",
+      "target": "_scratch_ayc_member_app_prompts_08_flashcard_study_review_the_n",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_08_flashcard_study_deck_player",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_decision",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_08_flashcard_study_deck_player",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_formula_module",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_08_flashcard_study_study_day",
+      "target": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_manila_time",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_08_flashcard_study_card_mark",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_cards",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_08_flashcard_study_signed_image_urls",
+      "target": "_scratch_ayc_member_app_prompts_06_card_import_private_content_bucket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_08_flashcard_study_deck_player",
+      "target": "_scratch_ayc_member_app_prompts_08_flashcard_study_review_the_n",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_07_card_editor_card_mark_deletion",
+      "target": "_scratch_ayc_member_app_prompts_08_flashcard_study_card_mark",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_06_card_import_replace_vs_add",
+      "target": "_scratch_ayc_member_app_prompts_08_flashcard_study_card_mark",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_08_flashcard_study_deck_player",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_session_ended_screen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/08-flashcard-study.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  addCalendarDays,
   formatAsOf,
   formatDate,
+  formatDateTime,
   isCalendarDate,
   manilaDate,
   manilaDayStart,
@@ -26,6 +28,21 @@ describe("formatAsOf", () => {
 
   it("rejects an empty string", () => {
     expect(() => formatAsOf("")).toThrow(RangeError);
+  });
+});
+
+describe("formatDateTime", () => {
+  it("gives the Manila date and time of an instant, day first", () => {
+    // 03:42 UTC is 11:42 in Manila.
+    expect(formatDateTime("2026-11-17T03:42:00.000Z")).toBe("17 Nov 2026, 11:42 am");
+  });
+
+  it("moves to the next day after Manila midnight", () => {
+    expect(formatDateTime("2026-11-17T16:05:00.000Z")).toBe("18 Nov 2026, 12:05 am");
+  });
+
+  it("throws a RangeError for a non-date", () => {
+    expect(() => formatDateTime("not a date")).toThrow(RangeError);
   });
 });
 
@@ -76,6 +93,18 @@ describe("manilaDate", () => {
 
   it("pads the month and day", () => {
     expect(manilaDate(new Date("2027-01-04T00:00:00Z"))).toBe("2027-01-04");
+  });
+});
+
+describe("addCalendarDays", () => {
+  it("moves a date forward and back by whole days", () => {
+    expect(addCalendarDays("2026-11-19", 7)).toBe("2026-11-26");
+    expect(addCalendarDays("2026-11-19", -19)).toBe("2026-10-31");
+  });
+
+  it("runs across the end of a month, a year and February", () => {
+    expect(addCalendarDays("2026-12-15", 30)).toBe("2027-01-14");
+    expect(addCalendarDays("2028-02-28", 1)).toBe("2028-02-29");
   });
 });
 

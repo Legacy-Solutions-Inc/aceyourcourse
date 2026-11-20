@@ -38,7 +38,7 @@ describe("AdminSidebar", () => {
     expect(screen.getByRole("list", { name: "WEBSITE" })).toHaveTextContent(
       "02Pages & promo03Products & store links04Reviews & FAQs",
     );
-    expect(screen.getByRole("list", { name: "SETTINGS" })).toHaveTextContent("05Settings");
+    expect(screen.getByRole("list", { name: "SETTINGS" })).toHaveTextContent("07Settings");
   });
 
   it("shows the signed-in Staff User with their Staff Role and Sign out", () => {

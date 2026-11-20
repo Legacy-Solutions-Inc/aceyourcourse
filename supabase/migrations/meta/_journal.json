@@ -43,6 +43,118 @@
       "when": 1793852907754,
       "tag": "20261105042827_about_page",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794897962764,
+      "tag": "20261117064602_member_app_gate",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794902794457,
+      "tag": "20261117080634_member_consents",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794909259154,
+      "tag": "20261117095419_member_target_exams",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794913002009,
+      "tag": "20261117105642_member_active_devices",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794928546333,
+      "tag": "20261117151546_member_content",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794931278657,
+      "tag": "20261117160118_cards",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794931292807,
+      "tag": "20261117160132_content_bucket",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794959983771,
+      "tag": "20261117235943_card_marks",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794978507551,
+      "tag": "20261118050827_study_progress",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1794986593563,
+      "tag": "20261118072313_quizzes",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1795005522637,
+      "tag": "20261118123842_quiz_attempts",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1795012478181,
+      "tag": "20261118143438_reviewer_pdf_jobs",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1795046671760,
+      "tag": "20261119000431_reviewer_reading",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795090255665,
+      "tag": "20261119121055_member_notices",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1795095669159,
+      "tag": "20261119134109_privacy_requests",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795137109371,
+      "tag": "20261120011149_privacy_request_fulfilment",
+      "breakpoints": true
     }
   ]
 }

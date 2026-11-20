@@ -1,0 +1,100 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_06_product_photos_and_upload",
+      "label": "Ticket 06: Product photos and the upload seam",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/06-product-photos-and-upload.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_06_product_photos_and_upload_photo_strip",
+      "label": "Photo strip (cover first, reorder with Move left/right, size warnings)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/06-product-photos-and-upload.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_06_product_photos_and_upload_one_time_upload_url",
+      "label": "One-time upload URL (dev route /api/dev/uploads/[id])",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/06-product-photos-and-upload.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_06_product_photos_and_upload",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_06_product_photos_and_upload",
+      "target": "_scratch_ayc_admin_issues_05_product_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_06_product_photos_and_upload",
+      "target": "_scratch_ayc_admin_issues_06_product_photos_and_upload_photo_strip",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_06_product_photos_and_upload",
+      "target": "_scratch_ayc_admin_issues_06_product_photos_and_upload_one_time_upload_url",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_06_product_photos_and_upload",
+      "target": "_scratch_ayc_admin_conventions_upload_seam",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_06_product_photos_and_upload_one_time_upload_url",
+      "target": "_scratch_ayc_admin_conventions_upload_seam",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/06-product-photos-and-upload.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

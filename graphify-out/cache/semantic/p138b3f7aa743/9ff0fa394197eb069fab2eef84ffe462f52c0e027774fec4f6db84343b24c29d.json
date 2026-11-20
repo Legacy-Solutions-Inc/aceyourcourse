@@ -1,0 +1,205 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_issues_04_active_device_ticket",
+      "label": "Ticket 04: Active Device",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_04_active_device_active_device",
+      "label": "Active Device",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_04_active_device_session_ended_screen",
+      "label": "Session Ended Screen",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_04_active_device_device_switch_log",
+      "label": "Device Switch Log",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_04_active_device_is_active_device_seam",
+      "label": "Active Device Seam Function (active / no-token / replaced)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_04_active_device_admin_exempt",
+      "label": "Admin Exempt from Active Device",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Using /admin never sets, checks or replaces the Active Device; Supabase single-session setting isn't used."
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_04_active_device_adr_0011",
+      "label": "ADR 0011",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_issues_04_active_device_ticket",
+      "target": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_04_active_device_ticket",
+      "target": "_scratch_ayc_member_app_readme_ayc_v1_spec",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_04_active_device_ticket",
+      "target": "_scratch_ayc_member_app_readme_vertical_slice_ticket",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_04_active_device_ticket",
+      "target": "_scratch_ayc_member_app_issues_04_active_device_active_device",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_04_active_device_ticket",
+      "target": "_scratch_ayc_member_app_issues_04_active_device_session_ended_screen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_04_active_device_ticket",
+      "target": "_scratch_ayc_member_app_issues_04_active_device_device_switch_log",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_04_active_device_ticket",
+      "target": "_scratch_ayc_member_app_issues_04_active_device_is_active_device_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_04_active_device_ticket",
+      "target": "_scratch_ayc_member_app_issues_04_active_device_admin_exempt",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_04_active_device_ticket",
+      "target": "_scratch_ayc_member_app_issues_04_active_device_adr_0011",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_04_active_device_ticket",
+      "target": "_scratch_ayc_member_app_grilling_notes_no_token_device_claim",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_04_active_device_active_device",
+      "target": "_scratch_ayc_member_app_grilling_notes_device_token_cookie",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_04_active_device_is_active_device_seam",
+      "target": "_scratch_ayc_member_app_issues_04_active_device_active_device",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/04-active-device.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

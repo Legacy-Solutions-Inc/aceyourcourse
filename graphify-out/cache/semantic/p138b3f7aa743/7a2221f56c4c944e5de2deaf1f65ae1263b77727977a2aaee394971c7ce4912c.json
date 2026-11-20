@@ -1,0 +1,153 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_ticket",
+      "label": "Ticket 03: Onboarding and Target Exams",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_onboarding",
+      "label": "Onboarding (Start my countdown)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_target_exam",
+      "label": "Target Exam",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_exam_switcher",
+      "label": "Target Exam Switcher",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_exam_date_rule",
+      "label": "Exam Date Follows Official Exam Date Until Edited",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/issues/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Staff changing the Official Exam Date moves Members who never edited theirs; days counted in Asia/Manila calendar days."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_ticket",
+      "target": "_scratch_ayc_member_app_issues_02_consent_and_legal_v2_draft_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_ticket",
+      "target": "_scratch_ayc_member_app_readme_ayc_v1_spec",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_ticket",
+      "target": "_scratch_ayc_member_app_readme_vertical_slice_ticket",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/issues/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_ticket",
+      "target": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_onboarding",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_ticket",
+      "target": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_target_exam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_ticket",
+      "target": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_exam_switcher",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_ticket",
+      "target": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_exam_date_rule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_ticket",
+      "target": "_scratch_ayc_member_app_grilling_notes_remove_target_exam",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_exam_switcher",
+      "target": "_scratch_ayc_member_app_issues_03_onboarding_and_target_exams_target_exam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/03-onboarding-and-target-exams.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

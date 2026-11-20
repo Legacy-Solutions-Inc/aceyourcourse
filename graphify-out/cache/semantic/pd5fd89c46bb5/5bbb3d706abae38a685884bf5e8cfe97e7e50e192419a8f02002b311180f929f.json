@@ -1,0 +1,325 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "label": "Executer prompt 21: About page editor",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_21_about_page_editor",
+      "label": "Ticket 21-about-page-editor",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_21_about_page_editor_about_page_editor",
+      "label": "About page editor (six sections: header, story, growth, mission, roots, closing)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_21_about_page_editor_blank_means_default",
+      "label": "Blank means default: nullable fields, null restores today's text",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_21_about_page_editor_field_limits_from_defaults",
+      "label": "Field limit = ~1.5x default length rounded up to next 10",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_21_about_page_editor_about_photo_warnings",
+      "label": "About photo warnings (not 4:3, smaller than 1200x900)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_lib_admin_exam_pages_view_shareimagewarning",
+      "label": "shareImageWarning",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_content_about",
+      "label": "src/content/about.ts (default About copy)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "_scratch_ayc_admin_issues_21_about_page_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "agents",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "docs_mockup_admin_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_executer_no_commit_guardrail",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_scratchpad_copy_build_gotcha",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_staff_guard_server_authorisation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "_scratch_ayc_admin_prompts_21_about_page_editor_about_page_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "_scratch_ayc_admin_prompts_21_about_page_editor_blank_means_default",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "_scratch_ayc_admin_prompts_21_about_page_editor_field_limits_from_defaults",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "_scratch_ayc_admin_prompts_21_about_page_editor_about_photo_warnings",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "src_content_about",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "src_lib_admin_exam_pages_view_shareimagewarning",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor_about_page_editor",
+      "target": "_scratch_ayc_admin_prompts_20_site_page_seo_site_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor_about_page_editor",
+      "target": "_scratch_ayc_admin_prompts_20_site_page_seo_catalogue_site_pages_tag",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor_about_photo_warnings",
+      "target": "src_lib_admin_exam_pages_view_shareimagewarning",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor_blank_means_default",
+      "target": "_scratch_ayc_admin_prompts_20_site_page_seo_seo_override_fallback",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor_field_limits_from_defaults",
+      "target": "src_content_about",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor_about_page_editor",
+      "target": "_scratch_ayc_admin_prompts_20_site_page_seo_contract_milestone_2",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor_about_page_editor",
+      "target": "_scratch_ayc_admin_prompts_15_admin_writes_on_the_database_optimistic_conflict_check",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_21_about_page_editor",
+      "target": "_scratch_ayc_admin_prompts_20_site_page_seo",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/21-about-page-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

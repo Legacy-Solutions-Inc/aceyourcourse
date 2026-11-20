@@ -10,6 +10,19 @@ import { LOCAL_SUPABASE_URL } from "./src/lib/db/local-database";
 const DATABASE_TESTS = "src/**/*.db.test.ts";
 /** The Admin seam's suites, written over ADMIN_ARMS (test/admin-arms.ts). */
 const ADMIN_SUITES = "src/services/admin.*.test.ts";
+/** The Member seam's suites, written over MEMBER_ARMS (test/member-arms.ts). */
+const MEMBER_SUITES = [
+  "src/services/member.test.ts",
+  "src/services/member.content.test.ts",
+  "src/services/member.target-exams.test.ts",
+  "src/services/member.devices.test.ts",
+  "src/services/member.study.test.ts",
+  "src/services/member.quiz.test.ts",
+  "src/services/member.reviewer.test.ts",
+  "src/services/member.progress.test.ts",
+  "src/services/member.notices.test.ts",
+  "src/services/member.privacy-requests.test.ts",
+];
 /** Admin tests that aren't written over ADMIN_ARMS. */
 const NOT_ADMIN_SUITES = [
   "src/services/admin.rows.test.ts",
@@ -60,14 +73,14 @@ const testStorage: Record<string, string> = testSecretKey
 const SAMPLE_MODE = { NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "" };
 
 /**
- * With a test database, the database project runs the Admin suites too, over
- * the database arm: the seams' DATABASE_URL is the test database, never the
+ * With a test database, the database project runs the Admin suites and the
+ * Member seam's suites too, over the database arm: the seams' DATABASE_URL is the test database, never the
  * shell's or .env's. Without one, it runs only the `*.db.test.ts` files, which
  * skip saying why.
  */
 const adminSuitesOnDatabase = testDatabaseUrl
   ? {
-      include: [DATABASE_TESTS, ADMIN_SUITES],
+      include: [DATABASE_TESTS, ADMIN_SUITES, ...MEMBER_SUITES],
       exclude: [...configDefaults.exclude, ...NOT_ADMIN_SUITES],
       env: {
         ...testDatabase,
@@ -119,6 +132,7 @@ export default defineConfig({
         // Drizzle DB layer: its query bodies only run against a live Postgres,
         // so the database tests (`pnpm test:db`) check them, not coverage.
         "src/lib/db/client.ts",
+        "src/lib/db/record-stamps.ts",
         "src/services/*.db.ts",
         "**/*.d.ts",
         // The seams' type-only modules (catalogue.types.ts, admin.types.ts):

@@ -1,0 +1,101 @@
+{
+  "nodes": [
+    {
+      "id": "_claude_skills_tailwind_v4_references_theming_theming_reference",
+      "label": "Theming Token Architecture Reference",
+      "file_type": "document",
+      "source_file": ".claude/skills/tailwind-v4/references/theming.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_tailwind_v4_references_theming_two_layer_tokens",
+      "label": "Two-Layer Tokens (raw oklch + @theme inline mapping)",
+      "file_type": "rationale",
+      "source_file": ".claude/skills/tailwind-v4/references/theming.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "@theme inline keeps utilities pointing at the live var so dark mode swapping raw tokens just works."
+    },
+    {
+      "id": "_claude_skills_tailwind_v4_references_theming_adding_semantic_color",
+      "label": "Adding a Semantic Color Procedure",
+      "file_type": "concept",
+      "source_file": ".claude/skills/tailwind-v4/references/theming.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_claude_skills_tailwind_v4_references_theming_theming_reference",
+      "target": "_claude_skills_tailwind_v4_references_theming_two_layer_tokens",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/tailwind-v4/references/theming.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_tailwind_v4_references_theming_theming_reference",
+      "target": "_claude_skills_tailwind_v4_references_theming_adding_semantic_color",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/tailwind-v4/references/theming.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_tailwind_v4_references_theming_theming_reference",
+      "target": "_claude_skills_tailwind_v4_skill_class_based_dark_mode",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/tailwind-v4/references/theming.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_tailwind_v4_references_theming_adding_semantic_color",
+      "target": "_claude_skills_tailwind_v4_references_theming_two_layer_tokens",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".claude/skills/tailwind-v4/references/theming.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_tailwind_v4_references_theming_theming_reference",
+      "target": "_claude_skills_shadcn_ui_skill_components_json",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/tailwind-v4/references/theming.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_tailwind_v4_references_theming_two_layer_tokens",
+      "target": "_claude_skills_tailwind_v4_skill_css_first_config",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".claude/skills/tailwind-v4/references/theming.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

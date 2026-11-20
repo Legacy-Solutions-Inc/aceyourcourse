@@ -1,0 +1,197 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_08_faqs",
+      "label": "Executer prompt 08: FAQs",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_08_faqs",
+      "label": "Ticket 08-faqs",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_08_faqs_faqs_area",
+      "label": "FAQs area (listFaqsForAdmin, createFaq, updateFaq, moveFaq, deleteFaq)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_08_faqs_faq_quote_picker",
+      "label": "FAQ quote picker with word-for-word check and computed credit line",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_08_faqs_faq_deep_link_slug",
+      "label": "FAQ deep-link slug #faq-{slug} (max 40 chars, fixed)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_08_faqs",
+      "target": "_scratch_ayc_admin_issues_08_faqs",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_08_faqs",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_08_faqs",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_08_faqs",
+      "target": "docs_mockup_admin_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_08_faqs",
+      "target": "_scratch_ayc_admin_prompts_07_reviews",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_08_faqs",
+      "target": "_scratch_ayc_admin_prompts_08_faqs_faqs_area",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_08_faqs",
+      "target": "_scratch_ayc_admin_prompts_08_faqs_faq_quote_picker",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_08_faqs",
+      "target": "_scratch_ayc_admin_prompts_08_faqs_faq_deep_link_slug",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_08_faqs_faq_deep_link_slug",
+      "target": "_scratch_ayc_admin_prompts_05_product_editor_slug_helper",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_08_faqs_faq_quote_picker",
+      "target": "_scratch_ayc_admin_prompts_07_reviews_faq_quote_guard",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_08_faqs_faqs_area",
+      "target": "_scratch_ayc_admin_prompts_07_reviews_reviews_area",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_08_faqs_faqs_area",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_conflict_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "faq_review_quote_integrity",
+      "label": "FAQ quote integrity across Reviews, FAQs and Product delete",
+      "nodes": [
+        "_scratch_ayc_admin_prompts_07_reviews_faq_quote_guard",
+        "_scratch_ayc_admin_prompts_08_faqs_faq_quote_picker",
+        "_scratch_ayc_admin_prompts_05_product_editor_product_delete_cascade",
+        "src_services_catalogue_schema"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/08-faqs.md"
+    }
+  ]
+}

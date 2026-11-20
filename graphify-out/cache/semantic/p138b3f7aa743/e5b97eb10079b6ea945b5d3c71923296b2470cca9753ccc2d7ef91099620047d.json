@@ -1,0 +1,316 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_executer_prompt",
+      "label": "Executer prompt 14: Reviewer PDF reader with stamped pages",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": "L1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_protected_page_endpoint",
+      "label": "Protected page endpoint (Route Handler under /app)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": "L28",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Gate, consent, Active Device, access decision, range check, read clean page, stamp, respond; refusals send no image bytes."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_watermark_stamper",
+      "label": "Burned-in watermark stamper (sharp)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": "L36",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Member email and short Member ID, semi-transparent, tiled/diagonal, fixed position so it can be tested."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_private_cache_control",
+      "label": "Private short browser cache (Cache-Control private, max-age)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": "L34",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Stamp on every request; never public or s-maxage; no CDN or Storage copy of stamped pages."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_reader_screen",
+      "label": "Reviewer PDF reader screen",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": "L37",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Page N of M, arrow keys, zoom 75-150% in 25% steps in the browser, no service worker."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_pages_viewed_record",
+      "label": "Pages viewed record (once per Member and page)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": "L43",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_reviewer_resume_state",
+      "label": "Reviewer PDF resume (last page and zoom)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": "L45",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_page_load_error_retry",
+      "label": "\"page didn't load - Try again\" retry",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": "L41",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_protected_page_endpoint",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_watermark_stamper",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_private_cache_control",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_reader_screen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_pages_viewed_record",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_reviewer_resume_state",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_page_load_error_retry",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_member_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_page_images_interface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_13_reviewer_pdf_placement_and_publishing_published_only_visibility",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_guardrails",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_protected_page_endpoint",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_access_decision",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_protected_page_endpoint",
+      "target": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_watermark_stamper",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_protected_page_endpoint",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_page_images_interface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_protected_page_endpoint",
+      "target": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_private_cache_control",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_watermark_stamper",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_page_images_interface",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_reader_screen",
+      "target": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_protected_page_endpoint",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_reader_screen",
+      "target": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_page_load_error_retry",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_pages_viewed_record",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_study_day",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_reviewer_resume_state",
+      "target": "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_reader_screen",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "reviewer_pdf_pipeline",
+      "label": "Reviewer PDF pipeline: upload, process, publish, stamp and read",
+      "nodes": [
+        "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_tus_resumable_upload",
+        "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_reviewer_pdf_job_state_machine",
+        "_scratch_ayc_member_app_prompts_13_reviewer_pdf_placement_and_publishing_reviewer_pdf_status_rules",
+        "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_protected_page_endpoint",
+        "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_watermark_stamper",
+        "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_reader_screen"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/14-reviewer-pdf-reader.md"
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_24_password_sign_in_in_production",
+      "label": "Ticket 24: Password sign-in in production (temporary)",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_24_password_sign_in_in_production_admin_password_sign_in_switch",
+      "label": "ADMIN_PASSWORD_SIGN_IN server-only switch (TESTING ONLY box)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_24_password_sign_in_in_production",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/issues/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_24_password_sign_in_in_production",
+      "target": "_scratch_ayc_admin_issues_19_development_password_sign_in",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_24_password_sign_in_in_production",
+      "target": "_scratch_ayc_admin_issues_24_password_sign_in_in_production_admin_password_sign_in_switch",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_24_password_sign_in_in_production_admin_password_sign_in_switch",
+      "target": "_scratch_ayc_admin_issues_19_development_password_sign_in_dev_password_box",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_24_password_sign_in_in_production_admin_password_sign_in_switch",
+      "target": "_scratch_ayc_admin_issues_19_development_password_sign_in_amr_method_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_24_password_sign_in_in_production_admin_password_sign_in_switch",
+      "target": "_scratch_ayc_admin_issues_18_production_go_live_production_runbook",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/24-password-sign-in-in-production.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

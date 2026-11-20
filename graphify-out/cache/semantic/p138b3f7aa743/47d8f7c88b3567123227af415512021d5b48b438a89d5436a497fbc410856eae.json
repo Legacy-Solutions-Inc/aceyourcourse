@@ -1,0 +1,305 @@
+{
+  "nodes": [
+    {
+      "id": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_query",
+      "label": "Q: How one Staff save travels from an Admin editor to the database",
+      "file_type": "document",
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": "L10",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "graphify"
+    },
+    {
+      "id": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_admin_save_pipeline",
+      "label": "Admin save pipeline (editor hook \u2192 adminAction \u2192 AdminService \u2192 onDatabase \u2192 revalidateTag)",
+      "file_type": "concept",
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": "L14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "graphify"
+    },
+    {
+      "id": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_calladminaction",
+      "label": "callAdminAction()",
+      "file_type": "concept",
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": "L14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "graphify"
+    },
+    {
+      "id": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_adminaction",
+      "label": "adminAction()",
+      "file_type": "concept",
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": "L14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "graphify"
+    },
+    {
+      "id": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_requirestaff",
+      "label": "requireStaff()",
+      "file_type": "concept",
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": "L14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "graphify"
+    },
+    {
+      "id": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_stampedwrite",
+      "label": "stampedWrite()",
+      "file_type": "concept",
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": "L14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "graphify"
+    },
+    {
+      "id": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_ondatabase",
+      "label": "onDatabase()",
+      "file_type": "concept",
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": "L14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "graphify",
+      "rationale": "Advisory lock per part, loads all tables, runs sample-arm writeCatalogue over a stand-in store, diffs and syncTables, optimistic UPDATE on record_stamps, Staff Activity last, Storage cleanup after commit."
+    },
+    {
+      "id": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_record_stamps",
+      "label": "record_stamps table",
+      "file_type": "concept",
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": "L14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "graphify"
+    },
+    {
+      "id": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_withstandinstore_divergence",
+      "label": "Divergence: DB arm reuses sample-arm code via withStandInStore",
+      "file_type": "rationale",
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": "L14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "graphify",
+      "rationale": "Differs from per-table UPDATE WHERE updated_at; stamps live in record_stamps; every write loads the whole catalogue."
+    }
+  ],
+  "edges": [
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_query",
+      "target": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_admin_save_pipeline",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_query",
+      "target": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_withstandinstore_divergence",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_query",
+      "target": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_calladminaction",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_query",
+      "target": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_adminaction",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_query",
+      "target": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_requirestaff",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_query",
+      "target": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_stampedwrite",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_query",
+      "target": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_ondatabase",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_calladminaction",
+      "target": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_adminaction",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_adminaction",
+      "target": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_requirestaff",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_stampedwrite",
+      "target": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_ondatabase",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_ondatabase",
+      "target": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_record_stamps",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_withstandinstore_divergence",
+      "target": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_ondatabase",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_requirestaff",
+      "target": "docs_specs_2026_10_29_ayc_v1_staff_guard",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_adminaction",
+      "target": "docs_specs_2026_10_29_ayc_v1_admin_seam",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_stampedwrite",
+      "target": "docs_specs_2026_10_29_ayc_v1_conflict_check",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_ondatabase",
+      "target": "docs_specs_2026_10_29_ayc_v1_staff_activity",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_admin_save_pipeline",
+      "target": "docs_specs_2026_10_29_ayc_v1_rendering_and_caching",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_withstandinstore_divergence",
+      "target": "docs_specs_2026_10_29_ayc_v1_two_stage_admin",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "admin_staff_save_flow",
+      "label": "Admin Staff save flow",
+      "nodes": [
+        "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_calladminaction",
+        "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_adminaction",
+        "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_requirestaff",
+        "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_stampedwrite",
+        "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_ondatabase",
+        "graphify_out_memory_query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito_record_stamps"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "graphify-out/memory/query_20261116_171558_40afcb46_how_does_one_staff_save_travel_from_an_admin_edito.md"
+    }
+  ]
+}

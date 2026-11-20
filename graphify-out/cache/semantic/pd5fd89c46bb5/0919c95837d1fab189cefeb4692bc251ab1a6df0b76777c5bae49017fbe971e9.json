@@ -1,0 +1,79 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_website_issues_07_reviews_page",
+      "label": "Ticket 07: Reviews page",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-website/issues/07-reviews-page.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_issues_07_reviews_page_review_wall_filters",
+      "label": "Reviews wall filters, sorts and URL state",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-website/issues/07-reviews-page.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_website_issues_07_reviews_page",
+      "target": "_scratch_ayc_website_issues_02_product_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/07-reviews-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_07_reviews_page",
+      "target": "_scratch_ayc_website_issues_07_reviews_page_review_wall_filters",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/07-reviews-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_07_reviews_page_review_wall_filters",
+      "target": "_scratch_ayc_website_issues_02_product_page_product_review_read_contract",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-website/issues/07-reviews-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_07_reviews_page",
+      "target": "_scratch_ayc_website_issues_02_product_page_no_rating_review_markup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/issues/07-reviews-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_issues_03_products_page_url_filter_state",
+      "target": "_scratch_ayc_website_issues_07_reviews_page_review_wall_filters",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-website/issues/07-reviews-page.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

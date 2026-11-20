@@ -1,8 +1,9 @@
 import "server-only";
 
-import { and, asc, desc, eq, getTableColumns, inArray, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, inArray, type SQL } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 
+import { type AdminPart, adminWriteLock } from "@/lib/db/admin-locks";
 import { getDb } from "@/lib/db/client";
 import type { Database } from "@/lib/db/connect";
 import { asDatabaseError, postgresErrorCode } from "@/lib/db/errors";
@@ -10,8 +11,18 @@ import { diffRows } from "@/lib/db/row-diff";
 import * as schema from "@/lib/db/schema";
 import { isStorageConfigured } from "@/lib/supabase/admin";
 import type { AdminService } from "@/services/admin";
-import { alreadyAnExam, newExamCodeOf, staffEmailSchema, typedCode } from "@/services/admin.schema";
 import {
+  alreadyAnExam,
+  alreadyATopic,
+  newExamCodeOf,
+  newTopicFormSchema,
+  staffEmailSchema,
+  typedCode,
+} from "@/services/admin.schema";
+import {
+  type BetaTesterRow,
+  betaTestersFromRows,
+  betaTesterToRow,
   deniedSignInFromRow,
   deniedSignInToRow,
   SEEDED_RECORD,
@@ -24,14 +35,30 @@ import {
 } from "@/services/admin.rows";
 import type {
   AdminResult,
+  BetaTester,
   DeniedSignIn,
   Invite,
   RecordStamp,
   StaffMember,
 } from "@/services/admin.types";
+import {
+  confirmCardImport,
+  confirmQuizImport,
+  planCardImport,
+  planQuizImport,
+} from "@/services/admin.content-import.db";
+import * as deckEditor from "@/services/admin.deck.db";
+import * as quizEditor from "@/services/admin.quiz.db";
+import * as reviewerPdfs from "@/services/admin.reviewer-pdfs.db";
+import * as users from "@/services/admin.users.db";
+import * as passes from "@/services/admin.access-passes.db";
+import * as privacy from "@/services/admin.privacy-requests.db";
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
+import { type ContentRows, contentFromRows, contentToRows } from "@/services/content.rows";
+import type { ContentRecords } from "@/services/content.types";
+import { ALREADY_A_BETA_TESTER } from "@/services/mock/admin/beta-testers";
 import { ALREADY_ON_LIST } from "@/services/mock/admin/staff";
 import { getSampleStore, type SampleStore, withStandInStore } from "@/services/mock/sample-store";
 import { imagesRemoved, storageArm, uploadPathsIn } from "@/services/uploads.storage";
@@ -43,8 +70,9 @@ import type { UploadLookup } from "@/services/uploads.types";
 // runs in one transaction, which
 //   1. takes the write lock of each part it loads, for a write, so writes to
 //      the same part run one at a time,
-//   2. loads what the call needs (the catalogue and its save stamps, or the
-//      staff list) into a store shaped like the sample data,
+//   2. loads what the call needs (the catalogue and its save stamps, the
+//      Member App's Topics and their content, the staff list, or the Beta
+//      Tester list) into a store shaped like the sample data,
 //   3. runs the sample arm's area code over that store (withStandInStore), so
 //      the role check, validation, conflict check and rules are the same code
 //      in both arms, and
@@ -65,16 +93,14 @@ import type { UploadLookup } from "@/services/uploads.types";
 
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
-/** What a call reads: the catalogue with its save stamps, and the staff list. */
-type Part = "catalogue" | "staff";
-
 /**
- * Each part's write lock: writes that change the same part run one at a time,
- * so a write's checks see every write before it. The Staff Guard's sign-in
- * check (a staff write) never waits for a catalogue save.
+ * What a call reads (src/lib/db/admin-locks.ts). A call that reads both the
+ * catalogue and the content lists them in that order, so their locks are
+ * always taken in the same order.
  */
-const writeLock = (part: Part) =>
-  sql`select pg_advisory_xact_lock(hashtext(${`aceyourcourse:admin:${part}`}))`;
+type Part = AdminPart;
+
+const CATALOGUE: readonly Part[] = ["catalogue"];
 
 /** Postgres's SQLSTATE for a unique key refusing a row. */
 const UNIQUE_VIOLATION = "23505";
@@ -109,12 +135,25 @@ async function readCatalogueRows(tx: Transaction): Promise<CatalogueRows> {
   };
 }
 
+async function readContentRows(tx: Transaction): Promise<ContentRows> {
+  return {
+    topics: await tx.select().from(schema.topics),
+    decks: await tx.select().from(schema.decks),
+    quizzes: await tx.select().from(schema.quizzes),
+    reviewerPdfs: await tx.select().from(schema.reviewerPdfs),
+  };
+}
+
 /** What a call loaded: the rows as they were, and the store the sample arm's code ran over. */
 interface Loaded {
   store: SampleStore;
   catalogue?: { rows: CatalogueRows; value: CatalogueSeed };
+  content?: { rows: ContentRows; value: ContentRecords };
+  /** The content as the call left it: the value loaded, or what its writes set. */
+  contentNow: () => ContentRecords | undefined;
   stamps?: Record<string, RecordStamp>;
   staff?: { rows: StaffRow[]; staff: StaffMember[]; invites: Invite[] };
+  betaTesters?: { rows: BetaTesterRow[]; value: BetaTester[] };
 }
 
 function notLoaded(part: string): never {
@@ -135,7 +174,7 @@ async function load(
   uploadAt: UploadLookup | undefined,
 ): Promise<Loaded> {
   const sample = getSampleStore();
-  const loaded: Omit<Loaded, "store"> = {};
+  const loaded: Omit<Loaded, "store" | "contentNow"> = {};
   let bootedAt = sample.bootedAt;
 
   if (parts.includes("catalogue")) {
@@ -145,15 +184,26 @@ async function load(
     loaded.stamps = stamps.stamps;
     bootedAt = stamps.seededAt;
   }
+  if (parts.includes("content")) {
+    const rows = await readContentRows(tx);
+    loaded.content = { rows, value: contentFromRows(rows) };
+  }
   if (parts.includes("staff")) {
     const rows = await tx.select().from(schema.staff);
     loaded.staff = { rows, ...staffFromRows(rows) };
+  }
+  if (parts.includes("betaTesters")) {
+    const rows = await tx.select().from(schema.betaTesters);
+    loaded.betaTesters = { rows, value: betaTestersFromRows(rows) };
   }
 
   let catalogue = loaded.catalogue?.value;
   let stamps = loaded.stamps;
   let staff = loaded.staff?.staff;
   let invites = loaded.staff?.invites;
+  let betaTesters = loaded.betaTesters?.value;
+  let content = loaded.content?.value;
+  const contentPart = () => content ?? notLoaded("the Member App content");
   const store: SampleStore = {
     generation: sample.generation,
     bootedAt,
@@ -183,13 +233,121 @@ async function load(
     },
     deniedSignIns: [],
     staffActivity: [],
+    get betaTesters() {
+      return betaTesters ?? notLoaded("the Beta Tester list");
+    },
+    set betaTesters(value) {
+      betaTesters = value;
+    },
+    // The Member seam's database arm (member.db.ts) reads and writes Members,
+    // their consent records, Target Exams and Active Devices itself.
+    get members() {
+      return notLoaded("the Members");
+    },
+    get memberConsents() {
+      return notLoaded("the consent records");
+    },
+    get memberTargetExams() {
+      return notLoaded("the Target Exams");
+    },
+    get selectedExams() {
+      return notLoaded("the selected Target Exams");
+    },
+    get memberActiveDevices() {
+      return notLoaded("the Active Devices");
+    },
+    get memberDeviceSwitches() {
+      return notLoaded("the device switches");
+    },
+    get topics() {
+      return contentPart().topics;
+    },
+    set topics(topics) {
+      content = { ...contentPart(), topics };
+    },
+    get decks() {
+      return contentPart().decks;
+    },
+    set decks(decks) {
+      content = { ...contentPart(), decks };
+    },
+    // The card import (admin.card-import.db.ts) reads and writes a Subject's
+    // cards itself, and the private bucket is Storage's.
+    get cards() {
+      return notLoaded("the cards");
+    },
+    // The card editor (admin.deck.db.ts) deletes a card's marks with it.
+    get cardMarks() {
+      return notLoaded("the Card Marks");
+    },
+    get contentFiles() {
+      return notLoaded("the private content bucket");
+    },
+    // The Member seam reads and writes the study records itself (ticket 08).
+    get studyDays() {
+      return notLoaded("the Study Days");
+    },
+    get deckPositions() {
+      return notLoaded("the deck positions");
+    },
+    get reviewerPageViews() {
+      return notLoaded("the Reviewer PDF pages viewed");
+    },
+    get readerPositions() {
+      return notLoaded("the Reviewer PDF reader positions");
+    },
+    get signedFiles() {
+      return notLoaded("the signed card image URLs");
+    },
+    // The quiz import and the quiz screen (ticket 09) read and write the questions themselves.
+    get questions() {
+      return notLoaded("the questions");
+    },
+    get quizAttempts() {
+      return notLoaded("the Quiz Attempts");
+    },
+    get quizzes() {
+      return contentPart().quizzes;
+    },
+    set quizzes(quizzes) {
+      content = { ...contentPart(), quizzes };
+    },
+    get reviewerPdfs() {
+      return contentPart().reviewerPdfs;
+    },
+    set reviewerPdfs(reviewerPdfs) {
+      content = { ...contentPart(), reviewerPdfs };
+    },
+    // The Reviewer PDFs screen and job (admin.reviewer-pdfs.db.ts, ticket 12)
+    // read and write the uploads themselves, and their bucket is Storage's.
+    get reviewerPdfUploads() {
+      return notLoaded("the Reviewer PDF uploads");
+    },
+    get reviewerPdfFiles() {
+      return notLoaded("the Reviewer PDFs bucket");
+    },
+    // The Member seam reads the Access Passes and notices itself, and
+    // admin.access-passes.db.ts grants, extends and ends them (ticket 17).
+    get accessPasses() {
+      return notLoaded("the Access Passes");
+    },
+    get accessPassGrants() {
+      return notLoaded("the Access Pass grants");
+    },
+    get memberNotices() {
+      return notLoaded("the Members' notices");
+    },
+    // The Privacy Requests have their own reads (member.db.ts, admin.privacy-requests.db.ts).
+    get privacyRequests() {
+      return notLoaded("the Privacy Requests");
+    },
     // Read only: a rollback couldn't undo a change to the sample data's uploads.
     get uploads() {
       return sample.uploads;
     },
     ...(uploadAt ? { uploadAt } : {}),
   };
-  return { store, ...loaded };
+  return { store, ...loaded, contentNow: () => content };
 }
 
 // ── Saving ──────────────────────────────────────────────────────────────────
@@ -220,7 +378,16 @@ const CATALOGUE_TABLES: readonly (Synced & { rows: keyof CatalogueRows })[] = [
   { rows: "promoBanner", table: schema.promoBanner, key: ["id"] },
 ];
 
+/** The Member App's content tables, parents before children, with their keys. */
+const CONTENT_TABLES: readonly (Synced & { rows: keyof ContentRows })[] = [
+  { rows: "topics", table: schema.topics, key: ["id"] },
+  { rows: "decks", table: schema.decks, key: ["id"] },
+  { rows: "quizzes", table: schema.quizzes, key: ["id"] },
+  { rows: "reviewerPdfs", table: schema.reviewerPdfs, key: ["id"] },
+];
+
 const STAFF_TABLE: Synced = { table: schema.staff, key: ["email"] };
+const BETA_TESTERS_TABLE: Synced = { table: schema.betaTesters, key: ["email"] };
 
 const keyOf =
   ({ key }: Synced) =>
@@ -309,13 +476,15 @@ async function saveStamps(
 }
 
 /** Whether the call changed each part of what it loaded. */
-function changes({ store, ...loaded }: Loaded) {
+function changes({ store, contentNow, ...loaded }: Loaded) {
   return {
     catalogue: loaded.catalogue !== undefined && store.catalogue !== loaded.catalogue.value,
+    content: loaded.content !== undefined && contentNow() !== loaded.content.value,
     stamps: loaded.stamps !== undefined && store.stamps !== loaded.stamps,
     staff:
       loaded.staff !== undefined &&
       (store.staff !== loaded.staff.staff || store.invites !== loaded.staff.invites),
+    betaTesters: loaded.betaTesters !== undefined && store.betaTesters !== loaded.betaTesters.value,
     deniedSignIns: store.deniedSignIns.length > 0,
     staffActivity: store.staffActivity.length > 0,
   };
@@ -325,21 +494,37 @@ function changes({ store, ...loaded }: Loaded) {
 async function save(tx: Transaction, loaded: Loaded): Promise<void> {
   const { store } = loaded;
   const changed = changes(loaded);
+  // The catalogue and the content in one sync, so a Topic is deleted before
+  // its Subject, and a Subject is added before its Topic.
+  const tables: Parameters<typeof syncTables>[1][number][] = [];
   if (changed.catalogue && loaded.catalogue) {
     const before = loaded.catalogue.rows;
     const after = catalogueToRows(store.catalogue);
-    await syncTables(
-      tx,
-      CATALOGUE_TABLES.map((synced) => ({
-        synced,
-        before: before[synced.rows],
-        after: after[synced.rows],
-      })),
-    );
+    for (const synced of CATALOGUE_TABLES) {
+      tables.push({ synced, before: before[synced.rows], after: after[synced.rows] });
+    }
   }
+  const content = loaded.contentNow();
+  if (changed.content && loaded.content && content) {
+    const before = loaded.content.rows;
+    const after = contentToRows(content);
+    for (const synced of CONTENT_TABLES) {
+      tables.push({ synced, before: before[synced.rows], after: after[synced.rows] });
+    }
+  }
+  if (tables.length > 0) await syncTables(tx, tables);
   if (changed.staff && loaded.staff) {
     await syncTables(tx, [
       { synced: STAFF_TABLE, before: loaded.staff.rows, after: staffToRows(store) },
+    ]);
+  }
+  if (changed.betaTesters && loaded.betaTesters) {
+    await syncTables(tx, [
+      {
+        synced: BETA_TESTERS_TABLE,
+        before: loaded.betaTesters.rows,
+        after: store.betaTesters.map(betaTesterToRow),
+      },
     ]);
   }
   if (changed.stamps && loaded.stamps) await saveStamps(tx, loaded.stamps, store.stamps);
@@ -377,7 +562,11 @@ async function onDatabase<T>(
   try {
     result = await getDb().transaction(
       async (tx) => {
-        if (mode === "write") for (const part of parts) await tx.execute(writeLock(part));
+        if (mode === "write")
+          // Each part's write lock: writes that change the same part run one at a
+          // time, so a write's checks see every write before it. The Staff
+          // Guard's sign-in check (a staff write) never waits for a catalogue save.
+          for (const part of parts) await tx.execute(adminWriteLock(part));
         const loaded = await load(tx, parts, uploadAt);
         const value = await withStandInStore(loaded.store, work);
         if (mode === "write") {
@@ -415,10 +604,13 @@ const write =
  * database after the call read it, it answers conflict, with who saved it.
  */
 const stampedWrite =
-  <Args extends unknown[], Value>(call: Call<Args, AdminResult<Value>>) =>
+  <Args extends unknown[], Value>(
+    call: Call<Args, AdminResult<Value>>,
+    parts: readonly Part[] = CATALOGUE,
+  ) =>
   async (...args: Args): Promise<AdminResult<Value>> => {
     try {
-      return await onDatabase(["catalogue"], "write", () => call(...args), args);
+      return await onDatabase(parts, "write", () => call(...args), args);
     } catch (error) {
       if (!(error instanceof StaleStampError)) throw error;
       const { recordStamps } = schema;
@@ -456,8 +648,13 @@ async function getLatestDeniedSignIn(email: string): Promise<DeniedSignIn | null
   }
 }
 
-const CATALOGUE: readonly Part[] = ["catalogue"];
 const STAFF: readonly Part[] = ["staff"];
+const BETA_TESTERS: readonly Part[] = ["betaTesters"];
+/**
+ * The Exam pages and the Topics: an Exam page shows what Topic content
+ * blocks deleting its Exam or Subjects, and a Topic belongs to a Subject.
+ */
+const WITH_CONTENT: readonly Part[] = ["catalogue", "content"];
 
 /**
  * An Invite. The staff list's own check refuses an email already on it; should
@@ -474,13 +671,30 @@ const inviteStaff: AdminService["inviteStaff"] = async (actor, input) => {
 };
 
 /**
+ * A Beta Tester. The list's own check refuses an email already on it; should
+ * one be added by a save that skipped the lock, the table's primary key
+ * refuses it too, and that says the same, on the email field.
+ */
+const addBetaTester: AdminService["addBetaTester"] = async (actor, input) => {
+  try {
+    return await onDatabase(BETA_TESTERS, "write", () => sampleArm.addBetaTester(actor, input));
+  } catch (error) {
+    if (postgresErrorCode(error) !== UNIQUE_VIOLATION) throw error;
+    return {
+      ok: false,
+      error: { kind: "invalid", fieldErrors: { email: [ALREADY_A_BETA_TESTER] } },
+    };
+  }
+};
+
+/**
  * A new Exam. The seam's own check refuses a code that's already an Exam's;
  * should one be added by a save that skipped the lock, the exams table's
  * primary key refuses it too, and that says the same, on the code field.
  */
 const createExam: AdminService["createExam"] = async (actor, input) => {
   try {
-    return await stampedWrite(sampleArm.createExam)(actor, input);
+    return await stampedWrite(sampleArm.createExam, WITH_CONTENT)(actor, input);
   } catch (error) {
     if (postgresErrorCode(error) !== UNIQUE_VIOLATION) throw error;
     const code = newExamCodeOf(input);
@@ -489,9 +703,9 @@ const createExam: AdminService["createExam"] = async (actor, input) => {
 };
 
 /**
- * A delete the seam's check allowed, which a Product's foreign key still
- * refuses: one added by a save that skipped the lock. Nothing changes, and
- * the refusal says so.
+ * A delete the seam's check allowed, which a foreign key still refuses: a
+ * Product's, or a deck's, quiz's or Reviewer PDF's on a Topic, added by a
+ * save that skipped the lock. Nothing changes, and the refusal says so.
  */
 function refusedByForeignKey<Args extends unknown[], Value>(
   call: Call<Args, AdminResult<Value>>,
@@ -499,10 +713,33 @@ function refusedByForeignKey<Args extends unknown[], Value>(
 ): Call<Args, AdminResult<Value>> {
   return async (...args) => {
     try {
-      return await stampedWrite(call)(...args);
+      // The content too: a deck, quiz or Reviewer PDF on a Topic is what blocks it.
+      return await stampedWrite(call, WITH_CONTENT)(...args);
     } catch (error) {
       if (postgresErrorCode(error) !== FOREIGN_KEY_VIOLATION) throw error;
       return { ok: false, error: { kind: "invalid", fieldErrors: {}, formError: reason(...args) } };
+    }
+  };
+}
+
+/** What a Topic name the unique index refused says: one a save that skipped the lock took first. */
+const TOPIC_NAME_TAKEN = "ANOTHER TOPIC IN THIS SUBJECT NOW HAS THIS NAME · RELOAD THE PAGE";
+
+/**
+ * A Topic's name, unique within its Subject. The seam's own check refuses a
+ * name already taken; should one be taken by a save that skipped the lock,
+ * the topics table's unique index refuses it too, on the name field.
+ */
+function refusedTakenName<Args extends unknown[], Value>(
+  call: Call<Args, AdminResult<Value>>,
+  message: (...args: Args) => string,
+): Call<Args, AdminResult<Value>> {
+  return async (...args) => {
+    try {
+      return await stampedWrite(call, WITH_CONTENT)(...args);
+    } catch (error) {
+      if (postgresErrorCode(error) !== UNIQUE_VIOLATION) throw error;
+      return { ok: false, error: { kind: "invalid", fieldErrors: { name: [message(...args)] } } };
     }
   };
 }
@@ -520,6 +757,24 @@ export const databaseArm: AdminService = {
   cancelInvite: write(STAFF, sampleArm.cancelInvite),
   changeStaffRole: write(STAFF, sampleArm.changeStaffRole),
   removeStaff: write(STAFF, sampleArm.removeStaff),
+
+  listBetaTesters: read(BETA_TESTERS, sampleArm.listBetaTesters),
+  addBetaTester,
+  removeBetaTester: write(BETA_TESTERS, sampleArm.removeBetaTester),
+  // The Members and their records, read and written by their own module (ticket 16).
+  listUsers: users.listUsers,
+  getMemberForAdmin: users.getMemberForAdmin,
+  forceSignOut: users.forceSignOut,
+  // A Member's Access Passes, granted, extended and ended by their own module (ticket 17).
+  grantAccess: passes.grantAccess,
+  extendAccess: passes.extendAccess,
+  endAccess: passes.endAccess,
+  // The Members' Privacy Requests, read and carried out by their own module (tickets 18 and 19).
+  listPrivacyRequests: privacy.listPrivacyRequests,
+  getPrivacyRequestForAdmin: privacy.getPrivacyRequestForAdmin,
+  exportMemberData: privacy.exportMemberData,
+  deleteMemberAccount: privacy.deleteMemberAccount,
+  markPrivacyRequestDone: privacy.markPrivacyRequestDone,
 
   getOverview: read(CATALOGUE, sampleArm.getOverview),
 
@@ -551,24 +806,74 @@ export const databaseArm: AdminService = {
   moveFaq: stampedWrite(sampleArm.moveFaq),
   deleteFaq: stampedWrite(sampleArm.deleteFaq),
 
-  getExamPageForAdmin: read(CATALOGUE, sampleArm.getExamPageForAdmin),
-  updateExamHeader: stampedWrite(sampleArm.updateExamHeader),
-  updateSubjectNames: stampedWrite(sampleArm.updateSubjectNames),
-  setExamSection: stampedWrite(sampleArm.setExamSection),
-  updateBundleOffer: stampedWrite(sampleArm.updateBundleOffer),
-  updateExamSeo: stampedWrite(sampleArm.updateExamSeo),
-  updateOfficialExamDate: stampedWrite(sampleArm.updateOfficialExamDate),
+  // Each returns the Exam page, which shows the Topic content that blocks a delete.
+  getExamPageForAdmin: read(WITH_CONTENT, sampleArm.getExamPageForAdmin),
+  updateExamHeader: stampedWrite(sampleArm.updateExamHeader, WITH_CONTENT),
+  updateSubjectNames: stampedWrite(sampleArm.updateSubjectNames, WITH_CONTENT),
+  setExamSection: stampedWrite(sampleArm.setExamSection, WITH_CONTENT),
+  updateBundleOffer: stampedWrite(sampleArm.updateBundleOffer, WITH_CONTENT),
+  updateExamSeo: stampedWrite(sampleArm.updateExamSeo, WITH_CONTENT),
+  updateOfficialExamDate: stampedWrite(sampleArm.updateOfficialExamDate, WITH_CONTENT),
   createExam,
-  addSubject: stampedWrite(sampleArm.addSubject),
+  addSubject: stampedWrite(sampleArm.addSubject, WITH_CONTENT),
   deleteSubject: refusedByForeignKey(
     sampleArm.deleteSubject,
     (_actor, _code, subject) =>
-      `A Product now uses ${typedCode(subject)}. Reload the page to see it.`,
+      `A Product or Member App content now uses ${typedCode(subject)}. Reload the page to see it.`,
   ),
   deleteExam: refusedByForeignKey(
     sampleArm.deleteExam,
-    (_actor, code) => `A Product now belongs to ${typedCode(code)}. Reload the page to see it.`,
+    (_actor, code) =>
+      `A Product or Member App content now belongs to ${typedCode(code)}. Reload the page to see it.`,
   ),
+
+  listTopicsForAdmin: read(WITH_CONTENT, sampleArm.listTopicsForAdmin),
+  createTopic: refusedTakenName(sampleArm.createTopic, (_actor, input) => {
+    const form = newTopicFormSchema.safeParse(input);
+    return form.success ? alreadyATopic(form.data.name, form.data.subject) : TOPIC_NAME_TAKEN;
+  }),
+  renameTopic: refusedTakenName(sampleArm.renameTopic, () => TOPIC_NAME_TAKEN),
+  moveTopic: stampedWrite(sampleArm.moveTopic, WITH_CONTENT),
+  deleteTopic: refusedByForeignKey(
+    sampleArm.deleteTopic,
+    () => "This Topic now has content, so it can’t be deleted. Reload the page to see it.",
+  ),
+  // One Subject's cards or quizzes, read and saved by the import itself.
+  planCardImport,
+  confirmCardImport,
+  planQuizImport,
+  confirmQuizImport,
+  // One Topic's deck and cards, read and saved by the card editor itself.
+  getDeckForAdmin: deckEditor.getDeckForAdmin,
+  getCardImageForAdmin: deckEditor.getCardImageForAdmin,
+  createCard: deckEditor.createCard,
+  updateCard: deckEditor.updateCard,
+  moveCard: deckEditor.moveCard,
+  deleteCard: deckEditor.deleteCard,
+  setDeckVisibility: deckEditor.setDeckVisibility,
+  setDeckFreePreview: deckEditor.setDeckFreePreview,
+  // One Topic's quiz and questions, read and saved by the quiz screen itself.
+  getQuizForAdmin: quizEditor.getQuizForAdmin,
+  getQuestionFigureForAdmin: quizEditor.getQuestionFigureForAdmin,
+  updateQuizSettings: quizEditor.updateQuizSettings,
+  setQuizVisibility: quizEditor.setQuizVisibility,
+  setQuizFreePreview: quizEditor.setQuizFreePreview,
+  // One question at a time, saved by the question editor itself (ticket 10).
+  createQuestion: quizEditor.createQuestion,
+  updateQuestion: quizEditor.updateQuestion,
+  moveQuestion: quizEditor.moveQuestion,
+  deleteQuestion: quizEditor.deleteQuestion,
+  // The Reviewer PDFs and their job (ticket 12), read and written by their own module.
+  listReviewerPdfsForAdmin: reviewerPdfs.listReviewerPdfsForAdmin,
+  recordReviewerPdf: reviewerPdfs.recordReviewerPdf,
+  deleteReviewerPdf: reviewerPdfs.deleteReviewerPdf,
+  runReviewerPdfJob: reviewerPdfs.runReviewerPdfJob,
+  restartStaleReviewerPdfJobs: reviewerPdfs.restartStaleReviewerPdfJobs,
+  getReviewerPdfForAdmin: reviewerPdfs.getReviewerPdfForAdmin,
+  getReviewerPdfPageForAdmin: reviewerPdfs.getReviewerPdfPageForAdmin,
+  placeReviewerPdf: reviewerPdfs.placeReviewerPdf,
+  setReviewerPdfPublished: reviewerPdfs.setReviewerPdfPublished,
+  setReviewerPdfFreePreview: reviewerPdfs.setReviewerPdfFreePreview,
 
   getSitePageForAdmin: read(CATALOGUE, sampleArm.getSitePageForAdmin),
   updateSitePageSeo: stampedWrite(sampleArm.updateSitePageSeo),

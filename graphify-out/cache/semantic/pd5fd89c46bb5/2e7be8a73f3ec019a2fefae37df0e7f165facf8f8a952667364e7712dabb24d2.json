@@ -1,0 +1,337 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "label": "Executer prompt 17: Photo storage",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_17_photo_storage",
+      "label": "Ticket 17-photo-storage",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_17_photo_storage_catalogue_storage_bucket",
+      "label": "Public Storage bucket 'catalogue' (JPEG/PNG/WebP, 10 MB)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "No storage.objects policies; uploads only through server-made signed upload URLs"
+    },
+    {
+      "id": "src_lib_supabase_admin",
+      "label": "src/lib/supabase/admin.ts (server-only Storage client)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_services_uploads_storage",
+      "label": "uploads.storage.ts (Storage arm of upload seam)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_services_uploads",
+      "label": "uploads.ts (upload seam selector)",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_17_photo_storage_after_commit_storage_cleanup",
+      "label": "After-commit Storage clean-up of removed photos (failures logged, never fatal)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_17_photo_storage_signed_upload_url",
+      "label": "One-time signed upload URL (createSignedUploadUrl)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_lib_csp",
+      "label": "src/lib/csp.ts",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "_scratch_ayc_admin_issues_17_photo_storage",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "agents",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_executer_no_commit_guardrail",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_scratchpad_copy_build_gotcha",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_staff_guard_server_authorisation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "_scratch_ayc_admin_prompts_17_photo_storage_catalogue_storage_bucket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "src_lib_supabase_admin",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "src_services_uploads_storage",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "src_services_uploads",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "_scratch_ayc_admin_prompts_17_photo_storage_after_commit_storage_cleanup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "_scratch_ayc_admin_prompts_17_photo_storage_signed_upload_url",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "src_lib_csp",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_services_uploads",
+      "target": "src_services_uploads_storage",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_services_uploads_storage",
+      "target": "src_lib_supabase_admin",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_lib_supabase_admin",
+      "target": "_scratch_ayc_admin_prompts_13_local_supabase_foundation_supabase_secret_key",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_services_uploads_storage",
+      "target": "_scratch_ayc_admin_prompts_17_photo_storage_signed_upload_url",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage_signed_upload_url",
+      "target": "_scratch_ayc_admin_prompts_17_photo_storage_catalogue_storage_bucket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "src_services_admin_db",
+      "target": "_scratch_ayc_admin_prompts_17_photo_storage_after_commit_storage_cleanup",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_catalogue_seed",
+      "target": "_scratch_ayc_admin_prompts_17_photo_storage_catalogue_storage_bucket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_17_photo_storage",
+      "target": "_scratch_ayc_admin_prompts_15_admin_writes_on_the_database",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/17-photo-storage.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

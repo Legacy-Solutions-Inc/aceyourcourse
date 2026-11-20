@@ -38,6 +38,8 @@ function eePage(products: BundleProductOption[], examsOnWebsite: string[]): Admi
     },
     products,
     subjectProducts: {},
+    subjectContent: {},
+    content: { decks: 0, quizzes: 0, reviewerPdfs: 0 },
     examsOnWebsite,
   };
 }

@@ -1,0 +1,237 @@
+{
+  "nodes": [
+    {
+      "id": "_claude_skills_clean_architecture_skill_clean_architecture_skill",
+      "label": "clean-architecture Skill",
+      "file_type": "document",
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_clean_architecture_skill_dependency_rule",
+      "label": "The Dependency Rule (dependencies point inward)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_clean_architecture_skill_service_seam",
+      "label": "Service Seam (src/services/*)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_clean_architecture_skill_catalogueservice_contract",
+      "label": "CatalogueService Contract",
+      "file_type": "concept",
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_clean_architecture_skill_dip_at_seam",
+      "label": "Dependency Inversion at the Seam",
+      "file_type": "concept",
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_clean_architecture_skill_dtos_at_boundary",
+      "label": "DTOs at the Boundary (not raw rows)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_clean_architecture_skill_pragmatic_divergence",
+      "label": "Deliberate Divergence from 4-Layer Clean Architecture",
+      "file_type": "rationale",
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "The service seam is the single boundary; full Entities/Use-Case rings are overkill for this scope (ADR 0003). Do not 'correct' it."
+    },
+    {
+      "id": "_claude_skills_clean_architecture_skill_adr_0003",
+      "label": "ADR 0003 Mock-First Service Seam",
+      "file_type": "concept",
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_clean_architecture_skill_kent_beck_refactoring",
+      "label": "Refactoring in Small Green Steps (Kent Beck)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_claude_skills_clean_architecture_skill_clean_architecture_skill",
+      "target": "_claude_skills_clean_architecture_skill_dependency_rule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_clean_architecture_skill_dependency_rule",
+      "target": "_claude_skills_clean_architecture_skill_service_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_clean_architecture_skill_dip_at_seam",
+      "target": "_claude_skills_clean_architecture_skill_catalogueservice_contract",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_clean_architecture_skill_catalogueservice_contract",
+      "target": "_claude_skills_clean_architecture_skill_service_seam",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_clean_architecture_skill_clean_architecture_skill",
+      "target": "_claude_skills_clean_architecture_skill_dtos_at_boundary",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_clean_architecture_skill_pragmatic_divergence",
+      "target": "_claude_skills_clean_architecture_skill_service_seam",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_clean_architecture_skill_pragmatic_divergence",
+      "target": "_claude_skills_clean_architecture_skill_adr_0003",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_clean_architecture_skill_clean_architecture_skill",
+      "target": "_claude_skills_clean_architecture_skill_kent_beck_refactoring",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_clean_architecture_skill_clean_architecture_skill",
+      "target": "_claude_skills_coding_standards_skill_coding_standards_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_clean_architecture_skill_clean_architecture_skill",
+      "target": "_claude_skills_drizzle_data_skill_drizzle_data_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_clean_architecture_skill_clean_architecture_skill",
+      "target": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_clean_architecture_skill_dtos_at_boundary",
+      "target": "_claude_skills_drizzle_data_skill_pure_row_mapper",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_clean_architecture_skill_dtos_at_boundary",
+      "target": "_claude_skills_drizzle_data_skill_retired_template_commit_aea34ea",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/clean-architecture/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,6 +1,22 @@
 import { z } from "zod";
 
+import { IMPORT_FILES } from "@/lib/content-import/limits";
+import {
+  CARD_IMAGE_TYPES,
+  type CardImageType,
+  EMPTY_IMAGE,
+  IMAGE_TOO_BIG,
+  MAX_CARD_IMAGE_BYTES,
+  WRONG_IMAGE_TYPE,
+} from "@/lib/cards/card-rules";
 import { ABOUT_PHOTO_SLOTS } from "@/lib/catalogue/about-content";
+import { MAX_PDF_BYTES } from "@/lib/reviewer-pdfs/job";
+import {
+  EMPTY_FILE as EMPTY_PDF,
+  NOT_A_PDF,
+  PDF_CONTENT_TYPE,
+  PDF_TOO_BIG,
+} from "@/lib/reviewer-pdfs/pdf-file";
 import { isSitePageKey } from "@/services/catalogue.schema";
 
 // The upload seam's inputs and outputs (CONVENTIONS §3; spec, Phase 2 → Seams:
@@ -108,3 +124,122 @@ export type UploadLookup = (
   path: string,
   purpose: UploadRequest["purpose"],
 ) => { publicUrl: string } | "waiting" | null;
+
+// ── Private content uploads (Phase 3, tickets 06 and 07) ────────────────────
+// An Editor's card import: the browser uploads its CSV and its zip of images
+// straight to the private content bucket, as it does a photo to the public
+// one (the zip can be far bigger than a Server Action may take). The card
+// editor (ticket 07) uploads a card's back image there the same way. These
+// files are never public: an upload gives no public URL, and only the server
+// reads them back, to plan and confirm an import or to save a card.
+
+/** What a private upload is for: an import's CSV or zip of images, or a card's back image. */
+export const CONTENT_UPLOAD_PURPOSES = ["import-csv", "import-zip", "card-image"] as const;
+
+export type ContentUploadPurpose = (typeof CONTENT_UPLOAD_PURPOSES)[number];
+
+/** The import's private uploads. */
+export type ImportUploadPurpose = Exclude<ContentUploadPurpose, "card-image">;
+
+/** Each import upload's rules (src/lib/content-import/limits.ts): its type, extension and largest size. */
+export const CONTENT_UPLOADS = {
+  "import-csv": IMPORT_FILES.csv,
+  "import-zip": IMPORT_FILES.zip,
+} as const satisfies Record<ImportUploadPurpose, (typeof IMPORT_FILES)[keyof typeof IMPORT_FILES]>;
+
+export type ContentUploadType =
+  (typeof CONTENT_UPLOADS)[ImportUploadPurpose]["contentType"] | CardImageType;
+
+const EMPTY_FILE = "THE FILE IS EMPTY";
+
+/** An import file as the browser asks for it: its size, held to its purpose's limit below. */
+const importFileSize = z
+  .number({ invalid_type_error: EMPTY_FILE, required_error: EMPTY_FILE })
+  .int(EMPTY_FILE)
+  .positive(EMPTY_FILE);
+
+/** A card's back image as the browser asks to upload it: a JPEG, PNG or WebP of at most 5 MB. */
+export const cardImageFileSchema = z.object({
+  contentType: z.enum(CARD_IMAGE_TYPES, { errorMap: () => ({ message: WRONG_IMAGE_TYPE }) }),
+  size: z
+    .number({ invalid_type_error: EMPTY_IMAGE, required_error: EMPTY_IMAGE })
+    .int(EMPTY_IMAGE)
+    .positive(EMPTY_IMAGE)
+    .max(MAX_CARD_IMAGE_BYTES, IMAGE_TOO_BIG),
+});
+
+/**
+ * A private upload as the browser asks for it: what it's for and the file's
+ * size, and for a card's back image its type (a JPEG, PNG or WebP of at most
+ * 5 MB, src/lib/cards/card-rules.ts). The browser checks the same first.
+ */
+export const contentUploadRequestSchema = z
+  .discriminatedUnion(
+    "purpose",
+    [
+      z.object({ purpose: z.literal("import-csv"), size: importFileSize }),
+      z.object({ purpose: z.literal("import-zip"), size: importFileSize }),
+      cardImageFileSchema.extend({ purpose: z.literal("card-image") }),
+    ],
+    {
+      errorMap: (issue, ctx) =>
+        issue.code === z.ZodIssueCode.invalid_union_discriminator
+          ? { message: UNKNOWN_UPLOAD }
+          : { message: ctx.defaultError },
+    },
+  )
+  .superRefine((request, ctx) => {
+    if (request.purpose === "card-image") return;
+    const { max, tooBig } = CONTENT_UPLOADS[request.purpose];
+    if (request.size > max) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["size"], message: tooBig });
+    }
+  });
+
+export type ContentUploadRequest = z.input<typeof contentUploadRequestSchema>;
+
+/** A private upload's one-time URL. There's no public URL: only the server reads the file. */
+export interface ContentUploadTicket {
+  uploadUrl: string;
+  /** What the import or the card's save sends back, for the server to read the file at. */
+  path: string;
+  /** The type to PUT the file as. */
+  contentType: ContentUploadType;
+}
+
+// ── Reviewer PDF uploads (Phase 3, ticket 12) ───────────────────────────────
+// An Editor's Reviewer PDF, up to 200 MB, goes from the browser straight to
+// the private Reviewer PDFs bucket, never through a Vercel request body
+// (about 4.5 MB at most). With Storage it's a resumable (TUS) upload, on a
+// one-time token signed with the secret key; the sample data takes it at a
+// one-time URL, as it does any other upload. Either way there's no public
+// URL: only the server reads the file back, to split it into page images.
+
+/** A Reviewer PDF as the browser asks to upload it: a PDF of up to 200 MB. */
+export const reviewerPdfUploadRequestSchema = z.object({
+  contentType: z.literal(PDF_CONTENT_TYPE, { errorMap: () => ({ message: NOT_A_PDF }) }),
+  size: z
+    .number({ invalid_type_error: EMPTY_PDF, required_error: EMPTY_PDF })
+    .int(EMPTY_PDF)
+    .positive(EMPTY_PDF)
+    .max(MAX_PDF_BYTES, PDF_TOO_BIG),
+});
+
+export type ReviewerPdfUploadRequest = z.input<typeof reviewerPdfUploadRequestSchema>;
+
+/**
+ * Where the browser sends a Reviewer PDF, and the path the Reviewer PDF's
+ * record then claims it at:
+ *   - "tus": a resumable upload to Storage's TUS endpoint, with these headers
+ *     (the one-time token) and metadata on every request;
+ *   - "put": one PUT to a one-time URL (the sample data).
+ */
+export type ReviewerPdfUploadTicket =
+  | {
+      method: "tus";
+      endpoint: string;
+      headers: Record<string, string>;
+      metadata: Record<string, string>;
+      path: string;
+    }
+  | { method: "put"; uploadUrl: string; path: string };

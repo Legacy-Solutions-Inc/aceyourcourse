@@ -1,0 +1,102 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_07_reviews",
+      "label": "Ticket 07: Reviews",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/07-reviews.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_07_reviews_reviews_curation",
+      "label": "Reviews curation (filters, editor, live preview)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/07-reviews.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_07_reviews_home_pins",
+      "label": "Pinned on Home (N OF 9) with reorder",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/07-reviews.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_07_reviews_faq_quote_integrity",
+      "label": "FAQ quote integrity on Review edit/delete",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/issues/07-reviews.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Quotes must match the Review word for word, so edits removing quoted words are refused and deletes clear the quotes."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_07_reviews",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_07_reviews",
+      "target": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_07_reviews",
+      "target": "_scratch_ayc_admin_issues_07_reviews_reviews_curation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_07_reviews",
+      "target": "_scratch_ayc_admin_issues_07_reviews_home_pins",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_07_reviews",
+      "target": "_scratch_ayc_admin_issues_07_reviews_faq_quote_integrity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/07-reviews.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

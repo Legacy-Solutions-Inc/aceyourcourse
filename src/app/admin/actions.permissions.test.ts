@@ -16,7 +16,9 @@ import { faqFormValues } from "@/lib/admin/faq-form";
 import { productFormValues } from "@/lib/admin/product-form";
 import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
 import { reviewFormValues } from "@/lib/admin/review-form";
-import { getExamPageForAdmin } from "@/services/admin";
+import { getExamPageForAdmin, planCardImport, planQuizImport } from "@/services/admin";
+import { claimDevice, getOrCreateMember, requestPrivacy } from "@/services/member.mock";
+import { sampleContentId, sampleTopicId } from "@/services/mock/content";
 import { getSampleStore } from "@/services/mock/sample-store";
 
 import {
@@ -26,12 +28,23 @@ import {
   UNUSED_EXAM,
   withUnusedExam,
 } from "../../../test/admin-inputs";
+import {
+  importCsv,
+  type ImportPaths,
+  quizCsv,
+  uploadSampleImport,
+} from "../../../test/import-files";
 import { editSampleCatalogue } from "../../../test/catalogue-seed";
+import { pdfOfPages } from "../../../test/reviewer-pdfs";
+import { uploadSampleReviewerPdf } from "../../../test/reviewer-pdf-uploads";
 
+import * as content from "./(shell)/content/actions";
+import * as reviewerPdfs from "./(shell)/content/reviewer-pdfs/actions";
 import * as examPages from "./(shell)/exam-pages/actions";
 import * as products from "./(shell)/products/actions";
 import * as reviews from "./(shell)/reviews/actions";
 import * as settings from "./(shell)/settings/actions";
+import * as users from "./(shell)/users/actions";
 import * as root from "./actions";
 import * as signIn from "./sign-in/actions";
 
@@ -52,9 +65,10 @@ import * as signIn from "./sign-in/actions";
 // registry fails the first test.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const { jar, mode } = vi.hoisted(() => ({
+const { jar, mode, afterTheResponse } = vi.hoisted(() => ({
   jar: new Map<string, string>(),
   mode: { current: "sample" as "sample" | "closed" },
+  afterTheResponse: [] as unknown[],
 }));
 
 vi.mock("next/headers", () => ({
@@ -72,6 +86,14 @@ vi.mock("next/navigation", () => ({
     throw new Error("NEXT_NOT_FOUND");
   },
 }));
+// Work an action leaves for after its response (a Reviewer PDF's job) is
+// only noted: it's no caller's doing, and the store must stay as it was.
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  after: (task: unknown) => {
+    afterTheResponse.push(task);
+  },
+}));
 // The mode as the server would compute it, which a test can force to closed.
 vi.mock("@/lib/admin/mode", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/admin/mode")>()),
@@ -85,8 +107,48 @@ const OWNER = sampleEmail("owner");
 const EDITOR = sampleEmail("editor");
 const NOT_STAFF = sampleEmail("not-staff");
 const READER = sampleActor("editor");
+/** An empty sample Topic in CE's MSTC, which any Staff User may rename, move or delete. */
+const SURVEYING = sampleTopicId("CE", "MSTC", "Surveying");
+/** A Hidden deck, given two cards before each test, which any Staff User may edit. */
+const ALGEBRA = sampleTopicId("CE", "MSTC", "Algebra");
+const ALGEBRA_DECK = sampleContentId(ALGEBRA, "deck");
+/** A Hidden quiz, given two questions before each test, which any Staff User may set and edit. */
+const SPIRAL_CURVES = sampleTopicId("CE", "MSTC", "Spiral Curves");
+const SPIRAL_CURVES_QUIZ = sampleContentId(SPIRAL_CURVES, "quiz");
+const QUESTION = "7f8091a2-bc3d-4e4f-8a51-6c7d8e9fa0b1";
+const SECOND_QUESTION = "8091a2b3-cd4e-4f50-9b62-7d8e9fa0b1c2";
+/** A question's fields that save, apart from the question itself. */
+const QUESTION_FIELDS = {
+  choices: { A: "1", B: "2", C: "3", D: "4" },
+  correct: "B",
+  explanation: "$L_s = 0.036 V^3/R$",
+  figure: null,
+} as const;
+const REVIEWER_PDF = "9a1b2c3d-4e5f-4a6b-8c7d-8e9fa0b1c2d3";
+const CARD = "5d6e7f80-9a1b-4c2d-8e3f-4a5b6c7d8e9f";
+const SECOND_CARD = "6e7f8091-ab2c-4d3e-9f40-5b6c7d8e9fa0";
+/** A Member on their Active Device, whom an Owner may force-sign-out. */
+const BEA = {
+  userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
+  email: "tester@example.com",
+  name: "Bea Tester",
+};
+/**
+ * Bea's phone's token hash, as the Member App stores it. A literal: nothing in
+ * the Admin uses the Active Device modules (src/app/app/device.test.tsx).
+ */
+const BEA_PHONE = "b".repeat(64);
+/** Bea's Privacy Requests, made before each test: a data copy, and a deletion (ticket 19). */
+const requests = { copy: "", deletion: "" };
 
 const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
+
+/** A card import's files, uploaded before each test, and the preview of them. */
+let cardImport: ImportPaths & { exam: string; subject: string; mode: "add"; basedOn: string };
+/** A quiz import's files, uploaded before each test, and the preview of them. */
+let quizImport: typeof cardImport;
+/** A Reviewer PDF uploaded to the sample data, and not yet recorded. */
+let reviewerPdfUpload: string;
 /** The stamp every record has before anyone saves it. */
 const opened = () => ({ savedAt: getSampleStore().bootedAt });
 
@@ -180,6 +242,144 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
       settings.changeStaffMemberRole(IDLE, { input: { email: EDITOR, role: "owner" } }),
     ),
     removeStaffMember: owner(() => settings.removeStaffMember(IDLE, { input: { email: EDITOR } })),
+  },
+  "./(shell)/users/actions.ts": {
+    addTester: owner(() => users.addTester(IDLE, { input: { email: SAVES.betaTester } })),
+    removeTester: owner(() => users.removeTester(IDLE, { input: { email: "tester@example.com" } })),
+    forceSignOutMember: owner(() =>
+      users.forceSignOutMember(IDLE, { input: { userId: BEA.userId, reason: "Shared" } }),
+    ),
+    grantAccessPass: owner(() =>
+      users.grantAccessPass(IDLE, {
+        input: { userId: BEA.userId, examCode: "CE", days: 30, reason: "Beta" },
+      }),
+    ),
+    extendAccessPass: owner(() =>
+      users.extendAccessPass(IDLE, {
+        input: { userId: BEA.userId, examCode: "CE", days: 7, reason: "Late" },
+      }),
+    ),
+    endAccessPass: owner(() =>
+      users.endAccessPass(IDLE, {
+        input: { userId: BEA.userId, examCode: "CE", reason: "Mistake" },
+      }),
+    ),
+    deleteAccount: owner(() =>
+      users.deleteAccount(IDLE, {
+        input: { requestId: requests.deletion, confirmation: BEA.email },
+      }),
+    ),
+    markRequestDone: owner(() =>
+      users.markRequestDone(IDLE, { input: { requestId: requests.copy } }),
+    ),
+  },
+  "./(shell)/content/actions.ts": {
+    addTopic: staff(() =>
+      content.addTopic(IDLE, { input: { exam: "ce", subject: "mstc", name: "Highways" } }),
+    ),
+    saveTopicName: editorSave("staff", content.saveTopicName, () => ({
+      id: SURVEYING,
+      name: "Leveling",
+    })),
+    moveTopicInSubject: staff(() =>
+      content.moveTopicInSubject(IDLE, { input: { id: SURVEYING, direction: "up" } }),
+    ),
+    removeTopic: staff(() => content.removeTopic(IDLE, { input: { id: SURVEYING } })),
+    createImportUpload: staff(() =>
+      content.createImportUpload(IDLE, { input: { purpose: "import-csv", size: 2048 } }),
+    ),
+    checkCardImport: staff(() => {
+      const { basedOn: _, ...input } = cardImport;
+      return content.checkCardImport(IDLE, { input });
+    }),
+    importCards: staff(() => content.importCards(IDLE, { input: cardImport })),
+    createCardImageUpload: staff(() =>
+      content.createCardImageUpload(IDLE, { input: { contentType: "image/png", size: 2048 } }),
+    ),
+    addCard: staff(() =>
+      content.addCard(IDLE, {
+        input: { topic: ALGEBRA, front: "Slope", back: "$m = \\frac{\\Delta y}{\\Delta x}$" },
+      }),
+    ),
+    saveCard: editorSave("staff", content.saveCard, () => ({
+      id: CARD,
+      front: "Grade, edited",
+      back: "Rise over run",
+      note: "",
+      image: null,
+    })),
+    moveCardInDeck: staff(() =>
+      content.moveCardInDeck(IDLE, { input: { id: SECOND_CARD, direction: "up" } }),
+    ),
+    removeCard: staff(() => content.removeCard(IDLE, { input: { id: CARD } })),
+    saveDeckVisibility: staff(() =>
+      content.saveDeckVisibility(IDLE, { input: { deck: ALGEBRA_DECK, visible: true } }),
+    ),
+    saveDeckFreePreview: staff(() =>
+      content.saveDeckFreePreview(IDLE, { input: { deck: ALGEBRA_DECK, freePreview: true } }),
+    ),
+    checkQuizImport: staff(() => {
+      const { basedOn: _, ...input } = quizImport;
+      return content.checkQuizImport(IDLE, { input });
+    }),
+    importQuizzes: staff(() => content.importQuizzes(IDLE, { input: quizImport })),
+    saveQuizSettings: editorSave("staff", content.saveQuizSettings, () => ({
+      id: SPIRAL_CURVES_QUIZ,
+      passingScore: "80",
+      shuffle: false,
+      showAnswers: false,
+    })),
+    saveQuizVisibility: staff(() =>
+      content.saveQuizVisibility(IDLE, { input: { quiz: SPIRAL_CURVES_QUIZ, visible: true } }),
+    ),
+    saveQuizFreePreview: staff(() =>
+      content.saveQuizFreePreview(IDLE, {
+        input: { quiz: SPIRAL_CURVES_QUIZ, freePreview: true },
+      }),
+    ),
+    addQuestion: staff(() =>
+      content.addQuestion(IDLE, {
+        input: { topic: SPIRAL_CURVES, question: "Spiral angle?", ...QUESTION_FIELDS },
+      }),
+    ),
+    saveQuestion: editorSave("staff", content.saveQuestion, () => ({
+      id: QUESTION,
+      question: "Length of spiral, edited?",
+      ...QUESTION_FIELDS,
+    })),
+    moveQuestionInQuiz: staff(() =>
+      content.moveQuestionInQuiz(IDLE, { input: { id: SECOND_QUESTION, direction: "up" } }),
+    ),
+    removeQuestion: staff(() => content.removeQuestion(IDLE, { input: { id: QUESTION } })),
+  },
+  "./(shell)/content/reviewer-pdfs/actions.ts": {
+    createReviewerPdfUpload: staff(() =>
+      reviewerPdfs.createReviewerPdfUpload(IDLE, {
+        input: { contentType: "application/pdf", size: 2048 },
+      }),
+    ),
+    addReviewerPdf: staff(() =>
+      reviewerPdfs.addReviewerPdf(IDLE, {
+        input: { path: reviewerPdfUpload, fileName: "MSTC Reviewer.pdf" },
+      }),
+    ),
+    removeReviewerPdf: staff(() =>
+      reviewerPdfs.removeReviewerPdf(IDLE, { input: { id: REVIEWER_PDF } }),
+    ),
+    saveReviewerPdfPlacement: editorSave("staff", reviewerPdfs.saveReviewerPdfPlacement, () => ({
+      id: REVIEWER_PDF,
+      topic: SURVEYING,
+    })),
+    saveReviewerPdfPublished: staff(() =>
+      reviewerPdfs.saveReviewerPdfPublished(IDLE, {
+        input: { id: REVIEWER_PDF, published: true },
+      }),
+    ),
+    saveReviewerPdfFreePreview: staff(() =>
+      reviewerPdfs.saveReviewerPdfFreePreview(IDLE, {
+        input: { id: REVIEWER_PDF, freePreview: true },
+      }),
+    ),
   },
   "./(shell)/products/actions.ts": {
     setProductFlag: staff(() =>
@@ -323,12 +523,82 @@ const named = <T extends { module: string; name: string }>(entries: T[]) =>
 /** The whole sample store, byte for byte. */
 const snapshot = () => JSON.stringify(getSampleStore());
 
-beforeEach(() => {
+beforeEach(async () => {
   jar.clear();
   mode.current = "sample";
   // The seed, with an Exam nothing uses yet, which the Exam and Subject deletes can delete.
   editSampleCatalogue(withUnusedExam);
+  // Two cards nobody has saved through the editor, so a card's stamp is the one opened() gives.
+  getSampleStore().cards = [CARD, SECOND_CARD].map((id, index) => ({
+    id,
+    deckId: ALGEBRA_DECK,
+    position: index + 1,
+    front: index === 0 ? "Grade" : "Slope",
+    back: "Rise over run",
+    note: null,
+    image: null,
+  }));
   vi.mocked(revalidateTag).mockClear();
+  const paths = await uploadSampleImport({ csv: importCsv(["Highways,Grade,Rise over run,,"]) });
+  const input = { exam: "ce", subject: "mstc", mode: "add" as const, ...paths };
+  const planned = await planCardImport(READER, input);
+  if (!planned.ok) throw new Error("The card import's files were refused");
+  cardImport = { ...input, basedOn: planned.value.basedOn };
+  // Two questions in Spiral Curves' quiz, nobody has saved through the editor,
+  // so it can be made Visible and a question's stamp is the one opened() gives.
+  getSampleStore().questions = [QUESTION, SECOND_QUESTION].map((id, index) => ({
+    id,
+    quizId: SPIRAL_CURVES_QUIZ,
+    position: index + 1,
+    question: index === 0 ? "Length of spiral?" : "Spiral angle?",
+    ...QUESTION_FIELDS,
+    removedAt: null,
+  }));
+  const quizPaths = await uploadSampleImport({
+    csv: quizCsv(["Highways,Grade?,1,2,3,4,A,Rise over run.,"]),
+  });
+  const quizInput = { exam: "ce", subject: "mstc", mode: "add" as const, ...quizPaths };
+  const plannedQuiz = await planQuizImport(READER, quizInput);
+  if (!plannedQuiz.ok) throw new Error("The quiz import's files were refused");
+  quizImport = { ...quizInput, basedOn: plannedQuiz.value.basedOn };
+  // A Reviewer PDF uploaded and not yet recorded, and a Draft one, placed
+  // under Algebra, to move, publish, flag Free Preview and delete.
+  afterTheResponse.length = 0;
+  reviewerPdfUpload = await uploadSampleReviewerPdf(pdfOfPages(2));
+  const store = getSampleStore();
+  store.reviewerPdfs = [
+    ...store.reviewerPdfs,
+    { id: REVIEWER_PDF, topicId: ALGEBRA, status: "draft", freePreview: false },
+  ];
+  store.reviewerPdfUploads = {
+    [REVIEWER_PDF]: {
+      fileName: "Old Reviewer.pdf",
+      fileSize: 2048,
+      uploadedAt: store.bootedAt,
+      pageCount: 2,
+      pagesDone: 2,
+      heartbeatAt: store.bootedAt,
+      restarts: 0,
+      failure: null,
+    },
+  };
+  // A Member signed in to the Member App on one device, with a CE pass for 30 more days.
+  await getOrCreateMember(BEA);
+  await claimDevice(BEA.userId, {
+    tokenHash: BEA_PHONE,
+    deviceLabel: "Chrome on Android",
+  });
+  store.accessPasses = [
+    ...store.accessPasses,
+    {
+      userId: BEA.userId,
+      examCode: "CE",
+      endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ];
+  // Bea asks, from Account, for a copy of her data and for her account to be deleted.
+  requests.copy = (await requestPrivacy(BEA.userId, "data-copy")).request.id;
+  requests.deletion = (await requestPrivacy(BEA.userId, "deletion")).request.id;
 });
 
 describe("the action registry", () => {

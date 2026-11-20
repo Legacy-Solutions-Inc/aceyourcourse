@@ -1,0 +1,121 @@
+{
+  "nodes": [
+    {
+      "id": "_claude_skills_data_tables_skill_data_tables_skill",
+      "label": "data-tables Skill (TanStack Table v8)",
+      "file_type": "document",
+      "source_file": ".claude/skills/data-tables/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_data_tables_skill_headless_tanstack_table",
+      "label": "Headless TanStack Table Rendered with shadcn Table",
+      "file_type": "concept",
+      "source_file": ".claude/skills/data-tables/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_data_tables_skill_stable_columns_data",
+      "label": "Referentially Stable columns/data",
+      "file_type": "concept",
+      "source_file": ".claude/skills/data-tables/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_data_tables_skill_customers_table_reference",
+      "label": "CustomersTable Reference Pattern",
+      "file_type": "concept",
+      "source_file": ".claude/skills/data-tables/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_claude_skills_data_tables_skill_data_tables_skill",
+      "target": "_claude_skills_data_tables_skill_headless_tanstack_table",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/data-tables/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_data_tables_skill_data_tables_skill",
+      "target": "_claude_skills_data_tables_skill_stable_columns_data",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/data-tables/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_data_tables_skill_data_tables_skill",
+      "target": "_claude_skills_data_tables_skill_customers_table_reference",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/data-tables/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_data_tables_skill_customers_table_reference",
+      "target": "_claude_skills_drizzle_data_skill_retired_template_commit_aea34ea",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/data-tables/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_data_tables_skill_data_tables_skill",
+      "target": "_claude_skills_shadcn_ui_skill_shadcn_ui_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/data-tables/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_data_tables_skill_data_tables_skill",
+      "target": "_claude_skills_drizzle_data_skill_drizzle_data_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/data-tables/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_data_tables_skill_customers_table_reference",
+      "target": "_claude_skills_nextjs_app_router_skill_paths_registry",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/data-tables/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

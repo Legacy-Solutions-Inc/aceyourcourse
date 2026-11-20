@@ -1,0 +1,226 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_ticket",
+      "label": "Ticket 01: Member App Shell, Sign-in and Beta Gate",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_not_open_yet_screen",
+      "label": "Not Open Yet Screen",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_member_app_shell",
+      "label": "Member App Shell (sidebar, drawer)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_beta_testers_tab",
+      "label": "Beta Testers Tab (Owner-only Users screen)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_sample_sign_in_as",
+      "label": "Sample Mode 'Sign in as' List",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Development-only sample Members (tester, Owner, non-tester, Not-open-yet) used by e2e; absent in production."
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_member_record",
+      "label": "Member Record",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_safe_next_rule",
+      "label": "Safe-next Redirect Rule",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_adr_0008",
+      "label": "ADR 0008",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_ticket",
+      "target": "_scratch_ayc_member_app_readme_ayc_v1_spec",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_ticket",
+      "target": "_scratch_ayc_member_app_readme_vertical_slice_ticket",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_ticket",
+      "target": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_not_open_yet_screen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_ticket",
+      "target": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_member_app_shell",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_ticket",
+      "target": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_beta_testers_tab",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_ticket",
+      "target": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_sample_sign_in_as",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_ticket",
+      "target": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_member_record",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_ticket",
+      "target": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_safe_next_rule",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_ticket",
+      "target": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_adr_0008",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_ticket",
+      "target": "_scratch_ayc_member_app_grilling_notes_beta_gate",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_beta_testers_tab",
+      "target": "_scratch_ayc_member_app_readme_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_sample_sign_in_as",
+      "target": "_scratch_ayc_member_app_readme_sample_live_closed_modes",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_01_member_app_shell_and_beta_gate_beta_testers_tab",
+      "target": "_scratch_ayc_member_app_grilling_notes_beta_tester",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/01-member-app-shell-and-beta-gate.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

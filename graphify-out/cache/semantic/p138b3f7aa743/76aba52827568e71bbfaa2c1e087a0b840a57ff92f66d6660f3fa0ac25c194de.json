@@ -1,0 +1,130 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_ticket",
+      "label": "Ticket 14: Reviewer PDF Reader with Stamped Pages",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_protected_page_endpoint",
+      "label": "Protected Page Endpoint (stamp with sharp)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_reviewer_reader",
+      "label": "Reviewer PDF Reader (zoom, retry)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_ticket",
+      "target": "_scratch_ayc_member_app_issues_13_reviewer_pdf_placement_and_publishing_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_ticket",
+      "target": "_scratch_ayc_member_app_readme_ayc_v1_spec",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_ticket",
+      "target": "_scratch_ayc_member_app_readme_vertical_slice_ticket",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/issues/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_ticket",
+      "target": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_protected_page_endpoint",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_ticket",
+      "target": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_reviewer_reader",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_protected_page_endpoint",
+      "target": "_scratch_ayc_member_app_grilling_notes_per_request_watermark",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_protected_page_endpoint",
+      "target": "_scratch_ayc_member_app_issues_05_content_model_topics_library_access_access_decision",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_reviewer_reader",
+      "target": "_scratch_ayc_member_app_grilling_notes_study_day",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_08_flashcard_study_overlay_watermark",
+      "target": "_scratch_ayc_member_app_issues_14_reviewer_pdf_reader_protected_page_endpoint",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/issues/14-reviewer-pdf-reader.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

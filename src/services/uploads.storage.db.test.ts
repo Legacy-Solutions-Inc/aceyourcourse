@@ -11,7 +11,7 @@ import {
   putFile,
   readPublicFile,
 } from "../../test/storage-database";
-import { createStorageArm } from "./uploads.storage";
+import { CONTENT_BUCKET, createStorageArm } from "./uploads.storage";
 
 // The upload seam's Storage arm against local Supabase (ticket 17): a file
 // sent to a signed upload URL lands in the public bucket and serves at its
@@ -122,4 +122,26 @@ describeWithStorage("the upload seam on Storage", [opened], () => {
     expect(await inBucket(ticket.path)).toBe(false);
     expect(await readPublicFile(ticket.publicUrl)).toBeNull();
   });
+});
+
+describeWithStorage("signed card image URLs on Storage (ticket 08)", [opened], () => {
+  const path = `decks/${crypto.randomUUID()}/${crypto.randomUUID()}.png`;
+  const bytes = imageBytes("image/png");
+
+  afterAll(async () => {
+    await storage().client.storage.from(CONTENT_BUCKET).remove([path]);
+  });
+
+  it("serves a card image from the private bucket at its signed URL until it expires", async () => {
+    await arm.contentFiles.put(path, bytes, "image/png");
+    // Two seconds here; the Member seam asks for about 10 minutes.
+    const url = (await arm.contentFiles.signedUrls([path], 2))[path] ?? "";
+
+    const fresh = await fetch(url);
+    expect(fresh.status).toBe(200);
+    expect(new Uint8Array(await fresh.arrayBuffer())).toEqual(bytes);
+
+    await new Promise((resolve) => setTimeout(resolve, 3500));
+    expect((await fetch(url)).ok).toBe(false);
+  }, 15_000);
 });

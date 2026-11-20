@@ -1,0 +1,245 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_05_product_editor",
+      "label": "Executer prompt 05: Product editor",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_05_product_editor",
+      "label": "Ticket 05-product-editor",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_05_product_editor_product_editor",
+      "label": "Product editor panel (createProduct, updateProduct, deleteProduct)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_05_product_editor_slug_helper",
+      "label": "Slug helper (src/lib/admin/slug.ts), fixed after creation",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_05_product_editor_typed_delete_dialog",
+      "label": "Reusable typed-DELETE dialog",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_05_product_editor_product_delete_cascade",
+      "label": "Product delete cascade (Reviews, photos, FAQ quotes)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_05_product_editor_centavos_money",
+      "label": "Money in integer centavos; form takes pesos",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_lib_catalogue_product_copy",
+      "label": "src/lib/catalogue/product-copy.ts",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_05_product_editor",
+      "target": "_scratch_ayc_admin_issues_05_product_editor",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_05_product_editor",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_05_product_editor",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_05_product_editor",
+      "target": "docs_mockup_admin_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_05_product_editor",
+      "target": "_scratch_ayc_admin_prompts_04_products_list",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_05_product_editor",
+      "target": "_scratch_ayc_admin_prompts_05_product_editor_product_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_05_product_editor",
+      "target": "_scratch_ayc_admin_prompts_05_product_editor_slug_helper",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_05_product_editor",
+      "target": "_scratch_ayc_admin_prompts_05_product_editor_typed_delete_dialog",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_05_product_editor",
+      "target": "_scratch_ayc_admin_prompts_05_product_editor_product_delete_cascade",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_05_product_editor",
+      "target": "_scratch_ayc_admin_prompts_05_product_editor_centavos_money",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_05_product_editor_product_editor",
+      "target": "src_lib_catalogue_product_copy",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_05_product_editor_product_editor",
+      "target": "src_services_catalogue_schema",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_05_product_editor_product_editor",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_conflict_check",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_05_product_editor_typed_delete_dialog",
+      "target": "_scratch_ayc_admin_prompts_05_product_editor_product_delete_cascade",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_05_product_editor_product_editor",
+      "target": "_scratch_ayc_admin_prompts_04_products_list",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/05-product-editor.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

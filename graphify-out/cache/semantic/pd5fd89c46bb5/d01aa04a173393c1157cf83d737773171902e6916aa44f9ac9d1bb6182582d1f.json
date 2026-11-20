@@ -1,0 +1,181 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "label": "Ticket 02: Settings and the shared save path",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_02_settings_and_save_path_settings_screen",
+      "label": "Settings: contact email, Marketplace shop links, social links, trust figures",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_02_settings_and_save_path_save_states",
+      "label": "Save states, conflict notice and Couldn't save toast",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_02_settings_and_save_path_sample_data_reset",
+      "label": "Sample data Reset (POST /api/dev/sample-data/reset)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_issues_01_admin_shell_and_sign_in",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_issues_02_settings_and_save_path_settings_screen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_issues_02_settings_and_save_path_save_states",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_issues_02_settings_and_save_path_sample_data_reset",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_conventions_sample_store",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_conventions_admin_seam",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_conventions_adminaction",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_conventions_conflict_check",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_conventions_staff_activity",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_conventions_cache_tags",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_02_settings_and_save_path",
+      "target": "_scratch_ayc_admin_conventions_catalogue_seam",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_02_settings_and_save_path_sample_data_reset",
+      "target": "_scratch_ayc_admin_conventions_sample_store",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-admin/issues/02-settings-and-save-path.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

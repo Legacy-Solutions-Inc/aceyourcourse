@@ -1,0 +1,268 @@
+{
+  "nodes": [
+    {
+      "id": "docs_specs_2026_07_15_multi_tenancy",
+      "label": "Spec: Multi-tenant foundation (superseded)",
+      "file_type": "document",
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_07_15_multi_tenancy_organization",
+      "label": "Organization",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": "L22",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_07_15_multi_tenancy_membership",
+      "label": "Membership",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": "L23",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_07_15_multi_tenancy_active_organization_cookie",
+      "label": "Active Organization (active_org cookie selector)",
+      "file_type": "rationale",
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": "L83",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "The Active-Organization cookie is a selector, never a security boundary; RLS is."
+    },
+    {
+      "id": "docs_specs_2026_07_15_multi_tenancy_org_role",
+      "label": "Org Role (owner/admin/member)",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": "L72",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_07_15_multi_tenancy_platform_superadmin",
+      "label": "Platform Role superadmin",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": "L30",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_07_15_multi_tenancy_rls_isolation_boundary",
+      "label": "RLS as tenant isolation boundary",
+      "file_type": "rationale",
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": "L76",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "RLS is easy to get subtly wrong; enforcing isolation in Postgres means forged/stale cookies cannot cross tenants."
+    },
+    {
+      "id": "docs_specs_2026_07_15_multi_tenancy_authz_helpers",
+      "label": "getActiveOrg / requireOrgRole / hasOrgRole / isPlatformSuperadmin",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": "L90",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_specs_2026_07_15_multi_tenancy_workspace_switcher",
+      "label": "Workspace switcher in Dashboard Shell",
+      "file_type": "concept",
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": "L110",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy",
+      "target": "docs_specs_2026_07_15_multi_tenancy_organization",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy",
+      "target": "docs_specs_2026_07_15_multi_tenancy_membership",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy",
+      "target": "docs_specs_2026_07_15_multi_tenancy_active_organization_cookie",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy",
+      "target": "docs_specs_2026_07_15_multi_tenancy_org_role",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy",
+      "target": "docs_specs_2026_07_15_multi_tenancy_platform_superadmin",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy",
+      "target": "docs_specs_2026_07_15_multi_tenancy_rls_isolation_boundary",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy",
+      "target": "docs_specs_2026_07_15_multi_tenancy_authz_helpers",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy",
+      "target": "docs_specs_2026_07_15_multi_tenancy_workspace_switcher",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy_membership",
+      "target": "docs_specs_2026_07_15_multi_tenancy_organization",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy_membership",
+      "target": "docs_specs_2026_07_15_multi_tenancy_org_role",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy_active_organization_cookie",
+      "target": "docs_specs_2026_07_15_multi_tenancy_rls_isolation_boundary",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy",
+      "target": "docs_adr_0005_multi_tenancy",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy",
+      "target": "docs_adr_0008_single_brand_members_and_staff",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy",
+      "target": "context",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy_authz_helpers",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_authz_primitives",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_specs_2026_07_15_multi_tenancy_workspace_switcher",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_dashboard_shell",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/specs/2026-07-15-multi-tenancy.md",
+      "source_location": "L110",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

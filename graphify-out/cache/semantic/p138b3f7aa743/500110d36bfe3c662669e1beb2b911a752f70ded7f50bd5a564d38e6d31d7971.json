@@ -1,0 +1,192 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_issues_11_quiz_taking_ticket",
+      "label": "Ticket 11: Quiz Taking",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_11_quiz_taking_quiz_player",
+      "label": "Quiz Player",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_11_quiz_taking_server_side_marking",
+      "label": "Server-side Quiz Marking",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_11_quiz_taking_best_score",
+      "label": "Best Score",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_issues_11_quiz_taking_quiz_score_screen",
+      "label": "Quiz Score Screen",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_issues_11_quiz_taking_ticket",
+      "target": "_scratch_ayc_member_app_issues_05_content_model_topics_library_access_ticket",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_11_quiz_taking_ticket",
+      "target": "_scratch_ayc_member_app_readme_ayc_v1_spec",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_11_quiz_taking_ticket",
+      "target": "_scratch_ayc_member_app_readme_vertical_slice_ticket",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_11_quiz_taking_ticket",
+      "target": "_scratch_ayc_member_app_issues_11_quiz_taking_quiz_player",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_11_quiz_taking_ticket",
+      "target": "_scratch_ayc_member_app_issues_11_quiz_taking_server_side_marking",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_11_quiz_taking_ticket",
+      "target": "_scratch_ayc_member_app_issues_11_quiz_taking_best_score",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_11_quiz_taking_ticket",
+      "target": "_scratch_ayc_member_app_issues_11_quiz_taking_quiz_score_screen",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_11_quiz_taking_server_side_marking",
+      "target": "_scratch_ayc_member_app_grilling_notes_server_graded_quizzes",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_11_quiz_taking_server_side_marking",
+      "target": "_scratch_ayc_member_app_grilling_notes_quiz_attempt",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_11_quiz_taking_server_side_marking",
+      "target": "_scratch_ayc_member_app_grilling_notes_study_day",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_11_quiz_taking_quiz_score_screen",
+      "target": "_scratch_ayc_member_app_issues_09_quiz_import_and_settings_quiz_settings",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_11_quiz_taking_quiz_player",
+      "target": "_scratch_ayc_member_app_issues_05_content_model_topics_library_access_access_decision",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_issues_11_quiz_taking_quiz_player",
+      "target": "_scratch_ayc_member_app_issues_08_flashcard_study_overlay_watermark",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/issues/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

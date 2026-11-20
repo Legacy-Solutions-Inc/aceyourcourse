@@ -1,0 +1,386 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access",
+      "label": "Executer prompt 05: Content model, Topics editor, Library and access decision",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_decision",
+      "label": "Access decision (pure)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": "L44",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Outcomes in order: not-open-yet, device (no-token/device-replaced), unavailable, allowed (Free Preview, active Staff, or pass ends_at later than now), else expired/locked. Every protected read from ticket 06 on calls its server wrapper; nothing reads content around it."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_topics",
+      "label": "topics table (name unique per Subject, case-insensitive)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": "L37",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_content_tables",
+      "label": "decks, quizzes, reviewer_pdfs (one per Topic, FK ON DELETE RESTRICT)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": "L38",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Decks/quizzes hidden or visible (default hidden); reviewer_pdfs processing/draft/published/unpublished/failed; FK restricts so DB also blocks deleting a non-empty Topic."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_passes",
+      "label": "access_passes (one per Member per Exam, ends_at)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": "L41",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_pass_grants",
+      "label": "access_pass_grants history",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": "L42",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_library",
+      "label": "Library (/app/library)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": "L60",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_topics_editor",
+      "label": "Admin Topics editor (Member App content area)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": "L74",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_delete_blockers",
+      "label": "Exam/Subject delete blockers extended for Topic content",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": "L78",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_free_preview",
+      "label": "Free Preview",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": "L55",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_adr_0010",
+      "label": "ADR 0010 (access follows the Exam; active Staff see Visible content)",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": "L18",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_opening_soon_placeholder",
+      "label": "'Opening soon' content-item placeholder",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": "L67",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_decision",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_topics",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_content_tables",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_passes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_pass_grants",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_library",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_topics_editor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_delete_blockers",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_opening_soon_placeholder",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_adr_0010",
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_adr_0010",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_decision",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_decision",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_gate",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_decision",
+      "target": "_scratch_ayc_member_app_prompts_04_active_device_devicestatus",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_decision",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_passes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_decision",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_free_preview",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_library",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_decision",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_opening_soon_placeholder",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_decision",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_topics_editor",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_topics",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_content_tables",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_topics",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_topics_editor",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_staff_guard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_topics_editor",
+      "target": "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_delete_blockers",
+      "target": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_content_tables",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_library",
+      "target": "_scratch_ayc_member_app_prompts_03_onboarding_and_target_exams_member_target_exams",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "member_app_server_check_chain",
+      "label": "Member App server check chain (gate, consent, Active Device, access decision)",
+      "nodes": [
+        "_scratch_ayc_member_app_prompts_01_member_app_shell_and_beta_gate_member_app_gate",
+        "_scratch_ayc_member_app_prompts_02_consent_and_legal_v2_draft_consent_check",
+        "_scratch_ayc_member_app_prompts_04_active_device_devicestatus",
+        "_scratch_ayc_member_app_prompts_05_content_model_topics_library_access_access_decision"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/05-content-model-topics-library-access.md"
+    }
+  ]
+}

@@ -4,17 +4,20 @@
 
 /**
  * PUTs the file to its upload URL, reporting how much has been sent (0 to 1).
- * Rejects when the network fails or the URL refuses the file.
+ * It's sent as `contentType`, or the file's own type: a CSV the browser calls
+ * application/vnd.ms-excel is still sent as text/csv. Rejects when the network
+ * fails or the URL refuses the file.
  */
 export function putFile(
   url: string,
   file: File,
   onProgress: (sent: number) => void,
+  contentType: string = file.type,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open("PUT", url);
-    request.setRequestHeader("content-type", file.type);
+    request.setRequestHeader("content-type", contentType);
     request.upload.onprogress = (event) => {
       if (event.lengthComputable && event.total > 0) onProgress(event.loaded / event.total);
     };

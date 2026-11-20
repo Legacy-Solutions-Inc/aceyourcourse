@@ -156,7 +156,7 @@ test.describe("the Owner", () => {
     await expect(page.getByText(todaysDateLine(), { exact: true })).toBeVisible();
   });
 
-  test("sees the five screens and View site, and each opens with its header", async ({ page }) => {
+  test("sees the seven screens and View site, and each opens with its header", async ({ page }) => {
     await signInAs(page, "owner");
     await expect(page).toHaveURL(/\/admin$/);
 
@@ -166,7 +166,9 @@ test.describe("the Owner", () => {
       "02Pages & promo",
       "03Products & store links",
       "04Reviews & FAQs",
-      "05Settings",
+      "05Member App content",
+      "06Users",
+      "07Settings",
       "View site ↗",
     ]);
     await expect(nav.getByRole("link", { name: "View site" })).toHaveAttribute("href", "/");
@@ -175,6 +177,8 @@ test.describe("the Owner", () => {
       ["WEBSITE", "Pages & promo", "/admin/exam-pages"],
       ["WEBSITE", "Products & store links", "/admin/products"],
       ["WEBSITE", "Reviews & FAQs", "/admin/reviews"],
+      ["MEMBER APP", "Member App content", "/admin/content"],
+      ["MEMBER APP", "Users", "/admin/users"],
       ["SETTINGS", "Settings", "/admin/settings"],
       ["HOME", "Overview", "/admin"],
     ] as const) {

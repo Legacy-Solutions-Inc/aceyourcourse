@@ -1,0 +1,186 @@
+{
+  "nodes": [
+    {
+      "id": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild",
+      "label": "Plan: shadcn + Supabase template rebuild",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_mock_first_service_seam",
+      "label": "Mock-first typed Service Seam (src/services/*)",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": "L7",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_customers_reference_feature",
+      "label": "Customers Reference Feature (CRUD copy-me slice)",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": "L280",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_authz_primitives",
+      "label": "Authz primitives (Role, hasRole, requireRole, RoleGuard)",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": "L223",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_dashboard_shell",
+      "label": "Dashboard Shell (auth-guarded)",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": "L250",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_mock_rbac_screens",
+      "label": "Team + Role settings mock RBAC screens",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": "L311",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_supabase_auth_screens",
+      "label": "Supabase email/password auth screens",
+      "file_type": "concept",
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": "L261",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_global_constraints",
+      "label": "Global constraints (only auth touches live backend; reads RSC, writes zod Server Actions)",
+      "file_type": "rationale",
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": "L11",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Keeps the template frontend-only and mock-first so UI can be prototyped without a backend."
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_mock_first_service_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_customers_reference_feature",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_authz_primitives",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_dashboard_shell",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_mock_rbac_screens",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_supabase_auth_screens",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_global_constraints",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_customers_reference_feature",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_mock_first_service_seam",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_global_constraints",
+      "target": "docs_superpowers_plans_2026_07_15_shadcn_supabase_template_rebuild_mock_first_service_seam",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/superpowers/plans/2026-07-15-shadcn-supabase-template-rebuild.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -5,7 +5,7 @@ import { z } from "zod";
 /**
  * Server-only environment. The companion to `src/env.ts`, which validates the
  * PUBLIC (`NEXT_PUBLIC_*`) vars. This module holds the server secrets —
- * `DATABASE_URL` and `SUPABASE_SECRET_KEY` — validated apart so that, thanks
+ * `DATABASE_URL`, `SUPABASE_SECRET_KEY` and `CRON_SECRET` — validated apart so that, thanks
  * to the `import "server-only"` marker above, they can never be referenced
  * from — and thus never inlined into — the client bundle. Do NOT reference
  * either from `src/env.ts`, `src/config.ts`, or any client component.
@@ -29,6 +29,13 @@ const serverEnvSchema = z.object({
   // counts a password session in the Staff Guard. Set it to "false" (or delete
   // it) before go-live. Read through src/lib/admin/identity.ts, never directly.
   ADMIN_PASSWORD_SIGN_IN: optionalEnv(z.enum(["true", "false"]).optional()),
+  // The Reviewer PDF job's secret (ticket 12). Vercel Cron sends it as
+  // `Authorization: Bearer <CRON_SECRET>` to the cron endpoint, and each run
+  // of the job sends it to the next. Unset (local, e2e): the cron and run
+  // endpoints answer 404, and recording an upload runs its job in the
+  // server's own process instead. At least 16 characters, so it can't be
+  // guessed. Never NEXT_PUBLIC_.
+  CRON_SECRET: optionalEnv(z.string().min(16, "use at least 16 characters").optional()),
   // Optional so the template still runs with no database configured (the
   // in-memory mock is the default). When set, it must be a valid URL.
   DATABASE_URL: optionalEnv(z.string().url().optional()),
@@ -64,6 +71,7 @@ export function parseServerEnv(raw: Record<string, unknown>): ServerEnv {
 // validate at import — a misconfiguration then fails loudly, not later.
 export const serverEnv = parseServerEnv({
   ADMIN_PASSWORD_SIGN_IN: process.env.ADMIN_PASSWORD_SIGN_IN,
+  CRON_SECRET: process.env.CRON_SECRET,
   DATABASE_URL: process.env.DATABASE_URL,
   MEMBER_APP_LIVE: process.env.MEMBER_APP_LIVE,
   SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,

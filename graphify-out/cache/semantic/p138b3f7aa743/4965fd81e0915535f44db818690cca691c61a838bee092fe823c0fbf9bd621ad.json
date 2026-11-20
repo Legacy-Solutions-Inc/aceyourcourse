@@ -1,0 +1,440 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+      "label": "Executer prompt 11: Quiz taking",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": "L1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_11_quiz_taking_server_side_quiz_grading",
+      "label": "Server-side quiz grading",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": "L41",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Quizzes are graded on the server so question reads never include the correct choice or explanation; the client cannot learn or forge answers."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_11_quiz_taking_pure_quiz_grader",
+      "label": "Pure quiz grader",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": "L77",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_11_quiz_taking_quiz_attempt",
+      "label": "Quiz Attempt record",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": "L43",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_11_quiz_taking_best_score_only_rises",
+      "label": "Best Score only rises",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": "L43",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "A lower retake never lowers the Best Score; Best Score updates only when the new score is higher."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_11_quiz_taking_show_answers_after",
+      "label": "Show answers after setting",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": "L50",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "When off, no response contains correct answers or explanations, only score and which questions were missed."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_11_quiz_taking_double_submit_idempotency",
+      "label": "Double-submit idempotency (attempt token)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": "L47",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "The same attempt posted twice saves one attempt; an attempt token or idempotency key prevents duplicates."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_11_quiz_taking_shuffle_per_attempt",
+      "label": "Question shuffle per attempt",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": "L53",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_11_quiz_taking_removed_question_marker",
+      "label": "Removed question marker in old attempts",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": "L54",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_11_quiz_taking_quiz_screens",
+      "label": "quizStart, quiz and score screens",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": "L40",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_11_quiz_taking_access_decision",
+      "label": "Access decision (ticket 05)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": "L56",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Every Member App read and submit goes through the pure access decision: allowed, locked, expired, device-replaced, no-token, unavailable."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_11_quiz_taking_member_seam",
+      "label": "Member seam (sample and database arms)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": "L64",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_11_quiz_taking_study_day",
+      "label": "Study Day (Asia/Manila)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": "L43",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Recorded in Asia/Manila time using src/lib/manila-time.ts."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_guardrails",
+      "label": "Executer guardrails (no commit, no hosted Supabase, no new deps)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": "L127",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Executers leave changes uncommitted on feat/phase3-member-app, never connect to hosted Supabase or Vercel, never apply migrations, and ask before adding dependencies."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_11_quiz_taking_short_lived_signed_figure_urls",
+      "label": "Short-lived signed URLs for figures",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": "L57",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Figures are signed URLs (~10 minutes) on allowed reads only; clean images are never public."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_server_side_quiz_grading",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_pure_quiz_grader",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_quiz_attempt",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_best_score_only_rises",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_show_answers_after",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_double_submit_idempotency",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_shuffle_per_attempt",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_removed_question_marker",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_quiz_screens",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_access_decision",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_member_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_study_day",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_guardrails",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_short_lived_signed_figure_urls",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_pure_quiz_grader",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_server_side_quiz_grading",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_server_side_quiz_grading",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_quiz_attempt",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_server_side_quiz_grading",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_best_score_only_rises",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_server_side_quiz_grading",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_study_day",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_pure_quiz_grader",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_show_answers_after",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_pure_quiz_grader",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_removed_question_marker",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_member_seam",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_access_decision",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_member_seam",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_quiz_attempt",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_quiz_screens",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_member_seam",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_11_quiz_taking_double_submit_idempotency",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_quiz_attempt",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "phase3_executer_prompt_series",
+      "label": "Phase 3 Member App executer prompt series (tickets 11-19)",
+      "nodes": [
+        "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_prompt",
+        "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_executer_prompt",
+        "_scratch_ayc_member_app_prompts_13_reviewer_pdf_placement_and_publishing_executer_prompt",
+        "_scratch_ayc_member_app_prompts_14_reviewer_pdf_reader_executer_prompt",
+        "_scratch_ayc_member_app_prompts_15_dashboard_and_progress_executer_prompt",
+        "_scratch_ayc_member_app_prompts_16_users_and_member_detail_executer_prompt",
+        "_scratch_ayc_member_app_prompts_17_grant_extend_end_access_executer_prompt",
+        "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_executer_prompt",
+        "_scratch_ayc_member_app_prompts_19_privacy_request_fulfilment_executer_prompt"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/11-quiz-taking.md"
+    }
+  ]
+}

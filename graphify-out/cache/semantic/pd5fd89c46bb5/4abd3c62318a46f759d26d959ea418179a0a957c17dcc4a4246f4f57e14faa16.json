@@ -1,0 +1,235 @@
+{
+  "nodes": [
+    {
+      "id": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "label": "nextjs-app-router Skill (Next 15, React 19)",
+      "file_type": "document",
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_nextjs_app_router_skill_reads_rsc_writes_actions",
+      "label": "Reads = RSC, Writes = Server Actions",
+      "file_type": "concept",
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_nextjs_app_router_skill_async_request_apis",
+      "label": "Next 15 Async Request APIs (await headers/cookies/params)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_nextjs_app_router_skill_dynamic_root_layout",
+      "label": "Dynamic Root Layout for Per-Request CSP Nonce",
+      "file_type": "rationale",
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Root layout awaits headers() so every route renders dynamically and the nonce applies to Next's framework scripts; do not optimize away."
+    },
+    {
+      "id": "_claude_skills_nextjs_app_router_skill_csp_middleware",
+      "label": "Edge Middleware Nonce CSP (buildCsp)",
+      "file_type": "concept",
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_nextjs_app_router_skill_paths_registry",
+      "label": "src/paths.ts Typed Route Registry",
+      "file_type": "concept",
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_skills_nextjs_app_router_skill_server_only_guard",
+      "label": "import \"server-only\" Environment Isolation",
+      "file_type": "concept",
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "target": "_claude_skills_nextjs_app_router_skill_reads_rsc_writes_actions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "target": "_claude_skills_nextjs_app_router_skill_async_request_apis",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "target": "_claude_skills_nextjs_app_router_skill_dynamic_root_layout",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "target": "_claude_skills_nextjs_app_router_skill_csp_middleware",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "target": "_claude_skills_nextjs_app_router_skill_paths_registry",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "target": "_claude_skills_nextjs_app_router_skill_server_only_guard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "target": "_claude_skills_nextjs_app_router_references_react_19_react_19_reference",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "target": "_claude_skills_nextjs_app_router_references_server_actions_server_actions_reference",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_skill_dynamic_root_layout",
+      "target": "_claude_skills_nextjs_app_router_skill_csp_middleware",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_skill_csp_middleware",
+      "target": "_claude_skills_supabase_auth_skill_middleware_session_refresh",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_skill_reads_rsc_writes_actions",
+      "target": "_claude_skills_clean_architecture_skill_service_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "target": "_claude_skills_supabase_auth_skill_supabase_auth_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "target": "_claude_skills_drizzle_data_skill_drizzle_data_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_skill_nextjs_app_router_skill",
+      "target": "_claude_skills_forms_validation_skill_forms_validation_skill",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_skills_nextjs_app_router_skill_server_only_guard",
+      "target": "_claude_skills_drizzle_data_skill_server_only_secrets",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/skills/nextjs-app-router/SKILL.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

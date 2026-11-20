@@ -1,0 +1,29 @@
+{
+  "nodes": [
+    {
+      "id": "_github_actions_setup_action",
+      "label": "Setup composite action (pnpm, Node 22.23.1, frozen lockfile)",
+      "file_type": "code",
+      "source_file": ".github/actions/setup/action.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Node pinned to 22.23.1 to match Volta/.nvmrc because posthog-node requires node >=22.22.0; pnpm version comes from packageManager to avoid duplicate-version error."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_github_actions_setup_action",
+      "target": "docs_adr_0007_analytics_posthog",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".github/actions/setup/action.yml",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

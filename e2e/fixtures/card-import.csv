@@ -1,0 +1,4 @@
+topic,front,back,note,image
+Beams,Moment of inertia of a rectangle,$I = \dfrac{bh^3}{12}$,b is the width and h the depth.,
+Beams,Simply supported beam: maximum moment,$$M = \dfrac{wL^2}{8}$$,Under a uniform load w.,beam.png
+Columns,Euler buckling load,$P_{cr} = \dfrac{\pi^2 EI}{(KL)^2}$,"K is 1 for pinned ends; a test rig costs \$5, a literal dollar.",

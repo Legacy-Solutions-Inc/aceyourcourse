@@ -1,0 +1,308 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_executer_prompt",
+      "label": "Executer prompt 18: Account, Support and Members' privacy requests",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": "L1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_privacy_request",
+      "label": "Privacy Request record",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": "L14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_account_page",
+      "label": "Member App Account page",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": "L12",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_support_page",
+      "label": "Member App Support page",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": "L13",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Contact email from Phase 2 Owner Setting, not hard-coded; common questions are developer-maintained text."
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_data_copy_request",
+      "label": "Data copy request (due in 7 days)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": "L32",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_deletion_request",
+      "label": "Deletion request with typed confirmation (due in 30 days)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": "L33",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_admin_privacy_requests_list",
+      "label": "Admin Privacy Requests list (Owner only)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": "L39",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_due_dates_and_overdue",
+      "label": "Due dates and overdue flag (Asia/Manila)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": "L58",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_one_open_request_per_type",
+      "label": "One open request per type",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": "L32",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "A repeat request while one is open shows the open one and creates nothing."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_privacy_request",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_account_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_support_page",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_data_copy_request",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_deletion_request",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_admin_privacy_requests_list",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_due_dates_and_overdue",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_one_open_request_per_type",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_member_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_12_reviewer_pdf_upload_and_job_admin_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_executer_prompt",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_executer_guardrails",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_data_copy_request",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_privacy_request",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_deletion_request",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_privacy_request",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_account_page",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_data_copy_request",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_account_page",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_deletion_request",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_admin_privacy_requests_list",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_privacy_request",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_admin_privacy_requests_list",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_due_dates_and_overdue",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_admin_privacy_requests_list",
+      "target": "_scratch_ayc_member_app_prompts_16_users_and_member_detail_users_list",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_one_open_request_per_type",
+      "target": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_privacy_request",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_member_app_prompts_18_account_support_privacy_requests_one_open_request_per_type",
+      "target": "_scratch_ayc_member_app_prompts_11_quiz_taking_double_submit_idempotency",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-member-app/prompts/18-account-support-privacy-requests.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

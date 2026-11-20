@@ -1,0 +1,224 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_prompts_04_products_list",
+      "label": "Executer prompt 04: Products list",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_04_products_list",
+      "label": "Ticket 04-products-list",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_04_products_list_products_list",
+      "label": "Products list (listProductsForAdmin) with URL filters",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_04_products_list_store_link_status",
+      "label": "Store link status per Marketplace: product, shop, none",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_04_products_list_missing_product_links",
+      "label": "Missing product links filter (Live Products with a shop-state Marketplace)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_prompts_04_products_list_set_product_flags",
+      "label": "setProductFlags: inline App and Site toggles",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "src_lib_catalogue_store_links",
+      "label": "src/lib/catalogue/store-links.ts",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_prompts_04_products_list",
+      "target": "_scratch_ayc_admin_issues_04_products_list",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_04_products_list",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_04_products_list",
+      "target": "docs_specs_2026_10_29_ayc_v1",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_04_products_list",
+      "target": "docs_mockup_admin_build_map",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_04_products_list",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_04_products_list",
+      "target": "_scratch_ayc_admin_prompts_04_products_list_products_list",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_04_products_list",
+      "target": "_scratch_ayc_admin_prompts_04_products_list_store_link_status",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_04_products_list",
+      "target": "_scratch_ayc_admin_prompts_04_products_list_missing_product_links",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_04_products_list",
+      "target": "_scratch_ayc_admin_prompts_04_products_list_set_product_flags",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_04_products_list_store_link_status",
+      "target": "src_lib_catalogue_store_links",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_04_products_list_missing_product_links",
+      "target": "_scratch_ayc_admin_prompts_04_products_list_store_link_status",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_04_products_list_set_product_flags",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_04_products_list_set_product_flags",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_catalogue_cache_tags",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_prompts_04_products_list_store_link_status",
+      "target": "_scratch_ayc_admin_prompts_02_settings_and_save_path_website_settings_editor",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-admin/prompts/04-products-list.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,5 +1,6 @@
 import type * as schema from "@/lib/db/schema";
 import type {
+  BetaTester,
   DeniedSignIn,
   Invite,
   RecordStamp,
@@ -18,6 +19,7 @@ export type StaffRow = typeof schema.staff.$inferSelect;
 export type DeniedSignInRow = typeof schema.deniedSignIns.$inferSelect;
 export type StaffActivityRow = typeof schema.staffActivity.$inferSelect;
 export type RecordStampRow = typeof schema.recordStamps.$inferSelect;
+export type BetaTesterRow = typeof schema.betaTesters.$inferSelect;
 
 /** The record whose stamp says when the seed was loaded: what an unsaved record's stamp is. */
 export const SEEDED_RECORD = "seeded";
@@ -130,6 +132,25 @@ export const staffActivityToRow = (activity: StaffActivity): Omit<StaffActivityR
   // jsonb holds JSON: a value it can't (undefined inside) is written as JSON writes it.
   before: activity.before ?? null,
   after: activity.after ?? null,
+});
+
+// ── Beta Testers ────────────────────────────────────────────────────────────
+
+/** The Beta Tester list, in the order they were added, whatever order the rows arrive in. */
+export const betaTestersFromRows = (rows: readonly BetaTesterRow[]): BetaTester[] =>
+  [...rows]
+    .sort((a, b) => a.seq - b.seq)
+    .map((row) => ({
+      email: row.email,
+      addedAt: iso(row.addedAt),
+      addedBy: { email: row.addedByEmail, name: row.addedByName },
+    }));
+
+export const betaTesterToRow = (tester: BetaTester): Omit<BetaTesterRow, "seq"> => ({
+  email: tester.email,
+  addedAt: new Date(tester.addedAt),
+  addedByEmail: tester.addedBy.email,
+  addedByName: tester.addedBy.name,
 });
 
 // ── Record stamps ───────────────────────────────────────────────────────────

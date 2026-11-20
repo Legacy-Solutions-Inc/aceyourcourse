@@ -1,0 +1,133 @@
+{
+  "nodes": [
+    {
+      "id": "_claude_readme_agent_configuration",
+      "label": "`.claude/` Agent Configuration",
+      "file_type": "document",
+      "source_file": ".claude/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_readme_settings_json",
+      "label": "settings.json (permission allowlist + hooks)",
+      "file_type": "concept",
+      "source_file": ".claude/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_claude_readme_planning_executer_model",
+      "label": "Planning to Executer Operating Model",
+      "file_type": "rationale",
+      "source_file": ".claude/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "A planning session produces one self-contained prompt; the executer runs it with no memory of planning, so the handoff must carry all context."
+    },
+    {
+      "id": "_claude_readme_prompt_architect_standing_rule",
+      "label": "prompt-architect Standing Rule",
+      "file_type": "rationale",
+      "source_file": ".claude/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "Every handoff prompt is crafted with prompt-architect so handoffs are consistently structured."
+    }
+  ],
+  "edges": [
+    {
+      "source": "_claude_readme_agent_configuration",
+      "target": "_claude_readme_settings_json",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_readme_agent_configuration",
+      "target": "_claude_readme_planning_executer_model",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_readme_prompt_architect_standing_rule",
+      "target": "_claude_readme_planning_executer_model",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_readme_agent_configuration",
+      "target": "_claude_commands_handoff_handoff_command",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_readme_agent_configuration",
+      "target": "_claude_commands_verify_verify_command",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_readme_agent_configuration",
+      "target": "_claude_commands_ship_ship_command",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_readme_agent_configuration",
+      "target": "_claude_agents_readme_project_subagents",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_claude_readme_agent_configuration",
+      "target": "_claude_skills_readme_project_skills_index",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".claude/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,1552 @@
+{
+  "nodes": [
+    {
+      "id": "$graphify-root$_github_workflows_ci_yml",
+      "label": "ci.yml",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L1"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_name",
+      "label": "name",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L1"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_on",
+      "label": "on",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L3"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_on_push",
+      "label": "push",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L4"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_push_branches",
+      "label": "branches",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L5"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_on_pull_request",
+      "label": "pull_request",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L6"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_concurrency",
+      "label": "concurrency",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L10"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_concurrency_group",
+      "label": "group",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L11"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_concurrency_cancel_in_progress",
+      "label": "cancel-in-progress",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L12"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_env",
+      "label": "env",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L14"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_env_next_public_supabase_url",
+      "label": "NEXT_PUBLIC_SUPABASE_URL",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L15"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_env_next_public_supabase_publishable_key",
+      "label": "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L16"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_jobs",
+      "label": "jobs",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L23"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_jobs_verify",
+      "label": "verify",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L24"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_verify_runs_on",
+      "label": "runs-on",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L25"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_verify_timeout_minutes",
+      "label": "timeout-minutes",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L26"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_verify_steps",
+      "label": "steps",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L27"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_steps_uses",
+      "label": "uses",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L28"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_steps_run",
+      "label": "run",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L31"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_jobs_database",
+      "label": "database",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L45"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_database_runs_on",
+      "label": "runs-on",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L46"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_database_timeout_minutes",
+      "label": "timeout-minutes",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L47"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_database_steps",
+      "label": "steps",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L48"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_steps_with",
+      "label": "with",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L53"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_with_version",
+      "label": "version",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L54"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_steps_name",
+      "label": "name",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L62"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_steps_env",
+      "label": "env",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L63"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_env_test_database_url",
+      "label": "TEST_DATABASE_URL",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L65"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_env_test_database_required",
+      "label": "TEST_DATABASE_REQUIRED",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L67"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_jobs_e2e_website",
+      "label": "e2e-website",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L81"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_website_runs_on",
+      "label": "runs-on",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L82"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_website_timeout_minutes",
+      "label": "timeout-minutes",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L83"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_website_steps",
+      "label": "steps",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L84"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_steps_if",
+      "label": "if",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L93"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_with_name",
+      "label": "name",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L95"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_with_path",
+      "label": "path",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L96"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_with_if_no_files_found",
+      "label": "if-no-files-found",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L97"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_with_retention_days",
+      "label": "retention-days",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L98"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_jobs_e2e_admin",
+      "label": "e2e-admin",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L100"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_admin_name",
+      "label": "name",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L101"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_admin_runs_on",
+      "label": "runs-on",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L102"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_admin_timeout_minutes",
+      "label": "timeout-minutes",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L103"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_admin_strategy",
+      "label": "strategy",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L104"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_strategy_fail_fast",
+      "label": "fail-fast",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L105"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_strategy_matrix",
+      "label": "matrix",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L106"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_matrix_shard",
+      "label": "shard",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L107"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_admin_steps",
+      "label": "steps",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L108"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_jobs_e2e_member_app",
+      "label": "e2e-member-app",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L127"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_member_app_runs_on",
+      "label": "runs-on",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L128"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_member_app_timeout_minutes",
+      "label": "timeout-minutes",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L129"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_member_app_steps",
+      "label": "steps",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L130"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_jobs_e2e_admin_live",
+      "label": "e2e-admin-live",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L151"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_admin_live_name",
+      "label": "name",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L152"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_admin_live_runs_on",
+      "label": "runs-on",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L153"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_admin_live_timeout_minutes",
+      "label": "timeout-minutes",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L154"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_admin_live_strategy",
+      "label": "strategy",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L155"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_e2e_admin_live_steps",
+      "label": "steps",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L159"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_jobs_dependency_review",
+      "label": "dependency-review",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L192"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_dependency_review_runs_on",
+      "label": "runs-on",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L193"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_dependency_review_if",
+      "label": "if",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L194"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_dependency_review_permissions",
+      "label": "permissions",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L195"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_permissions_contents",
+      "label": "contents",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L196"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_dependency_review_steps",
+      "label": "steps",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L197"
+    },
+    {
+      "id": "$graphify-root$_github_workflows_ci_with_fail_on_severity",
+      "label": "fail-on-severity",
+      "file_type": "code",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L201"
+    }
+  ],
+  "edges": [
+    {
+      "source": "$graphify-root$_github_workflows_ci_yml",
+      "target": "$graphify-root$_github_workflows_ci_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_yml",
+      "target": "$graphify-root$_github_workflows_ci_on",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_on",
+      "target": "$graphify-root$_github_workflows_ci_on_push",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_on_push",
+      "target": "$graphify-root$_github_workflows_ci_push_branches",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_on",
+      "target": "$graphify-root$_github_workflows_ci_on_pull_request",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_yml",
+      "target": "$graphify-root$_github_workflows_ci_concurrency",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_concurrency",
+      "target": "$graphify-root$_github_workflows_ci_concurrency_group",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_concurrency",
+      "target": "$graphify-root$_github_workflows_ci_concurrency_cancel_in_progress",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_yml",
+      "target": "$graphify-root$_github_workflows_ci_env",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_env",
+      "target": "$graphify-root$_github_workflows_ci_env_next_public_supabase_url",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_env",
+      "target": "$graphify-root$_github_workflows_ci_env_next_public_supabase_publishable_key",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_yml",
+      "target": "$graphify-root$_github_workflows_ci_jobs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs",
+      "target": "$graphify-root$_github_workflows_ci_jobs_verify",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_verify",
+      "target": "$graphify-root$_github_workflows_ci_verify_runs_on",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_verify",
+      "target": "$graphify-root$_github_workflows_ci_verify_timeout_minutes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_verify",
+      "target": "$graphify-root$_github_workflows_ci_verify_steps",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_verify_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_verify_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_verify_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_verify_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_verify_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_verify_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs",
+      "target": "$graphify-root$_github_workflows_ci_jobs_database",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_database",
+      "target": "$graphify-root$_github_workflows_ci_database_runs_on",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_database",
+      "target": "$graphify-root$_github_workflows_ci_database_timeout_minutes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_database",
+      "target": "$graphify-root$_github_workflows_ci_database_steps",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_database_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_database_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_database_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_database_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_with",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L53",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_version",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_database_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_database_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_database_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_env",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L63",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_env",
+      "target": "$graphify-root$_github_workflows_ci_env_test_database_url",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_env",
+      "target": "$graphify-root$_github_workflows_ci_env_test_database_required",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_database_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L68",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs",
+      "target": "$graphify-root$_github_workflows_ci_jobs_e2e_website",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_website",
+      "target": "$graphify-root$_github_workflows_ci_e2e_website_runs_on",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L82",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_website",
+      "target": "$graphify-root$_github_workflows_ci_e2e_website_timeout_minutes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L83",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_website",
+      "target": "$graphify-root$_github_workflows_ci_e2e_website_steps",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_website_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L85",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_website_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_website_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_website_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L90",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_website_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L92",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_website_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_if",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L93",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_website_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_with",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_path",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L96",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_if_no_files_found",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L97",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_retention_days",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs",
+      "target": "$graphify-root$_github_workflows_ci_jobs_e2e_admin",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_admin",
+      "target": "$graphify-root$_github_workflows_ci_e2e_admin_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_admin",
+      "target": "$graphify-root$_github_workflows_ci_e2e_admin_runs_on",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_admin",
+      "target": "$graphify-root$_github_workflows_ci_e2e_admin_timeout_minutes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L103",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_admin",
+      "target": "$graphify-root$_github_workflows_ci_e2e_admin_strategy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L104",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_strategy",
+      "target": "$graphify-root$_github_workflows_ci_strategy_fail_fast",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_strategy",
+      "target": "$graphify-root$_github_workflows_ci_strategy_matrix",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L106",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_strategy_matrix",
+      "target": "$graphify-root$_github_workflows_ci_matrix_shard",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L107",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_admin",
+      "target": "$graphify-root$_github_workflows_ci_e2e_admin_steps",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L116",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_if",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L117",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_with",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L118",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L119",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_path",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_if_no_files_found",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L121",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_retention_days",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs",
+      "target": "$graphify-root$_github_workflows_ci_jobs_e2e_member_app",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L127",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_member_app",
+      "target": "$graphify-root$_github_workflows_ci_e2e_member_app_runs_on",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L128",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_member_app",
+      "target": "$graphify-root$_github_workflows_ci_e2e_member_app_timeout_minutes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L129",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_member_app",
+      "target": "$graphify-root$_github_workflows_ci_e2e_member_app_steps",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L130",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_member_app_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L131",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_member_app_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L132",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_member_app_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_member_app_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L136",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_member_app_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L138",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_member_app_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_if",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L139",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_member_app_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_with",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L140",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L141",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_path",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L142",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_if_no_files_found",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L143",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_retention_days",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L144",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs",
+      "target": "$graphify-root$_github_workflows_ci_jobs_e2e_admin_live",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L151",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_admin_live",
+      "target": "$graphify-root$_github_workflows_ci_e2e_admin_live_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L152",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_admin_live",
+      "target": "$graphify-root$_github_workflows_ci_e2e_admin_live_runs_on",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L153",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_admin_live",
+      "target": "$graphify-root$_github_workflows_ci_e2e_admin_live_timeout_minutes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L154",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_admin_live",
+      "target": "$graphify-root$_github_workflows_ci_e2e_admin_live_strategy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L155",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_live_strategy",
+      "target": "$graphify-root$_github_workflows_ci_strategy_fail_fast",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L156",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_live_strategy",
+      "target": "$graphify-root$_github_workflows_ci_strategy_matrix",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L157",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_strategy_matrix",
+      "target": "$graphify-root$_github_workflows_ci_matrix_shard",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L158",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_e2e_admin_live",
+      "target": "$graphify-root$_github_workflows_ci_e2e_admin_live_steps",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L159",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_live_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L160",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_live_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L161",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_live_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L163",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_live_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_with",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L164",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_version",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L165",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_live_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L167",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_live_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L169",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_live_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L171",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_live_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L172",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_live_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L182",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_live_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_if",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L183",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_e2e_admin_live_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_with",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L184",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L185",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_path",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L186",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_if_no_files_found",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L187",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_retention_days",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L188",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs",
+      "target": "$graphify-root$_github_workflows_ci_jobs_dependency_review",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L192",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_dependency_review",
+      "target": "$graphify-root$_github_workflows_ci_dependency_review_runs_on",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L193",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_dependency_review",
+      "target": "$graphify-root$_github_workflows_ci_dependency_review_if",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L194",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_dependency_review",
+      "target": "$graphify-root$_github_workflows_ci_dependency_review_permissions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L195",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_dependency_review_permissions",
+      "target": "$graphify-root$_github_workflows_ci_permissions_contents",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L196",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_jobs_dependency_review",
+      "target": "$graphify-root$_github_workflows_ci_dependency_review_steps",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L197",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_dependency_review_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L198",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_dependency_review_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_uses",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L199",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_dependency_review_steps",
+      "target": "$graphify-root$_github_workflows_ci_steps_with",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L200",
+      "weight": 1.0
+    },
+    {
+      "source": "$graphify-root$_github_workflows_ci_steps_with",
+      "target": "$graphify-root$_github_workflows_ci_with_fail_on_severity",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/workflows/ci.yml",
+      "source_location": "L201",
+      "weight": 1.0
+    }
+  ]
+}

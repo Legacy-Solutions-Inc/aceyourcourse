@@ -40,6 +40,16 @@ const dayMonthYear = {
   }),
 };
 
+const dayMonthYearTime = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+  timeZone: MANILA,
+});
+
 function parseDate(iso: string): Date {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
@@ -59,6 +69,14 @@ export function formatAsOf(isoDate: string): string {
  */
 export function formatDate(isoDate: string, month: "short" | "long" = "short"): string {
   return dayMonthYear[month].format(parseDate(isoDate));
+}
+
+/**
+ * Pure: an instant's Manila date and time, "2026-11-17T03:42:00Z" →
+ * "17 Nov 2026, 11:42 am". Throws a RangeError for a non-date.
+ */
+export function formatDateTime(iso: string): string {
+  return dayMonthYearTime.format(parseDate(iso));
 }
 
 /**
@@ -82,6 +100,12 @@ export function manilaDayStart(isoDate: string): Date {
   }
   return parseDate(`${isoDate}T00:00:00${MANILA_OFFSET}`);
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Pure: a YYYY-MM-DD calendar date moved by whole days, "2026-12-31" + 1 → "2027-01-01". */
+export const addCalendarDays = (isoDate: string, days: number): string =>
+  new Date(Date.parse(`${isoDate}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
 
 /** Pure: the calendar date in Manila at the given instant, as YYYY-MM-DD. */
 export function manilaDate(now: Date): string {

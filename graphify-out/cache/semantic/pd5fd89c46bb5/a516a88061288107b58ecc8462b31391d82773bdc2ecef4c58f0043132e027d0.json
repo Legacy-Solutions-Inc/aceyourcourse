@@ -1,0 +1,69 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_website_prompts_09_about_page",
+      "label": "Executer prompt: Ticket 09: About page",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-website/prompts/09-about-page.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_website_prompts_09_about_page_aboutstats",
+      "label": "aboutStats({ productTotal, examCount, shopStats })",
+      "file_type": "code",
+      "source_file": ".scratch/ayc-website/prompts/09-about-page.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_website_prompts_09_about_page",
+      "target": "_scratch_ayc_website_issues_09_about_page",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/prompts/09-about-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_prompts_09_about_page",
+      "target": "_scratch_ayc_website_readme_risen_prompt_structure",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-website/prompts/09-about-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_prompts_09_about_page",
+      "target": "_scratch_ayc_website_prompts_09_about_page_aboutstats",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-website/prompts/09-about-page.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_website_prompts_09_about_page_aboutstats",
+      "target": "_scratch_ayc_website_issues_09_about_page_about_stats",
+      "relation": "implements",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": ".scratch/ayc-website/prompts/09-about-page.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

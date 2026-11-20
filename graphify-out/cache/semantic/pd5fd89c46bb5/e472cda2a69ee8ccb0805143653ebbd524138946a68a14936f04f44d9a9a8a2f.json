@@ -1,0 +1,171 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database",
+      "label": "Ticket 15: Admin writes on the database",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database_admin_db_arm",
+      "label": "Admin database arm (admin.db.ts, one transaction per write)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database_optimistic_updated_at",
+      "label": "Optimistic conflict check on updated_at/updated_by",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database_local_only_reset_route",
+      "label": "Reset route re-seeds only a localhost DATABASE_URL",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database",
+      "target": "_scratch_ayc_admin_issues_14_catalogue_on_the_database",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database",
+      "target": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database_admin_db_arm",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database",
+      "target": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database_optimistic_updated_at",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database",
+      "target": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database_local_only_reset_route",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database_admin_db_arm",
+      "target": "_scratch_ayc_admin_conventions_admin_seam",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database_optimistic_updated_at",
+      "target": "_scratch_ayc_admin_conventions_conflict_check",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database_local_only_reset_route",
+      "target": "_scratch_ayc_admin_issues_02_settings_and_save_path_sample_data_reset",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database",
+      "target": "_scratch_ayc_admin_conventions_admin_arms_test_pattern",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database_admin_db_arm",
+      "target": "_scratch_ayc_admin_conventions_staff_activity",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_conventions_admin_write_pipeline",
+      "target": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database_admin_db_arm",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_15_admin_writes_on_the_database_local_only_reset_route",
+      "target": "_scratch_ayc_admin_issues_14_catalogue_on_the_database_catalogue_seed",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": ".scratch/ayc-admin/issues/15-admin-writes-on-the-database.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}

@@ -1,0 +1,112 @@
+{
+  "nodes": [
+    {
+      "id": "_scratch_ayc_admin_issues_09_exam_pages",
+      "label": "Ticket 09: Exam pages",
+      "file_type": "document",
+      "source_file": ".scratch/ayc-admin/issues/09-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_09_exam_pages_exam_page_sections",
+      "label": "Exam page sections (Header, Subjects covered, Reviewers, Bundle offer, Reviews)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/09-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_09_exam_pages_search_ai_visibility_helper",
+      "label": "Search & AI visibility check (seo-check: title <=60, description 80-160)",
+      "file_type": "rationale",
+      "source_file": ".scratch/ayc-admin/issues/09-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "rationale": "One pure helper reused by the Overview and later Site pages."
+    },
+    {
+      "id": "_scratch_ayc_admin_issues_09_exam_pages_official_exam_date",
+      "label": "Official Exam Date (optional, used in Phase 3)",
+      "file_type": "concept",
+      "source_file": ".scratch/ayc-admin/issues/09-exam-pages.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "_scratch_ayc_admin_issues_09_exam_pages",
+      "target": "_scratch_ayc_admin_conventions",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_09_exam_pages",
+      "target": "_scratch_ayc_admin_issues_06_product_photos_and_upload",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_09_exam_pages",
+      "target": "_scratch_ayc_admin_issues_09_exam_pages_exam_page_sections",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_09_exam_pages",
+      "target": "_scratch_ayc_admin_issues_09_exam_pages_search_ai_visibility_helper",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_09_exam_pages",
+      "target": "_scratch_ayc_admin_issues_09_exam_pages_official_exam_date",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "_scratch_ayc_admin_issues_09_exam_pages",
+      "target": "_scratch_ayc_admin_conventions_upload_seam",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".scratch/ayc-admin/issues/09-exam-pages.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": []
+}
