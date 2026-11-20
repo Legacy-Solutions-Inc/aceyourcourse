@@ -20,6 +20,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { PRIVACY_REQUEST_STATUSES, PRIVACY_REQUEST_TYPES } from "@/lib/member-app/privacy-requests";
 import { REVIEWER_PDF_FAILURES } from "@/lib/reviewer-pdfs/job";
 import { PDF_NAME_MAX } from "@/lib/reviewer-pdfs/pdf-file";
 import { READER_ZOOMS } from "@/lib/reviewer-pdfs/reader";
@@ -1102,5 +1103,40 @@ export const memberNotices = pgTable(
   (t) => [
     index("member_notices_user_id_seq_idx").on(t.userId, t.seq),
     index("member_notices_exam_code_idx").on(t.examCode),
+  ],
+).enableRLS();
+
+// ── Privacy Requests ────────────────────────────────────────────────────────
+
+export const privacyRequestType = pgEnum("privacy_request_type", PRIVACY_REQUEST_TYPES);
+export const privacyRequestStatus = pgEnum("privacy_request_status", PRIVACY_REQUEST_STATUSES);
+
+/**
+ * Each Member's Privacy Requests (ticket 18; spec, Phase 3 → Privacy
+ * Requests): a data copy or a deletion, asked for from Account, open until an
+ * Owner marks it done (ticket 19). `due_on` is the Manila date it's due (7
+ * days for a copy, 30 for a deletion), fixed when it's made. A Member has at
+ * most one open request of each type: the partial unique index refuses a
+ * second. A request outlives the account it's about: deleting the Member
+ * empties `user_id`, so the request keeps its type, dates and status, the
+ * record that it was carried out, and nothing that says who asked. Nothing is
+ * emailed.
+ */
+export const privacyRequests = pgTable(
+  "privacy_requests",
+  {
+    id: uuid("id").primaryKey(),
+    // Null once the Member's account is deleted.
+    userId: uuid("user_id").references(() => members.userId, { onDelete: "set null" }),
+    type: privacyRequestType("type").notNull(),
+    status: privacyRequestStatus("status").notNull(),
+    requestedAt: at("requested_at").notNull(),
+    dueOn: date("due_on").notNull(),
+  },
+  (t) => [
+    index("privacy_requests_user_id_idx").on(t.userId),
+    uniqueIndex("privacy_requests_one_open_per_type_idx")
+      .on(t.userId, t.type)
+      .where(sql`${t.status} = 'open'`),
   ],
 ).enableRLS();

@@ -1,4 +1,4 @@
-import { manilaDate } from "@/lib/manila-time";
+import { addCalendarDays as addDays, manilaDate } from "@/lib/manila-time";
 import type {
   CardMark,
   DeckPosition,
@@ -477,12 +477,6 @@ export interface StudyStreak {
   /** The latest Study Day, or null before the first. */
   lastStudyDay: string | null;
 }
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-/** Pure: a calendar date moved by whole days. */
-const addDays = (isoDate: string, days: number) =>
-  new Date(Date.parse(`${isoDate}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
 
 /**
  * Pure: the Study Streak from a Member's Study Days (Asia/Manila dates), at

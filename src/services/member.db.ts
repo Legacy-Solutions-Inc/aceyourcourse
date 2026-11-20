@@ -8,6 +8,7 @@ import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
 import { deviceStatusFor } from "@/lib/member-app/device-token";
 import { noticesToShow } from "@/lib/member-app/notices";
+import { privacyRequestDueOn } from "@/lib/member-app/privacy-requests";
 import { isReaderZoom } from "@/lib/reviewer-pdfs/reader";
 import { readablePageCount } from "@/lib/reviewer-pdfs/status";
 import { isStorageConfigured } from "@/lib/supabase/admin";
@@ -36,6 +37,7 @@ import {
   memberUserIdSchema,
   memberUserSchema,
   noticeIdSchema,
+  privacyRequestTypeSchema,
 } from "@/services/member.schema";
 import {
   examsForMembers,
@@ -47,7 +49,13 @@ import {
   type WithMemberExams,
 } from "@/services/member.rules";
 import type { ContentKind } from "@/services/content.types";
-import type { ConsentRecord, DeviceSwitch, Member, MemberNotice } from "@/services/member.types";
+import type {
+  ConsentRecord,
+  DeviceSwitch,
+  Member,
+  MemberNotice,
+  PrivacyRequest,
+} from "@/services/member.types";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
 import { storageArm } from "@/services/uploads.storage";
 
@@ -934,6 +942,84 @@ const dismissNotice: MemberService["dismissNotice"] = async (userId, noticeId) =
   });
 };
 
+// ── Privacy Requests ────────────────────────────────────────────────────────
+
+type PrivacyRequestRow = typeof schema.privacyRequests.$inferSelect;
+
+/** A request row's own fields: all but who asked, which is gone once their account is deleted. */
+export const privacyRequestFieldsFromRow = (
+  row: PrivacyRequestRow,
+): Omit<PrivacyRequest, "userId"> => ({
+  id: row.id,
+  type: row.type,
+  status: row.status,
+  requestedAt: row.requestedAt.toISOString(),
+  dueOn: row.dueOn,
+});
+
+/** One of a Member's own requests, read by their User id. */
+const ownPrivacyRequest = (row: PrivacyRequestRow, userId: string): PrivacyRequest => ({
+  ...privacyRequestFieldsFromRow(row),
+  userId,
+});
+
+/** The Member's open Privacy Requests. */
+const openRequestsOf = (userId: string) =>
+  and(eq(schema.privacyRequests.userId, userId), eq(schema.privacyRequests.status, "open"));
+
+const listOpenPrivacyRequests: MemberService["listOpenPrivacyRequests"] = async (userId) => {
+  const wanted = memberUserIdSchema.parse(userId);
+  const { privacyRequests } = schema;
+  return inDatabase(async () =>
+    (
+      await getDb()
+        .select()
+        .from(privacyRequests)
+        .where(openRequestsOf(wanted))
+        .orderBy(asc(privacyRequests.requestedAt), asc(privacyRequests.id))
+    ).map((row) => ownPrivacyRequest(row, wanted)),
+  );
+};
+
+const requestPrivacy: MemberService["requestPrivacy"] = async (userId, type) => {
+  const wanted = memberUserIdSchema.parse(userId);
+  const asked = privacyRequestTypeSchema.parse(type);
+  const { members, privacyRequests } = schema;
+  return inDatabase(() =>
+    getDb().transaction(async (tx) => {
+      // Holding the Member's row makes two asks from the same Member take
+      // turns, so the second finds the first open; the partial unique index
+      // refuses a second open request of a type all the same.
+      const [member] = await tx
+        .select({ userId: members.userId })
+        .from(members)
+        .where(eq(members.userId, wanted))
+        .for("update");
+      if (!member) throw new Error("Only a Member can make a Privacy Request.");
+      const [open] = await tx
+        .select()
+        .from(privacyRequests)
+        .where(and(openRequestsOf(wanted), eq(privacyRequests.type, asked)));
+      if (open) return { request: ownPrivacyRequest(open, wanted), created: false };
+
+      const now = new Date();
+      const [made] = await tx
+        .insert(privacyRequests)
+        .values({
+          id: crypto.randomUUID(),
+          userId: wanted,
+          type: asked,
+          status: "open",
+          requestedAt: now,
+          dueOn: privacyRequestDueOn(asked, now),
+        })
+        .returning();
+      if (!made) throw new Error("The Privacy Request wasn't made.");
+      return { request: ownPrivacyRequest(made, wanted), created: true };
+    }),
+  );
+};
+
 export const databaseArm: MemberService = {
   isBetaTester,
   getOrCreateMember,
@@ -956,4 +1042,6 @@ export const databaseArm: MemberService = {
   ...progressCalls(databaseProgressStore),
   listNotices,
   dismissNotice,
+  listOpenPrivacyRequests,
+  requestPrivacy,
 };

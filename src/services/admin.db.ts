@@ -52,6 +52,7 @@ import * as quizEditor from "@/services/admin.quiz.db";
 import * as reviewerPdfs from "@/services/admin.reviewer-pdfs.db";
 import * as users from "@/services/admin.users.db";
 import * as passes from "@/services/admin.access-passes.db";
+import * as privacy from "@/services/admin.privacy-requests.db";
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
@@ -335,6 +336,10 @@ async function load(
     },
     get memberNotices() {
       return notLoaded("the Members' notices");
+    },
+    // The Privacy Requests have their own reads (member.db.ts, admin.privacy-requests.db.ts).
+    get privacyRequests() {
+      return notLoaded("the Privacy Requests");
     },
     // Read only: a rollback couldn't undo a change to the sample data's uploads.
     get uploads() {
@@ -764,6 +769,8 @@ export const databaseArm: AdminService = {
   grantAccess: passes.grantAccess,
   extendAccess: passes.extendAccess,
   endAccess: passes.endAccess,
+  // The Members' Privacy Requests, read by their own module (ticket 18).
+  listPrivacyRequests: privacy.listPrivacyRequests,
 
   getOverview: read(CATALOGUE, sampleArm.getOverview),
 

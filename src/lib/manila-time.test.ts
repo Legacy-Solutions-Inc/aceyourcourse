@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  addCalendarDays,
   formatAsOf,
   formatDate,
   formatDateTime,
@@ -92,6 +93,18 @@ describe("manilaDate", () => {
 
   it("pads the month and day", () => {
     expect(manilaDate(new Date("2027-01-04T00:00:00Z"))).toBe("2027-01-04");
+  });
+});
+
+describe("addCalendarDays", () => {
+  it("moves a date forward and back by whole days", () => {
+    expect(addCalendarDays("2026-11-19", 7)).toBe("2026-11-26");
+    expect(addCalendarDays("2026-11-19", -19)).toBe("2026-10-31");
+  });
+
+  it("runs across the end of a month, a year and February", () => {
+    expect(addCalendarDays("2026-12-15", 30)).toBe("2027-01-14");
+    expect(addCalendarDays("2028-02-28", 1)).toBe("2028-02-29");
   });
 });
 

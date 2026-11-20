@@ -41,6 +41,7 @@ import type {
   ConsentRecord,
   DeviceSwitch,
   Member,
+  PrivacyRequest,
   TargetExam,
 } from "@/services/member.types";
 
@@ -793,6 +794,17 @@ export interface ForcedSignOut {
   userId: string;
   signedOut: ActiveDevice;
   reason: string;
+}
+
+/**
+ * One Privacy Request as the Owners' list shows it (ticket 18; story 133):
+ * who asked, when it's due, and whether it's overdue now.
+ */
+export interface AdminPrivacyRequest extends Omit<PrivacyRequest, "userId"> {
+  /** Still open after its due date, in Manila. */
+  overdue: boolean;
+  /** Who asked, or null once their account is deleted: the request stays, saying nothing of them. */
+  member: Pick<Member, "userId" | "email" | "name"> | null;
 }
 
 /**

@@ -61,6 +61,11 @@ export interface AdminArm {
   /** Deletes a Review behind the seam's back, as another Staff User might. */
   deleteReviewElsewhere(id: string): Promise<void>;
   /**
+   * Deletes a Member's record behind the seam's back, as deleting their
+   * account will (ticket 19). Their Privacy Requests stay, with no Member.
+   */
+  deleteMemberElsewhere(userId: string): Promise<void>;
+  /**
    * Uploads a PNG through the upload seam, as the photo strip does, and gives
    * the path a save records and where the Website will load it from. With
    * `send: false` the browser never sends the file, as when an upload hasn't
@@ -173,6 +178,10 @@ const SAMPLE_ARM: AdminArm = {
   deleteReviewElsewhere: async (id) => {
     const { catalogue } = getSampleStore();
     catalogue.reviews = catalogue.reviews.filter((review) => review.id !== id);
+  },
+  deleteMemberElsewhere: async (userId) => {
+    const store = getSampleStore();
+    store.members = store.members.filter((member) => member.userId !== userId);
   },
   uploadPhoto: uploadSamplePhoto,
   staffActivity: async () => structuredClone(getSampleStore().staffActivity),

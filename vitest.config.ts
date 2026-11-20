@@ -21,6 +21,7 @@ const MEMBER_SUITES = [
   "src/services/member.reviewer.test.ts",
   "src/services/member.progress.test.ts",
   "src/services/member.notices.test.ts",
+  "src/services/member.privacy-requests.test.ts",
 ];
 /** Admin tests that aren't written over ADMIN_ARMS. */
 const NOT_ADMIN_SUITES = [

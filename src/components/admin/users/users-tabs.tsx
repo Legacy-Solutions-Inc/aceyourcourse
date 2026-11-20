@@ -7,16 +7,18 @@ import { paths } from "@/paths";
 const TABS: { tab: UsersTab; label: string; href: string }[] = [
   { tab: "users", label: "USERS", href: paths.admin.users },
   { tab: "beta-testers", label: "BETA TESTERS", href: paths.admin.betaTesters },
+  { tab: "privacy-requests", label: "PRIVACY REQUESTS", href: paths.admin.privacyRequests },
 ];
 
 /**
  * The Users screen's tabs, styled as Reviews & FAQs' are. Each is its own
  * address, so they're links, the current one marked as the page: the Users
- * list (ticket 16), and the Beta Testers beside it (ticket 01).
+ * list (ticket 16), the Beta Testers beside it (ticket 01), and the Privacy
+ * Requests (ticket 18).
  */
 export function UsersTabs({ tab }: { tab: UsersTab }) {
   return (
-    <nav aria-label="Users" className="flex border-b-[1.5px]">
+    <nav aria-label="Users" className="flex flex-wrap border-b-[1.5px]">
       {TABS.map(({ tab: key, label, href }) => (
         <Link
           key={key}

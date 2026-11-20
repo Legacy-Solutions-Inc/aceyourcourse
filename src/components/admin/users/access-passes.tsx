@@ -156,18 +156,19 @@ export function AccessPasses({ member, passes, exams, now, actions }: AccessPass
           </button>
           <span className="text-xs text-muted-foreground">{NO_PAYMENT}</span>
         </div>
+        {/* On paper, where the success green passes 4.5:1 (it doesn't on cream). */}
+        <p
+          role="status"
+          className={cn(
+            "px-3.5 pb-2.5 empty:pb-0",
+            notice?.tone === "refused"
+              ? "text-sm font-semibold text-destructive"
+              : "font-mono text-[11px] font-medium text-ayc-success",
+          )}
+        >
+          {notice?.text ?? ""}
+        </p>
       </div>
-      <p
-        role="status"
-        className={cn(
-          "min-h-4",
-          notice?.tone === "refused"
-            ? "text-sm font-semibold text-destructive"
-            : "font-mono text-[11px] font-medium text-ayc-success",
-        )}
-      >
-        {notice?.text ?? ""}
-      </p>
 
       <AdminDialog
         open={open !== null}

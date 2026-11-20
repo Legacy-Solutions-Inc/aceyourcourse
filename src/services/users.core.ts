@@ -133,7 +133,7 @@ export const matchesUserQuery = (
 ) => matchesSearch(row, q) && matchesFilter(row, filter, now);
 
 /** Pure: plain character order, as Postgres orders a uuid's hex digits. */
-const ordinal = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+export const ordinal = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
 /** Pure: newest Member first; Members who joined together by User id, as the database orders them. */
 export const newestFirst = (a: AdminUserRow, b: AdminUserRow) =>

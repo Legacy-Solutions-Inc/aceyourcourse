@@ -4,13 +4,14 @@ import { USER_FILTERS, type UserFilter, type UserListQuery } from "@/services/ad
 
 // The Users screen's URL (BUILD-MAP §3.10; story 129). The tab, search,
 // filter and page live in it, so a reload or a shared link keeps them:
-// ?q=bea&filter=beta&page=2, or ?tab=beta-testers. Anything else falls back to
+// ?q=bea&filter=beta&page=2, ?tab=beta-testers or ?tab=privacy-requests. Anything else falls back to
 // its default.
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
-/** The Users screen's tabs: the Users list, and the Beta Testers (ticket 01). */
-export type UsersTab = "users" | "beta-testers";
+/** The Users screen's tabs: the Users list, the Beta Testers (ticket 01), and the Privacy Requests (ticket 18). */
+const USERS_TABS = ["users", "beta-testers", "privacy-requests"] as const;
+export type UsersTab = (typeof USERS_TABS)[number];
 
 /** How many Members one page of the Users list shows. */
 export const USERS_PAGE_SIZE = 25;
@@ -20,6 +21,9 @@ const MAX_PAGE = 99_999;
 
 const isFilter = (value: string): value is UserFilter =>
   (USER_FILTERS as readonly string[]).includes(value);
+
+const isTab = (value: string): value is UsersTab =>
+  (USERS_TABS as readonly string[]).includes(value);
 
 /** Pure: the Users screen's tab, and the list's search, filter and page, from its URL's search params. */
 export function parseUsersParams(params: SearchParams): { tab: UsersTab; query: UserListQuery } {
@@ -31,8 +35,9 @@ export function parseUsersParams(params: SearchParams): { tab: UsersTab; query: 
   const filter = value("filter")?.toLowerCase() ?? "";
   const page = value("page") ?? "";
   const pageNumber = /^\d+$/.test(page) ? Number(page) : 0;
+  const tab = value("tab") ?? "";
   return {
-    tab: value("tab") === "beta-testers" ? "beta-testers" : "users",
+    tab: isTab(tab) ? tab : "users",
     query: {
       q,
       filter: isFilter(filter) ? filter : "all",

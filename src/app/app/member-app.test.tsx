@@ -107,6 +107,7 @@ const home = async () =>
   (await import("./(shell)/(home)/page")).default({ searchParams: Promise.resolve({}) });
 const account = async () => (await import("./(shell)/account/page")).default();
 const addExamPage = async () => (await import("./(shell)/add-exam/page")).default();
+const support = async () => (await import("./(shell)/support/page")).default();
 const comingSoon = async (segment: string) =>
   (await import("./(shell)/[screen]/page")).default({
     params: Promise.resolve({ screen: segment }),
@@ -130,7 +131,7 @@ const GATED_PAGES: [string, () => Promise<unknown>][] = [
   ["/app/billing", () => comingSoon("billing")],
   ["/app/account", account],
   ["/app/add-exam", addExamPage],
-  ["/app/support", () => comingSoon("support")],
+  ["/app/support", support],
   ["/app/nonsense", () => comingSoon("nonsense")],
 ];
 
@@ -265,7 +266,6 @@ describe("the screens that aren't built yet", () => {
     ["courses", "03 · COURSES"],
     ["plans", "04 · PLANS"],
     ["billing", "05 · BILLING"],
-    ["support", "07 · SUPPORT"],
   ])("/app/%s says it's coming in the beta", async (segment, eyebrow) => {
     await agreedAs(TESTER, "Bea Tester");
     signedInAs(TESTER);

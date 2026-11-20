@@ -144,8 +144,8 @@ const CONTENT_TABLES = [
  * The Admin's own tables. They describe the catalogue that is loaded (its
  * save stamps, who changed it), so a local load replaces them too. The Member
  * App's sample data (the Beta Tester list, the Access Passes, and the Members
- * "Sign in as" made, with their notices, consent records, Target Exams,
- * Active Devices and Study Days) starts again with them.
+ * "Sign in as" made, with their notices, Privacy Requests, consent records,
+ * Target Exams, Active Devices and Study Days) starts again with them.
  */
 const ADMIN_TABLES = [
   schema.staffActivity,
@@ -153,6 +153,7 @@ const ADMIN_TABLES = [
   schema.recordStamps,
   schema.staff,
   schema.betaTesters,
+  schema.privacyRequests,
   schema.memberNotices,
   schema.accessPassGrants,
   schema.accessPasses,

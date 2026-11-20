@@ -62,6 +62,8 @@ const READS = [
   // The Users list and a Member's detail page (ticket 16).
   "listUsers",
   "getMemberForAdmin",
+  // The Privacy Requests list (ticket 18).
+  "listPrivacyRequests",
   "getOverview",
   "getSettingsForAdmin",
   "listProductsForAdmin",

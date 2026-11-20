@@ -61,7 +61,9 @@ export function consentScreen(page: Page) {
 /** On the consent screen: ticks both boxes and agrees, going on to where the Member was going. */
 export async function agreeToConsent(page: Page) {
   const consent = consentScreen(page);
-  await expect(page).toHaveURL(/\/app\/consent(\?|$)/);
+  // Longer than the default: on a dev server the consent screen can be the
+  // first Member App route a run compiles, inside the sign-in's redirect.
+  await expect(page).toHaveURL(/\/app\/consent(\?|$)/, { timeout: 20_000 });
   await consent.terms.check();
   await consent.privacy.check();
   await consent.agree.click();

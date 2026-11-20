@@ -1,6 +1,11 @@
 import { z } from "zod";
 
 import { TOKEN_HASH_PATTERN } from "@/lib/member-app/device-token";
+import {
+  DELETION_CONFIRMATION,
+  isDeletionConfirmed,
+  PRIVACY_REQUEST_TYPES,
+} from "@/lib/member-app/privacy-requests";
 import { QUIZ_CHOICES } from "@/lib/quizzes/quiz-rules";
 import { isReaderZoom } from "@/lib/reviewer-pdfs/reader";
 import { staffEmailSchema } from "@/services/admin.schema";
@@ -172,3 +177,17 @@ export const readerPositionInputSchema = z.object({
 
 /** A notice's id, as the Member App's "Dismiss" sends it. Anything else is no notice. */
 export const noticeIdSchema = z.string().uuid();
+
+/** A Privacy Request's type, as Account's buttons ask for it. */
+export const privacyRequestTypeSchema = z.enum(PRIVACY_REQUEST_TYPES);
+
+/** What "Delete my account" says when the confirmation isn't typed. */
+export const DELETION_NOT_CONFIRMED = `Type ${DELETION_CONFIRMATION}, in capitals, to confirm.`;
+
+/** "Delete my account"'s form: the confirmation the Member typed. */
+export const deletionRequestFormSchema = z.object({
+  confirmation: z
+    .string()
+    .catch("")
+    .refine(isDeletionConfirmed, { message: DELETION_NOT_CONFIRMED }),
+});

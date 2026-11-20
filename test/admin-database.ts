@@ -142,6 +142,10 @@ export const DATABASE_ARM: AdminArm = {
   deleteReviewElsewhere: async (id) => {
     await getDb().delete(schema.reviews).where(eq(schema.reviews.id, id));
   },
+  deleteMemberElsewhere: async (userId) => {
+    // Their records cascade; their Privacy Requests' user_id is emptied.
+    await getDb().delete(schema.members).where(eq(schema.members.userId, userId));
+  },
   // Storage when the database project has it (TEST_SUPABASE_SECRET_KEY), as the database arm does.
   uploadPhoto: isStorageConfigured ? uploadStoragePhoto : uploadSamplePhoto,
   staffActivity: async () =>

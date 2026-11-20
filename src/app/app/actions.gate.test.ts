@@ -17,6 +17,7 @@ import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
+import * as account from "./(shell)/account/actions";
 import * as targetExams from "./(shell)/actions";
 import * as study from "./(shell)/library/actions";
 import * as root from "./actions";
@@ -30,7 +31,8 @@ import * as signIn from "./sign-in/actions";
 // each one is listed here with who may call it, and called as a browser would
 // by everyone it must refuse:
 //   - "member": behind the gate, then consent, then the Active Device (the
-//     Target Exam actions, the flashcard player's and the quiz screen's). Signed out goes to the sign-in screen, someone the
+//     Target Exam actions, the flashcard player's and the quiz screen's, and
+//     Account's Privacy Requests). Signed out goes to the sign-in screen, someone the
 //     gate doesn't let in goes to "Not open yet", with no Member record made,
 //     a Member who hasn't agreed to the current Terms and Privacy Policy goes
 //     to the consent screen, and a request that isn't from the Member's Active
@@ -107,6 +109,13 @@ function examForm(examDate?: string) {
   return data;
 }
 
+/** "Delete my account", confirmed as Account asks. */
+function deletionForm() {
+  const data = new FormData();
+  data.set("confirmation", "DELETE");
+  return data;
+}
+
 /** Both boxes ticked, with versions the consent screen could have shown. */
 function consentForm() {
   const data = new FormData();
@@ -157,6 +166,10 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
         answers: [{ questionId: freeQuestion, choice: "A" }],
       }),
     ),
+  },
+  "./(shell)/account/actions.ts": {
+    requestDataCopy: member(() => account.requestDataCopy()),
+    requestDeletion: member(() => account.requestDeletion({ error: null }, deletionForm())),
   },
   "./(shell)/actions.ts": {
     addExam: member(() => targetExams.addExam({ error: null }, examForm("2099-04-18"))),
@@ -211,7 +224,7 @@ const memberData = () => {
   const { members, memberConsents, memberTargetExams, selectedExams } = getSampleStore();
   const { memberActiveDevices, memberDeviceSwitches } = getSampleStore();
   const { cardMarks, studyDays, deckPositions, quizAttempts } = getSampleStore();
-  const { reviewerPageViews, readerPositions } = getSampleStore();
+  const { reviewerPageViews, readerPositions, privacyRequests } = getSampleStore();
   return structuredClone({
     members,
     memberConsents,
@@ -225,6 +238,7 @@ const memberData = () => {
     quizAttempts,
     reviewerPageViews,
     readerPositions,
+    privacyRequests,
   });
 };
 
@@ -338,6 +352,21 @@ describe("the Member App's Server Actions and the gate", () => {
       const before = memberData();
       await expect(call()).rejects.toThrow(/^NEXT_REDIRECT \/app\/device\?next=/);
       expect(memberData()).toEqual(before);
+    },
+  );
+
+  it.each(GATED)("$name gives nobody the gate refuses a Privacy Request", async ({ call }) => {
+    jar.set("ayc_admin_sample", STRANGER);
+    await call().catch(() => {});
+    expect(getSampleStore().privacyRequests).toEqual([]);
+  });
+
+  it.each(AFTER_CONSENT)(
+    "$name makes no Privacy Request for a Member who hasn't agreed to the current Terms",
+    async ({ call }) => {
+      jar.set("ayc_admin_sample", TESTER);
+      await call().catch(() => {});
+      expect(getSampleStore().privacyRequests).toEqual([]);
     },
   );
 

@@ -1,6 +1,7 @@
 import { isDatabaseConfigured } from "@/env.server";
 import type { MemberAccess } from "@/lib/member-app/access";
 import type { MemberProgress } from "@/lib/member-app/progress";
+import type { PrivacyRequestType } from "@/lib/member-app/privacy-requests";
 import type { DeviceStatus } from "@/lib/member-app/device-token";
 import type { ReaderPlace } from "@/lib/reviewer-pdfs/reader";
 import type { AccessPass, CardMark, ContentKind, DeckPosition } from "@/services/content.types";
@@ -26,6 +27,8 @@ import type {
   MemberUser,
   NewTargetExam,
   PickableExam,
+  PrivacyRequest,
+  PrivacyRequestOutcome,
   QuizOpening,
   QuizResult,
   QuizSubmitInput,
@@ -354,6 +357,22 @@ export interface MemberService {
    * Member's above all.
    */
   dismissNotice(userId: string, noticeId: string): Promise<boolean>;
+
+  // Privacy Requests (ticket 18; spec, Phase 3 → Privacy Requests; Privacy
+  // Policy §14): a Member asks from Account for a copy of their data or for
+  // their account to be deleted, and Owners carry it out by hand (ticket 19).
+  // Each call is scoped to the User id given: a Member only ever reads or
+  // makes their own. Nothing is emailed.
+
+  /** This Member's open Privacy Requests, oldest first: at most one of each type. Only ever their own. */
+  listOpenPrivacyRequests(userId: string): Promise<PrivacyRequest[]>;
+  /**
+   * Asks for a data copy (due in 7 days) or a deletion (due in 30), counted
+   * in Manila days from today, timed now. While one of the type is open, it
+   * makes nothing and gives that one. Throws for a type that isn't one, a
+   * User id that isn't one, and a User with no Member record.
+   */
+  requestPrivacy(userId: string, type: PrivacyRequestType): Promise<PrivacyRequestOutcome>;
 }
 
 const impl: MemberService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -390,3 +409,5 @@ export const getProgress = impl.getProgress;
 export const getTopicPercents = impl.getTopicPercents;
 export const listNotices = impl.listNotices;
 export const dismissNotice = impl.dismissNotice;
+export const listOpenPrivacyRequests = impl.listOpenPrivacyRequests;
+export const requestPrivacy = impl.requestPrivacy;

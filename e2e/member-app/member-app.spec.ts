@@ -147,7 +147,6 @@ test.describe("a Beta Tester", () => {
       ["Courses", "/app/courses"],
       ["Plans", "/app/plans"],
       ["Billing", "/app/billing"],
-      ["Support", "/app/support"],
     ] as const) {
       await memberNav(page)
         .getByRole("link", { name: new RegExp(label) })

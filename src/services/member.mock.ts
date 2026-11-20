@@ -1,5 +1,6 @@
 import { type DeviceStatus, deviceStatusFor } from "@/lib/member-app/device-token";
 import { noticesToShow } from "@/lib/member-app/notices";
+import { type PrivacyRequestType, privacyRequestDueOn } from "@/lib/member-app/privacy-requests";
 import { readablePageCount } from "@/lib/reviewer-pdfs/status";
 import { contentItemOf, type ContentExam, libraryOf } from "@/services/content.rules";
 import type { AccessPass, ContentKind, ContentRecords } from "@/services/content.types";
@@ -15,6 +16,7 @@ import {
   memberUserIdSchema,
   memberUserSchema,
   noticeIdSchema,
+  privacyRequestTypeSchema,
 } from "@/services/member.schema";
 import {
   applyChange,
@@ -37,6 +39,8 @@ import type {
   MemberNotice,
   MemberUser,
   PickableExam,
+  PrivacyRequest,
+  PrivacyRequestOutcome,
   TargetExam,
 } from "@/services/member.types";
 import { getSampleStore } from "@/services/mock/sample-store";
@@ -45,8 +49,8 @@ import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.m
 // The Member seam's sample arm: over the in-memory sample store
 // (src/services/mock/sample-store.ts), which holds the Beta Tester list and
 // the Topics the Admin's sample arm edits, the Members, their consent
-// records, Target Exams, Active Devices and Access Passes, and their study
-// records. The Target Exam rules (member.rules.ts), the content rules
+// records, Target Exams, Active Devices and Access Passes, their study
+// records, notices and Privacy Requests. The Target Exam rules (member.rules.ts), the content rules
 // (content.rules.ts) and the study calls (deck-study.core.ts,
 // quiz-study.core.ts and reviewer-study.core.ts) are shared with the
 // database arm.
@@ -468,4 +472,44 @@ export async function dismissNotice(userId: string, noticeId: string): Promise<b
     store.memberNotices = store.memberNotices.map((n) => (n === notice ? dismissed : n));
   }
   return true;
+}
+
+// ── Privacy Requests ────────────────────────────────────────────────────────
+
+export async function listOpenPrivacyRequests(userId: string): Promise<PrivacyRequest[]> {
+  const wanted = memberUserIdSchema.parse(userId);
+  return structuredClone(
+    getSampleStore().privacyRequests.filter(
+      (request) => request.userId === wanted && request.status === "open",
+    ),
+  );
+}
+
+export async function requestPrivacy(
+  userId: string,
+  type: PrivacyRequestType,
+): Promise<PrivacyRequestOutcome> {
+  const wanted = memberUserIdSchema.parse(userId);
+  const asked = privacyRequestTypeSchema.parse(type);
+  const store = getSampleStore();
+  // Like the database's foreign key: only a Member, someone the gate let in, asks.
+  if (!store.members.some((member) => member.userId === wanted)) {
+    throw new Error("Only a Member can make a Privacy Request.");
+  }
+  const open = store.privacyRequests.find(
+    (request) => request.userId === wanted && request.type === asked && request.status === "open",
+  );
+  if (open) return { request: structuredClone(open), created: false };
+
+  const now = new Date();
+  const request: PrivacyRequest = {
+    id: crypto.randomUUID(),
+    userId: wanted,
+    type: asked,
+    status: "open",
+    requestedAt: now.toISOString(),
+    dueOn: privacyRequestDueOn(asked, now),
+  };
+  store.privacyRequests = [...store.privacyRequests, request];
+  return { request: structuredClone(request), created: true };
 }

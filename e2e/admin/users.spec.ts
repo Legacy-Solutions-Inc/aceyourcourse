@@ -249,7 +249,7 @@ test.describe("the Owner and a lapsed tester", () => {
     await expect(
       page.getByRole("heading", { level: 2, name: /^Your CE All-Access ended on / }),
     ).toBeVisible();
-    await expect(page.getByText(/Your progress is kept\./)).toBeVisible();
+    await expect(page.getByText(/Your progress is kept: 1 card marked\./)).toBeVisible();
     await page.goto(paths.memberApp.home);
     const notices = page.getByRole("region", { name: "Notices" }).getByRole("listitem");
     await expect(notices).toHaveCount(2);

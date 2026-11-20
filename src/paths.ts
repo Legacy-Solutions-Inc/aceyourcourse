@@ -135,6 +135,8 @@ export const paths = {
     users: "/admin/users",
     /** The Users screen's Beta Testers tab (ticket 01). */
     betaTesters: "/admin/users?tab=beta-testers",
+    /** The Users screen's Privacy Requests tab (ticket 18): what Members asked for from Account. */
+    privacyRequests: "/admin/users?tab=privacy-requests",
     /** A Member's detail page in Users, by their User id (ticket 16). */
     user: (userId: string) => `/admin/users/${encodeURIComponent(userId)}`,
     /** Member App content (Phase 3): each Subject's Topics, picked by Exam and Subject. */

@@ -2,6 +2,7 @@ import type { z } from "zod";
 
 import type { AllowedVia, RefusedDecision } from "@/lib/member-app/access";
 import type { ExamDateSetBy } from "@/lib/member-app/exam-date";
+import type { PrivacyRequestStatus, PrivacyRequestType } from "@/lib/member-app/privacy-requests";
 import type { AttemptReview } from "@/lib/quizzes/grading";
 import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
 import type { ReaderPlace } from "@/lib/reviewer-pdfs/reader";
@@ -408,4 +409,30 @@ export interface MemberNotice {
   createdAt: string;
   /** ISO time the Member dismissed it, or null while it shows. */
   dismissedAt: string | null;
+}
+
+// ── Privacy Requests (ticket 18) ────────────────────────────────────────────
+
+/**
+ * One Privacy Request (spec, Phase 3 → Privacy Requests): a Member's ask, from
+ * Account, for a copy of their data or for their account to be deleted. Owners
+ * carry it out by hand (ticket 19). Nothing is emailed automatically.
+ */
+export interface PrivacyRequest {
+  id: string;
+  /** The Member's User id: a Member only ever sees their own. */
+  userId: string;
+  type: PrivacyRequestType;
+  status: PrivacyRequestStatus;
+  /** ISO time the Member asked. */
+  requestedAt: string;
+  /** The Manila date (YYYY-MM-DD) it's due: 7 days for a copy, 30 for a deletion. */
+  dueOn: string;
+}
+
+/** What asking gives: the Member's open request of that type, and whether this ask made it. */
+export interface PrivacyRequestOutcome {
+  request: PrivacyRequest;
+  /** False when one was already open: nothing new is made. */
+  created: boolean;
 }

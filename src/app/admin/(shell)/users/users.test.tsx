@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { claimDevice, getOrCreateMember } from "@/services/member.mock";
+import { claimDevice, getOrCreateMember, requestPrivacy } from "@/services/member.mock";
 import { resetSampleStore } from "@/services/mock/sample-store";
 
 import MemberPage from "./[id]/page";
@@ -108,7 +108,7 @@ describe("the Users list", () => {
     );
   });
 
-  it.each<Record<string, string>>([{}, { tab: "beta-testers" }])(
+  it.each<Record<string, string>>([{}, { tab: "beta-testers" }, { tab: "privacy-requests" }])(
     "refuses an Editor (%j)",
     async (params) => {
       signInAs(EDITOR);
@@ -122,6 +122,50 @@ describe("the Users list", () => {
     await getOrCreateMember(BEA);
     signInAs(BEA.email);
     await expect(usersPage()).rejects.toThrow("NEXT_REDIRECT /admin/denied?reason=not-staff");
+  });
+});
+
+describe("the Privacy Requests tab", () => {
+  const PRIVACY_REQUESTS = { tab: "privacy-requests" };
+
+  it("shows an Owner every Member's requests, on its own tab", async () => {
+    await getOrCreateMember(BEA);
+    await getOrCreateMember(SAM);
+    await requestPrivacy(BEA.userId, "deletion");
+    await requestPrivacy(SAM.userId, "data-copy");
+    signInAs(OWNER);
+    render(await usersPage(PRIVACY_REQUESTS));
+
+    expect(screen.getByRole("link", { name: "PRIVACY REQUESTS" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    const list = screen.getByRole("region", { name: "Privacy Requests" });
+    const listed = within(list).getAllByRole("row").slice(1);
+    expect(listed).toHaveLength(2);
+    expect(listed[0]).toHaveTextContent(/DATA COPY.*Sam Stranger/);
+    expect(listed[1]).toHaveTextContent(/DELETION.*Bea Tester/);
+  });
+
+  it("says there are none yet", async () => {
+    signInAs(OWNER);
+    render(await usersPage(PRIVACY_REQUESTS));
+    expect(screen.getByText(/^No Privacy Requests\./)).toBeInTheDocument();
+  });
+
+  it("sends a signed-out visitor to sign-in, coming back to the tab", async () => {
+    await expect(usersPage(PRIVACY_REQUESTS)).rejects.toThrow(
+      `NEXT_REDIRECT /admin/sign-in?next=${encodeURIComponent("/admin/users?tab=privacy-requests")}`,
+    );
+  });
+
+  it("never lets a Member who isn't Staff in", async () => {
+    await getOrCreateMember(BEA);
+    await requestPrivacy(BEA.userId, "data-copy");
+    signInAs(BEA.email);
+    await expect(usersPage(PRIVACY_REQUESTS)).rejects.toThrow(
+      "NEXT_REDIRECT /admin/denied?reason=not-staff",
+    );
   });
 });
 

@@ -101,6 +101,12 @@ export function manilaDayStart(isoDate: string): Date {
   return parseDate(`${isoDate}T00:00:00${MANILA_OFFSET}`);
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Pure: a YYYY-MM-DD calendar date moved by whole days, "2026-12-31" + 1 → "2027-01-01". */
+export const addCalendarDays = (isoDate: string, days: number): string =>
+  new Date(Date.parse(`${isoDate}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
+
 /** Pure: the calendar date in Manila at the given instant, as YYYY-MM-DD. */
 export function manilaDate(now: Date): string {
   const part = Object.fromEntries(isoParts.formatToParts(now).map((p) => [p.type, p.value]));

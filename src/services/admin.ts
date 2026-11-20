@@ -54,6 +54,7 @@ import type {
   AdminFaqList,
   AdminMemberDetail,
   AdminOverview,
+  AdminPrivacyRequest,
   AdminProduct,
   AdminQuestion,
   AdminQuiz,
@@ -257,6 +258,18 @@ export interface AdminService {
    * has already ended, or none, is refused with a message, recording nothing.
    */
   endAccess(actor: StaffActor, input: EndAccessInput): Promise<AdminResult<AccessPassChange>>;
+
+  // Privacy Requests (Owners only; Phase 3, ticket 18; story 133): what
+  // Members asked for from Account. Carrying them out is ticket 19. It
+  // touches no Catalogue, so it returns no cache tag.
+
+  /**
+   * Every Member's Privacy Requests (data copy or deletion), soonest due
+   * first, each with its Member (none once their account is deleted), the
+   * day it was asked for, the Manila date it's due, its status, and whether
+   * it's still open after that date. An Editor is refused.
+   */
+  listPrivacyRequests(actor: StaffActor): Promise<AdminResult<AdminPrivacyRequest[]>>;
 
   /**
    * The Overview's read (any Staff User): every Product, the Exams, the Exam
@@ -981,6 +994,7 @@ export const forceSignOut = impl.forceSignOut;
 export const grantAccess = impl.grantAccess;
 export const extendAccess = impl.extendAccess;
 export const endAccess = impl.endAccess;
+export const listPrivacyRequests = impl.listPrivacyRequests;
 export const getOverview = impl.getOverview;
 export const getSettingsForAdmin = impl.getSettingsForAdmin;
 export const updateWebsiteSettings = impl.updateWebsiteSettings;

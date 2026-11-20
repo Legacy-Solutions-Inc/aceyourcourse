@@ -19,6 +19,12 @@ describe("parseUsersParams", () => {
     expect(parseUsersParams({ tab: "beta-testers" })).toMatchObject({ tab: "beta-testers" });
   });
 
+  it("opens the Privacy Requests tab", () => {
+    expect(parseUsersParams({ tab: "privacy-requests" })).toMatchObject({
+      tab: "privacy-requests",
+    });
+  });
+
   it("opens the Users list for any other tab", () => {
     expect(parseUsersParams({ tab: "orders" })).toMatchObject({ tab: "users" });
   });

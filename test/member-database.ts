@@ -1,4 +1,4 @@
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import * as schema from "@/lib/db/schema";
@@ -13,6 +13,7 @@ import {
   databaseArm,
   deviceSwitchFromRow,
   memberFromRow,
+  privacyRequestFieldsFromRow,
 } from "@/services/member.db";
 
 import { byMemberAndPage } from "./admin-arms";
@@ -85,5 +86,18 @@ export const MEMBER_DATABASE_ARM: MemberArm = {
         .filter((answer) => answer.attemptId === row.id)
         .map(quizAttemptAnswerFromRow),
     }));
+  },
+  privacyRequests: async () =>
+    (
+      await getDb()
+        .select()
+        .from(schema.privacyRequests)
+        .orderBy(asc(schema.privacyRequests.requestedAt), asc(schema.privacyRequests.id))
+    ).map((row) => ({ ...privacyRequestFieldsFromRow(row), userId: row.userId })),
+  finishPrivacyRequest: async (id) => {
+    await getDb()
+      .update(schema.privacyRequests)
+      .set({ status: "done" })
+      .where(eq(schema.privacyRequests.id, id));
   },
 };

@@ -3,7 +3,7 @@ import * as adminSampleArm from "@/services/admin.mock";
 import type { MemberService } from "@/services/member";
 import * as sampleArm from "@/services/member.mock";
 import type { AccessPass, CardMark, QuizAttempt, ReviewerPageView } from "@/services/content.types";
-import type { ConsentRecord, DeviceSwitch, Member } from "@/services/member.types";
+import type { ConsentRecord, DeviceSwitch, Member, PrivacyRequest } from "@/services/member.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
@@ -53,6 +53,10 @@ export interface MemberArm {
   quizAttempts(): Promise<QuizAttempt[]>;
   /** Every Member's Reviewer PDF pages viewed as stored, by Member, Reviewer PDF and page. */
   pageViews(): Promise<ReviewerPageView[]>;
+  /** Every Privacy Request as stored, open and done, oldest first; null for a deleted Member's. */
+  privacyRequests(): Promise<(Omit<PrivacyRequest, "userId"> & { userId: string | null })[]>;
+  /** Marks a Privacy Request done behind the seam's back, as an Owner will (ticket 19). */
+  finishPrivacyRequest(id: string): Promise<void>;
 }
 
 /** An Active Device record as it is stored, for checking what is (and isn't) kept. */
@@ -87,6 +91,13 @@ const SAMPLE_ARM: MemberArm = {
   cardMarks: async () => byCardAndMember(structuredClone(getSampleStore().cardMarks)),
   quizAttempts: async () => structuredClone(getSampleStore().quizAttempts),
   pageViews: async () => byMemberAndPage(structuredClone(getSampleStore().reviewerPageViews)),
+  privacyRequests: async () => structuredClone(getSampleStore().privacyRequests),
+  finishPrivacyRequest: async (id) => {
+    const store = getSampleStore();
+    store.privacyRequests = store.privacyRequests.map((request) =>
+      request.id === id ? { ...request, status: "done" } : request,
+    );
+  },
 };
 
 export const MEMBER_ARMS: MemberArm[] =
