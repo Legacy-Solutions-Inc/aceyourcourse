@@ -20,10 +20,11 @@ export interface PasswordSignInInputs {
 }
 
 /**
- * Pure: where the Admin's password sign-in is allowed: live mode, under
- * `pnpm dev` (ticket 19) or, while the deployed site is tested, with the
- * ADMIN_PASSWORD_SIGN_IN switch "true" (ticket 24). The box, its action and the
- * Staff Guard all ask this, so they never disagree.
+ * Pure: where the password sign-in is allowed, in the Admin and the Member App
+ * alike (ticket 20): live mode, under `pnpm dev` (ticket 19) or, while the
+ * deployed site is tested, with the ADMIN_PASSWORD_SIGN_IN switch "true"
+ * (ticket 24). Both boxes, both actions, the Staff Guard and the Member App's
+ * gate all ask this, so they never disagree.
  */
 export function passwordSignInPermitted({
   adminMode,
@@ -34,8 +35,8 @@ export function passwordSignInPermitted({
 }
 
 /**
- * Pure: whether a session's sign-in counts for the Admin (ticket 19;
- * CONVENTIONS §3). Google (`oauth`) counts everywhere; a password only where
+ * Pure: whether a session's sign-in counts, for the Admin and the Member App
+ * alike (ticket 19; CONVENTIONS §3). Google (`oauth`) counts everywhere; a password only where
  * the password sign-in is allowed. It fails closed: any other method (otp,
  * magiclink, anonymous, a refresh alone), or an amr that's missing or
  * unreadable, never counts.

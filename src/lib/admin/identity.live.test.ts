@@ -546,6 +546,104 @@ describe("the identity module, live mode", () => {
 
       expect(await getSignedInUser()).toMatchObject({ email: OWNER, name: "Angel Rose L. Lepaña" });
     });
+
+    // The Member App counts how a session signed in exactly as the Staff Guard
+    // does (ticket 20): Google everywhere, a password only where the password
+    // box is allowed, nothing else, and it fails closed.
+    describe("how the session signed in (ticket 20)", () => {
+      const ANGEL = { userId: USER_ID, email: OWNER, name: "Angel Rose L. Lepaña" };
+
+      /** Loads the module in this NODE_ENV with the switch set ("" leaves it unset). */
+      async function memberAppIn(nodeEnv: string, passwordSwitch: string) {
+        vi.stubEnv("NODE_ENV", nodeEnv);
+        vi.stubEnv("ADMIN_PASSWORD_SIGN_IN", passwordSwitch);
+        vi.resetModules();
+        return loadIdentity();
+      }
+
+      beforeEach(() => {
+        auth.getUser.mockResolvedValue(user(googleUser()));
+      });
+
+      it.each([
+        ["production", "true"],
+        ["production", "false"],
+        ["production", ""],
+        ["development", "false"],
+      ])("counts a Google session in %s with the switch %j", async (nodeEnv, passwordSwitch) => {
+        signedInWith("oauth");
+        const { getSignedInUser } = await memberAppIn(nodeEnv, passwordSwitch);
+
+        expect(await getSignedInUser()).toEqual(ANGEL);
+      });
+
+      it.each([
+        ["production", "true"],
+        ["development", "false"],
+        ["development", ""],
+      ])(
+        "counts a password session where the box is allowed: %s with the switch %j",
+        async (nodeEnv, passwordSwitch) => {
+          signedInWith("password");
+          const { getSignedInUser } = await memberAppIn(nodeEnv, passwordSwitch);
+
+          expect(await getSignedInUser()).toEqual(ANGEL);
+        },
+      );
+
+      it.each(["false", ""])(
+        "is nobody for a password session in production with the switch %j",
+        async (passwordSwitch) => {
+          signedInWith("password");
+          const { getSignedInUser } = await memberAppIn("production", passwordSwitch);
+
+          expect(await getSignedInUser()).toBeNull();
+        },
+      );
+
+      it.each(["true", "false"])(
+        "never counts magic link, OTP, anonymous, or a missing or unreadable amr, with the switch %j",
+        async (passwordSwitch) => {
+          const { getSignedInUser } = await memberAppIn("production", passwordSwitch);
+
+          for (const amr of [
+            [{ method: "magiclink" }],
+            [{ method: "otp" }],
+            [{ method: "anonymous" }],
+            [{ method: "token_refresh" }],
+            [],
+            undefined,
+            "oauth",
+            [{ method: 1 }],
+          ]) {
+            auth.getClaims.mockResolvedValue(claims(amr));
+            expect(await getSignedInUser()).toBeNull();
+          }
+        },
+      );
+
+      it("is nobody when getClaims fails, refuses or finds no session, without crashing", async () => {
+        const { getSignedInUser } = await memberAppIn("production", "true");
+
+        auth.getClaims.mockResolvedValue({ data: null, error: new Error("Invalid JWT signature") });
+        expect(await getSignedInUser()).toBeNull();
+
+        auth.getClaims.mockResolvedValue({ data: null, error: null });
+        expect(await getSignedInUser()).toBeNull();
+
+        auth.getClaims.mockRejectedValue(new TypeError("fetch failed"));
+        expect(await getSignedInUser()).toBeNull();
+      });
+
+      it("is nobody when the claims are another User's than getUser's", async () => {
+        auth.getClaims.mockResolvedValue(
+          claims([{ method: "oauth" }], "8a0c7f8e-0000-4000-8000-000000000999"),
+        );
+        const { getSignedInUser } = await memberAppIn("production", "true");
+
+        expect(await getSignedInUser()).toBeNull();
+      });
+    });
   });
 
   describe("getSignInAttempt", () => {

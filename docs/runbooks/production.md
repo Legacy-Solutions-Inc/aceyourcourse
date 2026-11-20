@@ -228,9 +228,11 @@ Steps 7 and 8 can wait until go-live.
 
 #### Testing on the deployed site
 
-While you test the deployed site, its sign-in screen can show the same box,
-headed **TESTING ONLY**, under "Continue with Google", so Staff can sign in
-with the password Users above. It's temporary, and is removed once testing is done.
+While you test the deployed site, both sign-in screens can show the same box,
+headed **TESTING ONLY**, under "Continue with Google": the Admin's
+(`/admin/sign-in`) and the Member App's (`/app/sign-in`). Staff and Beta
+Testers then sign in with password Users. One switch, `ADMIN_PASSWORD_SIGN_IN`,
+turns it on for both. It's temporary, and is removed once testing is done.
 
 1. **Turn it on:** Vercel → Project → **Settings → Environment Variables**,
    environment **Production**: add `ADMIN_PASSWORD_SIGN_IN` with the value
@@ -238,12 +240,21 @@ with the password Users above. It's temporary, and is removed once testing is do
    a variable changes nothing until the next deploy.
 2. Keep this project's **Email** provider on, with **Confirm email** on. The
    box shows only while Supabase says Email is on.
-3. Open `<site-url>/admin/sign-in`, and sign in with the **TESTING ONLY**
-   box. Only emails on the staff list get in; anyone else lands on the
-   "denied" screen, as with Google.
-4. **Turn it off:** set `ADMIN_PASSWORD_SIGN_IN` to `false` (or delete it),
-   and redeploy. The box is gone, and a password session no longer counts,
-   even one already signed in. Turning the Email provider off ends it too.
+3. **The Admin:** open `<site-url>/admin/sign-in`, and sign in with the
+   **TESTING ONLY** box. Only emails on the staff list get in; anyone else
+   lands on the "denied" screen, as with Google.
+4. **The Member App's testers:** for each tester, create a password User in
+   the Supabase dashboard (**Authentication → Users → Add user → Create new
+   user**, with their email, a password you give them, and **Auto Confirm
+   User** ticked). Then add the same email in the Admin, **Users → Beta
+   Testers**. They sign in at `<site-url>/app/sign-in` with the **TESTING
+   ONLY** box, and that device becomes their Active Device, as with Google.
+   Staff can sign in there too. Anyone else lands on "Not open yet" until the
+   Member App launches.
+5. **Turn it off:** set `ADMIN_PASSWORD_SIGN_IN` to `false` (or delete it),
+   and redeploy. The box is gone from both sign-in screens, and a password
+   session no longer counts in the Admin or the Member App, even one already
+   signed in. Turning the Email provider off ends it too.
 
 Only `true` turns it on. Any other value (`yes`, `1`, `TRUE`) stops the
 deployment from starting, with a message naming `ADMIN_PASSWORD_SIGN_IN`.
@@ -282,11 +293,15 @@ with no `localhost` entries, and the Audience page shows **In production**.
 you developed or tested (after step 6):
 
 1. In Vercel, set `ADMIN_PASSWORD_SIGN_IN` to `false` (or delete it) for
-   Production, and redeploy. The deployed site's **TESTING ONLY** box is
-   gone, and it counts no password sign-in.
+   Production, and redeploy. That ends password sign-in in both the Admin and
+   the Member App: the **TESTING ONLY** box is gone from both sign-in
+   screens, and neither counts a password sign-in.
 2. Remove the test Editors from the Admin's **Settings → Staff & Invites**.
 3. Delete their Users (**Authentication → Users**).
-4. Your own User stays: your first Google sign-in attaches Google to it.
+4. Your own User stays: your first Google sign-in attaches Google to it. So
+   do the Member App testers' Users: a tester's first Google sign-in with the
+   same email attaches Google to theirs, and keeps their Member App data.
+   Remove from **Users → Beta Testers** anyone who should stop testing.
 5. 8.2 below turns Email off. After that the **Development only** box is
    gone on localhost too.
 

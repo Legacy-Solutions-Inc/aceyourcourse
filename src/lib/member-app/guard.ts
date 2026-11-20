@@ -26,9 +26,11 @@ import type { Member, MemberUser, TargetExam } from "@/services/member.types";
 // gate and consent.
 //
 // The gate takes the signed-in User from src/lib/admin/identity.ts (the Admin
-// and the Member App share one sign-in), then reads the Member App switch, the
-// staff list and the Beta Tester list on every call, so a removed tester or
-// removed Staff User is refused on their next request. The pure rule is
+// and the Member App share one sign-in, and count how a session signed in
+// alike: Google, or a password only where the password box is allowed; ticket
+// 20), then reads the Member App switch, the staff list and the Beta Tester
+// list on every call, so a removed tester or removed Staff User is refused on
+// their next request. The pure rule is
 // src/lib/member-app/gate.ts. Unlike the Staff Guard, it only reads the staff
 // list: an unused Invite isn't activated here, and a refusal isn't recorded.
 //
@@ -153,9 +155,9 @@ export async function requireMember(from: string = paths.memberApp.home): Promis
 
 /**
  * The Member App sign-in's claim, once sign-in completes (the callback after
- * Google, or the sample "Sign in as"): when the gate lets the signed-in User
- * in, this device becomes their Active Device, replacing any other, and the
- * claim is logged. Their Member record is made here if this is their first
+ * Google, the password box, or the sample "Sign in as"): when the gate lets
+ * the signed-in User in, this device becomes their Active Device, replacing
+ * any other, and the claim is logged. Their Member record is made here if this is their first
  * pass, as the gate's first pass would. Someone the gate turns away gets no
  * claim, no device token and no Member record. Consent is asked afterwards,
  * on the page they land on, like everything else.

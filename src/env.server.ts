@@ -23,11 +23,12 @@ function optionalEnv<T extends z.ZodTypeAny>(schema: T) {
 }
 
 const serverEnvSchema = z.object({
-  // TEMPORARY (ticket 24): the production password sign-in switch. Unset or
-  // "false" keeps the Admin's password box to `pnpm dev`; "true" also offers it
-  // (headed "TESTING ONLY") on this deployment while the site is tested, and
-  // counts a password session in the Staff Guard. Set it to "false" (or delete
-  // it) before go-live. Read through src/lib/admin/identity.ts, never directly.
+  // TEMPORARY (tickets 24 and 20): the production password sign-in switch, for
+  // the Admin and the Member App alike. Unset or "false" keeps the password box
+  // to `pnpm dev`; "true" also offers it (headed "TESTING ONLY") on this
+  // deployment while the site is tested, and counts a password session in the
+  // Staff Guard and the Member App. Set it to "false" (or delete it) before
+  // go-live. Read through src/lib/admin/identity.ts, never directly.
   ADMIN_PASSWORD_SIGN_IN: optionalEnv(z.enum(["true", "false"]).optional()),
   // The Reviewer PDF job's secret (ticket 12). Vercel Cron sends it as
   // `Authorization: Bearer <CRON_SECRET>` to the cron endpoint, and each run
