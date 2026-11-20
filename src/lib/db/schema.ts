@@ -1114,12 +1114,15 @@ export const privacyRequestStatus = pgEnum("privacy_request_status", PRIVACY_REQ
 /**
  * Each Member's Privacy Requests (ticket 18; spec, Phase 3 → Privacy
  * Requests): a data copy or a deletion, asked for from Account, open until an
- * Owner marks it done (ticket 19). `due_on` is the Manila date it's due (7
- * days for a copy, 30 for a deletion), fixed when it's made. A Member has at
+ * Owner marks it done (ticket 19), with when and by whom, as they were then.
+ * `due_on` is the Manila date it's due (7 days for a copy, 30 for a
+ * deletion), fixed when it's made. A Member has at
  * most one open request of each type: the partial unique index refuses a
  * second. A request outlives the account it's about: deleting the Member
  * empties `user_id`, so the request keeps its type, dates and status, the
- * record that it was carried out, and nothing that says who asked. Nothing is
+ * record that it was carried out, and nothing that says who asked. A deletion
+ * keeps the opaque User id it removed in `deleted_user_id`, so a Supabase User
+ * left behind by a failed step can be deleted again (ticket 19). Nothing is
  * emailed.
  */
 export const privacyRequests = pgTable(
@@ -1132,11 +1135,22 @@ export const privacyRequests = pgTable(
     status: privacyRequestStatus("status").notNull(),
     requestedAt: at("requested_at").notNull(),
     dueOn: date("due_on").notNull(),
+    // Set together when an Owner marks it done (ticket 19).
+    doneAt: at("done_at"),
+    doneByEmail: text("done_by_email"),
+    doneByName: text("done_by_name"),
+    // The User id a deletion removed the Member data of. No foreign key: the Member is gone.
+    deletedUserId: uuid("deleted_user_id"),
   },
   (t) => [
     index("privacy_requests_user_id_idx").on(t.userId),
     uniqueIndex("privacy_requests_one_open_per_type_idx")
       .on(t.userId, t.type)
       .where(sql`${t.status} = 'open'`),
+    check(
+      "privacy_requests_done_when_and_by_whom",
+      sql`(${t.status} = 'open' and ${t.doneAt} is null and ${t.doneByEmail} is null and ${t.doneByName} is null)
+        or (${t.status} = 'done' and ${t.doneAt} is not null and ${t.doneByEmail} is not null and ${t.doneByName} is not null)`,
+    ),
   ],
 ).enableRLS();

@@ -1,5 +1,6 @@
 import type { z } from "zod";
 
+import { isLastOwner, LAST_OWNER } from "@/lib/admin/staff-rules";
 import {
   type ChangeStaffRoleInput,
   changeStaffRoleSchema,
@@ -142,7 +143,6 @@ export async function recordSignIn(
 
 const FORBIDDEN = "ONLY AN OWNER CAN MANAGE STAFF";
 export const ALREADY_ON_LIST = "This email is already on the staff list.";
-const LAST_OWNER = "There must always be at least one Owner.";
 const OWN_ACCESS = "You can't remove or change your own access.";
 
 const NOT_FOUND = { ok: false, error: { kind: "not-found" } } as const;
@@ -170,8 +170,7 @@ function check<Schema extends z.ZodTypeAny>(
  * the only Owner can't stop being one, and nobody changes their own access.
  */
 function protectedAccess(store: SampleStore, actor: StaffActor, member: StaffMember) {
-  const owners = store.staff.filter((candidate) => candidate.role === "owner");
-  if (member.role === "owner" && owners.length === 1) return LAST_OWNER;
+  if (isLastOwner(store.staff, member.email)) return LAST_OWNER;
   if (member.email === actor.email.toLowerCase()) return OWN_ACCESS;
   return null;
 }

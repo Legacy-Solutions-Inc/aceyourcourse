@@ -5,11 +5,10 @@ import type { AdminPrivacyRequest } from "@/services/admin.types";
 
 import { PrivacyRequests } from "./privacy-requests";
 
-// The Users screen's Privacy Requests tab (Phase 3, ticket 18; story 133):
-// what Members asked for from Account, soonest due first as the seam orders
-// them, each with its Member, dates and status, an overdue one flagged.
-// Carrying them out comes with ticket 19, so there's nothing to click but the
-// Member.
+// The Users screen's Privacy Requests tab (Phase 3, tickets 18 and 19; story
+// 133): what Members asked for from Account, soonest due first as the seam
+// orders them, each with its Member, dates and status, an overdue one
+// flagged. Each request's type opens its screen, where it's carried out.
 const BEA = {
   userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
   email: "tester@example.com",
@@ -26,6 +25,8 @@ const COPY: AdminPrivacyRequest = {
   dueOn: "2026-11-27",
   overdue: true,
   member: { ...SAM, name: null },
+  doneAt: null,
+  doneBy: null,
 };
 const DELETION: AdminPrivacyRequest = {
   id: "0b6e4d2a-7c1f-4e3b-9a85-2d4c6e8f0a12",
@@ -35,6 +36,8 @@ const DELETION: AdminPrivacyRequest = {
   dueOn: "2026-12-19",
   overdue: false,
   member: BEA,
+  doneAt: null,
+  doneBy: null,
 };
 
 const list = () => screen.getByRole("region", { name: "Privacy Requests" });
@@ -81,18 +84,42 @@ describe("PrivacyRequests", () => {
     expect(within(deletion as HTMLElement).queryByText("OVERDUE")).not.toBeInTheDocument();
   });
 
-  it("says a done request is done", () => {
-    render(<PrivacyRequests requests={[{ ...DELETION, status: "done" }]} />);
-    expect(rows()[0]).toHaveTextContent("DONE");
+  it("opens each request's screen from its type, named with who asked", () => {
+    render(<PrivacyRequests requests={[COPY, DELETION]} />);
+    expect(
+      within(list()).getByRole("link", { name: "DATA COPY · stranger@example.com" }),
+    ).toHaveAttribute("href", `/admin/users/privacy-requests/${COPY.id}`);
+    expect(
+      within(list()).getByRole("link", { name: "DELETION · tester@example.com" }),
+    ).toHaveAttribute("href", `/admin/users/privacy-requests/${DELETION.id}`);
   });
 
-  it("says a request's account is deleted, with no Member to open", () => {
+  it("says a done request is done, and the day", () => {
+    render(
+      <PrivacyRequests
+        requests={[
+          {
+            ...DELETION,
+            status: "done",
+            doneAt: "2026-11-20T02:00:00.000Z",
+            doneBy: { email: "angel@aceyourcourse.ph", name: "Angel Rose L. Lepaña" },
+          },
+        ]}
+      />,
+    );
+    expect(rows()[0]).toHaveTextContent("DONE20 NOV 2026");
+  });
+
+  it("says a request's account is deleted, with no Member to open, only the request", () => {
     render(<PrivacyRequests requests={[{ ...DELETION, status: "done", member: null }]} />);
     expect(rows()[0]).toHaveTextContent("Account deleted");
-    expect(within(list()).queryByRole("link")).not.toBeInTheDocument();
+    expect(within(list()).getAllByRole("link")).toHaveLength(1);
+    expect(
+      within(list()).getByRole("link", { name: "DELETION · account deleted" }),
+    ).toBeInTheDocument();
   });
 
-  it("offers nothing to carry a request out yet", () => {
+  it("carries nothing out from the list: that's each request's screen", () => {
     render(<PrivacyRequests requests={[COPY, DELETION]} />);
     expect(within(list()).queryByRole("button")).not.toBeInTheDocument();
   });

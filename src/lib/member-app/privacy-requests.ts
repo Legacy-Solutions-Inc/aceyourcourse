@@ -3,11 +3,11 @@ import { addCalendarDays, manilaDate } from "@/lib/manila-time";
 // ─────────────────────────────────────────────────────────────────────────────
 // Privacy Requests (spec, Phase 3 → Privacy Requests; Privacy Policy §14),
 // pure. A Member asks from Account for a copy of their data or for their
-// account to be deleted; Owners carry each one out by hand (ticket 19). A data
-// copy is due within 7 days and a deletion within 30, counted in Asia/Manila
-// calendar days from the day the Member asked, so a request is overdue from
-// Manila midnight after its due date. A Member has at most one open request of
-// each type.
+// account to be deleted; Owners carry each one out from the Admin (ticket
+// 19). A data copy is due within 7 days and a deletion within 30, counted in
+// Asia/Manila calendar days from the day the Member asked, so a request is
+// overdue from Manila midnight after its due date. A Member has at most one
+// open request of each type.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const PRIVACY_REQUEST_TYPES = ["data-copy", "deletion"] as const;
@@ -22,6 +22,10 @@ export const PRIVACY_REQUEST_DAYS: Readonly<Record<PrivacyRequestType, number>> 
   "data-copy": 7,
   deletion: 30,
 };
+
+/** What carrying out a request says once its Member's account is gone (ticket 19). */
+export const ALREADY_DELETED =
+  "Already deleted. This Member’s account is gone, so there’s nothing left to download or delete. Mark the request done.";
 
 /** What a Member types to confirm they want their account deleted. */
 export const DELETION_CONFIRMATION = "DELETE";
@@ -42,3 +46,13 @@ export const isPrivacyRequestOverdue = (
 /** Pure: whether what the Member typed is the deletion confirmation, ignoring spaces around it. */
 export const isDeletionConfirmed = (typed: string): boolean =>
   typed.trim() === DELETION_CONFIRMATION;
+
+/**
+ * Pure: whether what an Owner typed to confirm deleting a Member's account
+ * (ticket 19) is that Member's email, ignoring capitals and the spaces around
+ * it. Nothing confirms an account with no email.
+ */
+export const isAccountDeletionConfirmed = (typed: string, email: string): boolean => {
+  const wanted = email.trim().toLowerCase();
+  return wanted !== "" && typed.trim().toLowerCase() === wanted;
+};

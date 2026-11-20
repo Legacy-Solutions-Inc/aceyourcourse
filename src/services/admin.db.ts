@@ -769,8 +769,12 @@ export const databaseArm: AdminService = {
   grantAccess: passes.grantAccess,
   extendAccess: passes.extendAccess,
   endAccess: passes.endAccess,
-  // The Members' Privacy Requests, read by their own module (ticket 18).
+  // The Members' Privacy Requests, read and carried out by their own module (tickets 18 and 19).
   listPrivacyRequests: privacy.listPrivacyRequests,
+  getPrivacyRequestForAdmin: privacy.getPrivacyRequestForAdmin,
+  exportMemberData: privacy.exportMemberData,
+  deleteMemberAccount: privacy.deleteMemberAccount,
+  markPrivacyRequestDone: privacy.markPrivacyRequestDone,
 
   getOverview: read(CATALOGUE, sampleArm.getOverview),
 

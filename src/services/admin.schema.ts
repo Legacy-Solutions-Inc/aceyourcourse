@@ -379,6 +379,32 @@ export type GrantAccessInput = z.input<typeof grantAccessInputSchema>;
 export type ExtendAccessInput = z.input<typeof extendAccessInputSchema>;
 export type EndAccessInput = z.input<typeof endAccessInputSchema>;
 
+// ── Privacy Requests (Owners only; Phase 3, ticket 19) ──────────────────────
+// Carrying out a Member's request: its id, and for "Delete this account" the
+// Member's email typed to confirm. Whether what was typed is that email is
+// the seam's to decide, as only it reads the Member.
+
+/** The longest confirmation taken: an email address is at most 320 characters. */
+const CONFIRMATION_MAX = 320;
+export const CONFIRMATION_WRONG = "TYPE THIS MEMBER’S EMAIL EXACTLY TO CONFIRM";
+
+/** A Privacy Request's id: anything else is no request (not-found). */
+export const privacyRequestIdSchema = z.string().uuid();
+
+/** A Privacy Request to carry out: "Mark done". */
+export const privacyRequestInputSchema = z.object({ requestId: z.string().max(100) });
+
+/** "Delete this account": the deletion request, and what the Owner typed to confirm. */
+export const deleteAccountInputSchema = z.object({
+  requestId: z.string().max(100),
+  confirmation: z
+    .string({ required_error: CONFIRMATION_WRONG, invalid_type_error: CONFIRMATION_WRONG })
+    .max(CONFIRMATION_MAX, CONFIRMATION_WRONG),
+});
+
+export type PrivacyRequestInput = z.input<typeof privacyRequestInputSchema>;
+export type DeleteAccountInput = z.input<typeof deleteAccountInputSchema>;
+
 // ── Products ────────────────────────────────────────────────────────────────
 
 const flag = z.boolean({

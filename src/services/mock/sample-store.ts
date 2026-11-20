@@ -93,6 +93,17 @@ export interface SignedSampleFile {
   expiresAt: string;
 }
 
+/** A Privacy Request as the sample data keeps it (tickets 18 and 19), as the database row does. */
+export interface SamplePrivacyRequest extends Omit<PrivacyRequest, "userId"> {
+  /** The Member who asked, or null once their account is deleted. */
+  userId: string | null;
+  /** ISO time an Owner marked it done, and who, as they were then; null while open. */
+  doneAt: string | null;
+  doneBy: { email: string; name: string } | null;
+  /** The User id a deletion removed the Member data of, or null before one has. */
+  deletedUserId: string | null;
+}
+
 /** A Member's Active Device record in the sample data. */
 export interface SampleActiveDevice {
   tokenHash: string;
@@ -164,7 +175,7 @@ export interface SampleStore {
   /** Every Member's in-app notices, in the order made (ticket 17): grants, extensions and ends. */
   memberNotices: MemberNotice[];
   /** Every Member's Privacy Requests, open and done, in the order asked (ticket 18). */
-  privacyRequests: PrivacyRequest[];
+  privacyRequests: SamplePrivacyRequest[];
   /** The upload seam's files, by upload id. */
   uploads: Record<string, SampleUpload>;
   /** The private content bucket's files, by path (ticket 06): card back images. */

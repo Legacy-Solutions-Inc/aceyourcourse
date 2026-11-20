@@ -43,7 +43,7 @@ import type {
   PrivacyRequestOutcome,
   TargetExam,
 } from "@/services/member.types";
-import { getSampleStore } from "@/services/mock/sample-store";
+import { getSampleStore, type SamplePrivacyRequest } from "@/services/mock/sample-store";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
 
 // The Member seam's sample arm: over the in-memory sample store
@@ -476,13 +476,17 @@ export async function dismissNotice(userId: string, noticeId: string): Promise<b
 
 // ── Privacy Requests ────────────────────────────────────────────────────────
 
+/** One of a Member's own requests, as the Member App reads it. */
+const ownRequest = (
+  { id, type, status, requestedAt, dueOn }: SamplePrivacyRequest,
+  userId: string,
+): PrivacyRequest => ({ id, userId, type, status, requestedAt, dueOn });
+
 export async function listOpenPrivacyRequests(userId: string): Promise<PrivacyRequest[]> {
   const wanted = memberUserIdSchema.parse(userId);
-  return structuredClone(
-    getSampleStore().privacyRequests.filter(
-      (request) => request.userId === wanted && request.status === "open",
-    ),
-  );
+  return getSampleStore()
+    .privacyRequests.filter((request) => request.userId === wanted && request.status === "open")
+    .map((request) => ownRequest(request, wanted));
 }
 
 export async function requestPrivacy(
@@ -499,17 +503,20 @@ export async function requestPrivacy(
   const open = store.privacyRequests.find(
     (request) => request.userId === wanted && request.type === asked && request.status === "open",
   );
-  if (open) return { request: structuredClone(open), created: false };
+  if (open) return { request: ownRequest(open, wanted), created: false };
 
   const now = new Date();
-  const request: PrivacyRequest = {
+  const request: SamplePrivacyRequest = {
     id: crypto.randomUUID(),
     userId: wanted,
     type: asked,
     status: "open",
     requestedAt: now.toISOString(),
     dueOn: privacyRequestDueOn(asked, now),
+    doneAt: null,
+    doneBy: null,
+    deletedUserId: null,
   };
   store.privacyRequests = [...store.privacyRequests, request];
-  return { request: structuredClone(request), created: true };
+  return { request: ownRequest(request, wanted), created: true };
 }

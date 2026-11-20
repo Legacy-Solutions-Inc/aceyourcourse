@@ -11,6 +11,7 @@ import type { AdminResult, StaffActor } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
 import { hashDeviceToken } from "@/lib/member-app/device-token";
+import { createFakeAuthAdmin } from "@/services/auth-admin.fake";
 import { createFakeRenderer } from "@/services/page-images.fake";
 
 import {
@@ -62,8 +63,9 @@ const READS = [
   // The Users list and a Member's detail page (ticket 16).
   "listUsers",
   "getMemberForAdmin",
-  // The Privacy Requests list (ticket 18).
+  // The Privacy Requests list (ticket 18), and one request's screen (ticket 19).
   "listPrivacyRequests",
+  "getPrivacyRequestForAdmin",
   "getOverview",
   "getSettingsForAdmin",
   "listProductsForAdmin",
@@ -136,6 +138,18 @@ const ALGEBRA = sampleTopicId("CE", "MSTC", "Algebra");
 const ALGEBRA_DECK = sampleContentId(ALGEBRA, "deck");
 /** The two cards withTwoCards adds to Algebra's deck, first and second. */
 const cards = { first: "", second: "" };
+/** An id no Privacy Request has. */
+const NO_SUCH_REQUEST = "5d2c1b0a-9e8f-4a7b-8c6d-0e1f2a3b4c5d";
+/** The Privacy Request a write's setUp has Bea make (ticket 19). */
+const requests = { made: "" };
+
+/** Bea joins and asks for a data copy or a deletion, from Account. */
+function beaAsksFor(type: "data-copy" | "deletion") {
+  return async (_seam: AdminService, arm: AdminArm) => {
+    await arm.member.getOrCreateMember(BEA);
+    requests.made = (await arm.member.requestPrivacy(BEA.userId, type)).request.id;
+  };
+}
 
 /** Gives Algebra's deck two cards, for the card editor's writes. */
 async function withTwoCards(seam: AdminService) {
@@ -372,6 +386,44 @@ const WRITES: Record<string, Write> = {
       await arm.member.getOrCreateMember(BEA);
       await arm.putAccessPass({ userId: BEA.userId, examCode: "CE", endsAt: inDays(30) });
     },
+  },
+  // Carry out a Privacy Request (ticket 19). The Supabase User goes through the fake auth admin.
+  exportMemberData: {
+    actor: OWNER,
+    entity: "privacy-request",
+    entityId: null,
+    saves: (seam, actor) => seam.exportMemberData(actor, requests.made),
+    refused: (seam, actor) => seam.exportMemberData(actor, NO_SUCH_REQUEST),
+    refusal: "not-found",
+    setUp: beaAsksFor("data-copy"),
+  },
+  deleteMemberAccount: {
+    actor: OWNER,
+    entity: "privacy-request",
+    entityId: null,
+    saves: (seam, actor) =>
+      seam.deleteMemberAccount(
+        actor,
+        { requestId: requests.made, confirmation: BEA.email },
+        createFakeAuthAdmin(),
+      ),
+    refused: (seam, actor) =>
+      seam.deleteMemberAccount(
+        actor,
+        { requestId: requests.made, confirmation: "someone.else@example.com" },
+        createFakeAuthAdmin(),
+      ),
+    refusal: "invalid",
+    setUp: beaAsksFor("deletion"),
+  },
+  markPrivacyRequestDone: {
+    actor: OWNER,
+    entity: "privacy-request",
+    entityId: null,
+    saves: (seam, actor) => seam.markPrivacyRequestDone(actor, { requestId: requests.made }),
+    refused: (seam, actor) => seam.markPrivacyRequestDone(actor, { requestId: NO_SUCH_REQUEST }),
+    refusal: "not-found",
+    setUp: beaAsksFor("data-copy"),
   },
   updateWebsiteSettings: {
     actor: OWNER,

@@ -17,7 +17,7 @@ import { productFormValues } from "@/lib/admin/product-form";
 import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
 import { reviewFormValues } from "@/lib/admin/review-form";
 import { getExamPageForAdmin, planCardImport, planQuizImport } from "@/services/admin";
-import { claimDevice, getOrCreateMember } from "@/services/member.mock";
+import { claimDevice, getOrCreateMember, requestPrivacy } from "@/services/member.mock";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
 import { getSampleStore } from "@/services/mock/sample-store";
 
@@ -138,6 +138,8 @@ const BEA = {
  * the Admin uses the Active Device modules (src/app/app/device.test.tsx).
  */
 const BEA_PHONE = "b".repeat(64);
+/** Bea's Privacy Requests, made before each test: a data copy, and a deletion (ticket 19). */
+const requests = { copy: "", deletion: "" };
 
 const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
 
@@ -261,6 +263,14 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
       users.endAccessPass(IDLE, {
         input: { userId: BEA.userId, examCode: "CE", reason: "Mistake" },
       }),
+    ),
+    deleteAccount: owner(() =>
+      users.deleteAccount(IDLE, {
+        input: { requestId: requests.deletion, confirmation: BEA.email },
+      }),
+    ),
+    markRequestDone: owner(() =>
+      users.markRequestDone(IDLE, { input: { requestId: requests.copy } }),
     ),
   },
   "./(shell)/content/actions.ts": {
@@ -586,6 +596,9 @@ beforeEach(async () => {
       endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     },
   ];
+  // Bea asks, from Account, for a copy of her data and for her account to be deleted.
+  requests.copy = (await requestPrivacy(BEA.userId, "data-copy")).request.id;
+  requests.deletion = (await requestPrivacy(BEA.userId, "deletion")).request.id;
 });
 
 describe("the action registry", () => {

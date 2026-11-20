@@ -139,6 +139,11 @@ export const paths = {
     privacyRequests: "/admin/users?tab=privacy-requests",
     /** A Member's detail page in Users, by their User id (ticket 16). */
     user: (userId: string) => `/admin/users/${encodeURIComponent(userId)}`,
+    /** One Privacy Request's screen, where an Owner carries it out (ticket 19). */
+    privacyRequest: (id: string) => `/admin/users/privacy-requests/${encodeURIComponent(id)}`,
+    /** A data-copy request's file: "Download this Member's data" posts here (ticket 19). */
+    privacyRequestData: (id: string) =>
+      `/admin/users/privacy-requests/${encodeURIComponent(id)}/data`,
     /** Member App content (Phase 3): each Subject's Topics, picked by Exam and Subject. */
     content: "/admin/content",
     /** Member App content open on one Subject's Topics list. */

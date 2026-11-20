@@ -8,10 +8,14 @@ import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { byCardAndMember, byMemberAndPage } from "./admin-arms";
+import { sampleActor } from "./admin-inputs";
 import { type CardImageUpload, uploadSampleCardImage } from "./card-images";
 import { editSampleCatalogue } from "./catalogue-seed";
 import { uploadSampleReviewerPdf } from "./reviewer-pdf-uploads";
 import { MEMBER_DATABASE_ARM } from "./member-database";
+
+/** Who marks a Privacy Request done behind the seam's back: the sample Owner, as they are. */
+const OWNER = { email: sampleActor("owner").email, name: sampleActor("owner").name };
 
 /**
  * The Member seam's arms, for `describe.each(MEMBER_ARMS)` (spec, Phase 3 →
@@ -55,7 +59,7 @@ export interface MemberArm {
   pageViews(): Promise<ReviewerPageView[]>;
   /** Every Privacy Request as stored, open and done, oldest first; null for a deleted Member's. */
   privacyRequests(): Promise<(Omit<PrivacyRequest, "userId"> & { userId: string | null })[]>;
-  /** Marks a Privacy Request done behind the seam's back, as an Owner will (ticket 19). */
+  /** Marks a Privacy Request done behind the seam's back, as an Owner does (ticket 19). */
   finishPrivacyRequest(id: string): Promise<void>;
 }
 
@@ -95,7 +99,9 @@ const SAMPLE_ARM: MemberArm = {
   finishPrivacyRequest: async (id) => {
     const store = getSampleStore();
     store.privacyRequests = store.privacyRequests.map((request) =>
-      request.id === id ? { ...request, status: "done" } : request,
+      request.id === id
+        ? { ...request, status: "done", doneAt: new Date().toISOString(), doneBy: OWNER }
+        : request,
     );
   },
 };

@@ -24,11 +24,13 @@ import type {
   CardForm,
   ImportInput,
   ConfirmImportInput,
+  DeleteAccountInput,
   NewCardForm,
   NewTopicForm,
   OfficialExamDateForm,
   QuestionForm,
   QuizSettingsForm,
+  PrivacyRequestInput,
   ProductFlags,
   ProductForm,
   PromoBannerForm,
@@ -55,6 +57,7 @@ import type {
   AdminMemberDetail,
   AdminOverview,
   AdminPrivacyRequest,
+  AdminPrivacyRequestDetail,
   AdminProduct,
   AdminQuestion,
   AdminQuiz,
@@ -87,6 +90,7 @@ import type {
   DeniedSignIn,
   FaqListQuery,
   ForcedSignOut,
+  MemberDataFile,
   Invite,
   ProductDeletePreview,
   ProductListQuery,
@@ -100,6 +104,7 @@ import type {
   UserListQuery,
 } from "@/services/admin.types";
 import type { Topic } from "@/services/content.types";
+import type { AuthAdmin } from "@/services/auth-admin.types";
 import type { PdfRenderer } from "@/services/page-images.types";
 import type { Exam, ExamPageSection, SitePageKey } from "@/services/catalogue.types";
 
@@ -259,17 +264,60 @@ export interface AdminService {
    */
   endAccess(actor: StaffActor, input: EndAccessInput): Promise<AdminResult<AccessPassChange>>;
 
-  // Privacy Requests (Owners only; Phase 3, ticket 18; story 133): what
-  // Members asked for from Account. Carrying them out is ticket 19. It
-  // touches no Catalogue, so it returns no cache tag.
+  // Privacy Requests (Owners only; Phase 3, tickets 18 and 19; stories 133,
+  // 133q and 133r): what Members asked for from Account, and carrying it
+  // out. An Editor is refused every call. Each write appends one Staff
+  // Activity record naming the request and an opaque User id, never the
+  // Member's email or name. None touches the Catalogue, so none returns a
+  // cache tag. Nothing is emailed.
 
   /**
    * Every Member's Privacy Requests (data copy or deletion), soonest due
    * first, each with its Member (none once their account is deleted), the
-   * day it was asked for, the Manila date it's due, its status, and whether
-   * it's still open after that date. An Editor is refused.
+   * day it was asked for, the Manila date it's due, its status, when and by
+   * whom it was marked done, and whether it's still open after its due date.
    */
   listPrivacyRequests(actor: StaffActor): Promise<AdminResult<AdminPrivacyRequest[]>>;
+  /**
+   * One request, as its screen shows it: the list's fields, why deleting the
+   * account is refused now (the staff list, the last Owner), whether a
+   * deletion is half done, and whether the Member is a Beta Tester. An id
+   * that isn't a request's is not-found.
+   */
+  getPrivacyRequestForAdmin(
+    actor: StaffActor,
+    requestId: string,
+  ): Promise<AdminResult<AdminPrivacyRequestDetail>>;
+  /**
+   * "Download this Member's data", from a data-copy request: every record
+   * kept about the Member, only theirs, as a JSON file, and the download
+   * logged in Staff Activity. A Member whose account is gone is refused as
+   * "Already deleted"; a deletion request has no file.
+   */
+  exportMemberData(actor: StaffActor, requestId: string): Promise<AdminResult<MemberDataFile>>;
+  /**
+   * "Delete this account", from an open deletion request, after typing the
+   * Member's email: deletes their Member data and Access Passes (no refund)
+   * in one step, taking their email out of earlier Staff Activity, then their
+   * Supabase User with `authAdmin`, then marks the request done. Refused for
+   * an email on the staff list (active or invited) and for the last Owner,
+   * and for a wrong typed email. If Supabase fails, the request stays open
+   * and deleting again (no typed email needed) finishes it.
+   */
+  deleteMemberAccount(
+    actor: StaffActor,
+    input: DeleteAccountInput,
+    authAdmin: AuthAdmin,
+  ): Promise<AdminResult<AdminPrivacyRequest>>;
+  /**
+   * "Mark done", with the date and who. A deletion request is done once its
+   * account is deleted: refused while the account is still there, or half
+   * deleted. A request already done is refused.
+   */
+  markPrivacyRequestDone(
+    actor: StaffActor,
+    input: PrivacyRequestInput,
+  ): Promise<AdminResult<AdminPrivacyRequest>>;
 
   /**
    * The Overview's read (any Staff User): every Product, the Exams, the Exam
@@ -995,6 +1043,10 @@ export const grantAccess = impl.grantAccess;
 export const extendAccess = impl.extendAccess;
 export const endAccess = impl.endAccess;
 export const listPrivacyRequests = impl.listPrivacyRequests;
+export const getPrivacyRequestForAdmin = impl.getPrivacyRequestForAdmin;
+export const exportMemberData = impl.exportMemberData;
+export const deleteMemberAccount = impl.deleteMemberAccount;
+export const markPrivacyRequestDone = impl.markPrivacyRequestDone;
 export const getOverview = impl.getOverview;
 export const getSettingsForAdmin = impl.getSettingsForAdmin;
 export const updateWebsiteSettings = impl.updateWebsiteSettings;

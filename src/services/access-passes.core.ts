@@ -102,8 +102,11 @@ const saved = (value: AccessPassChange): AdminResult<AccessPassChange> => ({
 /** The refusal of an Exam that isn't in the catalogue, on the Exam field. */
 const NO_SUCH_EXAM: AdminError = { kind: "invalid", fieldErrors: { examCode: [NOT_AN_EXAM] } };
 
+/** Pure: how Staff Activity's ids for a Member's passes begin: their User id. */
+export const passEntityPrefix = (userId: string) => `${userId}/`;
+
 /** Pure: how Staff Activity names a Member's pass for an Exam. */
-const passEntityId = (userId: string, examCode: string) => `${userId}/${examCode}`;
+const passEntityId = (userId: string, examCode: string) => `${passEntityPrefix(userId)}${examCode}`;
 
 /** Pure: the notice a change leaves the Member. */
 const noticeOf = (

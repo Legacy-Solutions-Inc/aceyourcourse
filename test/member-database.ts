@@ -18,7 +18,11 @@ import {
 
 import { byMemberAndPage } from "./admin-arms";
 import { DATABASE_ARM as ADMIN_DATABASE_ARM } from "./admin-database";
+import { sampleActor } from "./admin-inputs";
 import type { MemberArm } from "./member-arms";
+
+/** Who marks a Privacy Request done behind the seam's back: the sample Owner, as they are. */
+const OWNER = { email: sampleActor("owner").email, name: sampleActor("owner").name };
 
 /**
  * The Member seam's database arm in the database project (`pnpm test:db`),
@@ -97,7 +101,12 @@ export const MEMBER_DATABASE_ARM: MemberArm = {
   finishPrivacyRequest: async (id) => {
     await getDb()
       .update(schema.privacyRequests)
-      .set({ status: "done" })
+      .set({
+        status: "done",
+        doneAt: new Date(),
+        doneByEmail: OWNER.email,
+        doneByName: OWNER.name,
+      })
       .where(eq(schema.privacyRequests.id, id));
   },
 };

@@ -31,6 +31,7 @@ import {
   sampleReviewerPdfFile,
   uploadSampleReviewerPdf,
 } from "./reviewer-pdf-uploads";
+import type { MemberRecordCounts } from "./member-records";
 import { uploadSamplePhoto } from "./sample-photo";
 
 /**
@@ -129,6 +130,11 @@ export interface AdminArm {
    * seam's back, as a grant (ticket 17) will.
    */
   putAccessPass(pass: AccessPass, grants?: AccessPassGrant[]): Promise<void>;
+  /**
+   * How many records of each kind the Member App keeps for a User id, read
+   * behind the seam's back (ticket 19): what deleting an account must empty.
+   */
+  memberRecords(userId: string): Promise<MemberRecordCounts>;
 }
 
 /** Pure: Card Marks by card, then Member. */
@@ -226,6 +232,28 @@ const SAMPLE_ARM: AdminArm = {
     const store = getSampleStore();
     store.accessPasses = [...store.accessPasses, structuredClone(pass)];
     store.accessPassGrants = [...store.accessPassGrants, ...structuredClone(grants)];
+  },
+  memberRecords: async (userId) => {
+    const store = getSampleStore();
+    const mine = (records: readonly { userId: string | null }[]) =>
+      records.filter((record) => record.userId === userId).length;
+    return {
+      member: mine(store.members),
+      consents: mine(store.memberConsents),
+      targetExams: store.memberTargetExams[userId]?.length ?? 0,
+      activeDevice: store.memberActiveDevices[userId] ? 1 : 0,
+      deviceSwitches: mine(store.memberDeviceSwitches),
+      accessPasses: mine(store.accessPasses),
+      accessPassGrants: mine(store.accessPassGrants),
+      notices: mine(store.memberNotices),
+      cardMarks: mine(store.cardMarks),
+      studyDays: mine(store.studyDays),
+      deckPositions: mine(store.deckPositions),
+      quizAttempts: mine(store.quizAttempts),
+      reviewerPageViews: mine(store.reviewerPageViews),
+      readerPositions: mine(store.readerPositions),
+      privacyRequests: mine(store.privacyRequests),
+    };
   },
   breakStaffActivity: async () => {
     const store = getSampleStore();

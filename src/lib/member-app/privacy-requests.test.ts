@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  isAccountDeletionConfirmed,
   isDeletionConfirmed,
   isPrivacyRequestOverdue,
   PRIVACY_REQUEST_DAYS,
@@ -79,5 +80,25 @@ describe("isDeletionConfirmed", () => {
 
   it.each(["", "delete", "Delete", "DELET", "DELETE ME", "yes"])("refuses %j", (typed) => {
     expect(isDeletionConfirmed(typed)).toBe(false);
+  });
+});
+
+describe("isAccountDeletionConfirmed", () => {
+  // The Owner's confirmation in the Admin (ticket 19): the Member's email, typed.
+  const EMAIL = "tester@example.com";
+
+  it("takes the Member's email, whatever its capitals and the spaces around it", () => {
+    expect(isAccountDeletionConfirmed(EMAIL, EMAIL)).toBe(true);
+    expect(isAccountDeletionConfirmed("  Tester@Example.COM ", EMAIL)).toBe(true);
+  });
+
+  it("refuses anything else: another email, part of it, DELETE, or nothing", () => {
+    for (const typed of ["stranger@example.com", "tester@example", "DELETE", "", "   "]) {
+      expect(isAccountDeletionConfirmed(typed, EMAIL)).toBe(false);
+    }
+  });
+
+  it("refuses everything when the Member has no email to type", () => {
+    expect(isAccountDeletionConfirmed("", "")).toBe(false);
   });
 });

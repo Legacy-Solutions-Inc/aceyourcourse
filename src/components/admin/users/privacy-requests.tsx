@@ -36,9 +36,10 @@ const day = (iso: string) => formatDate(iso).toUpperCase();
  * Member's request for a copy of their data or for their account to be
  * deleted, soonest due first, with when it was asked for, when it's due (7 or
  * 30 days, in Manila) and its status; one still open after its due date is
- * flagged OVERDUE. A Member's name opens their detail page; once their account
- * is deleted, the request stays, saying only that. Carrying a request out (the
- * download, the deletion, "Mark done") comes with ticket 19.
+ * flagged OVERDUE, and one done says the day. Each request's type opens its
+ * screen, where it's carried out (ticket 19); a Member's name opens their
+ * detail page. Once their account is deleted, the request stays, saying only
+ * that.
  */
 export function PrivacyRequests({ requests }: PrivacyRequestsProps) {
   return (
@@ -73,13 +74,20 @@ export function PrivacyRequests({ requests }: PrivacyRequestsProps) {
 
 /** One request. On a phone, the day it was asked for folds under the Member. */
 function RequestRow({ request }: { request: AdminPrivacyRequest }) {
-  const { type, status, requestedAt, dueOn, overdue, member } = request;
+  const { id, type, status, requestedAt, dueOn, overdue, member, doneAt } = request;
   return (
     <TableRow className="border-ayc-ruled align-top hover:bg-ayc-sand/40">
       <TableCell className={cn(cell, "pr-2.5 pl-3.5 font-mono text-[11px] font-bold")}>
-        <span className={type === "deletion" ? "text-destructive" : "text-ayc-blue"}>
+        <Link
+          href={paths.admin.privacyRequest(id)}
+          className={cn(
+            "underline underline-offset-2 hover:no-underline",
+            type === "deletion" ? "text-destructive" : "text-ayc-blue",
+          )}
+        >
           {TYPE_LABELS[type]}
-        </span>
+          <span className="sr-only"> · {member?.email ?? "account deleted"}</span>
+        </Link>
       </TableCell>
       <TableCell className={cn(cell, "pr-2.5")}>
         <span className="flex min-w-0 flex-col gap-0.5">
@@ -114,6 +122,9 @@ function RequestRow({ request }: { request: AdminPrivacyRequest }) {
           <span className={status === "open" ? "text-foreground" : "text-ayc-slate"}>
             {status.toUpperCase()}
           </span>
+          {doneAt ? (
+            <span className="text-[10px] font-medium text-ayc-slate">{day(doneAt)}</span>
+          ) : null}
           {overdue ? <span className="text-destructive">OVERDUE</span> : null}
         </span>
       </TableCell>

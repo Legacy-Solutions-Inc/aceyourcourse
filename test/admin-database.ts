@@ -1,5 +1,6 @@
 import { DEFAULT_QUIZ_SETTINGS } from "@/lib/quizzes/quiz-rules";
 import { asc, eq, sql } from "drizzle-orm";
+import type { AnyPgColumn, PgTable } from "drizzle-orm/pg-core";
 
 import { getDb } from "@/lib/db/client";
 import * as schema from "@/lib/db/schema";
@@ -230,6 +231,35 @@ export const DATABASE_ARM: AdminArm = {
     if (grants.length) {
       await getDb().insert(schema.accessPassGrants).values(grants.map(accessPassGrantToRow));
     }
+  },
+  memberRecords: async (userId) => {
+    const db = getDb();
+    const count = async (table: PgTable & { userId: AnyPgColumn }) =>
+      Number(
+        (
+          await db
+            .select({ n: sql<number>`count(*)` })
+            .from(table)
+            .where(eq(table.userId, userId))
+        )[0]?.n ?? 0,
+      );
+    return {
+      member: await count(schema.members),
+      consents: await count(schema.memberConsents),
+      targetExams: await count(schema.memberTargetExams),
+      activeDevice: await count(schema.memberActiveDevices),
+      deviceSwitches: await count(schema.memberDeviceSwitches),
+      accessPasses: await count(schema.accessPasses),
+      accessPassGrants: await count(schema.accessPassGrants),
+      notices: await count(schema.memberNotices),
+      cardMarks: await count(schema.cardMarks),
+      studyDays: await count(schema.studyDays),
+      deckPositions: await count(schema.deckPositions),
+      quizAttempts: await count(schema.quizAttempts),
+      reviewerPageViews: await count(schema.reviewerPageViews),
+      readerPositions: await count(schema.readerPositions),
+      privacyRequests: await count(schema.privacyRequests),
+    };
   },
   // A trigger that refuses every Staff Activity row: the save's last write.
   // The database tests run one file at a time, so no other test meets it.

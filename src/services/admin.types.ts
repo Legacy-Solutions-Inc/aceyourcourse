@@ -24,6 +24,7 @@ import type { ImportCounts, ImportProblem } from "@/lib/content-import/plan";
 import type { ImportMode } from "@/lib/content-import/modes";
 import type { CardImageType } from "@/lib/cards/card-rules";
 import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
+import type { MemberDataExport } from "@/lib/member-app/data-export";
 import type { MemberProgress } from "@/lib/member-app/progress";
 import type {
   AccessPass,
@@ -805,6 +806,36 @@ export interface AdminPrivacyRequest extends Omit<PrivacyRequest, "userId"> {
   overdue: boolean;
   /** Who asked, or null once their account is deleted: the request stays, saying nothing of them. */
   member: Pick<Member, "userId" | "email" | "name"> | null;
+  /** ISO time an Owner marked it done, or null while it's open (ticket 19). */
+  doneAt: string | null;
+  /** The Owner who marked it done, as they were then, or null while it's open. */
+  doneBy: { email: string; name: string } | null;
+}
+
+/**
+ * One Privacy Request's own screen (ticket 19; stories 133q and 133r): the
+ * list's fields, and what carrying it out depends on now.
+ */
+export interface AdminPrivacyRequestDetail extends AdminPrivacyRequest {
+  /**
+   * Why "Delete this account" is refused now, or null when it isn't: the
+   * Member's email is on the staff list (an active Staff User or an Invite),
+   * or they're the last Owner.
+   */
+  deletionBlocked: string | null;
+  /**
+   * A deletion that removed the account's Member data but not yet its
+   * Supabase User: deleting again finishes it. False once it's done.
+   */
+  deletionUnfinished: boolean;
+  /** Whether the Member's email is on the Beta Tester list, where deleting the account leaves it. */
+  betaTester: boolean;
+}
+
+/** "Download this Member's data" (story 133q): the JSON file, and the name it downloads as. */
+export interface MemberDataFile {
+  filename: string;
+  data: MemberDataExport;
 }
 
 /**
