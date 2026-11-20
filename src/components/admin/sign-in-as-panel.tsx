@@ -86,6 +86,9 @@ export function SignInAsPanel({ users, next, action }: SignInAsPanelProps) {
             Other email
           </label>
           <div className="flex gap-2">
+            {/* w-0 with flex-1: the field takes the row's spare width, and its
+                built-in width (about 20 characters, more with some fonts)
+                never widens the page on a phone. */}
             <input
               id={`${panelId}-email`}
               name="email"
@@ -94,7 +97,7 @@ export function SignInAsPanel({ users, next, action }: SignInAsPanelProps) {
               defaultValue={state.email}
               aria-invalid={state.error ? true : undefined}
               aria-describedby={state.error ? errorId : undefined}
-              className="min-h-11 min-w-0 flex-1 border-[1.5px] bg-white px-3 text-[15px] aria-invalid:border-destructive"
+              className="min-h-11 w-0 min-w-0 flex-1 border-[1.5px] bg-white px-3 text-[15px] aria-invalid:border-destructive"
             />
             <button
               type="submit"
