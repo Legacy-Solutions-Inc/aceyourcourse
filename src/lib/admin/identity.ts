@@ -45,7 +45,8 @@ import { SAMPLE_USERS, type SampleUser } from "@/services/mock/staff";
 //   verified claims (supabase.auth.getClaims()). Google counts everywhere; a
 //   password only where the password box is allowed: under `pnpm dev`, or
 //   while the deployed site is tested with ADMIN_PASSWORD_SIGN_IN "true"
-//   (ticket 24, temporary; see sign-in-method.ts).
+//   (ticket 24, temporary; see sign-in-method.ts). The Admin and the Member
+//   App count it alike (ticket 20), and offer the box in the same places.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const SAMPLE_IDENTITY_COOKIE = "ayc_admin_sample";
@@ -146,9 +147,11 @@ export async function getIdentity(): Promise<SignInIdentity | null> {
 /**
  * The signed-in User for the Member App: their id, verified email (trimmed
  * and lowercased) and name, or null when signed out or their email isn't
- * verified. Live, the id is the Supabase User's. With sample data, where
- * "Sign in as" stands in for Google, it is made from the email, the same
- * every time.
+ * verified. Live, the id is the Supabase User's, and how the session signed
+ * in counts exactly as for the Staff Guard (supabaseUser, ticket 19), which
+ * the Member App's password box relies on (ticket 20).
+ * With sample data, where "Sign in as" stands in for Google, it is made from
+ * the email, the same every time.
  */
 export async function getSignedInUser(): Promise<MemberUser | null> {
   if (adminMode === "live") {
@@ -271,10 +274,12 @@ export async function googleSignInDestination(next: unknown): Promise<string> {
 }
 
 /**
- * Where the password sign-in may run at all: live mode under `pnpm dev`
- * (ticket 19) or, while the deployed site is tested, with ADMIN_PASSWORD_SIGN_IN
- * "true" (ticket 24, temporary). Anywhere else the box isn't offered, its
- * action answers 404, and the Staff Guard never counts a password session.
+ * Where the password sign-in may run at all, in the Admin and the Member App
+ * alike (ticket 20): live mode under `pnpm dev` (ticket 19) or, while the
+ * deployed site is tested, with ADMIN_PASSWORD_SIGN_IN "true" (ticket 24,
+ * temporary). Anywhere else neither sign-in screen offers the box, both
+ * actions answer 404, and neither the Staff Guard nor the Member App counts a
+ * password session.
  */
 export function passwordSignInAllowed(): boolean {
   return passwordSignInPermitted({
@@ -304,8 +309,8 @@ export type PasswordSignInStart = { ok: true } | { ok: false; problem: PasswordP
 /**
  * The password box's sign-in: a Supabase session for this email
  * and password, set in the cookies as Google's is. Only signs in: Supabase
- * makes no User here. The Staff Guard decides what happens next. Throws
- * where the password sign-in isn't allowed.
+ * makes no User here. The Staff Guard, or the Member App's gate, decides
+ * what happens next. Throws where the password sign-in isn't allowed.
  */
 export async function startPasswordSession(
   email: string,

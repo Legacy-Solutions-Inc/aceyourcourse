@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import type { PasswordSignInState } from "@/app/admin/sign-in/actions";
+import type { PasswordSignInState } from "@/lib/admin/password-sign-in";
 
 import { PasswordSignInForm } from "./password-sign-in-form";
 

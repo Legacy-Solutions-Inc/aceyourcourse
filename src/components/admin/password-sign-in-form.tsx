@@ -2,7 +2,7 @@
 
 import { useActionState, useId } from "react";
 
-import type { PasswordSignInState } from "@/app/admin/sign-in/actions";
+import type { PasswordSignInState } from "@/lib/admin/password-sign-in";
 import type { PasswordSignInPurpose } from "@/lib/admin/sign-in-method";
 
 interface PasswordSignInFormProps {
@@ -24,10 +24,11 @@ const FIELD =
   "min-h-11 min-w-0 border-[1.5px] bg-white px-3 text-[15px] aria-invalid:border-destructive";
 
 /**
- * The password box (ticket 19), under "Continue with Google": the sign-in
- * page renders it only where the password sign-in is allowed (live mode,
- * under `pnpm dev` or with ADMIN_PASSWORD_SIGN_IN "true", ticket 24), while
- * Supabase has Email on. It's headed "DEVELOPMENT ONLY" or "TESTING ONLY".
+ * The password box (ticket 19), under "Continue with Google": the Admin's and
+ * the Member App's sign-in pages (ticket 20) render it only where the
+ * password sign-in is allowed (live mode, under `pnpm dev` or with
+ * ADMIN_PASSWORD_SIGN_IN "true", ticket 24), while Supabase has Email on. Each
+ * passes its own action. It's headed "DEVELOPMENT ONLY" or "TESTING ONLY".
  * It only signs in: there's no sign-up and no password reset. It isn't in the mockup, so it stays plainly apart from the
  * mockup's screen. The typed email survives an error; the password doesn't.
  */

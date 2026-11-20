@@ -197,6 +197,10 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     signInAs: anyone(() => signIn.signInAs({ error: null, email: "" }, signInForm(STRANGER))),
     // Live mode only: sample mode answers 404.
     continueWithGoogle: anyone(() => signIn.continueWithGoogle(new FormData())),
+    // Only where the password box is allowed (live mode; ticket 20): sample mode answers 404.
+    signInWithPassword: anyone(() =>
+      signIn.signInWithPassword({ error: null, fieldErrors: {}, email: "" }, signInForm(STRANGER)),
+    ),
   },
 };
 

@@ -7,13 +7,16 @@ import {
   endSession,
   googleSignInDestination,
   passwordSignInAllowed,
-  startPasswordSession,
   startSampleSession,
 } from "@/lib/admin/identity";
 import { adminMode } from "@/lib/admin/mode";
+import {
+  type PasswordSignInState,
+  passwordRefused,
+  submitPasswordSignIn,
+} from "@/lib/admin/password-sign-in";
 import { safeAdminNext } from "@/lib/admin/safe-next";
-import { PASSWORD_PROBLEMS } from "@/lib/admin/sign-in-problem";
-import { fieldErrorsOf, passwordSignInSchema, signInAsSchema } from "@/services/admin.schema";
+import { signInAsSchema } from "@/services/admin.schema";
 
 export interface SignInAsState {
   error: string | null;
@@ -58,15 +61,6 @@ export async function continueWithGoogle(formData: FormData): Promise<void> {
   redirect(await googleSignInDestination(formData.get("next")));
 }
 
-export interface PasswordSignInState {
-  /** Why the sign-in didn't go on, for the whole form. */
-  error: string | null;
-  /** A message next to an empty or malformed field. */
-  fieldErrors: { email?: string; password?: string };
-  /** What was typed, so the field keeps it after an error. The password is never sent back. */
-  email: string;
-}
-
 /**
  * The password box (ticket 19): in live mode under `pnpm dev`, or with
  * ADMIN_PASSWORD_SIGN_IN "true" (ticket 24, temporary); anywhere else it
@@ -81,32 +75,15 @@ export async function signInWithPassword(
 ): Promise<PasswordSignInState> {
   if (!passwordSignInAllowed()) notFound();
 
-  const typed = formData.get("email");
-  const email = typeof typed === "string" ? typed : "";
-  const refused = (error: string): PasswordSignInState => ({ error, fieldErrors: {}, email });
-
-  const parsed = passwordSignInSchema.safeParse({
-    email: typed ?? undefined,
-    password: formData.get("password") ?? undefined,
-  });
-  if (!parsed.success) {
-    const errors = fieldErrorsOf(parsed.error);
-    return {
-      error: null,
-      fieldErrors: { email: errors.email?.[0], password: errors.password?.[0] },
-      email,
-    };
-  }
-
-  const started = await startPasswordSession(parsed.data.email, parsed.data.password);
-  if (!started.ok) return refused(PASSWORD_PROBLEMS[started.problem]);
+  const submitted = await submitPasswordSignIn(formData);
+  if (!submitted.ok) return submitted.state;
 
   const step = await continueSignIn();
-  if (step.status === "unverified") return refused(PASSWORD_PROBLEMS.unconfirmed);
+  if (step.status === "unverified") return passwordRefused(submitted.email, "unconfirmed");
   if (step.status === "signed-out") {
     // A session the Guard doesn't count: don't leave it in the cookies.
     await endSession();
-    return refused(PASSWORD_PROBLEMS.failed);
+    return passwordRefused(submitted.email, "failed");
   }
   redirect(safeAdminNext(formData.get("next")));
 }

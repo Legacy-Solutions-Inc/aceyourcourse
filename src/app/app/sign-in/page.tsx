@@ -3,10 +3,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { GoogleSignInForm } from "@/components/admin/google-sign-in-form";
+import { PasswordSignInForm } from "@/components/admin/password-sign-in-form";
 import { SignInAsPanel } from "@/components/admin/sign-in-as-panel";
 import { BrandLogo } from "@/components/website/brand-logo";
 import { config } from "@/config";
-import { listSampleMembers } from "@/lib/admin/identity";
+import {
+  listSampleMembers,
+  passwordSignInOffered,
+  passwordSignInPurpose,
+} from "@/lib/admin/identity";
 import { adminMode } from "@/lib/admin/mode";
 import { parseSignInProblem } from "@/lib/admin/sign-in-problem";
 import { getMemberAppAccess } from "@/lib/member-app/guard";
@@ -14,7 +19,7 @@ import { safeMemberAppNext } from "@/lib/member-app/safe-next";
 import { MEMBER_SIGN_IN_PROBLEMS } from "@/lib/member-app/sign-in-problem";
 import { paths } from "@/paths";
 
-import { continueWithGoogle, signInAs } from "./actions";
+import { continueWithGoogle, signInAs, signInWithPassword } from "./actions";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -34,9 +39,16 @@ const SELLING_POINTS = [
  * them in, or to "Not open yet". "Continue with Google" goes to Google in
  * live mode, and opens the development-only "Sign in as" list in sample mode.
  * `error` says why the last sign-in didn't go on. It only reads: signing in
- * happens in /auth/callback (Google) or the Sign in as action (sample).
+ * happens in /auth/callback (Google), the password box's action, or the Sign
+ * in as action (sample).
  * Its "One device at a time" notice says up front that signing in here makes
  * this device the Active Device (ADR 0011).
+ *
+ * While the site is tested (ticket 20, temporary), the Admin's password box
+ * sits under "Continue with Google" wherever the Admin offers it
+ * (passwordSignInOffered). The line under the heading then says Google is the
+ * usual way and the box is for testing (or development) only. It isn't in the
+ * mockup.
  */
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const params = await searchParams;
@@ -45,6 +57,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   if (access.status === "open") redirect(next);
   if (access.status === "not-open-yet") redirect(paths.memberApp.notOpenYet);
   const problem = parseSignInProblem(params.error);
+  const passwordPurpose = (await passwordSignInOffered()) ? passwordSignInPurpose() : null;
 
   return (
     <main className="flex min-h-svh flex-wrap">
@@ -76,7 +89,9 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         <div className="flex w-full max-w-[400px] flex-col gap-5">
           <h1 className="text-[32px] font-extrabold tracking-[-0.025em]">Sign in</h1>
           <p className="text-base leading-normal">
-            Use your Google account. No separate username or password.
+            {passwordPurpose
+              ? `Google is the usual way to sign in. The password sign-in below is for ${passwordPurpose} only.`
+              : "Use your Google account. No separate username or password."}
           </p>
           {problem ? (
             <p role="alert" className="text-sm font-semibold text-destructive">
@@ -84,7 +99,16 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             </p>
           ) : null}
           {adminMode === "live" ? (
-            <GoogleSignInForm next={next} action={continueWithGoogle} />
+            <>
+              <GoogleSignInForm next={next} action={continueWithGoogle} />
+              {passwordPurpose ? (
+                <PasswordSignInForm
+                  next={next}
+                  purpose={passwordPurpose}
+                  action={signInWithPassword}
+                />
+              ) : null}
+            </>
           ) : (
             <SignInAsPanel users={listSampleMembers()} next={next} action={signInAs} />
           )}
