@@ -4,16 +4,17 @@ import { type Browser, expect as baseExpect, type Page, test } from "@playwright
 
 import { paths } from "../../src/paths";
 import { resetSampleData, signInAs as signInToAdmin } from "../admin/helpers";
-import { expectNoBlockingViolations, LIVE, signInAndOnboard, SKIP_LIVE } from "./helpers";
+import { expectNoBlockingViolations, signInAndOnboard } from "./helpers";
 
-// Reading a Reviewer PDF on sample data (Phase 3, ticket 14; stories 101, 102
+// Reading a Reviewer PDF, on sample data and live (Phase 3, ticket 14; stories 101, 102
 // and 105): the tester, whose CE pass is active, opens a Published Reviewer
 // PDF, pages forward, zooms, leaves, and comes back to the same page and
 // zoom; a page whose request drops shows "didn't load", and Try again brings
 // it; a new tester with no pass finds the unlock prompt, and the page
 // endpoint refuses them the page. The sample data has no Reviewer PDF with
-// pages, so an Editor uploads a real 3-page PDF first, which the fake
-// renderer splits, and publishes it under CE MSTC's Surveying.
+// pages, so an Editor uploads a real 3-page PDF first, which the job splits
+// (the fake renderer on the sample data, pdf.js and Storage live), and
+// publishes it under CE MSTC's Surveying.
 
 // Sign-in redirects, the split and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -39,9 +40,13 @@ const pageImage = (page: Page, name: string) => page.getByRole("img", { name });
 const zoom = (page: Page) => page.getByRole("group", { name: "Zoom" });
 const pages = (page: Page) => page.getByRole("navigation", { name: "Pages" });
 
-/** Waits for the page image to have arrived from the page endpoint, stamped. */
+/**
+ * Waits for the page image to have arrived from the page endpoint, stamped.
+ * Longer than the default: a server's first stamped page loads sharp's fonts,
+ * which took about 15 s on a cold dev server live.
+ */
 async function expectLoaded(page: Page, name: string) {
-  await expect(pageImage(page, name)).toBeVisible();
+  await expect(pageImage(page, name)).toBeVisible({ timeout: 45_000 });
   await expect
     .poll(() => pageImage(page, name).evaluate((img: HTMLImageElement) => img.naturalWidth))
     .toBeGreaterThan(0);
@@ -101,8 +106,6 @@ async function openReviewerPdf(page: Page) {
     .click();
   await expect(page).toHaveURL(/\/app\/library\/reviewer-pdf\/[0-9a-f-]{36}$/);
 }
-
-test.skip(LIVE, SKIP_LIVE);
 
 test.beforeEach(async ({ request }) => {
   await resetSampleData(request);

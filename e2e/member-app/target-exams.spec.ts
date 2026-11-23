@@ -7,11 +7,9 @@ import {
   daysFromToday,
   examForm,
   expectNoBlockingViolations,
-  LIVE,
   onboardingHeading,
   signInAndAgree,
   signInAndOnboard,
-  SKIP_LIVE,
   startCountdown,
 } from "./helpers";
 
@@ -57,8 +55,6 @@ async function addExam(page: Page, examCode: string, days: number) {
   await page.getByRole("button", { name: "Add exam" }).click();
   await expect(page).toHaveURL(/\/app(\?restored=\w+)?$/);
 }
-
-test.skip(LIVE, SKIP_LIVE);
 
 test.beforeEach(async ({ request }) => {
   await resetSampleData(request);

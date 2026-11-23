@@ -3,8 +3,8 @@ import { type Browser, expect as baseExpect, type Page, test } from "@playwright
 import { paths } from "../../src/paths";
 import { sampleContentId, sampleTopicId } from "../../src/services/mock/content";
 import { sampleUserId } from "../../src/services/mock/members";
-import { expectNoBlockingViolations, signInAndOnboard, SKIP_LIVE } from "../member-app/helpers";
-import { LIVE, resetSampleData, signInAs } from "./helpers";
+import { expectNoBlockingViolations, signInAndOnboard } from "../member-app/helpers";
+import { resetSampleData, signInAs } from "./helpers";
 
 // Users in the Admin (Phase 3, ticket 16; stories 129, 130 and 132): the
 // sample tester signs in to the Member App on one device, then an Owner, on
@@ -60,8 +60,6 @@ async function editorWritesSpiralCurvesCard(browser: Browser) {
 }
 
 test.describe("the Owner", () => {
-  test.skip(LIVE, SKIP_LIVE);
-
   test("finds a Beta Tester, opens their page and signs their device out", async ({
     page,
     browser,
@@ -140,8 +138,6 @@ test.describe("the Owner", () => {
 });
 
 test.describe("the Owner and a lapsed tester", () => {
-  test.skip(LIVE, SKIP_LIVE);
-
   test("an Owner grants CE; the tester sees the notice and studies; the Owner extends, then ends it, and progress stays", async ({
     page,
     browser,

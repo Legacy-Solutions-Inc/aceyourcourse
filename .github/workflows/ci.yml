@@ -74,7 +74,7 @@ jobs:
           pnpm test:db
 
   # The e2e jobs run on the in-memory sample data, as on a developer's
-  # machine, or live on a local Supabase (e2e-admin-live). The placeholders
+  # machine, or live on a local Supabase (e2e-admin-live, e2e-member-app-live). The placeholders
   # above never make a run live: playwright.config.ts blanks the app's
   # Supabase and database values. A failed job keeps its test-results folder
   # (traces and page snapshots) for a week.
@@ -183,6 +183,51 @@ jobs:
         if: failure()
         with:
           name: test-results-e2e-admin-live-${{ matrix.shard }}
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # The Member App specs again, live on the runner's local Supabase: the
+  # database, Supabase Auth and Storage instead of the sample data. The sample
+  # Members are password Users there, made by the global setup with the ids
+  # "Sign in as" gives them, and they sign in with the sign-in screen's
+  # password box, which `pnpm dev` offers live (tickets 19 and 20); its action
+  # takes Google's path after sign-in. Set up like e2e-admin-live.
+  e2e-member-app-live:
+    name: e2e-member-app (live on the local Supabase, shard ${{ matrix.shard }} of 2)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.104.0
+
+      - run: supabase start -x realtime,imgproxy,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - name: pnpm test:e2e --project member-app (live)
+        run: |
+          eval "$(supabase status -o env)"
+          secret="${SECRET_KEY:-$SERVICE_ROLE_KEY}"
+          echo "::add-mask::$secret"
+          export PLAYWRIGHT_DATABASE_URL="$DB_URL"
+          export PLAYWRIGHT_SUPABASE_URL="$API_URL"
+          export PLAYWRIGHT_SUPABASE_PUBLISHABLE_KEY="${PUBLISHABLE_KEY:-$ANON_KEY}"
+          export PLAYWRIGHT_SUPABASE_SECRET_KEY="$secret"
+          pnpm test:e2e --project member-app --no-deps --shard=${{ matrix.shard }}/2
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results-e2e-member-app-live-${{ matrix.shard }}
           path: test-results
           if-no-files-found: ignore
           retention-days: 7

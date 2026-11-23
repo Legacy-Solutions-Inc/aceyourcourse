@@ -4,18 +4,27 @@ import { expect, type Page } from "@playwright/test";
 import { manilaDate } from "../../src/lib/manila-time";
 import { paths } from "../../src/paths";
 import { SAMPLE_MEMBERS, type SampleMemberKey } from "../../src/services/mock/members";
+import { E2E_PASSWORD, ensurePasswordUser, waitForHydration } from "../admin/helpers";
 import { LIVE } from "../server";
 
-// Shared steps for the Member App specs (Phase 3). They run on the in-memory
-// sample data, where the development-only "Sign in as" list stands in for
-// Google: the sample Members come from the sample data itself, so the two
-// can't drift apart. A live run (CI's local Supabase) has no such list, so
-// these specs skip there; the callback, the gate and the seams are tested
-// live at their own seams.
+// Shared steps for the Member App specs (Phase 3). The sample Members come
+// from the sample data itself, so the two can't drift apart. How they sign in
+// follows the server under test (e2e/server.ts):
+// - sample mode (by default): the development-only "Sign in as" list stands
+//   in for Google.
+// - live mode (CI's local Supabase): each is a password User there (the
+//   global setup and ensurePasswordUser), and signs in with the password box
+//   under "Continue with Google", which `pnpm dev` offers live (tickets 19
+//   and 20). Its action takes Google's path after sign-in: the beta gate,
+//   claiming this device, then `next`. So the specs run unchanged on the
+//   database, Supabase Auth and Storage. When the password box is removed,
+//   this needs another way in, such as the Admin helpers' session cookie
+//   followed by "Use the Member App on this device".
 
 export { LIVE, SAMPLE_MEMBERS, type SampleMemberKey };
 
-export const SKIP_LIVE = "The Member App specs sign in with “Sign in as”, on sample data only.";
+/** For a test that needs something only the sample data has. */
+export const SKIP_LIVE = "This needs the sample data's development-only tools.";
 
 /** A sample Member's email. */
 export function memberEmail(who: SampleMemberKey): string {
@@ -36,17 +45,54 @@ export async function openSignInAs(page: Page, next?: string) {
 
 /** Signs in to the Member App as one of the sample Members. */
 export async function signInAsMember(page: Page, who: SampleMemberKey, next?: string) {
+  if (LIVE) return signInWithPassword(page, memberEmail(who), next);
   const list = await openSignInAs(page, next);
   await list
     .getByRole("button", { name: new RegExp(memberEmail(who).replace(/[.\\]/g, "\\$&")) })
     .click();
 }
 
-/** Signs in to the Member App with any email, through the list's "Other email" field. */
+/** Signs in to the Member App with any email: the list's "Other email" field, or a password User live. */
 export async function signInWithEmail(page: Page, email: string, next?: string) {
+  if (LIVE) return signInWithPassword(page, email, next);
   const list = await openSignInAs(page, next);
   await list.getByLabel("Other email").fill(email);
   await list.getByRole("button", { name: "Sign in", exact: true }).click();
+}
+
+/** The password box on the Member App's sign-in screen, which `pnpm dev` offers live. */
+export const passwordBox = (page: Page) => page.getByRole("region", { name: "Development only" });
+
+/** Live: signs in with the password box as `email`, made a password User first. */
+async function signInWithPassword(page: Page, email: string, next?: string) {
+  await ensurePasswordUser(email);
+  await page.goto(paths.memberApp.signIn(next));
+  // The sign-in screen arrives by a fresh page load: typing before hydration is lost.
+  await waitForHydration(page);
+  const box = passwordBox(page);
+  await box.getByLabel("Email").fill(email);
+  await box.getByLabel("Password").fill(E2E_PASSWORD);
+  await box.getByRole("button", { name: "Sign in", exact: true }).click();
+  // Longer than the default: the redirect can be the first Member App route a run compiles.
+  await expect(page).not.toHaveURL(/\/app\/sign-in(\?|$)/, { timeout: 20_000 });
+}
+
+/**
+ * On a device another one replaced ("Session ended"): signs in again, making
+ * this device the Active Device, and goes on to where it was going. On the
+ * sample data that's the screen's "Sign in on this device" ("Sign in as"
+ * behind it). Live, that button goes to Google, which CI's local Supabase
+ * doesn't have, so the device signs out and back in with the password box:
+ * the same claim at sign-in.
+ */
+export async function signInAgainOnThisDevice(page: Page, who: SampleMemberKey) {
+  if (!LIVE) {
+    await page.getByRole("button", { name: "Sign in on this device" }).click();
+    return;
+  }
+  const next = new URL(page.url()).searchParams.get("next") ?? undefined;
+  await page.context().clearCookies();
+  await signInWithPassword(page, memberEmail(who), next);
 }
 
 /** The consent screen's two boxes and its button. */
@@ -101,7 +147,11 @@ export async function startCountdown(page: Page, examCode = "ME", days = 30) {
   await form.pick(examCode);
   await form.date.fill(daysFromToday(days));
   await page.getByRole("button", { name: "Start my countdown" }).click();
-  await expect(page.getByRole("region", { name: /board exam countdown/ })).toBeVisible();
+  // Longer than the default: the action then renders Home's dashboard, which
+  // a loaded dev server has been seen to take over 15 s for (sample and live).
+  await expect(page.getByRole("region", { name: /board exam countdown/ })).toBeVisible({
+    timeout: 30_000,
+  });
 }
 
 /** Signs in as a sample Member new to the Member App, agrees, and onboards with one Target Exam. */

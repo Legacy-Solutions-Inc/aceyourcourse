@@ -15,6 +15,7 @@ rule.
   - **`/handoff`** — planning: turn the current plan into one copy-paste executer
     prompt (via `prompt-architect`).
   - **`/verify`** — typecheck, test, and build.
+  - **`/commit`** — stage and commit (Conventional Commits), without pushing.
   - **`/ship`** — stage, commit (Conventional Commits), and push.
 - **`agents/`** — project subagents. Empty by default; this repo leans on the
   global agents (see `CLAUDE.md`).

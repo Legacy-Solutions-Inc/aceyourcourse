@@ -5,18 +5,18 @@ import { resetSampleData, signInAs as signInToAdmin } from "../admin/helpers";
 import {
   agreeToConsent,
   expectNoBlockingViolations,
-  LIVE,
+  signInAgainOnThisDevice,
   signInAndOnboard,
   signInAsMember,
-  SKIP_LIVE,
   startCountdown,
 } from "./helpers";
 
 // The Active Device on sample data (Phase 3, ticket 04; stories 107–109,
 // 133f; ADR 0011): each Member uses the Member App on one device at a time.
-// Every browser context is a device. Signing in with "Sign in as" claims the
-// device, as Google sign-in does live, so a second context signing in as the
-// same Member replaces the first. Signing in to the Admin claims nothing.
+// Every browser context is a device. Signing in ("Sign in as" on the sample
+// data, the password box live) claims the device, as Google sign-in does, so
+// a second context signing in as the same Member replaces the first. Signing
+// in to the Admin claims nothing.
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -38,8 +38,6 @@ async function anotherDevice(browser: Browser, userAgent?: string) {
   const context = await browser.newContext(userAgent ? { userAgent } : {});
   return { context, page: await context.newPage() };
 }
-
-test.skip(LIVE, SKIP_LIVE);
 
 test.beforeEach(async ({ request }) => {
   await resetSampleData(request);
@@ -75,7 +73,7 @@ test.describe("one Active Device per Member", () => {
       await expect(page).toHaveURL(/\/app\/device\?next=%2Fapp%2Faccount$/);
       await expect(sessionEnded(page)).toBeVisible();
 
-      await page.getByRole("button", { name: "Sign in on this device" }).click();
+      await signInAgainOnThisDevice(page, "tester");
       await expect(page).toHaveURL(/\/app\/account$/);
       await expect(page.getByRole("heading", { level: 1, name: "Account" })).toBeVisible();
 
@@ -107,7 +105,7 @@ test.describe("one Active Device per Member", () => {
     await page.reload();
     await expect(sessionEnded(page)).toBeVisible();
 
-    await page.getByRole("button", { name: "Sign in on this device" }).click();
+    await signInAgainOnThisDevice(page, "tester");
     await expect(welcome(page, "Bea")).toBeVisible();
   });
 });

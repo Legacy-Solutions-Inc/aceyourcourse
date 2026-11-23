@@ -1,8 +1,7 @@
-import postgres from "postgres";
-
 import { seedCatalogue } from "../../src/lib/catalogue-seed/seed";
 import { connectDatabase } from "../../src/lib/db/connect";
 import { CATALOGUE_SEED } from "../../src/services/mock/catalogue";
+import { SAMPLE_MEMBERS } from "../../src/services/mock/members";
 import { SAMPLE_USERS } from "../../src/services/mock/staff";
 import { LIVE, SERVER } from "../server";
 
@@ -12,8 +11,9 @@ import { ensurePasswordUser } from "./helpers";
 // Supabase gets
 // - the seed and the sample staff list in its database, so the Owner can sign
 //   in to reset it before each spec, as the reset route asks a Staff User to
-// - each sample User as a confirmed password User, named in their identity's
-//   data, where Google's profile name goes
+// - each sample User and sample Member as a confirmed password User, named
+//   in their identity's data, where Google's profile name goes, with the id
+//   "Sign in as" gives them (so the seed's Access Passes are theirs)
 // playwright.config.ts runs it only when e2e/server.ts says the run is live,
 // and that refuses any URL that isn't on this machine.
 
@@ -28,17 +28,7 @@ export default async function globalSetup() {
     await database.close();
   }
 
-  for (const { email } of SAMPLE_USERS) await ensurePasswordUser(email);
-
-  const sql = postgres(SERVER.env.DATABASE_URL, { max: 1, onnotice: () => {} });
-  try {
-    for (const { email, name } of SAMPLE_USERS) {
-      await sql`
-        update auth.identities
-        set identity_data = identity_data || jsonb_build_object('full_name', ${name}::text)
-        where provider = 'email' and lower(identity_data ->> 'email') = ${email}`;
-    }
-  } finally {
-    await sql.end({ timeout: 5 });
-  }
+  // Each is named as on the sample data, with the id "Sign in as" gives them.
+  const emails = new Set([...SAMPLE_USERS, ...SAMPLE_MEMBERS].map(({ email }) => email));
+  for (const email of emails) await ensurePasswordUser(email);
 }

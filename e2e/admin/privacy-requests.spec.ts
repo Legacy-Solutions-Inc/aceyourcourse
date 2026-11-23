@@ -9,9 +9,8 @@ import {
   onboardingHeading,
   signInAndOnboard,
   signInAsMember,
-  SKIP_LIVE,
 } from "../member-app/helpers";
-import { LIVE, resetSampleData, signInAs, waitForHydration } from "./helpers";
+import { resetSampleData, signInAs, waitForHydration } from "./helpers";
 
 // Privacy Requests (Phase 3, tickets 18 and 19; stories 111, 112, 133, 133q
 // and 133r): the sample tester asks, from Account in the Member App, for a
@@ -84,8 +83,6 @@ test.beforeEach(async ({ request }) => {
 });
 
 test.describe("a Member and the Owner", () => {
-  test.skip(LIVE, SKIP_LIVE);
-
   test("the tester asks for a data copy and a deletion; the Owner sees both listed", async ({
     page,
     browser,
@@ -142,8 +139,6 @@ test.describe("a Member and the Owner", () => {
 });
 
 test.describe("the Owner carrying requests out", () => {
-  test.skip(LIVE, SKIP_LIVE);
-
   test("downloads the tester's data and marks it done; deletes the lapsed tester's account", async ({
     page,
     browser,

@@ -786,7 +786,7 @@ describe("the identity module, live mode", () => {
   });
 
   describe("endSession", () => {
-    it("signs out of Supabase, and drops any sample cookie", async () => {
+    it("signs this browser out of Supabase, and drops any sample cookie", async () => {
       jar.set("ayc_admin_sample", OWNER);
       auth.signOut.mockResolvedValue({ error: null });
       const { endSession } = await loadIdentity();
@@ -794,6 +794,14 @@ describe("the identity module, live mode", () => {
       await endSession();
       expect(auth.signOut).toHaveBeenCalledTimes(1);
       expect(jar.has("ayc_admin_sample")).toBe(false);
+    });
+
+    it("leaves the person's other devices signed in: only this session ends, never every one (Supabase's default)", async () => {
+      auth.signOut.mockResolvedValue({ error: null });
+      const { endSession } = await loadIdentity();
+
+      await endSession();
+      expect(auth.signOut).toHaveBeenCalledWith({ scope: "local" });
     });
   });
 

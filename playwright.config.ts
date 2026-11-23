@@ -5,7 +5,8 @@ import { BASE_URL as baseURL, LIVE, PORT, SERVER } from "./e2e/server";
 export default defineConfig({
   testDir: "./e2e",
   // Live mode only (CI): loads the seed into the runner's local database and
-  // makes the sample Staff password Users on its local Supabase.
+  // makes the sample Staff and sample Members password Users on its local
+  // Supabase.
   globalSetup: LIVE ? "./e2e/admin/global-setup.ts" : undefined,
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
