@@ -3,7 +3,7 @@ import path from "node:path";
 import { type Browser, expect as baseExpect, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
-import { LIVE, signInAndOnboard, SKIP_LIVE } from "../member-app/helpers";
+import { signInAndOnboard } from "../member-app/helpers";
 import { resetSampleData, signInAs } from "./helpers";
 
 // The card editor (Phase 3, ticket 07; stories 125, 127, 128), on the sample
@@ -136,9 +136,6 @@ async function ownerAddsTester(browser: Browser, email: string) {
 }
 
 test.describe("the Member App", () => {
-  // The Member signs in with "Sign in as", on sample data only.
-  test.skip(LIVE, SKIP_LIVE);
-
   test("opens a deck made Visible and Free Preview for a Member with no Access Pass", async ({
     page,
     browser,

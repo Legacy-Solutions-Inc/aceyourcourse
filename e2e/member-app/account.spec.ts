@@ -2,13 +2,7 @@ import { expect as baseExpect, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
 import { resetSampleData } from "../admin/helpers";
-import {
-  expectNoBlockingViolations,
-  LIVE,
-  memberEmail,
-  signInAndOnboard,
-  SKIP_LIVE,
-} from "./helpers";
+import { expectNoBlockingViolations, memberEmail, signInAndOnboard } from "./helpers";
 
 // Account and Support in the Member App (Phase 3, ticket 18; stories 110 and
 // 113): the sample tester's profile from Google, their exams, what they
@@ -24,8 +18,6 @@ const TESTER = memberEmail("tester");
 const main = (page: Page) => page.getByRole("main");
 const memberNav = (page: Page) =>
   page.getByRole("complementary").getByRole("navigation", { name: "Member App" });
-
-test.skip(LIVE, SKIP_LIVE);
 
 test.beforeEach(async ({ request }) => {
   await resetSampleData(request);

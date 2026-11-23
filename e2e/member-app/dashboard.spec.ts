@@ -4,7 +4,7 @@ import { type Browser, expect as baseExpect, type Page, test } from "@playwright
 
 import { paths } from "../../src/paths";
 import { resetSampleData, signInAs as signInToAdmin } from "../admin/helpers";
-import { expectNoBlockingViolations, LIVE, signInAndOnboard, SKIP_LIVE } from "./helpers";
+import { expectNoBlockingViolations, signInAndOnboard } from "./helpers";
 
 // Home's dashboard and the Library's % on sample data (Phase 3, ticket 15;
 // stories 88–93), at the end of the Member App journey: the tester, whose CE
@@ -116,8 +116,6 @@ async function openFromLibrary(page: Page, topic: string, item: RegExp) {
   await topicRow(page, topic).getByRole("link", { name: item }).click();
 }
 
-test.skip(LIVE, SKIP_LIVE);
-
 test.beforeEach(async ({ request }) => {
   await resetSampleData(request);
 });
@@ -156,7 +154,10 @@ test("a Member's study shows on Home and in the Library, and Continue opens the 
 
   // Pages 1 and 2 of Surveying's Reviewer PDF, leaving it at page 2.
   await openFromLibrary(page, "Surveying", /^Reviewer PDF/);
-  await expect(page.getByRole("img", { name: "Page 1 of 3" })).toBeVisible();
+  // Longer than the default: a server's first stamped page loads sharp's
+  // fonts, which took about 15 s on a cold dev server live; later pages take
+  // well under a second.
+  await expect(page.getByRole("img", { name: "Page 1 of 3" })).toBeVisible({ timeout: 45_000 });
   const left = posted(page, "reviewer-pdf");
   await page
     .getByRole("navigation", { name: "Pages" })

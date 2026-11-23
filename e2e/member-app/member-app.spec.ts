@@ -1,7 +1,7 @@
 import { type Browser, expect as baseExpect, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
-import { resetSampleData, signInAs as signInToAdmin } from "../admin/helpers";
+import { resetSampleData, signInAs as signInToAdmin, waitForHydration } from "../admin/helpers";
 import {
   agreeToConsent,
   consentScreen,
@@ -10,6 +10,7 @@ import {
   memberEmail,
   onboardingHeading,
   openSignInAs,
+  passwordBox,
   signInAndOnboard,
   signInAsMember,
   startCountdown,
@@ -46,23 +47,33 @@ async function anotherPerson(browser: Browser) {
   return { context, page: await context.newPage() };
 }
 
-test.skip(LIVE, SKIP_LIVE);
-
 test.beforeEach(async ({ request }) => {
   await resetSampleData(request);
 });
 
 test.describe("a signed-out visitor", () => {
-  test("is sent from /app to the sign-in screen, which offers Google only", async ({ page }) => {
+  test("is sent from /app to the sign-in screen, which offers Google (and live, under pnpm dev, the password box)", async ({
+    page,
+  }) => {
     await page.goto(paths.memberApp.home);
 
     await expect(page).toHaveURL(/\/app\/sign-in\?next=%2Fapp$/);
     await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
-    await expect(
-      page.getByText("Use your Google account. No separate username or password."),
-    ).toBeVisible();
     await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
-    await expect(page.getByLabel("Password")).toHaveCount(0);
+    if (LIVE) {
+      // Ticket 20: live under `pnpm dev`, with the local Supabase's Email provider on.
+      await expect(
+        page.getByText(
+          "Google is the usual way to sign in. The password sign-in below is for development only.",
+        ),
+      ).toBeVisible();
+      await expect(passwordBox(page).getByLabel("Password")).toBeVisible();
+    } else {
+      await expect(
+        page.getByText("Use your Google account. No separate username or password."),
+      ).toBeVisible();
+      await expect(page.getByLabel("Password")).toHaveCount(0);
+    }
     await expect(page.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/legal/terms");
   });
 
@@ -76,6 +87,7 @@ test.describe("a signed-out visitor", () => {
   });
 
   test("sees the four sample Members in the development-only Sign in as list", async ({ page }) => {
+    test.skip(LIVE, SKIP_LIVE);
     const list = await openSignInAs(page);
     await expect(list.getByText("SAMPLE DATA · DEVELOPMENT ONLY")).toBeVisible();
     await expect(list.getByRole("listitem")).toHaveText([
@@ -425,16 +437,23 @@ test.describe("accessibility", () => {
     test.describe(`on ${size.name} (${size.viewport.width} px)`, () => {
       test.use({ viewport: size.viewport });
 
-      test("no serious or critical violations on the sign-in screen, with Sign in as open", async ({
+      test("no serious or critical violations on the sign-in screen, with Sign in as (or live, the password box) showing an error", async ({
         page,
       }) => {
         await page.goto(paths.memberApp.signIn());
         await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
         await expectNoBlockingViolations(page);
 
-        const list = await openSignInAs(page);
-        await list.getByRole("button", { name: "Sign in", exact: true }).click();
-        await expect(list.getByRole("alert")).toBeVisible();
+        if (LIVE) {
+          // The password box, with its field errors showing.
+          await waitForHydration(page);
+          await passwordBox(page).getByRole("button", { name: "Sign in", exact: true }).click();
+          await expect(passwordBox(page).getByText("Enter your email")).toBeVisible();
+        } else {
+          const list = await openSignInAs(page);
+          await list.getByRole("button", { name: "Sign in", exact: true }).click();
+          await expect(list.getByRole("alert")).toBeVisible();
+        }
         await expectNoBlockingViolations(page);
       });
 

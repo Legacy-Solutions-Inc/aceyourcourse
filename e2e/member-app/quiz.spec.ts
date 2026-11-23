@@ -2,7 +2,7 @@ import { type Browser, expect as baseExpect, type Page, test } from "@playwright
 
 import { paths } from "../../src/paths";
 import { resetSampleData, signInAs as signInToAdmin } from "../admin/helpers";
-import { expectNoBlockingViolations, LIVE, signInAndOnboard, SKIP_LIVE } from "./helpers";
+import { expectNoBlockingViolations, signInAndOnboard } from "./helpers";
 
 // Taking a quiz on sample data (Phase 3, ticket 11; stories 98–100, 106 and
 // 133k): the lapsed tester, whose CE pass ended, takes HPGE Hydrostatics'
@@ -82,8 +82,6 @@ async function pick(page: Page, letter: string) {
   await choice.check();
   await expect(choice).toBeChecked();
 }
-
-test.skip(LIVE, SKIP_LIVE);
 
 test.beforeEach(async ({ request }) => {
   await resetSampleData(request);

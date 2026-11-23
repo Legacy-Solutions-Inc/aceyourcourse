@@ -7,10 +7,12 @@ import {
 } from "@playwright/test";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
+import postgres from "postgres";
 
 import { bucketPublicUrl, CATALOGUE_BUCKET } from "../../src/lib/catalogue-bucket";
 import { SESSION_COOKIE } from "../../src/lib/supabase/cookie-options";
 import { paths } from "../../src/paths";
+import { SAMPLE_MEMBERS, sampleUserId } from "../../src/services/mock/members";
 import { SAMPLE_USERS, type SampleUserKey } from "../../src/services/mock/staff";
 import { BASE_URL, LIVE, SERVER } from "../server";
 
@@ -130,17 +132,43 @@ export function localSupabaseAdmin() {
   });
 }
 
+/** The sample Users' and sample Members' names, by email: the Owner is on both lists. */
+const SAMPLE_NAMES = new Map(
+  [...SAMPLE_USERS, ...SAMPLE_MEMBERS].map(({ email, name }) => [email, name]),
+);
+
 /**
  * Makes `email` a confirmed password User on the local Supabase, unless it is
- * one already. The global setup gives the sample Users their names.
+ * one already. Its id is the one "Sign in as" gives the same email, so the
+ * seed's sample Access Passes (src/lib/catalogue-seed/seed.ts) belong to the
+ * same Members live as on the sample data. A sample User or Member is named
+ * as on the sample data every time, new or not, so a Member whose account a
+ * spec deleted comes back with their name when they sign in again, on a fresh
+ * Supabase or a reused one.
  */
 export async function ensurePasswordUser(email: string): Promise<void> {
   const { error } = await localSupabaseAdmin().auth.admin.createUser({
+    id: sampleUserId(email),
     email,
     password: E2E_PASSWORD,
     email_confirm: true,
   });
   if (error && error.code !== "email_exists") throw error;
+  const name = SAMPLE_NAMES.get(email);
+  if (name) await nameIdentity(email, name);
+}
+
+/** Puts `name` in the User's identity data, where Google's profile name goes (src/lib/admin/identity.ts). */
+async function nameIdentity(email: string, name: string): Promise<void> {
+  const sql = postgres(SERVER.env.DATABASE_URL, { max: 1, onnotice: () => {} });
+  try {
+    await sql`
+      update auth.identities
+      set identity_data = identity_data || jsonb_build_object('full_name', ${name}::text)
+      where provider = 'email' and lower(identity_data ->> 'email') = ${email}`;
+  } finally {
+    await sql.end({ timeout: 5 });
+  }
 }
 
 /** The session cookies a password sign-in as `email` sets, as the app's server client writes them. */

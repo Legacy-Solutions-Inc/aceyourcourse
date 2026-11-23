@@ -2,7 +2,7 @@ import { type Browser, expect as baseExpect, type Page, test } from "@playwright
 
 import { paths } from "../../src/paths";
 import { resetSampleData, signInAs as signInToAdmin } from "../admin/helpers";
-import { expectNoBlockingViolations, LIVE, signInAndOnboard, SKIP_LIVE } from "./helpers";
+import { expectNoBlockingViolations, signInAndOnboard } from "./helpers";
 
 // The Library and opening an item on sample data (Phase 3, ticket 05;
 // stories 93, 94, 103 and 133i): the Beta Tester's CE pass opens CE, a new
@@ -50,8 +50,6 @@ async function ownerAddsTester(browser: Browser, email: string) {
     await context.close();
   }
 }
-
-test.skip(LIVE, SKIP_LIVE);
 
 test.beforeEach(async ({ request }) => {
   await resetSampleData(request);

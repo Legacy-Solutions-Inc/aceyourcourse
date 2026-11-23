@@ -2,7 +2,7 @@ import { type Browser, expect as baseExpect, type Page, test } from "@playwright
 
 import { paths } from "../../src/paths";
 import { resetSampleData, signInAs as signInToAdmin } from "../admin/helpers";
-import { expectNoBlockingViolations, LIVE, signInAndOnboard, SKIP_LIVE } from "./helpers";
+import { expectNoBlockingViolations, signInAndOnboard } from "./helpers";
 
 // Studying flashcards on sample data (Phase 3, ticket 08; stories 95–97, 104
 // and 106): the lapsed tester, whose CE pass ended, studies a Free Preview
@@ -94,8 +94,6 @@ async function swipe(page: Page, dx: number) {
   await page.mouse.move(x + dx, y, { steps: 8 });
   await page.mouse.up();
 }
-
-test.skip(LIVE, SKIP_LIVE);
 
 test.beforeEach(async ({ request }) => {
   await resetSampleData(request);

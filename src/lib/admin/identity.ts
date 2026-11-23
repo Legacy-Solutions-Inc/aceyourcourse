@@ -347,12 +347,16 @@ export async function finishGoogleSignIn(code: string): Promise<boolean> {
 
 /**
  * Signs out, of the Admin and the Member App alike (they share the session):
- * the Supabase session in live mode, the sample cookie otherwise.
+ * the Supabase session in live mode, the sample cookie otherwise. Only this
+ * browser's session ends ("local"): Supabase's default ends every session the
+ * User has, which would sign them out of the Admin on their laptop when they
+ * sign out of the Member App on their phone. Their other devices stay signed
+ * in; in the Member App the Active Device decides who's replaced (ADR 0011).
  */
 export async function endSession(): Promise<void> {
   if (adminMode === "live") {
     try {
-      await createClient(cookies()).auth.signOut();
+      await createClient(cookies()).auth.signOut({ scope: "local" });
     } catch {
       // Supabase unreachable: the intent is to sign out, so carry on.
     }
