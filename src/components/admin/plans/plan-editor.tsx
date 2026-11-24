@@ -15,14 +15,13 @@ import type { AdminAction } from "@/lib/admin/action";
 import {
   accessPeriodLabel,
   newPlanFormValues,
-  perMonthText,
-  periodLabel,
   type PlanFormValues,
   planFormValues,
   planPreviewTag,
   plansHref,
   previewPrice,
 } from "@/lib/admin/plan-view";
+import { perMonthText, periodLabel } from "@/lib/plans/plan-text";
 import { formatPeso } from "@/lib/money";
 import { defaultPlanName, isPlanDays, PLAN_DAYS } from "@/lib/plans/plan-rules";
 import { cn } from "@/lib/utils";

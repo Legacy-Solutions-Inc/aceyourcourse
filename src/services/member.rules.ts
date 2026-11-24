@@ -1,12 +1,15 @@
 import { isPastExamDate, resolveExamDate } from "@/lib/member-app/exam-date";
 import { isCalendarDate } from "@/lib/manila-time";
+import type { Plan } from "@/services/admin.types";
 import { examCodesOnWebsite } from "@/services/catalogue.rules";
 import type { Exam, ExamPage, Product } from "@/services/catalogue.types";
 import { memberUserIdSchema } from "@/services/member.schema";
+import type { AccessPass } from "@/services/content.types";
 import type {
   AddedTargetExam,
   NewTargetExam,
   PickableExam,
+  PlansExam,
   TargetExam,
   TargetExamRefusal,
   TargetExamResult,
@@ -310,3 +313,55 @@ export function targetExamOperations(withMemberExams: WithMemberExams) {
       run(userId, (state) => planRemove(state, examCode, new Date())),
   };
 }
+
+// ── Plans (Phase 4, ticket 02; spec, Phase 4 planning decisions → Who buys,
+// and which Exams) ───────────────────────────────────────────────────────────
+
+/** What the Plans page reads, gathered by each arm: the Exams, every Plan, and one Member's own records. */
+export interface PlansInputs {
+  exams: readonly MemberExam[];
+  plans: readonly Plan[];
+  /** The Member's own Target Exams. */
+  targetExams: readonly TargetExam[];
+  /** The Member's own Access Passes, ended ones too. */
+  passes: readonly AccessPass[];
+}
+
+/** An Exam's Plans on sale, shortest first. */
+const plansOnSale = (plans: readonly Plan[], examCode: string) =>
+  plans.filter((plan) => plan.onSale && plan.examCode === examCode).sort((a, b) => a.days - b.days);
+
+/** The Exams a Member can study (those on the Website) that have at least one Plan on sale, in order. */
+const examsWithPlansOnSale = (exams: readonly MemberExam[], plans: readonly Plan[]) =>
+  exams.filter((exam) => exam.onWebsite && plansOnSale(plans, exam.code).length > 0);
+
+/**
+ * Pure: the Plans page's Exams for one Member: each Exam on the Website with
+ * a Plan on sale, in the catalogue's order, with its Plans on sale shortest
+ * first, when the Member's pass for it ends, and the Exam Date a Plan would
+ * count towards (their own for a Target Exam, otherwise the Official Exam
+ * Date, which buying adds it with). An Exam that isn't on the Website has no
+ * Plans page: no Member can pick it.
+ */
+export function plansExams({ exams, plans, targetExams, passes }: PlansInputs): PlansExam[] {
+  return examsWithPlansOnSale(exams, plans).map((exam) => ({
+    examCode: exam.code,
+    board: exam.board,
+    name: exam.name,
+    plans: plansOnSale(plans, exam.code).map(({ id, name, days, priceCentavos, bestValue }) => ({
+      id,
+      name,
+      days,
+      priceCentavos,
+      bestValue,
+    })),
+    passEndsAt: passes.find((pass) => pass.examCode === exam.code)?.endsAt ?? null,
+    examDate:
+      targetExams.find((target) => target.examCode === exam.code)?.examDate ??
+      exam.officialExamDate,
+  }));
+}
+
+/** Pure: the codes of the Exams on the Website with a Plan on sale, in order: where "See plans" leads. */
+export const examCodesOnSale = (exams: readonly MemberExam[], plans: readonly Plan[]): string[] =>
+  examsWithPlansOnSale(exams, plans).map((exam) => exam.code);

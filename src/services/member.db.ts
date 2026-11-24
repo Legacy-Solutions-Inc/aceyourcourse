@@ -9,9 +9,11 @@ import * as schema from "@/lib/db/schema";
 import { deviceStatusFor } from "@/lib/member-app/device-token";
 import { noticesToShow } from "@/lib/member-app/notices";
 import { privacyRequestDueOn } from "@/lib/member-app/privacy-requests";
+import { toPlanDays } from "@/lib/plans/plan-rules";
 import { isReaderZoom } from "@/lib/reviewer-pdfs/reader";
 import { readablePageCount } from "@/lib/reviewer-pdfs/status";
 import { isStorageConfigured } from "@/lib/supabase/admin";
+import type { Plan } from "@/services/admin.types";
 import { type ContentExam, contentItemOf, libraryOf } from "@/services/content.rules";
 import {
   accessPassFromRow,
@@ -40,8 +42,10 @@ import {
   privacyRequestTypeSchema,
 } from "@/services/member.schema";
 import {
+  examCodesOnSale,
   examsForMembers,
   pickableExams,
+  plansExams,
   targetExamOperations,
   targetExams,
   type MemberExam,
@@ -1020,6 +1024,53 @@ const requestPrivacy: MemberService["requestPrivacy"] = async (userId, type) => 
   );
 };
 
+// ── Plans (Phase 4, ticket 02) ──────────────────────────────────────────────
+
+/** Every Plan on sale, read fresh: an Owner switching one off takes it off the page on the next request. */
+async function readPlansOnSale(db: Reader): Promise<Plan[]> {
+  const { plans } = schema;
+  const rows = await db
+    .select({
+      id: plans.id,
+      examCode: plans.examCode,
+      name: plans.name,
+      days: plans.days,
+      priceCentavos: plans.priceCentavos,
+      bestValue: plans.bestValue,
+      onSale: plans.onSale,
+    })
+    .from(plans)
+    .where(eq(plans.onSale, true));
+  // The table's check keeps the days to a Plan's durations.
+  return rows.map((row) => ({ ...row, days: toPlanDays(row.days) }));
+}
+
+const listMemberPlans: MemberService["listMemberPlans"] = async (userId) => {
+  const wanted = memberUserIdSchema.parse(userId);
+  try {
+    const db = getDb();
+    const [exams, plans, targetExams, passes] = await Promise.all([
+      readExams(db),
+      readPlansOnSale(db),
+      listTargetExams(wanted),
+      listAccessPasses(wanted),
+    ]);
+    return plansExams({ exams, plans, targetExams, passes });
+  } catch (error) {
+    throw asDatabaseError(error);
+  }
+};
+
+const listExamsOnSale: MemberService["listExamsOnSale"] = async () => {
+  try {
+    const db = getDb();
+    const [exams, plans] = await Promise.all([readExams(db), readPlansOnSale(db)]);
+    return examCodesOnSale(exams, plans);
+  } catch (error) {
+    throw asDatabaseError(error);
+  }
+};
+
 export const databaseArm: MemberService = {
   isBetaTester,
   getOrCreateMember,
@@ -1044,4 +1095,6 @@ export const databaseArm: MemberService = {
   dismissNotice,
   listOpenPrivacyRequests,
   requestPrivacy,
+  listMemberPlans,
+  listExamsOnSale,
 };

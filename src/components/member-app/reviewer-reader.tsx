@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { StudyActionState } from "@/app/app/(shell)/library/actions";
 import type { ShownRefusal } from "@/lib/member-app/access";
+import type { UnlockRoute } from "@/lib/member-app/unlock";
 import {
   openingPlace,
   type ReaderPlace,
@@ -34,8 +35,8 @@ export interface ReviewerReaderProps {
   /** The page and zoom the Member left it at, or null. */
   resumeAt: ReaderPlace | null;
   examCode: string;
-  /** Where Members ask AYC for access during the beta. */
-  contactEmail: string;
+  /** How the Member gets the Exam's All-Access, should access stop mid-way: its Plans, or asking AYC. */
+  unlock: UnlockRoute;
   back: { href: string; label: string };
   actions: ReviewerReaderActions;
 }
@@ -111,7 +112,7 @@ export function ReviewerReader({
   pageCount,
   resumeAt,
   examCode,
-  contactEmail,
+  unlock,
   back,
   actions,
 }: ReviewerReaderProps) {
@@ -238,7 +239,7 @@ export function ReviewerReader({
           // The count of the pages viewed shows when the Reviewer PDF is opened again.
           keptNote={keptNote(refusal, null)}
           examCode={examCode}
-          contactEmail={contactEmail}
+          unlock={unlock}
           back={back}
         />
       ) : (

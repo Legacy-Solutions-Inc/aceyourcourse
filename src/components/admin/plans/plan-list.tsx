@@ -9,7 +9,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { AdminAction } from "@/lib/admin/action";
-import { perMonthText, periodLabel, plansHref } from "@/lib/admin/plan-view";
+import { plansHref } from "@/lib/admin/plan-view";
+import { perMonthText, periodLabel } from "@/lib/plans/plan-text";
 import { formatPeso } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import type { AdminPlan, AdminPlans } from "@/services/admin.types";

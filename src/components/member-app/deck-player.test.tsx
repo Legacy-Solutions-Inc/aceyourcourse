@@ -73,7 +73,7 @@ function renderPlayer(overrides: Partial<DeckPlayerProps> = {}) {
     imagesExpireAt: null,
     watermark: WATERMARK,
     examCode: "CE",
-    contactEmail: "help@example.com",
+    unlock: { kind: "plans", href: "/app/plans?exam=CE" },
     back: { href: "/app/library?subject=MSTC", label: "Back to MSTC topics" },
     actions,
     ...overrides,
@@ -457,6 +457,10 @@ describe("when a save doesn't go through", () => {
       await screen.findByRole("heading", { name: "Your CE All-Access ended on 14 Nov 2026" }),
     ).toBeVisible();
     expect(screen.getByText(/Renew to keep reviewing\. Your progress is kept\./)).toBeVisible();
+    expect(screen.getByRole("link", { name: "Renew access" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
   });
 
   it("says so when a card was removed", async () => {

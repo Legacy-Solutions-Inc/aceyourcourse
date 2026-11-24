@@ -1,9 +1,10 @@
 import Link from "next/link";
 
+import type { UnlockRoute } from "@/lib/member-app/unlock";
 import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
 
-import { BetaAccessNote } from "./content-state";
+import { ContactNote, PlansLink } from "./content-state";
 import {
   isLocked,
   type LibraryItemState,
@@ -20,8 +21,8 @@ interface LibraryProps {
   subject: { code: string; name: string } | null;
   /** The open Subject's Topics, in order, each item stated by the access decision. */
   topics: readonly LibraryTopicView[];
-  /** Where Members ask AYC for access during the beta. */
-  contactEmail: string;
+  /** How the Member unlocks the Exam: its Plans while one is on sale, otherwise asking AYC. */
+  unlock: UnlockRoute;
 }
 
 const ITEM_CLASS: Record<LibraryItemState, string> = {
@@ -62,9 +63,11 @@ function ItemLink({ item, exam }: { item: LibraryItemView; exam: string }) {
  * selected Target Exam's Subjects as tabs, then the open Subject's Topics in
  * order. Each Topic shows the Member's % done (story 93), kept when their
  * access ends, and the content Members can see, each open, Free Preview or
- * locked; an empty one says its content is still being prepared.
+ * locked; an empty one says its content is still being prepared. A locked
+ * Topic's "Unlock with {exam} All-Access" goes to the Exam's Plans while one
+ * is on sale (ticket 02), otherwise to the "contact us" note below.
  */
-export function Library({ exam, subjects, subject, topics, contactEmail }: LibraryProps) {
+export function Library({ exam, subjects, subject, topics, unlock }: LibraryProps) {
   const anyLocked = topics.some((topic) => topic.locked);
   return (
     <>
@@ -142,12 +145,12 @@ export function Library({ exam, subjects, subject, topics, contactEmail }: Libra
                         ))}
                       </div>
                       {topic.locked ? (
-                        <a
-                          href="#unlock"
+                        <Link
+                          href={unlock.kind === "plans" ? unlock.href : "#unlock"}
                           className="text-[13px] font-bold text-ayc-blue underline underline-offset-2"
                         >
                           🔒 Unlock with {exam.code} All-Access
-                        </a>
+                        </Link>
                       ) : null}
                     </div>
                   ) : null}
@@ -178,9 +181,10 @@ export function Library({ exam, subjects, subject, topics, contactEmail }: Libra
             🔒 UNLOCK WITH {exam.code} ALL-ACCESS
           </h2>
           <p className="text-[15px] leading-normal">
-            {exam.code} All-Access opens every deck, quiz and Reviewer PDF for {exam.code}.{" "}
-            <BetaAccessNote contactEmail={contactEmail} />
+            {exam.code} All-Access opens every deck, quiz and Reviewer PDF for {exam.code}.
+            <ContactNote unlock={unlock} />
           </p>
+          {unlock.kind === "plans" ? <PlansLink href={unlock.href}>See plans</PlansLink> : null}
         </section>
       ) : null}
     </>

@@ -27,6 +27,7 @@ import type {
   MemberUser,
   NewTargetExam,
   PickableExam,
+  PlansExam,
   PrivacyRequest,
   PrivacyRequestOutcome,
   QuizOpening,
@@ -373,6 +374,27 @@ export interface MemberService {
    * User id that isn't one, and a User with no Member record.
    */
   requestPrivacy(userId: string, type: PrivacyRequestType): Promise<PrivacyRequestOutcome>;
+
+  // Plans (Phase 4, ticket 02; spec, Phase 4 planning decisions → Who buys,
+  // and which Exams; Phase 4 seams → Member seam, extended). Reads only, fresh
+  // each time: an Owner switching a Plan off takes it off the Plans page on
+  // the next request. Buying comes with ticket 03.
+
+  /**
+   * The Plans page's read for this Member: each Exam on the Website with at
+   * least one Plan on sale, in the catalogue's order, with its Plans on sale
+   * shortest first, when the Member's own Access Pass for it ends, and the
+   * Exam Date a Plan would count towards (theirs for a Target Exam, otherwise
+   * the Official Exam Date). Never another Member's pass or date. Throws for
+   * a User id that isn't one.
+   */
+  listMemberPlans(userId: string): Promise<PlansExam[]>;
+  /**
+   * The codes of the Exams on the Website with at least one Plan on sale, in
+   * the catalogue's order: where a lock's "See plans" can lead. The same for
+   * every Member.
+   */
+  listExamsOnSale(): Promise<string[]>;
 }
 
 const impl: MemberService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -411,3 +433,5 @@ export const listNotices = impl.listNotices;
 export const dismissNotice = impl.dismissNotice;
 export const listOpenPrivacyRequests = impl.listOpenPrivacyRequests;
 export const requestPrivacy = impl.requestPrivacy;
+export const listMemberPlans = impl.listMemberPlans;
+export const listExamsOnSale = impl.listExamsOnSale;

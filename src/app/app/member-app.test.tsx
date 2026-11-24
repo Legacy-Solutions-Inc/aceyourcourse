@@ -119,6 +119,8 @@ const signInPage = async (query: { next?: string; error?: string } = {}) =>
 const notOpenYetPage = async () => (await import("./not-open-yet/page")).default();
 const library = async () =>
   (await import("./(shell)/library/page")).default({ searchParams: Promise.resolve({}) });
+const plans = async () =>
+  (await import("./(shell)/plans/page")).default({ searchParams: Promise.resolve({}) });
 const signInAs = async (fields: Record<string, string>) =>
   (await import("./sign-in/actions")).signInAs({ error: null, email: "" }, form(fields));
 
@@ -127,7 +129,7 @@ const GATED_PAGES: [string, () => Promise<unknown>][] = [
   ["/app", home],
   ["/app/library", library],
   ["/app/courses", () => comingSoon("courses")],
-  ["/app/plans", () => comingSoon("plans")],
+  ["/app/plans", plans],
   ["/app/billing", () => comingSoon("billing")],
   ["/app/account", account],
   ["/app/add-exam", addExamPage],
@@ -264,7 +266,6 @@ describe("Home", () => {
 describe("the screens that aren't built yet", () => {
   it.each([
     ["courses", "03 · COURSES"],
-    ["plans", "04 · PLANS"],
     ["billing", "05 · BILLING"],
   ])("/app/%s says it's coming in the beta", async (segment, eyebrow) => {
     await agreedAs(TESTER, "Bea Tester");

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { periodLabel } from "@/lib/admin/plan-view";
+import { periodLabel } from "@/lib/plans/plan-text";
 import type { PlanDays } from "@/lib/plans/plan-rules";
 import { NOT_AN_EXAM } from "@/services/access-passes.core";
 import {

@@ -44,7 +44,7 @@ function renderReader(overrides: Partial<ReviewerReaderProps> = {}) {
     pageCount: 3,
     resumeAt: null,
     examCode: "CE",
-    contactEmail: "hello@aceyourcourse.ph",
+    unlock: { kind: "plans", href: "/app/plans?exam=CE" },
     back: { href: "/app/library?subject=MSTC", label: "Back to MSTC topics" },
     actions: { savePosition },
     ...overrides,

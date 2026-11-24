@@ -29,6 +29,7 @@ import type { StudyMarkInput, StudyPositionInput } from "@/services/member.schem
 import type { StudyCard } from "@/services/member.types";
 
 import type { ShownRefusal } from "@/lib/member-app/access";
+import type { UnlockRoute } from "@/lib/member-app/unlock";
 
 import { ContentState } from "./content-state";
 import { keptNote } from "./study-states";
@@ -56,8 +57,8 @@ export interface DeckPlayerProps {
   /** The Member's email and short Member ID, tiled over every card. */
   watermark: string;
   examCode: string;
-  /** Where Members ask AYC for access during the beta. */
-  contactEmail: string;
+  /** How the Member gets the Exam's All-Access, should access stop mid-way: its Plans, or asking AYC. */
+  unlock: UnlockRoute;
   back: { href: string; label: string };
   actions: DeckPlayerActions;
 }
@@ -113,7 +114,7 @@ export function DeckPlayer({
   imagesExpireAt,
   watermark,
   examCode,
-  contactEmail,
+  unlock,
   back,
   actions,
 }: DeckPlayerProps) {
@@ -300,7 +301,7 @@ export function DeckPlayer({
           // The count of what was saved shows when the deck is opened again.
           keptNote={keptNote(refusal, null)}
           examCode={examCode}
-          contactEmail={contactEmail}
+          unlock={unlock}
           back={back}
         />
       ) : offering ? (

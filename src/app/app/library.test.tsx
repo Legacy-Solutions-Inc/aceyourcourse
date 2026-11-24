@@ -221,17 +221,39 @@ describe("the Library", () => {
       }),
     ).toBeInTheDocument();
     expect(itemsIn("Spiral Curves")).toEqual(["🔒Flashcards"]);
+    // CE has Plans on sale: unlocking it is buying one (ticket 02).
+    expect(
+      within(row("Simple Curves")).getByRole("link", { name: /Unlock with CE All-Access$/ }),
+    ).toHaveAttribute("href", "/app/plans?exam=CE");
+
+    const unlock = screen.getByRole("region", { name: "🔒 UNLOCK WITH CE ALL-ACCESS" });
+    expect(within(unlock).getByRole("link", { name: "See plans" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
+    expect(unlock).not.toHaveTextContent("During the beta");
+  });
+
+  it("keeps the contact us note for an Exam with no Plan on sale", async () => {
+    const store = getSampleStore();
+    store.plans = store.plans.map((plan) => ({
+      ...plan,
+      onSale: plan.examCode !== "CE" && plan.onSale,
+    }));
+    await asNewTester();
+    render(await library());
+
     expect(
       within(row("Simple Curves")).getByRole("link", { name: /Unlock with CE All-Access$/ }),
     ).toHaveAttribute("href", "#unlock");
-
     const unlock = screen.getByRole("region", { name: "🔒 UNLOCK WITH CE ALL-ACCESS" });
     expect(unlock).toHaveTextContent("During the beta, access comes from AYC. Ask us at");
-    const { contactEmail } = getSampleStore().catalogue.settings;
+    const { contactEmail } = store.catalogue.settings;
     expect(within(unlock).getByRole("link", { name: contactEmail })).toHaveAttribute(
       "href",
       `mailto:${contactEmail}`,
     );
+    expect(within(unlock).queryByRole("link", { name: "See plans" })).not.toBeInTheDocument();
   });
 
   it("opens every Visible and Published item for active Staff with no pass", async () => {
@@ -408,9 +430,26 @@ describe("opening an item", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "Unlock with CE All-Access" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "See plans" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
+    expect(screen.queryByText(/During the beta/)).not.toBeInTheDocument();
+  });
+
+  it("keeps the contact us note on a locked quiz whose Exam has no Plan on sale", async () => {
+    const store = getSampleStore();
+    store.plans = store.plans.map((plan) => ({
+      ...plan,
+      onSale: plan.examCode !== "CE" && plan.onSale,
+    }));
+    await asNewTester();
+    render(await opening("quiz", QUIZ));
+
     expect(
       screen.getByText(/During the beta, access comes from AYC\. Ask us at/),
     ).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "See plans" })).not.toBeInTheDocument();
   });
 
   it("tells the lapsed tester their access ended, and that their progress is kept", async () => {
@@ -423,6 +462,10 @@ describe("opening an item", () => {
     expect(
       screen.getByText(/Your access ended\. Renew to keep reviewing\. Your progress is kept\./),
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Renew access" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
   });
 
   it.each([

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { ShownRefusal } from "@/lib/member-app/access";
+import type { UnlockRoute } from "@/lib/member-app/unlock";
 import type { ContentKind } from "@/services/content.types";
 
 import { ContentState } from "./content-state";
@@ -97,7 +98,8 @@ interface RefusedStudyProps extends StudyHeadingProps {
   /** What of the Member's progress on it is kept, such as "3 cards marked", or null for none. */
   kept: string | null;
   examCode: string;
-  contactEmail: string;
+  /** How the Member gets the Exam's All-Access: its Plans, or asking AYC. */
+  unlock: UnlockRoute;
   back: { href: string; label: string };
 }
 

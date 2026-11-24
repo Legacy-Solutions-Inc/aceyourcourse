@@ -19,8 +19,8 @@ import type { MemberAccess } from "@/lib/member-app/access";
 import { readMemberAccess, shownRefusal } from "@/lib/member-app/access-check";
 import { requireMemberWithExam } from "@/lib/member-app/guard";
 import { memberWatermark } from "@/lib/member-app/member-id";
+import { readUnlockRoutes } from "@/lib/member-app/unlock-read";
 import { paths } from "@/paths";
-import { getWebsiteSettings } from "@/services/catalogue";
 import { openDeck, openQuiz, openReviewerPdf, reviewQuizAttempt } from "@/services/member";
 import { contentRefSchema } from "@/services/member.schema";
 import type { ContentItem, Member, RefusedQuiz, TargetExam } from "@/services/member.types";
@@ -65,7 +65,8 @@ function backFrom(item: ContentItem, selected: TargetExam) {
  * runs the access decision before it reads a card, a question or a page, so
  * a refused deck's cards, a refused quiz's questions and a refused Reviewer
  * PDF's pages never reach the browser, which gets the unlock prompt, renew
- * or "no longer available" instead; nor does a correct choice before the
+ * or "no longer available" instead (the first two lead to the Exam's Plans
+ * while one is on sale, ticket 02); nor does a correct choice before the
  * Member submits. The reader's pages come one at a time from the protected
  * page endpoint, stamped for the Member (src/app/app/reviewer-pdfs).
  */
@@ -101,9 +102,9 @@ interface DeckScreenProps {
 async function deckScreen({ id, member, selected, from }: DeckScreenProps) {
   const access = await readMemberAccess();
   if (!access) redirect(paths.memberApp.signIn(from));
-  const [opening, { contactEmail }] = await Promise.all([
+  const [opening, unlockOf] = await Promise.all([
     openDeck(member.userId, id, access),
-    getWebsiteSettings(),
+    readUnlockRoutes(),
   ]);
   if (opening.status === "not-found") notFound();
 
@@ -120,7 +121,7 @@ async function deckScreen({ id, member, selected, from }: DeckScreenProps) {
         decision={shownRefusal(opening.decision, from)}
         kept={cardsKept(opening.marked)}
         examCode={item.examCode}
-        contactEmail={contactEmail}
+        unlock={unlockOf(item.examCode)}
         back={back}
       />
     );
@@ -138,7 +139,7 @@ async function deckScreen({ id, member, selected, from }: DeckScreenProps) {
         imagesExpireAt={opening.deck.imagesExpireAt}
         watermark={memberWatermark(member.email, member.userId)}
         examCode={item.examCode}
-        contactEmail={contactEmail}
+        unlock={unlockOf(item.examCode)}
         back={back}
         actions={{ markCard: markStudyCard, savePosition: saveStudyPosition }}
       />
@@ -166,7 +167,7 @@ async function refusedQuizScreen(opening: RefusedQuiz, selected: TargetExam, fro
   const { item } = opening;
   const back = backFrom(item, selected);
   const crumb = quizCrumb(item);
-  const { contactEmail } = await getWebsiteSettings();
+  const unlockOf = await readUnlockRoutes();
   return (
     <FocusScreen back={back} crumb={crumb} title={item.topicName}>
       <RefusedStudy
@@ -175,7 +176,7 @@ async function refusedQuizScreen(opening: RefusedQuiz, selected: TargetExam, fro
         decision={shownRefusal(opening.decision, from)}
         kept={quizKept(opening.attemptCount, opening.bestScore)}
         examCode={item.examCode}
-        contactEmail={contactEmail}
+        unlock={unlockOf(item.examCode)}
         back={back}
       />
     </FocusScreen>
@@ -184,9 +185,9 @@ async function refusedQuizScreen(opening: RefusedQuiz, selected: TargetExam, fro
 
 /** A quiz, as a focus screen: the quiz screen, or why it won't open, or that it's still being prepared. */
 async function quizScreen({ id, member, selected, from, access }: StudyScreenProps) {
-  const [opening, { contactEmail }] = await Promise.all([
+  const [opening, unlockOf] = await Promise.all([
     openQuiz(member.userId, id, access),
-    getWebsiteSettings(),
+    readUnlockRoutes(),
   ]);
   if (opening.status === "not-found") notFound();
   if (opening.status === "refused") return refusedQuizScreen(opening, selected, from);
@@ -206,7 +207,7 @@ async function quizScreen({ id, member, selected, from, access }: StudyScreenPro
           quiz={quiz}
           watermark={memberWatermark(member.email, member.userId)}
           examCode={item.examCode}
-          contactEmail={contactEmail}
+          unlock={unlockOf(item.examCode)}
           back={back}
           actions={{ submitQuiz: submitQuizAttempt }}
         />
@@ -263,9 +264,9 @@ async function attemptScreen({
 
 /** A Reviewer PDF, as a focus screen: the reader, or why it won't open, or that it's still being prepared. */
 async function reviewerScreen({ id, member, selected, from, access }: StudyScreenProps) {
-  const [opening, { contactEmail }] = await Promise.all([
+  const [opening, unlockOf] = await Promise.all([
     openReviewerPdf(member.userId, id, access),
-    getWebsiteSettings(),
+    readUnlockRoutes(),
   ]);
   if (opening.status === "not-found") notFound();
 
@@ -282,7 +283,7 @@ async function reviewerScreen({ id, member, selected, from, access }: StudyScree
         decision={shownRefusal(opening.decision, from)}
         kept={pagesKept(opening.viewed)}
         examCode={item.examCode}
-        contactEmail={contactEmail}
+        unlock={unlockOf(item.examCode)}
         back={back}
       />
     );
@@ -297,7 +298,7 @@ async function reviewerScreen({ id, member, selected, from, access }: StudyScree
         pageCount={opening.reviewerPdf.pageCount}
         resumeAt={opening.reviewerPdf.resumeAt}
         examCode={item.examCode}
-        contactEmail={contactEmail}
+        unlock={unlockOf(item.examCode)}
         back={back}
         actions={{ savePosition: saveReadingPosition }}
       />

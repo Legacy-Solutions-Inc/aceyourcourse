@@ -6,8 +6,8 @@ import { MemberScreen } from "@/components/member-app/member-screen";
 import { accessDecision } from "@/lib/member-app/access";
 import { readMemberAccess } from "@/lib/member-app/access-check";
 import { requireMemberWithExam } from "@/lib/member-app/guard";
+import { readUnlockRoutes } from "@/lib/member-app/unlock-read";
 import { paths } from "@/paths";
-import { getWebsiteSettings } from "@/services/catalogue";
 import { getLibrary, getTopicPercents } from "@/services/member";
 
 export const metadata: Metadata = { title: "Library" };
@@ -21,17 +21,18 @@ interface LibraryPageProps {
  * Target Exam's Subjects and Topics, each with the Member's own % done, and
  * each item open, Free Preview or locked by the access decision, which is
  * asked for every item on the server. Hidden and unpublished content never
- * reaches the page. The gate, consent, the Active Device and onboarding come
+ * reaches the page. A lock leads to the Exam's Plans while one is on sale
+ * (ticket 02). The gate, consent, the Active Device and onboarding come
  * first.
  */
 export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   const { subject: asked } = await searchParams;
   const { member: signedIn, selected } = await requireMemberWithExam(paths.memberApp.library);
-  const [member, subjects, percents, { contactEmail }] = await Promise.all([
+  const [member, subjects, percents, unlockOf] = await Promise.all([
     readMemberAccess(),
     getLibrary(selected.examCode),
     getTopicPercents(signedIn.userId, selected.examCode),
-    getWebsiteSettings(),
+    readUnlockRoutes(),
   ]);
   // requireMemberWithExam just let a signed-in Member in.
   if (!member) throw new Error("The Library lost its signed-in Member.");
@@ -60,7 +61,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
         subjects={subjects.map(({ code, name }) => ({ code, name }))}
         subject={subject ? { code: subject.code, name: subject.name } : null}
         topics={topics}
-        contactEmail={contactEmail}
+        unlock={unlockOf(selected.examCode)}
       />
     </MemberScreen>
   );

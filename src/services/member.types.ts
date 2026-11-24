@@ -6,6 +6,7 @@ import type { PrivacyRequestStatus, PrivacyRequestType } from "@/lib/member-app/
 import type { AttemptReview } from "@/lib/quizzes/grading";
 import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
 import type { ReaderPlace } from "@/lib/reviewer-pdfs/reader";
+import type { Plan } from "@/services/admin.types";
 import type { CardMarkVerdict, ContentKind } from "@/services/content.types";
 import type {
   attemptRefSchema,
@@ -435,4 +436,27 @@ export interface PrivacyRequestOutcome {
   request: PrivacyRequest;
   /** False when one was already open: nothing new is made. */
   created: boolean;
+}
+
+// ── Plans (Phase 4, ticket 02; spec, Phase 4 planning decisions → Who buys,
+// and which Exams; stories 134 and 151c) ─────────────────────────────────────
+
+/** A Plan on sale, as the Member's Plans page shows it: its name ("CE All-Access"), days, price and Best value. */
+export type OnSalePlan = Pick<Plan, "id" | "name" | "days" | "priceCentavos" | "bestValue">;
+
+/** An Exam with at least one Plan on sale, as one Member's Plans page reads it. */
+export interface PlansExam {
+  examCode: string;
+  board: string;
+  name: string;
+  /** Its Plans on sale, shortest first. Never empty. */
+  plans: OnSalePlan[];
+  /** When this Member's own Access Pass for the Exam ends (ISO), ended or not; null with none. */
+  passEndsAt: string | null;
+  /**
+   * The Exam Date a Plan would count towards (YYYY-MM-DD): the Member's own
+   * for a Target Exam, else the Exam's Official Exam Date, which buying it
+   * adds it with; null when there's neither.
+   */
+  examDate: string | null;
 }

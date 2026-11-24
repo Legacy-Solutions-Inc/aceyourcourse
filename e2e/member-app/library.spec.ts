@@ -132,9 +132,13 @@ test.describe("a new tester with no pass", () => {
     await expect(
       row(page, "Simple Curves").getByRole("link", { name: "🔒 Unlock with CE All-Access" }),
     ).toBeVisible();
-    await expect(page.getByRole("region", { name: "🔒 UNLOCK WITH CE ALL-ACCESS" })).toContainText(
-      "During the beta, access comes from AYC.",
-    );
+    // CE has Plans on sale (ticket 02): unlocking it is buying one.
+    await expect(
+      page.getByRole("region", { name: "🔒 UNLOCK WITH CE ALL-ACCESS" }).getByRole("link", {
+        name: "See plans",
+        exact: true,
+      }),
+    ).toHaveAttribute("href", paths.memberApp.plansFor("CE"));
     await expectNoBlockingViolations(page);
 
     // The locked quiz shows the unlock prompt.

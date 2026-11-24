@@ -2,8 +2,9 @@ import { paths } from "@/paths";
 import { CONTENT_KINDS } from "@/services/content.types";
 
 // The Member App's fixed menu (Member App BUILD-MAP §2; mockup L794): seven
-// numbered items, the same for every Member. Only Home is built so far; the
-// others open a "Coming in the beta" screen until their tickets land.
+// numbered items, the same for every Member. Courses and Billing open a
+// "Coming in the beta" screen until their tickets land; Plans arrived with
+// Phase 4, ticket 02.
 
 export type MemberScreenKey =
   "home" | "library" | "courses" | "plans" | "billing" | "account" | "support";

@@ -99,6 +99,8 @@ export const paths = {
     sampleCardImage: (token: string) => `/api/dev/card-images/${encodeURIComponent(token)}`,
     courses: "/app/courses",
     plans: "/app/plans",
+    /** Plans open on one Exam's (ticket 02): where a lock's "See plans" and "Renew access" lead. */
+    plansFor: (examCode: string) => `/app/plans?exam=${encodeURIComponent(examCode)}`,
     billing: "/app/billing",
     account: "/app/account",
     support: "/app/support",

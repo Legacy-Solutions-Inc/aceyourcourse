@@ -157,7 +157,6 @@ test.describe("a Beta Tester", () => {
 
     for (const [label, path] of [
       ["Courses", "/app/courses"],
-      ["Plans", "/app/plans"],
       ["Billing", "/app/billing"],
     ] as const) {
       await memberNav(page)
@@ -464,8 +463,9 @@ test.describe("accessibility", () => {
         await expect(welcome(page, "Bea")).toBeVisible();
         await expectNoBlockingViolations(page);
 
-        // The Library is built (ticket 05; its checks are in library.spec.ts); Plans isn't yet.
-        await page.goto(paths.memberApp.plans);
+        // The Library and Plans are built (their checks are in library.spec.ts and
+        // plans.spec.ts); Billing isn't yet.
+        await page.goto(paths.memberApp.billing);
         await expect(page.getByRole("heading", { level: 1 })).toHaveText("Coming in the beta");
         await expectNoBlockingViolations(page);
       });

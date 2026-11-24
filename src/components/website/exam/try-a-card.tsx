@@ -15,12 +15,24 @@ interface TryACardProps {
   cards: SampleCard[];
   /** The top Live seller, for "Get the printed set". Null hides the link. */
   printedSetSlug: string | null;
-  /** "See {code} app plans": only while the Member App is live and a Product is in it. */
+  /** The line on the app: only while the Member App is live and a Product is in it. */
+  showAppIntro: boolean;
+  /**
+   * "See {code} plans", to the Member App's Plans for the Exam, through
+   * sign-in (Phase 4, ticket 02): as for the line on the app, and only while
+   * the Exam has a Plan on sale.
+   */
   showAppPlans: boolean;
 }
 
 /** "Try a {code} card": the Exam's sample formula cards. Hidden when it has none. */
-export function TryACard({ examCode, cards, printedSetSlug, showAppPlans }: TryACardProps) {
+export function TryACard({
+  examCode,
+  cards,
+  printedSetSlug,
+  showAppIntro,
+  showAppPlans,
+}: TryACardProps) {
   const headingId = useId();
   if (cards.length === 0) return null;
 
@@ -42,13 +54,13 @@ export function TryACard({ examCode, cards, printedSetSlug, showAppPlans }: TryA
           </h2>
           <p className="max-w-[30em] text-[17px] leading-relaxed text-ayc-on-navy-soft">
             {copy.intro}
-            {showAppPlans ? ` ${copy.appIntro}` : null}
+            {showAppIntro ? ` ${copy.appIntro}` : null}
           </p>
           {showAppPlans || printedSetSlug ? (
             <div className="mt-1.5 flex flex-wrap gap-2.5">
               {showAppPlans ? (
                 <Link
-                  href={paths.memberApp.plans}
+                  href={paths.memberApp.plansFor(examCode)}
                   className={cn(
                     link,
                     "border-ayc-navy bg-ayc-cream text-ayc-navy shadow-hard hover:text-ayc-navy",

@@ -162,7 +162,7 @@ test.describe("the CE page", () => {
   test("links nowhere in the Member App while the switch is off", async ({ page }) => {
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Civil Engineering");
     await expect(page.getByRole("link", { name: "Review CE in the app" })).toHaveCount(0);
-    await expect(page.getByRole("link", { name: /app plans/ })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "See CE plans" })).toHaveCount(0);
     await expect(compareTable(page).getByRole("columnheader", { name: "In the app" })).toHaveCount(
       0,
     );

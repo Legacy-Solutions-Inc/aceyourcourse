@@ -1,37 +1,15 @@
 import { pesoText } from "@/lib/admin/peso";
-import { formatPeso } from "@/lib/money";
 import { defaultPlanName, parsePlanPrice, type PlanDays } from "@/lib/plans/plan-rules";
+import { periodLabel } from "@/lib/plans/plan-text";
 import { paths } from "@/paths";
 import type { Plan } from "@/services/admin.types";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// How a Plan's duration and price read (Phase 4, ticket 01; spec, Phase 4 →
-// Plans; BUILD-MAP §3.8): a Plan runs 30, 90, 180 or 365 days, called 1, 3, 6
-// or 12 months, and its per-month figure is worked out for display only, in
-// whole pesos. A 30-day Plan has no per-month figure: it reads "for 30 days".
-// ─────────────────────────────────────────────────────────────────────────────
-
-const MONTHS: Record<PlanDays, number> = { 30: 1, 90: 3, 180: 6, 365: 12 };
-
-/** Pure: the duration in months, "3 months" or "1 month". */
-export function periodLabel(days: PlanDays): string {
-  const months = MONTHS[days];
-  return `${months} ${months === 1 ? "month" : "months"}`;
-}
+// How the Admin's Plans & prices screen words a Plan (Phase 4, ticket 01;
+// spec, Phase 4 → Plans; BUILD-MAP §3.8). The duration and per-month figure
+// read as they do on the Member's Plans page: src/lib/plans/plan-text.ts.
 
 /** Pure: the editor's access-period option, "3 months · 90 days". */
 export const accessPeriodLabel = (days: PlanDays) => `${periodLabel(days)} · ${days} days`;
-
-/**
- * Pure: the per-month figure beside a price, "₱433 / month", rounded to whole
- * pesos; "for 30 days" for a 30-day Plan; nothing while there's no price.
- */
-export function perMonthText(priceCentavos: number | null, days: PlanDays): string {
-  if (days === 30) return "for 30 days";
-  if (priceCentavos === null) return "";
-  const pesos = Math.round(priceCentavos / 100 / MONTHS[days]);
-  return `${formatPeso(pesos * 100)} / month`;
-}
 
 /** Pure: the preview's tag, "CE · 3 MONTHS". */
 export const planPreviewTag = (examCode: string, days: PlanDays) =>

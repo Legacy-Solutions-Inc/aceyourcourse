@@ -10,6 +10,7 @@ import { FormulaText } from "@/components/formula/formula-text";
 import { WatermarkOverlay } from "@/components/watermark-overlay";
 import { formatDateTime } from "@/lib/manila-time";
 import type { ShownRefusal } from "@/lib/member-app/access";
+import type { UnlockRoute } from "@/lib/member-app/unlock";
 import { QUIZ_CHOICES, type QuizChoice } from "@/lib/quizzes/quiz-rules";
 import {
   answer,
@@ -51,8 +52,8 @@ export interface QuizPlayerProps {
   /** The Member's email and short Member ID, tiled over every question. */
   watermark: string;
   examCode: string;
-  /** Where Members ask AYC for access during the beta. */
-  contactEmail: string;
+  /** How the Member gets the Exam's All-Access, should access stop mid-way: its Plans, or asking AYC. */
+  unlock: UnlockRoute;
   back: { href: string; label: string };
   actions: QuizPlayerActions;
 }
@@ -93,7 +94,7 @@ export function QuizPlayer({
   quiz,
   watermark,
   examCode,
-  contactEmail,
+  unlock,
   back,
   actions,
 }: QuizPlayerProps) {
@@ -209,7 +210,7 @@ export function QuizPlayer({
             // What was saved shows when the quiz is opened again.
             keptNote={keptNote(screen.decision, null)}
             examCode={examCode}
-            contactEmail={contactEmail}
+            unlock={unlock}
             back={back}
           />
         </>

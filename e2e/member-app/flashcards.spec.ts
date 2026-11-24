@@ -179,7 +179,11 @@ test.describe("a new tester with no pass, on a locked deck", () => {
     await expect(
       page.getByRole("heading", { level: 2, name: "Unlock with CE All-Access" }),
     ).toBeVisible();
-    await expect(page.getByText(/During the beta, access comes from AYC/)).toBeVisible();
+    // CE has Plans on sale (ticket 02): unlocking it is buying one.
+    await expect(page.getByRole("link", { name: "See plans", exact: true })).toHaveAttribute(
+      "href",
+      paths.memberApp.plansFor("CE"),
+    );
     expect(await page.content()).not.toContain("A locked formula");
     await expectNoBlockingViolations(page);
   });

@@ -20,8 +20,10 @@ import {
 } from "@/services/member.schema";
 import {
   applyChange,
+  examCodesOnSale,
   examsForMembers,
   pickableExams,
+  plansExams,
   targetExamOperations,
   targetExams,
   type MemberExams,
@@ -39,6 +41,7 @@ import type {
   MemberNotice,
   MemberUser,
   PickableExam,
+  PlansExam,
   PrivacyRequest,
   PrivacyRequestOutcome,
   TargetExam,
@@ -519,4 +522,22 @@ export async function requestPrivacy(
   };
   store.privacyRequests = [...store.privacyRequests, request];
   return { request: ownRequest(request, wanted), created: true };
+}
+
+// ── Plans (Phase 4, ticket 02) ──────────────────────────────────────────────
+
+export async function listMemberPlans(userId: string): Promise<PlansExam[]> {
+  const wanted = memberUserIdSchema.parse(userId);
+  const { catalogue, plans } = getSampleStore();
+  return plansExams({
+    exams: examsForMembers(structuredClone(catalogue)),
+    plans: structuredClone(plans),
+    targetExams: await listTargetExams(wanted),
+    passes: await listAccessPasses(wanted),
+  });
+}
+
+export async function listExamsOnSale(): Promise<string[]> {
+  const { catalogue, plans } = getSampleStore();
+  return examCodesOnSale(examsForMembers(structuredClone(catalogue)), structuredClone(plans));
 }

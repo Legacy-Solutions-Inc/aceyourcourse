@@ -177,7 +177,10 @@ describe("the deck page", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "Unlock with CE All-Access" }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/During the beta, access comes from AYC/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "See plans" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
     expect(document.body.innerHTML).not.toContain("A secret formula");
     // Nor in what the server would send for the page's client parts.
     expect(JSON.stringify(page)).not.toContain("A secret formula");

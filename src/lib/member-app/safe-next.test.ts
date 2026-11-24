@@ -12,6 +12,8 @@ describe("safeMemberAppNext", () => {
     ["/app/library", "/app/library"],
     ["/app/library?topic=simple-curves", "/app/library?topic=simple-curves"],
     ["/app/plans#ce", "/app/plans"],
+    // The Website Exam page's "See CE plans" (Phase 4, ticket 02) comes back to CE's Plans.
+    ["/app/plans?exam=CE", "/app/plans?exam=CE"],
   ])("keeps the Member App path %s", (next, expected) => {
     expect(safeMemberAppNext(next)).toBe(expected);
   });
@@ -43,6 +45,11 @@ describe("safeMemberAppNext", () => {
     "/app/consent?next=%2Fapp%2Flibrary",
     "/app/device",
     "/app/device?next=%2Fapp%2Faccount",
+    // The Plans query opens no redirect of its own.
+    "/plans?exam=CE",
+    "https://evil.example/app/plans?exam=CE",
+    "//evil.example/app/plans?exam=CE",
+    "/app/../products?exam=CE",
   ])("falls back to Home for %s", (next) => {
     expect(safeMemberAppNext(next)).toBe("/app");
   });

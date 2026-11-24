@@ -193,7 +193,7 @@ export const examPageCopy = {
     next: "Next card",
     // Shown only while the Member App switch is on.
     appIntro: "The app works the same way, and remembers which cards you need to see again.",
-    seeAppPlans: (code: string) => `See ${code} app plans`,
+    seeAppPlans: (code: string) => `See ${code} plans`,
   },
   promo: {
     /** The bundle offer's headline with its saving, e.g. "₱200", when it has one. */
