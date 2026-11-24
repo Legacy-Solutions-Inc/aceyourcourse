@@ -12,6 +12,7 @@ import { MAX_QUERY_LENGTH } from "@/lib/catalogue/product-filters";
 import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
 import { isCalendarDate } from "@/lib/manila-time";
 import { EXTEND_DAYS, GRANT_MAX_DAYS } from "@/lib/member-app/access-pass";
+import { isPlanDays, parsePlanPrice, type PlanDays } from "@/lib/plans/plan-rules";
 import { PDF_NAME_MAX } from "@/lib/reviewer-pdfs/pdf-file";
 import { variationLabel } from "@/lib/catalogue/price";
 import {
@@ -2003,3 +2004,77 @@ export const reviewerPdfFreePreviewInputSchema = z.object({
   id: reviewerPdfId,
   freePreview: onOrOff,
 });
+
+// ── Plans (Owners only; Phase 4, ticket 01) ─────────────────────────────────
+// A Plan as the Plans & prices editor holds it (spec, Phase 4 → Plans; Phase 4
+// planning decisions → Plans & prices): a name, an Exam, 30, 90, 180 or 365
+// days, a price in whole pesos from ₱1 to ₱99,999 (src/lib/plans/plan-rules.ts),
+// stored in centavos, Best value and On sale. The Server Actions check only
+// the form's shape; the seam parses it with these rules, then checks the Exam
+// is in the catalogue and the Plans' own rules (one Best value per Exam, one
+// on sale per Exam and duration).
+
+export const PLAN_NAME_MAX = 80;
+
+export const PLAN_NAME_MISSING = "ADD A NAME";
+export const PLAN_NAME_TOO_LONG = `KEEP THE NAME TO ${PLAN_NAME_MAX} CHARACTERS`;
+export const PLAN_DAYS_ERROR = "PICK 1, 3, 6 OR 12 MONTHS";
+
+/** A price as typed or sent: its centavos, or why it isn't a Plan's price. */
+const planPrice = z.unknown().transform((value, ctx) => {
+  const price = parsePlanPrice(value);
+  if (price.ok) return price.centavos;
+  ctx.addIssue({ code: z.ZodIssueCode.custom, message: price.message });
+  return z.NEVER;
+});
+
+/** A Plan's days as sent: a number, or the select's text ("90"). Only 30, 90, 180 or 365. */
+const planDays = z.preprocess(typedDays, z.custom<PlanDays>(isPlanDays, PLAN_DAYS_ERROR));
+
+const planName = z
+  .string({ required_error: PLAN_NAME_MISSING, invalid_type_error: PLAN_NAME_MISSING })
+  .trim()
+  .min(1, PLAN_NAME_MISSING)
+  .max(PLAN_NAME_MAX, PLAN_NAME_TOO_LONG);
+
+/** The editor's fields, with every rule that needs nothing but the form. */
+export const planFormSchema = z
+  .object({
+    name: planName,
+    examCode: passExamCode,
+    days: planDays,
+    price: planPrice,
+    bestValue: z.boolean(),
+    onSale: z.boolean(),
+  })
+  .transform(({ price, ...plan }) => ({ ...plan, priceCentavos: price }));
+
+/** The Plans & prices editor's values, as it sends them. */
+export type PlanForm = z.input<typeof planFormSchema>;
+/** A Plan's fields once they pass the form's rules. */
+export type PlanInput = z.output<typeof planFormSchema>;
+
+/** A Plan's id, as the screen addresses it: any text, so one that isn't a Plan's answers not-found. */
+const planId = z.string().trim().min(1).max(100);
+
+/** The editor's shape, for the Server Actions: the seam checks the rules. */
+const planFormFields = z.object({
+  name: z.string().max(1_000),
+  examCode: z.string().max(100),
+  days: z.union([z.string().max(20), z.number()]),
+  price: z.union([z.string().max(40), z.number()]),
+  bestValue: z.boolean(),
+  onSale: z.boolean(),
+});
+
+/** "Add plan": a new Plan's form, its shape checked. */
+export const addPlanInputSchema = planFormFields;
+
+/** "Save": the Plan and its form, its shape checked. */
+export const savePlanInputSchema = planFormFields.extend({ id: planId });
+
+/** A Plan's On sale switch in the list. */
+export const planOnSaleInputSchema = z.object({ id: planId, onSale: onOrOff });
+
+/** The Plan a delete is for. */
+export const planIdInputSchema = z.object({ id: planId });

@@ -2,12 +2,13 @@ import { sql } from "drizzle-orm";
 
 import type { Database } from "@/lib/db/connect";
 import * as schema from "@/lib/db/schema";
-import { betaTesterToRow, SEEDED_RECORD, staffToRows } from "@/services/admin.rows";
+import { betaTesterToRow, planToRow, SEEDED_RECORD, staffToRows } from "@/services/admin.rows";
 import { catalogueToRows } from "@/services/catalogue.rows";
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
 import { accessPassToRow, contentToRows } from "@/services/content.rows";
 import { sampleContent } from "@/services/mock/content";
 import { sampleAccessPasses, sampleBetaTesters } from "@/services/mock/members";
+import { samplePlans } from "@/services/mock/plans";
 import { sampleStaff } from "@/services/mock/staff";
 
 import { type SeedPhotos, seedPhotoPlan } from "./photos";
@@ -195,8 +196,9 @@ async function writeSampleStaff(tx: Transaction, now: Date): Promise<SampleStaff
 }
 
 /**
- * Adds the Member App's sample Topics with their content, and the sample
- * Access Passes, timed from `now`, for the catalogue just written.
+ * Adds the Member App's sample Topics with their content, the sample Access
+ * Passes, timed from `now`, and the starting Plans on sale, for the catalogue
+ * just written.
  */
 async function writeSampleMemberApp(
   tx: Transaction,
@@ -212,6 +214,25 @@ async function writeSampleMemberApp(
   if (accessPasses.length) {
     await tx.insert(schema.accessPasses).values(accessPasses.map(accessPassToRow));
   }
+  await writeStartingPlans(tx, seed, now, true);
+}
+
+/**
+ * Adds the starting Plans for the catalogue just written (Phase 4, ticket 01):
+ * on sale in a local load, as the sample data has them; switched off in a
+ * production load, as the starting-plans migration adds them where the Exams
+ * already existed, until the client confirms the prices.
+ */
+async function writeStartingPlans(
+  tx: Transaction,
+  seed: CatalogueSeed,
+  now: Date,
+  onSale: boolean,
+): Promise<void> {
+  const plans = samplePlans(seed, onSale).map((plan) =>
+    planToRow({ ...plan, stamp: { savedAt: now.toISOString(), savedBy: null } }),
+  );
+  if (plans.length) await tx.insert(schema.plans).values(plans);
 }
 
 async function writeCatalogue(tx: Transaction, seed: CatalogueSeed): Promise<void> {
@@ -299,7 +320,8 @@ async function prepareSeed(seed: unknown, photos: SeedPhotos | undefined): Promi
  * Validates the seed, then writes it in one transaction. Without
  * `production`, it replaces whatever catalogue is there, and the Admin's data
  * with the sample staff list, timed from `now`. With it, it refuses when any
- * Catalogue row exists, deletes nothing and adds no Staff. An invalid seed, or
+ * Catalogue row exists, deletes nothing and adds no Staff; it adds the
+ * starting Plans switched off. An invalid seed, or
  * with `photos` a missing photo file, is refused before the database is
  * touched. With `photos`, the photos are uploaded once the transaction knows
  * it will load; without, they stay at their public/ paths.
@@ -327,6 +349,7 @@ export async function seedCatalogue(
     await writeCatalogue(tx, loaded?.seed ?? valid);
     const staff = production ? null : await writeSampleStaff(tx, now);
     if (!production) await writeSampleMemberApp(tx, loaded?.seed ?? valid, now);
+    else await writeStartingPlans(tx, loaded?.seed ?? valid, now, false);
     await stampSeed(tx, now);
     return {
       ok: true,

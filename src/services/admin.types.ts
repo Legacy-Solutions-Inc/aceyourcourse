@@ -24,6 +24,7 @@ import type { ImportCounts, ImportProblem } from "@/lib/content-import/plan";
 import type { ImportMode } from "@/lib/content-import/modes";
 import type { CardImageType } from "@/lib/cards/card-rules";
 import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
+import type { PlanDays } from "@/lib/plans/plan-rules";
 import type { MemberDataExport } from "@/lib/member-app/data-export";
 import type { MemberProgress } from "@/lib/member-app/progress";
 import type {
@@ -858,4 +859,34 @@ export interface AccessPassChange {
    * null for an extension or an end.
    */
   targetExam: "added" | "restored" | null;
+}
+
+// ── Plans (Owners only; Phase 4, ticket 01) ─────────────────────────────────
+
+/**
+ * A Plan: what the Member App sells (CONTEXT.md, Plan): all of one Exam's
+ * content (ADR 0010) for 30, 90, 180 or 365 days, at a price in centavos
+ * (whole pesos). At most one per Exam is Best value, and at most one per Exam
+ * and duration is On sale; one that's off is hidden from Members and leaves
+ * every Access Pass as it is. A Plan never renews by itself.
+ */
+export interface Plan {
+  id: string;
+  examCode: string;
+  name: string;
+  days: PlanDays;
+  priceCentavos: number;
+  bestValue: boolean;
+  onSale: boolean;
+}
+
+/** A Plan as the Admin opens it, with its stamp for the conflict check. */
+export interface AdminPlan extends Plan {
+  stamp: RecordStamp;
+}
+
+/** The Plans & prices screen: every Plan, by Exam, duration and name, and the Exams in order. */
+export interface AdminPlans {
+  plans: AdminPlan[];
+  exams: Pick<Exam, "code" | "name">[];
 }

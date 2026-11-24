@@ -1,5 +1,7 @@
 import type * as schema from "@/lib/db/schema";
+import { toPlanDays } from "@/lib/plans/plan-rules";
 import type {
+  AdminPlan,
   BetaTester,
   DeniedSignIn,
   Invite,
@@ -180,3 +182,27 @@ export function stampsToRows(stamps: Record<string, RecordStamp>): RecordStampRo
     updatedBy: stamp.savedBy,
   }));
 }
+
+// ── Plans (Phase 4, ticket 01) ──────────────────────────────────────────────
+
+export type PlanRow = typeof schema.plans.$inferSelect;
+
+/** Pure: a Plan's row as the seam's Plan, with its last save as its stamp. */
+export const planFromRow = (row: PlanRow): AdminPlan => ({
+  id: row.id,
+  examCode: row.examCode,
+  name: row.name,
+  // The table's check keeps the days to a Plan's durations.
+  days: toPlanDays(row.days),
+  priceCentavos: row.priceCentavos,
+  bestValue: row.bestValue,
+  onSale: row.onSale,
+  stamp: { savedAt: row.savedAt.toISOString(), savedBy: row.savedBy },
+});
+
+/** Pure: the seam's Plan as its row. */
+export const planToRow = ({ stamp, ...plan }: AdminPlan): PlanRow => ({
+  ...plan,
+  savedAt: new Date(stamp.savedAt),
+  savedBy: stamp.savedBy,
+});

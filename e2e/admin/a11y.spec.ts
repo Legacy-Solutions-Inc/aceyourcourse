@@ -6,6 +6,7 @@ import { expect, type Locator, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
 import { sampleContentId, sampleTopicId } from "../../src/services/mock/content";
+import { samplePlanId } from "../../src/services/mock/plans";
 import {
   LIVE,
   openSignInAs,
@@ -308,6 +309,20 @@ const KEYBOARD_SCREENS: {
     },
   },
   {
+    name: "Plans & prices, with a Plan's editor and its delete dialog",
+    who: "owner",
+    path: `${paths.admin.plans}?exam=ce&plan=${samplePlanId("CE", 90)}`,
+    ready: (page) => page.getByRole("form", { name: "Edit plan" }),
+    dialog: {
+      open: (page) =>
+        page
+          .getByRole("form", { name: "Edit plan" })
+          .getByRole("button", { name: "Delete plan" })
+          .click(),
+      name: "Delete “CE All-Access · 3 months”?",
+    },
+  },
+  {
     name: "Settings, with the add-invite modal",
     who: "owner",
     path: paths.admin.settings,
@@ -404,6 +419,9 @@ for (const size of SIZES) {
         // Users: the Users list (ticket 16) and the Beta Testers tab (ticket 01).
         "/admin/users",
         paths.admin.betaTesters,
+        // Plans & prices (Phase 4, ticket 01), with the new Plan's editor and its preview.
+        paths.admin.plans,
+        `${paths.admin.plans}?plan=new`,
         "/admin/settings",
       ]) {
         await page.goto(path);

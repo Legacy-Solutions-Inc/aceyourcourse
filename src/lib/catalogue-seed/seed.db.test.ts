@@ -8,6 +8,7 @@ import * as schema from "@/lib/db/schema";
 import { staffFromRows } from "@/services/admin.rows";
 import { readCatalogue } from "@/services/catalogue.db";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
+import { samplePlans } from "@/services/mock/plans";
 import { sampleStaff } from "@/services/mock/staff";
 
 import { loadTestCatalogue } from "../../../test/catalogue-database";
@@ -198,6 +199,38 @@ describeWithDatabase("catalogue seed on the database", database, () => {
       sampleStaff: null,
     });
     expect(await db().select().from(schema.staff)).toEqual([]);
+  });
+
+  it("adds the starting Plans: on sale in a local load, switched off in a production load (Phase 4, ticket 01)", async () => {
+    const plans = async () =>
+      (await db().select().from(schema.plans))
+        .map(({ examCode, days, priceCentavos, bestValue, onSale }) => ({
+          examCode,
+          days,
+          priceCentavos,
+          bestValue,
+          onSale,
+        }))
+        .sort((a, b) => a.examCode.localeCompare(b.examCode) || a.days - b.days);
+    const expected = (onSale: boolean) =>
+      samplePlans(CATALOGUE_SEED, onSale)
+        .map(({ examCode, days, priceCentavos, bestValue }) => ({
+          examCode,
+          days,
+          priceCentavos,
+          bestValue,
+          onSale,
+        }))
+        .sort((a, b) => a.examCode.localeCompare(b.examCode) || a.days - b.days);
+
+    expect(await seedCatalogue(db(), CATALOGUE_SEED)).toMatchObject({ ok: true });
+    expect(await plans()).toEqual(expected(true));
+
+    await clearCatalogue(db());
+    expect(await seedCatalogue(db(), CATALOGUE_SEED, { production: true })).toMatchObject({
+      ok: true,
+    });
+    expect(await plans()).toEqual(expected(false));
   });
 
   it("with --production --check, reports what an empty database would get, and writes nothing", async () => {

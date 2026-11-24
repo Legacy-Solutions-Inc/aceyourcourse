@@ -19,6 +19,7 @@ import { reviewFormValues } from "@/lib/admin/review-form";
 import { getExamPageForAdmin, planCardImport, planQuizImport } from "@/services/admin";
 import { claimDevice, getOrCreateMember, requestPrivacy } from "@/services/member.mock";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
+import { samplePlanId } from "@/services/mock/plans";
 import { getSampleStore } from "@/services/mock/sample-store";
 
 import {
@@ -45,6 +46,7 @@ import * as products from "./(shell)/products/actions";
 import * as reviews from "./(shell)/reviews/actions";
 import * as settings from "./(shell)/settings/actions";
 import * as users from "./(shell)/users/actions";
+import * as plans from "./(shell)/plans/actions";
 import * as root from "./actions";
 import * as signIn from "./sign-in/actions";
 
@@ -272,6 +274,34 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     markRequestDone: owner(() =>
       users.markRequestDone(IDLE, { input: { requestId: requests.copy } }),
     ),
+  },
+  // Plans & prices (Phase 4, ticket 01).
+  "./(shell)/plans/actions.ts": {
+    addPlan: owner(() =>
+      plans.addPlan(IDLE, {
+        input: {
+          name: "CE All-Access",
+          examCode: "CE",
+          days: "365",
+          price: "3,999",
+          bestValue: false,
+          onSale: false,
+        },
+      }),
+    ),
+    savePlan: editorSave("owner", plans.savePlan, () => ({
+      id: samplePlanId("CE", 30),
+      name: "CE All-Access",
+      examCode: "CE",
+      days: "30",
+      price: "549",
+      bestValue: false,
+      onSale: true,
+    })),
+    switchPlanOnSale: owner(() =>
+      plans.switchPlanOnSale(IDLE, { input: { id: samplePlanId("CE", 30), onSale: false } }),
+    ),
+    removePlan: owner(() => plans.removePlan(IDLE, { input: { id: samplePlanId("CE", 180) } })),
   },
   "./(shell)/content/actions.ts": {
     addTopic: staff(() =>

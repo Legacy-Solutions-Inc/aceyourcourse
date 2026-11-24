@@ -10,6 +10,7 @@ import ProductsPage from "./products/page";
 import ReviewsPage from "./reviews/page";
 import SettingsPage from "./settings/page";
 import UsersPage from "./users/page";
+import PlansPage from "./plans/page";
 
 // Every signed-in screen calls the Staff Guard itself, with its own address
 // for `next`, because the shell layout doesn't re-render between screens. The
@@ -56,6 +57,12 @@ const SCREENS = [
     "WEBSITE",
   ],
   ["Users", () => UsersPage({ searchParams: Promise.resolve({}) }), "/admin/users", "MEMBER APP"],
+  [
+    "Plans & prices",
+    () => PlansPage({ searchParams: Promise.resolve({}) }),
+    "/admin/plans",
+    "SALES",
+  ],
   ["Settings", SettingsPage, "/admin/settings", "SETTINGS"],
 ] as const;
 
@@ -181,7 +188,7 @@ describe("Admin shell layout", () => {
     resetSampleStore();
   });
 
-  it("puts an Owner's screen inside the sidebar, with all seven screens", async () => {
+  it("puts an Owner's screen inside the sidebar, with all eight screens", async () => {
     signInAs("angel@aceyourcourse.ph");
     render(await AdminShellLayout({ children: <p>Screen</p> }));
     const sidebar = screen.getByRole("complementary");
@@ -196,7 +203,8 @@ describe("Admin shell layout", () => {
       "04Reviews & FAQs",
       "05Member App content",
       "06Users",
-      "07Settings",
+      "07Plans & prices",
+      "08Settings",
       "View site ↗",
     ]);
     expect(within(sidebar).getByText("OWNER")).toBeInTheDocument();
@@ -204,12 +212,14 @@ describe("Admin shell layout", () => {
     expect(screen.getByRole("button", { name: "Menu" })).toBeInTheDocument();
   });
 
-  it("leaves Users and Settings out of an Editor's sidebar", async () => {
+  it("leaves Users, Plans & prices and Settings, and the SALES group, out of an Editor's sidebar", async () => {
     signInAs("content@aceyourcourse.ph");
     render(await AdminShellLayout({ children: <p>Screen</p> }));
     const sidebar = screen.getByRole("complementary");
     expect(within(sidebar).queryByRole("link", { name: "Settings" })).not.toBeInTheDocument();
     expect(within(sidebar).queryByRole("link", { name: "Users" })).not.toBeInTheDocument();
+    expect(within(sidebar).queryByRole("link", { name: /Plans & prices/ })).not.toBeInTheDocument();
+    expect(within(sidebar).queryByText("SALES")).not.toBeInTheDocument();
     expect(within(sidebar).getByText("EDITOR")).toBeInTheDocument();
   });
 

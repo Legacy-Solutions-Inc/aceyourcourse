@@ -10,6 +10,7 @@ import type { AdminService } from "@/services/admin";
 import type { AdminResult, StaffActor } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
+import { samplePlanId } from "@/services/mock/plans";
 import { hashDeviceToken } from "@/lib/member-app/device-token";
 import { createFakeAuthAdmin } from "@/services/auth-admin.fake";
 import { createFakeRenderer } from "@/services/page-images.fake";
@@ -50,6 +51,19 @@ const BEA = {
 /** An empty sample Topic, in CE's MSTC. */
 const SURVEYING = sampleTopicId("CE", "MSTC", "Surveying");
 const UNKNOWN_TOPIC = "3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b";
+
+/** CE's starting 30-day Plan, as its editor sends it, and a 365-day CE Plan to add. */
+const CE_30_PLAN = samplePlanId("CE", 30);
+const CE_30_FORM = {
+  name: "CE All-Access",
+  examCode: "CE",
+  days: "30",
+  price: "499",
+  bestValue: false,
+  onSale: true,
+};
+const CE_YEAR_PLAN = { ...CE_30_FORM, days: "365", price: "3,999", onSale: false };
+const NO_SUCH_PLAN = "5d2c1b0a-9e8f-4d7c-8b6a-5f4e3d2c1b0a";
 
 /** An ISO time `days` from now. */
 const inDays = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
@@ -96,6 +110,8 @@ const READS = [
   "listReviewerPdfsForAdmin",
   "getReviewerPdfForAdmin",
   "getReviewerPdfPageForAdmin",
+  // Plans & prices (Phase 4, ticket 01).
+  "listPlansForAdmin",
 ] as const satisfies readonly (keyof AdminService)[];
 
 /**
@@ -1083,6 +1099,39 @@ const WRITES: Record<string, Write> = {
         (await seam.getAnnouncementForAdmin(actor)).stamp,
       ),
     refusal: "invalid",
+  },
+  // Plans & prices (Phase 4, ticket 01).
+  createPlan: {
+    actor: OWNER,
+    entity: "plan",
+    entityId: null,
+    saves: (seam, actor) => seam.createPlan(actor, { ...CE_YEAR_PLAN }),
+    refused: (seam, actor) => seam.createPlan(actor, { ...CE_YEAR_PLAN, price: "0" }),
+    refusal: "invalid",
+  },
+  updatePlan: {
+    actor: OWNER,
+    entity: "plan",
+    entityId: CE_30_PLAN,
+    saves: (seam, actor) => seam.updatePlan(actor, CE_30_PLAN, { ...CE_30_FORM, price: "549" }),
+    refused: (seam, actor) => seam.updatePlan(actor, NO_SUCH_PLAN, CE_30_FORM),
+    refusal: "not-found",
+  },
+  setPlanOnSale: {
+    actor: OWNER,
+    entity: "plan",
+    entityId: CE_30_PLAN,
+    saves: (seam, actor) => seam.setPlanOnSale(actor, CE_30_PLAN, false),
+    refused: (seam, actor) => seam.setPlanOnSale(actor, NO_SUCH_PLAN, false),
+    refusal: "not-found",
+  },
+  deletePlan: {
+    actor: OWNER,
+    entity: "plan",
+    entityId: CE_30_PLAN,
+    saves: (seam, actor) => seam.deletePlan(actor, CE_30_PLAN),
+    refused: (seam, actor) => seam.deletePlan(actor, NO_SUCH_PLAN),
+    refusal: "not-found",
   },
 };
 

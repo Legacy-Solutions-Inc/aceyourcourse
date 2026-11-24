@@ -144,6 +144,11 @@ export const paths = {
     /** A data-copy request's file: "Download this Member's data" posts here (ticket 19). */
     privacyRequestData: (id: string) =>
       `/admin/users/privacy-requests/${encodeURIComponent(id)}/data`,
+    /**
+     * Plans & prices (Owners only; Phase 4, ticket 01), with the Exam chip
+     * and the selected Plan in the search params (src/lib/admin/plan-view.ts).
+     */
+    plans: "/admin/plans",
     /** Member App content (Phase 3): each Subject's Topics, picked by Exam and Subject. */
     content: "/admin/content",
     /** Member App content open on one Subject's Topics list. */

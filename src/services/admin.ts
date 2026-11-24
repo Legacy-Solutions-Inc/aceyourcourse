@@ -28,6 +28,7 @@ import type {
   NewCardForm,
   NewTopicForm,
   OfficialExamDateForm,
+  PlanForm,
   QuestionForm,
   QuizSettingsForm,
   PrivacyRequestInput,
@@ -56,6 +57,8 @@ import type {
   AdminFaqList,
   AdminMemberDetail,
   AdminOverview,
+  AdminPlan,
+  AdminPlans,
   AdminPrivacyRequest,
   AdminPrivacyRequestDetail,
   AdminProduct,
@@ -91,6 +94,7 @@ import type {
   FaqListQuery,
   ForcedSignOut,
   MemberDataFile,
+  Plan,
   Invite,
   ProductDeletePreview,
   ProductListQuery,
@@ -1018,6 +1022,35 @@ export interface AdminService {
     input: AnnouncementForm,
     expected?: { savedAt: string },
   ): Promise<AdminResult<AdminAnnouncement>>;
+
+  // Plans & prices (Owners only; Phase 4, ticket 01; stories 145, 146, 151p,
+  // 151q and 151r): what the Member App sells. Each Plan has an Exam, a name,
+  // 30, 90, 180 or 365 days, a price in whole pesos (₱1–₱99,999), Best value
+  // and On sale. At most one Best value per Exam (saving one clears the
+  // others, in the same write) and one on sale per Exam and duration. Every
+  // read and write refuses an Editor. Each write appends one Staff Activity
+  // record per Plan it changed; nothing here touches an Access Pass or the
+  // Website, so no tag is cleared.
+
+  /** Every Plan, by Exam, duration and name, with the catalogue's Exams. */
+  listPlansForAdmin(actor: StaffActor): Promise<AdminResult<AdminPlans>>;
+  /** "Add plan": a new Plan. Refused for an Exam not in the catalogue, or a second on sale. */
+  createPlan(actor: StaffActor, input: PlanForm): Promise<AdminResult<AdminPlan>>;
+  /** "Save": a Plan's fields, against its stamp when the editor opened (the conflict check). */
+  updatePlan(
+    actor: StaffActor,
+    id: string,
+    input: PlanForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminPlan>>;
+  /**
+   * The On sale switch: always saves, with no conflict check, but moves the
+   * Plan's stamp on, so an editor opened before it conflicts rather than
+   * switching it back. Off hides the Plan from Members; Access Passes stay.
+   */
+  setPlanOnSale(actor: StaffActor, id: string, onSale: boolean): Promise<AdminResult<AdminPlan>>;
+  /** Deletes a Plan that has never had an Order; one that has is refused (switch it off instead). */
+  deletePlan(actor: StaffActor, id: string): Promise<AdminResult<Plan>>;
 }
 
 const impl: AdminService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -1128,3 +1161,8 @@ export const updatePromoBanner = impl.updatePromoBanner;
 export const setPromoBannerVisible = impl.setPromoBannerVisible;
 export const getAnnouncementForAdmin = impl.getAnnouncementForAdmin;
 export const updateAnnouncement = impl.updateAnnouncement;
+export const listPlansForAdmin = impl.listPlansForAdmin;
+export const createPlan = impl.createPlan;
+export const updatePlan = impl.updatePlan;
+export const setPlanOnSale = impl.setPlanOnSale;
+export const deletePlan = impl.deletePlan;

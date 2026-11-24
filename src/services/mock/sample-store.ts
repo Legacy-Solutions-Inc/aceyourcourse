@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
 import type {
+  AdminPlan,
   BetaTester,
   DeniedSignIn,
   Invite,
@@ -38,6 +39,7 @@ import type {
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { sampleContent } from "@/services/mock/content";
 import { sampleAccessPasses, sampleBetaTesters } from "@/services/mock/members";
+import { samplePlans } from "@/services/mock/plans";
 import { sampleStaff } from "@/services/mock/staff";
 import type {
   ContentUploadPurpose,
@@ -176,6 +178,8 @@ export interface SampleStore {
   memberNotices: MemberNotice[];
   /** Every Member's Privacy Requests, open and done, in the order asked (ticket 18). */
   privacyRequests: SamplePrivacyRequest[];
+  /** The Plans for sale in the Member App, each with its last save (Phase 4, ticket 01). */
+  plans: AdminPlan[];
   /** The upload seam's files, by upload id. */
   uploads: Record<string, SampleUpload>;
   /** The private content bucket's files, by path (ticket 06): card back images. */
@@ -228,6 +232,10 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     ...sampleAccessPasses(now, catalogue),
     memberNotices: [],
     privacyRequests: [],
+    plans: samplePlans(catalogue).map((plan) => ({
+      ...plan,
+      stamp: { savedAt: now.toISOString(), savedBy: null },
+    })),
     reviewerPdfUploads: {},
     reviewerPdfFiles: {},
     uploads: {},

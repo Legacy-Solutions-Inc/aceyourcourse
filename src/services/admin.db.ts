@@ -53,6 +53,7 @@ import * as reviewerPdfs from "@/services/admin.reviewer-pdfs.db";
 import * as users from "@/services/admin.users.db";
 import * as passes from "@/services/admin.access-passes.db";
 import * as privacy from "@/services/admin.privacy-requests.db";
+import * as plans from "@/services/admin.plans.db";
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
@@ -341,6 +342,13 @@ async function load(
     get privacyRequests() {
       return notLoaded("the Privacy Requests");
     },
+    // The Plans have their own reads and writes (admin.plans.db.ts). Deleting
+    // an Exam drops its Plans from the sample data; here the table's cascade
+    // does it, so the stand-in has none and keeps none.
+    get plans() {
+      return [];
+    },
+    set plans(_plans) {},
     // Read only: a rollback couldn't undo a change to the sample data's uploads.
     get uploads() {
       return sample.uploads;
@@ -775,6 +783,12 @@ export const databaseArm: AdminService = {
   exportMemberData: privacy.exportMemberData,
   deleteMemberAccount: privacy.deleteMemberAccount,
   markPrivacyRequestDone: privacy.markPrivacyRequestDone,
+  // The Plans for sale, read and written by their own module (Phase 4, ticket 01).
+  listPlansForAdmin: plans.listPlansForAdmin,
+  createPlan: plans.createPlan,
+  updatePlan: plans.updatePlan,
+  setPlanOnSale: plans.setPlanOnSale,
+  deletePlan: plans.deletePlan,
 
   getOverview: read(CATALOGUE, sampleArm.getOverview),
 

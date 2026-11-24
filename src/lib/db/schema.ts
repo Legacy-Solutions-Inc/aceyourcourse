@@ -1073,6 +1073,50 @@ export const accessPassGrants = pgTable(
   ],
 ).enableRLS();
 
+// ── Plans ───────────────────────────────────────────────────────────────────
+
+/**
+ * The Plans for sale in the Member App (Phase 4, ticket 01; spec, Phase 4 →
+ * Plans): all of one Exam's content (ADR 0010) for 30, 90, 180 or 365 days,
+ * at a price in centavos, whole pesos from ₱1 to ₱99,999. At most one per
+ * Exam is Best value and at most one per Exam and duration is on sale (the
+ * partial unique indexes); one that's off is hidden from Members. `saved_at`
+ * and `saved_by` are its last save, for the conflict check. Deleting the Exam
+ * deletes its Plans. The starting Plans go in switched off on the live
+ * database (the starting-plans migration); a local load adds them on sale.
+ */
+export const plans = pgTable(
+  "plans",
+  {
+    id: uuid("id").primaryKey(),
+    examCode: text("exam_code")
+      .notNull()
+      .references(() => exams.code, { onDelete: "cascade", onUpdate: "cascade" }),
+    name: text("name").notNull(),
+    days: integer("days").notNull(),
+    priceCentavos: integer("price_centavos").notNull(),
+    bestValue: boolean("best_value").notNull().default(false),
+    onSale: boolean("on_sale").notNull().default(false),
+    savedAt: at("saved_at").notNull(),
+    savedBy: text("saved_by"),
+  },
+  (t) => [
+    index("plans_exam_code_idx").on(t.examCode),
+    uniqueIndex("plans_one_best_value_per_exam_idx")
+      .on(t.examCode)
+      .where(sql`${t.bestValue}`),
+    uniqueIndex("plans_one_on_sale_per_exam_and_days_idx")
+      .on(t.examCode, t.days)
+      .where(sql`${t.onSale}`),
+    check("plans_days", sql`${t.days} in (30, 90, 180, 365)`),
+    check(
+      "plans_price_whole_pesos",
+      sql`${t.priceCentavos} between 100 and 9999900 and ${t.priceCentavos} % 100 = 0`,
+    ),
+    check("plans_name_present", sql`btrim(${t.name}) <> '' and char_length(${t.name}) <= 80`),
+  ],
+).enableRLS();
+
 // ── In-app notices ──────────────────────────────────────────────────────────
 
 export const memberNoticeKind = pgEnum("member_notice_kind", NOTICE_KINDS);
