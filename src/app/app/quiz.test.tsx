@@ -22,7 +22,7 @@ import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
-import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 import { submitQuizAttempt } from "./(shell)/library/actions";
 
 // Taking a quiz in the Member App (Phase 3, ticket 11; stories 98–100, 106,
@@ -75,7 +75,7 @@ const redirectsTo = (url: string) =>
 async function memberOnDevice(email: string, name: string) {
   const userId = sampleUserId(email);
   await getOrCreateMember({ userId, email, name });
-  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(userId, AGREED_TO_CURRENT);
   await addTargetExam(userId, { examCode: "CE", examDate: "2027-01-10" });
   await onThisDevice(userId);
   jar.set("ayc_admin_sample", email);

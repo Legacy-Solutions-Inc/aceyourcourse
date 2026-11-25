@@ -21,7 +21,7 @@ import {
 } from "@/services/member.schema";
 
 import { sampleActor } from "../../../test/admin-inputs";
-import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 
 // Billing and the Payment Acknowledgement in the Member App (Phase 4, ticket
 // 06; spec, Phase 4 → Payment Acknowledgement; stories 143, 144, 151u), on
@@ -64,7 +64,7 @@ async function signedIn({ email, name } = TESTER) {
   const userId = sampleUserId(email);
   await getOrCreateMember({ userId, email, name });
   await onThisDevice(userId);
-  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(userId, AGREED_TO_CURRENT);
   await addTargetExam(userId, { examCode: "CE", examDate: "2027-01-10" });
   jar.set("ayc_admin_sample", email);
   jar.set(DEVICE_COOKIE, TEST_DEVICE_TOKEN);

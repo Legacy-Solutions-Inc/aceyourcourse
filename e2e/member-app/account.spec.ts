@@ -38,7 +38,7 @@ test("Account shows the profile, the exams and what the Member agreed to", async
     "Mechanical Engineering",
   );
   await expect(
-    page.getByText(/^You agreed to Terms v2\.0 and Privacy v2\.0 on \d{1,2} \w{3} \d{4}\.$/),
+    page.getByText(/^You agreed to Terms v2\.1 and Privacy v2\.1 on \d{1,2} \w{3} \d{4}\.$/),
   ).toBeVisible();
   await expect(page.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
     "href",

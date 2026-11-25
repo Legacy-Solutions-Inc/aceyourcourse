@@ -229,7 +229,7 @@ describe("Plans", () => {
     expect(screen.queryByText(/Payment cancelled/)).not.toBeInTheDocument();
   });
 
-  it("says payment is finished on PayMongo's page, and links the Terms of Use", () => {
+  it("says payment is finished on PayMongo's page, and links the Terms of Use and its Payments and refunds", () => {
     renderPlans();
     expect(summary()).toHaveTextContent(
       "You’ll finish payment on PayMongo’s secure page. We never see or store your card details.",
@@ -240,6 +240,10 @@ describe("Plans", () => {
     expect(within(summary()).getByRole("link", { name: "Terms of Use" })).toHaveAttribute(
       "href",
       "/legal/terms",
+    );
+    expect(within(summary()).getByRole("link", { name: "Payments and refunds" })).toHaveAttribute(
+      "href",
+      "/legal/terms#payments-and-refunds",
     );
   });
 

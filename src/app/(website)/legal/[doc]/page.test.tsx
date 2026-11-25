@@ -1,6 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { paths } from "@/paths";
+
 import LegalPage, { generateMetadata } from "./page";
 
 // The legal page's own decisions: which documents exist (only the exact
@@ -45,7 +47,7 @@ describe("the legal page", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "Privacy Policy" })).toBeInTheDocument();
     expect(screen.getByTestId("legal-version")).toHaveTextContent(
-      "Version 2.0 · Effective 17 Nov 2026",
+      "Version 2.1 · Effective 26 Nov 2026",
     );
     expect(screen.getByRole("note", { name: "Draft, pending legal review" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
@@ -64,7 +66,7 @@ describe("the legal page", () => {
       "link",
     );
     expect(contents.map((link) => link.getAttribute("href"))).toEqual(
-      Array.from({ length: 15 }, (_, index) => `#s${index + 1}`),
+      Array.from({ length: 16 }, (_, index) => `#s${index + 1}`),
     );
     for (const link of contents) {
       const id = link.getAttribute("href")?.slice(1) ?? "";
@@ -87,7 +89,7 @@ describe("the legal page", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "Terms of Use" })).toBeInTheDocument();
     expect(screen.getByTestId("legal-version")).toHaveTextContent(
-      "Version 2.0 · Effective 17 Nov 2026",
+      "Version 2.1 · Effective 26 Nov 2026",
     );
     expect(screen.getByRole("note", { name: "Draft, pending legal review" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Terms of Use" })).toHaveAttribute(
@@ -96,6 +98,18 @@ describe("the legal page", () => {
     );
     expect(screen.getByRole("link", { name: "Privacy Policy" })).not.toHaveAttribute(
       "aria-current",
+    );
+  });
+
+  // The Plans page's "Payments and refunds" link (Phase 4, ticket 13) lands here.
+  it("has the Payments and refunds section at the anchor the Plans page links to", async () => {
+    render(await LegalPage(props("terms")));
+
+    const anchor = new URL(paths.legal.paymentsAndRefunds, "https://example.com").hash.slice(1);
+    const heading = document.getElementById(anchor);
+    expect(heading).toBe(screen.getByRole("heading", { level: 2, name: "9 Payments and refunds" }));
+    expect(heading?.closest("section")).toHaveTextContent(
+      "Ask Support within 7 days of payment. Refunds are at our discretion. A refund removes that Order’s days.",
     );
   });
 

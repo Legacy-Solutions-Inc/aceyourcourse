@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { paths } from "@/paths";
+
 import { currentLegalVersions, legalDocuments } from "./documents";
 import { legalDocumentSchema } from "./schema";
 import type { LegalDocument, LegalKind } from "./types";
@@ -34,17 +36,17 @@ const sectionText = (document: LegalDocument, title: string) => {
 const titles = (document: LegalDocument) => document.sections.map((section) => section.title);
 
 describe.each([
-  [privacy, 15],
-  [terms, 13],
+  [privacy, 16],
+  [terms, 14],
 ])("the $title", (document, sectionCount) => {
   it("passes the content schema", () => {
     expect(legalDocumentSchema.safeParse(document).error?.issues ?? []).toEqual([]);
   });
 
-  it("is version 2.0, effective 17 Nov 2026, and a draft pending legal review", () => {
+  it("is version 2.1, effective 26 Nov 2026, and a draft pending legal review", () => {
     expect(document).toMatchObject({
-      version: "2.0",
-      effectiveDate: "2026-11-17",
+      version: "2.1",
+      effectiveDate: "2026-11-26",
       status: "draft",
     });
   });
@@ -62,11 +64,11 @@ describe.each([
     expect(document.summary.join(" ")).toContain("Member App");
   });
 
-  // Payments arrive with Phase 4, under a new version, and the mockup's draft
-  // addresses were never real.
+  // An Access Pass isn't a subscription, a Payment Acknowledgement isn't a
+  // receipt, and the mockup's draft addresses were never real.
   it.each([
-    "PayMongo",
     "subscription",
+    "receipt",
     "Billing",
     "privacy@aceyourcourse.ph",
     "support@aceyourcourse.ph",
@@ -75,8 +77,10 @@ describe.each([
     expect(document.description.toLowerCase()).not.toContain(term.toLowerCase());
   });
 
-  it("says the Member App doesn't take payments yet, and that a new version comes first", () => {
-    expect(fullText(document)).toMatch(/The Member App doesn’t take payments yet/);
+  // v2.1 covers payments (Phase 4), so the v2.0 promise of a new version is kept.
+  it("covers payments through PayMongo, and no longer says the Member App doesn't take them", () => {
+    expect(fullText(document)).toContain("PayMongo");
+    expect(fullText(document)).not.toMatch(/doesn’t take payments yet/);
   });
 
   it("uses the contact email from the Website settings", () => {
@@ -85,14 +89,17 @@ describe.each([
     expect(fullText(document)).not.toContain("aceyourcourseinc@gmail.com");
   });
 
-  it("dates its version history: 1.0 replaced before it took effect, then 2.0 as a draft", () => {
+  it("dates its version history: 1.0 replaced before it took effect, 2.0, then 2.1 as a draft", () => {
     const history = document.sections.at(document.kind === "privacy" ? -1 : -2);
-    const text = history?.paragraphs.join("\n") ?? "";
-    expect(text).toContain(
-      "Version 1.0, set to take effect 1 December 2026: the first version, covering the Website only.",
+    const paragraphs = history?.paragraphs ?? [];
+    expect(paragraphs).toContain(
+      "Version 1.0, set to take effect 1 December 2026: the first version, covering the Website only. Version 2.0 replaced it before that date.",
     );
-    expect(text).toMatch(/Version 2\.0, effective 17 November 2026: adds the Member App/);
-    expect(text).toContain("A draft, pending legal review.");
+    const v20 = paragraphs.find((paragraph) => paragraph.startsWith("Version 2.0,"));
+    expect(v20).toMatch(/^Version 2\.0, effective 17 November 2026: adds the Member App/);
+    expect(v20).not.toContain("draft");
+    expect(paragraphs.at(-1)).toMatch(/^Version 2\.1, effective 26 November 2026: adds payments/);
+    expect(paragraphs.at(-1)).toMatch(/A draft, pending legal review\.$/);
   });
 
   it("says the Member App asks everyone to agree again to each new version", () => {
@@ -113,6 +120,7 @@ describe("the Privacy Policy", () => {
       "Your Active Device and its device log",
       "Watermarks on Reviewer PDF pages",
       "Access Passes and grants",
+      "Payments and payment records",
       "Analytics in the Member App",
       "Why we use it, and for how long",
       "Who processes it, and where",
@@ -122,7 +130,7 @@ describe("the Privacy Policy", () => {
       "Changes and version history",
     ]);
     expect(sectionText(privacy, "Who we are and how to reach us")).toContain(
-      "Sections 2 and 3 are about the Website, and sections 4 to 9 and 14 are about the Member App.",
+      "Sections 2 and 3 are about the Website, and sections 4 to 10 and 15 are about the Member App.",
     );
   });
 
@@ -168,6 +176,10 @@ describe("the Privacy Policy", () => {
     expect(study).toMatch(/Reviewer PDF pages you’ve viewed/);
     expect(study).toMatch(/study streak/);
     expect(study).toMatch(/stays when your access to an exam ends/);
+    expect(study).toMatch(/deleted when your account is deleted \(section 15\)/);
+    expect(privacy.sections[14]?.title).toBe(
+      "Privacy Requests: a copy of your data, or deleting your account",
+    );
   });
 
   it("covers the Active Device, its hashed device cookie and the device log", () => {
@@ -193,6 +205,31 @@ describe("the Privacy Policy", () => {
     expect(access).toMatch(/Free Preview/);
     expect(access).toMatch(/grant, extend or end Access Passes/);
     expect(access).toMatch(/who did it, when, and why/);
+  });
+
+  it("covers payments: PayMongo takes them, and card details are never stored", () => {
+    const payments = sectionText(privacy, "Payments and payment records");
+    expect(payments).toMatch(/PayMongo/);
+    expect(payments).toMatch(/we never receive or store your card details/);
+    expect(payments).toMatch(
+      /we keep an Order: its reference, the Plan you chose, its price, the payment method you picked \(QR Ph, GCash, Maya or card\), when, its status \(such as paid or refunded\) and any refund, PayMongo’s ID for the payment, and your name and email/,
+    );
+    expect(sectionText(privacy, "Why we use it, and for how long")).toMatch(
+      /We keep payment records to meet the tax rules \(section 9\)/,
+    );
+    expect(payments).toMatch(/Invoice Request/);
+    expect(sectionText(privacy, "Access Passes and grants")).toMatch(/Section 9 explains/);
+    expect(sectionText(privacy, "Who processes it, and where")).toMatch(/PayMongo/);
+  });
+
+  it("keeps payment records as the tax rules require, even after an account is deleted", () => {
+    expect(sectionText(privacy, "Payments and payment records")).toContain(
+      "We keep payment records (Orders and Invoice Requests) for as long as the tax rules require, even after your account is deleted.",
+    );
+    expect(
+      sectionText(privacy, "Privacy Requests: a copy of your data, or deleting your account"),
+    ).toMatch(/all your Member App data except your payment records \(section 9\)/);
+    expect(privacy.summary.join(" ")).toMatch(/payment records the tax rules require/);
   });
 
   it("covers the Member App's analytics: anonymous, cookieless, no profiles, no link to the account", () => {
@@ -233,6 +270,7 @@ describe("the Privacy Policy", () => {
     expect(text).toMatch(/Data Privacy Act of 2012 \(Republic Act No\. 10173\)/);
     expect(rights).toMatch(/access it, correct it, object/);
     expect(rights).toMatch(/complaint with the National Privacy Commission/);
+    expect(rights).toMatch(/Section 15 explains/);
   });
 
   it("gives the contact email as the data protection contact", () => {
@@ -253,6 +291,7 @@ describe("the Terms of Use", () => {
       "The Member App and your account",
       "One Active Device",
       "Access Passes, Free Preview and grants",
+      "Payments and refunds",
       "Member App content and watermarks",
       "Ending your access, and deleting your account",
       "Limitation of liability",
@@ -297,6 +336,8 @@ describe("the Terms of Use", () => {
     const device = sectionText(terms, "One Active Device");
     expect(device).toMatch(/one device at a time/);
     expect(device).toMatch(/log each change of Active Device/);
+    expect(device).toMatch(/act under section 11/);
+    expect(terms.sections[10]?.title).toBe("Ending your access, and deleting your account");
   });
 
   it("covers Access Passes, Free Preview and Staff grants", () => {
@@ -305,6 +346,50 @@ describe("the Terms of Use", () => {
     expect(access).toMatch(/until its end date, in Philippine time/);
     expect(access).toMatch(/your progress is kept/);
     expect(access).toMatch(/grant you an Access Pass/);
+    expect(access).toMatch(/buy an Access Pass .* as section 9 explains/);
+  });
+
+  describe("Payments and refunds (v2.1)", () => {
+    const payments = () => sectionText(terms, "Payments and refunds");
+
+    it("is section 9, at the stable anchor the Plans page links to", () => {
+      const section = terms.sections.find(({ title }) => title === "Payments and refunds");
+      expect(section).toMatchObject({ id: "s9", anchor: "payments-and-refunds" });
+      expect(paths.legal.paymentsAndRefunds).toBe("/legal/terms#payments-and-refunds");
+    });
+
+    it("prices Plans in pesos, VAT included if registered, paid through PayMongo", () => {
+      expect(payments()).toMatch(/Philippine pesos/);
+      expect(payments()).toMatch(/including VAT if we are registered for VAT/);
+      expect(payments()).toMatch(/through PayMongo/);
+      expect(payments()).toMatch(/Plan/);
+    });
+
+    it("starts access when the payment is confirmed, adding the days to an active Access Pass", () => {
+      expect(payments()).toMatch(/access starts when your payment is confirmed/);
+      expect(payments()).toMatch(
+        /While you have an Access Pass for that exam, the new days are added to its current end date/,
+      );
+    });
+
+    it("is in the summary: each Order paid once, no automatic renewal, refunds at our discretion", () => {
+      expect(terms.summary).toContain(
+        "An Access Pass opens one exam’s content until its end date. Each Order is paid once, in pesos, through PayMongo: nothing renews automatically, and refunds are at our discretion.",
+      );
+      expect(terms.description).toMatch(/payments and refunds/);
+      expect(terms.description).toMatch(/Marketplace purchases/);
+    });
+
+    it("renews nothing automatically, and never stores card details", () => {
+      expect(payments()).toMatch(/Nothing renews automatically/);
+      expect(payments()).toMatch(/We never store your card details/);
+    });
+
+    it("has the placeholder refund rule, word for word, for the client and the lawyer", () => {
+      expect(payments()).toContain(
+        "Ask Support within 7 days of payment. Refunds are at our discretion. A refund removes that Order’s days.",
+      );
+    });
   });
 
   it("covers Member App content and its watermarks", () => {

@@ -18,6 +18,7 @@ import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
+import { AGREED_TO_CURRENT } from "../../../test/member-inputs";
 import * as account from "./(shell)/account/actions";
 import * as billing from "./(shell)/billing/actions";
 import * as targetExams from "./(shell)/actions";
@@ -142,8 +143,8 @@ function deletionForm() {
 function consentForm() {
   const data = new FormData();
   for (const name of ["terms", "privacy"]) data.set(name, "agreed");
-  data.set("termsVersion", "2.0");
-  data.set("privacyVersion", "2.0");
+  data.set("termsVersion", AGREED_TO_CURRENT.termsVersion);
+  data.set("privacyVersion", AGREED_TO_CURRENT.privacyVersion);
   data.set("next", "/app");
   return data;
 }
@@ -262,7 +263,7 @@ const MEMBER_ONLY = ENTRIES.filter((entry) => entry.who === "member");
 async function agreedTester() {
   const userId = sampleUserId(TESTER);
   await getOrCreateMember({ userId, email: TESTER, name: "Bea Tester" });
-  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(userId, AGREED_TO_CURRENT);
   await addTargetExam(userId, { examCode: "ME", examDate: "2099-02-08" });
   jar.set("ayc_admin_sample", TESTER);
   return userId;

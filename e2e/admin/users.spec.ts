@@ -76,7 +76,9 @@ test.describe("the Owner", () => {
       const owner = await desk.newPage();
       await signInAs(owner, "owner", paths.admin.users);
       await expect(owner).toHaveURL(/\/admin\/users$/);
-      await expect(rows(owner)).toHaveCount(1);
+      // The tester, and the renewing tester, who joined the day before the
+      // sample data starts (Phase 4, ticket 13).
+      await expect(rows(owner)).toHaveCount(2);
 
       // Filter to the Beta Testers: the tester, with their pass and device.
       await chip(owner, "Beta Tester").click();
@@ -106,7 +108,7 @@ test.describe("the Owner", () => {
       await expect(section(owner, "ACCESS PASSES")).toContainText("ACTIVE");
       await expect(section(owner, "PROGRESS")).toContainText("CARDS GOT IT");
       await expect(section(owner, "DEVICE SWITCHES · 1")).toBeVisible();
-      await expect(section(owner, "CONSENT")).toContainText("TERMS 2.0 · PRIVACY 2.0");
+      await expect(section(owner, "CONSENT")).toContainText("TERMS 2.1 · PRIVACY 2.1");
       // Bea's sample Order, ₱300 of it refunded (Phase 4, tickets 07 and 09).
       await expect(section(owner, "ORDERS · 1")).toContainText("AYC-10007");
       await expect(section(owner, "ORDERS · 1")).toContainText("PARTIALLY REFUNDED · ₱300");

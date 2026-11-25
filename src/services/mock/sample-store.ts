@@ -41,7 +41,7 @@ import type {
 } from "@/services/member.types";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { sampleContent } from "@/services/mock/content";
-import { sampleAccessPasses, sampleBetaTesters } from "@/services/mock/members";
+import { sampleAccessPasses, sampleAgreements, sampleBetaTesters } from "@/services/mock/members";
 import { sampleOrders } from "@/services/mock/orders";
 import { samplePlans } from "@/services/mock/plans";
 import { sampleStaff } from "@/services/mock/staff";
@@ -236,12 +236,24 @@ export interface SampleStoreOptions {
    * specs' reset have them; unit tests start without, unless they ask.
    */
   sampleOrders?: boolean;
+  /**
+   * With the sample agreements (Phase 4, ticket 13): the renewing tester as
+   * a Member who agreed to Legal v2.0. The dev server's data and the e2e
+   * specs' reset have them; unit tests start without, unless they ask.
+   */
+  sampleAgreements?: boolean;
 }
+
+/** How the dev server, and the e2e specs' reset, start the sample data. */
+export const DEV_SAMPLE_DATA: SampleStoreOptions = { sampleOrders: true, sampleAgreements: true };
 
 function createSampleStore(
   now: Date,
   seed: CatalogueSeed,
-  { sampleOrders: withOrders = false }: SampleStoreOptions = {},
+  {
+    sampleOrders: withOrders = false,
+    sampleAgreements: withAgreements = false,
+  }: SampleStoreOptions = {},
 ): SampleStore {
   const validation = validateCatalogueSeed(seed);
   if (!validation.success) {
@@ -257,8 +269,7 @@ function createSampleStore(
     deniedSignIns: [],
     staffActivity: [],
     betaTesters: sampleBetaTesters(now),
-    members: [],
-    memberConsents: [],
+    ...(withAgreements ? sampleAgreements(now) : { members: [], memberConsents: [] }),
     memberTargetExams: {},
     selectedExams: {},
     memberActiveDevices: {},
@@ -303,13 +314,13 @@ function createSampleStore(
 const standIn = new AsyncLocalStorage<SampleStore>();
 
 /**
- * The sample data, made from the seed on first use, with the sample Orders as
- * the dev server shows them (or the stand-in store, inside withStandInStore).
+ * The sample data, made from the seed on first use, with the sample Orders and
+ * agreements as the dev server shows them (or the stand-in store, inside withStandInStore).
  */
 export function getSampleStore(): SampleStore {
   return (
     standIn.getStore() ??
-    (holder[STORE] ??= createSampleStore(new Date(), CATALOGUE_SEED, { sampleOrders: true }))
+    (holder[STORE] ??= createSampleStore(new Date(), CATALOGUE_SEED, DEV_SAMPLE_DATA))
   );
 }
 

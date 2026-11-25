@@ -9,6 +9,7 @@ import { sampleUserId } from "@/services/mock/members";
 import { sampleActor } from "../../../test/admin-inputs";
 import { editSampleCatalogue } from "../../../test/catalogue-seed";
 import {
+  AGREED_TO_CURRENT,
   CE_OFFICIAL,
   onThisDevice,
   TEST_DEVICE_TOKEN,
@@ -63,7 +64,7 @@ const redirectsTo = (url: string) =>
 async function agreedAs(email: string, name: string) {
   const userId = sampleUserId(email);
   await getOrCreateMember({ userId, email, name });
-  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(userId, AGREED_TO_CURRENT);
   await onThisDevice(userId);
 }
 

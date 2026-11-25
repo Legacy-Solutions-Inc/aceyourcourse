@@ -2,7 +2,7 @@
 // The legal documents (the Privacy Policy and Terms of Use), typed and
 // versioned in the repo, shown on the Website and agreed to in the Member App.
 // Each version describes only what Ace Your Course does at that version: v1.0
-// was Website-only, and v2.0 adds the Member App sections. The current
+// was Website-only, v2.0 adds the Member App sections, and v2.1 payments. The current
 // versions are what the Member App's consent screen asks Members to agree to
 // (documents.ts). The content is checked by src/content/legal/schema.ts in a
 // test.
@@ -19,6 +19,12 @@ export interface LegalVersions {
 export interface LegalSection {
   /** The anchor: "s1" for the first section, "s2" for the second, and so on. */
   id: string;
+  /**
+   * A stable anchor, for a section linked from elsewhere, such as the Terms'
+   * "payments-and-refunds" (the Plans page links it): a section's number can
+   * change between versions, its anchor can't.
+   */
+  anchor?: string;
   title: string;
   paragraphs: string[];
 }

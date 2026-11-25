@@ -21,7 +21,7 @@ import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
-import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 
 // The Library and opening an item (Phase 3, ticket 05; spec → Content model
 // and Access decision seam; stories 93, 94, 103, 133i and 133m), on sample
@@ -75,7 +75,7 @@ const redirectsTo = (url: string) =>
 async function memberOnDevice(email: string, name: string, exam = "CE") {
   const userId = sampleUserId(email);
   await getOrCreateMember({ userId, email, name });
-  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(userId, AGREED_TO_CURRENT);
   await addTargetExam(userId, { examCode: exam, examDate: "2027-01-10" });
   await onThisDevice(userId);
   jar.set("ayc_admin_sample", email);

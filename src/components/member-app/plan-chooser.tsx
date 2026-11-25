@@ -177,7 +177,14 @@ export function PlanChooser({ examCode, rows, pay }: PlanChooserProps) {
               >
                 Terms of Use
               </Link>
-              , including Payments and refunds.
+              , including{" "}
+              <Link
+                href={paths.legal.paymentsAndRefunds}
+                className="font-bold text-ayc-blue underline underline-offset-2"
+              >
+                Payments and refunds
+              </Link>
+              .
             </p>
           </div>
         </section>

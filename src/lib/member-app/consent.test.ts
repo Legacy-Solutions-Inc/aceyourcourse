@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { currentLegalVersions } from "@/content/legal/documents";
+
 import { consentStatus } from "./consent";
 
 // The consent version check (spec, Phase 3 → Consent; stories 82, 83, 133e):
@@ -54,5 +56,25 @@ describe("consentStatus with other current versions", () => {
       "terms-changed",
     );
     expect(consentStatus(bumped, { termsVersion: "2.1", privacyVersion: "2.0" })).toBe("ok");
+  });
+});
+
+// Legal v2.1 (Phase 4, ticket 13; story 151k): both documents add payments,
+// so every Member who agreed to v2.0 is asked once more, and only once.
+describe("consentStatus with the current documents (Legal v2.1)", () => {
+  const current = currentLegalVersions();
+
+  it("has both documents at 2.1", () => {
+    expect(current).toEqual({ terms: "2.1", privacy: "2.1" });
+  });
+
+  it("asks a Member who agreed to v2.0 to agree again", () => {
+    expect(consentStatus(current, { termsVersion: "2.0", privacyVersion: "2.0" })).toBe(
+      "both-changed",
+    );
+  });
+
+  it("doesn't ask a Member who agreed to v2.1 again", () => {
+    expect(consentStatus(current, { termsVersion: "2.1", privacyVersion: "2.1" })).toBe("ok");
   });
 });

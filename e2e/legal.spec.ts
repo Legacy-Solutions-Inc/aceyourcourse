@@ -1,6 +1,8 @@
 import { expect, type Page, test } from "@playwright/test";
 
-// The Privacy Policy and Terms of Use (v2.0, a draft pending legal review) on
+import { paths } from "../src/paths";
+
+// The Privacy Policy and Terms of Use (v2.1, a draft pending legal review) on
 // a real browser, with the Member App switch off (the launch default).
 // Expected copy is src/content/legal/.
 
@@ -17,14 +19,14 @@ for (const { path, title, other, otherPath, sections } of [
     title: "Privacy Policy",
     other: "Terms of Use",
     otherPath: "/legal/terms",
-    sections: 15,
+    sections: 16,
   },
   {
     path: "/legal/terms",
     title: "Terms of Use",
     other: "Privacy Policy",
     otherPath: "/legal/privacy",
-    sections: 13,
+    sections: 14,
   },
 ]) {
   test.describe(`the ${title}`, () => {
@@ -40,7 +42,7 @@ for (const { path, title, other, otherPath, sections } of [
       );
 
       await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
-      await expect(page.getByText("Version 2.0 · Effective 17 Nov 2026")).toBeVisible();
+      await expect(page.getByText("Version 2.1 · Effective 26 Nov 2026")).toBeVisible();
       await expect(summary(page).getByRole("listitem")).toHaveCount(6);
       await expect(
         summary(page).getByText("This summary isn’t a replacement for the full text below."),
@@ -169,6 +171,55 @@ test("the Privacy Policy covers the Member App: sign-in, progress, device log, w
   await expect(main.getByText(/within 30 days, we delete your account/)).toBeVisible();
   await expect(main.getByText(/Version 2\.0, effective 17 November 2026/)).toBeVisible();
 });
+
+// Legal v2.1 (Phase 4, ticket 13).
+test("the Privacy Policy keeps payment records as the tax rules require", async ({ page }) => {
+  await page.goto("/legal/privacy");
+  const main = page.getByRole("main");
+
+  await expect(
+    main.getByRole("heading", { level: 2, name: "Payments and payment records" }),
+  ).toBeVisible();
+  await expect(
+    main.getByText(
+      "We keep payment records (Orders and Invoice Requests) for as long as the tax rules require, even after your account is deleted.",
+    ),
+  ).toBeVisible();
+  await expect(main.getByText(/Version 2\.1, effective 26 November 2026/)).toBeVisible();
+});
+
+// The Plans page's "Payments and refunds" link lands on the section's heading,
+// clear of the sticky header, on a phone too.
+for (const viewport of [
+  { width: 1280, height: 800 },
+  { width: 320, height: 640 },
+]) {
+  test(`the Terms of Use open at Payments and refunds from its anchor, at ${viewport.width} px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await page.goto(paths.legal.paymentsAndRefunds);
+
+    const main = page.getByRole("main");
+    const heading = main.getByRole("heading", { level: 2, name: "9 Payments and refunds" });
+    await expect(heading).toHaveAttribute("id", "payments-and-refunds");
+    await expect(heading).toBeInViewport();
+    const headerBottom = await page
+      .getByRole("banner")
+      .evaluate((header) => header.getBoundingClientRect().bottom);
+    const headingTop = await heading.evaluate((element) => element.getBoundingClientRect().top);
+    expect(headingTop).toBeGreaterThanOrEqual(headerBottom);
+
+    await expect(main.getByText(/Prices are in Philippine pesos/)).toBeVisible();
+    await expect(main.getByText(/Nothing renews automatically/)).toBeVisible();
+    await expect(
+      main.getByText(
+        "Ask Support within 7 days of payment. Refunds are at our discretion. A refund removes that Order’s days.",
+      ),
+    ).toBeVisible();
+    await expect(main.getByText(/Version 2\.1, effective 26 November 2026/)).toBeVisible();
+  });
+}
 
 test("the Terms of Use cover the Member App account, Active Device, Access Passes and content", async ({
   page,

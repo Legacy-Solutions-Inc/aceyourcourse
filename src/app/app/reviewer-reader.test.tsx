@@ -24,7 +24,7 @@ import { createFakeRenderer, FAKE_PAGE_IMAGE } from "@/services/page-images.fake
 import { sharpStamper } from "@/services/page-images.sharp";
 
 import { sampleActor } from "../../../test/admin-inputs";
-import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 import { uploadSampleReviewerPdf } from "../../../test/reviewer-pdf-uploads";
 import { pdfOfPages } from "../../../test/reviewer-pdfs";
 import { saveReadingPosition } from "./(shell)/library/actions";
@@ -77,7 +77,7 @@ const readerPage = (id: string) => `/app/library/reviewer-pdf/${id}`;
 async function memberOnDevice(email: string, name: string) {
   const userId = sampleUserId(email);
   await getOrCreateMember({ userId, email, name });
-  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(userId, AGREED_TO_CURRENT);
   await addTargetExam(userId, { examCode: "CE", examDate: "2027-01-10" });
   await onThisDevice(userId);
   jar.set("ayc_admin_sample", email);

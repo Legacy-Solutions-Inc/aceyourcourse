@@ -9,7 +9,7 @@ import { addTargetExam, getOrCreateMember, recordConsent } from "@/services/memb
 import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
-import { ANDROID_CHROME, IPHONE_SAFARI } from "../../../test/member-inputs";
+import { AGREED_TO_CURRENT, ANDROID_CHROME, IPHONE_SAFARI } from "../../../test/member-inputs";
 
 // The Active Device in the Member App's pages and Server Actions on sample
 // data (Phase 3, ticket 04; stories 107–109, 133f). Each Member uses the
@@ -75,7 +75,7 @@ const DEVICE_SCREEN = (next: string) => redirectsTo(`/app/device?next=${encodeUR
 async function agreed(email: string, name: string) {
   const userId = sampleUserId(email);
   await getOrCreateMember({ userId, email, name });
-  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(userId, AGREED_TO_CURRENT);
   await addTargetExam(userId, { examCode: "ME", examDate: "2099-02-08" });
   return userId;
 }

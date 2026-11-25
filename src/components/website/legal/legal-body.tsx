@@ -82,7 +82,11 @@ export function LegalBody({ document, contactEmail }: LegalBodyProps) {
               id={section.id}
               className="flex scroll-mt-36 flex-col gap-2.5"
             >
-              <h2 className="text-[22px] leading-tight font-extrabold tracking-[-0.02em]">
+              {/* A stable anchor (the Terms' #payments-and-refunds) jumps to the heading, clear of the header too. */}
+              <h2
+                id={section.anchor}
+                className="scroll-mt-36 text-[22px] leading-tight font-extrabold tracking-[-0.02em]"
+              >
                 <span className="mr-1.5 font-mono text-sm font-bold text-ayc-blue">
                   {index + 1}
                 </span>{" "}

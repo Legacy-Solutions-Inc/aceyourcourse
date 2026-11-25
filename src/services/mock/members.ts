@@ -1,6 +1,7 @@
 import type { BetaTester } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import type { AccessPass, AccessPassGrant } from "@/services/content.types";
+import type { ConsentRecord, Member } from "@/services/member.types";
 import { SAMPLE_USERS } from "@/services/mock/staff";
 
 import { stableUuid } from "./stable-uuid";
@@ -51,7 +52,7 @@ export const SAMPLE_MEMBERS: readonly SampleMember[] = [
     key: "renewing",
     name: "Rae Renewing",
     email: "renewing@example.com",
-    startsAs: "Beta Tester · CE All-Access ends in 5 days",
+    startsAs: "Beta Tester · CE All-Access ends in 5 days · agreed to Legal v2.0",
   },
 ];
 
@@ -110,6 +111,25 @@ export function sampleAccessPasses(
   }));
   const exists = (code: string) => catalogue.exams.some((exam) => exam.code === code);
   return { accessPasses: passes.filter((pass) => exists(pass.examCode)), accessPassGrants: [] };
+}
+
+/**
+ * The sample agreements (Phase 4, ticket 13): the renewing tester joined the
+ * day before boot and agreed to Legal v2.0 then, so their next visit asks them
+ * to agree to the current versions. The dev server's data and the e2e specs'
+ * reset have them; unit tests start without, unless they ask.
+ */
+export function sampleAgreements(bootedAt: Date): {
+  members: Member[];
+  memberConsents: ConsentRecord[];
+} {
+  const { email, name } = sampleMember("renewing");
+  const userId = sampleUserId(email);
+  const dayBefore = new Date(bootedAt.getTime() - DAY).toISOString();
+  return {
+    members: [{ userId, email, name, joinedAt: dayBefore }],
+    memberConsents: [{ userId, termsVersion: "2.0", privacyVersion: "2.0", agreedAt: dayBefore }],
+  };
 }
 
 /**

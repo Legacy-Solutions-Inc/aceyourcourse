@@ -16,7 +16,7 @@ import { createFakePaymentsClient } from "@/services/payments.fake";
 import type { PaymentsClient } from "@/services/payments.types";
 
 import { sampleActor } from "../../../test/admin-inputs";
-import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 
 // Buying in the Member App (Phase 4, ticket 03; spec, Phase 4 → Return flow;
 // Phase 4 planning decisions → Paying, The key decides; stories 135–140,
@@ -79,7 +79,7 @@ async function signedIn({ email, name } = TESTER) {
   const userId = sampleUserId(email);
   await getOrCreateMember({ userId, email, name });
   await onThisDevice(userId);
-  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(userId, AGREED_TO_CURRENT);
   await addTargetExam(userId, { examCode: "CE", examDate: "2027-01-10" });
   jar.set("ayc_admin_sample", email);
   jar.set(DEVICE_COOKIE, TEST_DEVICE_TOKEN);

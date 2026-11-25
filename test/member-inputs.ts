@@ -1,8 +1,19 @@
+import { currentLegalVersions } from "@/content/legal/documents";
 import { hashDeviceToken } from "@/lib/member-app/device-token";
 import { examPageDefaults, type CatalogueSeed } from "@/services/catalogue.schema";
 import { claimDevice } from "@/services/member.mock";
 
 import { withUnusedExam } from "./admin-inputs";
+
+/**
+ * An agreement to the current Terms of Use and Privacy Policy, read from the
+ * documents: what a page test's Member records to get past consent, whatever
+ * the versions are now.
+ */
+export const AGREED_TO_CURRENT = {
+  termsVersion: currentLegalVersions().terms,
+  privacyVersion: currentLegalVersions().privacy,
+} as const;
 
 /** The Official Exam Date the Target Exam tests give CE. */
 export const CE_OFFICIAL = "2026-11-21";

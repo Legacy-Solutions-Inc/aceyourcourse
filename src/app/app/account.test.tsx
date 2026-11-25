@@ -14,7 +14,7 @@ import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
 import { editSampleCatalogue } from "../../../test/catalogue-seed";
-import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 
 // Account and Support in the Member App (Phase 3, ticket 18; stories 110–113),
 // on sample data: the pages as a browser would load them, and Account's
@@ -62,7 +62,7 @@ const signedInAs = (email: string) => {
 async function agreedAs(email: string, name: string) {
   const userId = sampleUserId(email);
   await getOrCreateMember({ userId, email, name });
-  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(userId, AGREED_TO_CURRENT);
   await addTargetExam(userId, { examCode: "ME", examDate: "2099-02-08" });
   await onThisDevice(userId);
 }
@@ -114,7 +114,7 @@ describe("Account", () => {
     );
     const privacy = screen.getByRole("region", { name: "Privacy" });
     expect(
-      within(privacy).getByText("You agreed to Terms v2.0 and Privacy v2.0 on 19 Nov 2026."),
+      within(privacy).getByText("You agreed to Terms v2.1 and Privacy v2.1 on 19 Nov 2026."),
     ).toBeInTheDocument();
     expect(
       within(privacy).getByRole("button", { name: "Request a copy of my data" }),
@@ -124,7 +124,7 @@ describe("Account", () => {
 
   it("shows a Member with no Google name their email as their name", async () => {
     await getOrCreateMember({ userId: LOU_ID, email: LOU, name: null });
-    await recordConsent(LOU_ID, { termsVersion: "2.0", privacyVersion: "2.0" });
+    await recordConsent(LOU_ID, AGREED_TO_CURRENT);
     await addTargetExam(LOU_ID, { examCode: "ME", examDate: "2099-02-08" });
     await onThisDevice(LOU_ID);
     signedInAs(LOU);

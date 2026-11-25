@@ -28,6 +28,8 @@ export const paths = {
   legal: {
     privacy: "/legal/privacy",
     terms: "/legal/terms",
+    /** The Terms of Use's "Payments and refunds" section, at its stable anchor (v2.1). */
+    paymentsAndRefunds: "/legal/terms#payments-and-refunds",
   },
   /** The signed-in Member App (Phase 3). */
   memberApp: {

@@ -2,25 +2,27 @@ import type { LegalDocument } from "@/content/legal/types";
 import { formatDate } from "@/lib/manila-time";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Privacy Policy v2.0: the Website and the Member App, a draft for the
+// Privacy Policy v2.1: the Website and the Member App, a draft for the
 // client's lawyer ("Draft, pending legal review" shows while `status` is
 // "draft"). v1.0 covered the Website only; its text stays as the Website
-// sections (2, 3, 12), and v1.0 itself is in git history. The Member App
-// sections (4 to 9, and 14) describe what the Member App does at its launch
-// (spec, Phase 3; docs/adr/0009, 0011 and 0012): Google sign-in, consent,
-// Target Exams and progress, one Active Device and its device log, stamped
-// Reviewer PDF pages, Access Passes and Staff grants, anonymous cookieless
-// analytics, and Privacy Requests. Payments come with Phase 4, and a new
-// version. Keep it true to the code: if either Surface starts collecting
-// anything new, this policy changes first, and bumping PRIVACY_POLICY_VERSION
-// asks every Member to agree again.
+// sections (2, 3, 13), and v1.0 itself is in git history. The Member App
+// sections (4 to 10, and 15) describe what the Member App does (spec, Phase
+// 3; docs/adr/0009, 0011 and 0012): Google sign-in, consent, Target Exams and
+// progress, one Active Device and its device log, stamped Reviewer PDF pages,
+// Access Passes and Staff grants, payments and payment records (v2.1: spec,
+// Phase 4 planning decisions → Legal v2.1), anonymous cookieless analytics,
+// and Privacy Requests. How many years the tax rules keep payment records is
+// for the lawyer to confirm. Keep it true to the code: if either Surface
+// starts collecting anything new, this policy changes first, and bumping
+// PRIVACY_POLICY_VERSION asks every Member to agree again.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** The current version: what the consent screen asks Members to agree to. */
-export const PRIVACY_POLICY_VERSION = "2.0";
-const EFFECTIVE_DATE = "2026-11-17";
+export const PRIVACY_POLICY_VERSION = "2.1";
+const EFFECTIVE_DATE = "2026-11-26";
 /** v1.0 was set to take effect on this date, and v2.0 replaced it before then. */
 const V1_EFFECTIVE_DATE = "2026-12-01";
+const V2_0_EFFECTIVE_DATE = "2026-11-17";
 
 export function privacyPolicy(contactEmail: string): LegalDocument {
   return {
@@ -36,7 +38,7 @@ export function privacyPolicy(contactEmail: string): LegalDocument {
       "The Member App needs a Google sign-in. We keep your name and email, your Target Exams, your study progress and your Active Device, to run the Member App for you.",
       "Each Reviewer PDF page you open in the Member App is stamped with your email and Member ID, so a shared page can be traced to its account.",
       "We don’t sell your data, and our analytics never build a profile of you, on the Website or in the Member App.",
-      "You can ask for a copy of your Member App data, or for your account to be deleted, at any time. We send the copy within 7 days and delete within 30.",
+      "You can ask for a copy of your Member App data, or for your account to be deleted, at any time. We send the copy within 7 days and delete within 30, keeping only the payment records the tax rules require.",
       `For any privacy question or request, email ${contactEmail}.`,
     ],
     sections: [
@@ -45,7 +47,7 @@ export function privacyPolicy(contactEmail: string): LegalDocument {
         title: "Who we are and how to reach us",
         paragraphs: [
           "Ace Your Course (“AYC”, “we”, “us”) is a small business in Iloilo City, Philippines, that makes printed reviewers and digital study material for Philippine licensure exams. This policy explains how our website (“the Website”) and our Member App (“the Member App”), where Members study our digital content, handle information about the people who use them.",
-          "Sections 2 and 3 are about the Website, and sections 4 to 9 and 14 are about the Member App. The rest covers both.",
+          "Sections 2 and 3 are about the Website, and sections 4 to 10 and 15 are about the Member App. The rest covers both.",
           "In the Philippines, the Data Privacy Act of 2012 (Republic Act No. 10173) protects your personal information, and the National Privacy Commission (NPC) enforces it.",
           `Our data protection contact is ${contactEmail}. Email us there with any question about this policy or your personal information.`,
         ],
@@ -90,7 +92,7 @@ export function privacyPolicy(contactEmail: string): LegalDocument {
           "To run your countdown and dashboard, we keep your Target Exams (the exams you’re preparing for) and your exam date for each.",
           "As you study, we keep your progress: your latest mark on each flashcard (“Got it” or “Review again”), your quiz results and best scores, which Reviewer PDF pages you’ve viewed, where you left off, and the days you studied, which make up your study streak.",
           "We use it to show your progress, your weakest topics and your streak, and to bring you back to where you left off. Our Owners, the staff who manage Members’ accounts, can see your account details, access and progress when they support you.",
-          "Your progress stays when your access to an exam ends, so it’s there if you come back. It’s deleted when your account is deleted (section 14).",
+          "Your progress stays when your access to an exam ends, so it’s there if you come back. It’s deleted when your account is deleted (section 15).",
         ],
       },
       {
@@ -117,11 +119,21 @@ export function privacyPolicy(contactEmail: string): LegalDocument {
         paragraphs: [
           "An Access Pass lets you open all of one exam’s study content until an end date. Some content is a Free Preview that any Member can open without one.",
           "We keep each Access Pass with its exam and end date. Our Owners may grant, extend or end Access Passes, for example during the beta or to help you, and each time we record who did it, when, and why.",
-          "The Member App doesn’t take payments yet. Before it does, we’ll update this policy with what we keep about payments, under a new version.",
+          "You can also buy an Access Pass in the Member App. Section 9 explains what we keep about payments.",
         ],
       },
       {
         id: "s9",
+        title: "Payments and payment records",
+        paragraphs: [
+          "You buy an Access Pass on the Member App’s Plans screen, and pay through PayMongo, our payment provider, on its own secure page and under its own privacy policy. You enter your payment details there: we never receive or store your card details.",
+          "For each purchase, we keep an Order: its reference, the Plan you chose, its price, the payment method you picked (QR Ph, GCash, Maya or card), when, its status (such as paid or refunded) and any refund, PayMongo’s ID for the payment, and your name and email. PayMongo tells us when a payment is confirmed or refunded.",
+          "If you ask for the official invoice of an Order, we keep the name, address and TIN you give us for it, as an Invoice Request.",
+          "We keep payment records (Orders and Invoice Requests) for as long as the tax rules require, even after your account is deleted.",
+        ],
+      },
+      {
+        id: "s10",
         title: "Analytics in the Member App",
         paragraphs: [
           "The Member App uses the same anonymous, cookieless analytics as the Website (section 2), and records only the pages you view.",
@@ -129,30 +141,32 @@ export function privacyPolicy(contactEmail: string): LegalDocument {
         ],
       },
       {
-        id: "s10",
+        id: "s11",
         title: "Why we use it, and for how long",
         paragraphs: [
           "We use the analytics only to understand which pages and Products people find useful, and whether the Website helps them reach our official Marketplace stores, so we can improve it.",
           "We use your emails only to answer you.",
           "We keep the analytics events only for as long as they help us improve the Website. We keep emails for as long as we need them to help you, and delete them after that unless the law requires us to keep them longer.",
           "We use your Member App data only to run the Member App for you, as our Terms of Use describe: to sign you in, keep your progress, keep to one Active Device, protect our content with watermarks, give you the access you have, and support you.",
+          "We keep payment records to meet the tax rules (section 9).",
           "We keep your Member App data while you have an account. Your progress, device log and agreements stay when an Access Pass ends, and are deleted when your account is deleted, unless the law requires us to keep something longer.",
           "We don’t sell or rent any information, and we don’t use it for advertising.",
         ],
       },
       {
-        id: "s11",
+        id: "s12",
         title: "Who processes it, and where",
         paragraphs: [
           "PostHog, Inc. runs our analytics. The events pass through our own address on their way to PostHog, which stores them on its servers in the United States.",
           "Vercel Inc. hosts the Website and the Member App, with its servers in Singapore and pages delivered through Vercel’s global network. Like any web host, Vercel receives your IP address and browser details in order to deliver pages and protect our services from abuse, and may keep them in its logs for a short time.",
           "Supabase, Inc. runs our database in Singapore, along with the Member App’s sign-in and file storage. Your Member App account, study data, device log and agreements are stored there. The Website itself doesn’t send Supabase any information about you.",
           "Google provides our email, so the messages you send us are stored by Google. Google also provides the Member App’s sign-in, under Google’s own privacy policy.",
+          "PayMongo takes the payments for Access Passes in the Member App, under its own privacy policy (section 9).",
           "These providers process data on our behalf, only to run their services for us. Some of them process it outside the Philippines.",
         ],
       },
       {
-        id: "s12",
+        id: "s13",
         title: "Buying on the Marketplaces",
         paragraphs: [
           "The Website doesn’t sell anything. Its buy buttons open our official stores on Shopee, Lazada and TikTok Shop.",
@@ -161,31 +175,32 @@ export function privacyPolicy(contactEmail: string): LegalDocument {
         ],
       },
       {
-        id: "s13",
+        id: "s14",
         title: "Your rights",
         paragraphs: [
           "Under the Data Privacy Act, you have the right to be informed about how your personal information is processed, and to access it, correct it, object to its processing, have it erased or blocked, and get a copy in a portable format. You may also claim damages and file a complaint.",
           `The Website’s analytics are anonymous, so we can’t link them to you, and there is usually no Website data about you to give, correct or delete. For anything else we hold about you, such as your emails, write to ${contactEmail} and tell us what you’d like us to do.`,
-          "If you use the Member App, we do hold data about you. Section 14 explains how to get a copy of it, or have your account deleted.",
+          "If you use the Member App, we do hold data about you. Section 15 explains how to get a copy of it, or have your account deleted.",
           "If you believe we’ve mishandled your personal information, please tell us first so we can put it right. You can also file a complaint with the National Privacy Commission at privacy.gov.ph.",
         ],
       },
       {
-        id: "s14",
+        id: "s15",
         title: "Privacy Requests: a copy of your data, or deleting your account",
         paragraphs: [
           `You can make a Privacy Request from the Member App’s Account screen, or by emailing ${contactEmail} from the email address on your account. We may ask you to confirm that the request comes from you.`,
           "A copy of your data: within 7 days, we email you a file of your Member App account, Target Exams, agreements, Access Passes and grants, progress, and device log.",
-          "Deleting your account: within 30 days, we delete your account and all your Member App data, and your Access Passes end. Access you paid for isn’t refunded when you delete your account, and the Member App says so before you confirm. We keep a note that the deletion happened, without your personal information.",
+          "Deleting your account: within 30 days, we delete your account and all your Member App data except your payment records (section 9), and your Access Passes end. Access you paid for isn’t refunded when you delete your account, and the Member App says so before you confirm. We keep a note that the deletion happened, without your personal information.",
         ],
       },
       {
-        id: "s15",
+        id: "s16",
         title: "Changes and version history",
         paragraphs: [
           "If what the Website or the Member App does with information changes, we’ll update this policy first, give it a new version number and effective date, and show both at the top of this page. The Member App asks you to agree to each new version before you continue.",
           `Version 1.0, set to take effect ${formatDate(V1_EFFECTIVE_DATE, "long")}: the first version, covering the Website only. Version 2.0 replaced it before that date.`,
-          `Version ${PRIVACY_POLICY_VERSION}, effective ${formatDate(EFFECTIVE_DATE, "long")}: adds the Member App, covering your account and Google sign-in, study data and progress, the Active Device and its device log, watermarks on Reviewer PDF pages, Access Passes and grants, the Member App’s analytics, and Privacy Requests. A draft, pending legal review.`,
+          `Version 2.0, effective ${formatDate(V2_0_EFFECTIVE_DATE, "long")}: adds the Member App, covering your account and Google sign-in, study data and progress, the Active Device and its device log, watermarks on Reviewer PDF pages, Access Passes and grants, the Member App’s analytics, and Privacy Requests.`,
+          `Version ${PRIVACY_POLICY_VERSION}, effective ${formatDate(EFFECTIVE_DATE, "long")}: adds payments and payment records (section 9), including that we keep payment records as the tax rules require. A draft, pending legal review.`,
         ],
       },
     ],

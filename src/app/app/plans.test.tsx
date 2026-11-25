@@ -9,7 +9,7 @@ import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
-import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 
 // The Member's Plans page (Phase 4, ticket 02; spec, Phase 4 planning
 // decisions → Who buys, and which Exams, The key decides, Renewal reminders;
@@ -58,7 +58,7 @@ async function signedIn({ email, name }: { email: string; name: string }) {
 /** Signed in as a Member who has agreed, with CE (Exam Date 10 Jan 2027) as their Target Exam. */
 async function memberOnDevice(who = TESTER, examDate = "2027-01-10") {
   const userId = await signedIn(who);
-  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(userId, AGREED_TO_CURRENT);
   await addTargetExam(userId, { examCode: "CE", examDate });
   return userId;
 }
@@ -229,9 +229,34 @@ describe("the Plans page", () => {
     );
   });
 
-  it("sends a Member with no Target Exam yet to Home to pick one", async () => {
+  // Legal v2.1 (Phase 4, ticket 13): the Terms now cover payments and
+  // refunds, so a Member who agreed to v2.0 agrees again before they can pay.
+  it("sends a Member who agreed to v2.0 to agree to v2.1 first, coming back to Plans", async () => {
     const userId = await signedIn(TESTER);
     await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+    await addTargetExam(userId, { examCode: "CE", examDate: "2027-01-10" });
+
+    await expect(plansPage("CE")).rejects.toThrow(
+      redirectsTo("/app/consent?next=%2Fapp%2Fplans%3Fexam%3DCE"),
+    );
+  });
+
+  it("opens for that Member once they agree to v2.1, and doesn't ask again", async () => {
+    const userId = await signedIn(TESTER);
+    await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+    await addTargetExam(userId, { examCode: "CE", examDate: "2027-01-10" });
+    await recordConsent(userId, { termsVersion: "2.1", privacyVersion: "2.1" });
+
+    for (let visit = 0; visit < 2; visit += 1) {
+      const { unmount } = render(await plansPage("CE"));
+      expect(planGroup()).toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  it("sends a Member with no Target Exam yet to Home to pick one", async () => {
+    const userId = await signedIn(TESTER);
+    await recordConsent(userId, AGREED_TO_CURRENT);
     await expect(plansPage()).rejects.toThrow(redirectsTo("/app"));
   });
 });

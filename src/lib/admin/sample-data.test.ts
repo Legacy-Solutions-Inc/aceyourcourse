@@ -60,3 +60,25 @@ describe("restoreSampleData on the database", () => {
     await expect(restore()).rejects.toThrow("The sample data wasn't restored (invalid).");
   });
 });
+
+// The header's Reset and the e2e specs' reset bring the sample data back as a
+// server restart makes it: with the sample Orders (ticket 07) and the renewing
+// tester's v2.0 agreement (Phase 4, ticket 13).
+describe("restoreSampleData in memory", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+    resetSampleStore();
+  });
+
+  it("brings back the sample Orders and the sample agreements", async () => {
+    resetSampleStore();
+    const restore = await restoreWithDatabase("");
+
+    expect(await restore()).toEqual({ ok: true });
+    expect(getSampleStore().orders.length).toBeGreaterThan(0);
+    expect(getSampleStore().memberConsents).toEqual([
+      expect.objectContaining({ termsVersion: "2.0", privacyVersion: "2.0" }),
+    ]);
+  });
+});
