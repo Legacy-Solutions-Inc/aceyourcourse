@@ -26,6 +26,7 @@ import type { ImportMode } from "@/lib/content-import/modes";
 import type { CardImageType } from "@/lib/cards/card-rules";
 import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
 import type { PlanDays } from "@/lib/plans/plan-rules";
+import type { InvoiceRequest } from "@/lib/payments/invoice-requests";
 import type { Order, OrderStatus } from "@/lib/payments/order-ledger";
 import type { PaymentMethod } from "@/lib/payments/payment-methods";
 import type { MemberDataExport } from "@/lib/member-app/data-export";
@@ -927,6 +928,8 @@ export interface OrderListQuery {
   range: OrderRange;
   /** "Include test orders": Test Orders are left out unless it's ticked. */
   tests: boolean;
+  /** "Invoice requested" (ticket 08): only the Orders whose invoice was requested and not yet sent. */
+  invoiceRequested: boolean;
 }
 
 /** An Order as the Admin shows it. */
@@ -936,6 +939,8 @@ export interface AdminOrder extends Order {
   /** The status recorded on it, which the status check reads. */
   recordedStatus: OrderStatus;
   paidAfterExpiry: boolean;
+  /** Its Invoice Request (ticket 08), or null for none. */
+  invoice: InvoiceRequest | null;
 }
 
 /** The Orders list's tiles, for the Orders the filters match. */

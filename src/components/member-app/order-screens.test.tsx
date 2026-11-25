@@ -26,6 +26,7 @@ const ORDER: MemberOrder = {
   accessUntil: null,
   paidAfterExpiry: false,
   livemode: false,
+  invoice: null,
 };
 const PAID: MemberOrder = {
   ...ORDER,

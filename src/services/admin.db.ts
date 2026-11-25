@@ -357,6 +357,10 @@ async function load(
     get orderNotes() {
       return notLoaded("the Orders' internal notes");
     },
+    // The Member seam and the Orders admin read and write them themselves (ticket 08).
+    get invoiceRequests() {
+      return notLoaded("the Invoice Requests");
+    },
     get paymentEvents() {
       return notLoaded("the PayMongo events");
     },
@@ -812,6 +816,7 @@ export const databaseArm: AdminService = {
   getOrderForAdmin: orders.getOrderForAdmin,
   saveOrderNote: orders.saveOrderNote,
   checkOrderWithPayMongo: orders.checkOrderWithPayMongo,
+  markInvoiceSent: orders.markInvoiceSent,
   exportOrdersCsv: orders.exportOrdersCsv,
 
   getOverview: read(CATALOGUE, sampleArm.getOverview),

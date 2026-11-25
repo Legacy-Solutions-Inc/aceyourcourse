@@ -12,8 +12,10 @@ const SELECT =
   "min-h-10 w-full min-w-0 border-[1.5px] bg-white px-2.5 py-2 text-sm font-medium wide:w-40 wide:flex-none";
 
 /**
- * The Orders list's search, Payment Method, range and "Include test orders"
- * (mockup 663–668; BUILD-MAP §3.9): each lives in the URL, so the server
+ * The Orders list's search, Payment Method, range, "Include test orders" and
+ * "Invoice requested" (ticket 08: the Orders whose official invoice was
+ * requested and not yet sent) (mockup 663–668; BUILD-MAP §3.9): each lives in
+ * the URL, so the server
  * filters the list and a reload or a shared link keeps it. The status chips
  * are links beside them. A change shows at once, while the server filters.
  */
@@ -77,6 +79,15 @@ export function OrderFilters({ query }: { query: OrderListQuery }) {
           className="size-4 accent-ayc-navy"
         />
         Include test orders
+      </label>
+      <label className="flex min-h-10 cursor-pointer items-center gap-2 text-[13px] font-semibold">
+        <input
+          type="checkbox"
+          checked={shown.invoiceRequested}
+          onChange={(event) => go({ ...shown, invoiceRequested: event.target.checked })}
+          className="size-4 accent-ayc-navy"
+        />
+        Invoice requested
       </label>
     </>
   );

@@ -1,7 +1,7 @@
 "use server";
 
 import { adminAction } from "@/lib/admin/action";
-import { checkOrderWithPayMongo, saveOrderNote } from "@/services/admin";
+import { checkOrderWithPayMongo, markInvoiceSent, saveOrderNote } from "@/services/admin";
 import { orderNoteInputSchema, orderReferenceInputSchema } from "@/services/admin.schema";
 import { paymentsClient } from "@/services/payments";
 
@@ -22,4 +22,13 @@ export const saveNote = adminAction(
 export const checkStatus = adminAction(
   { role: "owner", schema: orderReferenceInputSchema },
   async (actor, { reference }) => checkOrderWithPayMongo(actor, reference, paymentsClient()),
+);
+
+/**
+ * "Mark invoice sent" (ticket 08): once the official invoice has gone from
+ * the support inbox. Marking it again changes nothing. No email is sent.
+ */
+export const markInvoiceSentAction = adminAction(
+  { role: "owner", schema: orderReferenceInputSchema },
+  async (actor, { reference }) => markInvoiceSent(actor, reference),
 );

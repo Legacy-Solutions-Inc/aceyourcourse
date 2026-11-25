@@ -3,25 +3,31 @@ import Link from "next/link";
 import { paths } from "@/paths";
 
 import type { AcknowledgementView } from "./billing-view";
+import { type InvoiceRequestAction, InvoiceRequestForm } from "./invoice-request-form";
 import { PrintButton } from "./print-button";
 
 const LABEL = "block font-mono text-[11px] font-bold tracking-[0.06em] text-muted-foreground";
 
 interface PaymentAcknowledgementDocumentProps {
   view: AcknowledgementView;
-  /** Where Members ask for an official invoice until ticket 08's request exists. */
-  contactEmail: string;
+  /** The Member's name, which the name on the official invoice starts as. */
+  memberName: string;
+  /** "Request official invoice"'s Server Action (ticket 08). */
+  requestInvoice: InvoiceRequestAction;
 }
 
 /**
  * A Paid Order's Payment Acknowledgement (Phase 4, ticket 06; BUILD-MAP §3
  * "Receipt", L662–674; spec, Phase 4 → Payment Acknowledgement; stories 143,
  * 144): printable, labelled as not an official invoice. Printing leaves out
- * everything but the document.
+ * everything but the document. Under it, "Request official invoice" (ticket
+ * 08; story 151j): the short form until the request is made, then "Invoice
+ * requested", later "Invoice sent · check your email".
  */
 export function PaymentAcknowledgementDocument({
   view,
-  contactEmail,
+  memberName,
+  requestInvoice,
 }: PaymentAcknowledgementDocumentProps) {
   return (
     <main
@@ -101,15 +107,25 @@ export function PaymentAcknowledgementDocument({
       </article>
       <section
         aria-labelledby="request-invoice"
-        className="flex max-w-155 flex-col gap-1.5 border-[1.5px] border-dashed p-4 print:hidden"
+        className="flex max-w-155 flex-col gap-2.5 border-[1.5px] border-dashed p-4 print:hidden"
       >
         <h2 id="request-invoice" className="font-mono text-[11px] font-bold tracking-[0.06em]">
           Request official invoice
         </h2>
-        <p className="text-sm leading-normal">
-          Official invoices are issued outside the app. Requesting one from here is coming soon;
-          until then, email {contactEmail} with {view.number}.
-        </p>
+        {view.invoice.line ? <p className="text-sm font-semibold">{view.invoice.line}</p> : null}
+        {view.invoice.canRequest ? (
+          <>
+            <p className="text-sm leading-normal">
+              Official invoices are issued outside the app and emailed to you. Tell us the name and
+              address to put on it.
+            </p>
+            <InvoiceRequestForm
+              reference={view.number}
+              defaultName={memberName}
+              action={requestInvoice}
+            />
+          </>
+        ) : null}
       </section>
     </main>
   );

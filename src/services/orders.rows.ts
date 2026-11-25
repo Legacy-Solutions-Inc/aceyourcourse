@@ -1,4 +1,5 @@
 import type * as schema from "@/lib/db/schema";
+import type { InvoiceRequest } from "@/lib/payments/invoice-requests";
 import type { Order } from "@/lib/payments/order-ledger";
 import { toPlanDays } from "@/lib/plans/plan-rules";
 
@@ -39,4 +40,31 @@ export const orderToRow = (order: Order): OrderRow => ({
   createdAt: new Date(order.createdAt),
   paidAt: order.paidAt === null ? null : new Date(order.paidAt),
   statusChangedAt: new Date(order.statusChangedAt),
+});
+
+// Invoice Requests (ticket 08): who marked one sent is two columns, set together.
+type InvoiceRequestRow = typeof schema.invoiceRequests.$inferSelect;
+
+export const invoiceRequestFromRow = (row: InvoiceRequestRow): InvoiceRequest => ({
+  orderId: row.orderId,
+  name: row.name,
+  address: row.address,
+  tin: row.tin,
+  requestedAt: row.requestedAt.toISOString(),
+  sentAt: row.sentAt?.toISOString() ?? null,
+  sentBy:
+    row.sentByEmail !== null && row.sentByName !== null
+      ? { email: row.sentByEmail, name: row.sentByName }
+      : null,
+});
+
+export const invoiceRequestToRow = (request: InvoiceRequest): InvoiceRequestRow => ({
+  orderId: request.orderId,
+  name: request.name,
+  address: request.address,
+  tin: request.tin,
+  requestedAt: new Date(request.requestedAt),
+  sentAt: request.sentAt === null ? null : new Date(request.sentAt),
+  sentByEmail: request.sentBy?.email ?? null,
+  sentByName: request.sentBy?.name ?? null,
 });

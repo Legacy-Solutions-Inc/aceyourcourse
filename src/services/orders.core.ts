@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { type InvoiceRequest, invoiceStatus } from "@/lib/payments/invoice-requests";
 import {
   applyOutcome,
   effectiveStatus,
@@ -17,7 +18,12 @@ import { noticeOf, passEntityId, type PassWrite } from "@/services/access-passes
 import type { Plan, StaffActivity } from "@/services/admin.types";
 import type { AccessPass } from "@/services/content.types";
 import { activityRecord } from "@/services/content-editor.core";
-import { memberUserIdSchema } from "@/services/member.schema";
+import {
+  invoiceFieldErrors,
+  type InvoiceRequestInput,
+  invoiceRequestInputSchema,
+  memberUserIdSchema,
+} from "@/services/member.schema";
 import {
   examCodeOf,
   examCodesOnSale,
@@ -27,7 +33,9 @@ import {
 } from "@/services/member.rules";
 import type {
   ExpirySweep,
+  InvoiceRequestResult,
   Member,
+  MemberInvoice,
   MemberOrder,
   PaymentAcknowledgement,
   PaymentEventResult,
@@ -95,10 +103,15 @@ export interface OrderWrite {
   activity: StaffActivity | null;
 }
 
-/** One of a Member's Orders, with the days its payment added to their pass, from and until (null until Paid). */
+/**
+ * One of a Member's Orders, with the days its payment added to their pass,
+ * from and until (null until Paid), and its Invoice Request (ticket 08; null
+ * for none).
+ */
 export interface OwnOrder {
   order: Order;
   paidDays: { startsAt: string; endsAt: string } | null;
+  invoice: InvoiceRequest | null;
 }
 
 /** Where a payment event finds its Order: by its checkout's id, or our id or reference. */
@@ -166,6 +179,11 @@ export interface OrderStore {
   ): Promise<EventRecording<T>>;
   /** Every Pending Order made before `madeBefore`, oldest first: what the daily sweep checks. */
   listOverdueOrders(madeBefore: Date): Promise<Order[]>;
+  /**
+   * Adds an Order's Invoice Request (ticket 08), unless it has one: true when
+   * added, false (adding nothing) when one is there, two at once included.
+   */
+  addInvoiceRequest(request: InvoiceRequest): Promise<boolean>;
 }
 
 const payInputSchema = z.object({
@@ -174,8 +192,15 @@ const payInputSchema = z.object({
   method: z.enum(PAYMENT_METHODS),
 });
 
+/** Pure: an Invoice Request as the Member sees it: requested, then sent. */
+const memberInvoiceOf = (request: InvoiceRequest): MemberInvoice => ({
+  status: invoiceStatus(request),
+  requestedAt: request.requestedAt,
+  sentAt: request.sentAt,
+});
+
 /** Pure: what the screens show of an Order at `now`: Expired once Pending past its 24 hours. */
-const memberOrderOf = ({ order, paidDays }: OwnOrder, now: Date): MemberOrder => ({
+const memberOrderOf = ({ order, paidDays, invoice }: OwnOrder, now: Date): MemberOrder => ({
   id: order.id,
   reference: order.reference,
   examCode: order.examCode,
@@ -189,6 +214,7 @@ const memberOrderOf = ({ order, paidDays }: OwnOrder, now: Date): MemberOrder =>
   livemode: order.livemode,
   accessUntil: paidDays?.endsAt ?? null,
   paidAfterExpiry: paidAfterExpiry(order),
+  invoice: invoice && memberInvoiceOf(invoice),
 });
 
 /**
@@ -410,6 +436,35 @@ export function orderCalls(store: OrderStore) {
   }
 
   /**
+   * "Request official invoice" (ticket 08): for the Member's own Order only
+   * (anyone else's answers not found), once it's Paid, and once. The form is
+   * checked after the Order, so a refused Order says why before any field.
+   * The store's add refuses a second request, two at once included.
+   */
+  async function requestInvoice(
+    userId: string,
+    reference: string,
+    sent: InvoiceRequestInput,
+  ): Promise<InvoiceRequestResult> {
+    const own = await ownOrder(userId, reference);
+    if (!own) return { ok: false, reason: "not-found" };
+    if (own.order.status !== "paid") return { ok: false, reason: "not-paid" };
+    if (own.invoice) return { ok: false, reason: "already-requested" };
+    const parsed = invoiceRequestInputSchema.safeParse(sent);
+    if (!parsed.success) {
+      return { ok: false, reason: "invalid", fields: invoiceFieldErrors(parsed.error) };
+    }
+    const added = await store.addInvoiceRequest({
+      orderId: own.order.id,
+      ...parsed.data,
+      requestedAt: new Date().toISOString(),
+      sentAt: null,
+      sentBy: null,
+    });
+    return added ? { ok: true } : { ok: false, reason: "already-requested" };
+  }
+
+  /**
    * The Member's own Order, after asking the client for its status while it's
    * Pending; `throttled`, only when no status check of it was claimed in the
    * last 10 seconds.
@@ -501,6 +556,7 @@ export function orderCalls(store: OrderStore) {
     getMemberOrder,
     listMemberOrders,
     getPaymentAcknowledgement,
+    requestInvoice,
     recordPaymentEvent,
     expireOverdueOrders,
     checkOrderStatus: (userId: string, reference: string, client: PaymentsClient | null) =>

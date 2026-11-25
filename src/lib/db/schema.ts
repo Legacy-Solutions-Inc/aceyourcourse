@@ -1236,6 +1236,46 @@ export const paymentEvents = pgTable(
   (t) => [index("payment_events_order_id_idx").on(t.orderId)],
 ).enableRLS();
 
+/**
+ * Invoice Requests (Phase 4, ticket 08; spec, Phase 4 planning decisions →
+ * Payment Acknowledgement and Invoice Requests): a Member's request for the
+ * official invoice of one Paid Order, with the name, address and TIN to put
+ * on it. One per Order: the Order is the key, so a second request (two at
+ * once included) is refused. It references the Order, not the Member, so it
+ * stays with the Order when the account is deleted (ticket 14). `sent_at`
+ * and who marked it sent (as they were then) are set together, when an
+ * Owner marks it sent; the invoice itself is issued and emailed outside the
+ * app. RLS on with no policy: only the server reads or writes it.
+ */
+export const invoiceRequests = pgTable(
+  "invoice_requests",
+  {
+    orderId: uuid("order_id")
+      .primaryKey()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    address: text("address").notNull(),
+    tin: text("tin"),
+    requestedAt: at("requested_at").notNull(),
+    sentAt: at("sent_at"),
+    sentByEmail: text("sent_by_email"),
+    sentByName: text("sent_by_name"),
+  },
+  (t) => [
+    check("invoice_requests_name_present", sql`btrim(${t.name}) <> ''`),
+    check("invoice_requests_address_present", sql`btrim(${t.address}) <> ''`),
+    check(
+      "invoice_requests_tin_format",
+      sql`${t.tin} ~ '^[0-9]{3}-[0-9]{3}-[0-9]{3}(-[0-9]{3}|-[0-9]{5})?$'`,
+    ),
+    check(
+      "invoice_requests_sent_when_and_by_whom",
+      sql`(${t.sentAt} is null and ${t.sentByEmail} is null and ${t.sentByName} is null)
+        or (${t.sentAt} is not null and ${t.sentByEmail} is not null and ${t.sentByName} is not null)`,
+    ),
+  ],
+).enableRLS();
+
 // ── In-app notices ──────────────────────────────────────────────────────────
 
 export const memberNoticeKind = pgEnum("member_notice_kind", NOTICE_KINDS);

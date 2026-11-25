@@ -1,4 +1,5 @@
 import { isDatabaseConfigured } from "@/env.server";
+import type { InvoiceRequest } from "@/lib/payments/invoice-requests";
 import { databaseArm } from "@/services/admin.db";
 import * as mockImpl from "@/services/admin.mock";
 import type {
@@ -1106,8 +1107,17 @@ export interface AdminService {
     client: PaymentsClient | null,
   ): Promise<AdminResult<OrderStatusCheck>>;
   /**
+   * "Mark invoice sent" (ticket 08): records that the official invoice an
+   * Order's Invoice Request asked for was sent from the support inbox, when
+   * and by whom, with Staff Activity. A request already marked sent is given
+   * back as it is, changing and logging nothing. Refused for an Order with
+   * no request. No email is sent.
+   */
+  markInvoiceSent(actor: StaffActor, reference: string): Promise<AdminResult<InvoiceRequest>>;
+  /**
    * The CSV export: exactly the Orders the list's query matches, in its
-   * order, with a header row always; logged in Staff Activity.
+   * order, with a header row always, and each Order's Invoice Request;
+   * logged in Staff Activity.
    */
   exportOrdersCsv(actor: StaffActor, query: OrderListQuery): Promise<AdminResult<OrdersCsv>>;
 }
@@ -1229,4 +1239,5 @@ export const listOrdersForAdmin = impl.listOrdersForAdmin;
 export const getOrderForAdmin = impl.getOrderForAdmin;
 export const saveOrderNote = impl.saveOrderNote;
 export const checkOrderWithPayMongo = impl.checkOrderWithPayMongo;
+export const markInvoiceSent = impl.markInvoiceSent;
 export const exportOrdersCsv = impl.exportOrdersCsv;

@@ -14,8 +14,8 @@ import { orderItem, orderStatusLabel } from "./order-view";
 //   as at Pay, the item, Exam and days, the amount, the Payment Method, the
 //   status (as every screen shows it; "(test)" on a Test Order), the amount
 //   refunded, PayMongo's payment ID, and the Invoice Request: whether there
-//   is one, with its name, address and TIN. The refund and invoice cells stay
-//   empty until tickets 08 and 09 fill them.
+//   is one ("Yes" or "No"), with its name, address and TIN (ticket 08). The
+//   refund cell stays empty until ticket 09 fills it.
 // - Amounts are plain numbers in pesos ("1299.00"), so a spreadsheet adds
 //   them up.
 // - RFC 4180: rows end with CRLF, and a cell holding a comma, a quote or a
@@ -78,6 +78,7 @@ const pesos = (centavos: number) => (centavos / 100).toFixed(2);
 /** Pure: one Order's cells, in the header's order. */
 function rowOf(order: AdminOrder): string[] {
   const status = orderStatusLabel(order.status);
+  const { invoice } = order;
   return [
     order.reference,
     order.paidAt ? manilaDateTime(order.paidAt) : "",
@@ -92,11 +93,10 @@ function rowOf(order: AdminOrder): string[] {
     // The amount refunded: ticket 09.
     "",
     order.paymentId ?? "",
-    // Whether an invoice was requested, and its name, address and TIN: ticket 08.
-    "",
-    "",
-    "",
-    "",
+    invoice ? "Yes" : "No",
+    invoice?.name ?? "",
+    invoice?.address ?? "",
+    invoice?.tin ?? "",
   ];
 }
 

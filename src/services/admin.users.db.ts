@@ -23,7 +23,7 @@ import { staffActivityToRow } from "@/services/admin.rows";
 import type { AdminUserRow, UserFilter, UserRole } from "@/services/admin.types";
 import { accessPassGrantFromRow } from "@/services/content.rows";
 import { consentFromRow, databaseArm as memberArm, memberFromRow } from "@/services/member.db";
-import { orderFromRow } from "@/services/orders.rows";
+import { invoiceRequestFromRow, orderFromRow } from "@/services/orders.rows";
 import { type UsersStore, usersCalls } from "@/services/users.core";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -206,7 +206,11 @@ const databaseUsersStore: UsersStore = {
           .from(memberConsents)
           .where(eq(memberConsents.userId, userId))
           .orderBy(asc(memberConsents.seq)),
-        db.select().from(schema.orders).where(eq(schema.orders.userId, userId)),
+        db
+          .select({ order: schema.orders, invoice: schema.invoiceRequests })
+          .from(schema.orders)
+          .leftJoin(schema.invoiceRequests, eq(schema.invoiceRequests.orderId, schema.orders.id))
+          .where(eq(schema.orders.userId, userId)),
       ]);
       return {
         member: memberFromRow(row),
@@ -223,7 +227,10 @@ const databaseUsersStore: UsersStore = {
             }),
         })),
         consents: consents.map(consentFromRow),
-        orders: orders.map(orderFromRow),
+        orders: orders.map(({ order, invoice }) => ({
+          order: orderFromRow(order),
+          invoice: invoice && invoiceRequestFromRow(invoice),
+        })),
       };
     }),
 

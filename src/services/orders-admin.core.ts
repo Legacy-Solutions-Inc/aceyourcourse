@@ -1,11 +1,7 @@
 import { ordersCsv, ordersCsvFilename } from "@/lib/admin/orders-csv";
 import { filterOrders, orderStats, rangeStart } from "@/lib/admin/orders-list";
-import {
-  effectiveStatus,
-  isOrderReference,
-  type Order,
-  paidAfterExpiry,
-} from "@/lib/payments/order-ledger";
+import type { InvoiceRequest, OrderWithInvoice } from "@/lib/payments/invoice-requests";
+import { effectiveStatus, isOrderReference, paidAfterExpiry } from "@/lib/payments/order-ledger";
 import {
   invalidInput,
   type OrderNoteInput,
@@ -58,6 +54,12 @@ import type { PaymentsClient } from "@/services/payments.types";
 // - The CSV export: exactly the filtered Orders (src/lib/admin/orders-csv.ts),
 //   logged in Staff Activity with the filters and the number of rows; the
 //   search itself, often a Member's email, isn't kept there.
+// - Invoice Requests (ticket 08): every read carries an Order's request, for
+//   the "Invoice requested" filter, the detail and the CSV. "Mark invoice
+//   sent" records when and by whom (as they were then) and Staff Activity,
+//   as one step; a request already marked sent is given back as it is,
+//   changing and logging nothing. The app sends no email: the Owner sends
+//   the invoice from the support inbox first.
 // - Refunds are issued from the PayMongo dashboard, never here.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -69,17 +71,19 @@ export const NO_PAYMENTS_CLIENT =
 /** Pure: the record stamp an Order's internal note saves under. */
 export const orderNoteRecord = (orderId: string) => `order-note:${orderId}`;
 
-/** Pure: an Order as the Admin shows it at `now`. */
-export const adminOrderOf = (order: Order, now: Date): AdminOrder => ({
+export const NO_INVOICE_REQUEST = "No invoice was requested for this Order.";
+
+/** Pure: an Order, with its Invoice Request, as the Admin shows it at `now`. */
+export const adminOrderOf = ({ order, invoice }: OrderWithInvoice, now: Date): AdminOrder => ({
   ...order,
   status: effectiveStatus(order, now),
   recordedStatus: order.status,
   paidAfterExpiry: paidAfterExpiry(order),
+  invoice,
 });
 
 /** One Order as the detail page reads it. */
-export interface OrderRecord {
-  order: Order;
+export interface OrderRecord extends OrderWithInvoice {
   /** Whether the buyer's Member record is there: false once their account is deleted. */
   memberExists: boolean;
   /** The internal note, or null for none. */
@@ -97,10 +101,19 @@ export interface OrderNoteWrite {
   activity: StaffActivity;
 }
 
+/** What "Mark invoice sent" writes, all or nothing. */
+export interface InvoiceSentWrite {
+  request: InvoiceRequest;
+  activity: StaffActivity;
+}
+
 /** How an arm reads and writes the Orders admin's records. */
 export interface OrdersAdminStore {
-  /** Every Order made at or after `since` (all of them for null); Test Orders only with `tests`. */
-  listOrders(filter: { since: Date | null; tests: boolean }): Promise<Order[]>;
+  /**
+   * Every Order made at or after `since` (all of them for null), with its
+   * Invoice Request; Test Orders only with `tests`.
+   */
+  listOrders(filter: { since: Date | null; tests: boolean }): Promise<OrderWithInvoice[]>;
   /** The Order with this reference, or null for none. */
   readOrder(reference: string): Promise<OrderRecord | null>;
   /**
@@ -112,6 +125,16 @@ export interface OrdersAdminStore {
   withOrderNote<T>(
     reference: string,
     work: (record: OrderRecord) => { write: OrderNoteWrite | null; result: T },
+  ): Promise<T | null>;
+  /**
+   * Runs `work` on the Order with this reference and its Invoice Request as
+   * they are now, then writes the request it gives, with its Staff Activity,
+   * as one step: two marks of one request take turns. Gives work's result,
+   * or null for no such Order.
+   */
+  withInvoiceRequest<T>(
+    reference: string,
+    work: (held: OrderWithInvoice) => { write: InvoiceSentWrite | null; result: T },
   ): Promise<T | null>;
   /** Appends a Staff Activity record. */
   recordActivity(activity: StaffActivity): Promise<void>;
@@ -158,7 +181,7 @@ export function ordersAdminCalls(store: OrdersAdminStore, orders: Pick<OrderStor
       tests: query.tests,
     });
     return filterOrders(
-      found.map((order) => adminOrderOf(order, now)),
+      found.map((held) => adminOrderOf(held, now)),
       query,
       now,
     );
@@ -184,7 +207,7 @@ export function ordersAdminCalls(store: OrdersAdminStore, orders: Pick<OrderStor
     const record = reference && (await store.readOrder(reference));
     if (!record) return NOT_FOUND;
     return saved({
-      order: adminOrderOf(record.order, new Date()),
+      order: adminOrderOf(record, new Date()),
       memberUserId: record.memberExists ? record.order.userId : null,
       note: noteOf(record),
     });
@@ -244,14 +267,14 @@ export function ordersAdminCalls(store: OrdersAdminStore, orders: Pick<OrderStor
     if (!reference || !record) return NOT_FOUND;
     const { order } = record;
     if (order.status !== "pending") {
-      return saved({ outcome: "not-pending", order: adminOrderOf(order, new Date()) });
+      return saved({ outcome: "not-pending", order: adminOrderOf(record, new Date()) });
     }
     if (!client) return refused(formError(NO_PAYMENTS_CLIENT));
 
     const { status, moved } = await checkCheckoutStatus(orders, order, client);
     const latest = await store.readOrder(reference);
     if (!latest) return NOT_FOUND;
-    const after = adminOrderOf(latest.order, new Date());
+    const after = adminOrderOf(latest, new Date());
     let outcome: OrderCheckOutcome;
     if (status === "pending") outcome = "still-pending";
     else if (status === "unknown") outcome = "unknown";
@@ -259,6 +282,49 @@ export function ordersAdminCalls(store: OrdersAdminStore, orders: Pick<OrderStor
     // The webhook settled it first: PayMongo's answer changed nothing here.
     else outcome = after.recordedStatus === "pending" ? "unknown" : "not-pending";
     return saved({ outcome, order: after });
+  }
+
+  async function markInvoiceSent(
+    actor: StaffActor,
+    sent: string,
+  ): Promise<AdminResult<InvoiceRequest>> {
+    const role = roleRefusal(actor, "owner", FORBIDDEN);
+    if (role) return refused(role);
+    const reference = referenceOf(sent);
+    if (!reference) return NOT_FOUND;
+    const now = new Date();
+
+    const result = await store.withInvoiceRequest(
+      reference,
+      ({
+        order,
+        invoice,
+      }): { write: InvoiceSentWrite | null; result: AdminResult<InvoiceRequest> } => {
+        if (!invoice) return { write: null, result: refused(formError(NO_INVOICE_REQUEST)) };
+        if (invoice.sentAt !== null) return { write: null, result: saved(invoice) };
+        const request: InvoiceRequest = {
+          ...invoice,
+          sentAt: now.toISOString(),
+          sentBy: { email: actor.email, name: actor.name },
+        };
+        return {
+          write: {
+            request,
+            activity: activityRecord(
+              actor,
+              now,
+              "order",
+              order.id,
+              "invoice-sent",
+              { reference, invoiceSentAt: null },
+              { reference, invoiceSentAt: request.sentAt },
+            ),
+          },
+          result: saved(request),
+        };
+      },
+    );
+    return result ?? NOT_FOUND;
   }
 
   async function exportOrdersCsv(
@@ -270,13 +336,14 @@ export function ordersAdminCalls(store: OrdersAdminStore, orders: Pick<OrderStor
     const { query } = checks;
     const now = new Date();
     const rows = await matching(query, now);
-    const { status, method, range, tests } = query;
+    const { status, method, range, tests, invoiceRequested } = query;
     await store.recordActivity(
       activityRecord(actor, now, "orders", "csv", "export-csv", null, {
         status,
         method,
         range,
         tests,
+        invoiceRequested,
         searched: query.q !== null,
         rows: rows.length,
       }),
@@ -289,6 +356,7 @@ export function ordersAdminCalls(store: OrdersAdminStore, orders: Pick<OrderStor
     getOrderForAdmin,
     saveOrderNote,
     checkOrderWithPayMongo,
+    markInvoiceSent,
     exportOrdersCsv,
   };
 }

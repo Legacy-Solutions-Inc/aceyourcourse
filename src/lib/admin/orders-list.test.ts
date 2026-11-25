@@ -40,6 +40,7 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
     status: "paid",
     recordedStatus: "paid",
     paidAfterExpiry: false,
+    invoice: null,
     livemode: true,
     checkoutId: "cs_1",
     paymentId: "pay_1",
@@ -67,6 +68,7 @@ describe("parseOrdersParams", () => {
       method: "all",
       range: "30d",
       tests: false,
+      invoiceRequested: false,
     });
   });
 
@@ -78,13 +80,28 @@ describe("parseOrdersParams", () => {
         method: "gcash",
         range: "7d",
         tests: "1",
+        invoice: "Requested",
       }),
-    ).toEqual({ q: "AYC-10482", status: "paid", method: "gcash", range: "7d", tests: true });
+    ).toEqual({
+      q: "AYC-10482",
+      status: "paid",
+      method: "gcash",
+      range: "7d",
+      tests: true,
+      invoiceRequested: true,
+    });
   });
 
   it("falls back to each default for values it doesn't know", () => {
     expect(
-      parseOrdersParams({ q: "   ", status: "lost", method: "cash", range: "90d", tests: "yes" }),
+      parseOrdersParams({
+        q: "   ",
+        status: "lost",
+        method: "cash",
+        range: "90d",
+        tests: "yes",
+        invoice: "sent",
+      }),
     ).toEqual(DEFAULT_ORDER_QUERY);
   });
 
@@ -109,15 +126,16 @@ describe("ordersHref and ordersExportHref", () => {
       method: "gcash",
       range: "all",
       tests: true,
+      invoiceRequested: true,
     });
     const href = ordersHref(filtered);
     expect(href).toBe(
-      "/admin/orders?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1",
+      "/admin/orders?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested",
     );
     const params = Object.fromEntries(new URL(href, "https://example.com").searchParams);
     expect(parseOrdersParams(params)).toEqual(filtered);
     expect(ordersExportHref(filtered)).toBe(
-      "/admin/orders/export?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1",
+      "/admin/orders/export?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested",
     );
   });
 });
@@ -173,6 +191,31 @@ describe("filterOrders", () => {
     expect(only("refunded")).toEqual([refunded.reference]);
     expect(only("paid")).toEqual([paid.reference]);
     expect(only("any")).toHaveLength(5);
+  });
+
+  it("keeps, under Invoice requested, only the Orders whose invoice was requested and not yet sent", () => {
+    const request = {
+      orderId: "id",
+      name: "Sample Builders Inc.",
+      address: "Jaro",
+      tin: null,
+      requestedAt: "2026-11-25T01:00:00.000Z",
+    };
+    const toSend = order({ invoice: { ...request, sentAt: null, sentBy: null } });
+    const sent = order({
+      invoice: {
+        ...request,
+        sentAt: "2026-11-25T01:30:00.000Z",
+        sentBy: { email: "owner@example.com", name: "Sample Owner" },
+      },
+    });
+    const none = order();
+    const rows = [toSend, sent, none];
+
+    expect(references(filterOrders(rows, query({ invoiceRequested: true }), NOW))).toEqual([
+      toSend.reference,
+    ]);
+    expect(filterOrders(rows, query(), NOW)).toHaveLength(3);
   });
 
   it("filters by Payment Method, and combines it with the status", () => {

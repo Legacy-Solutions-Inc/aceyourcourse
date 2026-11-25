@@ -316,6 +316,10 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
       note: "Asked about Maya",
     })),
     checkStatus: owner(() => orders.checkStatus(IDLE, { input: { reference: BEA_ORDER } })),
+    // Ticket 08: "Mark invoice sent" on the Order's Invoice Request.
+    markInvoiceSentAction: owner(() =>
+      orders.markInvoiceSentAction(IDLE, { input: { reference: BEA_ORDER } }),
+    ),
   },
   "./(shell)/content/actions.ts": {
     addTopic: staff(() =>
@@ -662,6 +666,18 @@ beforeEach(async () => {
       createdAt: store.bootedAt,
       paidAt: null,
       statusChangedAt: store.bootedAt,
+    },
+  ];
+  // An Invoice Request on it, for "Mark invoice sent" (ticket 08); only the Guard is under test here.
+  store.invoiceRequests = [
+    {
+      orderId: "00000000-0000-4000-8000-000000010001",
+      name: BEA.name,
+      address: "Jaro, Iloilo City",
+      tin: null,
+      requestedAt: store.bootedAt,
+      sentAt: null,
+      sentBy: null,
     },
   ];
   // Bea asks, from Account, for a copy of her data and for her account to be deleted.

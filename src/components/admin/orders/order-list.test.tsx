@@ -60,6 +60,65 @@ describe("OrderList", () => {
     expect(replace).toHaveBeenLastCalledWith("/admin/orders?tests=1", { scroll: false });
   });
 
+  it("keeps only the Orders with an invoice to send when Invoice requested is ticked", async () => {
+    const { user } = renderList();
+    await user.click(screen.getByRole("checkbox", { name: "Invoice requested" }));
+    expect(replace).toHaveBeenLastCalledWith("/admin/orders?invoice=requested", { scroll: false });
+  });
+
+  it("tags an Order whose invoice was requested and not yet sent", () => {
+    const order = {
+      id: "00000000-0000-4000-8000-000000010003",
+      reference: "AYC-10003",
+      userId: null,
+      examCode: "CE",
+      planId: "plan-ce-90",
+      planName: "CE All-Access",
+      days: 90,
+      priceCentavos: 129_900,
+      method: "gcash",
+      status: "paid",
+      recordedStatus: "paid",
+      paidAfterExpiry: false,
+      livemode: true,
+      checkoutId: null,
+      paymentId: "pay_Sample10003",
+      buyerName: "Bea Tester",
+      buyerEmail: "tester@example.com",
+      createdAt: "2026-11-25T01:00:00.000Z",
+      paidAt: "2026-11-25T01:01:00.000Z",
+      statusChangedAt: "2026-11-25T01:01:00.000Z",
+    } as const;
+    const request = {
+      orderId: order.id,
+      name: "Bea Tester",
+      address: "Jaro",
+      tin: null,
+      requestedAt: "2026-11-25T02:00:00.000Z",
+      sentAt: null,
+      sentBy: null,
+    };
+    renderList({
+      ...EMPTY,
+      rows: [
+        { ...order, invoice: request },
+        {
+          ...order,
+          id: "sent",
+          reference: "AYC-10002",
+          invoice: {
+            ...request,
+            sentAt: "2026-11-25T03:00:00.000Z",
+            sentBy: { email: "o@example.com", name: "O" },
+          },
+        },
+      ],
+    });
+
+    expect(screen.getAllByText("INVOICE REQUESTED")).toHaveLength(1);
+    expect(screen.getByRole("row", { name: /AYC-10003/ })).toHaveTextContent("INVOICE REQUESTED");
+  });
+
   it("offers a chip per status, linking to it", () => {
     renderList();
     expect(screen.getByRole("link", { name: "ANY STATUS" })).toHaveAttribute(

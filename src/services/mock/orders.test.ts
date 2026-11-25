@@ -8,14 +8,30 @@ import { sampleOrders } from "./orders";
 
 // The sample Orders (Phase 4, ticket 07): the dev server's data and the e2e
 // specs' reset start with Paid, Pending and Failed Orders, one older than 30
-// days and one Test Order, for buyers no sample Member is. Unit tests start
-// without them.
+// days and one Test Order, for buyers no sample Member is; one Paid Order has
+// an Invoice Request to send (ticket 08). Unit tests start without them.
 
 const BOOT = new Date("2026-11-25T02:00:00.000Z");
 const DAY = 24 * 60 * 60 * 1000;
 
 describe("sampleOrders", () => {
-  const { orders, nextOrderNumber } = sampleOrders(BOOT, CATALOGUE_SEED);
+  const { orders, nextOrderNumber, invoiceRequests } = sampleOrders(BOOT, CATALOGUE_SEED);
+
+  it("has one Invoice Request, not yet sent, on Maria's Paid Order, asked for after it was paid", () => {
+    const maria = orders.find((order) => order.reference === "AYC-10002");
+    expect(invoiceRequests).toEqual([
+      {
+        orderId: maria?.id,
+        name: "Sample Builders Inc.",
+        address: "12 Sample St, Jaro, Iloilo City",
+        tin: "123-456-789-000",
+        requestedAt: new Date(BOOT.getTime() - 19 * DAY).toISOString(),
+        sentAt: null,
+        sentBy: null,
+      },
+    ]);
+    expect(maria?.status).toBe("paid");
+  });
 
   it("numbers them from AYC-10001, oldest first, and the next Order after them", () => {
     expect(orders.map(({ reference }) => reference)).toEqual([

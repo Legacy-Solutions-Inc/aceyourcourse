@@ -8,7 +8,7 @@ import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
 import { staffActivityToRow } from "@/services/admin.rows";
 import { databaseOrderStore } from "@/services/member.db";
-import { orderFromRow } from "@/services/orders.rows";
+import { invoiceRequestFromRow, invoiceRequestToRow, orderFromRow } from "@/services/orders.rows";
 import {
   type OrderRecord,
   type OrdersAdminStore,
@@ -27,12 +27,14 @@ import {
 // note's save runs in one transaction that locks the Order's row, so two
 // saves take turns and each one's conflict check sees the stamp the one
 // before it wrote; then the note, its stamp (record_stamps) and its Staff
-// Activity are written together, or none of them. Drizzle bypasses RLS, so
+// Activity are written together, or none of them. "Mark invoice sent"
+// (ticket 08) locks the Order's row the same way, then writes the request's
+// sent columns and its Staff Activity together. Drizzle bypasses RLS, so
 // authorisation is the seam's role check and the Staff Guard (coding
 // standards §3).
 // ─────────────────────────────────────────────────────────────────────────────
 
-const { orders, recordStamps, staffActivity } = schema;
+const { invoiceRequests, orders, recordStamps, staffActivity } = schema;
 
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
@@ -53,12 +55,16 @@ async function readRecord(
   const query = db.select().from(orders).where(eq(orders.reference, reference));
   const [row] = lock ? await query.for("update") : await query;
   if (!row) return null;
-  const [stamp] = await db
-    .select()
-    .from(recordStamps)
-    .where(eq(recordStamps.record, orderNoteRecord(row.id)));
+  const [[stamp], [invoice]] = await Promise.all([
+    db
+      .select()
+      .from(recordStamps)
+      .where(eq(recordStamps.record, orderNoteRecord(row.id))),
+    db.select().from(invoiceRequests).where(eq(invoiceRequests.orderId, row.id)),
+  ]);
   return {
     order: orderFromRow(row),
+    invoice: invoice ? invoiceRequestFromRow(invoice) : null,
     memberExists: row.userId !== null,
     note: row.internalNote,
     noteStamp: stamp ? { savedAt: stamp.updatedAt.toISOString(), savedBy: stamp.updatedBy } : null,
@@ -72,11 +78,15 @@ const databaseOrdersAdminStore: OrdersAdminStore = {
       if (!tests) conditions.push(eq(orders.livemode, true));
       if (since) conditions.push(gte(orders.createdAt, since));
       const rows = await getDb()
-        .select()
+        .select({ order: orders, invoice: invoiceRequests })
         .from(orders)
+        .leftJoin(invoiceRequests, eq(invoiceRequests.orderId, orders.id))
         .where(and(...conditions))
         .orderBy(desc(orders.createdAt), desc(orders.reference));
-      return rows.map(orderFromRow);
+      return rows.map(({ order, invoice }) => ({
+        order: orderFromRow(order),
+        invoice: invoice && invoiceRequestFromRow(invoice),
+      }));
     }),
 
   readOrder: (reference) => inDatabase(() => readRecord(getDb(), reference)),
@@ -105,6 +115,24 @@ const databaseOrdersAdminStore: OrdersAdminStore = {
       }),
     ),
 
+  // Locks the Order's row, as a note's save does, so two marks of one request take turns.
+  withInvoiceRequest: (reference, work) =>
+    inDatabase(() =>
+      getDb().transaction(async (tx) => {
+        const record = await readRecord(tx, reference, true);
+        if (!record) return null;
+        const { write, result } = work({ order: record.order, invoice: record.invoice });
+        if (!write) return result;
+        await tx.insert(staffActivity).values(staffActivityToRow(write.activity));
+        const { sentAt, sentByEmail, sentByName } = invoiceRequestToRow(write.request);
+        await tx
+          .update(invoiceRequests)
+          .set({ sentAt, sentByEmail, sentByName })
+          .where(eq(invoiceRequests.orderId, write.request.orderId));
+        return result;
+      }),
+    ),
+
   recordActivity: (activity) =>
     inDatabase(async () => {
       await getDb().insert(staffActivity).values(staffActivityToRow(activity));
@@ -116,5 +144,6 @@ export const {
   getOrderForAdmin,
   saveOrderNote,
   checkOrderWithPayMongo,
+  markInvoiceSent,
   exportOrdersCsv,
 } = ordersAdminCalls(databaseOrdersAdminStore, databaseOrderStore);

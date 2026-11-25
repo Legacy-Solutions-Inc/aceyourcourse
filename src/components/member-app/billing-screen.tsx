@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
 
 import type { OrderRow, PassCard, StatusTone } from "./billing-view";
+import { type InvoiceRequestAction, InvoiceRequestForm } from "./invoice-request-form";
 
 const TONE: Record<StatusTone, string> = {
   paid: "border-ayc-success text-ayc-success",
@@ -17,15 +18,22 @@ const TAG = "font-mono text-[10px] leading-none font-bold px-1.5 py-1.5";
 interface BillingScreenProps {
   passes: readonly PassCard[];
   orders: readonly OrderRow[];
+  /** The Member's name, which the name on an official invoice starts as. */
+  memberName: string;
+  /** "Request official invoice"'s Server Action. */
+  requestInvoice: InvoiceRequestAction;
 }
 
 /**
  * Billing's body (Phase 4, ticket 06; BUILD-MAP §3 Billing, L452–477; stories
  * 143, 144): the Member's Access Passes, each with Renew now, then every
  * Order, newest first, with a Payment Acknowledgement for each Paid one, or
- * "No payments yet" and See plans before their first Order.
+ * "No payments yet" and See plans before their first Order. A Paid Order
+ * offers "Request official invoice", a short form (ticket 08), until its
+ * request is made; then it says "Invoice requested", later "Invoice sent ·
+ * check your email".
  */
-export function BillingScreen({ passes, orders }: BillingScreenProps) {
+export function BillingScreen({ passes, orders, memberName, requestInvoice }: BillingScreenProps) {
   return (
     <>
       <p className="text-[15px]">
@@ -103,6 +111,24 @@ export function BillingScreen({ passes, orders }: BillingScreenProps) {
                     <span className="sr-only">Payment </span>Acknowledgement
                     <span className="sr-only"> for {order.reference}</span>
                   </Link>
+                ) : null}
+                {order.invoice.line ? (
+                  <p className="basis-full text-[13px] font-semibold">{order.invoice.line}</p>
+                ) : null}
+                {order.invoice.canRequest ? (
+                  <details className="group basis-full">
+                    <summary className="flex min-h-9 w-fit cursor-pointer items-center text-[13px] font-semibold text-ayc-blue underline underline-offset-4">
+                      Request official invoice
+                      <span className="sr-only"> for {order.reference}</span>
+                    </summary>
+                    <div className="mt-2 max-w-md">
+                      <InvoiceRequestForm
+                        reference={order.reference}
+                        defaultName={memberName}
+                        action={requestInvoice}
+                      />
+                    </div>
+                  </details>
                 ) : null}
               </li>
             ))}

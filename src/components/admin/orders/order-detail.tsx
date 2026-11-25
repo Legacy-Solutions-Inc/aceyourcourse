@@ -15,9 +15,11 @@ import { formatPeso } from "@/lib/money";
 import { methodLabel } from "@/lib/payments/payment-methods";
 import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
+import type { InvoiceRequest } from "@/lib/payments/invoice-requests";
 import type { AdminOrderDetail, AdminOrderNote, OrderStatusCheck } from "@/services/admin.types";
 
 import { CheckStatusButton } from "./check-status-button";
+import { InvoiceRequestPanel } from "./invoice-request-panel";
 import { OrderNoteForm } from "./order-note-form";
 import { OrderStatusTag, TestOrderTag } from "./order-status-tag";
 
@@ -25,6 +27,7 @@ interface OrderDetailProps {
   detail: AdminOrderDetail;
   saveNote: AdminAction<AdminOrderNote>;
   checkStatus: AdminAction<OrderStatusCheck>;
+  markInvoiceSent: AdminAction<InvoiceRequest>;
 }
 
 const card = "flex min-w-0 flex-col gap-3 border-[1.5px] bg-ayc-paper p-4";
@@ -42,10 +45,11 @@ const DOTS: Record<TimelineStep["tone"], string> = {
  * One Order's detail page (mockup 752–785; BUILD-MAP §3.9; story 148): the
  * Order with its Member, PayMongo reference and timeline; the status note and
  * the internal note only Staff see; "Check status with PayMongo" while it's
- * recorded Pending, and the PayMongo dashboard link. Refunds are issued from
- * the PayMongo dashboard, never here.
+ * recorded Pending, and the PayMongo dashboard link; and its Invoice Request,
+ * with "Mark invoice sent" (ticket 08). Refunds are issued from the PayMongo
+ * dashboard, never here.
  */
-export function OrderDetail({ detail, saveNote, checkStatus }: OrderDetailProps) {
+export function OrderDetail({ detail, saveNote, checkStatus, markInvoiceSent }: OrderDetailProps) {
   const { order, note } = detail;
   const reference = payMongoReference(order);
   const dashboard = payMongoDashboardUrl(order);
@@ -105,6 +109,19 @@ export function OrderDetail({ detail, saveNote, checkStatus }: OrderDetailProps)
           <p className="text-sm leading-normal text-foreground">{statusNote(order)}</p>
           <OrderNoteForm note={note} action={saveNote} />
         </section>
+
+        {order.invoice ? (
+          <section aria-labelledby="order-invoice" className={card}>
+            <h2 id="order-invoice" className={label}>
+              INVOICE REQUEST
+            </h2>
+            <InvoiceRequestPanel
+              reference={order.reference}
+              request={order.invoice}
+              markSent={markInvoiceSent}
+            />
+          </section>
+        ) : null}
 
         <section aria-labelledby="order-actions" className={cn(card, "gap-2")}>
           <h2 id="order-actions" className={label}>

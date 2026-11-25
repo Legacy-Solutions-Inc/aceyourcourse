@@ -36,6 +36,7 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
     status: "pending",
     recordedStatus: "pending",
     paidAfterExpiry: false,
+    invoice: null,
     livemode: true,
     checkoutId: "cs_Checkout0001",
     paymentId: null,

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { BusinessDetails } from "@/services/catalogue.types";
 import type { MemberOrder, PaymentAcknowledgement } from "@/services/member.types";
 
-import { acknowledgementView, orderRow, passCard } from "./billing-view";
+import { acknowledgementView, invoiceState, orderRow, passCard } from "./billing-view";
 
 // Billing and the Payment Acknowledgement, worded (Phase 4, ticket 06;
 // BUILD-MAP §3 Billing and Receipt; stories 143, 144, 151u), pure. Every date
@@ -24,6 +24,7 @@ const ORDER: MemberOrder = {
   livemode: true,
   accessUntil: "2027-01-12T03:01:00.000Z",
   paidAfterExpiry: false,
+  invoice: null,
 };
 
 describe("passCard", () => {
@@ -72,6 +73,7 @@ describe("orderRow", () => {
       amount: "₱1,299",
       test: false,
       acknowledgementHref: "/app/billing/AYC-10482",
+      invoice: { canRequest: true, line: null },
     });
   });
 
@@ -86,17 +88,65 @@ describe("orderRow", () => {
     ["pending", "PENDING", "waiting"],
     ["failed", "FAILED", "failed"],
     ["expired", "EXPIRED", "ended"],
-  ] as const)("shows a %s Order as %s, with no Acknowledgement", (status, label, tone) => {
-    expect(orderRow({ ...ORDER, status, paidAt: null })).toMatchObject({
-      status: label,
-      tone,
-      acknowledgementHref: null,
-    });
+  ] as const)(
+    "shows a %s Order as %s, with no Acknowledgement or invoice",
+    (status, label, tone) => {
+      expect(orderRow({ ...ORDER, status, paidAt: null })).toMatchObject({
+        status: label,
+        tone,
+        acknowledgementHref: null,
+        invoice: { canRequest: false, line: null },
+      });
+    },
+  );
+
+  it("says when a Paid Order's invoice was requested", () => {
+    expect(
+      orderRow({
+        ...ORDER,
+        invoice: { status: "requested", requestedAt: "2026-11-17T03:00:00.000Z", sentAt: null },
+      }).invoice,
+    ).toEqual({ canRequest: false, line: "Invoice requested" });
   });
 
   it("marks a Test Order TEST", () => {
     expect(orderRow({ ...ORDER, livemode: false }).test).toBe(true);
   });
+});
+
+describe("invoiceState", () => {
+  const requested = {
+    status: "requested",
+    requestedAt: "2026-11-17T03:00:00.000Z",
+    sentAt: null,
+  } as const;
+
+  it('offers a Paid Order with no request "Request official invoice"', () => {
+    expect(invoiceState(ORDER)).toEqual({ canRequest: true, line: null });
+  });
+
+  it("says a requested invoice is requested, then sent, offering no second request", () => {
+    expect(invoiceState({ ...ORDER, invoice: requested })).toEqual({
+      canRequest: false,
+      line: "Invoice requested",
+    });
+    expect(
+      invoiceState({
+        ...ORDER,
+        invoice: { ...requested, status: "sent", sentAt: "2026-11-18T03:00:00.000Z" },
+      }),
+    ).toEqual({ canRequest: false, line: "Invoice sent · check your email" });
+  });
+
+  it.each(["pending", "failed", "expired", "refunded"] as const)(
+    "offers a %s Order no invoice",
+    (status) => {
+      expect(invoiceState({ ...ORDER, status })).toEqual({
+        canRequest: false,
+        line: null,
+      });
+    },
+  );
 });
 
 describe("acknowledgementView", () => {
@@ -133,6 +183,7 @@ describe("acknowledgementView", () => {
       status: "PAID",
       vatLine: "Prices include VAT",
       test: false,
+      invoice: { canRequest: true, line: null },
     });
   });
 

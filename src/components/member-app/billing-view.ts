@@ -14,7 +14,10 @@ import type { MemberOrder, PaymentAcknowledgement } from "@/services/member.type
 // BUILD-MAP §3 Billing L452–477 and "Receipt" L662–674, which we call the
 // Payment Acknowledgement; stories 143, 144, 151u), pure. Every date is the
 // Manila calendar date. An Order's status is as the Member seam read it (a
-// Pending Order older than 24 hours already reads Expired).
+// Pending Order older than 24 hours already reads Expired). A Paid Order
+// offers "Request official invoice" until its Invoice Request is made, then
+// says "Invoice requested", later "Invoice sent · check your email" (ticket
+// 08; story 151j).
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -71,6 +74,28 @@ const STATUS: Record<OrderStatus, { label: string; tone: StatusTone }> = {
   refunded: { label: "REFUNDED", tone: "ended" },
 };
 
+/** Where a Paid Order's official invoice is: whether it can be asked for, and what to say. */
+export interface InvoiceState {
+  /** "Request official invoice": a Paid Order with no request yet. */
+  canRequest: boolean;
+  /** "Invoice requested", or "Invoice sent · check your email"; null with no request. */
+  line: string | null;
+}
+
+/** Pure: where an Order's official invoice is. */
+export function invoiceState({
+  status,
+  invoice,
+}: Pick<MemberOrder, "status" | "invoice">): InvoiceState {
+  if (invoice) {
+    return {
+      canRequest: false,
+      line: invoice.status === "sent" ? "Invoice sent · check your email" : "Invoice requested",
+    };
+  }
+  return { canRequest: status === "paid", line: null };
+}
+
 /** One row of Billing's Orders. */
 export interface OrderRow {
   reference: string;
@@ -84,6 +109,7 @@ export interface OrderRow {
   test: boolean;
   /** Only a Paid Order has a Payment Acknowledgement. */
   acknowledgementHref: string | null;
+  invoice: InvoiceState;
 }
 
 /** Pure: an Order as Billing lists it. */
@@ -99,6 +125,7 @@ export function orderRow(order: MemberOrder): OrderRow {
     test: !order.livemode,
     acknowledgementHref:
       order.status === "paid" ? paths.memberApp.acknowledgement(order.reference) : null,
+    invoice: invoiceState(order),
   };
 }
 
@@ -117,6 +144,7 @@ export interface AcknowledgementView {
   /** "Prices include VAT" when the business is VAT-registered. */
   vatLine: string | null;
   test: boolean;
+  invoice: InvoiceState;
 }
 
 /** Pure: a Paid Order's Payment Acknowledgement, with the seller's business details. */
@@ -143,5 +171,6 @@ export function acknowledgementView(
     status: STATUS[order.status].label,
     vatLine: business.vatRegistered ? "Prices include VAT" : null,
     test: !order.livemode,
+    invoice: invoiceState(order),
   };
 }

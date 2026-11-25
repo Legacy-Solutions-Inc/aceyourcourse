@@ -7,6 +7,8 @@ import { requireMemberWithExam } from "@/lib/member-app/guard";
 import { paths } from "@/paths";
 import { listAccessPasses, listMemberOrders } from "@/services/member";
 
+import { requestOfficialInvoice } from "./actions";
+
 export const metadata: Metadata = { title: "Billing" };
 
 /**
@@ -14,7 +16,8 @@ export const metadata: Metadata = { title: "Billing" };
  * signed-in Member's Access Passes, active ones first, each with Renew now,
  * and every Order of theirs, newest first, as at this request (a Pending
  * Order older than 24 hours reads Expired). Each Paid Order links to its
- * Payment Acknowledgement. Only the Member's own passes and Orders are read.
+ * Payment Acknowledgement, and offers "Request official invoice" until its
+ * request is made (ticket 08). Only the Member's own passes and Orders are read.
  * The gate, consent, the Active Device and onboarding come first.
  */
 export default async function BillingPage() {
@@ -30,7 +33,12 @@ export default async function BillingPage() {
 
   return (
     <MemberScreen eyebrow="05 · BILLING" title="Plans and purchases">
-      <BillingScreen passes={cards} orders={orders.map(orderRow)} />
+      <BillingScreen
+        passes={cards}
+        orders={orders.map(orderRow)}
+        memberName={member.name ?? ""}
+        requestInvoice={requestOfficialInvoice}
+      />
     </MemberScreen>
   );
 }

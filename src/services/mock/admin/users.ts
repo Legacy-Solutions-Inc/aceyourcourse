@@ -78,7 +78,12 @@ const sampleUsersStore: UsersStore = {
           .map(({ userId: _, examCode: __, ...grant }) => grant),
       })),
       consents: store.memberConsents.filter((record) => record.userId === userId),
-      orders: store.orders.filter((order) => order.userId === userId),
+      orders: store.orders
+        .filter((order) => order.userId === userId)
+        .map((order) => ({
+          order,
+          invoice: store.invoiceRequests.find((request) => request.orderId === order.id) ?? null,
+        })),
     });
   },
 

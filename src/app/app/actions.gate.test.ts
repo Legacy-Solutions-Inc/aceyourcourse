@@ -19,6 +19,7 @@ import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
 import * as account from "./(shell)/account/actions";
+import * as billing from "./(shell)/billing/actions";
 import * as targetExams from "./(shell)/actions";
 import * as study from "./(shell)/library/actions";
 import * as orders from "./(shell)/plans/orders/[reference]/actions";
@@ -147,6 +148,14 @@ function consentForm() {
   return data;
 }
 
+/** "Request official invoice"'s form, filled in. */
+function invoiceForm() {
+  const data = new FormData();
+  data.set("name", "Bea Tester");
+  data.set("address", "Jaro, Iloilo City");
+  return data;
+}
+
 /** The Active Device screen's form: where to go once this device is active. */
 function deviceForm() {
   const data = new FormData();
@@ -194,6 +203,12 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
   "./(shell)/plans/orders/[reference]/actions.ts": {
     simulatePayment: member(() => orders.simulatePayment(simulateForm())),
     checkPayment: member(() => orders.checkPayment("AYC-10001")),
+  },
+  "./(shell)/billing/actions.ts": {
+    // No Order of theirs has this reference, so nothing is recorded.
+    requestOfficialInvoice: member(() =>
+      billing.requestOfficialInvoice("AYC-10001", { error: null, fields: {} }, invoiceForm()),
+    ),
   },
   "./(shell)/account/actions.ts": {
     requestDataCopy: member(() => account.requestDataCopy()),
@@ -258,8 +273,10 @@ const memberData = () => {
   const { cardMarks, studyDays, deckPositions, quizAttempts } = getSampleStore();
   const { reviewerPageViews, readerPositions, privacyRequests } = getSampleStore();
   const { orders, accessPasses, accessPassGrants, memberNotices } = getSampleStore();
+  const { invoiceRequests } = getSampleStore();
   return structuredClone({
     orders,
+    invoiceRequests,
     accessPasses,
     accessPassGrants,
     memberNotices,

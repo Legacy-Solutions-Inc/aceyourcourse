@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AdminActionState } from "@/lib/admin/action";
+import type { InvoiceRequest } from "@/lib/payments/invoice-requests";
 import type {
   AdminOrder,
   AdminOrderDetail,
@@ -14,8 +15,9 @@ import { OrderDetail } from "./order-detail";
 
 // An Order's detail page (story 148; mockup 752–785): the internal note saves
 // with the stamp it opened with, and "Check status with PayMongo" says what
-// PayMongo said, then reads the page again. The Server Actions are the
-// boundary, so they're replaced.
+// PayMongo said, then reads the page again. An Invoice Request (ticket 08;
+// story 151v) shows its details and "Mark invoice sent". The Server Actions
+// are the boundary, so they're replaced.
 const { refresh } = vi.hoisted(() => ({ refresh: vi.fn() }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh }),
@@ -37,6 +39,7 @@ const PENDING: AdminOrder = {
   status: "pending",
   recordedStatus: "pending",
   paidAfterExpiry: false,
+  invoice: null,
   livemode: true,
   checkoutId: "cs_sample10006",
   paymentId: null,
@@ -55,6 +58,27 @@ const NOTE: AdminOrderNote = {
 
 type NoteState = AdminActionState<AdminOrderNote>;
 type CheckState = AdminActionState<OrderStatusCheck>;
+type InvoiceState = AdminActionState<InvoiceRequest>;
+
+const REQUEST: InvoiceRequest = {
+  orderId: "00000000-0000-4000-8000-000000010003",
+  name: "Sample Builders Inc.",
+  address: "12 Sample St, Jaro, Iloilo City",
+  tin: "123-456-789-000",
+  requestedAt: "2026-11-25T03:00:00.000Z",
+  sentAt: null,
+  sentBy: null,
+};
+const PAID: AdminOrder = {
+  ...PENDING,
+  id: REQUEST.orderId,
+  reference: "AYC-10003",
+  status: "paid",
+  recordedStatus: "paid",
+  paidAt: MADE,
+  paymentId: "pay_Sample10003",
+  invoice: REQUEST,
+};
 
 function renderDetail({
   detail = { order: PENDING, memberUserId: PENDING.userId, note: NOTE } as AdminOrderDetail,
@@ -70,15 +94,25 @@ function renderDetail({
     status: "saved",
     value: { outcome: "still-pending", order: PENDING },
   } as CheckState,
+  invoiceAnswer = {
+    status: "saved",
+    value: { ...REQUEST, sentAt: "2026-11-25T04:00:00.000Z" },
+  } as InvoiceState,
 } = {}) {
   const saveNote = vi.fn(async (): Promise<NoteState> => noteAnswer);
   const checkStatus = vi.fn(async (): Promise<CheckState> => checkAnswer);
+  const markInvoiceSent = vi.fn(async (): Promise<InvoiceState> => invoiceAnswer);
   const user = userEvent.setup();
   const { rerender } = render(
-    <OrderDetail detail={detail} saveNote={saveNote} checkStatus={checkStatus} />,
+    <OrderDetail
+      detail={detail}
+      saveNote={saveNote}
+      checkStatus={checkStatus}
+      markInvoiceSent={markInvoiceSent}
+    />,
   );
   rerenderDetail = rerender;
-  return { user, saveNote, checkStatus };
+  return { user, saveNote, checkStatus, markInvoiceSent };
 }
 
 /** Renders the page again in place, as router.refresh() does with the server's new props. */
@@ -197,7 +231,7 @@ describe("OrderDetail", () => {
 
   it("keeps saying the check made the Order Paid once the page shows it Paid", async () => {
     const paidOrder = { ...PENDING, status: "paid", recordedStatus: "paid" } as const;
-    const { user, saveNote, checkStatus } = renderDetail({
+    const { user, saveNote, checkStatus, markInvoiceSent } = renderDetail({
       checkAnswer: { status: "saved", value: { outcome: "paid", order: paidOrder } },
     });
     await user.click(screen.getByRole("button", { name: "Check status with PayMongo" }));
@@ -209,6 +243,7 @@ describe("OrderDetail", () => {
         detail={{ order: paidOrder, memberUserId: PENDING.userId, note: NOTE }}
         saveNote={saveNote}
         checkStatus={checkStatus}
+        markInvoiceSent={markInvoiceSent}
       />,
     );
 
@@ -248,5 +283,66 @@ describe("OrderDetail", () => {
     });
     expect(screen.getByRole("region", { name: "AYC-10006" })).toHaveTextContent("EXPIRED");
     expect(screen.getByRole("button", { name: "Check status with PayMongo" })).toBeInTheDocument();
+  });
+
+  it("shows no Invoice Request on an Order with none", () => {
+    renderDetail();
+    expect(screen.queryByRole("region", { name: "INVOICE REQUEST" })).not.toBeInTheDocument();
+  });
+
+  it("shows the Invoice Request's name, address, TIN and when it was asked for, and marks it sent", async () => {
+    const { user, markInvoiceSent } = renderDetail({
+      detail: { order: PAID, memberUserId: PAID.userId, note: NOTE } as AdminOrderDetail,
+    });
+    const panel = within(screen.getByRole("region", { name: "INVOICE REQUEST" }));
+
+    expect(panel.getByText("Sample Builders Inc.")).toBeInTheDocument();
+    expect(panel.getByText("12 Sample St, Jaro, Iloilo City")).toBeInTheDocument();
+    expect(panel.getByText("123-456-789-000")).toBeInTheDocument();
+    expect(panel.getByText("25 Nov 2026, 11:00 am")).toBeInTheDocument();
+    await user.click(panel.getByRole("button", { name: "Mark invoice sent" }));
+
+    expect(markInvoiceSent).toHaveBeenCalledWith(expect.anything(), {
+      input: { reference: "AYC-10003" },
+    });
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it("says when and by whom a sent request was marked, offering no second mark", () => {
+    renderDetail({
+      detail: {
+        order: {
+          ...PAID,
+          invoice: {
+            ...REQUEST,
+            tin: null,
+            sentAt: "2026-11-25T04:00:00.000Z",
+            sentBy: { email: "owner@example.com", name: "Sample Owner" },
+          },
+        },
+        memberUserId: PAID.userId,
+        note: NOTE,
+      } as AdminOrderDetail,
+    });
+    const panel = within(screen.getByRole("region", { name: "INVOICE REQUEST" }));
+
+    expect(panel.getByText("None given")).toBeInTheDocument();
+    expect(panel.getByText(/^✓ SENT 25 NOV 2026, 12:00 PM · SAMPLE OWNER$/)).toBeInTheDocument();
+    expect(panel.queryByRole("button", { name: "Mark invoice sent" })).not.toBeInTheDocument();
+  });
+
+  it("says why marking it sent was refused", async () => {
+    const { user } = renderDetail({
+      detail: { order: PAID, memberUserId: PAID.userId, note: NOTE } as AdminOrderDetail,
+      invoiceAnswer: {
+        status: "refused",
+        error: { kind: "forbidden", message: "ONLY AN OWNER CAN SEE ORDERS AND PAYMENTS" },
+      },
+    });
+    await user.click(screen.getByRole("button", { name: "Mark invoice sent" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "ONLY AN OWNER CAN SEE ORDERS AND PAYMENTS",
+    );
   });
 });

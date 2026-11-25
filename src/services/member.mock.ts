@@ -554,6 +554,12 @@ export async function listExamsOnSale(): Promise<string[]> {
 
 // ── Buying (Phase 4, ticket 03) ─────────────────────────────────────────────
 
+/** A sample Order's Invoice Request, or null for none. */
+function invoiceOf(orderId: string) {
+  const request = getSampleStore().invoiceRequests.find((held) => held.orderId === orderId);
+  return request ? structuredClone(request) : null;
+}
+
 /** The days a sample Order's payment added to its buyer's pass: its paid history row. */
 function paidDaysOf(orderId: string) {
   const grant = getSampleStore().accessPassGrants.find((held) => held.orderId === orderId);
@@ -601,7 +607,13 @@ export const sampleOrderStore: OrderStore = {
     const order = getSampleStore().orders.find(
       (candidate) => candidate.reference === reference && candidate.userId === userId,
     );
-    return order ? { order: structuredClone(order), paidDays: paidDaysOf(order.id) } : null;
+    return order
+      ? {
+          order: structuredClone(order),
+          paidDays: paidDaysOf(order.id),
+          invoice: invoiceOf(order.id),
+        }
+      : null;
   },
   async listOwnOrders(userId) {
     return getSampleStore()
@@ -609,7 +621,11 @@ export const sampleOrderStore: OrderStore = {
       .sort(
         (a, b) => b.createdAt.localeCompare(a.createdAt) || b.reference.localeCompare(a.reference),
       )
-      .map((order) => ({ order: structuredClone(order), paidDays: paidDaysOf(order.id) }));
+      .map((order) => ({
+        order: structuredClone(order),
+        paidDays: paidDaysOf(order.id),
+        invoice: invoiceOf(order.id),
+      }));
   },
   async withOrder(orderId, work) {
     return holdSampleOrder(orderId, work);
@@ -645,6 +661,12 @@ export const sampleOrderStore: OrderStore = {
         )
         .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     );
+  },
+  async addInvoiceRequest(request) {
+    const store = getSampleStore();
+    if (store.invoiceRequests.some((held) => held.orderId === request.orderId)) return false;
+    store.invoiceRequests = [...store.invoiceRequests, structuredClone(request)];
+    return true;
   },
 };
 
@@ -695,6 +717,7 @@ export const {
   getMemberOrder,
   listMemberOrders,
   getPaymentAcknowledgement,
+  requestInvoice,
   checkOrderStatus,
   pollOrderStatus,
   recordPaymentEvent,

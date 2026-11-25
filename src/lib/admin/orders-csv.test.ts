@@ -27,6 +27,7 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
     status: "paid",
     recordedStatus: "paid",
     paidAfterExpiry: false,
+    invoice: null,
     livemode: true,
     checkoutId: "cs_LiveCheckout0001",
     paymentId: "pay_LivePayment0001",
@@ -69,7 +70,7 @@ describe("ordersCsv", () => {
     ]);
   });
 
-  it("gives a Paid Order its paid time in Manila, its amount as a plain number and empty refund and invoice cells", () => {
+  it("gives a Paid Order its paid time in Manila, its amount as a plain number, an empty refund cell and No invoice", () => {
     expect(lines(ordersCsv([order()]))[1]).toBe(
       [
         "AYC-10482",
@@ -84,12 +85,32 @@ describe("ordersCsv", () => {
         "Paid",
         "",
         "pay_LivePayment0001",
-        "",
+        "No",
         "",
         "",
         "",
       ].join(","),
     );
+  });
+
+  it("gives an Order's Invoice Request: Yes, with its name, address (quoted for its comma) and TIN", () => {
+    const requested = order({
+      invoice: {
+        orderId: "id-AYC-10482",
+        name: "Sample Builders Inc.",
+        address: "12 Sample St, Jaro",
+        tin: "123-456-789-000",
+        requestedAt: "2026-11-25T03:00:00.000Z",
+        sentAt: null,
+        sentBy: null,
+      },
+    });
+    expect(lines(ordersCsv([requested]))[1]).toMatch(
+      /,Yes,Sample Builders Inc\.,"12 Sample St, Jaro",123-456-789-000$/,
+    );
+    expect(
+      lines(ordersCsv([order({ invoice: { ...requested.invoice!, tin: null, name: "=Bea" } })]))[1],
+    ).toMatch(/,Yes,'=Bea,"12 Sample St, Jaro",$/);
   });
 
   it("leaves a Pending Order's paid time and payment ID empty, and shows its status as every screen does", () => {

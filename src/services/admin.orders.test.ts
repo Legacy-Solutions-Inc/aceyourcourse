@@ -141,6 +141,7 @@ const shown = (stored: Order, fields: Partial<AdminOrder> = {}): AdminOrder => (
   ...stored,
   recordedStatus: stored.status,
   paidAfterExpiry: false,
+  invoice: null,
   ...fields,
 });
 
@@ -568,6 +569,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Orders ($name)", (arm) => {
             method: "gcash",
             range: "30d",
             tests: false,
+            invoiceRequested: false,
             searched: false,
             rows: 1,
           },

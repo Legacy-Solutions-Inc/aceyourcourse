@@ -2139,6 +2139,7 @@ export const orderListQuerySchema = z.object({
   method: z.union([z.literal("all"), z.enum(PAYMENT_METHODS)]),
   range: z.enum(ORDER_RANGES),
   tests: z.boolean(),
+  invoiceRequested: z.boolean(),
 });
 
 /** An Order's reference, as an address carries it: any text, so one that isn't an Order's answers not-found. */

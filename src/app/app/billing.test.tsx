@@ -14,6 +14,11 @@ import { sampleUserId } from "@/services/mock/members";
 import { samplePlanId } from "@/services/mock/plans";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import { createFakePaymentsClient } from "@/services/payments.fake";
+import {
+  INVOICE_ADDRESS_REQUIRED,
+  INVOICE_NAME_REQUIRED,
+  INVOICE_REFUSALS,
+} from "@/services/member.schema";
 
 import { sampleActor } from "../../../test/admin-inputs";
 import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
@@ -22,7 +27,9 @@ import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 // 06; spec, Phase 4 → Payment Acknowledgement; stories 143, 144, 151u), on
 // sample data with the payments fake: the pages as a browser would reach
 // them. A Member sees only their own Orders, and an Acknowledgement only for
-// one of their own Paid Orders. "Now" is 17 Nov 2026, 11:42 in Manila.
+// one of their own Paid Orders. "Request official invoice" (ticket 08; story
+// 151j) records an Invoice Request for one of the Member's own Paid Orders,
+// once. "Now" is 17 Nov 2026, 11:42 in Manila.
 const { jar } = vi.hoisted(() => ({ jar: new Map<string, string>() }));
 
 vi.mock("next/headers", () => ({
@@ -266,5 +273,112 @@ describe("the Payment Acknowledgement", () => {
     await expect(acknowledgementPage("AYC-10001")).rejects.toThrow(
       redirectsTo("/app/sign-in?next=%2Fapp%2Fbilling%2FAYC-10001"),
     );
+  });
+});
+
+describe("Request official invoice", () => {
+  const IDLE = { error: null, fields: {} };
+  const form = (fields: Record<string, string>) => {
+    const data = new FormData();
+    for (const [key, value] of Object.entries(fields)) data.set(key, value);
+    return data;
+  };
+  const request = async (reference: string, fields: Record<string, string>) =>
+    (await import("./(shell)/billing/actions")).requestOfficialInvoice(
+      reference,
+      IDLE,
+      form(fields),
+    );
+
+  it("records the request for the Member's Paid Order; Billing and the Acknowledgement then say Invoice requested", async () => {
+    const userId = await signedIn();
+    await bought(userId, "paid");
+
+    expect(
+      await request("AYC-10001", { name: "Bea Tester", address: "Jaro, Iloilo City", tin: "" }),
+    ).toEqual(IDLE);
+
+    expect(getSampleStore().invoiceRequests).toMatchObject([
+      { name: "Bea Tester", address: "Jaro, Iloilo City", tin: null, sentAt: null },
+    ]);
+    const { unmount } = render(await billingPage());
+    const [row] = within(screen.getByRole("list", { name: "Orders" })).getAllByRole("listitem");
+    expect(row).toHaveTextContent("Invoice requested");
+    expect(within(row!).queryByText("Request official invoice")).not.toBeInTheDocument();
+    unmount();
+
+    render(await acknowledgementPage("AYC-10001"));
+    const section = within(screen.getByRole("region", { name: "Request official invoice" }));
+    expect(section.getByText("Invoice requested")).toBeInTheDocument();
+    expect(section.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  it("offers the form on a Paid Order, with the name prefilled from the Member's", async () => {
+    const userId = await signedIn();
+    await bought(userId, "paid");
+    render(await acknowledgementPage("AYC-10001"));
+
+    const section = within(screen.getByRole("region", { name: "Request official invoice" }));
+    expect(section.getByRole("textbox", { name: "Name on the invoice" })).toHaveValue("Bea Tester");
+  });
+
+  it("refuses an empty name and address with a message for each, recording nothing", async () => {
+    const userId = await signedIn();
+    await bought(userId, "paid");
+
+    expect(await request("AYC-10001", { name: "  ", address: "" })).toEqual({
+      error: null,
+      fields: { name: INVOICE_NAME_REQUIRED, address: INVOICE_ADDRESS_REQUIRED },
+    });
+    expect(getSampleStore().invoiceRequests).toEqual([]);
+  });
+
+  it("refuses a second request, and one for an Order that isn't Paid", async () => {
+    const userId = await signedIn();
+    await bought(userId, "paid");
+    await bought(userId, "failed");
+    const details = { name: "Bea Tester", address: "Jaro" };
+    await request("AYC-10001", details);
+
+    expect(await request("AYC-10001", details)).toEqual({
+      error: INVOICE_REFUSALS["already-requested"],
+      fields: {},
+    });
+    expect(await request("AYC-10002", details)).toEqual({
+      error: INVOICE_REFUSALS["not-paid"],
+      fields: {},
+    });
+    expect(getSampleStore().invoiceRequests).toHaveLength(1);
+  });
+
+  it.each(["AYC-99999", "nonsense"])(
+    "refuses a request for %j, recording nothing",
+    async (reference) => {
+      const userId = await signedIn();
+      await bought(userId, "paid");
+
+      expect(await request(reference, { name: "Bea Tester", address: "Jaro" })).toEqual({
+        error: INVOICE_REFUSALS["not-found"],
+        fields: {},
+      });
+      expect(getSampleStore().invoiceRequests).toEqual([]);
+    },
+  );
+
+  it("refuses a request for another Member's Order, as one it can't find", async () => {
+    getSampleStore().betaTesters.push({
+      email: STRANGER.email,
+      addedAt: BOOT.toISOString(),
+      addedBy: { email: OWNER.email, name: OWNER.name },
+    });
+    const sam = await signedIn(STRANGER);
+    await bought(sam, "paid");
+
+    await signedIn();
+    expect(await request("AYC-10001", { name: "Bea Tester", address: "Jaro" })).toEqual({
+      error: INVOICE_REFUSALS["not-found"],
+      fields: {},
+    });
+    expect(getSampleStore().invoiceRequests).toEqual([]);
   });
 });

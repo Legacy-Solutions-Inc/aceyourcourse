@@ -23,7 +23,7 @@ import type {
   UserRole,
 } from "@/services/admin.types";
 import { activityRecord, formError, NOT_FOUND, refused } from "@/services/content-editor.core";
-import type { Order } from "@/lib/payments/order-ledger";
+import type { OrderWithInvoice } from "@/lib/payments/invoice-requests";
 import type { MemberService } from "@/services/member";
 import { adminOrderOf } from "@/services/orders-admin.core";
 import type { ActiveDevice, ConsentRecord, Member } from "@/services/member.types";
@@ -62,8 +62,8 @@ export interface MemberRecords {
   accessPasses: AdminAccessPass[];
   /** Their agreements, oldest first. */
   consents: ConsentRecord[];
-  /** Every Order they made, in any order (Phase 4, ticket 07). */
-  orders: Order[];
+  /** Every Order they made, in any order, each with its Invoice Request (Phase 4, tickets 07, 08). */
+  orders: OrderWithInvoice[];
 }
 
 /** One page of the Members a query matches, newest first, and the counts. */
@@ -215,7 +215,7 @@ export function usersCalls(store: UsersStore, member: MemberReads) {
       activeDevice,
       deviceSwitches: newestWithoutId(switches),
       consents: newestWithoutId(consents),
-      orders: orders.map((order) => adminOrderOf(order, now)).sort(newestOrderFirst),
+      orders: orders.map((held) => adminOrderOf(held, now)).sort(newestOrderFirst),
     });
   }
 

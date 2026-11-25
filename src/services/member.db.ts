@@ -81,8 +81,14 @@ import {
   type OrderHolding,
   type OrderStore,
   type OrderWrite,
+  type OwnOrder,
 } from "@/services/orders.core";
-import { orderFromRow, orderToRow } from "@/services/orders.rows";
+import {
+  invoiceRequestFromRow,
+  invoiceRequestToRow,
+  orderFromRow,
+  orderToRow,
+} from "@/services/orders.rows";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
 import { storageArm } from "@/services/uploads.storage";
 
@@ -1232,32 +1238,46 @@ export const databaseOrderStore: OrderStore = {
         .orderBy(asc(orders.createdAt));
       return rows.map(orderFromRow);
     }),
+  // The Order is the key: a second request, two at once included, inserts nothing.
+  addInvoiceRequest: (request) =>
+    inDatabase(async () => {
+      const added = await getDb()
+        .insert(schema.invoiceRequests)
+        .values(invoiceRequestToRow(request))
+        .onConflictDoNothing({ target: schema.invoiceRequests.orderId })
+        .returning({ orderId: schema.invoiceRequests.orderId });
+      return added.length > 0;
+    }),
 };
 
 /**
  * A Member's own Orders (just the one with `reference`, when given), newest
- * first, each with the days its payment added to their pass: its paid
- * history row (unique per Order). Always scoped to the Member.
+ * first, each with the days its payment added to their pass (its paid
+ * history row, unique per Order) and its Invoice Request (one per Order, by
+ * its key). Always scoped to the Member.
  */
-async function readOwnOrders(userId: string, reference?: string) {
-  const { orders, accessPassGrants } = schema;
+async function readOwnOrders(userId: string, reference?: string): Promise<OwnOrder[]> {
+  const { orders, accessPassGrants, invoiceRequests } = schema;
   const mine = eq(orders.userId, userId);
   const rows = await getDb()
     .select({
       order: orders,
       startsAt: accessPassGrants.startsAt,
       endsAt: accessPassGrants.endsAt,
+      invoice: invoiceRequests,
     })
     .from(orders)
     .leftJoin(accessPassGrants, eq(accessPassGrants.orderId, orders.id))
+    .leftJoin(invoiceRequests, eq(invoiceRequests.orderId, orders.id))
     .where(reference === undefined ? mine : and(mine, eq(orders.reference, reference)))
     .orderBy(desc(orders.createdAt), desc(orders.reference));
-  return rows.map(({ order, startsAt, endsAt }) => ({
+  return rows.map(({ order, startsAt, endsAt, invoice }) => ({
     order: orderFromRow(order),
     paidDays:
       startsAt && endsAt
         ? { startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString() }
         : null,
+    invoice: invoice && invoiceRequestFromRow(invoice),
   }));
 }
 

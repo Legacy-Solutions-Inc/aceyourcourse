@@ -11,6 +11,7 @@ import type {
 } from "@/services/admin.types";
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
 import type { CardImageType } from "@/lib/cards/card-rules";
+import type { InvoiceRequest } from "@/lib/payments/invoice-requests";
 import { FIRST_REFERENCE_NUMBER, type Order } from "@/lib/payments/order-ledger";
 import type {
   AccessPass,
@@ -188,6 +189,8 @@ export interface SampleStore {
   nextOrderNumber: number;
   /** Each Order's internal note, which only Staff see, by Order id (ticket 07). */
   orderNotes: Record<string, string>;
+  /** The Invoice Requests, one per Order at most, in the order asked (ticket 08). */
+  invoiceRequests: InvoiceRequest[];
   /** When each Order's status was last asked of the payments client, by Order id (ticket 04's backup). */
   orderStatusCheckedAt: Record<string, string>;
   /** The PayMongo webhook events already applied, in the order received (ticket 05). */
@@ -263,7 +266,7 @@ function createSampleStore(
     })),
     ...(withOrders
       ? sampleOrders(now, catalogue)
-      : { orders: [], nextOrderNumber: FIRST_REFERENCE_NUMBER }),
+      : { orders: [], nextOrderNumber: FIRST_REFERENCE_NUMBER, invoiceRequests: [] }),
     orderNotes: {},
     orderStatusCheckedAt: {},
     paymentEvents: [],

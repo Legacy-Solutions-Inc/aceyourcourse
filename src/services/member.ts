@@ -8,6 +8,7 @@ import type { AccessPass, CardMark, ContentKind, DeckPosition } from "@/services
 import type { PageStamper } from "@/services/page-images.types";
 import type { PaymentEvent, PaymentsClient } from "@/services/payments.types";
 import { databaseArm } from "@/services/member.db";
+import type { InvoiceRequestInput } from "@/services/member.schema";
 import * as mockImpl from "@/services/member.mock";
 import type {
   ActiveDevice,
@@ -26,6 +27,7 @@ import type {
   Member,
   MemberNotice,
   ExpirySweep,
+  InvoiceRequestResult,
   MemberOrder,
   PaymentAcknowledgement,
   PaymentEventResult,
@@ -437,6 +439,17 @@ export interface MemberService {
     reference: string,
   ): Promise<PaymentAcknowledgement | null>;
   /**
+   * "Request official invoice" (ticket 08): records the name, address and
+   * TIN to put on the official invoice of one of this Member's own Paid
+   * Orders, once. Refused for anyone else's Order (as not found), one that
+   * isn't Paid, a second request, or a form with a field wrong. No email.
+   */
+  requestInvoice(
+    userId: string,
+    reference: string,
+    input: InvoiceRequestInput,
+  ): Promise<InvoiceRequestResult>;
+  /**
    * Asks the payments client for a Pending Order's checkout status, applies
    * a Paid or Failed outcome through the Order ledger, and gives the Order as
    * it is then. Paid adds its days to the Member's Access Pass, keeps them as
@@ -522,6 +535,7 @@ export const payForPlan = impl.payForPlan;
 export const getMemberOrder = impl.getMemberOrder;
 export const listMemberOrders = impl.listMemberOrders;
 export const getPaymentAcknowledgement = impl.getPaymentAcknowledgement;
+export const requestInvoice = impl.requestInvoice;
 export const checkOrderStatus = impl.checkOrderStatus;
 export const pollOrderStatus = impl.pollOrderStatus;
 export const recordPaymentEvent = impl.recordPaymentEvent;

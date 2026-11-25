@@ -9,6 +9,8 @@ import { paths } from "@/paths";
 import { getWebsiteSettings } from "@/services/catalogue";
 import { getPaymentAcknowledgement } from "@/services/member";
 
+import { requestOfficialInvoice } from "../actions";
+
 export const metadata: Metadata = { title: "Payment Acknowledgement" };
 
 interface AcknowledgementPageProps {
@@ -18,7 +20,8 @@ interface AcknowledgementPageProps {
 /**
  * A Paid Order's Payment Acknowledgement (Phase 4, ticket 06; mockup
  * L662–674; spec, Phase 4 → Payment Acknowledgement; stories 143, 144,
- * 151u): printable, with the business details from Settings as the seller.
+ * 151u): printable, with the business details from Settings as the seller,
+ * and "Request official invoice" under it (ticket 08).
  * Only the Order's own Member can open it, and only once it's Paid: anything
  * else answers not found. The gate, consent, the Active Device and
  * onboarding come first, coming back here.
@@ -31,12 +34,13 @@ export default async function AcknowledgementPage({ params }: AcknowledgementPag
   const { member } = await requireMemberWithExam(from);
   const acknowledgement = await getPaymentAcknowledgement(member.userId, reference);
   if (!acknowledgement) notFound();
-  const { business, contactEmail } = await getWebsiteSettings();
+  const { business } = await getWebsiteSettings();
 
   return (
     <PaymentAcknowledgementDocument
       view={acknowledgementView(acknowledgement, business)}
-      contactEmail={contactEmail}
+      memberName={member.name ?? ""}
+      requestInvoice={requestOfficialInvoice}
     />
   );
 }

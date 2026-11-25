@@ -2,6 +2,7 @@ import type { z } from "zod";
 
 import type { AllowedVia, RefusedDecision } from "@/lib/member-app/access";
 import type { ExamDateSetBy } from "@/lib/member-app/exam-date";
+import type { InvoiceStatus } from "@/lib/payments/invoice-requests";
 import type { Order } from "@/lib/payments/order-ledger";
 import type { PrivacyRequestStatus, PrivacyRequestType } from "@/lib/member-app/privacy-requests";
 import type { AttemptReview } from "@/lib/quizzes/grading";
@@ -496,6 +497,25 @@ export interface PaymentAcknowledgement {
   payMongoReference: string | null;
 }
 
+/** An Order's Invoice Request as the Member sees it (ticket 08): requested, then sent. */
+export interface MemberInvoice {
+  status: InvoiceStatus;
+  requestedAt: string;
+  sentAt: string | null;
+}
+
+/** Why "Request official invoice" was refused: no Order of theirs, not Paid, or asked already. */
+export type InvoiceRefusal = "not-found" | "not-paid" | "already-requested";
+
+/** The form's fields, each with what was wrong with it. */
+export type InvoiceFieldErrors = Partial<Record<"name" | "address" | "tin", string>>;
+
+/** "Request official invoice"'s outcome. */
+export type InvoiceRequestResult =
+  | { ok: true }
+  | { ok: false; reason: InvoiceRefusal }
+  | { ok: false; reason: "invalid"; fields: InvoiceFieldErrors };
+
 /** What a PayMongo webhook event did (ticket 05). */
 export type PaymentEventResult = "applied" | "no-change" | "duplicate" | "unknown-order";
 
@@ -535,4 +555,6 @@ export type MemberOrder = Pick<
   accessUntil: string | null;
   /** Whether its payment was confirmed more than 24 hours after it was made (ticket 05). */
   paidAfterExpiry: boolean;
+  /** Its Invoice Request (ticket 08), or null for none. */
+  invoice: MemberInvoice | null;
 };

@@ -7,11 +7,17 @@ import {
   PRIVACY_REQUEST_TYPES,
 } from "@/lib/member-app/privacy-requests";
 import { ORDER_REFERENCE_PATTERN } from "@/lib/payments/order-ledger";
+import { normaliseTin } from "@/lib/payments/tin";
 import { QUIZ_CHOICES } from "@/lib/quizzes/quiz-rules";
 import { isReaderZoom } from "@/lib/reviewer-pdfs/reader";
 import { staffEmailSchema } from "@/services/admin.schema";
 import { CARD_MARK_VERDICTS, CONTENT_KINDS } from "@/services/content.types";
-import type { PayRefusal, TargetExamRefusal } from "@/services/member.types";
+import type {
+  InvoiceFieldErrors,
+  InvoiceRefusal,
+  PayRefusal,
+  TargetExamRefusal,
+} from "@/services/member.types";
 
 // The Member seam's zod schemas, shared by its arms.
 
@@ -213,3 +219,63 @@ export const deletionRequestFormSchema = z.object({
     .catch("")
     .refine(isDeletionConfirmed, { message: DELETION_NOT_CONFIRMED }),
 });
+
+// ── Invoice Requests (Phase 4, ticket 08) ───────────────────────────────────
+
+/** The longest name and address an Invoice Request keeps. */
+export const INVOICE_NAME_MAX = 120;
+export const INVOICE_ADDRESS_MAX = 300;
+
+export const INVOICE_NAME_REQUIRED = "Enter the name to put on the invoice.";
+export const INVOICE_ADDRESS_REQUIRED = "Enter the address to put on the invoice.";
+export const INVOICE_TIN_SHAPE =
+  "Enter 9 digits, like 123-456-789, with a 3- or 5-digit branch code if any.";
+
+const requiredText = (message: string, max: number, what: string) =>
+  z
+    .string({ invalid_type_error: message, required_error: message })
+    .trim()
+    .min(1, message)
+    .max(max, `Keep the ${what} to ${max} characters.`);
+
+/**
+ * "Request official invoice": the name and address to put on the invoice,
+ * required and trimmed, and a TIN for businesses, optional (blank is none),
+ * checked with the shared TIN validator and kept with dashes.
+ */
+export const invoiceRequestInputSchema = z.object({
+  name: requiredText(INVOICE_NAME_REQUIRED, INVOICE_NAME_MAX, "name"),
+  address: requiredText(INVOICE_ADDRESS_REQUIRED, INVOICE_ADDRESS_MAX, "address"),
+  tin: z
+    .string({ invalid_type_error: INVOICE_TIN_SHAPE })
+    .optional()
+    .transform((typed, context) => {
+      if (typed === undefined || typed.trim() === "") return null;
+      const tin = normaliseTin(typed);
+      if (tin === null)
+        context.addIssue({ code: z.ZodIssueCode.custom, message: INVOICE_TIN_SHAPE });
+      return tin;
+    }),
+});
+
+/** "Request official invoice"'s values, as the form sends them. */
+export type InvoiceRequestInput = z.input<typeof invoiceRequestInputSchema>;
+
+/** One message per field the form refused: the first one each field has. */
+export function invoiceFieldErrors(error: z.ZodError): InvoiceFieldErrors {
+  const fields: InvoiceFieldErrors = {};
+  for (const issue of error.issues) {
+    const field = issue.path[0];
+    if ((field === "name" || field === "address" || field === "tin") && !fields[field]) {
+      fields[field] = issue.message;
+    }
+  }
+  return fields;
+}
+
+/** What "Request official invoice" says when it's refused for the Order, not a field. */
+export const INVOICE_REFUSALS: Record<InvoiceRefusal, string> = {
+  "not-found": "We couldn't find that Order.",
+  "not-paid": "Only a Paid Order has an official invoice.",
+  "already-requested": "You've already requested this Order's invoice.",
+};

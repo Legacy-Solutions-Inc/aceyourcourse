@@ -9,7 +9,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { orderItem, orderStatusTag } from "@/lib/admin/order-view";
-import { DEFAULT_ORDER_QUERY, ordersHref, paidTileLabel } from "@/lib/admin/orders-list";
+import {
+  DEFAULT_ORDER_QUERY,
+  invoiceToSend,
+  ordersHref,
+  paidTileLabel,
+} from "@/lib/admin/orders-list";
 import { formatDate } from "@/lib/manila-time";
 import { formatPeso } from "@/lib/money";
 import { methodLabel } from "@/lib/payments/payment-methods";
@@ -165,7 +170,14 @@ function OrderRow({ order }: { order: AdminOrder }) {
         {amount}
       </TableCell>
       <TableCell className="py-2.75 pr-3.5 pl-0 whitespace-normal">
-        <OrderStatusTag status={order.status} />
+        <span className="flex flex-col items-start gap-1">
+          <OrderStatusTag status={order.status} />
+          {invoiceToSend(order) ? (
+            <span className="font-mono text-[10px] font-bold text-ayc-warning">
+              INVOICE REQUESTED
+            </span>
+          ) : null}
+        </span>
       </TableCell>
     </TableRow>
   );

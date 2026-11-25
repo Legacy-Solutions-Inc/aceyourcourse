@@ -7,7 +7,8 @@ import type { AcknowledgementView, OrderRow, PassCard } from "./billing-view";
 import { PaymentAcknowledgementDocument } from "./payment-acknowledgement";
 
 // Billing and the Payment Acknowledgement (Phase 4, ticket 06; BUILD-MAP §3
-// Billing and Receipt; stories 143, 144, 151u), from their worded views.
+// Billing and Receipt; stories 143, 144, 151u), from their worded views, with
+// "Request official invoice" (ticket 08; story 151j).
 
 const PASS: PassCard = {
   examCode: "CE",
@@ -26,6 +27,7 @@ const PAID: OrderRow = {
   amount: "₱1,299",
   test: false,
   acknowledgementHref: "/app/billing/AYC-10482",
+  invoice: { canRequest: true, line: null },
 };
 const FAILED: OrderRow = {
   ...PAID,
@@ -35,18 +37,26 @@ const FAILED: OrderRow = {
   tone: "failed",
   test: true,
   acknowledgementHref: null,
+  invoice: { canRequest: false, line: null },
 };
+
+/** "Request official invoice"'s action, answering `answer`. */
+const invoiceAction = (answer = { error: null as string | null, fields: {} }) =>
+  vi.fn(async (_reference: string, _previous: unknown, _formData: FormData) => answer);
+
+/** BillingScreen's invoice props. */
+const INVOICE = { memberName: "Bea Tester", requestInvoice: invoiceAction() };
 
 describe("BillingScreen", () => {
   it("says what Billing is, and that card details stay with PayMongo", () => {
-    render(<BillingScreen passes={[PASS]} orders={[PAID]} />);
+    render(<BillingScreen {...INVOICE} passes={[PASS]} orders={[PAID]} />);
     expect(
       screen.getByText("Your payment history. Card details stay with PayMongo; we never see them."),
     ).toBeInTheDocument();
   });
 
   it("shows each Access Pass with ACTIVE or ENDED, its line, and Renew now to that Exam's Plans", () => {
-    render(<BillingScreen passes={[PASS]} orders={[PAID]} />);
+    render(<BillingScreen {...INVOICE} passes={[PASS]} orders={[PAID]} />);
     const access = within(screen.getByRole("region", { name: "Access" }));
 
     expect(access.getByRole("heading", { level: 3, name: "CE All-Access" })).toBeInTheDocument();
@@ -59,7 +69,7 @@ describe("BillingScreen", () => {
   });
 
   it("lists each Order with its item, date, method, reference, status and amount", () => {
-    render(<BillingScreen passes={[]} orders={[PAID, FAILED]} />);
+    render(<BillingScreen {...INVOICE} passes={[]} orders={[PAID, FAILED]} />);
     const rows = within(screen.getByRole("list", { name: "Orders" })).getAllByRole("listitem");
 
     expect(rows).toHaveLength(2);
@@ -71,7 +81,7 @@ describe("BillingScreen", () => {
   });
 
   it("links a Paid Order's Payment Acknowledgement, and no other Order's", () => {
-    render(<BillingScreen passes={[]} orders={[PAID, FAILED]} />);
+    render(<BillingScreen {...INVOICE} passes={[]} orders={[PAID, FAILED]} />);
     const rows = within(screen.getByRole("list", { name: "Orders" })).getAllByRole("listitem");
 
     expect(
@@ -81,7 +91,7 @@ describe("BillingScreen", () => {
   });
 
   it("marks a Test Order TEST", () => {
-    render(<BillingScreen passes={[]} orders={[PAID, FAILED]} />);
+    render(<BillingScreen {...INVOICE} passes={[]} orders={[PAID, FAILED]} />);
     const rows = within(screen.getByRole("list", { name: "Orders" })).getAllByRole("listitem");
 
     expect(within(rows[0]!).queryByText("TEST")).not.toBeInTheDocument();
@@ -89,7 +99,7 @@ describe("BillingScreen", () => {
   });
 
   it("says No payments yet under Orders for a Member with granted access who has never paid", () => {
-    render(<BillingScreen passes={[PASS]} orders={[]} />);
+    render(<BillingScreen {...INVOICE} passes={[PASS]} orders={[]} />);
     const orders = within(screen.getByRole("region", { name: "Orders" }));
 
     expect(screen.getByRole("region", { name: "Access" })).toBeInTheDocument();
@@ -98,7 +108,7 @@ describe("BillingScreen", () => {
   });
 
   it("says No payments yet, with See plans, before the Member has paid", () => {
-    render(<BillingScreen passes={[]} orders={[]} />);
+    render(<BillingScreen {...INVOICE} passes={[]} orders={[]} />);
 
     expect(screen.getByText("No payments yet")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "See plans" })).toHaveAttribute("href", "/app/plans");
@@ -120,12 +130,14 @@ describe("PaymentAcknowledgementDocument", () => {
     status: "PAID",
     vatLine: "Prices include VAT",
     test: false,
+    invoice: { canRequest: true, line: null },
   };
-  const renderIt = (view: Partial<AcknowledgementView> = {}) =>
+  const renderIt = (view: Partial<AcknowledgementView> = {}, action = invoiceAction()) =>
     render(
       <PaymentAcknowledgementDocument
         view={{ ...VIEW, ...view }}
-        contactEmail="help@example.com"
+        memberName="Bea Tester"
+        requestInvoice={action}
       />,
     );
 
@@ -188,11 +200,122 @@ describe("PaymentAcknowledgementDocument", () => {
     expect(screen.getByRole("link", { name: "← Billing" })).toHaveAttribute("href", "/app/billing");
   });
 
-  it("keeps a place for requesting an official invoice, with no form yet", () => {
-    renderIt();
+  it("asks for the official invoice's name, prefilled from the Member's, address and optional TIN", async () => {
+    const action = invoiceAction();
+    renderIt({}, action);
     const request = within(screen.getByRole("region", { name: "Request official invoice" }));
+    const user = userEvent.setup();
 
-    expect(request.getByText(/email help@example.com with AYC-10482/)).toBeInTheDocument();
-    expect(request.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(request.getByRole("textbox", { name: "Name on the invoice" })).toHaveValue("Bea Tester");
+    await user.type(request.getByRole("textbox", { name: "Address" }), "Jaro, Iloilo City");
+    await user.type(
+      request.getByRole("textbox", { name: "TIN (optional, for businesses)" }),
+      "123456789",
+    );
+    await user.click(request.getByRole("button", { name: "Request invoice" }));
+
+    expect(action).toHaveBeenCalledTimes(1);
+    const [reference, , sent] = action.mock.calls[0]!;
+    expect(reference).toBe("AYC-10482");
+    expect(Object.fromEntries(sent)).toEqual({
+      name: "Bea Tester",
+      address: "Jaro, Iloilo City",
+      tin: "123456789",
+    });
+  });
+
+  it("shows each refused field's message under it, keeping what was typed", async () => {
+    renderIt(
+      {},
+      invoiceAction({
+        error: null,
+        fields: { address: "Enter the address to put on the invoice.", tin: "Enter 9 digits." },
+      }),
+    );
+    const user = userEvent.setup();
+    await user.type(screen.getByRole("textbox", { name: "Address" }), "   ");
+    await user.type(screen.getByRole("textbox", { name: /^TIN/ }), "12345");
+    await user.click(screen.getByRole("button", { name: "Request invoice" }));
+
+    const address = screen.getByRole("textbox", { name: "Address" });
+    expect(address).toHaveAttribute("aria-invalid", "true");
+    expect(address).toHaveAccessibleDescription("Enter the address to put on the invoice.");
+    expect(screen.getByRole("textbox", { name: /^TIN/ })).toHaveAccessibleDescription(
+      "Enter 9 digits.",
+    );
+    expect(screen.getByRole("textbox", { name: /^TIN/ })).toHaveValue("12345");
+    expect(screen.getByRole("textbox", { name: "Name on the invoice" })).not.toHaveAttribute(
+      "aria-invalid",
+    );
+  });
+
+  it("says why a request for the Order was refused", async () => {
+    renderIt(
+      {},
+      invoiceAction({ error: "You've already requested this Order's invoice.", fields: {} }),
+    );
+    const user = userEvent.setup();
+    await user.type(screen.getByRole("textbox", { name: "Address" }), "Jaro");
+    await user.click(screen.getByRole("button", { name: "Request invoice" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "You've already requested this Order's invoice.",
+    );
+  });
+
+  it.each(["Invoice requested", "Invoice sent · check your email"])(
+    "says %s in the form's place once the invoice is asked for",
+    (line) => {
+      renderIt({ invoice: { canRequest: false, line } });
+      const request = within(screen.getByRole("region", { name: "Request official invoice" }));
+
+      expect(request.getByText(line)).toBeInTheDocument();
+      expect(request.queryByRole("textbox")).not.toBeInTheDocument();
+    },
+  );
+});
+
+describe("BillingScreen's official invoices", () => {
+  it('offers a Paid Order with no request "Request official invoice", opening the short form', async () => {
+    const requestInvoice = invoiceAction();
+    render(
+      <BillingScreen
+        passes={[]}
+        orders={[PAID]}
+        memberName="Bea Tester"
+        requestInvoice={requestInvoice}
+      />,
+    );
+    const row = within(
+      within(screen.getByRole("list", { name: "Orders" })).getAllByRole("listitem")[0]!,
+    );
+    const user = userEvent.setup();
+
+    await user.click(row.getByText("Request official invoice"));
+    const form = within(row.getByRole("form", { name: "Request official invoice for AYC-10482" }));
+    expect(form.getByRole("textbox", { name: "Name on the invoice" })).toHaveValue("Bea Tester");
+    await user.type(form.getByRole("textbox", { name: "Address" }), "Jaro");
+    await user.click(form.getByRole("button", { name: "Request invoice" }));
+
+    expect(requestInvoice).toHaveBeenCalledWith(
+      "AYC-10482",
+      expect.anything(),
+      expect.any(FormData),
+    );
+  });
+
+  it("says Invoice requested on a Paid Order once asked for, with no form, and nothing on other Orders", () => {
+    render(
+      <BillingScreen
+        {...INVOICE}
+        passes={[]}
+        orders={[{ ...PAID, invoice: { canRequest: false, line: "Invoice requested" } }, FAILED]}
+      />,
+    );
+    const rows = within(screen.getByRole("list", { name: "Orders" })).getAllByRole("listitem");
+
+    expect(rows[0]).toHaveTextContent("Invoice requested");
+    expect(within(rows[0]!).queryByText("Request official invoice")).not.toBeInTheDocument();
+    expect(within(rows[1]!).queryByText(/invoice/i)).not.toBeInTheDocument();
   });
 });

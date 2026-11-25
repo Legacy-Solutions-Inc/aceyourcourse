@@ -89,6 +89,19 @@ const NOTED_ORDER: Order = {
   statusChangedAt: new Date().toISOString(),
 };
 
+/** Bea's Paid Order, whose official invoice she has asked for (ticket 08). */
+const INVOICED_ORDER: Order = {
+  ...NOTED_ORDER,
+  id: "00000000-0000-4000-8000-000000010002",
+  reference: "AYC-10002",
+  userId: BEA.userId,
+  status: "paid",
+  paymentId: "pay_Sample10002",
+  buyerName: BEA.name,
+  buyerEmail: BEA.email,
+  paidAt: new Date().toISOString(),
+};
+
 /** An ISO time `days` from now. */
 const inDays = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
@@ -1176,6 +1189,22 @@ const WRITES: Record<string, Write> = {
     saves: (seam, actor) =>
       seam.saveOrderNote(actor, { reference: NOTED_ORDER.reference, note: "Asked about Maya" }),
     refused: (seam, actor) => seam.saveOrderNote(actor, { reference: "AYC-99999", note: "Hi" }),
+    refusal: "not-found",
+  },
+  markInvoiceSent: {
+    actor: OWNER,
+    entity: "order",
+    entityId: INVOICED_ORDER.id,
+    setUp: async (_seam, arm) => {
+      await arm.member.getOrCreateMember(BEA);
+      await arm.putOrder(INVOICED_ORDER);
+      await arm.member.requestInvoice(BEA.userId, INVOICED_ORDER.reference, {
+        name: BEA.name,
+        address: "Jaro, Iloilo City",
+      });
+    },
+    saves: (seam, actor) => seam.markInvoiceSent(actor, INVOICED_ORDER.reference),
+    refused: (seam, actor) => seam.markInvoiceSent(actor, "AYC-99999"),
     refusal: "not-found",
   },
   exportOrdersCsv: {

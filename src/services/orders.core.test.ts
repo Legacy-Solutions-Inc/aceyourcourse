@@ -57,6 +57,7 @@ function storeFailingToRecord(): OrderStore & { added: string[] } {
     withOrder: async () => null,
     withPaymentEvent: async () => ({ recorded: true, found: false }),
     listOverdueOrders: async () => [],
+    addInvoiceRequest: async () => false,
   };
 }
 
