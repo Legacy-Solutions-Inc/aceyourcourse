@@ -62,6 +62,7 @@ import type {
   AdminOrderList,
   AdminOrderNote,
   AdminOverview,
+  PaidToday,
   AdminPlan,
   AdminPlans,
   AdminPrivacyRequest,
@@ -335,9 +336,13 @@ export interface AdminService {
   /**
    * The Overview's read (any Staff User): every Product, the Exams, the Exam
    * page records, the shop pages, the trust figures and the promo banner, read fresh, so a fix made
-   * elsewhere shows on the next load.
+   * elsewhere shows on the next load. For an Owner it adds the sales figures,
+   * the Member figures and the payment work waiting (Phase 4, ticket 11);
+   * an Editor gets none of them (`sales` is null).
    */
   getOverview(actor: StaffActor): Promise<AdminOverview>;
+  /** The sidebar's "PAID TODAY" card (ticket 11): an Owner's; null for an Editor. */
+  getPaidToday(actor: StaffActor): Promise<PaidToday | null>;
 
   /** Settings: the contact email, shop and social links and trust figures, with their stamp. */
   getSettingsForAdmin(): Promise<AdminWebsiteSettings>;
@@ -1150,6 +1155,7 @@ export const exportMemberData = impl.exportMemberData;
 export const deleteMemberAccount = impl.deleteMemberAccount;
 export const markPrivacyRequestDone = impl.markPrivacyRequestDone;
 export const getOverview = impl.getOverview;
+export const getPaidToday = impl.getPaidToday;
 export const getSettingsForAdmin = impl.getSettingsForAdmin;
 export const updateWebsiteSettings = impl.updateWebsiteSettings;
 export const listProductsForAdmin = impl.listProductsForAdmin;

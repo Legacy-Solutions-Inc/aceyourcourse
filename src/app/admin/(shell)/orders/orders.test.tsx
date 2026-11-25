@@ -21,6 +21,9 @@ import OrdersPage from "./page";
 //   AYC-10006 Paolo, ME 1 month, Maya, Pending, 1 hour ago
 //   AYC-10007 Bea, CE 3 months, QR Ph, Paid, ₱300 refunded (ticket 09), 50 minutes ago
 //   AYC-10008 Lou, CE 1 month, GCash, Refunded (ticket 09), 40 minutes ago
+//   AYC-10009 Karen, CE 3 months, GCash, Paid, 3 days ago (ticket 11)
+//   AYC-10010 Jose, ME 1 month, QR Ph, Paid, 9 days ago (ticket 11)
+//   AYC-10011 Maria, CE 1 month, Card, Paid after expiry, 2 days ago (ticket 11)
 const { jar } = vi.hoisted(() => ({ jar: new Map<string, string>() }));
 
 vi.mock("next/headers", () => ({
@@ -77,12 +80,15 @@ describe("the Orders list", () => {
       "AYC-10008",
       "AYC-10007",
       "AYC-10006",
+      "AYC-10011",
+      "AYC-10009",
       "AYC-10004",
       "AYC-10003",
+      "AYC-10010",
       "AYC-10002",
     ]);
     const tiles = screen.getByRole("region", { name: "Orders list" }).querySelector("dl");
-    expect(tiles).toHaveTextContent("PAID · LAST 30 DAYS₱3,097ORDERS6PENDING1FAILED1");
+    expect(tiles).toHaveTextContent("PAID · LAST 30 DAYS₱5,344ORDERS9PENDING1FAILED1");
     expect(screen.getByRole("button", { name: "Export CSV" })).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -123,8 +129,16 @@ describe("the Orders list", () => {
     signInAs(OWNER);
     render(await ordersPage({ method: "gcash", status: "paid" }));
 
-    expect(references()).toEqual(["AYC-10003"]);
+    expect(references()).toEqual(["AYC-10009", "AYC-10003"]);
     expect(screen.getByRole("link", { name: "PAID" })).toHaveAttribute("aria-current", "true");
+  });
+
+  it("lists the Orders paid after expiry in the last 7 days, as Needs attention's link opens it (ticket 11)", async () => {
+    signInAs(OWNER);
+    render(await ordersPage({ range: "7d", late: "1" }));
+
+    expect(references()).toEqual(["AYC-10011"]);
+    expect(screen.getByRole("checkbox", { name: "Paid after expiry" })).toBeChecked();
   });
 
   it("shows the Test Order, tagged TEST, only with Include test orders", async () => {
@@ -246,9 +260,9 @@ describe("GET /admin/orders/export", () => {
     expect(response.headers.get("content-disposition")).toMatch(
       /^attachment; filename="ayc-orders-\d{4}-\d{2}-\d{2}\.csv"$/,
     );
-    expect(csvReferences(await response.text())).toEqual(["AYC-10003"]);
+    expect(csvReferences(await response.text())).toEqual(["AYC-10009", "AYC-10003"]);
     expect(getSampleStore().staffActivity).toMatchObject([
-      { entity: "orders", action: "export-csv", after: { rows: 1 } },
+      { entity: "orders", action: "export-csv", after: { rows: 2 } },
     ]);
   });
 
@@ -258,8 +272,11 @@ describe("GET /admin/orders/export", () => {
       "AYC-10008",
       "AYC-10007",
       "AYC-10006",
+      "AYC-10011",
+      "AYC-10009",
       "AYC-10004",
       "AYC-10003",
+      "AYC-10010",
       "AYC-10002",
     ]);
     expect(csvReferences(await (await exportCsv("?q=nobody")).text())).toEqual([]);
@@ -297,6 +314,6 @@ describe("GET /admin/orders/export", () => {
   it("reads a repeated filter as the list does: the first value", async () => {
     signInAs(OWNER);
     const response = await exportCsv("?status=paid&status=failed&method=gcash");
-    expect(csvReferences(await response.text())).toEqual(["AYC-10003"]);
+    expect(csvReferences(await response.text())).toEqual(["AYC-10009", "AYC-10003"]);
   });
 });

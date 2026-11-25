@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { effectiveStatus } from "@/lib/payments/order-ledger";
+import { effectiveStatus, paidAfterExpiry } from "@/lib/payments/order-ledger";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
@@ -11,7 +11,9 @@ import { sampleOrders } from "./orders";
 // days and one Test Order, for buyers no sample Member is; one Paid Order has
 // an Invoice Request to send (ticket 08). The last two, the sample Members
 // Bea's and Lou's, are refunded (ticket 09): Bea's in part, so it's still
-// Paid, and Lou's in full. Unit tests start without them.
+// Paid, and Lou's in full. The Overview's three (ticket 11) come after them:
+// Paid over the last two weeks, one after it expired. Unit tests start
+// without them.
 
 const BOOT = new Date("2026-11-25T02:00:00.000Z");
 const DAY = 24 * 60 * 60 * 1000;
@@ -38,7 +40,7 @@ describe("sampleOrders", () => {
     expect(maria?.status).toBe("paid");
   });
 
-  it("numbers them from AYC-10001, oldest first, and the next Order after them", () => {
+  it("numbers them from AYC-10001, oldest first but the Overview's three, and the next Order after them", () => {
     expect(orders.map(({ reference }) => reference)).toEqual([
       "AYC-10001",
       "AYC-10002",
@@ -48,10 +50,24 @@ describe("sampleOrders", () => {
       "AYC-10006",
       "AYC-10007",
       "AYC-10008",
+      "AYC-10009",
+      "AYC-10010",
+      "AYC-10011",
     ]);
-    expect(nextOrderNumber).toBe(10_009);
-    const made = orders.map(({ createdAt }) => createdAt);
+    expect(nextOrderNumber).toBe(10_012);
+    const made = orders.slice(0, 8).map(({ createdAt }) => createdAt);
     expect([...made].sort()).toEqual(made);
+  });
+
+  it("pays the Overview's three over the last two weeks, one 26 hours after it was made (ticket 11)", () => {
+    const overviews = orders.slice(8);
+    expect(overviews.map(({ paidAt }) => paidAt)).toEqual([
+      new Date(BOOT.getTime() - 3 * DAY + 2 * 60_000).toISOString(),
+      new Date(BOOT.getTime() - 9 * DAY + 2 * 60_000).toISOString(),
+      new Date(BOOT.getTime() - 22 * 60 * 60_000).toISOString(),
+    ]);
+    expect(overviews.map(paidAfterExpiry)).toEqual([false, false, true]);
+    expect(overviews.every(({ livemode, status }) => livemode && status === "paid")).toBe(true);
   });
 
   it("has Paid, Pending, Failed and Refunded ones, a Test Order, and one older than 30 days", () => {
@@ -64,6 +80,9 @@ describe("sampleOrders", () => {
       "pending",
       "paid",
       "refunded",
+      "paid",
+      "paid",
+      "paid",
     ]);
     expect(orders.filter(({ livemode }) => !livemode)).toHaveLength(1);
     expect(
@@ -71,7 +90,7 @@ describe("sampleOrders", () => {
     ).toHaveLength(1);
     expect(
       orders.filter(({ method, status }) => method === "gcash" && status === "paid"),
-    ).toHaveLength(2);
+    ).toHaveLength(3);
   });
 
   it("keeps the ledger's rules: paid at once Paid (Refunded ones too), a payment ID only once paid", () => {
@@ -145,8 +164,8 @@ describe("the sample store's Orders", () => {
 
   it("starts with them when asked, as the dev server and its reset do", () => {
     resetSampleStore(CATALOGUE_SEED, { sampleOrders: true });
-    expect(getSampleStore().orders).toHaveLength(8);
-    expect(getSampleStore().nextOrderNumber).toBe(10_009);
+    expect(getSampleStore().orders).toHaveLength(11);
+    expect(getSampleStore().nextOrderNumber).toBe(10_012);
     expect(getSampleStore().orderRefunds).toHaveLength(2);
   });
 });

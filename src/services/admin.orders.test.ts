@@ -572,6 +572,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Orders ($name)", (arm) => {
             range: "30d",
             tests: false,
             invoiceRequested: false,
+            paidAfterExpiry: false,
             searched: false,
             rows: 1,
           },

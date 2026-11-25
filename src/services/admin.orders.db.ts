@@ -11,6 +11,7 @@ import { refundsOfOrder } from "@/lib/payments/refunds";
 import { databaseOrderStore, readOrderRefunds } from "@/services/member.db";
 import { invoiceRequestFromRow, invoiceRequestToRow, orderFromRow } from "@/services/orders.rows";
 import {
+  type AdminOrderRecord,
   type OrderRecord,
   type OrdersAdminStore,
   orderNoteRecord,
@@ -74,29 +75,44 @@ async function readRecord(
   };
 }
 
+/**
+ * Orders read with their Invoice Requests, as the Admin reads them, each with
+ * its refunds (one more read for them all), in the order given. The Overview's
+ * sales (admin.sales.db.ts; ticket 11) read theirs the same way.
+ */
+export async function adminOrderRecords(
+  rows: readonly {
+    order: typeof orders.$inferSelect;
+    invoice: typeof invoiceRequests.$inferSelect | null;
+  }[],
+): Promise<AdminOrderRecord[]> {
+  const refundsOf = refundsOfOrder(
+    await readOrderRefunds(
+      getDb(),
+      rows.map(({ order }) => order.id),
+    ),
+  );
+  return rows.map(({ order, invoice }) => ({
+    order: orderFromRow(order),
+    invoice: invoice && invoiceRequestFromRow(invoice),
+    refunds: refundsOf(order.id),
+  }));
+}
+
 const databaseOrdersAdminStore: OrdersAdminStore = {
   listOrders: ({ since, tests }) =>
     inDatabase(async () => {
       const conditions: SQL[] = [];
       if (!tests) conditions.push(eq(orders.livemode, true));
       if (since) conditions.push(gte(orders.createdAt, since));
-      const rows = await getDb()
-        .select({ order: orders, invoice: invoiceRequests })
-        .from(orders)
-        .leftJoin(invoiceRequests, eq(invoiceRequests.orderId, orders.id))
-        .where(and(...conditions))
-        .orderBy(desc(orders.createdAt), desc(orders.reference));
-      const refundsOf = refundsOfOrder(
-        await readOrderRefunds(
-          getDb(),
-          rows.map(({ order }) => order.id),
-        ),
+      return adminOrderRecords(
+        await getDb()
+          .select({ order: orders, invoice: invoiceRequests })
+          .from(orders)
+          .leftJoin(invoiceRequests, eq(invoiceRequests.orderId, orders.id))
+          .where(and(...conditions))
+          .orderBy(desc(orders.createdAt), desc(orders.reference)),
       );
-      return rows.map(({ order, invoice }) => ({
-        order: orderFromRow(order),
-        invoice: invoice && invoiceRequestFromRow(invoice),
-        refunds: refundsOf(order.id),
-      }));
     }),
 
   readOrder: (reference) => inDatabase(() => readRecord(getDb(), reference)),

@@ -29,6 +29,7 @@ import type { PlanDays } from "@/lib/plans/plan-rules";
 import type { InvoiceRequest } from "@/lib/payments/invoice-requests";
 import type { OrderRefund } from "@/lib/payments/refunds";
 import type { Order, OrderStatus } from "@/lib/payments/order-ledger";
+import type { SalesFigures } from "@/lib/payments/sales-figures";
 import type { PaymentMethod } from "@/lib/payments/payment-methods";
 import type { MemberDataExport } from "@/lib/member-app/data-export";
 import type { MemberProgress } from "@/lib/member-app/progress";
@@ -478,7 +479,7 @@ export interface AdminAnnouncement {
 /**
  * What the Overview works out what needs Staff from (src/lib/admin/needs-attention.ts):
  * every Product, hidden and Coming Soon ones included, the Exams and their
- * page records, and the settings it checks.
+ * page records, and the settings it checks; and for an Owner, the sales.
  */
 export interface AdminOverview {
   products: Product[];
@@ -486,6 +487,34 @@ export interface AdminOverview {
   /** Only the Exams that have one; the others have the defaults. */
   examPages: ExamPage[];
   settings: OverviewSettings;
+  /** Owners only (Phase 4, ticket 11): null for an Editor, whatever the page shows. */
+  sales: SalesOverview | null;
+}
+
+/**
+ * The Overview's sales for an Owner (Phase 4, ticket 11; stories 151, 151w
+ * and 151x): the money (src/lib/payments/sales-figures.ts), the Member
+ * figures, and the payment work waiting for Needs attention.
+ */
+export interface SalesOverview {
+  figures: SalesFigures;
+  /** Members with an active Access Pass, paid or granted; Staff left out. */
+  activeMembers: number;
+  /** Access Passes ending in the next 7 days; Staff's left out. */
+  passesEndingSoon: number;
+  payments: PaymentWork;
+}
+
+/** The sidebar's "PAID TODAY" card, for Owners only (ticket 11). */
+export interface PaidToday {
+  /** Today in Manila, YYYY-MM-DD. */
+  date: string;
+  /** Today's money so far, refunds made today taken off, in centavos. */
+  netCentavos: number;
+  /** The Orders paid today. */
+  orders: number;
+  /** The Pending payments not yet expired. */
+  pending: number;
 }
 
 /** The Website's settings the Overview checks: the shop pages, the trust figures and the promo banner. */
@@ -946,6 +975,8 @@ export interface OrderListQuery {
   tests: boolean;
   /** "Invoice requested" (ticket 08): only the Orders whose invoice was requested and not yet sent. */
   invoiceRequested: boolean;
+  /** "Paid after expiry" (ticket 11): only the Orders PayMongo confirmed after they expired. */
+  paidAfterExpiry: boolean;
 }
 
 /** An Order as the Admin shows it. */
@@ -970,6 +1001,19 @@ export interface OrderStats {
   orders: number;
   pending: number;
   failed: number;
+}
+
+/** The payment work waiting for an Owner, as the Overview's Needs attention lists it (ticket 11). */
+export interface PaymentWork {
+  /** The Pending payments not yet expired, and when the oldest of them was made (null for none). */
+  pending: number;
+  oldestPendingAt: string | null;
+  /** The official invoices requested and not yet marked sent. */
+  invoicesToSend: number;
+  /** The Orders paid after expiry, made in the last 7 Manila days. */
+  paidAfterExpiry: number;
+  /** The Orders paid after their account was deleted, to refund in PayMongo (ticket 14; none until then). */
+  paidAccountDeleted: number;
 }
 
 /** The Orders list: the Orders its filters match, newest first, and their tiles. */

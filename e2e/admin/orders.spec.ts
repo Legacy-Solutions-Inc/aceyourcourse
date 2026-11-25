@@ -25,6 +25,9 @@ import { LIVE, resetSampleData, signInAs } from "./helpers";
 //   AYC-10006 Paolo, ME 1 month, Maya, Pending, 1 hour ago
 //   AYC-10007 Bea, CE 3 months, QR Ph, Paid, ₱300 refunded, 50 minutes ago
 //   AYC-10008 Lou, CE 1 month, GCash, Refunded, 40 minutes ago
+//   AYC-10009 Karen, CE 3 months, GCash, Paid, 3 days ago (ticket 11)
+//   AYC-10010 Jose, ME 1 month, QR Ph, Paid, 9 days ago (ticket 11)
+//   AYC-10011 Maria, CE 1 month, Card, Paid after expiry, 2 days ago (ticket 11)
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -49,7 +52,17 @@ async function csvOf(path: string) {
 }
 
 /** The last 30 days' Orders, without Test Orders, newest first: the list as it opens. */
-const DEFAULT_LIST = ["AYC-10008", "AYC-10007", "AYC-10006", "AYC-10004", "AYC-10003", "AYC-10002"];
+const DEFAULT_LIST = [
+  "AYC-10008",
+  "AYC-10007",
+  "AYC-10006",
+  "AYC-10011",
+  "AYC-10009",
+  "AYC-10004",
+  "AYC-10003",
+  "AYC-10010",
+  "AYC-10002",
+];
 
 test.beforeEach(async ({ request }) => {
   test.skip(LIVE, "The sample Orders are in the in-memory sample data only.");
@@ -89,11 +102,11 @@ test.describe("an Owner", () => {
     await page.getByRole("combobox", { name: "Payment method" }).selectOption({ label: "GCash" });
     await expect(page).toHaveURL(/method=gcash/);
     // Lou's GCash Order was refunded: it leaves the list once Paid is picked.
-    await expect(shown(page)).toHaveText(["AYC-10008", "AYC-10003"]);
+    await expect(shown(page)).toHaveText(["AYC-10008", "AYC-10009", "AYC-10003"]);
     await list(page).getByRole("link", { name: "PAID", exact: true }).click();
     await expect(page).toHaveURL(/\/admin\/orders\?status=paid&method=gcash$/);
-    await expect(shown(page)).toHaveText(["AYC-10003"]);
-    await expect(list(page)).toContainText("PAID · LAST 30 DAYS₱499");
+    await expect(shown(page)).toHaveText(["AYC-10009", "AYC-10003"]);
+    await expect(list(page)).toContainText("PAID · LAST 30 DAYS₱1,798");
 
     const downloading = page.waitForEvent("download");
     await page.getByRole("button", { name: "Export CSV" }).click();
@@ -101,15 +114,16 @@ test.describe("an Owner", () => {
     expect(download.suggestedFilename()).toMatch(/^ayc-orders-\d{4}-\d{2}-\d{2}\.csv$/);
     const csv = await csvOf(await download.path());
     expect(csv.header).toMatch(/^Reference,Paid at \(Manila\),Member name,Member email,/);
-    expect(csv.references).toEqual(["AYC-10003"]);
+    expect(csv.references).toEqual(["AYC-10009", "AYC-10003"]);
     await expect(page.getByText("✓ CSV EXPORTED · MATCHING ORDERS ONLY")).toBeVisible();
 
     // All time adds the GCash Order from 45 days ago, to the list and the CSV.
     await page.getByRole("combobox", { name: "Date range" }).selectOption({ label: "All time" });
-    await expect(shown(page)).toHaveText(["AYC-10003", "AYC-10001"]);
+    await expect(shown(page)).toHaveText(["AYC-10009", "AYC-10003", "AYC-10001"]);
     const again = page.waitForEvent("download");
     await page.getByRole("button", { name: "Export CSV" }).click();
     expect((await csvOf(await (await again).path())).references).toEqual([
+      "AYC-10009",
       "AYC-10003",
       "AYC-10001",
     ]);
@@ -126,9 +140,12 @@ test.describe("an Owner", () => {
       "AYC-10008",
       "AYC-10007",
       "AYC-10006",
+      "AYC-10011",
       "AYC-10005",
+      "AYC-10009",
       "AYC-10004",
       "AYC-10003",
+      "AYC-10010",
       "AYC-10002",
     ]);
     const testRow = list(page)

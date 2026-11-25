@@ -1,7 +1,9 @@
 import { refundsOfOrder } from "@/lib/payments/refunds";
 import { sampleOrderStore } from "@/services/member.mock";
 import { getSampleStore } from "@/services/mock/sample-store";
+import type { Order } from "@/lib/payments/order-ledger";
 import {
+  type AdminOrderRecord,
   type OrderRecord,
   type OrdersAdminStore,
   orderNoteRecord,
@@ -22,6 +24,16 @@ const invoiceOf = (orderId: string) =>
 
 /** A sample Order's PayMongo refunds (ticket 09). */
 const refundsOf = (orderId: string) => refundsOfOrder(getSampleStore().orderRefunds)(orderId);
+
+/**
+ * A sample Order as the Admin reads it, with its Invoice Request and refunds;
+ * the Overview's sales (mock/admin/sales.ts; ticket 11) read theirs the same way.
+ */
+export const sampleOrderRecord = (order: Order): AdminOrderRecord => ({
+  order,
+  invoice: invoiceOf(order.id),
+  refunds: refundsOf(order.id),
+});
 
 function recordOf(reference: string): OrderRecord | null {
   const store = getSampleStore();
@@ -46,11 +58,7 @@ const sampleOrdersAdminStore: OrdersAdminStore = {
           (order) =>
             (tests || order.livemode) && (since === null || new Date(order.createdAt) >= since),
         )
-        .map((order) => ({
-          order,
-          invoice: invoiceOf(order.id),
-          refunds: refundsOf(order.id),
-        })),
+        .map(sampleOrderRecord),
     );
   },
   async readOrder(reference) {

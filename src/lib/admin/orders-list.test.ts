@@ -8,8 +8,10 @@ import {
   orderStats,
   ordersExportHref,
   ordersHref,
+  PAYMENT_WORK,
   paidTileLabel,
   parseOrdersParams,
+  paymentWork,
   rangeStart,
 } from "./orders-list";
 
@@ -71,6 +73,7 @@ describe("parseOrdersParams", () => {
       range: "30d",
       tests: false,
       invoiceRequested: false,
+      paidAfterExpiry: false,
     });
   });
 
@@ -83,6 +86,7 @@ describe("parseOrdersParams", () => {
         range: "7d",
         tests: "1",
         invoice: "Requested",
+        late: "1",
       }),
     ).toEqual({
       q: "AYC-10482",
@@ -91,6 +95,7 @@ describe("parseOrdersParams", () => {
       range: "7d",
       tests: true,
       invoiceRequested: true,
+      paidAfterExpiry: true,
     });
   });
 
@@ -103,6 +108,7 @@ describe("parseOrdersParams", () => {
         range: "90d",
         tests: "yes",
         invoice: "sent",
+        late: "yes",
       }),
     ).toEqual(DEFAULT_ORDER_QUERY);
   });
@@ -129,15 +135,16 @@ describe("ordersHref and ordersExportHref", () => {
       range: "all",
       tests: true,
       invoiceRequested: true,
+      paidAfterExpiry: true,
     });
     const href = ordersHref(filtered);
     expect(href).toBe(
-      "/admin/orders?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested",
+      "/admin/orders?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested&late=1",
     );
     const params = Object.fromEntries(new URL(href, "https://example.com").searchParams);
     expect(parseOrdersParams(params)).toEqual(filtered);
     expect(ordersExportHref(filtered)).toBe(
-      "/admin/orders/export?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested",
+      "/admin/orders/export?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested&late=1",
     );
   });
 });
@@ -220,6 +227,23 @@ describe("filterOrders", () => {
     expect(filterOrders(rows, query(), NOW)).toHaveLength(3);
   });
 
+  it("keeps, under Paid after expiry, only the Orders PayMongo confirmed after they expired (ticket 11)", () => {
+    const late = order({ paidAfterExpiry: true });
+    const lateThenRefunded = order({
+      paidAfterExpiry: true,
+      status: "refunded",
+      recordedStatus: "refunded",
+    });
+    const onTime = order();
+    const rows = [late, lateThenRefunded, onTime];
+
+    expect(references(filterOrders(rows, query({ paidAfterExpiry: true }), NOW))).toEqual([
+      lateThenRefunded.reference,
+      late.reference,
+    ]);
+    expect(filterOrders(rows, query(), NOW)).toHaveLength(3);
+  });
+
   it("filters by Payment Method, and combines it with the status", () => {
     const gcashPaid = order({ method: "gcash" });
     const gcashFailed = order({ method: "gcash", status: "failed", recordedStatus: "failed" });
@@ -296,6 +320,106 @@ describe("orderStats", () => {
 
   it("is all zero for no Orders", () => {
     expect(orderStats([])).toEqual({ paidCentavos: 0, orders: 0, pending: 0, failed: 0 });
+  });
+});
+
+describe("paymentWork: what Needs attention lists (ticket 11)", () => {
+  const HOUR = 60 * 60 * 1000;
+  const ago = (hours: number) => new Date(NOW.getTime() - hours * HOUR).toISOString();
+  const request = {
+    orderId: "id",
+    name: "Sample Builders Inc.",
+    address: "Jaro",
+    tin: null,
+    requestedAt: ago(24 * 60),
+    sentAt: null,
+    sentBy: null,
+  };
+  const pending = (hoursAgo: number, fields: Partial<AdminOrder> = {}) =>
+    order({
+      status: "pending",
+      recordedStatus: "pending",
+      paidAt: null,
+      createdAt: ago(hoursAgo),
+      ...fields,
+    });
+
+  it("counts the Pending payments not yet expired, with the oldest one's making", () => {
+    const rows = [
+      pending(1),
+      pending(18),
+      pending(30, { status: "expired" }), // past its 24 hours
+      pending(2, { livemode: false }),
+      order(),
+    ];
+
+    expect(paymentWork(rows, NOW)).toMatchObject({ pending: 2, oldestPendingAt: ago(18) });
+  });
+
+  it("counts the invoice requests to send, on Orders of any age, and not the ones sent", () => {
+    const rows = [
+      order({ createdAt: ago(24 * 60), invoice: request }),
+      order({ invoice: request }),
+      order({
+        invoice: { ...request, sentAt: ago(1), sentBy: { email: "o@example.com", name: "O" } },
+      }),
+      order({ invoice: request, livemode: false }),
+    ];
+
+    expect(paymentWork(rows, NOW).invoicesToSend).toBe(2);
+  });
+
+  it("counts the Orders paid after expiry made in the last 7 Manila days, and still Paid", () => {
+    const rows = [
+      order({ paidAfterExpiry: true, createdAt: ago(30) }),
+      // Refunded since: settled.
+      order({
+        paidAfterExpiry: true,
+        createdAt: ago(30),
+        status: "refunded",
+        recordedStatus: "refunded",
+      }),
+      // Made at 00:30 on 19 Nov in Manila, the 7 days' first day.
+      order({ paidAfterExpiry: true, createdAt: "2026-11-18T16:30:00.000Z" }),
+      // Made at 23:59 on 18 Nov in Manila: before the 7 days.
+      order({ paidAfterExpiry: true, createdAt: "2026-11-18T15:59:00.000Z" }),
+      order({ paidAfterExpiry: true, createdAt: ago(30), livemode: false }),
+      order({ createdAt: ago(30) }),
+    ];
+
+    expect(paymentWork(rows, NOW).paidAfterExpiry).toBe(2);
+  });
+
+  it("counts exactly the Orders each item's link lists", () => {
+    const rows = [
+      pending(3),
+      order({ invoice: request, createdAt: ago(24 * 45) }),
+      order({ paidAfterExpiry: true, createdAt: ago(30) }),
+    ];
+    const work = paymentWork(rows, NOW);
+
+    expect(filterOrders(rows, PAYMENT_WORK.pending, NOW)).toHaveLength(work.pending);
+    expect(filterOrders(rows, PAYMENT_WORK.invoicesToSend, NOW)).toHaveLength(work.invoicesToSend);
+    expect(filterOrders(rows, PAYMENT_WORK.paidAfterExpiry, NOW)).toHaveLength(
+      work.paidAfterExpiry,
+    );
+    expect(ordersHref(PAYMENT_WORK.pending)).toBe("/admin/orders?status=pending");
+    expect(ordersHref(PAYMENT_WORK.invoicesToSend)).toBe(
+      "/admin/orders?range=all&invoice=requested",
+    );
+    expect(ordersHref(PAYMENT_WORK.paidAfterExpiry)).toBe(
+      "/admin/orders?status=paid&range=7d&late=1",
+    );
+  });
+
+  it("has nothing to list with no Orders", () => {
+    expect(paymentWork([], NOW)).toEqual({
+      pending: 0,
+      oldestPendingAt: null,
+      invoicesToSend: 0,
+      paidAfterExpiry: 0,
+      paidAccountDeleted: 0,
+    });
   });
 });
 

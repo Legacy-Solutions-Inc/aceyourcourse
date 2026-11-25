@@ -21,3 +21,4 @@ export * from "@/services/mock/admin/quiz";
 export * from "@/services/mock/admin/reviewer-pdfs";
 export * from "@/services/mock/admin/plans";
 export * from "@/services/mock/admin/orders";
+export { getPaidToday } from "@/services/mock/admin/sales";

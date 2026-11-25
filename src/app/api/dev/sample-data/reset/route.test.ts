@@ -54,8 +54,11 @@ describe("POST /api/dev/sample-data/reset", () => {
       "AYC-10006",
       "AYC-10007",
       "AYC-10008",
+      "AYC-10009",
+      "AYC-10010",
+      "AYC-10011",
     ]);
-    expect(nextOrderNumber).toBe(10_009);
+    expect(nextOrderNumber).toBe(10_012);
     expect(getSampleStore().orderRefunds).toHaveLength(2);
   });
 

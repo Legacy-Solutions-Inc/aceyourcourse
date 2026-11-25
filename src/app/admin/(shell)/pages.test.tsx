@@ -206,8 +206,13 @@ describe("Admin shell layout", () => {
     signInAs("angel@aceyourcourse.ph");
     render(await AdminShellLayout({ children: <p>Screen</p> }));
     const sidebar = screen.getByRole("complementary");
+    // Above the menu, the PAID TODAY card (Phase 4, ticket 11; layout.test.tsx).
+    expect(within(sidebar).getByRole("link", { name: /^PAID TODAY/ })).toHaveAttribute(
+      "href",
+      "/admin/orders",
+    );
     expect(
-      within(sidebar)
+      within(within(sidebar).getByRole("navigation", { name: "Admin" }))
         .getAllByRole("link")
         .map((link) => link.textContent),
     ).toEqual([

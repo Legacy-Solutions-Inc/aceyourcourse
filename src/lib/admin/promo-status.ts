@@ -29,8 +29,8 @@ export function dayMonth(isoDate: string): string {
   return `${day} ${month}`;
 }
 
-/** Pure: the days a banner runs, "9–11 Nov", "28 Oct–12 Nov", or with years across two. */
-function span(startDate: string, endDate: string): string {
+/** Pure: the days from one date to another, "9–11 Nov", "28 Oct–12 Nov", or with years across two. */
+export function daySpan(startDate: string, endDate: string): string {
   if (startDate === endDate) return dayMonth(startDate);
   const start = partsOf(startDate);
   const end = partsOf(endDate);
@@ -58,7 +58,7 @@ export function promoStatus(banner: PromoBanner | null, now: Date): PromoStatus 
   }
   const { startDate, endDate } = banner;
   if (isPromoActive(banner, now)) {
-    return { kind: "on", line: `ON · SHOWS ${span(startDate, endDate).toUpperCase()}` };
+    return { kind: "on", line: `ON · SHOWS ${daySpan(startDate, endDate).toUpperCase()}` };
   }
   return now < manilaDayStart(startDate)
     ? { kind: "scheduled", line: `SCHEDULED · STARTS ${dayMonth(startDate).toUpperCase()}` }

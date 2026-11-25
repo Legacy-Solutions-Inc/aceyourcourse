@@ -67,6 +67,12 @@ describe("OrderList", () => {
     expect(replace).toHaveBeenLastCalledWith("/admin/orders?invoice=requested", { scroll: false });
   });
 
+  it("keeps only the Orders paid after expiry when Paid after expiry is ticked (ticket 11)", async () => {
+    const { user } = renderList();
+    await user.click(screen.getByRole("checkbox", { name: "Paid after expiry" }));
+    expect(replace).toHaveBeenLastCalledWith("/admin/orders?late=1", { scroll: false });
+  });
+
   it("tags an Order whose invoice was requested and not yet sent", () => {
     const order = {
       id: "00000000-0000-4000-8000-000000010003",

@@ -2140,6 +2140,7 @@ export const orderListQuerySchema = z.object({
   range: z.enum(ORDER_RANGES),
   tests: z.boolean(),
   invoiceRequested: z.boolean(),
+  paidAfterExpiry: z.boolean(),
 });
 
 /** An Order's reference, as an address carries it: any text, so one that isn't an Order's answers not-found. */

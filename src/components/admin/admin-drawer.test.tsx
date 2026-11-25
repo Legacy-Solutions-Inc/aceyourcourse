@@ -53,6 +53,33 @@ describe("AdminSidebar", () => {
     expect(screen.queryByRole("link", { name: "Settings" })).not.toBeInTheDocument();
   });
 
+  // Phase 4, ticket 11: the layout reads the card for Owners only; an Editor's is null.
+  it("shows an Owner's PAID TODAY card, opening Orders", () => {
+    render(
+      <AdminSidebar
+        menu={adminMenu("owner")}
+        actor={OWNER}
+        signOutAction={signOut}
+        paidToday={{ date: "2026-10-22", netCentavos: 624_000, orders: 9, pending: 4 }}
+      />,
+    );
+    const card = screen.getByRole("link", { name: /^PAID TODAY/ });
+    expect(card).toHaveTextContent(/^PAID TODAY22 OCT₱6,2409 orders · 4 pending$/);
+    expect(card).toHaveAttribute("href", "/admin/orders");
+  });
+
+  it("shows no PAID TODAY card without one, as for an Editor", () => {
+    render(
+      <AdminSidebar
+        menu={adminMenu("editor")}
+        actor={EDITOR}
+        signOutAction={signOut}
+        paidToday={null}
+      />,
+    );
+    expect(screen.queryByText("PAID TODAY")).not.toBeInTheDocument();
+  });
+
   it("has no close button outside the drawer", () => {
     render(<AdminSidebar menu={adminMenu("owner")} actor={OWNER} signOutAction={signOut} />);
     expect(screen.queryByRole("button", { name: "Close menu" })).not.toBeInTheDocument();

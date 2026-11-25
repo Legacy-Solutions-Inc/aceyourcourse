@@ -55,6 +55,7 @@ import * as passes from "@/services/admin.access-passes.db";
 import * as privacy from "@/services/admin.privacy-requests.db";
 import * as plans from "@/services/admin.plans.db";
 import * as orders from "@/services/admin.orders.db";
+import * as sales from "@/services/admin.sales.db";
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
@@ -823,7 +824,16 @@ export const databaseArm: AdminService = {
   markInvoiceSent: orders.markInvoiceSent,
   exportOrdersCsv: orders.exportOrdersCsv,
 
-  getOverview: read(CATALOGUE, sampleArm.getOverview),
+  // The catalogue part runs the sample arm's code over the catalogue it loads;
+  // an Owner's sales read their own records (admin.sales.db.ts; ticket 11).
+  getOverview: async (actor) => {
+    const [catalogue, owners] = await Promise.all([
+      read(CATALOGUE, sampleArm.getOverviewCatalogue)(actor),
+      sales.salesOverview(actor),
+    ]);
+    return { ...catalogue, sales: owners };
+  },
+  getPaidToday: sales.getPaidToday,
 
   getSettingsForAdmin: read(CATALOGUE, sampleArm.getSettingsForAdmin),
   updateWebsiteSettings: stampedWrite(sampleArm.updateWebsiteSettings),

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { OverviewSettings } from "@/services/admin.types";
+import type { OverviewSettings, PaymentWork } from "@/services/admin.types";
 import type { ExamPage, Product, PromoBanner, WebsiteSettings } from "@/services/catalogue.types";
 
 import { testComingSoonProduct, testExam, testLiveProduct } from "../../../test/fixtures/catalogue";
@@ -47,6 +47,20 @@ const goodPage = (examCode: string): ExamPage => ({
   officialExamDate: null,
 });
 
+/** An Owner's payment work with nothing waiting. */
+const NO_PAYMENT_WORK: PaymentWork = {
+  pending: 0,
+  oldestPendingAt: null,
+  invoicesToSend: 0,
+  paidAfterExpiry: 0,
+  paidAccountDeleted: 0,
+};
+
+const HOUR = 60 * 60 * 1000;
+const ago = (ms: number) => new Date(NOW.getTime() - ms).toISOString();
+const withPayments = (payments: Partial<PaymentWork>) =>
+  input({ payments: { ...NO_PAYMENT_WORK, ...payments } });
+
 /** Nothing needs attention: every item's opposite. Each test changes one thing. */
 function input(overrides: Partial<NeedsAttentionInput> = {}): NeedsAttentionInput {
   return {
@@ -60,6 +74,7 @@ function input(overrides: Partial<NeedsAttentionInput> = {}): NeedsAttentionInpu
     examPages: [goodPage("CE")],
     now: NOW,
     role: "owner",
+    payments: NO_PAYMENT_WORK,
     ...overrides,
   };
 }
@@ -287,7 +302,98 @@ describe("needsAttention", () => {
     });
   });
 
-  it("lists every item in order: links, banner, search, hidden, trust figures", () => {
+  // Phase 4, ticket 11 (story 151x): the payment work waiting for an Owner,
+  // each item opening the Orders list with the filters the seam counted by.
+  describe("payment work", () => {
+    it("lists the Pending payments, with the oldest one's age, opening the Pending Orders", () => {
+      expect(
+        needsAttention(withPayments({ pending: 4, oldestPendingAt: ago(18 * HOUR + 59 * 60_000) })),
+      ).toEqual([
+        {
+          kind: "payments-pending",
+          title: "4 payments pending",
+          detail: "Oldest is 18 hours old. Pending payments expire after 24 hours.",
+          action: "Review",
+          href: "/admin/orders?status=pending",
+          tone: "info",
+        },
+      ]);
+    });
+
+    it("says “1 payment pending”, and an age under an hour in minutes", () => {
+      const [item] = needsAttention(withPayments({ pending: 1, oldestPendingAt: ago(60_000) }));
+      expect(item).toMatchObject({
+        title: "1 payment pending",
+        detail: "Oldest is 1 minute old. Pending payments expire after 24 hours.",
+      });
+      const [fresh] = needsAttention(withPayments({ pending: 2, oldestPendingAt: ago(30_000) }));
+      expect(fresh?.detail).toBe(
+        "Oldest is under a minute old. Pending payments expire after 24 hours.",
+      );
+      const [later] = needsAttention(withPayments({ pending: 2, oldestPendingAt: ago(HOUR) }));
+      expect(later?.detail).toBe("Oldest is 1 hour old. Pending payments expire after 24 hours.");
+    });
+
+    it("lists the invoice requests to send, opening the Orders with one to send", () => {
+      expect(needsAttention(withPayments({ invoicesToSend: 2 }))).toEqual([
+        {
+          kind: "invoices",
+          title: "2 invoice requests to send",
+          detail:
+            "Send each official invoice from the support inbox, then mark it sent on its Order.",
+          action: "Send",
+          href: "/admin/orders?range=all&invoice=requested",
+          tone: "warning",
+        },
+      ]);
+      expect(needsAttention(withPayments({ invoicesToSend: 1 }))[0]?.title).toBe(
+        "1 invoice request to send",
+      );
+    });
+
+    it("lists the Orders paid after expiry in the last 7 days, opening exactly those", () => {
+      expect(needsAttention(withPayments({ paidAfterExpiry: 1 }))).toEqual([
+        {
+          kind: "paid-after-expiry",
+          title: "1 Order paid after expiry",
+          detail:
+            "PayMongo confirmed it after the Order had expired, in the last 7 days, and its days were added. Check the Member didn’t pay twice.",
+          action: "Review",
+          href: "/admin/orders?status=paid&range=7d&late=1",
+          tone: "warning",
+        },
+      ]);
+      expect(needsAttention(withPayments({ paidAfterExpiry: 3 }))[0]).toMatchObject({
+        title: "3 Orders paid after expiry",
+        detail:
+          "PayMongo confirmed them after the Orders had expired, in the last 7 days, and their days were added. Check no Member paid twice.",
+      });
+    });
+
+    it("lists the payments that landed after an account was deleted, to refund in PayMongo", () => {
+      expect(needsAttention(withPayments({ paidAccountDeleted: 1 }))).toEqual([
+        {
+          kind: "paid-account-deleted",
+          title: "Paid, account deleted · refund in PayMongo",
+          detail:
+            "1 payment landed after the Member’s account was deleted, so it gave no access. Refund it in the PayMongo dashboard.",
+          action: "Review",
+          href: "/admin/orders?status=paid&range=all",
+          tone: "warning",
+        },
+      ]);
+      expect(needsAttention(withPayments({ paidAccountDeleted: 2 }))[0]?.detail).toBe(
+        "2 payments landed after the Members’ accounts were deleted, so they gave no access. Refund them in the PayMongo dashboard.",
+      );
+    });
+
+    it("lists no payment item at zero, and none for an Editor, who gets no payment work", () => {
+      expect(needsAttention(input())).toEqual([]);
+      expect(needsAttention(input({ role: "editor", payments: null }))).toEqual([]);
+    });
+  });
+
+  it("lists every item in order: payments, links, banner, search, hidden, trust figures", () => {
     const items = needsAttention({
       ...withSettings({
         promoBanner: null,
@@ -295,8 +401,19 @@ describe("needsAttention", () => {
       }),
       products: [testLiveProduct({ listings: {}, showOnWebsite: false })],
       examPages: [],
+      payments: {
+        pending: 1,
+        oldestPendingAt: ago(HOUR),
+        invoicesToSend: 1,
+        paidAfterExpiry: 1,
+        paidAccountDeleted: 1,
+      },
     });
     expect(items.map((item) => item.kind)).toEqual([
+      "payments-pending",
+      "invoices",
+      "paid-after-expiry",
+      "paid-account-deleted",
       "missing-links",
       "promo",
       "search",

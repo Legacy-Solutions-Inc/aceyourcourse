@@ -2,13 +2,16 @@ import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type CatalogueSeed, examPageDefaults } from "@/services/catalogue.schema";
+import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { resetSampleStore } from "@/services/mock/sample-store";
 
 import { editSampleCatalogue } from "../../../../test/catalogue-seed";
 import OverviewPage from "./page";
 
 // The Overview (spec, Phase 2 story 61; BUILD-MAP §3.1), rendered from the
-// sample data: the greeting, the quick actions, and what needs Staff today.
+// sample data: the greeting, the quick actions, and what needs Staff today;
+// and for an Owner, the sales tiles, the paid-sales chart and the payment
+// work (Phase 4, ticket 11; stories 151, 151w and 151x).
 // The cookie jar and redirect() are the framework boundary, so they are
 // replaced. The signed-out and not-Staff redirects are in pages.test.tsx.
 const { jar } = vi.hoisted(() => ({ jar: new Map<string, string>() }));
@@ -56,10 +59,23 @@ describe("Overview page", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(NOW);
     resetSampleStore();
+    // An Owner's page has the chart, which jsdom can't lay out: it watches its
+    // size with this, and warns that it has none.
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
     resetSampleStore();
   });
 
@@ -154,18 +170,97 @@ describe("Overview page", () => {
     expect(screen.queryByRole("heading", { name: "Needs attention" })).not.toBeInTheDocument();
   });
 
-  it("has none of Phase 4's sales, orders or member panels", async () => {
+  // The dev server's sample Orders, made relative to NOW (10:00 on 3 Nov in
+  // Manila): today Bea's ₱1,299 and Lou's ₱499 were paid, and ₱300 and ₱499
+  // refunded; Maria's ₱499, made 1 Nov, was paid yesterday at noon, after it
+  // expired; Karen's ₱1,299 on 31 Oct, Paolo's ₱499 on 28 Oct, Jose's ₱449 on
+  // 25 Oct; Paolo's ₱449 has been Pending an hour; Maria's 14 Oct Order has
+  // an invoice to send; and a Test Order never counts.
+  describe("an Owner's sales (ticket 11)", () => {
+    const tiles = () =>
+      within(screen.getByRole("list", { name: "Sales figures" }))
+        .getAllByRole("link")
+        .map((tile) => [tile.textContent, tile.getAttribute("href")]);
+
+    beforeEach(() => {
+      resetSampleStore(CATALOGUE_SEED, { sampleOrders: true });
+    });
+
+    it("shows today's and this month's money, a refund today taken off today, matching the Orders", async () => {
+      await renderOverview(OWNER);
+
+      expect(tiles()).toEqual([
+        ["PAID TODAY₱999+₱500 vs yesterday₱799 refunded", "/admin/orders?status=paid&range=7d"],
+        ["PAID · NOVEMBER₱1,498+₱1,498 vs 1–3 Oct₱799 refunded", "/admin/orders?status=paid"],
+        ["ACTIVE MEMBERS0Paid or granted access", "/admin/users?filter=active"],
+        ["ACCESS ENDING · 7 DAYS0Nothing renews automatically", "/admin/users?filter=active"],
+      ]);
+    });
+
+    it("shows the paid-sales chart over the last 14 days, today's last", async () => {
+      await renderOverview(OWNER);
+
+      expect(screen.getByRole("heading", { name: "Paid sales" })).toBeInTheDocument();
+      expect(screen.getByText("NET PAID · LAST 14 DAYS · ₱3,745")).toBeInTheDocument();
+      const days = within(screen.getByRole("table", { name: "Net paid by day" }))
+        .getAllByRole("row")
+        .slice(1)
+        .map((row) => row.textContent);
+      expect(days).toHaveLength(14);
+      expect(days.slice(-3)).toEqual(["1 Nov₱0", "2 Nov₱499", "3 Nov, today₱999"]);
+    });
+
+    it("lists the payment work first in Needs attention, each opening the filtered Orders", async () => {
+      await renderOverview(OWNER);
+
+      expect(screen.getByText("6 things need you today.")).toBeInTheDocument();
+      expect(
+        rows()
+          .slice(0, 3)
+          .map((row) => [row.textContent, row.getAttribute("href")]),
+      ).toEqual([
+        [
+          "1 payment pendingOldest is 1 hour old. Pending payments expire after 24 hours.Review →",
+          "/admin/orders?status=pending",
+        ],
+        [
+          "1 invoice request to sendSend each official invoice from the support inbox, then mark it sent on its Order.Send →",
+          "/admin/orders?range=all&invoice=requested",
+        ],
+        [
+          "1 Order paid after expiryPayMongo confirmed it after the Order had expired, in the last 7 days, and its days were added. Check the Member didn’t pay twice.Review →",
+          "/admin/orders?status=paid&range=7d&late=1",
+        ],
+      ]);
+    });
+
+    it("shows an Editor no sales tiles, chart or payment work", async () => {
+      await renderOverview(EDITOR);
+
+      expect(screen.queryByRole("list", { name: "Sales figures" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Paid sales" })).not.toBeInTheDocument();
+      expect(screen.getByText("3 things need you today.")).toBeInTheDocument();
+      expect(screen.queryByText(/payment|invoice|paid after expiry/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/₱/)).not.toBeInTheDocument();
+    });
+  });
+
+  it("shows an Owner ₱0 tiles and no payment work with no Orders at all", async () => {
     await renderOverview(OWNER);
-    for (const text of [
-      /paid today/i,
-      /paid sales/i,
-      /recent orders/i,
-      /active members/i,
-      /plans ending/i,
-      /top-selling/i,
-      /sales are up/i,
-      /₱/,
-    ]) {
+
+    expect(screen.getByRole("list", { name: "Sales figures" })).toHaveTextContent(
+      /^PAID TODAY₱0Same as yesterday₱0 refundedPAID · NOVEMBER₱0Same as 1–3 Oct₱0 refunded/,
+    );
+    expect(screen.getByText("NET PAID · LAST 14 DAYS · ₱0")).toBeInTheDocument();
+    expect(screen.getByText("3 things need you today.")).toBeInTheDocument();
+    expect(rows().map((row) => row.textContent)).not.toContainEqual(
+      expect.stringMatching(/payment|invoice|paid after expiry/i),
+    );
+  });
+
+  it("has none of the recent orders, members or top-selling panels", async () => {
+    await renderOverview(OWNER);
+    for (const text of [/recent orders/i, /plans ending/i, /top-selling/i, /sales are up/i]) {
       expect(screen.queryByText(text)).not.toBeInTheDocument();
     }
   });

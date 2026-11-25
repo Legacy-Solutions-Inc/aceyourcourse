@@ -117,7 +117,9 @@ const READS = [
   // The Privacy Requests list (ticket 18), and one request's screen (ticket 19).
   "listPrivacyRequests",
   "getPrivacyRequestForAdmin",
+  // The Overview, with an Owner's sales, and the sidebar's PAID TODAY card (Phase 4, ticket 11).
   "getOverview",
+  "getPaidToday",
   "getSettingsForAdmin",
   "listProductsForAdmin",
   "listExamsForAdmin",

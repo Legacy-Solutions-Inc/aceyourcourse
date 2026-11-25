@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import type { StaffActor } from "@/services/admin.types";
+import type { PaidToday, StaffActor } from "@/services/admin.types";
 
 import type { AdminMenuGroup } from "./admin-menu";
 import { AdminSidebar } from "./admin-sidebar";
@@ -12,6 +12,8 @@ interface AdminDrawerProps {
   menu: AdminMenuGroup[];
   actor: StaffActor;
   signOutAction: () => Promise<void>;
+  /** The "PAID TODAY" card's figures: an Owner's; null shows no card. */
+  paidToday?: PaidToday | null;
 }
 
 /**
@@ -19,7 +21,7 @@ interface AdminDrawerProps {
  * slide-in drawer (mockup 40–69). Escape, the scrim and the close button close
  * it, and focus goes back to the button.
  */
-export function AdminDrawer({ menu, actor, signOutAction }: AdminDrawerProps) {
+export function AdminDrawer({ menu, actor, signOutAction, paidToday = null }: AdminDrawerProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -44,7 +46,13 @@ export function AdminDrawer({ menu, actor, signOutAction }: AdminDrawerProps) {
         className="w-[min(86%,320px)] gap-0 overflow-y-auto border-r-[1.5px] bg-ayc-sand p-0 shadow-[6px_0_0_var(--ayc-navy)]"
       >
         <SheetTitle className="sr-only">Menu</SheetTitle>
-        <AdminSidebar menu={menu} actor={actor} signOutAction={signOutAction} inDrawer />
+        <AdminSidebar
+          menu={menu}
+          actor={actor}
+          signOutAction={signOutAction}
+          paidToday={paidToday}
+          inDrawer
+        />
       </SheetContent>
     </Sheet>
   );

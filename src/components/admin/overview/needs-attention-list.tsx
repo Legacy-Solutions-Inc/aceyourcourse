@@ -10,12 +10,21 @@ const TONE: Record<AttentionTone, string> = {
   quiet: "bg-ayc-on-navy-muted",
 };
 
-/** The Overview's Needs attention panel (mockup 723–726): each row links to the screen that fixes it. */
-export function NeedsAttentionList({ items }: { items: AttentionItem[] }) {
+/**
+ * The Overview's Needs attention panel (mockup 723–726): each row links to the
+ * screen that fixes it. Beside an Owner's sales chart it takes the row's space.
+ */
+export function NeedsAttentionList({
+  items,
+  className,
+}: {
+  items: AttentionItem[];
+  className?: string;
+}) {
   return (
     <section
       aria-labelledby="needs-attention"
-      className="flex max-w-3xl flex-col border-[1.5px] bg-ayc-paper shadow-hard"
+      className={cn("flex max-w-3xl flex-col border-[1.5px] bg-ayc-paper shadow-hard", className)}
     >
       <div className="flex items-center justify-between gap-2.5 border-b-[1.5px] px-4 py-3.5">
         <h2 id="needs-attention" className="text-lg font-extrabold tracking-[-0.01em]">

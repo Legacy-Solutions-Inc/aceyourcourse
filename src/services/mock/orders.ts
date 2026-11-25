@@ -24,8 +24,12 @@ import { stableUuid } from "./stable-uuid";
 // sample Members who sign in, so their Billing shows them: Bea's Order is
 // partially refunded (₱300) and stays Paid, and Lou's is Refunded. Their
 // Access Passes are the sample data's own (members.ts), so these Orders add
-// no history rows. Unit tests start without any of them (resetSampleStore),
-// so a first Pay there is AYC-10001. Never add a real person's address here.
+// no history rows. The Overview's sales (ticket 11) add three more Paid ones
+// over the last two weeks, one paid after it expired; they come last, so the
+// references before them stay as the other tickets' specs name them, though
+// they were made earlier. Unit tests start without any of them
+// (resetSampleStore), so a first Pay there is AYC-10001. Never add a real
+// person's address here.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MINUTE = 60_000;
@@ -41,6 +45,8 @@ interface SampleOrder {
   status: "paid" | "pending" | "failed" | "refunded";
   /** How long before boot it was made. */
   madeAgo: number;
+  /** How long before boot it was paid, when not two minutes after it was made (paid after expiry). */
+  paidAgo?: number;
   livemode: boolean;
   /** Its Invoice Request, not yet sent, asked for this long before boot (ticket 08). */
   invoice?: { name: string; address: string; tin: string | null; requestedAgo: number };
@@ -57,7 +63,10 @@ const TESS = { name: "Tess Buyer", email: "tess.buyer@example.com" };
 const BEA = { name: "Bea Tester", email: "tester@example.com" };
 const LOU = { name: "Lou Lapsed", email: "lapsed@example.com" };
 
-/** Oldest first, so the references count up with time, as Pays make them. */
+/**
+ * Oldest first, so the references count up with time, as Pays make them; the
+ * Overview's three (ticket 11) are added after, though made earlier.
+ */
 const SAMPLE_ORDERS: readonly SampleOrder[] = [
   // Outside the last 30 days: only "All time" shows it.
   {
@@ -151,6 +160,39 @@ const SAMPLE_ORDERS: readonly SampleOrder[] = [
     livemode: true,
     refunds: [{ amountCentavos: 49_900, refundedAgo: 20 * MINUTE }],
   },
+  // The Overview's (ticket 11): Paid on more days of the chart, and one paid
+  // after expiry, 26 hours after it was made, for Needs attention.
+  {
+    buyer: KAREN,
+    examCode: "CE",
+    days: 90,
+    priceCentavos: 129_900,
+    method: "gcash",
+    status: "paid",
+    madeAgo: 3 * DAY,
+    livemode: true,
+  },
+  {
+    buyer: JOSE,
+    examCode: "ME",
+    days: 30,
+    priceCentavos: 44_900,
+    method: "qrph",
+    status: "paid",
+    madeAgo: 9 * DAY,
+    livemode: true,
+  },
+  {
+    buyer: MARIA,
+    examCode: "CE",
+    days: 30,
+    priceCentavos: 49_900,
+    method: "card",
+    status: "paid",
+    madeAgo: 2 * DAY,
+    paidAgo: 2 * DAY - 26 * HOUR,
+    livemode: true,
+  },
 ];
 
 /**
@@ -172,7 +214,9 @@ export function sampleOrders(
   const orders = samples.map((sample, index): Order => {
     const reference = orderReference(FIRST_REFERENCE_NUMBER + index);
     const createdAt = new Date(bootedAt.getTime() - sample.madeAgo).toISOString();
-    const settledAt = new Date(bootedAt.getTime() - sample.madeAgo + 2 * MINUTE).toISOString();
+    const settledAt = new Date(
+      bootedAt.getTime() - (sample.paidAgo ?? sample.madeAgo - 2 * MINUTE),
+    ).toISOString();
     const settled = sample.status !== "pending";
     const paid = wasPaid(sample.status);
     const lastRefund = sample.refunds?.at(-1);
