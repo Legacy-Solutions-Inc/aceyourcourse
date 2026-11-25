@@ -270,21 +270,15 @@ describe.each(MEMBER_ARMS)("Member seam: refunds ($name)", (arm) => {
       expect(await passEnd()).toBe(iso(30 * DAY - 60_000));
     });
 
-    it("after the Owner ended access, refunds the Order and moves no end", async () => {
+    // An Owner can't end paid days (ticket 10), so a pass with paid days ends by running out.
+    it("after access ran out, refunds the Order and moves no end", async () => {
       const { order: paid, paymentId } = await bought();
-      vi.setSystemTime(at(DAY));
-      const ended = await arm.admin.endAccess(OWNER, {
-        userId: BEA.userId,
-        examCode: "CE",
-        reason: "Asked to stop",
-      });
-      expect(ended.ok).toBe(true);
-      vi.setSystemTime(at(2 * DAY));
+      vi.setSystemTime(at(91 * DAY));
 
       expect(await seam.recordPaymentEvent(refundEvent(paymentId, [refund()]))).toBe("applied");
 
       expect(await order(paid.reference)).toMatchObject({ status: "refunded" });
-      expect(await passEnd()).toBe(iso(DAY));
+      expect(await passEnd()).toBe(iso(90 * DAY));
       const [notice] = await seam.listNotices(BEA.userId);
       expect(notice && noticeText(notice)).toBe(
         `Your refund for ${paid.reference} was processed. CE All-Access has ended`,

@@ -13,10 +13,11 @@ import { useStaffAction } from "@/components/admin/settings/use-staff-action";
 import type { AdminAction } from "@/lib/admin/action";
 import { formatChangedOn } from "@/lib/admin/time";
 import { refusalText, UNREACHABLE } from "@/lib/admin/users-refusal";
-import { passChangeText, passEnd } from "@/lib/admin/users-view";
+import { type ChangeWording, passChangeText, passEnd } from "@/lib/admin/users-view";
+import { isPassActive, passEndDate } from "@/lib/member-app/access";
 import { EXTEND_DAYS, GRANT_DAYS, GRANT_MAX_DAYS } from "@/lib/member-app/access-pass";
 import { cn } from "@/lib/utils";
-import type { AccessPassChange, AdminAccessPass } from "@/services/admin.types";
+import type { AccessPassChange, AdminAccessPass, PassEnding } from "@/services/admin.types";
 
 /** The Server Actions the panel calls: grant, extend and end a Member's Access Pass. */
 export interface PassActions {
@@ -37,7 +38,11 @@ interface AccessPassesProps {
 }
 
 type Action = "grant" | "extend" | "end";
-type Open = { action: "grant" } | { action: "extend" | "end"; examCode: string } | null;
+type Open =
+  | { action: "grant" }
+  | { action: "extend"; examCode: string }
+  | { action: "end"; examCode: string; ending: PassEnding }
+  | null;
 type Notice = { tone: "done" | "refused"; text: string };
 type FieldErrors = Partial<Record<"examCode" | "days" | "reason", string>>;
 
@@ -50,11 +55,15 @@ const NO_PAYMENT =
 /**
  * ACCESS PASSES on a Member's detail page (ticket 17; stories 131 and 133j;
  * BUILD-MAP §3.10, our decisions over the mockup's): each pass with its end in
- * Manila and the grants that made it, "Extend…" on each and "End access
- * now…" on an active one, then "Grant Access Pass…". Each asks for a reason
+ * Manila and the grants that made it, "Extend…" on each, then "Grant Access
+ * Pass…". A pass with granted days left offers an end (Phase 4, ticket 10;
+ * story 151t): "End access now…" when no paid days are left, or "End granted
+ * access…" when they are, previewing the end before confirming; none once
+ * only paid days are left, or the pass has ended. Each asks for a reason
  * that Staff Activity keeps. The server decides everything (Owners only, the
- * days allowed, the pass rule); this panel only shows what it answered, then
- * reads the page again. The Member gets an in-app notice, never an email.
+ * days allowed, the pass rule, the end); this panel only shows what it read
+ * and answered, then reads the page again. The Member gets an in-app notice,
+ * never an email.
  */
 export function AccessPasses({ member, passes, exams, now, actions }: AccessPassesProps) {
   const { pending, run } = useStaffAction();
@@ -97,7 +106,10 @@ export function AccessPasses({ member, passes, exams, now, actions }: AccessPass
         }
         setNotice({ tone: "refused", text: refusalText(error) });
       } else if (state.status === "saved") {
-        setNotice({ tone: "done", text: passChangeText(action, state.value) });
+        setNotice({
+          tone: "done",
+          text: passChangeText(wordingOf(action, state.value), state.value),
+        });
       }
       answered.current = true;
       setOpen(null);
@@ -136,7 +148,7 @@ export function AccessPasses({ member, passes, exams, now, actions }: AccessPass
                 now={now}
                 pending={pending}
                 onExtend={() => start({ action: "extend", examCode: pass.examCode })}
-                onEnd={() => start({ action: "end", examCode: pass.examCode })}
+                onEnd={(ending) => start({ action: "end", examCode: pass.examCode, ending })}
               />
             ))}
           </ul>
@@ -259,6 +271,15 @@ export function AccessPasses({ member, passes, exams, now, actions }: AccessPass
   );
 }
 
+/**
+ * Pure: which change to word, from what the server did: an end that left the
+ * pass active kept its paid days (ticket 10). The server decides, so a
+ * payment landing after the page was read still words it right.
+ */
+function wordingOf(action: Action, { endsAt }: AccessPassChange): ChangeWording {
+  return action === "end" && isPassActive(endsAt, new Date()) ? "end-granted" : action;
+}
+
 interface DialogCopy {
   tag: string;
   tone: AdminDialogTone;
@@ -293,6 +314,17 @@ function dialogCopy(open: NonNullable<Open>, firstName: string): DialogCopy {
         pendingLabel: "Adding…",
       };
     case "end":
+      if (open.ending.kind === "keeps-paid") {
+        return {
+          tag: "END GRANTED ACCESS",
+          tone: "danger",
+          title: `End ${firstName}’s granted ${open.examCode} days?`,
+          description: `Access will end on ${passEndDate(open.ending.endsAt)}. Paid days stay; refund in PayMongo to remove them.`,
+          placeholder: "e.g. Granted by mistake",
+          submitLabel: "End granted access",
+          pendingLabel: "Ending…",
+        };
+      }
       return {
         tag: "END ACCESS",
         tone: "danger",
@@ -318,9 +350,10 @@ function PassRow({
   now: Date;
   pending: boolean;
   onExtend: () => void;
-  onEnd: () => void;
+  onEnd: (ending: PassEnding) => void;
 }) {
   const { date, expired } = passEnd(pass.endsAt, now);
+  const { ending } = pass;
   return (
     <li
       aria-label={`${pass.examCode} pass`}
@@ -357,16 +390,16 @@ function PassRow({
         <button type="button" disabled={pending} onClick={onExtend} className={smallButton}>
           Extend…
         </button>
-        {expired ? null : (
+        {ending ? (
           <button
             type="button"
             disabled={pending}
-            onClick={onEnd}
+            onClick={() => onEnd(ending)}
             className={cn(smallButton, "border-destructive text-destructive")}
           >
-            End access now…
+            {ending.kind === "keeps-paid" ? "End granted access…" : "End access now…"}
           </button>
-        )}
+        ) : null}
       </span>
     </li>
   );

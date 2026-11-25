@@ -7,7 +7,9 @@ import type { MemberNotice } from "@/services/member.types";
 // end of a Member's Access Pass leaves a notice, which the Member App shows
 // as one dismissible banner until the Member dismisses it. There's no email
 // and no notification centre. A full refund in PayMongo leaves one too
-// (Phase 4, ticket 09), naming the Order and the pass's end after it.
+// (Phase 4, ticket 09), naming the Order and the pass's end after it. An
+// Owner's end that takes the granted days and leaves paid ones says the
+// pass's new end (ticket 10).
 //
 // Every notice shows until the Member dismisses it, newest first, so a grant
 // followed by "End access now" shows both, the end on top.
@@ -22,6 +24,8 @@ export function noticeText({ kind, examCode, endsAt, createdAt, reference }: Mem
       return `Your ${examCode} access was extended to ${passEndDate(endsAt)}`;
     case "ended":
       return `Your ${examCode} access has ended`;
+    case "shortened":
+      return `Your ${examCode} access now ends ${passEndDate(endsAt)}`;
     case "refunded": {
       // A refund that ended the pass ends it then: its end is the notice's making.
       const access = isPassActive(endsAt, new Date(createdAt))

@@ -28,9 +28,12 @@ export function passEnd(endsAt: string, now: Date): { date: string; expired: boo
   };
 }
 
+/** Which change the ACCESS PASSES panel words: an end of granted days that kept paid ones is "end-granted" (ticket 10). */
+export type ChangeWording = "grant" | "extend" | "end" | "end-granted";
+
 /** Pure: what the ACCESS PASSES panel says once a grant, an extension or an end is done. */
 export function passChangeText(
-  action: "grant" | "extend" | "end",
+  action: ChangeWording,
   { examCode, endsAt, days, targetExam }: AccessPassChange,
 ): string {
   const until = passEndDate(endsAt).toUpperCase();
@@ -48,6 +51,8 @@ export function passChangeText(
       return `✓ ADDED ${days ?? 0} DAYS · ${examCode} UNTIL ${until}`;
     case "end":
       return `✓ ENDED ${examCode} ACCESS · THEY SEE THE EXPIRED STATE`;
+    case "end-granted":
+      return `✓ ENDED ${examCode} GRANTED DAYS · ACCESS UNTIL ${until}`;
   }
 }
 

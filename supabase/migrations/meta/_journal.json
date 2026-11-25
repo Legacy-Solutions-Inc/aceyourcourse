@@ -218,6 +218,13 @@
       "when": 1795612928609,
       "tag": "20261125132208_order_refunds",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1795617187184,
+      "tag": "20261125143307_shortened_notice_kind",
+      "breakpoints": true
     }
   ]
 }

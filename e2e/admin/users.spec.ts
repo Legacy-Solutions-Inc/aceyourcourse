@@ -1,5 +1,6 @@
 import { type Browser, expect as baseExpect, type Page, test } from "@playwright/test";
 
+import { passEndDate } from "../../src/lib/member-app/access";
 import { paths } from "../../src/paths";
 import { sampleContentId, sampleTopicId } from "../../src/services/mock/content";
 import { sampleUserId } from "../../src/services/mock/members";
@@ -11,10 +12,12 @@ import { resetSampleData, signInAs } from "./helpers";
 // another, finds them in the Users list (filter, search, no results), opens
 // their detail page, and forces their device to sign out with a reason. The
 // tester's next Member App request shows "Session ended". An Editor is
-// refused both screens.
+// refused both screens. Ending a pass with paid days ends only its granted
+// days (Phase 4, ticket 10).
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
+const DAY = 24 * 60 * 60 * 1000;
 
 const TESTER = "tester@example.com";
 /** The sample tester's User id, as "Sign in as" gives it. */
@@ -251,6 +254,77 @@ test.describe("the Owner and a lapsed tester", () => {
     await expect(notices).toHaveCount(2);
     await expect(notices.first()).toContainText("Your CE access has ended");
     await expect(notices.nth(1)).toContainText("Your CE access was extended to");
+  });
+});
+
+test.describe("the Owner, a grant and a paid Order (Phase 4, ticket 10)", () => {
+  test("an Owner ends only the granted days: the preview says the paid days' end, and the tester keeps them", async ({
+    page,
+    browser,
+  }) => {
+    test.setTimeout(180_000);
+    await signInAndOnboard(page, "lapsed", "ME");
+
+    /** The paid days' end in Manila, worked out just before the preview shows it. */
+    let paidEnd = "";
+    const desk = await browser.newContext();
+    try {
+      const owner = await desk.newPage();
+      await signInAs(owner, "owner", paths.admin.user(LAPSED_ID));
+      const passes = section(owner, "ACCESS PASSES");
+      const cePass = passes.getByRole("listitem", { name: "CE pass" });
+      await passes.getByRole("button", { name: "Grant Access Pass…" }).click();
+      const grant = owner.getByRole("dialog", { name: "Grant Lou an Access Pass" });
+      await grant.getByRole("combobox", { name: "EXAM" }).selectOption("CE");
+      await grant.getByRole("radio", { name: "30 days" }).check();
+      await grant.getByLabel("REASON · SAVED IN STAFF ACTIVITY").fill("Launch promo");
+      await grant.getByRole("button", { name: "Grant access" }).click();
+      await expect(passes.getByRole("status")).toContainText("✓ GRANTED CE UNTIL");
+      // Only granted days: the end is "End access now", as before.
+      await expect(cePass.getByRole("button", { name: "End access now…" })).toBeVisible();
+
+      // The tester buys CE for 3 months with the payments fake: the days stack after the grant.
+      await page.goto(paths.memberApp.plansFor("CE"));
+      const plans = page.getByRole("radiogroup", { name: /ALL-ACCESS/ });
+      await plans.getByText("₱1,299", { exact: true }).click();
+      await page.getByRole("button", { name: "Pay ₱1,299 with PayMongo" }).click();
+      await expect(page).toHaveURL(/\/app\/plans\/orders\/AYC-\d{5,}$/);
+      await page.getByRole("button", { name: "Simulate paid" }).click();
+      await expect(page.getByText("✓ PAYMENT CONFIRMED")).toBeVisible();
+
+      // Paid days left: "End granted access", previewing the end before confirming: the
+      // granted days go from now, so the 90 paid days end 90 days from now.
+      paidEnd = passEndDate(new Date(Date.now() + 90 * DAY).toISOString());
+      await owner.reload();
+      await expect(cePass.getByRole("button", { name: "End access now…" })).toHaveCount(0);
+      await cePass.getByRole("button", { name: "End granted access…" }).click();
+      const end = owner.getByRole("dialog", { name: "End Lou’s granted CE days?" });
+      await expect(end).toContainText(
+        `Access will end on ${paidEnd}. Paid days stay; refund in PayMongo to remove them.`,
+      );
+      await expectNoBlockingViolations(owner);
+      await end.getByRole("button", { name: "End granted access" }).click();
+      await expect(end.getByText("ENTER A REASON · IT’S SAVED IN STAFF ACTIVITY")).toBeVisible();
+      await end.getByLabel("REASON · SAVED IN STAFF ACTIVITY").fill("Promo ended");
+      await end.getByRole("button", { name: "End granted access" }).click();
+      await expect(passes.getByRole("status")).toHaveText(
+        `✓ ENDED CE GRANTED DAYS · ACCESS UNTIL ${paidEnd.toUpperCase()}`,
+      );
+      await expect(cePass).toContainText(`UNTIL ${paidEnd.toUpperCase()}`);
+      await expect(cePass).toContainText("ACTIVE");
+      // Only paid days are left: nothing more to end here; a refund removes them.
+      await expect(cePass.getByRole("button", { name: /^End / })).toHaveCount(0);
+    } finally {
+      await desk.close();
+    }
+
+    // The tester is told the new end, and still studies CE.
+    await page.goto(paths.memberApp.home);
+    await expect(page.getByRole("region", { name: "Notices" })).toContainText(
+      `Your CE access now ends ${paidEnd}`,
+    );
+    await page.goto(SPIRAL_CURVES_DECK);
+    await expect(page.getByRole("heading", { level: 2, name: /ended on/ })).toHaveCount(0);
   });
 });
 

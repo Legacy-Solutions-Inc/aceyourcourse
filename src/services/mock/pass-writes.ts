@@ -1,10 +1,26 @@
+import type { PassHistoryRow } from "@/lib/payments/order-ledger";
 import type { PassWrite } from "@/services/access-passes.core";
 import { getSampleStore } from "@/services/mock/sample-store";
 
 /**
+ * A Member's pass history for an Exam in the sample data, in order, each row
+ * keyed by its place in the whole history, as the Order ledger's segment
+ * model reads it and a write gives it back (writeSamplePass, a refund's
+ * reduction in member.mock.ts).
+ */
+export function samplePassHistory(userId: string, examCode: string): PassHistoryRow[] {
+  return getSampleStore().accessPassGrants.flatMap((row, key) =>
+    row.userId === userId && row.examCode === examCode
+      ? [{ key, orderId: row.orderId, startsAt: row.startsAt, endsAt: row.endsAt }]
+      : [],
+  );
+}
+
+/**
  * Writes a change to a Member's Access Pass for an Exam into the sample
  * data: the Staff Activity first (should it fail, nothing else is written),
- * then the pass (made when they held none), its history row, the Target Exam
+ * then the pass (made when they held none), its history row or the rows an
+ * end moved (ticket 10), the Target Exam
  * record (added, or replacing theirs for its Exam) and the notice. An Owner's
  * grant, extension or end (mock/admin/access-passes.ts) and a Paid Order
  * (member.mock.ts) write the same way. A Node process runs one call at a time
@@ -19,6 +35,12 @@ export function writeSamplePass(userId: string, examCode: string, write: PassWri
   store.accessPasses = store.accessPasses.some(held)
     ? store.accessPasses.map((pass) => (held(pass) ? ends : pass))
     : [...store.accessPasses, ends];
+  // The rows an end moved, by their place in the whole history (ticket 10), before any new row.
+  const moved = new Map(write.segments.map((segment) => [segment.key, segment]));
+  store.accessPassGrants = store.accessPassGrants.map((row, key) => {
+    const segment = moved.get(key);
+    return segment ? { ...row, startsAt: segment.startsAt, endsAt: segment.endsAt } : row;
+  });
   if (write.grant) store.accessPassGrants = [...store.accessPassGrants, write.grant];
   const { targetExam } = write;
   if (targetExam) {

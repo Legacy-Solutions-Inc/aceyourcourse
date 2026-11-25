@@ -10,7 +10,7 @@ import {
   type Order,
   type OrderOutcome,
   PAYMONGO_SYSTEM_ACTOR,
-  type PassSegment,
+  type PassHistoryRow,
   passSegments,
   removeUnusedDays,
   wasPaid,
@@ -98,14 +98,6 @@ import type { CheckoutStatus, PaymentEvent, PaymentsClient } from "@/services/pa
 //   is logged in Staff Activity as "PayMongo (system)" with the end before
 //   and after.
 // ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * One row of the buyer's pass history for the Order's Exam (access_pass_grants),
- * as the segment model reads it, with the arm's key for writing it back.
- */
-export interface PassHistoryRow extends PassSegment {
-  key: number;
-}
 
 /** An Order as one outcome finds it, with what Paid and refunds change alongside it. */
 export interface OrderHolding {
@@ -330,6 +322,7 @@ export function settleOrder(
         grantedAt: now.toISOString(),
         orderId: order.id,
       },
+      segments: [],
       targetExam: added?.record ?? null,
       notice: noticeOf(userId, examCode, "granted", paidDays.endsAt, now),
       activity: activityRecord(

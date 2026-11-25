@@ -394,12 +394,13 @@ export type TopicPercents = Record<string, number | null>;
  * What a notice tells the Member: a grant, an extension, the end of their
  * access, or a full refund in PayMongo (Phase 4, ticket 09).
  */
-export const NOTICE_KINDS = ["granted", "extended", "ended", "refunded"] as const;
+export const NOTICE_KINDS = ["granted", "extended", "ended", "refunded", "shortened"] as const;
 export type NoticeKind = (typeof NOTICE_KINDS)[number];
 
 /**
  * One in-app notice (spec, Phase 3 planning decisions → In-app notices): an
- * Owner's grant, extension or end of a Member's Access Pass, or a full refund
+ * Owner's grant, extension or end of a Member's Access Pass ("shortened" when
+ * ending its granted days leaves paid ones, ticket 10), or a full refund
  * (ticket 09), shown as a dismissible banner until the Member dismisses it.
  * No email is sent.
  */

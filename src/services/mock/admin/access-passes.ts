@@ -1,5 +1,5 @@
 import { type AccessPassStore, accessPassCalls } from "@/services/access-passes.core";
-import { writeSamplePass } from "@/services/mock/pass-writes";
+import { samplePassHistory, writeSamplePass } from "@/services/mock/pass-writes";
 import { getSampleStore } from "@/services/mock/sample-store";
 
 // The sample arm of the Admin seam's Access Pass actions (Phase 3, ticket 17):
@@ -22,6 +22,7 @@ const sampleAccessPassStore: AccessPassStore = {
         examExists: store.catalogue.exams.some((exam) => exam.code === examCode),
         pass,
         targetExams: store.memberTargetExams[userId] ?? [],
+        history: pass ? samplePassHistory(userId, examCode) : [],
       }),
     );
     if (!write) return result;

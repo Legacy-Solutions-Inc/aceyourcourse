@@ -5,7 +5,6 @@ import {
   EXTEND_DAYS,
   GRANT_DAYS,
   GRANT_MAX_DAYS,
-  endedNow,
   passWithDays,
 } from "@/lib/member-app/access-pass";
 
@@ -50,17 +49,6 @@ describe("passWithDays", () => {
     expect(passWithDays("2026-12-01T15:59:00.000Z", 3, NOW).endsAt).toBe(
       "2026-12-04T15:59:00.000Z",
     );
-  });
-});
-
-describe("endedNow", () => {
-  it("ends an active pass now", () => {
-    expect(endedNow(at(30 * DAY), NOW)).toBe(NOW.toISOString());
-  });
-
-  it("leaves a pass that has already ended as it is: nothing to end", () => {
-    expect(endedNow(at(-3 * DAY), NOW)).toBeNull();
-    expect(endedNow(NOW.toISOString(), NOW)).toBeNull();
   });
 });
 

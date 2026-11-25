@@ -1,0 +1,1 @@
+ALTER TYPE "public"."member_notice_kind" ADD VALUE 'shortened';

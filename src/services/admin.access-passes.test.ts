@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { accessDecision } from "@/lib/member-app/access";
 import { noticeText } from "@/lib/member-app/notices";
+import type { Order } from "@/lib/payments/order-ledger";
+import type { AccessPassGrant } from "@/services/content.types";
 import { sampleTopicId } from "@/services/mock/content";
+import { samplePlanId } from "@/services/mock/plans";
 
 import { ADMIN_ARMS } from "../../test/admin-arms";
 import { sampleActor, UNUSED_EXAM } from "../../test/admin-inputs";
@@ -172,6 +175,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Access Passes ($name)", (arm) => {
               orderId: null,
             },
           ],
+          ending: { kind: "now" },
         },
       ]);
     });
@@ -517,17 +521,19 @@ describe.each(ADMIN_ARMS)("Admin seam: Access Passes ($name)", (arm) => {
       ]);
     });
 
-    it("adds no history row: the grants that made the pass stay as they were", async () => {
+    it("adds no history row, and cuts each grant's unused days to now (ticket 10)", async () => {
       await seam.grantAccess(OWNER, { ...end, days: 30 });
-      const grants = async () => {
-        const detail = await seam.getMemberForAdmin(OWNER, BEA.userId);
-        return detail.ok ? detail.value.accessPasses[0]?.grants : null;
-      };
-      const before = await grants();
 
       await seam.endAccess(OWNER, end);
 
-      expect(await grants()).toEqual(before);
+      expect(await arm.passHistory(BEA.userId, "CE")).toEqual([
+        expect.objectContaining({
+          days: 30,
+          reason: "Granted by mistake",
+          startsAt: at(NOW),
+          endsAt: at(NOW),
+        }),
+      ]);
     });
 
     it("lets a later grant start again from now", async () => {
@@ -589,6 +595,218 @@ describe.each(ADMIN_ARMS)("Admin seam: Access Passes ($name)", (arm) => {
         error: { kind: "forbidden" },
       });
       expect(await snapshot()).toEqual(before);
+    });
+  });
+
+  describe("endAccess once paid days exist (Phase 4, ticket 10)", () => {
+    // Pat was granted 30 CE days 14 days before BOOT, then bought 90 more at
+    // their end: granted to BOOT + 16 days, paid to BOOT + 106 days. Pia
+    // bought 90 days 5 days before BOOT and holds nothing else.
+    const PAT = {
+      userId: "5e7a9c1b-3d2f-4b6a-8c0e-1f3a5b7d9e2c",
+      email: "pat.paid@example.com",
+      name: "Pat Paid",
+    };
+    const PIA = {
+      userId: "6f8b0d2c-4e3a-4c7b-9d1f-2a4b6c8e0f3d",
+      email: "pia.paid@example.com",
+      name: "Pia Paid",
+    };
+    const end = { userId: PAT.userId, examCode: "CE", reason: "Granted by mistake" };
+
+    /** A Paid Order's fixture: CE 3 months by GCash, paid at `paidAt`. */
+    const paidOrder = (reference: string, buyer: typeof PAT, paidAt: string): Order => ({
+      id: `00000000-0000-4000-8000-${reference.slice(4).padStart(12, "0")}`,
+      reference,
+      userId: buyer.userId,
+      examCode: "CE",
+      planId: samplePlanId("CE", 90),
+      planName: "CE All-Access",
+      days: 90,
+      priceCentavos: 129_900,
+      method: "gcash",
+      status: "paid",
+      livemode: true,
+      checkoutId: null,
+      paymentId: `pay_Sample${reference.slice(4)}`,
+      buyerName: buyer.name,
+      buyerEmail: buyer.email,
+      createdAt: paidAt,
+      paidAt,
+      statusChangedAt: paidAt,
+    });
+    /** A history row: granted by the Owner, or paid by `order`. */
+    const historyRow = (
+      buyer: typeof PAT,
+      days: number,
+      from: number,
+      order: Order | null,
+    ): AccessPassGrant => ({
+      userId: buyer.userId,
+      examCode: "CE",
+      days,
+      startsAt: at(from),
+      endsAt: at(from + days * DAY),
+      reason: order ? `Paid ${order.reference}` : "Launch promo",
+      grantedBy: order
+        ? { email: "system:paymongo", name: "PayMongo (system)" }
+        : { email: OWNER.email, name: OWNER.name },
+      grantedAt: at(from),
+      orderId: order?.id ?? null,
+    });
+
+    const PAT_ORDER = paidOrder("AYC-10001", PAT, at(-10 * DAY));
+    const PIA_ORDER = paidOrder("AYC-10002", PIA, at(-5 * DAY));
+    const PAT_GRANT = historyRow(PAT, 30, -14 * DAY, null);
+    const PAT_PAID = historyRow(PAT, 90, 16 * DAY, PAT_ORDER);
+    const PIA_PAID = historyRow(PIA, 90, -5 * DAY, PIA_ORDER);
+
+    /** Everything a refused call must leave as it was, for Pat and Pia. */
+    const theirs = async () => ({
+      passes: await Promise.all([PAT, PIA].map(({ userId }) => member.listAccessPasses(userId))),
+      history: await Promise.all([PAT, PIA].map(({ userId }) => arm.passHistory(userId, "CE"))),
+      notices: await Promise.all([PAT, PIA].map(({ userId }) => member.listNotices(userId))),
+      activity: await arm.staffActivity(),
+    });
+    const endingOf = async (userId: string) => {
+      const detail = await seam.getMemberForAdmin(OWNER, userId);
+      if (!detail.ok) throw new Error(`No detail: ${detail.error.kind}`);
+      return detail.value.accessPasses.map(({ examCode, ending }) => ({ examCode, ending }));
+    };
+
+    beforeEach(async () => {
+      later(-14 * DAY);
+      for (const user of [PAT, PIA]) await member.getOrCreateMember(user);
+      later(NOW);
+      await arm.putOrder(PAT_ORDER);
+      await arm.putOrder(PIA_ORDER);
+      await arm.putAccessPass({ userId: PAT.userId, examCode: "CE", endsAt: PAT_PAID.endsAt }, [
+        PAT_GRANT,
+        PAT_PAID,
+      ]);
+      await arm.putAccessPass({ userId: PIA.userId, examCode: "CE", endsAt: PIA_PAID.endsAt }, [
+        PIA_PAID,
+      ]);
+    });
+
+    it("tells the panel what ending each pass would do: the paid days' end, now, or nothing", async () => {
+      expect(await endingOf(PAT.userId)).toEqual([
+        { examCode: "CE", ending: { kind: "keeps-paid", endsAt: at(NOW + 90 * DAY) } },
+      ]);
+      expect(await endingOf(BEA.userId)).toEqual([{ examCode: "CE", ending: { kind: "now" } }]);
+      expect(await endingOf(PIA.userId)).toEqual([{ examCode: "CE", ending: null }]);
+      expect(await endingOf(LOU.userId)).toEqual([{ examCode: "CE", ending: null }]);
+    });
+
+    it("takes off only the granted days not yet used: the paid days stay, moved earlier", async () => {
+      const result = await seam.endAccess(OWNER, end);
+
+      expect(result).toEqual({
+        ok: true,
+        tags: [],
+        value: {
+          userId: PAT.userId,
+          examCode: "CE",
+          endsBefore: at(106 * DAY),
+          endsAt: at(NOW + 90 * DAY),
+          days: null,
+          reason: "Granted by mistake",
+          targetExam: null,
+        },
+      });
+      expect(await passOf(PAT.userId)).toMatchObject({ endsAt: at(NOW + 90 * DAY) });
+      expect(await decisionFor(PAT.userId)).toEqual({ outcome: "allowed", via: "pass" });
+      expect(await arm.passHistory(PAT.userId, "CE")).toEqual([
+        { ...PAT_GRANT, endsAt: at(NOW) },
+        { ...PAT_PAID, startsAt: at(NOW), endsAt: at(NOW + 90 * DAY) },
+      ]);
+    });
+
+    it("records the ends before and after with the reason, and tells the Member the new end", async () => {
+      await seam.endAccess(OWNER, end);
+
+      expect(await arm.staffActivity()).toEqual([
+        expect.objectContaining({
+          actor: { email: OWNER.email, name: OWNER.name },
+          entity: "access-pass",
+          entityId: `${PAT.userId}/CE`,
+          action: "end-granted-access",
+          before: { email: PAT.email, examCode: "CE", endsAt: at(106 * DAY) },
+          after: {
+            email: PAT.email,
+            examCode: "CE",
+            endsAt: at(NOW + 90 * DAY),
+            reason: "Granted by mistake",
+          },
+        }),
+      ]);
+      expect((await member.listNotices(PAT.userId)).map(noticeText)).toEqual([
+        "Your CE access now ends 15 Feb 2027",
+      ]);
+    });
+
+    it("then has nothing more to end: only paid days are left", async () => {
+      await seam.endAccess(OWNER, end);
+
+      expect(await endingOf(PAT.userId)).toEqual([{ examCode: "CE", ending: null }]);
+      const before = await theirs();
+      expect(await seam.endAccess(OWNER, end)).toEqual({
+        ok: false,
+        error: {
+          kind: "invalid",
+          fieldErrors: {},
+          formError: expect.stringMatching(/only paid days left/),
+        },
+      });
+      expect(await theirs()).toEqual(before);
+    });
+
+    it("refuses a pass made only of paid days, and changes nothing", async () => {
+      const before = await theirs();
+
+      expect(await seam.endAccess(OWNER, { ...end, userId: PIA.userId })).toEqual({
+        ok: false,
+        error: {
+          kind: "invalid",
+          fieldErrors: {},
+          formError: expect.stringMatching(/CE Access Pass has only paid days left/),
+        },
+      });
+      expect(await theirs()).toEqual(before);
+    });
+
+    it("takes nothing of a grant already used up, so there's nothing to end", async () => {
+      // 20 days on: the grant ran out at BOOT + 16 days, and the paid days are being used.
+      later(20 * DAY);
+      const before = await theirs();
+
+      expect(await seam.endAccess(OWNER, end)).toMatchObject({
+        ok: false,
+        error: { formError: expect.stringMatching(/only paid days left/) },
+      });
+      expect(await endingOf(PAT.userId)).toEqual([{ examCode: "CE", ending: null }]);
+      expect(await theirs()).toEqual(before);
+    });
+
+    it("handles a pass that has expired since, changing and logging nothing", async () => {
+      later(107 * DAY);
+      const before = await theirs();
+
+      expect(await seam.endAccess(OWNER, end)).toMatchObject({
+        ok: false,
+        error: { formError: expect.stringMatching(/CE Access Pass has already ended/) },
+      });
+      expect(await theirs()).toEqual(before);
+    });
+
+    it.each([
+      ["an empty reason", OWNER, { ...end, reason: "" }, "invalid"],
+      ["a reason of spaces", OWNER, { ...end, reason: "   " }, "invalid"],
+      ["an Editor", EDITOR, end, "forbidden"],
+    ] as const)("refuses %s, and changes nothing", async (_what, actor, input, kind) => {
+      const before = await theirs();
+      expect(await seam.endAccess(actor, input)).toMatchObject({ ok: false, error: { kind } });
+      expect(await theirs()).toEqual(before);
     });
   });
 

@@ -30,8 +30,30 @@ const EXAMS = [
   { code: "CE", name: "Civil Engineering" },
   { code: "ME", name: "Mechanical Engineering" },
 ];
-const ACTIVE: AdminAccessPass = { examCode: "CE", endsAt: "2027-02-15T03:42:00.000Z", grants: [] };
-const ENDED: AdminAccessPass = { examCode: "ME", endsAt: "2026-11-14T03:42:00.000Z", grants: [] };
+const ACTIVE: AdminAccessPass = {
+  examCode: "CE",
+  endsAt: "2027-02-15T03:42:00.000Z",
+  grants: [],
+  ending: { kind: "now" },
+};
+const ENDED: AdminAccessPass = {
+  examCode: "ME",
+  endsAt: "2026-11-14T03:42:00.000Z",
+  grants: [],
+  ending: null,
+};
+/**
+ * The spec's example, granted 30 days on 1 Jan and 90 bought on 10 Jan:
+ * ending the granted days on 15 Jan leaves the paid ones, to 00:30 on 15 Apr
+ * in Manila (still 14 Apr in UTC).
+ */
+const MIXED: AdminAccessPass = {
+  ...ACTIVE,
+  endsAt: "2027-04-30T16:30:00.000Z",
+  ending: { kind: "keeps-paid", endsAt: "2027-04-14T16:30:00.000Z" },
+};
+/** Only paid days left: nothing to end. */
+const PAID_ONLY: AdminAccessPass = { ...ACTIVE, examCode: "ME", ending: null };
 
 const CHANGE: AccessPassChange = {
   userId: BEA.userId,
@@ -81,6 +103,17 @@ describe("AccessPasses", () => {
     expect(within(row("CE")).getByRole("button", { name: "End access now…" })).toBeInTheDocument();
     expect(within(row("ME")).getByRole("button", { name: "Extend…" })).toBeInTheDocument();
     expect(within(row("ME")).queryByRole("button", { name: "End access now…" })).toBeNull();
+  });
+
+  it("offers End granted access while paid days are left, and no end once only paid days are", () => {
+    renderPanel({ passes: [MIXED, PAID_ONLY] });
+    expect(
+      within(row("CE")).getByRole("button", { name: "End granted access…" }),
+    ).toBeInTheDocument();
+    expect(within(row("CE")).queryByRole("button", { name: "End access now…" })).toBeNull();
+    expect(within(row("ME")).getByText("UNTIL 15 FEB 2027")).toBeInTheDocument();
+    expect(within(row("ME")).getByRole("button", { name: "Extend…" })).toBeInTheDocument();
+    expect(within(row("ME")).queryByRole("button", { name: /^End / })).toBeNull();
   });
 
   it("says a Member with no pass sees Free Preview only, and still offers a grant", () => {
@@ -239,8 +272,9 @@ describe("AccessPasses", () => {
 
   describe("End access now", () => {
     it("asks first, then ends that pass with a reason", async () => {
+      // The server ended it when asked: its end is that moment, now past.
       const { user, actions } = renderPanel({
-        answer: { status: "saved", value: { ...CHANGE, days: null } },
+        answer: { status: "saved", value: { ...CHANGE, days: null, endsAt: NOW.toISOString() } },
       });
       await user.click(within(row("CE")).getByRole("button", { name: "End access now…" }));
 
@@ -254,6 +288,78 @@ describe("AccessPasses", () => {
         { input: { userId: BEA.userId, examCode: "CE", reason: "Granted by mistake" } },
       );
       expect(status()).toHaveTextContent("✓ ENDED CE ACCESS · THEY SEE THE EXPIRED STATE");
+    });
+
+    it("previews the end before confirming when paid days stay, then ends the granted days", async () => {
+      const { user, actions } = renderPanel({
+        passes: [MIXED],
+        answer: {
+          status: "saved",
+          value: { ...CHANGE, days: null, endsAt: "2027-04-14T16:30:00.000Z" },
+        },
+      });
+      await user.click(within(row("CE")).getByRole("button", { name: "End granted access…" }));
+
+      expect(dialog()).toHaveAccessibleName("End Bea’s granted CE days?");
+      expect(dialog()).toHaveAccessibleDescription(
+        "Access will end on 15 Apr 2027. Paid days stay; refund in PayMongo to remove them.",
+      );
+      await user.type(reasonField(), "Granted by mistake");
+      await user.click(within(dialog()).getByRole("button", { name: "End granted access" }));
+
+      expect(actions.end).toHaveBeenCalledWith(
+        { status: "idle" },
+        { input: { userId: BEA.userId, examCode: "CE", reason: "Granted by mistake" } },
+      );
+      expect(status()).toHaveTextContent("✓ ENDED CE GRANTED DAYS · ACCESS UNTIL 15 APR 2027");
+    });
+
+    it("words the end by what the server did: paid days that landed after the page was read stay", async () => {
+      const { user } = renderPanel({
+        passes: [ACTIVE],
+        answer: {
+          status: "saved",
+          value: { ...CHANGE, days: null, endsAt: "2027-04-14T16:30:00.000Z" },
+        },
+      });
+      await user.click(within(row("CE")).getByRole("button", { name: "End access now…" }));
+      await user.type(reasonField(), "Granted by mistake");
+      await user.click(within(dialog()).getByRole("button", { name: "End access now" }));
+
+      expect(status()).toHaveTextContent("✓ ENDED CE GRANTED DAYS · ACCESS UNTIL 15 APR 2027");
+    });
+
+    it("keeps the dialog open on a reason the server refused", async () => {
+      const { user } = renderPanel({
+        passes: [MIXED],
+        answer: {
+          status: "refused",
+          error: { kind: "invalid", fieldErrors: { reason: ["Give a reason."] } },
+        },
+      });
+      await user.click(within(row("CE")).getByRole("button", { name: "End granted access…" }));
+      await user.click(within(dialog()).getByRole("button", { name: "End granted access" }));
+
+      expect(within(dialog()).getByText("Give a reason.")).toBeInTheDocument();
+    });
+
+    it("says why the server refused, such as only paid days left", async () => {
+      const { user } = renderPanel({
+        passes: [MIXED],
+        answer: {
+          status: "refused",
+          error: {
+            kind: "invalid",
+            fieldErrors: {},
+            formError: "This Member’s CE Access Pass has only paid days left.",
+          },
+        },
+      });
+      await user.click(within(row("CE")).getByRole("button", { name: "End granted access…" }));
+      await user.type(reasonField(), "Granted by mistake");
+      await user.click(within(dialog()).getByRole("button", { name: "End granted access" }));
+
+      expect(status()).toHaveTextContent("only paid days left");
     });
 
     it("sends nothing when cancelled", async () => {

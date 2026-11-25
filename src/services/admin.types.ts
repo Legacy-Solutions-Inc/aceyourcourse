@@ -770,9 +770,24 @@ export interface AdminUserList {
   pageCount: number;
 }
 
-/** One of a Member's Access Passes, with every grant that made or extended it, oldest first. */
-export interface AdminAccessPass extends Pick<AccessPass, "examCode" | "endsAt"> {
+/** One of a Member's Access Passes as an arm reads it, with every history row that made it, oldest first. */
+export interface AccessPassRecord extends Pick<AccessPass, "examCode" | "endsAt"> {
+  /** Grants, extensions and Paid Orders' days (orderId set), in the order added. */
   grants: Omit<AccessPassGrant, "userId" | "examCode">[];
+}
+
+/**
+ * What "End access now" would do to a pass at the read (Phase 4, ticket 10;
+ * story 151t): end it now, when it holds no paid days after its granted
+ * ones ("End access now"); or end it on `endsAt`, the paid days kept ("End
+ * granted access").
+ */
+export type PassEnding = { kind: "now" } | { kind: "keeps-paid"; endsAt: string };
+
+/** One of a Member's Access Passes on their detail page. */
+export interface AdminAccessPass extends AccessPassRecord {
+  /** What ending its granted days would do now; null when there are none to end (it has ended, or only paid days are left). */
+  ending: PassEnding | null;
 }
 
 /** A Member's progress in one of their Target Exams (ticket 15's calculator). */

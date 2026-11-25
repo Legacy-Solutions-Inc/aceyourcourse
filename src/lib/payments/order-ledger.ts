@@ -146,6 +146,14 @@ export interface PassSegment {
   endsAt: string;
 }
 
+/**
+ * One history row as an arm hands it to the segment model, with the arm's key
+ * for writing it back (the row's seq in Postgres, its place in the sample data).
+ */
+export interface PassHistoryRow extends PassSegment {
+  key: number;
+}
+
 const ms = (iso: string) => new Date(iso).getTime();
 const iso = (time: number) => new Date(time).toISOString();
 
@@ -210,6 +218,53 @@ export function removeUnusedDays<T extends PassSegment>(
     segments,
     endsAt: removed > 0 ? iso(Math.max(at, ms(passEndsAt) - removed)) : passEndsAt,
   };
+}
+
+/**
+ * What "End granted access" would do to a pass now (ticket 10): nothing,
+ * when no granted day falls after now (the pass has ended, or only paid days
+ * are left); end it now, when no paid day is left after the granted ones go;
+ * or end it on `endsAt`, keeping the paid days. `moved` is the history rows
+ * whose segment that changes, as they then stand, for the arm to rewrite.
+ */
+export type GrantedEnding<T extends PassSegment> =
+  { kind: "none" } | { kind: "now" | "keeps-paid"; endsAt: string; moved: T[] };
+
+/**
+ * Pure: "End granted access" on a pass at `now`, from its history rows in
+ * order and its end: the granted segments (grants and extensions: no
+ * Order's) lose their part after now and every later paid segment moves
+ * earlier by as much (removeUnusedDays). Paid days, used or not, stay.
+ *
+ * Days of the pass that no history row holds came before the history was
+ * kept (ticket 17 started it; sample passes have none): a Paid Order always
+ * writes its row (ticket 03), so they're granted days, and go too. They can
+ * only lie before the first row, which started at the pass's end then.
+ */
+export function endGrantedDays<T extends PassSegment>(
+  history: readonly T[],
+  passEndsAt: string,
+  now: Date,
+): GrantedEnding<T> {
+  const standing = passSegments(history, passEndsAt);
+  const heldFrom = ms(standing[0]?.startsAt ?? passEndsAt);
+  const untracked =
+    heldFrom > now.getTime()
+      ? [{ row: null, orderId: null, startsAt: now.toISOString(), endsAt: iso(heldFrom) }]
+      : [];
+  const { segments, endsAt } = removeUnusedDays(
+    [...untracked, ...standing.map((row) => ({ ...row, row }))],
+    passEndsAt,
+    (segment) => segment.orderId === null,
+    now,
+  );
+  if (endsAt === passEndsAt) return { kind: "none" };
+  const moved = segments.flatMap(({ row, startsAt, endsAt: until }) =>
+    row && (row.startsAt !== startsAt || row.endsAt !== until)
+      ? [{ ...row, startsAt, endsAt: until }]
+      : [],
+  );
+  return { kind: ms(endsAt) > now.getTime() ? "keeps-paid" : "now", endsAt, moved };
 }
 
 /** Pure: whether an Order was ever Paid: Paid, or Refunded since (it has a Payment Acknowledgement). */

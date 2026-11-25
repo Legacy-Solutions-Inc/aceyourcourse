@@ -41,6 +41,13 @@ describe("noticeText", () => {
     expect(noticeText(notice({ kind: "ended", examCode: "ME" }))).toBe("Your ME access has ended");
   });
 
+  it("says when access now ends once an Owner ended the granted days, on its Manila day (ticket 10)", () => {
+    // 00:30 on 15 Apr 2027 in Manila is still 14 Apr in UTC.
+    expect(noticeText(notice({ kind: "shortened", endsAt: "2027-04-14T16:30:00.000Z" }))).toBe(
+      "Your CE access now ends 15 Apr 2027",
+    );
+  });
+
   it("says a refund was processed and when the pass now ends (ticket 09)", () => {
     expect(
       noticeText(

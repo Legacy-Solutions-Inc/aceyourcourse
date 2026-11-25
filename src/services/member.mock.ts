@@ -48,7 +48,7 @@ import type {
   PrivacyRequestOutcome,
   TargetExam,
 } from "@/services/member.types";
-import { writeSamplePass } from "@/services/mock/pass-writes";
+import { samplePassHistory, writeSamplePass } from "@/services/mock/pass-writes";
 import { getSampleStore, type SamplePrivacyRequest } from "@/services/mock/sample-store";
 import {
   orderCalls,
@@ -712,11 +712,7 @@ function holdSampleOrder<T>(
   const held = (row: { userId: string | null; examCode: string }) =>
     row.userId === userId && row.examCode === examCode;
   const pass = store.accessPasses.find(held) ?? null;
-  const history = store.accessPassGrants.flatMap((row, key) =>
-    pass && held(row)
-      ? [{ key, orderId: row.orderId, startsAt: row.startsAt, endsAt: row.endsAt }]
-      : [],
-  );
+  const history = pass && userId ? samplePassHistory(userId, examCode) : [];
   const { write, result } = work(
     structuredClone({
       order,

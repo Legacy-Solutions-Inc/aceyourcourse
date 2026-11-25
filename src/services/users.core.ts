@@ -1,6 +1,7 @@
 import { newestOrderFirst } from "@/lib/admin/orders-list";
 import { USERS_PAGE_SIZE } from "@/lib/admin/users-list";
 import { isPassActive } from "@/lib/member-app/access";
+import { endGrantedDays } from "@/lib/payments/order-ledger";
 import {
   type ForceSignOutInput,
   forceSignOutInputSchema,
@@ -10,6 +11,7 @@ import {
   userListQuerySchema,
 } from "@/services/admin.schema";
 import type {
+  AccessPassRecord,
   AdminAccessPass,
   AdminMemberDetail,
   AdminResult,
@@ -37,7 +39,8 @@ import type { ActiveDevice, ConsentRecord, Member } from "@/services/member.type
 //   Tester list, each read now. Each arm finds the page its own way (the
 //   sample arm with matchesUserQuery below, the database in SQL).
 // - A Member's detail: their records, read fresh, with every Order they made
-//   (Phase 4, ticket 07), newest first. What the Member App itself
+//   (Phase 4, ticket 07), newest first, and what "End access now" would do
+//   to each Access Pass (ticket 10). What the Member App itself
 //   reads (Target Exams, the Active Device and its switch log, progress) comes
 //   from the arm's Member seam, which reads only that Member's own records.
 // - Force sign-out: clears the Member's Active Device, so the device's next
@@ -58,7 +61,7 @@ export interface MemberRecords {
   role: UserRole;
   betaTester: boolean;
   /** Their Access Passes by Exam code, each with its grants, oldest first. */
-  accessPasses: AdminAccessPass[];
+  accessPasses: AccessPassRecord[];
   /** Their agreements, oldest first. */
   consents: ConsentRecord[];
   /** Every Order they made, in any order, each with its Invoice Request and refunds (Phase 4, tickets 07–09). */
@@ -150,6 +153,24 @@ const saved = <T>(value: T): AdminResult<T> => ({ ok: true, value, tags: [] });
 const newestWithoutId = <T extends { userId: string }>(records: readonly T[]) =>
   records.map(({ userId: _, ...record }) => record).reverse();
 
+/**
+ * Pure: a pass with what "End access now" would do to it at `now` (Phase 4,
+ * ticket 10): the Order ledger's endGrantedDays over its history, as the
+ * action itself decides, so the panel's label and preview match.
+ */
+function withEnding(pass: AccessPassRecord, now: Date): AdminAccessPass {
+  const ending = endGrantedDays(pass.grants, pass.endsAt, now);
+  return {
+    ...pass,
+    ending:
+      ending.kind === "none"
+        ? null
+        : ending.kind === "now"
+          ? { kind: "now" }
+          : { kind: "keeps-paid", endsAt: ending.endsAt },
+  };
+}
+
 /** The Admin seam's Users calls, over an arm's store and Member seam. */
 export function usersCalls(store: UsersStore, member: MemberReads) {
   async function listUsers(
@@ -209,7 +230,7 @@ export function usersCalls(store: UsersStore, member: MemberReads) {
       role,
       betaTester,
       targetExams,
-      accessPasses,
+      accessPasses: accessPasses.map((pass) => withEnding(pass, now)),
       progress,
       activeDevice,
       deviceSwitches: newestWithoutId(switches),

@@ -7,7 +7,7 @@ import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
 import { type AccessPassStore, accessPassCalls } from "@/services/access-passes.core";
 import { accessPassFromRow } from "@/services/content.rows";
-import { memberFromRow, targetExamFromRow, writePass } from "@/services/member.db";
+import { memberFromRow, readPassHistory, targetExamFromRow, writePass } from "@/services/member.db";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The Admin seam's Access Pass actions on Postgres (Phase 3, ticket 17): the
@@ -15,8 +15,10 @@ import { memberFromRow, targetExamFromRow, writePass } from "@/services/member.d
 // the records a change writes with it. Each change runs in one transaction
 // that first locks the Member's row, as the Member seam's Target Exam
 // changes do (member.db.ts), so a grant and a Target Exam change for the same
-// Member take turns; then the pass, its history row, the Target Exam, the
-// notice and the Staff Activity are written together, or none of them.
+// Member take turns, then the pass (whose lock covers its history); then the
+// pass, its history row or the rows an end moved (ticket 10), the Target
+// Exam, the notice and the Staff Activity are written together, or none of
+// them.
 // Drizzle bypasses RLS, so authorisation is the seam's role check and the
 // Staff Guard (coding standards §3).
 // ─────────────────────────────────────────────────────────────────────────────
@@ -47,12 +49,14 @@ const databaseAccessPassStore: AccessPassStore = {
           .from(memberTargetExams)
           .where(eq(memberTargetExams.userId, userId))
           .orderBy(asc(memberTargetExams.seq));
+        const history = pass ? await readPassHistory(tx, userId, examCode) : [];
 
         const { write, result } = work({
           member: memberFromRow(member),
           examExists: exam !== undefined,
           pass: pass ? accessPassFromRow(pass) : null,
           targetExams: targetExams.map(targetExamFromRow),
+          history,
         });
         if (!write) return result;
 

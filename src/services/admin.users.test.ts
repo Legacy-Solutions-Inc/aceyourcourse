@@ -367,7 +367,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Users ($name)", (arm) => {
           betaTester: true,
           targetExams: await member.listTargetExams(BEA.userId),
           accessPasses: [
-            { examCode: "CE", endsAt: at(90 * DAY), grants: [] },
+            { examCode: "CE", endsAt: at(90 * DAY), grants: [], ending: { kind: "now" } },
             {
               examCode: "ME",
               endsAt: at(10 * DAY),
@@ -375,6 +375,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Users ($name)", (arm) => {
                 { ...grantShown, startsAt: at(-20 * DAY) },
                 { ...grantShown, endsAt: at(10 * DAY) },
               ],
+              ending: { kind: "now" },
             },
           ],
           progress: [

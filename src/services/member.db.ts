@@ -24,6 +24,7 @@ import * as schema from "@/lib/db/schema";
 import { deviceStatusFor } from "@/lib/member-app/device-token";
 import { noticesToShow } from "@/lib/member-app/notices";
 import { privacyRequestDueOn } from "@/lib/member-app/privacy-requests";
+import type { PassHistoryRow } from "@/lib/payments/order-ledger";
 import { type OrderRefund, refundsOfOrder } from "@/lib/payments/refunds";
 import { toPlanDays } from "@/lib/plans/plan-rules";
 import { isReaderZoom } from "@/lib/reviewer-pdfs/reader";
@@ -1111,6 +1112,57 @@ const listExamsOnSale: MemberService["listExamsOnSale"] = async () => {
 // ── Buying (Phase 4, ticket 03) ─────────────────────────────────────────────
 
 /**
+ * Reads a Member's pass history for an Exam in `tx`, in order, each row keyed
+ * by its seq, as the Order ledger's segment model reads it. The caller holds
+ * the pass's lock, which covers its history: every write to it locks the
+ * pass first.
+ */
+export async function readPassHistory(
+  tx: Transaction,
+  userId: string,
+  examCode: string,
+): Promise<PassHistoryRow[]> {
+  const { accessPassGrants } = schema;
+  const rows = await tx
+    .select({
+      key: accessPassGrants.seq,
+      orderId: accessPassGrants.orderId,
+      startsAt: accessPassGrants.startsAt,
+      endsAt: accessPassGrants.endsAt,
+    })
+    .from(accessPassGrants)
+    .where(and(eq(accessPassGrants.userId, userId), eq(accessPassGrants.examCode, examCode)))
+    .orderBy(asc(accessPassGrants.seq));
+  return rows.map((row) => ({
+    ...row,
+    startsAt: row.startsAt.toISOString(),
+    endsAt: row.endsAt.toISOString(),
+  }));
+}
+
+/** Rewrites the pass history rows a change moved in `tx`, by seq, in place (the segment model). */
+async function rewriteSegments(
+  tx: Transaction,
+  userId: string,
+  examCode: string,
+  segments: readonly PassHistoryRow[],
+): Promise<void> {
+  const { accessPassGrants } = schema;
+  for (const segment of segments) {
+    await tx
+      .update(accessPassGrants)
+      .set({ startsAt: new Date(segment.startsAt), endsAt: new Date(segment.endsAt) })
+      .where(
+        and(
+          eq(accessPassGrants.seq, segment.key),
+          eq(accessPassGrants.userId, userId),
+          eq(accessPassGrants.examCode, examCode),
+        ),
+      );
+  }
+}
+
+/**
  * Writes a change to a Member's Access Pass for an Exam in `tx`: the pass
  * (made when they held none), its history row, the Target Exam record, the
  * notice and the Staff Activity. An Owner's grant, extension or end
@@ -1131,6 +1183,7 @@ export async function writePass(
     .onConflictDoUpdate({ target: [accessPasses.userId, accessPasses.examCode], set: { endsAt } });
   if (write.grant)
     await tx.insert(schema.accessPassGrants).values(accessPassGrantToRow(write.grant));
+  await rewriteSegments(tx, userId, examCode, write.segments);
   if (write.targetExam) await writeTargetExam(tx, userId, write.targetExam);
   await tx.insert(schema.memberNotices).values(noticeToRow(write.notice));
   await tx.insert(schema.staffActivity).values(staffActivityToRow(write.activity));
@@ -1331,7 +1384,7 @@ async function holdOrder<T>(
   orderId: string,
   work: (holding: OrderHolding) => { write: OrderWrite | null; result: T },
 ): Promise<T | null> {
-  const { orders, members, accessPasses, accessPassGrants, memberTargetExams } = schema;
+  const { orders, members, accessPasses, memberTargetExams } = schema;
   const [orderRow] = await tx.select().from(orders).where(eq(orders.id, orderId)).for("update");
   if (!orderRow) return null;
   const order = orderFromRow(orderRow);
@@ -1353,31 +1406,14 @@ async function holdOrder<T>(
         .where(eq(memberTargetExams.userId, userId))
         .orderBy(asc(memberTargetExams.seq))
     : [];
-  // The pass's lock covers its history: every write to it locks the pass first.
-  const history =
-    userId && pass
-      ? await tx
-          .select({
-            key: accessPassGrants.seq,
-            orderId: accessPassGrants.orderId,
-            startsAt: accessPassGrants.startsAt,
-            endsAt: accessPassGrants.endsAt,
-          })
-          .from(accessPassGrants)
-          .where(and(eq(accessPassGrants.userId, userId), eq(accessPassGrants.examCode, examCode)))
-          .orderBy(asc(accessPassGrants.seq))
-      : [];
+  const history = userId && pass ? await readPassHistory(tx, userId, examCode) : [];
 
   const { write, result } = work({
     order,
     member: member ? memberFromRow(member) : null,
     pass: pass ? accessPassFromRow(pass) : null,
     targetExams: targetExams.map(targetExamFromRow),
-    history: history.map((row) => ({
-      ...row,
-      startsAt: row.startsAt.toISOString(),
-      endsAt: row.endsAt.toISOString(),
-    })),
+    history,
     refunds: await readOrderRefunds(tx, [orderId]),
   });
   if (!write) return result;
@@ -1419,23 +1455,12 @@ async function writeReduction(
   examCode: string,
   write: PassReduction,
 ): Promise<void> {
-  const { accessPasses, accessPassGrants } = schema;
+  const { accessPasses } = schema;
   await tx
     .update(accessPasses)
     .set({ endsAt: new Date(write.endsAt) })
     .where(and(eq(accessPasses.userId, userId), eq(accessPasses.examCode, examCode)));
-  for (const segment of write.segments) {
-    await tx
-      .update(accessPassGrants)
-      .set({ startsAt: new Date(segment.startsAt), endsAt: new Date(segment.endsAt) })
-      .where(
-        and(
-          eq(accessPassGrants.seq, segment.key),
-          eq(accessPassGrants.userId, userId),
-          eq(accessPassGrants.examCode, examCode),
-        ),
-      );
-  }
+  await rewriteSegments(tx, userId, examCode, write.segments);
   await tx.insert(schema.memberNotices).values(noticeToRow(write.notice));
   await tx.insert(schema.staffActivity).values(staffActivityToRow(write.activity));
 }
