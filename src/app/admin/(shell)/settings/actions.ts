@@ -10,6 +10,7 @@ import {
   updateWebsiteSettings,
 } from "@/services/admin";
 import {
+  businessDetailsSchema,
   changeStaffRoleSchema,
   contactSettingsSchema,
   inviteStaffSchema,
@@ -39,6 +40,12 @@ export const saveLinks = adminAction(
 /** Saves the trust figures, dated today. */
 export const saveTrustFigures = adminAction(
   { role: "owner", schema: trustFiguresSchema, requiresStamp: true },
+  updateWebsiteSettings,
+);
+
+/** Saves the business details printed on Payment Acknowledgements (Phase 4, ticket 06). */
+export const saveBusinessDetails = adminAction(
+  { role: "owner", schema: businessDetailsSchema, requiresStamp: true },
   updateWebsiteSettings,
 );
 

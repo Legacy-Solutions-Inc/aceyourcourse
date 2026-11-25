@@ -1183,16 +1183,10 @@ const databaseOrderStore: OrderStore = {
     }),
   findOwnOrder: (userId, reference) =>
     inDatabase(async () => {
-      const { orders, accessPassGrants } = schema;
-      const [row] = await getDb()
-        .select({ order: orders, accessUntil: accessPassGrants.endsAt })
-        .from(orders)
-        .leftJoin(accessPassGrants, eq(accessPassGrants.orderId, orders.id))
-        .where(and(eq(orders.reference, reference), eq(orders.userId, userId)));
-      return row
-        ? { order: orderFromRow(row.order), accessUntil: row.accessUntil?.toISOString() ?? null }
-        : null;
+      const [own] = await readOwnOrders(userId, reference);
+      return own ?? null;
     }),
+  listOwnOrders: (userId) => inDatabase(() => readOwnOrders(userId)),
   withOrder: (orderId, work) =>
     inDatabase(() => getDb().transaction((tx) => holdOrder(tx, orderId, work))),
   // The event's row and what it changed commit together: a repeat finds the
@@ -1238,6 +1232,33 @@ const databaseOrderStore: OrderStore = {
       return rows.map(orderFromRow);
     }),
 };
+
+/**
+ * A Member's own Orders (just the one with `reference`, when given), newest
+ * first, each with the days its payment added to their pass: its paid
+ * history row (unique per Order). Always scoped to the Member.
+ */
+async function readOwnOrders(userId: string, reference?: string) {
+  const { orders, accessPassGrants } = schema;
+  const mine = eq(orders.userId, userId);
+  const rows = await getDb()
+    .select({
+      order: orders,
+      startsAt: accessPassGrants.startsAt,
+      endsAt: accessPassGrants.endsAt,
+    })
+    .from(orders)
+    .leftJoin(accessPassGrants, eq(accessPassGrants.orderId, orders.id))
+    .where(reference === undefined ? mine : and(mine, eq(orders.reference, reference)))
+    .orderBy(desc(orders.createdAt), desc(orders.reference));
+  return rows.map(({ order, startsAt, endsAt }) => ({
+    order: orderFromRow(order),
+    paidDays:
+      startsAt && endsAt
+        ? { startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString() }
+        : null,
+  }));
+}
 
 /** An Order id as Postgres takes it: the metadata PayMongo echoes could carry anything. */
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

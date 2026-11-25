@@ -107,6 +107,8 @@ export const paths = {
     /** One of the Member's Orders (ticket 03): Confirming payment, then Paid or Failed. */
     order: (reference: string) => `/app/plans/orders/${encodeURIComponent(reference)}`,
     billing: "/app/billing",
+    /** One of the Member's Paid Orders' Payment Acknowledgement (Phase 4, ticket 06). */
+    acknowledgement: (reference: string) => `/app/billing/${encodeURIComponent(reference)}`,
     account: "/app/account",
     support: "/app/support",
   },

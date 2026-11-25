@@ -25,7 +25,7 @@ export const isPaymentMethod = (value: unknown): value is PaymentMethod =>
 /** Pure: a method as people read it: "QR Ph", "GCash", "Maya" or "Card". */
 export const methodLabel = (method: PaymentMethod): string => LABELS[method];
 
-/** Pure: a method in capitals, as the receipt line has it: "QR PH". */
+/** Pure: a method in capitals, as the Paid screen's payment line has it: "QR PH". */
 export const methodTag = (method: PaymentMethod): string => LABELS[method].toUpperCase();
 
 /** What the failed payment screen says. */

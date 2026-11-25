@@ -45,6 +45,7 @@ const SEED_SETTINGS = {
     instagram: "https://www.instagram.com/aceyourcourseph",
   },
   shopStats: { rating: 4.8, ratingCount: 874, followers: "3.7K", asOf: "2026-10-29" },
+  business: { name: "Ace Your Course", address: null, tin: null, vatRegistered: false },
 };
 
 const NEW_EMAIL = "hello@aceyourcourse.ph";
@@ -396,6 +397,113 @@ describe.each(ADMIN_ARMS)("Admin seam: Settings ($name)", (arm) => {
 
 // The sample arm saves to a draft copy and validates the whole catalogue before
 // it commits (CONVENTIONS §3), so no save can break the Website.
+describe.each(ADMIN_ARMS)("Admin seam: business details ($name)", (arm) => {
+  // The seller on every Payment Acknowledgement (Phase 4, ticket 06): one
+  // more part of the settings record, saved like the others, with the
+  // conflict check and Staff Activity. The details here are made up.
+  const { seam } = arm;
+  const DETAILS = {
+    name: "Ace Your Course Review Center",
+    address: "Iloilo City, Iloilo",
+    tin: "123456789000",
+    vatRegistered: true,
+  };
+
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    clockAt(BOOT);
+    await arm.reset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("saves an Owner's business details, the TIN kept with dashes, live for the Member App", async () => {
+    clockAt(at(MINUTE));
+    const { stamp } = await seam.getSettingsForAdmin();
+
+    const result = await seam.updateWebsiteSettings(OWNER, { business: DETAILS }, stamp);
+
+    const saved = { ...DETAILS, tin: "123-456-789-000" };
+    expect(result).toMatchObject({ ok: true, value: { values: { business: saved } } });
+    expect((await getWebsiteSettings()).business).toEqual(saved);
+  });
+
+  it("logs the save in Staff Activity with the details before and after", async () => {
+    await seam.updateWebsiteSettings(OWNER, { business: DETAILS });
+
+    expect(await arm.staffActivity()).toEqual([
+      expect.objectContaining({
+        actor: { email: OWNER.email, name: OWNER.name },
+        entity: "settings",
+        action: "update",
+        before: expect.objectContaining({ business: SEED_SETTINGS.business }),
+        after: expect.objectContaining({ business: { ...DETAILS, tin: "123-456-789-000" } }),
+      }),
+    ]);
+  });
+
+  it("clears an emptied address and TIN, trimming the name", async () => {
+    await seam.updateWebsiteSettings(OWNER, { business: DETAILS });
+
+    const result = await seam.updateWebsiteSettings(OWNER, {
+      business: { name: "  Ace Your Course  ", address: "  ", tin: "", vatRegistered: false },
+    });
+
+    expect(result.ok && result.value.values.business).toEqual(SEED_SETTINGS.business);
+  });
+
+  it("refuses an Editor on the server, saving nothing", async () => {
+    expect(await seam.updateWebsiteSettings(EDITOR, { business: DETAILS })).toEqual({
+      ok: false,
+      error: { kind: "forbidden", message: "ONLY AN OWNER CAN CHANGE SETTINGS" },
+    });
+    expect((await getWebsiteSettings()).business).toEqual(SEED_SETTINGS.business);
+    expect(await arm.staffActivity()).toEqual([]);
+  });
+
+  it.each(["12345678", "123-456-789-0000", "ABC-DEF-GHI"])(
+    "refuses the TIN %j with a field message",
+    async (tin) => {
+      expect(await seam.updateWebsiteSettings(OWNER, { business: { ...DETAILS, tin } })).toEqual({
+        ok: false,
+        error: {
+          kind: "invalid",
+          fieldErrors: {
+            "business.tin": [
+              "ENTER 9 DIGITS, LIKE 123-456-789, WITH A 3- OR 5-DIGIT BRANCH CODE IF ANY",
+            ],
+          },
+        },
+      });
+      expect(await arm.staffActivity()).toEqual([]);
+    },
+  );
+
+  it("refuses a business with no name", async () => {
+    expect(
+      await seam.updateWebsiteSettings(OWNER, { business: { ...DETAILS, name: "  " } }),
+    ).toEqual({
+      ok: false,
+      error: { kind: "invalid", fieldErrors: { "business.name": ["ENTER THE BUSINESS NAME"] } },
+    });
+  });
+
+  it("refuses a stale save over a newer one with the conflict check", async () => {
+    const { stamp: opened } = await seam.getSettingsForAdmin();
+    clockAt(at(MINUTE));
+    await seam.updateWebsiteSettings(OWNER, { contactEmail: NEW_EMAIL }, opened);
+
+    clockAt(at(2 * MINUTE));
+    expect(await seam.updateWebsiteSettings(SECOND_OWNER, { business: DETAILS }, opened)).toEqual({
+      ok: false,
+      error: { kind: "conflict", savedBy: OWNER.name, savedAt: at(MINUTE).toISOString() },
+    });
+    expect((await getWebsiteSettings()).business).toEqual(SEED_SETTINGS.business);
+  });
+});
+
 describe("Admin seam: Settings (sample data only)", () => {
   beforeEach(() => {
     resetSampleStore();

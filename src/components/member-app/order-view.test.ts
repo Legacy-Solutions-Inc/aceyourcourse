@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import type { MemberOrder } from "@/services/member.types";
 
-import { orderLine, orderScreen, receiptLine, STILL_WAITING_MS, stillWaiting } from "./order-view";
+import { orderLine, orderScreen, paymentLine, STILL_WAITING_MS, stillWaiting } from "./order-view";
 
 // The Order screens, worded (Phase 4, ticket 03; BUILD-MAP §3 Pay pending,
 // Pay failed, Pay success; spec, Phase 4 → Return flow): which screen an
-// Order shows, its summary and receipt lines, and when Confirming payment
+// Order shows, its summary and payment lines, and when Confirming payment
 // says it's still waiting (about 2 minutes on).
 const ORDER: MemberOrder = {
   id: "0b6a3f1e-2c4d-4e5f-8a9b-1c2d3e4f5a6b",
@@ -21,6 +21,7 @@ const ORDER: MemberOrder = {
   paidAt: null,
   accessUntil: null,
   paidAfterExpiry: false,
+  livemode: false,
 };
 
 describe("orderScreen", () => {
@@ -41,9 +42,9 @@ describe("orderLine", () => {
   });
 });
 
-describe("receiptLine", () => {
+describe("paymentLine", () => {
   it("gives the amount, method and reference, and where the receipt is", () => {
-    expect(receiptLine(ORDER)).toBe("₱1,299 · QR PH · REF AYC-10483 · RECEIPT IN BILLING");
+    expect(paymentLine(ORDER)).toBe("₱1,299 · QR PH · REF AYC-10483 · ACKNOWLEDGEMENT IN BILLING");
   });
 });
 

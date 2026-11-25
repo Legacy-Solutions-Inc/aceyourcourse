@@ -29,6 +29,7 @@ import type {
   ExpirySweep,
   Member,
   MemberOrder,
+  PaymentAcknowledgement,
   PaymentEventResult,
   PayInput,
   PayRefusal,
@@ -92,6 +93,12 @@ export interface OrderWrite {
   activity: StaffActivity | null;
 }
 
+/** One of a Member's Orders, with the days its payment added to their pass, from and until (null until Paid). */
+export interface OwnOrder {
+  order: Order;
+  paidDays: { startsAt: string; endsAt: string } | null;
+}
+
 /** Where a payment event finds its Order: by its checkout's id, or our id or reference. */
 export interface OrderLookup {
   checkoutId: string | null;
@@ -128,13 +135,12 @@ export interface OrderStore {
    */
   claimStatusCheck(orderId: string, now: Date, everyMs: number): Promise<boolean>;
   /**
-   * The Member's own Order with this reference, with the end of the pass its
-   * paid days gave (null until Paid); null for no Order of theirs.
+   * The Member's own Order with this reference, with the days its payment
+   * added to their pass (null until Paid); null for no Order of theirs.
    */
-  findOwnOrder(
-    userId: string,
-    reference: string,
-  ): Promise<{ order: Order; accessUntil: string | null } | null>;
+  findOwnOrder(userId: string, reference: string): Promise<OwnOrder | null>;
+  /** Every Order of the Member's, newest first, each with its paid days (ticket 06). */
+  listOwnOrders(userId: string): Promise<OwnOrder[]>;
   /**
    * Runs `work` on an Order and its buyer's pass as they are now, then writes
    * what it gives, all as one step: two outcomes for the same Order or Member
@@ -167,7 +173,7 @@ const payInputSchema = z.object({
 });
 
 /** Pure: what the screens show of an Order at `now`: Expired once Pending past its 24 hours. */
-const memberOrderOf = (order: Order, accessUntil: string | null, now: Date): MemberOrder => ({
+const memberOrderOf = ({ order, paidDays }: OwnOrder, now: Date): MemberOrder => ({
   id: order.id,
   reference: order.reference,
   examCode: order.examCode,
@@ -178,7 +184,8 @@ const memberOrderOf = (order: Order, accessUntil: string | null, now: Date): Mem
   status: effectiveStatus(order, now),
   createdAt: order.createdAt,
   paidAt: order.paidAt,
-  accessUntil,
+  livemode: order.livemode,
+  accessUntil: paidDays?.endsAt ?? null,
   paidAfterExpiry: paidAfterExpiry(order),
 });
 
@@ -340,7 +347,35 @@ export function orderCalls(store: OrderStore) {
 
   async function getMemberOrder(userId: string, reference: string): Promise<MemberOrder | null> {
     const own = await ownOrder(userId, reference);
-    return own && memberOrderOf(own.order, own.accessUntil, new Date());
+    return own && memberOrderOf(own, new Date());
+  }
+
+  /** Every Order of the Member's, newest first, as at now (ticket 06). */
+  async function listMemberOrders(userId: string): Promise<MemberOrder[]> {
+    const now = new Date();
+    const own = await store.listOwnOrders(memberUserIdSchema.parse(userId));
+    return own.map((held) => memberOrderOf(held, now));
+  }
+
+  /**
+   * The Payment Acknowledgement of one of the Member's own Paid Orders
+   * (ticket 06): the Order, the buyer as at Pay, the access period its days
+   * gave, and PayMongo's reference (the payment's id, or the checkout's while
+   * there's none). Null for anyone else's Order, or one that isn't Paid.
+   */
+  async function getPaymentAcknowledgement(
+    userId: string,
+    reference: string,
+  ): Promise<PaymentAcknowledgement | null> {
+    const own = await ownOrder(userId, reference);
+    if (!own || own.order.status !== "paid") return null;
+    const { order, paidDays } = own;
+    return {
+      order: memberOrderOf(own, new Date()),
+      buyer: { name: order.buyerName, email: order.buyerEmail },
+      access: paidDays,
+      payMongoReference: order.paymentId ?? order.checkoutId,
+    };
   }
 
   /** Asks the client for an Order's checkout status, and applies Paid or Failed through the ledger. */
@@ -376,7 +411,7 @@ export function orderCalls(store: OrderStore) {
       client !== null &&
       order.status === "pending" &&
       (!throttled || (await store.claimStatusCheck(order.id, new Date(), STATUS_CHECK_EVERY_MS)));
-    if (!asking) return memberOrderOf(order, own.accessUntil, new Date());
+    if (!asking) return memberOrderOf(own, new Date());
     await applyCheckoutStatus(order, client);
     return getMemberOrder(userId, reference);
   }
@@ -448,6 +483,8 @@ export function orderCalls(store: OrderStore) {
   return {
     payForPlan,
     getMemberOrder,
+    listMemberOrders,
+    getPaymentAcknowledgement,
     recordPaymentEvent,
     expireOverdueOrders,
     checkOrderStatus: (userId: string, reference: string, client: PaymentsClient | null) =>

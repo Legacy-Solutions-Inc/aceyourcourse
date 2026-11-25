@@ -9,7 +9,7 @@ export function TestPaymentsStrip() {
     <p
       role="note"
       aria-label="TEST PAYMENTS"
-      className="bg-ayc-navy px-4 py-1.5 text-center font-mono text-[12px] font-bold tracking-wide text-ayc-paper"
+      className="bg-ayc-navy px-4 py-1.5 text-center font-mono text-[12px] font-bold tracking-wide text-ayc-paper print:hidden"
     >
       TEST PAYMENTS · no real money
     </p>

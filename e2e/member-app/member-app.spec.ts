@@ -155,10 +155,8 @@ test.describe("a Beta Tester", () => {
     await signInAndOnboard(page, "tester");
     await expect(welcome(page, "Bea")).toBeVisible();
 
-    for (const [label, path] of [
-      ["Courses", "/app/courses"],
-      ["Billing", "/app/billing"],
-    ] as const) {
+    // Billing has its own screen since Phase 4, ticket 06 (billing.spec.ts).
+    for (const [label, path] of [["Courses", "/app/courses"]] as const) {
       await memberNav(page)
         .getByRole("link", { name: new RegExp(label) })
         .click();
@@ -463,9 +461,9 @@ test.describe("accessibility", () => {
         await expect(welcome(page, "Bea")).toBeVisible();
         await expectNoBlockingViolations(page);
 
-        // The Library and Plans are built (their checks are in library.spec.ts and
-        // plans.spec.ts); Billing isn't yet.
-        await page.goto(paths.memberApp.billing);
+        // The Library, Plans and Billing are built (their checks are in
+        // library.spec.ts, plans.spec.ts and billing.spec.ts); Courses isn't yet.
+        await page.goto(paths.memberApp.courses);
         await expect(page.getByRole("heading", { level: 1 })).toHaveText("Coming in the beta");
         await expectNoBlockingViolations(page);
       });

@@ -484,6 +484,18 @@ export type PayRefusal =
 export type PayResult =
   { ok: true; reference: string; redirectTo: string } | { ok: false; reason: PayRefusal };
 
+/**
+ * One of the Member's own Paid Orders as its Payment Acknowledgement shows
+ * it (ticket 06): the Order, who was billed as at Pay, the access period its
+ * days gave (from, until), and PayMongo's reference, null with the fake.
+ */
+export interface PaymentAcknowledgement {
+  order: MemberOrder;
+  buyer: { name: string | null; email: string };
+  access: { startsAt: string; endsAt: string } | null;
+  payMongoReference: string | null;
+}
+
 /** What a PayMongo webhook event did (ticket 05). */
 export type PaymentEventResult = "applied" | "no-change" | "duplicate" | "unknown-order";
 
@@ -517,6 +529,7 @@ export type MemberOrder = Pick<
   | "status"
   | "createdAt"
   | "paidAt"
+  | "livemode"
 > & {
   /** Once Paid: the end of the Access Pass the Order's days gave (ISO); null until then. */
   accessUntil: string | null;

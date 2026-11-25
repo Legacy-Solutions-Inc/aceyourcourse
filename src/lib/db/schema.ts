@@ -318,8 +318,20 @@ export const websiteSettings = pgTable(
     shopFollowers: text("shop_followers").notNull(),
     shopStatsAsOf: date("shop_stats_as_of").notNull(),
     announcementId: text("announcement_id").notNull(),
+    // The seller on Payment Acknowledgements (Phase 4, ticket 06).
+    businessName: text("business_name").notNull().default("Ace Your Course"),
+    businessAddress: text("business_address"),
+    // With dashes, "123-456-789" or with a 3- or 5-digit branch code.
+    businessTin: text("business_tin"),
+    businessVatRegistered: boolean("business_vat_registered").notNull().default(false),
   },
-  (t) => [check("website_settings_single_row", sql`${t.id} = 1`)],
+  (t) => [
+    check("website_settings_single_row", sql`${t.id} = 1`),
+    check(
+      "website_settings_business_tin_format",
+      sql`${t.businessTin} ~ '^[0-9]{3}-[0-9]{3}-[0-9]{3}(-[0-9]{3}|-[0-9]{5})?$'`,
+    ),
+  ],
 ).enableRLS();
 
 /** The announcement bar's messages, in order. */

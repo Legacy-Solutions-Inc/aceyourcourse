@@ -121,6 +121,7 @@ const library = async () =>
   (await import("./(shell)/library/page")).default({ searchParams: Promise.resolve({}) });
 const plans = async () =>
   (await import("./(shell)/plans/page")).default({ searchParams: Promise.resolve({}) });
+const billing = async () => (await import("./(shell)/billing/page")).default();
 const signInAs = async (fields: Record<string, string>) =>
   (await import("./sign-in/actions")).signInAs({ error: null, email: "" }, form(fields));
 
@@ -130,7 +131,7 @@ const GATED_PAGES: [string, () => Promise<unknown>][] = [
   ["/app/library", library],
   ["/app/courses", () => comingSoon("courses")],
   ["/app/plans", plans],
-  ["/app/billing", () => comingSoon("billing")],
+  ["/app/billing", billing],
   ["/app/account", account],
   ["/app/add-exam", addExamPage],
   ["/app/support", support],
@@ -264,20 +265,21 @@ describe("Home", () => {
 });
 
 describe("the screens that aren't built yet", () => {
-  it.each([
-    ["courses", "03 · COURSES"],
-    ["billing", "05 · BILLING"],
-  ])("/app/%s says it's coming in the beta", async (segment, eyebrow) => {
-    await agreedAs(TESTER, "Bea Tester");
-    signedInAs(TESTER);
-    render(await comingSoon(segment));
+  // Billing has its own screen since Phase 4, ticket 06 (billing.test.tsx).
+  it.each([["courses", "03 · COURSES"]])(
+    "/app/%s says it's coming in the beta",
+    async (segment, eyebrow) => {
+      await agreedAs(TESTER, "Bea Tester");
+      signedInAs(TESTER);
+      render(await comingSoon(segment));
 
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Coming in the beta" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(eyebrow)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Back to Home" })).toHaveAttribute("href", "/app");
-  });
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Coming in the beta" }),
+      ).toBeInTheDocument();
+      expect(screen.getByText(eyebrow)).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Back to Home" })).toHaveAttribute("href", "/app");
+    },
+  );
 
   it("answers 404 for an address that is no screen, once the gate and consent let the Member in", async () => {
     await agreedAs(TESTER, "Bea Tester");

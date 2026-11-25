@@ -105,7 +105,7 @@ describe("Admin screens", () => {
     },
   );
 
-  it("shows the Owner Settings' four parts with the sample data's values", async () => {
+  it("shows the Owner Settings' five parts with the sample data's values", async () => {
     signInAs("angel@aceyourcourse.ph");
     render(await SettingsPage());
     expect(screen.getByLabelText("EMAIL ADDRESS")).toHaveValue("aceyourcourseinc@gmail.com");
@@ -114,7 +114,14 @@ describe("Admin screens", () => {
     expect(screen.getByText("NOT CHANGED IN THE ADMIN YET")).toBeInTheDocument();
     expect(
       screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent),
-    ).toEqual(["CONTACT EMAIL", "TRUST FIGURES", "STORE & SOCIAL LINKS", "ADMIN ACCOUNTS"]);
+    ).toEqual([
+      "CONTACT EMAIL",
+      "TRUST FIGURES",
+      "BUSINESS DETAILS",
+      "STORE & SOCIAL LINKS",
+      "ADMIN ACCOUNTS",
+    ]);
+    expect(screen.getByLabelText("BUSINESS NAME")).toHaveValue("Ace Your Course");
   });
 
   it("lists the sample staff list in ADMIN ACCOUNTS, with the Owner's own row first", async () => {

@@ -42,9 +42,9 @@ export function orderScreen(status: OrderStatus): OrderScreen {
 export const orderLine = ({ planName, days, priceCentavos }: MemberOrder): string =>
   `${planName} · ${periodLabel(days)} · ${formatPeso(priceCentavos)}`.toUpperCase();
 
-/** Pure: the Paid screen's receipt line: "₱1,299 · QR PH · REF AYC-10483 · RECEIPT IN BILLING". */
-export const receiptLine = ({ priceCentavos, method, reference }: MemberOrder): string =>
-  `${formatPeso(priceCentavos)} · ${methodTag(method)} · REF ${reference} · RECEIPT IN BILLING`;
+/** Pure: the Paid screen's payment line: "₱1,299 · QR PH · REF AYC-10483 · ACKNOWLEDGEMENT IN BILLING". */
+export const paymentLine = ({ priceCentavos, method, reference }: MemberOrder): string =>
+  `${formatPeso(priceCentavos)} · ${methodTag(method)} · REF ${reference} · ACKNOWLEDGEMENT IN BILLING`;
 
 /** Pure: whether an Order made at `createdAt` has been waiting long enough to say so, at `now`. */
 export const stillWaiting = (createdAt: string, now: Date): boolean =>

@@ -11,7 +11,7 @@ describe("MEMBER_MENU", () => {
       ["02", "Library", "Flash cards, quizzes, reviewers", "/app/library"],
       ["03", "Courses", "Video lessons", "/app/courses"],
       ["04", "Plans", "Buy or renew access", "/app/plans"],
-      ["05", "Billing", "Payments and receipts", "/app/billing"],
+      ["05", "Billing", "Your access and payments", "/app/billing"],
       ["06", "Account", "Exam date and privacy", "/app/account"],
       ["07", "Support", "Contact us", "/app/support"],
     ]);

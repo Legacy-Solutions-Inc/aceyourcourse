@@ -253,6 +253,12 @@ export function settingsFromRows(
       instagram: settings.socialInstagram,
     },
     contactEmail: settings.contactEmail,
+    business: {
+      name: settings.businessName,
+      address: settings.businessAddress,
+      tin: settings.businessTin,
+      vatRegistered: settings.businessVatRegistered,
+    },
     shopStats: {
       rating: settings.shopRating,
       ratingCount: settings.shopRatingCount,
@@ -415,6 +421,10 @@ export function catalogueToRows(seed: CatalogueSeed): CatalogueRows {
         shopFollowers: settings.shopStats.followers,
         shopStatsAsOf: settings.shopStats.asOf,
         announcementId: settings.announcement.id,
+        businessName: settings.business.name,
+        businessAddress: settings.business.address,
+        businessTin: settings.business.tin,
+        businessVatRegistered: settings.business.vatRegistered,
       },
     ],
     announcementMessages: settings.announcement.messages.map((message, position) => ({

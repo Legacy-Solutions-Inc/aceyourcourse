@@ -8,7 +8,7 @@ import type { MemberOrder } from "@/services/member.types";
 
 import { PlansLink } from "./content-state";
 import { OrderPoller, type OrderPollerProps } from "./order-poller";
-import { orderLine, receiptLine } from "./order-view";
+import { orderLine, paymentLine } from "./order-view";
 
 // The Order screens (Phase 4, ticket 03; mockup L546–574; BUILD-MAP §3 Pay
 // pending, Pay failed, Pay success; stories 136–140): one card each, opened
@@ -17,7 +17,7 @@ import { orderLine, receiptLine } from "./order-view";
 const LABEL = "font-mono text-xs font-bold tracking-[0.06em]";
 const TITLE = "text-[26px] leading-[1.15] font-extrabold tracking-[-0.02em]";
 const BODY = "text-[15px] leading-normal text-ayc-slate";
-const RECEIPT =
+const PAYMENT_LINE =
   "border-t border-dashed border-ayc-rule pt-3 font-mono text-xs leading-[1.7] text-muted-foreground";
 const PLAIN_BUTTON =
   "flex min-h-12 items-center border-[1.5px] border-ayc-navy px-4 text-[15px] font-bold";
@@ -76,7 +76,7 @@ export function ConfirmingPayment({
         This usually takes under a minute. Keep this page open. Your access starts as soon as the
         payment is confirmed.
       </p>
-      <p className={RECEIPT}>
+      <p className={PAYMENT_LINE}>
         {orderLine(order)}
         <br />
         REF {order.reference}
@@ -132,7 +132,7 @@ export function PaymentConfirmed({ order }: { order: MemberOrder }) {
           ends.
         </p>
       ) : null}
-      <p className={RECEIPT}>{receiptLine(order)}</p>
+      <p className={PAYMENT_LINE}>{paymentLine(order)}</p>
       <PlansLink href={paths.memberApp.library}>Start reviewing</PlansLink>
     </OrderCard>
   );
@@ -153,7 +153,7 @@ export function PaymentFailed({
       <p className={cn(LABEL, "text-destructive")}>PAYMENT DIDN’T GO THROUGH</p>
       <h1 className={TITLE}>{title}</h1>
       <p className={BODY}>{body}</p>
-      <p className={RECEIPT}>
+      <p className={PAYMENT_LINE}>
         {orderLine(order)} · {methodTag(order.method)}
         <br />
         REF {order.reference}

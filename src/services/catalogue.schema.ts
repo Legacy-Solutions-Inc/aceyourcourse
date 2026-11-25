@@ -4,6 +4,7 @@ import { ABOUT_ALT_MAX, ABOUT_SPEC_MAX } from "@/lib/catalogue/about-content";
 import { isMarketplaceUrl, MARKETPLACE_HOSTS } from "@/lib/catalogue/store-links";
 import { isBucketImageUrl } from "@/lib/catalogue-bucket";
 import { isCalendarDate } from "@/lib/manila-time";
+import { normaliseTin } from "@/lib/payments/tin";
 import type {
   Exam,
   ExamPage,
@@ -456,6 +457,15 @@ const settingsSchema = z.object({
     ),
   }),
   promoBanner: promoBannerSchema.nullable(),
+  business: z.object({
+    name: nonBlank("Business name"),
+    address: z.string().min(1).nullable(),
+    tin: z
+      .string()
+      .refine((tin) => normaliseTin(tin) === tin, "must be a TIN like 123-456-789")
+      .nullable(),
+    vatRegistered: z.boolean(),
+  }),
 });
 
 export const catalogueSeedSchema: z.ZodType<CatalogueSeed> = z

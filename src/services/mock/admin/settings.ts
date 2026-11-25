@@ -14,14 +14,15 @@ import { getSampleStore, stampOf } from "@/services/mock/sample-store";
 import { writeCatalogue } from "./write";
 
 // The sample arm of the Admin seam's Settings area: the Website's contact
-// email, shop and social links, and shop-wide trust figures. They are one
+// email, shop and social links, shop-wide trust figures, and the business
+// details printed on Payment Acknowledgements (Phase 4, ticket 06). They are one
 // record, with one stamp, however many of its parts a save changes.
 
 const RECORD = "settings";
 
 function editable({ settings }: CatalogueSeed): EditableWebsiteSettings {
-  const { contactEmail, shopLinks, socialLinks, shopStats } = settings;
-  return structuredClone({ contactEmail, shopLinks, socialLinks, shopStats });
+  const { contactEmail, shopLinks, socialLinks, shopStats, business } = settings;
+  return structuredClone({ contactEmail, shopLinks, socialLinks, shopStats, business });
 }
 
 const view = (catalogue: CatalogueSeed, stamp: RecordStamp): AdminWebsiteSettings => ({
@@ -52,6 +53,7 @@ export async function updateWebsiteSettings(
       if (update.socialLinks) settings.socialLinks = update.socialLinks;
       // Saving the trust figures dates them: they were copied from Shopee today.
       if (update.shopStats) settings.shopStats = { ...update.shopStats, asOf: manilaDate(now) };
+      if (update.business) settings.business = update.business;
     },
     result: view,
     tags: [CATALOGUE_TAGS.settings],

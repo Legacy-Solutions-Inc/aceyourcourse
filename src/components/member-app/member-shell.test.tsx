@@ -54,7 +54,7 @@ describe("MemberSidebar", () => {
       "02LibraryFlash cards, quizzes, reviewers",
       "03CoursesVideo lessons",
       "04PlansBuy or renew access",
-      "05BillingPayments and receipts",
+      "05BillingYour access and payments",
       "06AccountExam date and privacy",
       "07SupportContact us",
     ]);

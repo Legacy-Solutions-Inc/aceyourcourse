@@ -233,6 +233,9 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     saveTrustFigures: editorSave("owner", settings.saveTrustFigures, () => ({
       shopStats: { rating: "4.9", ratingCount: "900", followers: "3.8K" },
     })),
+    saveBusinessDetails: editorSave("owner", settings.saveBusinessDetails, () => ({
+      business: { name: "Ace Your Course", address: "", tin: "", vatRegistered: false },
+    })),
     addInvite: owner(() => settings.addInvite(IDLE, { input: SAVES.invite })),
     renewStaffInvite: owner(() =>
       settings.renewStaffInvite(IDLE, { input: { email: sampleEmail("expired") } }),

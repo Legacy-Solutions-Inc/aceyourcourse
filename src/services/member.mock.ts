@@ -554,9 +554,11 @@ export async function listExamsOnSale(): Promise<string[]> {
 
 // ── Buying (Phase 4, ticket 03) ─────────────────────────────────────────────
 
-/** The sample data's grants that hold an Order's paid days, by Order id. */
-const paidUntil = (orderId: string) =>
-  getSampleStore().accessPassGrants.find((grant) => grant.orderId === orderId)?.endsAt ?? null;
+/** The days a sample Order's payment added to its buyer's pass: its paid history row. */
+function paidDaysOf(orderId: string) {
+  const grant = getSampleStore().accessPassGrants.find((held) => held.orderId === orderId);
+  return grant ? { startsAt: grant.startsAt, endsAt: grant.endsAt } : null;
+}
 
 // A Node process runs one call at a time here, so an outcome reads and writes
 // in one step, and two Pays take consecutive numbers.
@@ -598,7 +600,15 @@ const sampleOrderStore: OrderStore = {
     const order = getSampleStore().orders.find(
       (candidate) => candidate.reference === reference && candidate.userId === userId,
     );
-    return order ? { order: structuredClone(order), accessUntil: paidUntil(order.id) } : null;
+    return order ? { order: structuredClone(order), paidDays: paidDaysOf(order.id) } : null;
+  },
+  async listOwnOrders(userId) {
+    return getSampleStore()
+      .orders.filter((order) => order.userId === userId)
+      .sort(
+        (a, b) => b.createdAt.localeCompare(a.createdAt) || b.reference.localeCompare(a.reference),
+      )
+      .map((order) => ({ order: structuredClone(order), paidDays: paidDaysOf(order.id) }));
   },
   async withOrder(orderId, work) {
     return holdSampleOrder(orderId, work);
@@ -682,6 +692,8 @@ function holdSampleOrder<T>(
 export const {
   payForPlan,
   getMemberOrder,
+  listMemberOrders,
+  getPaymentAcknowledgement,
   checkOrderStatus,
   pollOrderStatus,
   recordPaymentEvent,

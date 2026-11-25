@@ -53,6 +53,7 @@ function storeFailingToRecord(): OrderStore & { added: string[] } {
     },
     claimStatusCheck: async () => true,
     findOwnOrder: async () => null,
+    listOwnOrders: async () => [],
     withOrder: async () => null,
     withPaymentEvent: async () => ({ recorded: true, found: false }),
     listOverdueOrders: async () => [],

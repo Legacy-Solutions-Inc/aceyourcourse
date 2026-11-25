@@ -50,7 +50,7 @@ export const MEMBER_MENU: readonly MemberMenuItem[] = [
     key: "billing",
     code: "05",
     label: "Billing",
-    hint: "Payments and receipts",
+    hint: "Your access and payments",
     href: paths.memberApp.billing,
   },
   {

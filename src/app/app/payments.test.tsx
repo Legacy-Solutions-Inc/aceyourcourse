@@ -366,7 +366,7 @@ describe("Simulate paid and Simulate failed", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("₱1,299 · GCASH · REF AYC-10001 · RECEIPT IN BILLING"),
+      screen.getByText("₱1,299 · GCASH · REF AYC-10001 · ACKNOWLEDGEMENT IN BILLING"),
     ).toBeInTheDocument();
     const ce = (await listAccessPasses(userId)).find((pass) => pass.examCode === "CE");
     expect(ce?.endsAt).toBe(new Date(BOOT.getTime() + 180 * 24 * 60 * MINUTE).toISOString());

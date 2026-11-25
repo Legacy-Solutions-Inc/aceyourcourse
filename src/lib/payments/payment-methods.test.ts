@@ -27,7 +27,7 @@ describe("PAYMENT_METHODS", () => {
 });
 
 describe("methodTag", () => {
-  it("names a method in capitals, for the receipt line", () => {
+  it("names a method in capitals, for the Paid screen's payment line", () => {
     expect(methodTag("qrph")).toBe("QR PH");
     expect(methodTag("gcash")).toBe("GCASH");
   });

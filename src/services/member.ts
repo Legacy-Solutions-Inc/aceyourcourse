@@ -27,6 +27,7 @@ import type {
   MemberNotice,
   ExpirySweep,
   MemberOrder,
+  PaymentAcknowledgement,
   PaymentEventResult,
   MemberUser,
   NewTargetExam,
@@ -423,6 +424,19 @@ export interface MemberService {
   /** One of this Member's own Orders by its reference; null for anyone else's, or none. */
   getMemberOrder(userId: string, reference: string): Promise<MemberOrder | null>;
   /**
+   * Billing (ticket 06): every Order of this Member's, newest first, as at
+   * the read (a Pending Order older than 24 hours reads Expired).
+   */
+  listMemberOrders(userId: string): Promise<MemberOrder[]>;
+  /**
+   * The Payment Acknowledgement of one of this Member's own Paid Orders
+   * (ticket 06): null for anyone else's Order, one that isn't Paid, or none.
+   */
+  getPaymentAcknowledgement(
+    userId: string,
+    reference: string,
+  ): Promise<PaymentAcknowledgement | null>;
+  /**
    * Asks the payments client for a Pending Order's checkout status, applies
    * a Paid or Failed outcome through the Order ledger, and gives the Order as
    * it is then. Paid adds its days to the Member's Access Pass, keeps them as
@@ -506,6 +520,8 @@ export const listMemberPlans = impl.listMemberPlans;
 export const listExamsOnSale = impl.listExamsOnSale;
 export const payForPlan = impl.payForPlan;
 export const getMemberOrder = impl.getMemberOrder;
+export const listMemberOrders = impl.listMemberOrders;
+export const getPaymentAcknowledgement = impl.getPaymentAcknowledgement;
 export const checkOrderStatus = impl.checkOrderStatus;
 export const pollOrderStatus = impl.pollOrderStatus;
 export const recordPaymentEvent = impl.recordPaymentEvent;

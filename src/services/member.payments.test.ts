@@ -278,6 +278,7 @@ describe.each(MEMBER_ARMS)("Member seam: buying ($name)", (arm) => {
         paidAt: null,
         accessUntil: null,
         paidAfterExpiry: false,
+        livemode: false,
       });
     });
 

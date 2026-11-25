@@ -1,6 +1,6 @@
 import { paths } from "@/paths";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
-import type { ExamPage, Faq } from "@/services/catalogue.types";
+import { DEFAULT_BUSINESS, type ExamPage, type Faq } from "@/services/catalogue.types";
 import { exams, products, reviews } from "@/services/mock/catalogue.generated";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -86,6 +86,7 @@ export const CATALOGUE_SEED: CatalogueSeed = {
       instagram: "https://www.instagram.com/aceyourcourseph",
     },
     contactEmail: "aceyourcourseinc@gmail.com",
+    business: { ...DEFAULT_BUSINESS },
     shopStats: { rating: 4.8, ratingCount: 874, followers: "3.7K", asOf: "2026-10-29" },
     announcement: {
       // Change the id whenever the messages change, so Visitors who dismissed

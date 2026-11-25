@@ -12,6 +12,7 @@ import { MAX_QUERY_LENGTH } from "@/lib/catalogue/product-filters";
 import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
 import { isCalendarDate } from "@/lib/manila-time";
 import { EXTEND_DAYS, GRANT_MAX_DAYS } from "@/lib/member-app/access-pass";
+import { normaliseTin } from "@/lib/payments/tin";
 import { isPlanDays, parsePlanPrice, type PlanDays } from "@/lib/plans/plan-rules";
 import { PDF_NAME_MAX } from "@/lib/reviewer-pdfs/pdf-file";
 import { variationLabel } from "@/lib/catalogue/price";
@@ -233,6 +234,47 @@ export const trustFiguresSchema = z.object({
   }),
 });
 
+const BUSINESS_NAME = "ENTER THE BUSINESS NAME";
+const TIN = "ENTER 9 DIGITS, LIKE 123-456-789, WITH A 3- OR 5-DIGIT BRANCH CODE IF ANY";
+const VAT = "CHOOSE WHETHER THE BUSINESS IS VAT-REGISTERED";
+
+/** Pure: a blank text field as empty (null), anything else as it is. */
+const blankAsNull = (value: unknown) =>
+  typeof value === "string" && value.trim() === "" ? null : value;
+
+/**
+ * The business details printed as the seller on every Payment
+ * Acknowledgement (Phase 4, ticket 06): a name, an address and a TIN
+ * (both optional; blank clears them), and whether the business is
+ * VAT-registered. The TIN is kept with dashes.
+ */
+export const businessDetailsSchema = z.object({
+  business: z.object({
+    name: z
+      .string({ invalid_type_error: BUSINESS_NAME, required_error: BUSINESS_NAME })
+      .trim()
+      .min(1, BUSINESS_NAME)
+      .max(120, "KEEP THE NAME TO 120 CHARACTERS"),
+    address: z.preprocess(
+      blankAsNull,
+      z.string().trim().max(300, "KEEP THE ADDRESS TO 300 CHARACTERS").nullable(),
+    ),
+    tin: z.preprocess(
+      blankAsNull,
+      z
+        .string({ invalid_type_error: TIN })
+        .nullable()
+        .transform((typed, context) => {
+          if (typed === null) return null;
+          const tin = normaliseTin(typed);
+          if (tin === null) context.addIssue({ code: z.ZodIssueCode.custom, message: TIN });
+          return tin;
+        }),
+    ),
+    vatRegistered: z.boolean({ invalid_type_error: VAT, required_error: VAT }),
+  }),
+});
+
 /**
  * A Settings save: any of its parts, each whole. Anything else in the input,
  * such as the announcement, is dropped.
@@ -240,6 +282,7 @@ export const trustFiguresSchema = z.object({
 export const websiteSettingsUpdateSchema = contactSettingsSchema
   .merge(linkSettingsSchema)
   .merge(trustFiguresSchema)
+  .merge(businessDetailsSchema)
   .partial()
   .refine((update) => Object.keys(update).length > 0, "NOTHING TO SAVE");
 

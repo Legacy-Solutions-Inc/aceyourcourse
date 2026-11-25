@@ -25,6 +25,7 @@ const ORDER: MemberOrder = {
   paidAt: null,
   accessUntil: null,
   paidAfterExpiry: false,
+  livemode: false,
 };
 const PAID: MemberOrder = {
   ...ORDER,
@@ -111,7 +112,7 @@ describe("PaymentConfirmed", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("₱1,299 · QR PH · REF AYC-10483 · RECEIPT IN BILLING"),
+      screen.getByText("₱1,299 · QR PH · REF AYC-10483 · ACKNOWLEDGEMENT IN BILLING"),
     ).toBeInTheDocument();
   });
 

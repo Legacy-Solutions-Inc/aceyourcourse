@@ -2,6 +2,7 @@
 // through src/services/admin.ts; these are its inputs and outputs.
 
 import type {
+  BusinessDetails,
   AboutContent,
   AboutSectionKey,
   Exam,
@@ -166,6 +167,8 @@ export interface EditableWebsiteSettings {
   shopLinks: WebsiteSettings["shopLinks"];
   socialLinks: SocialLinks;
   shopStats: ShopStats;
+  /** The seller on Payment Acknowledgements (Phase 4, ticket 06). */
+  business: BusinessDetails;
 }
 
 /** Settings as the Admin reads them: the values, and when and by whom they were last saved. */

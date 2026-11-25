@@ -6,7 +6,8 @@ import { LIVE, resetSampleData, signInAs } from "./helpers";
 // Settings on sample data (ticket 02): an Owner edits the contact email, the
 // store and social links and the trust figures, and each save is live on the
 // Website at once. Plus the conflict check between two Owners, Reset, and an
-// Editor refused.
+// Editor refused. The business details for Payment Acknowledgements (Phase 4,
+// ticket 06) save the same way; billing.spec.ts shows them on one.
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -44,6 +45,7 @@ const part = (page: Page, name: string) => page.getByRole("form", { name });
 const contactPart = (page: Page) => part(page, "CONTACT EMAIL");
 const linksPart = (page: Page) => part(page, "STORE & SOCIAL LINKS");
 const figuresPart = (page: Page) => part(page, "TRUST FIGURES");
+const businessPart = (page: Page) => part(page, "BUSINESS DETAILS");
 const footer = (page: Page) => page.getByRole("contentinfo");
 
 async function openSettings(page: Page) {
@@ -248,6 +250,31 @@ test("POST /api/dev/sample-data/reset starts the sample data again, and the Webs
 
   await page.reload();
   await expect(footer(page).getByRole("link", { name: SEED_EMAIL })).toBeVisible();
+});
+
+test("an Owner saves the business details, the TIN kept with dashes; a TIN in the wrong shape is refused", async ({
+  page,
+}) => {
+  await openSettings(page);
+  const business = businessPart(page);
+  await expect(business.getByLabel("BUSINESS NAME")).toHaveValue("Ace Your Course");
+
+  await business.getByLabel("ADDRESS").fill("Iloilo City, Iloilo");
+  await business.getByLabel("TIN (OPTIONAL)").fill("12345");
+  await business.getByRole("button", { name: "Save details" }).click();
+  await expect(
+    business.getByText("ENTER 9 DIGITS, LIKE 123-456-789, WITH A 3- OR 5-DIGIT BRANCH CODE IF ANY"),
+  ).toBeVisible();
+
+  await business.getByLabel("TIN (OPTIONAL)").fill("123456789");
+  await business.getByRole("radio", { name: "Yes" }).check();
+  await business.getByRole("button", { name: "Save details" }).click();
+  await expect(business.getByRole("status")).toHaveText("✓ SAVED · ON EVERY ACKNOWLEDGEMENT");
+  await expect(business.getByLabel("TIN (OPTIONAL)")).toHaveValue("123-456-789");
+
+  await page.reload();
+  await expect(businessPart(page).getByLabel("ADDRESS")).toHaveValue("Iloilo City, Iloilo");
+  await expect(businessPart(page).getByRole("radio", { name: "Yes" })).toBeChecked();
 });
 
 test("an Editor is refused Settings with the owners-only 403 screen", async ({ page }) => {
