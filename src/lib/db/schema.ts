@@ -1196,6 +1196,9 @@ export const orders = pgTable(
     // When the status-check backup last asked PayMongo (ticket 04): at most
     // once every 10 seconds per Order, claimed with one conditional update.
     statusCheckedAt: at("status_checked_at"),
+    // The Orders admin's internal note, which only Staff see (ticket 07);
+    // null for none. Its stamp is the record "order-note:<id>" (record_stamps).
+    internalNote: text("internal_note"),
   },
   (t) => [
     index("orders_user_id_idx").on(t.userId),

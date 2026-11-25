@@ -1130,9 +1130,10 @@ export async function writePass(
  * same Order or Member take turns; then the Order, the pass, its paid history
  * row, the Target Exam, the notice and the Staff Activity are written
  * together, or none of them. The paid history row's unique order_id keeps an
- * Order's days to one row, whatever happens.
+ * Order's days to one row, whatever happens. The Orders admin's "Check
+ * status with PayMongo" (ticket 07) settles Orders through it too.
  */
-const databaseOrderStore: OrderStore = {
+export const databaseOrderStore: OrderStore = {
   readOnSale: () =>
     inDatabase(async () => {
       const db = getDb();

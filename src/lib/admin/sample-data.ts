@@ -28,8 +28,9 @@ export async function restoreSampleData(): Promise<RestoreOutcome> {
     const outcome = await seedCatalogue(getDb(), CATALOGUE_SEED);
     if (!outcome.ok) throw new Error(`The sample data wasn't restored (${outcome.reason}).`);
   }
-  // The uploads stay in memory until ticket 17, so they start again too.
-  resetSampleStore();
+  // The uploads stay in memory until ticket 17, so they start again too. The
+  // sample Orders come back as a server restart makes them (ticket 07).
+  resetSampleStore(CATALOGUE_SEED, { sampleOrders: true });
   revalidateTag(CATALOGUE_TAG);
   return { ok: true };
 }

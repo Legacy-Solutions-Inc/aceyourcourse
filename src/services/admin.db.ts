@@ -54,6 +54,7 @@ import * as users from "@/services/admin.users.db";
 import * as passes from "@/services/admin.access-passes.db";
 import * as privacy from "@/services/admin.privacy-requests.db";
 import * as plans from "@/services/admin.plans.db";
+import * as orders from "@/services/admin.orders.db";
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
@@ -351,6 +352,10 @@ async function load(
     },
     get orderStatusCheckedAt() {
       return notLoaded("the Orders' status checks");
+    },
+    // The Orders admin reads and writes the internal notes itself (admin.orders.db.ts).
+    get orderNotes() {
+      return notLoaded("the Orders' internal notes");
     },
     get paymentEvents() {
       return notLoaded("the PayMongo events");
@@ -802,6 +807,12 @@ export const databaseArm: AdminService = {
   updatePlan: plans.updatePlan,
   setPlanOnSale: plans.setPlanOnSale,
   deletePlan: plans.deletePlan,
+  // The Orders admin has its own reads and writes (admin.orders.db.ts).
+  listOrdersForAdmin: orders.listOrdersForAdmin,
+  getOrderForAdmin: orders.getOrderForAdmin,
+  saveOrderNote: orders.saveOrderNote,
+  checkOrderWithPayMongo: orders.checkOrderWithPayMongo,
+  exportOrdersCsv: orders.exportOrdersCsv,
 
   getOverview: read(CATALOGUE, sampleArm.getOverview),
 

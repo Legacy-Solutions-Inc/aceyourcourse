@@ -3,12 +3,14 @@ import type { Order } from "@/lib/payments/order-ledger";
 import { toPlanDays } from "@/lib/plans/plan-rules";
 
 // The Orders table's rows as Orders, and back (Phase 4, ticket 03). The
-// Member seam reads and writes them here; the Orders Admin (ticket 07) will
-// read them the same way.
+// Member seam reads and writes them here, and the Orders admin (ticket 07)
+// reads them the same way.
 
 // status_checked_at isn't part of an Order: only the status-check backup's
 // claim reads and writes it (ticket 04), so writing an Order never moves it.
-type OrderRow = Omit<typeof schema.orders.$inferSelect, "statusCheckedAt">;
+// Nor is internal_note: only the Orders admin's note reads and writes it
+// (ticket 07), so an outcome never touches the note.
+type OrderRow = Omit<typeof schema.orders.$inferSelect, "statusCheckedAt" | "internalNote">;
 
 export const orderFromRow = (row: OrderRow): Order => ({
   id: row.id,

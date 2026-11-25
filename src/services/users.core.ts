@@ -1,3 +1,4 @@
+import { newestOrderFirst } from "@/lib/admin/orders-list";
 import { USERS_PAGE_SIZE } from "@/lib/admin/users-list";
 import { isPassActive } from "@/lib/member-app/access";
 import {
@@ -22,7 +23,9 @@ import type {
   UserRole,
 } from "@/services/admin.types";
 import { activityRecord, formError, NOT_FOUND, refused } from "@/services/content-editor.core";
+import type { Order } from "@/lib/payments/order-ledger";
 import type { MemberService } from "@/services/member";
+import { adminOrderOf } from "@/services/orders-admin.core";
 import type { ActiveDevice, ConsentRecord, Member } from "@/services/member.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -34,7 +37,8 @@ import type { ActiveDevice, ConsentRecord, Member } from "@/services/member.type
 //   or email and filtered by their Access Passes, Staff Role or the Beta
 //   Tester list, each read now. Each arm finds the page its own way (the
 //   sample arm with matchesUserQuery below, the database in SQL).
-// - A Member's detail: their records, read fresh. What the Member App itself
+// - A Member's detail: their records, read fresh, with every Order they made
+//   (Phase 4, ticket 07), newest first. What the Member App itself
 //   reads (Target Exams, the Active Device and its switch log, progress) comes
 //   from the arm's Member seam, which reads only that Member's own records.
 // - Force sign-out: clears the Member's Active Device, so the device's next
@@ -58,6 +62,8 @@ export interface MemberRecords {
   accessPasses: AdminAccessPass[];
   /** Their agreements, oldest first. */
   consents: ConsentRecord[];
+  /** Every Order they made, in any order (Phase 4, ticket 07). */
+  orders: Order[];
 }
 
 /** One page of the Members a query matches, newest first, and the counts. */
@@ -197,7 +203,8 @@ export function usersCalls(store: UsersStore, member: MemberReads) {
         progress: await member.getProgress(id.data, examCode),
       })),
     );
-    const { member: profile, role, betaTester, accessPasses, consents } = records;
+    const { member: profile, role, betaTester, accessPasses, consents, orders } = records;
+    const now = new Date();
     return saved({
       member: profile,
       role,
@@ -208,6 +215,7 @@ export function usersCalls(store: UsersStore, member: MemberReads) {
       activeDevice,
       deviceSwitches: newestWithoutId(switches),
       consents: newestWithoutId(consents),
+      orders: orders.map((order) => adminOrderOf(order, now)).sort(newestOrderFirst),
     });
   }
 

@@ -40,6 +40,7 @@ import type {
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { sampleContent } from "@/services/mock/content";
 import { sampleAccessPasses, sampleBetaTesters } from "@/services/mock/members";
+import { sampleOrders } from "@/services/mock/orders";
 import { samplePlans } from "@/services/mock/plans";
 import { sampleStaff } from "@/services/mock/staff";
 import type {
@@ -185,6 +186,8 @@ export interface SampleStore {
   orders: Order[];
   /** The number the next Order's reference carries: "AYC-10001" first, like order_reference_seq. */
   nextOrderNumber: number;
+  /** Each Order's internal note, which only Staff see, by Order id (ticket 07). */
+  orderNotes: Record<string, string>;
   /** When each Order's status was last asked of the payments client, by Order id (ticket 04's backup). */
   orderStatusCheckedAt: Record<string, string>;
   /** The PayMongo webhook events already applied, in the order received (ticket 05). */
@@ -208,7 +211,20 @@ export interface SampleStore {
 const STORE = Symbol.for("aceyourcourse.admin.sample-store");
 const holder = globalThis as typeof globalThis & { [STORE]?: SampleStore };
 
-function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
+/** How the sample data starts. */
+export interface SampleStoreOptions {
+  /**
+   * With the sample Orders (ticket 07): the dev server's data and the e2e
+   * specs' reset have them; unit tests start without, unless they ask.
+   */
+  sampleOrders?: boolean;
+}
+
+function createSampleStore(
+  now: Date,
+  seed: CatalogueSeed,
+  { sampleOrders: withOrders = false }: SampleStoreOptions = {},
+): SampleStore {
   const validation = validateCatalogueSeed(seed);
   if (!validation.success) {
     throw new Error(`Invalid catalogue seed — ${validation.errors.join("; ")}`);
@@ -245,8 +261,10 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
       ...plan,
       stamp: { savedAt: now.toISOString(), savedBy: null },
     })),
-    orders: [],
-    nextOrderNumber: FIRST_REFERENCE_NUMBER,
+    ...(withOrders
+      ? sampleOrders(now, catalogue)
+      : { orders: [], nextOrderNumber: FIRST_REFERENCE_NUMBER }),
+    orderNotes: {},
     orderStatusCheckedAt: {},
     paymentEvents: [],
     reviewerPdfUploads: {},
@@ -260,9 +278,15 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
 /** A store standing in for the sample data, while withStandInStore runs. */
 const standIn = new AsyncLocalStorage<SampleStore>();
 
-/** The sample data, made from the seed on first use (or the stand-in store, inside withStandInStore). */
+/**
+ * The sample data, made from the seed on first use, with the sample Orders as
+ * the dev server shows them (or the stand-in store, inside withStandInStore).
+ */
 export function getSampleStore(): SampleStore {
-  return standIn.getStore() ?? (holder[STORE] ??= createSampleStore(new Date(), CATALOGUE_SEED));
+  return (
+    standIn.getStore() ??
+    (holder[STORE] ??= createSampleStore(new Date(), CATALOGUE_SEED, { sampleOrders: true }))
+  );
 }
 
 /**
@@ -278,10 +302,14 @@ export function withStandInStore<T>(store: SampleStore, work: () => Promise<T>):
 
 /**
  * Starts the sample data again, timed from now: from the seed, or from an
- * edited copy of it (tests). Throws when that seed fails validation.
+ * edited copy of it (tests). Without the sample Orders unless asked for: the
+ * dev reset asks (restoreSampleData). Throws when that seed fails validation.
  */
-export function resetSampleStore(seed: CatalogueSeed = CATALOGUE_SEED): SampleStore {
-  holder[STORE] = createSampleStore(new Date(), seed);
+export function resetSampleStore(
+  seed: CatalogueSeed = CATALOGUE_SEED,
+  options: SampleStoreOptions = {},
+): SampleStore {
+  holder[STORE] = createSampleStore(new Date(), seed, options);
   return holder[STORE];
 }
 

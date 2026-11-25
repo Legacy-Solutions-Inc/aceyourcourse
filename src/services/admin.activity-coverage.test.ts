@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { aboutSectionFormValues } from "@/lib/admin/about-form";
 import { faqFormValues } from "@/lib/admin/faq-form";
+import { DEFAULT_ORDER_QUERY } from "@/lib/admin/orders-list";
 import { productFormValues } from "@/lib/admin/product-form";
 import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
 import { reviewFormValues } from "@/lib/admin/review-form";
@@ -12,6 +13,7 @@ import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
 import { samplePlanId } from "@/services/mock/plans";
 import { hashDeviceToken } from "@/lib/member-app/device-token";
+import type { Order } from "@/lib/payments/order-ledger";
 import { createFakeAuthAdmin } from "@/services/auth-admin.fake";
 import { createFakeRenderer } from "@/services/page-images.fake";
 
@@ -65,6 +67,28 @@ const CE_30_FORM = {
 const CE_YEAR_PLAN = { ...CE_30_FORM, days: "365", price: "3,999", onSale: false };
 const NO_SUCH_PLAN = "5d2c1b0a-9e8f-4d7c-8b6a-5f4e3d2c1b0a";
 
+/** A Pending Order from an account since deleted, which an Owner may note (ticket 07). */
+const NOTED_ORDER: Order = {
+  id: "00000000-0000-4000-8000-000000010001",
+  reference: "AYC-10001",
+  userId: null,
+  examCode: "CE",
+  planId: CE_30_PLAN,
+  planName: "CE All-Access",
+  days: 30,
+  priceCentavos: 49_900,
+  method: "gcash",
+  status: "pending",
+  livemode: true,
+  checkoutId: null,
+  paymentId: null,
+  buyerName: "Gone Member",
+  buyerEmail: "gone@example.com",
+  createdAt: new Date().toISOString(),
+  paidAt: null,
+  statusChangedAt: new Date().toISOString(),
+};
+
 /** An ISO time `days` from now. */
 const inDays = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
@@ -112,7 +136,17 @@ const READS = [
   "getReviewerPdfPageForAdmin",
   // Plans & prices (Phase 4, ticket 01).
   "listPlansForAdmin",
+  // The Orders list and one Order's detail page (Phase 4, ticket 07).
+  "listOrdersForAdmin",
+  "getOrderForAdmin",
 ] as const satisfies readonly (keyof AdminService)[];
+
+/**
+ * "Check status with PayMongo" (ticket 07): what it changes is PayMongo's
+ * outcome, recorded by the Order ledger under "PayMongo (system)", as the
+ * webhook's is (admin.orders.test.ts checks it), never as the Owner's write.
+ */
+const STATUS_CHECKS = ["checkOrderWithPayMongo"] as const satisfies readonly (keyof AdminService)[];
 
 /**
  * The Reviewer PDF job's runs and the cron's restarts (ticket 12): they
@@ -1133,6 +1167,26 @@ const WRITES: Record<string, Write> = {
     refused: (seam, actor) => seam.deletePlan(actor, NO_SUCH_PLAN),
     refusal: "not-found",
   },
+  // Orders & payments (Phase 4, ticket 07).
+  saveOrderNote: {
+    actor: OWNER,
+    entity: "order",
+    entityId: NOTED_ORDER.id,
+    setUp: async (_seam, arm) => arm.putOrder(NOTED_ORDER),
+    saves: (seam, actor) =>
+      seam.saveOrderNote(actor, { reference: NOTED_ORDER.reference, note: "Asked about Maya" }),
+    refused: (seam, actor) => seam.saveOrderNote(actor, { reference: "AYC-99999", note: "Hi" }),
+    refusal: "not-found",
+  },
+  exportOrdersCsv: {
+    actor: OWNER,
+    entity: "orders",
+    entityId: "csv",
+    saves: (seam, actor) => seam.exportOrdersCsv(actor, DEFAULT_ORDER_QUERY),
+    refused: (seam, actor) =>
+      seam.exportOrdersCsv(actor, { ...DEFAULT_ORDER_QUERY, range: "90d" as "30d" }),
+    refusal: "invalid",
+  },
 };
 
 /** resolveSignIn writes too: the first sign-in with an Invite's email activates it. */
@@ -1144,6 +1198,7 @@ describe("the Staff Activity table", () => {
       ...READS,
       ...SIGN_IN_RECORDS,
       ...JOB_CALLS,
+      ...STATUS_CHECKS,
       ACTIVATION,
       ...Object.keys(WRITES),
     ].sort();

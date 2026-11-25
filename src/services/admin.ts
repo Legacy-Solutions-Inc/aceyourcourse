@@ -28,6 +28,7 @@ import type {
   NewCardForm,
   NewTopicForm,
   OfficialExamDateForm,
+  OrderNoteInput,
   PlanForm,
   QuestionForm,
   QuizSettingsForm,
@@ -56,6 +57,9 @@ import type {
   AdminFaq,
   AdminFaqList,
   AdminMemberDetail,
+  AdminOrderDetail,
+  AdminOrderList,
+  AdminOrderNote,
   AdminOverview,
   AdminPlan,
   AdminPlans,
@@ -94,6 +98,9 @@ import type {
   FaqListQuery,
   ForcedSignOut,
   MemberDataFile,
+  OrderListQuery,
+  OrdersCsv,
+  OrderStatusCheck,
   Plan,
   Invite,
   ProductDeletePreview,
@@ -110,6 +117,7 @@ import type {
 import type { Topic } from "@/services/content.types";
 import type { AuthAdmin } from "@/services/auth-admin.types";
 import type { PdfRenderer } from "@/services/page-images.types";
+import type { PaymentsClient } from "@/services/payments.types";
 import type { Exam, ExamPageSection, SitePageKey } from "@/services/catalogue.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1051,6 +1059,57 @@ export interface AdminService {
   setPlanOnSale(actor: StaffActor, id: string, onSale: boolean): Promise<AdminResult<AdminPlan>>;
   /** Deletes a Plan that has never had an Order; one that has is refused (switch it off instead). */
   deletePlan(actor: StaffActor, id: string): Promise<AdminResult<Plan>>;
+
+  // Orders & payments (Owners only; Phase 4, ticket 07; stories 147, 148,
+  // 151o and 151z): every Order, its detail, and the CSV for the accountant.
+  // Every read and write refuses an Editor. An Order's status reads as every
+  // screen shows it (a Pending Order past its 24 hours is Expired). Nothing
+  // here touches the Website, so no tag is cleared. Refunds are issued from
+  // the PayMongo dashboard, never here.
+
+  /**
+   * The Orders list: the Orders the search (part of a reference or an email)
+   * and filters (status, Payment Method, a range of Manila days, Test Orders
+   * only when included) match, newest first, with the tiles: the Paid ones'
+   * amounts, and the Orders, Pending and Failed.
+   */
+  listOrdersForAdmin(
+    actor: StaffActor,
+    query: OrderListQuery,
+  ): Promise<AdminResult<AdminOrderList>>;
+  /**
+   * One Order's detail page: the Order, its buyer's User id while their Member
+   * record is there, and its internal note with its stamp. A reference no
+   * Order has, or that isn't a reference, is not-found.
+   */
+  getOrderForAdmin(actor: StaffActor, reference: string): Promise<AdminResult<AdminOrderDetail>>;
+  /**
+   * "Save note": an Order's internal note, which only Staff see, trimmed (a
+   * blank one clears it), at most 2,000 characters, with the conflict check
+   * against the stamp the page opened with. Appends Staff Activity.
+   */
+  saveOrderNote(
+    actor: StaffActor,
+    input: OrderNoteInput,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminOrderNote>>;
+  /**
+   * "Check status with PayMongo": the status-check backup's own check, with
+   * `client`, on an Order recorded Pending (one past its 24 hours too); Paid
+   * or Failed lands through the Order ledger, as the webhook's would. Any
+   * other Order is answered "not-pending", asking nothing. Refused when the
+   * server has no payments client.
+   */
+  checkOrderWithPayMongo(
+    actor: StaffActor,
+    reference: string,
+    client: PaymentsClient | null,
+  ): Promise<AdminResult<OrderStatusCheck>>;
+  /**
+   * The CSV export: exactly the Orders the list's query matches, in its
+   * order, with a header row always; logged in Staff Activity.
+   */
+  exportOrdersCsv(actor: StaffActor, query: OrderListQuery): Promise<AdminResult<OrdersCsv>>;
 }
 
 const impl: AdminService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -1166,3 +1225,8 @@ export const createPlan = impl.createPlan;
 export const updatePlan = impl.updatePlan;
 export const setPlanOnSale = impl.setPlanOnSale;
 export const deletePlan = impl.deletePlan;
+export const listOrdersForAdmin = impl.listOrdersForAdmin;
+export const getOrderForAdmin = impl.getOrderForAdmin;
+export const saveOrderNote = impl.saveOrderNote;
+export const checkOrderWithPayMongo = impl.checkOrderWithPayMongo;
+export const exportOrdersCsv = impl.exportOrdersCsv;

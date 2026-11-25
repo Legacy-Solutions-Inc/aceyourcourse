@@ -20,3 +20,4 @@ export * from "@/services/mock/admin/deck";
 export * from "@/services/mock/admin/quiz";
 export * from "@/services/mock/admin/reviewer-pdfs";
 export * from "@/services/mock/admin/plans";
+export * from "@/services/mock/admin/orders";

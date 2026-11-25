@@ -158,6 +158,15 @@ export const paths = {
      * and the selected Plan in the search params (src/lib/admin/plan-view.ts).
      */
     plans: "/admin/plans",
+    /**
+     * Orders & payments (Owners only; Phase 4, ticket 07), with the search and
+     * filters in the search params (src/lib/admin/orders-list.ts).
+     */
+    orders: "/admin/orders",
+    /** One Order's detail page, by its reference ("AYC-10482"). */
+    order: (reference: string) => `/admin/orders/${encodeURIComponent(reference)}`,
+    /** The Orders list's CSV export, with the list's filters in the search params. */
+    ordersExport: "/admin/orders/export",
     /** Member App content (Phase 3): each Subject's Topics, picked by Exam and Subject. */
     content: "/admin/content",
     /** Member App content open on one Subject's Topics list. */

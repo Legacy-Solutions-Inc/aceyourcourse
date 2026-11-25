@@ -38,8 +38,10 @@ describe("AdminSidebar", () => {
     expect(screen.getByRole("list", { name: "WEBSITE" })).toHaveTextContent(
       "02Pages & promo03Products & store links04Reviews & FAQs",
     );
-    expect(screen.getByRole("list", { name: "SALES" })).toHaveTextContent("07Plans & prices");
-    expect(screen.getByRole("list", { name: "SETTINGS" })).toHaveTextContent("08Settings");
+    expect(screen.getByRole("list", { name: "SALES" })).toHaveTextContent(
+      "07Plans & prices08Orders & payments",
+    );
+    expect(screen.getByRole("list", { name: "SETTINGS" })).toHaveTextContent("09Settings");
   });
 
   it("shows the signed-in Staff User with their Staff Role and Sign out", () => {

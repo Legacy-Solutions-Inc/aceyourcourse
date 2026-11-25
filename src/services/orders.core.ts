@@ -35,7 +35,7 @@ import type {
   PayRefusal,
   PayResult,
 } from "@/services/member.types";
-import type { PaymentEvent, PaymentsClient } from "@/services/payments.types";
+import type { CheckoutStatus, PaymentEvent, PaymentsClient } from "@/services/payments.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The Member seam's buying (Phase 4, ticket 03; spec, Phase 4 → Order ledger,
@@ -63,7 +63,9 @@ import type { PaymentEvent, PaymentsClient } from "@/services/payments.types";
 // - The status-check backup (ticket 04): Confirming payment asks for the
 //   status itself, so an outcome lands with a slow webhook or none (local
 //   development). It asks PayMongo at most once every 10 seconds per Order,
-//   claimed in the store, so two servers never both ask.
+//   claimed in the store, so two servers never both ask. The Owner's "Check
+//   status with PayMongo" (the Orders admin, ticket 07) runs the same check
+//   (checkCheckoutStatus), unthrottled.
 // - A Member only ever reads or checks their own Orders: another's reference
 //   answers nothing.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -264,6 +266,35 @@ export function settleOrder(
   };
 }
 
+/**
+ * The status check, shared by Confirming payment's backup (statusOf below)
+ * and the Owner's "Check status with PayMongo" (the Orders admin, ticket 07):
+ * asks the client for an Order's checkout status, and applies Paid or Failed
+ * through the ledger (settleOrder), all or nothing. Gives what the client
+ * said, and whether that moved the Order: "pending", "unknown", or an outcome
+ * already applied, changes nothing.
+ */
+export async function checkCheckoutStatus(
+  store: Pick<OrderStore, "withOrder">,
+  order: Order,
+  client: PaymentsClient,
+): Promise<{ status: CheckoutStatus["status"]; moved: boolean }> {
+  const status = await client.checkoutStatus({
+    orderId: order.id,
+    reference: order.reference,
+    checkoutId: order.checkoutId,
+  });
+  if (status.status !== "paid" && status.status !== "failed") {
+    return { status: status.status, moved: false };
+  }
+  const now = new Date();
+  const moved = await store.withOrder(order.id, (holding) => {
+    const write = settleOrder(holding, status.status, status.paymentId, now);
+    return { write, result: write !== null };
+  });
+  return { status: status.status, moved: moved === true };
+}
+
 /** The Member seam's buying, over an arm's store. */
 export function orderCalls(store: OrderStore) {
   const refuse = (reason: PayRefusal): PayResult => ({ ok: false, reason });
@@ -378,21 +409,6 @@ export function orderCalls(store: OrderStore) {
     };
   }
 
-  /** Asks the client for an Order's checkout status, and applies Paid or Failed through the ledger. */
-  async function applyCheckoutStatus(order: Order, client: PaymentsClient): Promise<void> {
-    const status = await client.checkoutStatus({
-      orderId: order.id,
-      reference: order.reference,
-      checkoutId: order.checkoutId,
-    });
-    if (status.status !== "paid" && status.status !== "failed") return;
-    const now = new Date();
-    await store.withOrder(order.id, (holding) => ({
-      write: settleOrder(holding, status.status, status.paymentId, now),
-      result: null,
-    }));
-  }
-
   /**
    * The Member's own Order, after asking the client for its status while it's
    * Pending; `throttled`, only when no status check of it was claimed in the
@@ -412,7 +428,7 @@ export function orderCalls(store: OrderStore) {
       order.status === "pending" &&
       (!throttled || (await store.claimStatusCheck(order.id, new Date(), STATUS_CHECK_EVERY_MS)));
     if (!asking) return memberOrderOf(own, new Date());
-    await applyCheckoutStatus(order, client);
+    await checkCheckoutStatus(store, order, client);
     return getMemberOrder(userId, reference);
   }
 

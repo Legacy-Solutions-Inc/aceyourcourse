@@ -26,6 +26,8 @@ import type { ImportMode } from "@/lib/content-import/modes";
 import type { CardImageType } from "@/lib/cards/card-rules";
 import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
 import type { PlanDays } from "@/lib/plans/plan-rules";
+import type { Order, OrderStatus } from "@/lib/payments/order-ledger";
+import type { PaymentMethod } from "@/lib/payments/payment-methods";
 import type { MemberDataExport } from "@/lib/member-app/data-export";
 import type { MemberProgress } from "@/lib/member-app/progress";
 import type {
@@ -792,6 +794,8 @@ export interface AdminMemberDetail {
   deviceSwitches: Omit<DeviceSwitch, "userId">[];
   /** Every agreement to the Terms and Privacy Policy, newest first. */
   consents: Omit<ConsentRecord, "userId">[];
+  /** Every Order they made, newest first, each as the Orders list shows it (Phase 4, ticket 07). */
+  orders: AdminOrder[];
 }
 
 /** What a forced sign-out did: the Active Device it cleared, and why. */
@@ -892,4 +896,99 @@ export interface AdminPlan extends Plan {
 export interface AdminPlans {
   plans: AdminPlan[];
   exams: Pick<Exam, "code" | "name">[];
+}
+
+// ── Orders & payments (Owners only; Phase 4, ticket 07) ─────────────────────
+
+/** The Orders list's status chips: any, then each state as every screen shows it. */
+export const ORDER_STATUS_FILTERS = [
+  "any",
+  "paid",
+  "pending",
+  "failed",
+  "expired",
+  "refunded",
+] as const;
+export type OrderStatusFilter = (typeof ORDER_STATUS_FILTERS)[number];
+
+/** The Orders list's Payment Method filter: every method, or one of the four. */
+export type OrderMethodFilter = "all" | PaymentMethod;
+
+/** The Orders list's date range, on Manila days: the last 7, the last 30 (the default), or all time. */
+export const ORDER_RANGES = ["7d", "30d", "all"] as const;
+export type OrderRange = (typeof ORDER_RANGES)[number];
+
+/** The Orders list's search and filters, as its URL holds them. */
+export interface OrderListQuery {
+  /** "Search by order number or email": part of a reference or of the buyer's email, or none. */
+  q: string | null;
+  status: OrderStatusFilter;
+  method: OrderMethodFilter;
+  range: OrderRange;
+  /** "Include test orders": Test Orders are left out unless it's ticked. */
+  tests: boolean;
+}
+
+/** An Order as the Admin shows it. */
+export interface AdminOrder extends Order {
+  /** Its status as every screen shows it: a Pending Order past its 24 hours reads Expired. */
+  status: OrderStatus;
+  /** The status recorded on it, which the status check reads. */
+  recordedStatus: OrderStatus;
+  paidAfterExpiry: boolean;
+}
+
+/** The Orders list's tiles, for the Orders the filters match. */
+export interface OrderStats {
+  /** The Paid Orders' amounts, in centavos. */
+  paidCentavos: number;
+  orders: number;
+  pending: number;
+  failed: number;
+}
+
+/** The Orders list: the Orders its filters match, newest first, and their tiles. */
+export interface AdminOrderList {
+  query: OrderListQuery;
+  rows: AdminOrder[];
+  stats: OrderStats;
+}
+
+/** An Order's internal note, which only Staff see, with its stamp for the conflict check. */
+export interface AdminOrderNote {
+  reference: string;
+  /** The note's text; "" while it has none. */
+  text: string;
+  stamp: RecordStamp;
+}
+
+/** One Order's detail page. */
+export interface AdminOrderDetail {
+  order: AdminOrder;
+  /**
+   * The buyer's User id while their Member record is there, for the link to
+   * their detail page; null once their account is deleted.
+   */
+  memberUserId: string | null;
+  note: AdminOrderNote;
+}
+
+/**
+ * What "Check status with PayMongo" found: still pending, Paid or Failed now
+ * (applied through the Order ledger), PayMongo couldn't say, or the Order
+ * isn't recorded Pending, so nothing was asked.
+ */
+export type OrderCheckOutcome = "still-pending" | "paid" | "failed" | "unknown" | "not-pending";
+
+/** "Check status with PayMongo": what it found, and the Order as it is now. */
+export interface OrderStatusCheck {
+  outcome: OrderCheckOutcome;
+  order: AdminOrder;
+}
+
+/** The Orders list's CSV export: the file's name and text, and how many Orders it holds. */
+export interface OrdersCsv {
+  filename: string;
+  csv: string;
+  rows: number;
 }

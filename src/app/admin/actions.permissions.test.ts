@@ -47,6 +47,7 @@ import * as reviews from "./(shell)/reviews/actions";
 import * as settings from "./(shell)/settings/actions";
 import * as users from "./(shell)/users/actions";
 import * as plans from "./(shell)/plans/actions";
+import * as orders from "./(shell)/orders/actions";
 import * as root from "./actions";
 import * as signIn from "./sign-in/actions";
 
@@ -135,6 +136,8 @@ const BEA = {
   email: "tester@example.com",
   name: "Bea Tester",
 };
+/** Bea's Pending Order, which an Owner may note and check with PayMongo (ticket 07). */
+const BEA_ORDER = "AYC-10001";
 /**
  * Bea's phone's token hash, as the Member App stores it. A literal: nothing in
  * the Admin uses the Active Device modules (src/app/app/device.test.tsx).
@@ -305,6 +308,14 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
       plans.switchPlanOnSale(IDLE, { input: { id: samplePlanId("CE", 30), onSale: false } }),
     ),
     removePlan: owner(() => plans.removePlan(IDLE, { input: { id: samplePlanId("CE", 180) } })),
+  },
+  // Orders & payments (Phase 4, ticket 07).
+  "./(shell)/orders/actions.ts": {
+    saveNote: editorSave("owner", orders.saveNote, () => ({
+      reference: BEA_ORDER,
+      note: "Asked about Maya",
+    })),
+    checkStatus: owner(() => orders.checkStatus(IDLE, { input: { reference: BEA_ORDER } })),
   },
   "./(shell)/content/actions.ts": {
     addTopic: staff(() =>
@@ -627,6 +638,30 @@ beforeEach(async () => {
       userId: BEA.userId,
       examCode: "CE",
       endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ];
+  // Bea's Pending Order, made at boot, so its note's stamp is the one opened() gives (ticket 07).
+  store.orders = [
+    ...store.orders,
+    {
+      id: "00000000-0000-4000-8000-000000010001",
+      reference: BEA_ORDER,
+      userId: BEA.userId,
+      examCode: "CE",
+      planId: samplePlanId("CE", 30),
+      planName: "CE All-Access",
+      days: 30,
+      priceCentavos: 49_900,
+      method: "maya",
+      status: "pending",
+      livemode: false,
+      checkoutId: null,
+      paymentId: null,
+      buyerName: BEA.name,
+      buyerEmail: BEA.email,
+      createdAt: store.bootedAt,
+      paidAt: null,
+      statusChangedAt: store.bootedAt,
     },
   ];
   // Bea asks, from Account, for a copy of her data and for her account to be deleted.

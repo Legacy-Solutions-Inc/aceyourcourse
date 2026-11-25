@@ -11,6 +11,7 @@ import ReviewsPage from "./reviews/page";
 import SettingsPage from "./settings/page";
 import UsersPage from "./users/page";
 import PlansPage from "./plans/page";
+import OrdersPage from "./orders/page";
 
 // Every signed-in screen calls the Staff Guard itself, with its own address
 // for `next`, because the shell layout doesn't re-render between screens. The
@@ -61,6 +62,12 @@ const SCREENS = [
     "Plans & prices",
     () => PlansPage({ searchParams: Promise.resolve({}) }),
     "/admin/plans",
+    "SALES",
+  ],
+  [
+    "Orders & payments",
+    () => OrdersPage({ searchParams: Promise.resolve({}) }),
+    "/admin/orders",
     "SALES",
   ],
   ["Settings", SettingsPage, "/admin/settings", "SETTINGS"],
@@ -195,7 +202,7 @@ describe("Admin shell layout", () => {
     resetSampleStore();
   });
 
-  it("puts an Owner's screen inside the sidebar, with all eight screens", async () => {
+  it("puts an Owner's screen inside the sidebar, with all nine screens", async () => {
     signInAs("angel@aceyourcourse.ph");
     render(await AdminShellLayout({ children: <p>Screen</p> }));
     const sidebar = screen.getByRole("complementary");
@@ -211,7 +218,8 @@ describe("Admin shell layout", () => {
       "05Member App content",
       "06Users",
       "07Plans & prices",
-      "08Settings",
+      "08Orders & payments",
+      "09Settings",
       "View site ↗",
     ]);
     expect(within(sidebar).getByText("OWNER")).toBeInTheDocument();

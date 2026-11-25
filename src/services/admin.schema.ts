@@ -12,12 +12,15 @@ import { MAX_QUERY_LENGTH } from "@/lib/catalogue/product-filters";
 import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
 import { isCalendarDate } from "@/lib/manila-time";
 import { EXTEND_DAYS, GRANT_MAX_DAYS } from "@/lib/member-app/access-pass";
+import { PAYMENT_METHODS } from "@/lib/payments/payment-methods";
 import { normaliseTin } from "@/lib/payments/tin";
 import { isPlanDays, parsePlanPrice, type PlanDays } from "@/lib/plans/plan-rules";
 import { PDF_NAME_MAX } from "@/lib/reviewer-pdfs/pdf-file";
 import { variationLabel } from "@/lib/catalogue/price";
 import {
   type AdminError,
+  ORDER_RANGES,
+  ORDER_STATUS_FILTERS,
   type RequiredRole,
   type StaffActor,
   USER_FILTERS,
@@ -2121,3 +2124,38 @@ export const planOnSaleInputSchema = z.object({ id: planId, onSale: onOrOff });
 
 /** The Plan a delete is for. */
 export const planIdInputSchema = z.object({ id: planId });
+
+// ── Orders & payments (Owners only; Phase 4, ticket 07) ─────────────────────
+
+/** The Orders list's search and filters, as the seam takes them (parseOrdersParams makes them). */
+export const orderListQuerySchema = z.object({
+  q: z
+    .string()
+    .trim()
+    .max(MAX_QUERY_LENGTH)
+    .nullable()
+    .transform((q) => q || null),
+  status: z.enum(ORDER_STATUS_FILTERS),
+  method: z.union([z.literal("all"), z.enum(PAYMENT_METHODS)]),
+  range: z.enum(ORDER_RANGES),
+  tests: z.boolean(),
+});
+
+/** An Order's reference, as an address carries it: any text, so one that isn't an Order's answers not-found. */
+const orderReference = z.string().trim().min(1).max(40);
+
+/** The longest internal note an Order keeps. */
+export const ORDER_NOTE_MAX = 2_000;
+export const ORDER_NOTE_TOO_LONG = `KEEP THE NOTE TO ${ORDER_NOTE_MAX.toLocaleString("en-PH")} CHARACTERS`;
+
+/** "Save note": an Order's internal note, trimmed; a blank one clears it. */
+export const orderNoteInputSchema = z.object({
+  reference: orderReference,
+  note: z.string().trim().max(ORDER_NOTE_MAX, ORDER_NOTE_TOO_LONG),
+});
+
+/** "Save note"'s values, as the form sends them. */
+export type OrderNoteInput = z.input<typeof orderNoteInputSchema>;
+
+/** The Order "Check status with PayMongo" is for. */
+export const orderReferenceInputSchema = z.object({ reference: orderReference });

@@ -390,6 +390,8 @@ describe.each(ADMIN_ARMS)("Admin seam: Users ($name)", (arm) => {
             { termsVersion: "2.0", privacyVersion: "2.0", agreedAt: at(6 * MINUTE) },
             { termsVersion: "1.0", privacyVersion: "1.0", agreedAt: at(5 * MINUTE) },
           ],
+          // Their Orders: admin.orders.test.ts.
+          orders: [],
         },
       });
       if (result.ok) {
@@ -426,6 +428,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Users ($name)", (arm) => {
           activeDevice: null,
           deviceSwitches: [],
           consents: [],
+          orders: [],
         },
       });
     });

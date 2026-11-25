@@ -1,0 +1,68 @@
+import { sampleOrderStore } from "@/services/member.mock";
+import { getSampleStore } from "@/services/mock/sample-store";
+import {
+  type OrderRecord,
+  type OrdersAdminStore,
+  orderNoteRecord,
+  ordersAdminCalls,
+} from "@/services/orders-admin.core";
+
+// The sample arm of the Admin seam's Orders & payments (Phase 4, ticket 07):
+// the shared calls (src/services/orders-admin.core.ts) over the in-memory
+// sample store, with the Member seam's sample Order store for "Check status
+// with PayMongo". A Node process runs one call at a time here, so a note's
+// save reads and writes in one step. A buyer's Member record is "there" while
+// the sample data has it: an Order whose account was deleted has no User id,
+// and a sample buyer who has never signed in has no record yet.
+
+function recordOf(reference: string): OrderRecord | null {
+  const store = getSampleStore();
+  const order = store.orders.find((candidate) => candidate.reference === reference);
+  if (!order) return null;
+  const { userId } = order;
+  return structuredClone({
+    order,
+    memberExists: userId !== null && store.members.some((member) => member.userId === userId),
+    note: store.orderNotes[order.id] ?? null,
+    noteStamp: store.stamps[orderNoteRecord(order.id)] ?? null,
+  });
+}
+
+const sampleOrdersAdminStore: OrdersAdminStore = {
+  async listOrders({ since, tests }) {
+    return structuredClone(
+      getSampleStore().orders.filter(
+        (order) =>
+          (tests || order.livemode) && (since === null || new Date(order.createdAt) >= since),
+      ),
+    );
+  },
+  async readOrder(reference) {
+    return recordOf(reference);
+  },
+  async withOrderNote(reference, work) {
+    const record = recordOf(reference);
+    if (!record) return null;
+    const { write, result } = work(record);
+    if (!write) return result;
+    const store = getSampleStore();
+    // The Staff Activity first: should it fail, the note stays as it was.
+    store.staffActivity = [...store.staffActivity, structuredClone(write.activity)];
+    const { [write.orderId]: _old, ...others } = store.orderNotes;
+    store.orderNotes = write.note === null ? others : { ...others, [write.orderId]: write.note };
+    store.stamps = { ...store.stamps, [orderNoteRecord(write.orderId)]: write.stamp };
+    return result;
+  },
+  async recordActivity(activity) {
+    const store = getSampleStore();
+    store.staffActivity = [...store.staffActivity, structuredClone(activity)];
+  },
+};
+
+export const {
+  listOrdersForAdmin,
+  getOrderForAdmin,
+  saveOrderNote,
+  checkOrderWithPayMongo,
+  exportOrdersCsv,
+} = ordersAdminCalls(sampleOrdersAdminStore, sampleOrderStore);

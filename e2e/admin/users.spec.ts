@@ -104,9 +104,8 @@ test.describe("the Owner", () => {
       await expect(section(owner, "PROGRESS")).toContainText("CARDS GOT IT");
       await expect(section(owner, "DEVICE SWITCHES · 1")).toBeVisible();
       await expect(section(owner, "CONSENT")).toContainText("TERMS 2.0 · PRIVACY 2.0");
-      await expect(section(owner, "PURCHASE HISTORY")).toContainText(
-        "Purchases arrive with Payments (Phase 4).",
-      );
+      // Bea hasn't bought anything here (Phase 4, ticket 07).
+      await expect(section(owner, "ORDERS · 0")).toContainText("No Orders yet.");
       await expectNoBlockingViolations(owner);
       // On a phone, the profile and the sections stack, with no sideways scroll.
       const desktop = owner.viewportSize();

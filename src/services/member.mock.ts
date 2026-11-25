@@ -561,8 +561,9 @@ function paidDaysOf(orderId: string) {
 }
 
 // A Node process runs one call at a time here, so an outcome reads and writes
-// in one step, and two Pays take consecutive numbers.
-const sampleOrderStore: OrderStore = {
+// in one step, and two Pays take consecutive numbers. The Orders admin's
+// "Check status with PayMongo" (ticket 07) settles Orders through it too.
+export const sampleOrderStore: OrderStore = {
   async readOnSale() {
     const { catalogue, plans } = getSampleStore();
     return {

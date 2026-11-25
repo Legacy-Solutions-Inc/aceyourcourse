@@ -422,6 +422,11 @@ for (const size of SIZES) {
         // Plans & prices (Phase 4, ticket 01), with the new Plan's editor and its preview.
         paths.admin.plans,
         `${paths.admin.plans}?plan=new`,
+        // Orders & payments (Phase 4, ticket 07), every Order with the TEST tag, and the
+        // sample data's Pending Order, which the live database doesn't have.
+        paths.admin.orders,
+        `${paths.admin.orders}?range=all&tests=1`,
+        ...(LIVE ? [] : [paths.admin.order("AYC-10006")]),
         "/admin/settings",
       ]) {
         await page.goto(path);
@@ -451,6 +456,22 @@ for (const size of SIZES) {
 
       await page.getByRole("button", { name: "Delete card 1" }).click();
       await settled(page.getByRole("dialog", { name: /^Delete card 1/ }));
+      await expectNoBlockingViolations(page);
+    });
+
+    test("no serious or critical accessibility violations on an Order's detail page, after a status check and a saved note", async ({
+      page,
+    }) => {
+      test.skip(LIVE, "The sample Orders are in the in-memory sample data only.");
+      await signInAs(page, "owner", paths.admin.order("AYC-10006"));
+      await page.getByRole("button", { name: "Check status with PayMongo" }).click();
+      await expect(page.getByText("CHECKED JUST NOW · STILL PENDING AT MAYA")).toBeVisible({
+        timeout: 15_000,
+      });
+      const note = page.getByRole("form", { name: "Internal note" });
+      await note.getByLabel("INTERNAL NOTE").fill("Asked about Maya");
+      await note.getByRole("button", { name: "Save note" }).click();
+      await expect(note.getByRole("status")).toHaveText("✓ NOTE SAVED · ONLY ADMINS SEE IT");
       await expectNoBlockingViolations(page);
     });
 
