@@ -7,12 +7,14 @@ import {
   count,
   desc,
   eq,
+  inArray,
   isNotNull,
   isNull,
   lt,
   lte,
   or,
   type SQL,
+  sql,
 } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
@@ -22,6 +24,7 @@ import * as schema from "@/lib/db/schema";
 import { deviceStatusFor } from "@/lib/member-app/device-token";
 import { noticesToShow } from "@/lib/member-app/notices";
 import { privacyRequestDueOn } from "@/lib/member-app/privacy-requests";
+import { type OrderRefund, refundsOfOrder } from "@/lib/payments/refunds";
 import { toPlanDays } from "@/lib/plans/plan-rules";
 import { isReaderZoom } from "@/lib/reviewer-pdfs/reader";
 import { readablePageCount } from "@/lib/reviewer-pdfs/status";
@@ -82,11 +85,14 @@ import {
   type OrderStore,
   type OrderWrite,
   type OwnOrder,
+  type PassReduction,
 } from "@/services/orders.core";
 import {
   invoiceRequestFromRow,
   invoiceRequestToRow,
   orderFromRow,
+  orderRefundFromRow,
+  orderRefundToRow,
   orderToRow,
 } from "@/services/orders.rows";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
@@ -932,6 +938,7 @@ export const noticeFromRow = (row: NoticeRow): MemberNotice => ({
   endsAt: row.endsAt.toISOString(),
   createdAt: row.createdAt.toISOString(),
   dismissedAt: row.dismissedAt?.toISOString() ?? null,
+  reference: row.reference,
 });
 
 /** A notice as a row to add: its `seq` is the table's to give. */
@@ -943,6 +950,7 @@ export const noticeToRow = (notice: MemberNotice): Omit<NoticeRow, "seq"> => ({
   endsAt: new Date(notice.endsAt),
   createdAt: new Date(notice.createdAt),
   dismissedAt: notice.dismissedAt === null ? null : new Date(notice.dismissedAt),
+  reference: notice.reference,
 });
 
 const listNotices: MemberService["listNotices"] = async (userId) => {
@@ -1199,7 +1207,7 @@ export const databaseOrderStore: OrderStore = {
   // The event's row and what it changed commit together: a repeat finds the
   // row (the insert does nothing) and changes nothing, and a failed write
   // leaves no row, so PayMongo's retry applies it.
-  withPaymentEvent: (event, { checkoutId, orderId, reference }, work) =>
+  withPaymentEvent: (event, { checkoutId, orderId, reference, paymentId }, work) =>
     inDatabase(() =>
       getDb().transaction(async (tx) => {
         const { orders, paymentEvents } = schema;
@@ -1208,7 +1216,8 @@ export const databaseOrderStore: OrderStore = {
         const found =
           (checkoutId ? await find(eq(orders.checkoutId, checkoutId)) : null) ??
           (orderId && UUID.test(orderId) ? await find(eq(orders.id, orderId)) : null) ??
-          (reference ? await find(eq(orders.reference, reference)) : null);
+          (reference ? await find(eq(orders.reference, reference)) : null) ??
+          (paymentId ? await find(eq(orders.paymentId, paymentId)) : null);
         const recorded = await tx
           .insert(paymentEvents)
           .values({
@@ -1251,10 +1260,28 @@ export const databaseOrderStore: OrderStore = {
 };
 
 /**
+ * Every refund of these Orders (ticket 09), in the order first recorded
+ * (PayMongo's refund ids don't sort by time, so by refund time, then id).
+ */
+export async function readOrderRefunds(
+  db: Pick<ReturnType<typeof getDb>, "select">,
+  orderIds: readonly string[],
+): Promise<OrderRefund[]> {
+  if (orderIds.length === 0) return [];
+  const { orderRefunds } = schema;
+  const rows = await db
+    .select()
+    .from(orderRefunds)
+    .where(inArray(orderRefunds.orderId, [...orderIds]))
+    .orderBy(sql`${orderRefunds.refundedAt} asc nulls last`, asc(orderRefunds.refundId));
+  return rows.map(orderRefundFromRow);
+}
+
+/**
  * A Member's own Orders (just the one with `reference`, when given), newest
  * first, each with the days its payment added to their pass (its paid
- * history row, unique per Order) and its Invoice Request (one per Order, by
- * its key). Always scoped to the Member.
+ * history row, unique per Order), its Invoice Request (one per Order, by its
+ * key) and its refunds (ticket 09). Always scoped to the Member.
  */
 async function readOwnOrders(userId: string, reference?: string): Promise<OwnOrder[]> {
   const { orders, accessPassGrants, invoiceRequests } = schema;
@@ -1271,6 +1298,12 @@ async function readOwnOrders(userId: string, reference?: string): Promise<OwnOrd
     .leftJoin(invoiceRequests, eq(invoiceRequests.orderId, orders.id))
     .where(reference === undefined ? mine : and(mine, eq(orders.reference, reference)))
     .orderBy(desc(orders.createdAt), desc(orders.reference));
+  const refundsOf = refundsOfOrder(
+    await readOrderRefunds(
+      getDb(),
+      rows.map(({ order }) => order.id),
+    ),
+  );
   return rows.map(({ order, startsAt, endsAt, invoice }) => ({
     order: orderFromRow(order),
     paidDays:
@@ -1278,6 +1311,7 @@ async function readOwnOrders(userId: string, reference?: string): Promise<OwnOrd
         ? { startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString() }
         : null,
     invoice: invoice && invoiceRequestFromRow(invoice),
+    refunds: refundsOf(order.id),
   }));
 }
 
@@ -1287,16 +1321,17 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /**
  * Runs `work` on an Order inside `tx`: locks the Order's row, then the
  * buyer's Member row (as a grant does, admin.access-passes.db.ts) and pass,
- * so two outcomes for the same Order or Member take turns; then writes the
- * Order, the pass and its history, the Target Exam, the notice and the Staff
- * Activity together. Null for an id no Order has.
+ * so two outcomes for the same Order or Member take turns, and reads the
+ * pass's history (each row keyed by its seq) and the Order's refunds; then
+ * writes the Order, its refunds, the pass and its history, the Target Exam,
+ * the notice and the Staff Activity together. Null for an id no Order has.
  */
 async function holdOrder<T>(
   tx: Transaction,
   orderId: string,
   work: (holding: OrderHolding) => { write: OrderWrite | null; result: T },
 ): Promise<T | null> {
-  const { orders, members, accessPasses, memberTargetExams } = schema;
+  const { orders, members, accessPasses, accessPassGrants, memberTargetExams } = schema;
   const [orderRow] = await tx.select().from(orders).where(eq(orders.id, orderId)).for("update");
   if (!orderRow) return null;
   const order = orderFromRow(orderRow);
@@ -1318,21 +1353,91 @@ async function holdOrder<T>(
         .where(eq(memberTargetExams.userId, userId))
         .orderBy(asc(memberTargetExams.seq))
     : [];
+  // The pass's lock covers its history: every write to it locks the pass first.
+  const history =
+    userId && pass
+      ? await tx
+          .select({
+            key: accessPassGrants.seq,
+            orderId: accessPassGrants.orderId,
+            startsAt: accessPassGrants.startsAt,
+            endsAt: accessPassGrants.endsAt,
+          })
+          .from(accessPassGrants)
+          .where(and(eq(accessPassGrants.userId, userId), eq(accessPassGrants.examCode, examCode)))
+          .orderBy(asc(accessPassGrants.seq))
+      : [];
 
   const { write, result } = work({
     order,
     member: member ? memberFromRow(member) : null,
     pass: pass ? accessPassFromRow(pass) : null,
     targetExams: targetExams.map(targetExamFromRow),
+    history: history.map((row) => ({
+      ...row,
+      startsAt: row.startsAt.toISOString(),
+      endsAt: row.endsAt.toISOString(),
+    })),
+    refunds: await readOrderRefunds(tx, [orderId]),
   });
   if (!write) return result;
 
   const { reference: _kept, id: _same, ...moved } = orderToRow(write.order);
   await tx.update(orders).set(moved).where(eq(orders.id, orderId));
+  if (write.refunds.length > 0) {
+    const { orderRefunds } = schema;
+    await tx
+      .insert(orderRefunds)
+      .values(write.refunds.map(orderRefundToRow))
+      .onConflictDoUpdate({
+        target: orderRefunds.refundId,
+        set: {
+          amountCentavos: sql`excluded.amount_centavos`,
+          status: sql`excluded.status`,
+          refundedAt: sql`excluded.refunded_at`,
+        },
+      });
+  }
   if (write.paid && member) await writePass(tx, member.userId, examCode, write.paid);
+  if (write.reduction && member) {
+    await writeReduction(tx, member.userId, examCode, write.reduction);
+  }
   if (write.activity)
     await tx.insert(schema.staffActivity).values(staffActivityToRow(write.activity));
   return result;
+}
+
+/**
+ * Writes a full refund's change to a Member's pass in `tx` (ticket 09): its
+ * new end, the history rows it moved (by seq, rewritten in place: the Order
+ * ledger's segment model), the notice and the Staff Activity, inside the
+ * transaction that locked the pass.
+ */
+async function writeReduction(
+  tx: Transaction,
+  userId: string,
+  examCode: string,
+  write: PassReduction,
+): Promise<void> {
+  const { accessPasses, accessPassGrants } = schema;
+  await tx
+    .update(accessPasses)
+    .set({ endsAt: new Date(write.endsAt) })
+    .where(and(eq(accessPasses.userId, userId), eq(accessPasses.examCode, examCode)));
+  for (const segment of write.segments) {
+    await tx
+      .update(accessPassGrants)
+      .set({ startsAt: new Date(segment.startsAt), endsAt: new Date(segment.endsAt) })
+      .where(
+        and(
+          eq(accessPassGrants.seq, segment.key),
+          eq(accessPassGrants.userId, userId),
+          eq(accessPassGrants.examCode, examCode),
+        ),
+      );
+  }
+  await tx.insert(schema.memberNotices).values(noticeToRow(write.notice));
+  await tx.insert(schema.staffActivity).values(staffActivityToRow(write.activity));
 }
 
 export const databaseArm: MemberService = {

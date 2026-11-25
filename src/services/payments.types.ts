@@ -1,5 +1,5 @@
-import type { OrderOutcome } from "@/lib/payments/order-ledger";
 import type { PaymentMethod } from "@/lib/payments/payment-methods";
+import type { PaymentRefund } from "@/lib/payments/refunds";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The payments client (Phase 4, ticket 03; spec, Phase 4 → PayMongo
@@ -55,20 +55,36 @@ export type CheckoutStatus =
   | { status: "paid"; paymentId: string | null }
   | { status: "failed"; paymentId: string | null };
 
-/** A webhook's event buying acts on, once its signature checks out (ticket 05). */
-export interface PaymentEvent {
+/** What every webhook event buying acts on carries. */
+interface PaymentEventBase {
   /** The provider's event id: each event is applied once. */
   id: string;
   /** The provider's event type, such as "checkout_session.payment.paid". */
   type: string;
-  outcome: Exclude<OrderOutcome, "expired">;
-  /** The Order it's about: by its checkout's id, or our id and reference from the checkout's metadata. */
+  /**
+   * The Order it's about: by its checkout's id, our id and reference from the
+   * checkout's metadata, or its payment's id (a refund's, ticket 09).
+   */
   checkoutId: string | null;
   orderId: string | null;
   reference: string | null;
   paymentId: string | null;
   livemode: boolean;
 }
+
+/** A payment's outcome (ticket 05): Paid or Failed. */
+export interface PaymentOutcomeEvent extends PaymentEventBase {
+  outcome: "paid" | "failed";
+}
+
+/** A payment's refunds (ticket 09): each refund the event carries, whatever its status. */
+export interface PaymentRefundEvent extends PaymentEventBase {
+  outcome: "refund";
+  refunds: PaymentRefund[];
+}
+
+/** A webhook's event buying acts on, once its signature checks out (ticket 05). */
+export type PaymentEvent = PaymentOutcomeEvent | PaymentRefundEvent;
 
 /**
  * A webhook checked: its event; a verified event buying doesn't act on (by

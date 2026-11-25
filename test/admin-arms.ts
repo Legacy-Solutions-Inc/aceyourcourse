@@ -1,4 +1,5 @@
 import type { Order } from "@/lib/payments/order-ledger";
+import type { OrderRefund } from "@/lib/payments/refunds";
 import { DEFAULT_QUIZ_SETTINGS } from "@/lib/quizzes/quiz-rules";
 import type { AdminService } from "@/services/admin";
 import * as sampleArm from "@/services/admin.mock";
@@ -135,6 +136,10 @@ export interface AdminArm {
   putOrder(order: Order): Promise<void>;
   /** Every Order, read behind the seam's back, by reference. */
   orders(): Promise<Order[]>;
+  /** Every Order's PayMongo refunds, read behind the seam's back, by refund id (ticket 09). */
+  orderRefunds(): Promise<OrderRefund[]>;
+  /** A Member's Access Pass history for an Exam, read behind the seam's back, in order (ticket 09). */
+  passHistory(userId: string, examCode: string): Promise<AccessPassGrant[]>;
   /**
    * How many records of each kind the Member App keeps for a User id, read
    * behind the seam's back (ticket 19): what deleting an account must empty.
@@ -249,6 +254,13 @@ export const SAMPLE_ARM: AdminArm = {
     store.orders = [...store.orders, structuredClone(order)];
   },
   orders: async () => byReference(structuredClone(getSampleStore().orders)),
+  orderRefunds: async () => byId(structuredClone(getSampleStore().orderRefunds)),
+  passHistory: async (userId, examCode) =>
+    structuredClone(
+      getSampleStore().accessPassGrants.filter(
+        (grant) => grant.userId === userId && grant.examCode === examCode,
+      ),
+    ),
   memberRecords: async (userId) => {
     const store = getSampleStore();
     const mine = (records: readonly { userId: string | null }[]) =>

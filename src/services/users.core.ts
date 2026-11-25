@@ -23,9 +23,8 @@ import type {
   UserRole,
 } from "@/services/admin.types";
 import { activityRecord, formError, NOT_FOUND, refused } from "@/services/content-editor.core";
-import type { OrderWithInvoice } from "@/lib/payments/invoice-requests";
 import type { MemberService } from "@/services/member";
-import { adminOrderOf } from "@/services/orders-admin.core";
+import { type AdminOrderRecord, adminOrderOf } from "@/services/orders-admin.core";
 import type { ActiveDevice, ConsentRecord, Member } from "@/services/member.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -62,8 +61,8 @@ export interface MemberRecords {
   accessPasses: AdminAccessPass[];
   /** Their agreements, oldest first. */
   consents: ConsentRecord[];
-  /** Every Order they made, in any order, each with its Invoice Request (Phase 4, tickets 07, 08). */
-  orders: OrderWithInvoice[];
+  /** Every Order they made, in any order, each with its Invoice Request and refunds (Phase 4, tickets 07–09). */
+  orders: AdminOrderRecord[];
 }
 
 /** One page of the Members a query matches, newest first, and the counts. */

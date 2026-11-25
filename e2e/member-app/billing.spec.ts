@@ -11,7 +11,10 @@ import { expectNoBlockingViolations, LIVE, SKIP_LIVE, signInAndOnboard } from ".
 // details, VAT-registered, then show on it. The Member requests the official
 // invoice (ticket 08) and sees "Invoice requested"; an Owner filters Invoice
 // requested, opens the Order and marks it sent, and the Member then sees
-// "Invoice sent · check your email". Live mode has no payments client here.
+// "Invoice sent · check your email". Refunds (ticket 09), from the sample
+// data: Lou's AYC-10008 was refunded in full and Bea's AYC-10007 in part
+// (₱300); each shows in Billing and on its Acknowledgement. Live mode has no
+// payments client here.
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -132,15 +135,16 @@ test("an Owner's business details, VAT-registered, show on the Member's Acknowle
 }) => {
   await ownerSavesBusinessDetails(browser);
   await signInAndOnboard(page, "tester", "CE");
-  await buyCeThreeMonths(page);
+  const reference = await buyCeThreeMonths(page);
 
   await page.goto(paths.memberApp.billing);
+  // Bea's sample Order (AYC-10007, ticket 09) has an Acknowledgement too: open the one just bought.
   await page
     .getByRole("list", { name: "Orders" })
-    .getByRole("link", { name: /^Payment Acknowledgement for AYC-/ })
+    .getByRole("link", { name: `Payment Acknowledgement for ${reference}` })
     .click();
 
-  const document = page.getByRole("article", { name: /^Payment Acknowledgement AYC-/ });
+  const document = page.getByRole("article", { name: `Payment Acknowledgement ${reference}` });
   await expect(document.getByText("Ace Your Course Review Center")).toBeVisible();
   await expect(document.getByText("Iloilo City, Iloilo")).toBeVisible();
   await expect(document.getByText("TIN 123-456-789-000")).toBeVisible();
@@ -215,4 +219,48 @@ test("an Order that isn't Paid has no Acknowledgement, and its address answers n
 
   const response = await page.goto(paths.memberApp.acknowledgement(reference));
   expect(response?.status()).toBe(404);
+});
+
+/** A Member's Order in Billing, by its reference. */
+const billingRow = (page: Page, reference: string) =>
+  page.getByRole("list", { name: "Orders" }).getByRole("listitem").filter({ hasText: reference });
+
+test("a Member whose Order was refunded in full sees REFUNDED in Billing and on its Acknowledgement", async ({
+  page,
+}) => {
+  await signInAndOnboard(page, "lapsed", "CE");
+  await page.goto(paths.memberApp.billing);
+  const order = billingRow(page, "AYC-10008");
+  await expect(order.getByText("REFUNDED", { exact: true })).toBeVisible();
+  await expect(order.getByText(/^REFUNDED ON .* · UNUSED DAYS REMOVED$/)).toBeVisible();
+  await expect(order.getByText("Request official invoice")).toHaveCount(0);
+  await expectNoBlockingViolations(page);
+
+  await order.getByRole("link", { name: "Payment Acknowledgement for AYC-10008" }).click();
+  await expect(page).toHaveURL(/\/app\/billing\/AYC-10008$/);
+  const document = page.getByRole("article", { name: /^Payment Acknowledgement AYC-10008/ });
+  await expect(document.getByRole("definition").filter({ hasText: /^REFUNDED$/ })).toBeVisible();
+  await expect(document.getByText(/^₱499\.00 on /)).toBeVisible();
+  await expect(document.getByText(/^Refunded .* · its unused days were removed$/)).toBeVisible();
+  await expectNoBlockingViolations(page);
+});
+
+test("a Member whose Order was refunded in part sees PARTIALLY REFUNDED · ₱300 in Billing and on its Acknowledgement", async ({
+  page,
+}) => {
+  await signInAndOnboard(page, "tester", "CE");
+  await page.goto(paths.memberApp.billing);
+  const order = billingRow(page, "AYC-10007");
+  await expect(order.getByText("PAID", { exact: true })).toBeVisible();
+  await expect(order.getByText("PARTIALLY REFUNDED · ₱300")).toBeVisible();
+  await expectNoBlockingViolations(page);
+
+  await order.getByRole("link", { name: "Payment Acknowledgement for AYC-10007" }).click();
+  await expect(page).toHaveURL(/\/app\/billing\/AYC-10007$/);
+  const document = page.getByRole("article", { name: /^Payment Acknowledgement AYC-10007/ });
+  await expect(
+    document.getByRole("definition").filter({ hasText: /^PARTIALLY REFUNDED$/ }),
+  ).toBeVisible();
+  await expect(document.getByText(/^₱300\.00 on /)).toBeVisible();
+  await expectNoBlockingViolations(page);
 });

@@ -2,6 +2,7 @@ import { type DeviceStatus, deviceStatusFor } from "@/lib/member-app/device-toke
 import { noticesToShow } from "@/lib/member-app/notices";
 import { type PrivacyRequestType, privacyRequestDueOn } from "@/lib/member-app/privacy-requests";
 import { type Order, orderReference } from "@/lib/payments/order-ledger";
+import { type OrderRefund, refundsOfOrder } from "@/lib/payments/refunds";
 import { readablePageCount } from "@/lib/reviewer-pdfs/status";
 import { contentItemOf, type ContentExam, libraryOf } from "@/services/content.rules";
 import type { AccessPass, ContentKind, ContentRecords } from "@/services/content.types";
@@ -56,6 +57,7 @@ import {
   type OrderLookup,
   type OrderStore,
   type OrderWrite,
+  type PassReduction,
 } from "@/services/orders.core";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
 
@@ -566,6 +568,11 @@ function paidDaysOf(orderId: string) {
   return grant ? { startsAt: grant.startsAt, endsAt: grant.endsAt } : null;
 }
 
+/** A sample Order's PayMongo refunds, in the order first recorded (ticket 09). */
+function refundsOf(orderId: string) {
+  return structuredClone(refundsOfOrder(getSampleStore().orderRefunds)(orderId));
+}
+
 // A Node process runs one call at a time here, so an outcome reads and writes
 // in one step, and two Pays take consecutive numbers. The Orders admin's
 // "Check status with PayMongo" (ticket 07) settles Orders through it too.
@@ -612,6 +619,7 @@ export const sampleOrderStore: OrderStore = {
           order: structuredClone(order),
           paidDays: paidDaysOf(order.id),
           invoice: invoiceOf(order.id),
+          refunds: refundsOf(order.id),
         }
       : null;
   },
@@ -625,6 +633,7 @@ export const sampleOrderStore: OrderStore = {
         order: structuredClone(order),
         paidDays: paidDaysOf(order.id),
         invoice: invoiceOf(order.id),
+        refunds: refundsOf(order.id),
       }));
   },
   async withOrder(orderId, work) {
@@ -670,21 +679,27 @@ export const sampleOrderStore: OrderStore = {
   },
 };
 
-/** The sample Order a payment event is about: by its checkout's id, then our id, then its reference. */
-function findSampleOrder({ checkoutId, orderId, reference }: OrderLookup): Order | null {
+/**
+ * The sample Order a payment event is about: by its checkout's id, then our
+ * id, then its reference, then its payment's id (a refund's, ticket 09).
+ */
+function findSampleOrder({ checkoutId, orderId, reference, paymentId }: OrderLookup): Order | null {
   const { orders } = getSampleStore();
   return (
     (checkoutId ? orders.find((order) => order.checkoutId === checkoutId) : undefined) ??
     (orderId ? orders.find((order) => order.id === orderId) : undefined) ??
     (reference ? orders.find((order) => order.reference === reference) : undefined) ??
+    (paymentId ? orders.find((order) => order.paymentId === paymentId) : undefined) ??
     null
   );
 }
 
 /**
- * Runs `work` on a sample Order and its buyer's pass, then writes what it
+ * Runs `work` on a sample Order, its buyer's pass with its history (each row
+ * keyed by its place in the history) and its refunds, then writes what it
  * gives: the Staff Activity first (should it fail, nothing else is), then
- * the pass, then the Order. A Node process runs one call at a time here.
+ * the pass, then the refunds, then the Order. A Node process runs one call
+ * at a time here.
  */
 function holdSampleOrder<T>(
   orderId: string,
@@ -694,22 +709,58 @@ function holdSampleOrder<T>(
   const order = store.orders.find((candidate) => candidate.id === orderId);
   if (!order) return null;
   const { userId, examCode } = order;
-  const pass =
-    store.accessPasses.find((held) => held.userId === userId && held.examCode === examCode) ?? null;
+  const held = (row: { userId: string | null; examCode: string }) =>
+    row.userId === userId && row.examCode === examCode;
+  const pass = store.accessPasses.find(held) ?? null;
+  const history = store.accessPassGrants.flatMap((row, key) =>
+    pass && held(row)
+      ? [{ key, orderId: row.orderId, startsAt: row.startsAt, endsAt: row.endsAt }]
+      : [],
+  );
   const { write, result } = work(
     structuredClone({
       order,
       member: store.members.find((candidate) => candidate.userId === userId) ?? null,
       pass,
       targetExams: userId ? (store.memberTargetExams[userId] ?? []) : [],
+      history,
+      refunds: refundsOfOrder(store.orderRefunds)(orderId),
     }),
   );
   if (!write) return result;
 
   if (write.activity) store.staffActivity = [...store.staffActivity, write.activity];
   if (write.paid && userId) writeSamplePass(userId, examCode, write.paid);
-  store.orders = store.orders.map((held) => (held.id === orderId ? write.order : held));
+  if (write.reduction && userId) writeSampleReduction(userId, examCode, write.reduction);
+  store.orderRefunds = mergeById(store.orderRefunds, write.refunds);
+  store.orders = store.orders.map((kept) => (kept.id === orderId ? write.order : kept));
   return result;
+}
+
+/** Records refunds by their id: one already there is replaced in its place, a new one added after. */
+function mergeById(refunds: readonly OrderRefund[], changed: readonly OrderRefund[]) {
+  const byId = new Map(refunds.map((refund) => [refund.id, refund]));
+  for (const refund of changed) byId.set(refund.id, structuredClone(refund));
+  return [...byId.values()];
+}
+
+/**
+ * Writes a full refund's change to a sample pass (ticket 09): the Staff
+ * Activity first, then the pass's end, the history rows it moved (by their
+ * place) and the notice.
+ */
+function writeSampleReduction(userId: string, examCode: string, write: PassReduction) {
+  const store = getSampleStore();
+  store.staffActivity = [...store.staffActivity, write.activity];
+  store.accessPasses = store.accessPasses.map((pass) =>
+    pass.userId === userId && pass.examCode === examCode ? { ...pass, endsAt: write.endsAt } : pass,
+  );
+  const moved = new Map(write.segments.map((segment) => [segment.key, segment]));
+  store.accessPassGrants = store.accessPassGrants.map((row, key) => {
+    const segment = moved.get(key);
+    return segment ? { ...row, startsAt: segment.startsAt, endsAt: segment.endsAt } : row;
+  });
+  store.memberNotices = [...store.memberNotices, write.notice];
 }
 
 export const {

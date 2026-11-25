@@ -11,8 +11,10 @@ import { LIVE, resetSampleData, signInAs } from "./helpers";
 // as a CSV, ticks "Include test orders" to see the TEST row, then opens the
 // Pending Order, checks its status with PayMongo and saves an internal note.
 // "Invoice requested" (ticket 08) finds Maria's Invoice Request; the Owner
-// opens it and marks it sent. An Editor sees no SALES group and is refused
-// the screens and the export.
+// opens it and marks it sent. Refunds (ticket 09): the Owner sees Lou's
+// Order REFUNDED and Bea's "PARTIALLY REFUNDED · ₱300", on the list, the
+// detail and in the CSV's amount refunded. An Editor sees no SALES group and
+// is refused the screens and the export.
 //
 // The sample Orders, timed from the reset:
 //   AYC-10001 Jose, CE 6 months, GCash, Paid, 45 days ago
@@ -21,6 +23,8 @@ import { LIVE, resetSampleData, signInAs } from "./helpers";
 //   AYC-10004 Karen, ME 1 month, Card, Failed, 4 days ago
 //   AYC-10005 Tess, CE 1 month, Maya, Paid, a Test Order, 2 days ago
 //   AYC-10006 Paolo, ME 1 month, Maya, Pending, 1 hour ago
+//   AYC-10007 Bea, CE 3 months, QR Ph, Paid, ₱300 refunded, 50 minutes ago
+//   AYC-10008 Lou, CE 1 month, GCash, Refunded, 40 minutes ago
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -33,11 +37,19 @@ const shown = (page: Page) =>
     .getByRole("row")
     .getByRole("link", { name: /^AYC-\d+$/ });
 
-/** The references a downloaded CSV holds, in order, and its header row. */
+/** The references a downloaded CSV holds, in order, its header row, and each row's cells. */
 async function csvOf(path: string) {
   const lines = (await readFile(path, "utf8")).replace("﻿", "").split("\r\n").slice(0, -1);
-  return { header: lines[0], references: lines.slice(1).map((line) => line.split(",")[0]) };
+  const rows = lines.slice(1).map((line) => line.split(","));
+  return {
+    header: lines[0],
+    references: rows.map((cells) => cells[0]),
+    cells: (reference: string) => rows.find((cells) => cells[0] === reference) ?? [],
+  };
 }
+
+/** The last 30 days' Orders, without Test Orders, newest first: the list as it opens. */
+const DEFAULT_LIST = ["AYC-10008", "AYC-10007", "AYC-10006", "AYC-10004", "AYC-10003", "AYC-10002"];
 
 test.beforeEach(async ({ request }) => {
   test.skip(LIVE, "The sample Orders are in the in-memory sample data only.");
@@ -53,7 +65,7 @@ test.describe("an Owner", () => {
       .getByRole("link", { name: /Orders & payments/ })
       .click();
     await expect(page).toHaveURL(/\/admin\/orders$/);
-    await expect(shown(page)).toHaveText(["AYC-10006", "AYC-10004", "AYC-10003", "AYC-10002"]);
+    await expect(shown(page)).toHaveText(DEFAULT_LIST);
 
     const search = page.getByRole("searchbox", { name: "Search by order number or email" });
     await search.fill("AYC-10004");
@@ -72,10 +84,12 @@ test.describe("an Owner", () => {
 
   test("filters GCash and Paid, and the CSV holds exactly those Orders", async ({ page }) => {
     await signInAs(page, "owner", paths.admin.orders);
-    await expect(shown(page)).toHaveCount(4);
+    await expect(shown(page)).toHaveCount(DEFAULT_LIST.length);
 
     await page.getByRole("combobox", { name: "Payment method" }).selectOption({ label: "GCash" });
     await expect(page).toHaveURL(/method=gcash/);
+    // Lou's GCash Order was refunded: it leaves the list once Paid is picked.
+    await expect(shown(page)).toHaveText(["AYC-10008", "AYC-10003"]);
     await list(page).getByRole("link", { name: "PAID", exact: true }).click();
     await expect(page).toHaveURL(/\/admin\/orders\?status=paid&method=gcash$/);
     await expect(shown(page)).toHaveText(["AYC-10003"]);
@@ -103,12 +117,14 @@ test.describe("an Owner", () => {
 
   test("ticks Include test orders to see the TEST row", async ({ page }) => {
     await signInAs(page, "owner", paths.admin.orders);
-    await expect(shown(page)).toHaveCount(4);
+    await expect(shown(page)).toHaveCount(DEFAULT_LIST.length);
     await expect(list(page).getByText("TEST", { exact: true })).toHaveCount(0);
 
     await page.getByRole("checkbox", { name: "Include test orders" }).check();
     await expect(page).toHaveURL(/\/admin\/orders\?tests=1$/);
     await expect(shown(page)).toHaveText([
+      "AYC-10008",
+      "AYC-10007",
       "AYC-10006",
       "AYC-10005",
       "AYC-10004",
@@ -119,6 +135,41 @@ test.describe("an Owner", () => {
       .getByRole("row")
       .filter({ has: page.getByRole("link", { name: "AYC-10005" }) });
     await expect(testRow.getByText("TEST", { exact: true })).toBeVisible();
+  });
+
+  test("sees a refunded Order REFUNDED and a partial refund's amount, on the list, the detail and in the CSV", async ({
+    page,
+  }) => {
+    await signInAs(page, "owner", paths.admin.orders);
+    const row = (reference: string) =>
+      list(page)
+        .getByRole("row")
+        .filter({ has: page.getByRole("link", { name: reference, exact: true }) });
+    await expect(row("AYC-10008").getByText("REFUNDED", { exact: true })).toBeVisible();
+    await expect(row("AYC-10007").getByText("PAID", { exact: true })).toBeVisible();
+    await expect(row("AYC-10007").getByText("PARTIALLY REFUNDED · ₱300")).toBeVisible();
+
+    const downloading = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Export CSV" }).click();
+    const csv = await csvOf(await (await downloading).path());
+    expect(csv.header).toContain(",Status,Amount refunded (PHP),");
+    expect(csv.cells("AYC-10007").slice(9, 11)).toEqual(["Paid", "300.00"]);
+    expect(csv.cells("AYC-10008").slice(9, 11)).toEqual(["Refunded", "499.00"]);
+    expect(csv.cells("AYC-10003").slice(9, 11)).toEqual(["Paid", ""]);
+
+    await list(page).getByRole("link", { name: "AYC-10008" }).click();
+    await expect(page).toHaveURL(/\/admin\/orders\/AYC-10008$/);
+    const refunded = page.getByRole("region", { name: "AYC-10008" });
+    await expect(refunded.getByText("REFUNDED", { exact: true })).toBeVisible();
+    await expect(refunded).toContainText("AMOUNT REFUNDED₱499 · in full");
+    await expect(refunded).toContainText(
+      "Refunded in full in PayMongo · ₱499 · unused days removed",
+    );
+
+    await page.goto(paths.admin.order("AYC-10007"));
+    const partial = page.getByRole("region", { name: "AYC-10007" });
+    await expect(partial.getByText("PARTIALLY REFUNDED · ₱300")).toBeVisible();
+    await expect(partial).toContainText("Partially refunded in PayMongo · ₱300 · access unchanged");
   });
 
   test("opens the Pending Order, checks its status with PayMongo and saves an internal note", async ({

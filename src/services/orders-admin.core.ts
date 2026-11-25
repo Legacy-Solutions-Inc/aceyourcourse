@@ -2,6 +2,7 @@ import { ordersCsv, ordersCsvFilename } from "@/lib/admin/orders-csv";
 import { filterOrders, orderStats, rangeStart } from "@/lib/admin/orders-list";
 import type { InvoiceRequest, OrderWithInvoice } from "@/lib/payments/invoice-requests";
 import { effectiveStatus, isOrderReference, paidAfterExpiry } from "@/lib/payments/order-ledger";
+import { type OrderRefund, refundedCentavos, succeededRefunds } from "@/lib/payments/refunds";
 import {
   invalidInput,
   type OrderNoteInput,
@@ -60,7 +61,9 @@ import type { PaymentsClient } from "@/services/payments.types";
 //   as one step; a request already marked sent is given back as it is,
 //   changing and logging nothing. The app sends no email: the Owner sends
 //   the invoice from the support inbox first.
-// - Refunds are issued from the PayMongo dashboard, never here.
+// - Refunds are issued from the PayMongo dashboard, never here. Every read
+//   carries an Order's refunds that PayMongo's events recorded (ticket 09),
+//   for its status, the timeline and the CSV's amount refunded.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FORBIDDEN = "ONLY AN OWNER CAN SEE ORDERS AND PAYMENTS";
@@ -73,17 +76,27 @@ export const orderNoteRecord = (orderId: string) => `order-note:${orderId}`;
 
 export const NO_INVOICE_REQUEST = "No invoice was requested for this Order.";
 
-/** Pure: an Order, with its Invoice Request, as the Admin shows it at `now`. */
-export const adminOrderOf = ({ order, invoice }: OrderWithInvoice, now: Date): AdminOrder => ({
+/** An Order as the Admin reads it: with its Invoice Request (ticket 08) and its refunds (ticket 09). */
+export interface AdminOrderRecord extends OrderWithInvoice {
+  refunds: OrderRefund[];
+}
+
+/** Pure: an Order, with its Invoice Request and refunds, as the Admin shows it at `now`. */
+export const adminOrderOf = (
+  { order, invoice, refunds }: AdminOrderRecord,
+  now: Date,
+): AdminOrder => ({
   ...order,
   status: effectiveStatus(order, now),
   recordedStatus: order.status,
   paidAfterExpiry: paidAfterExpiry(order),
   invoice,
+  refunds: succeededRefunds(refunds),
+  refundedCentavos: refundedCentavos(refunds),
 });
 
 /** One Order as the detail page reads it. */
-export interface OrderRecord extends OrderWithInvoice {
+export interface OrderRecord extends AdminOrderRecord {
   /** Whether the buyer's Member record is there: false once their account is deleted. */
   memberExists: boolean;
   /** The internal note, or null for none. */
@@ -111,9 +124,9 @@ export interface InvoiceSentWrite {
 export interface OrdersAdminStore {
   /**
    * Every Order made at or after `since` (all of them for null), with its
-   * Invoice Request; Test Orders only with `tests`.
+   * Invoice Request and refunds; Test Orders only with `tests`.
    */
-  listOrders(filter: { since: Date | null; tests: boolean }): Promise<OrderWithInvoice[]>;
+  listOrders(filter: { since: Date | null; tests: boolean }): Promise<AdminOrderRecord[]>;
   /** The Order with this reference, or null for none. */
   readOrder(reference: string): Promise<OrderRecord | null>;
   /**

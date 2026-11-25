@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { z } from "zod";
 
+import { type PaymentRefund, REFUND_STATUSES, type RefundStatus } from "@/lib/payments/refunds";
 import type { PaymentEvent, WebhookCheck } from "@/services/payments.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -17,11 +18,20 @@ import type { PaymentEvent, WebhookCheck } from "@/services/payments.types";
 //   was signed is refused. Compared in constant time.
 // - The events (docs.paymongo.com/docs/developer-tools-webhooks-events):
 //   `{ data: { id: "evt_…", type: "event", attributes: { type, livemode,
-//   data } } }`. Buying acts on three:
+//   data } } }`. Buying acts on these:
 //   - checkout_session.payment.paid: a Checkout Session, with its id, our
 //     reference_number and metadata, and the paid payment among its payments;
 //   - payment.paid and payment.failed: a payment, carrying the metadata its
-//     Checkout Session gave it (our Order's id and reference).
+//     Checkout Session gave it (our Order's id and reference);
+//   - payment.refunded and payment.refund.updated (ticket 09;
+//     docs.paymongo.com/reference/webhook-resource): read by the resource
+//     they carry. A refund (docs.paymongo.com/reference/refund-resource:
+//     "ref_…", amount in centavos, status, payment_id, refunded_at; the
+//     events page's sample for payment.refund.updated) names its payment;
+//     a payment names our Order in its metadata and lists its refunds. The
+//     docs show no sample for payment.refunded, so either is read, and a
+//     listed refund that can't be read is skipped. A status PayMongo adds
+//     later reads as pending, which counts for nothing.
 //   Any other type is verified and acknowledged, but changes nothing.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -92,6 +102,82 @@ const checkoutSchema = z.object({
     .passthrough(),
 });
 
+/** Pure: PayMongo's seconds since 1970 as an ISO time; null for none. */
+const isoOf = (seconds: number | null | undefined) =>
+  typeof seconds === "number" ? new Date(seconds * 1000).toISOString() : null;
+
+const isRefundStatus = (status: string): status is RefundStatus =>
+  (REFUND_STATUSES as readonly string[]).includes(status);
+
+const refundSchema = z.object({
+  id: z.string().min(1),
+  type: z.literal("refund"),
+  attributes: z
+    .object({
+      amount: z.number().int().positive(),
+      payment_id: z.string().min(1),
+      status: z.string(),
+      refunded_at: z.number().nullish(),
+      updated_at: z.number().nullish(),
+      metadata: metadataSchema,
+    })
+    .passthrough(),
+});
+
+const refundedPaymentSchema = z.object({
+  id: z.string().min(1),
+  type: z.literal("payment"),
+  attributes: z
+    .object({ metadata: metadataSchema, refunds: z.array(z.unknown()).nullish() })
+    .passthrough(),
+});
+
+/**
+ * Pure: a refund resource as an Order records it: a status it doesn't know
+ * is pending, and a succeeded one's time is PayMongo's refunded_at, or its
+ * last update when there's none.
+ */
+function refundOf({ id, attributes }: z.infer<typeof refundSchema>): PaymentRefund {
+  const status = isRefundStatus(attributes.status) ? attributes.status : "pending";
+  return {
+    id,
+    amountCentavos: attributes.amount,
+    status,
+    refundedAt:
+      status === "succeeded"
+        ? (isoOf(attributes.refunded_at) ?? isoOf(attributes.updated_at))
+        : null,
+  };
+}
+
+/** Pure: a refund event's resource: a refund, or a refunded payment with its refunds; null when it's neither. */
+function readRefunds(data: unknown) {
+  const refund = refundSchema.safeParse(data);
+  if (refund.success) {
+    const { metadata, payment_id } = refund.data.attributes;
+    return {
+      orderId: metadata?.order_id ?? null,
+      reference: metadata?.reference ?? null,
+      paymentId: payment_id,
+      refunds: [refundOf(refund.data)],
+    };
+  }
+  const payment = refundedPaymentSchema.safeParse(data);
+  if (!payment.success) return null;
+  const { metadata, refunds } = payment.data.attributes;
+  return {
+    orderId: metadata?.order_id ?? null,
+    reference: metadata?.reference ?? null,
+    paymentId: payment.data.id,
+    refunds: (refunds ?? []).flatMap((listed) => {
+      const read = refundSchema.safeParse(listed);
+      return read.success ? [refundOf(read.data)] : [];
+    }),
+  };
+}
+
+const REFUND_EVENTS: ReadonlySet<string> = new Set(["payment.refunded", "payment.refund.updated"]);
+
 const eventSchema = z.object({
   data: z.object({
     id: z.string().min(1),
@@ -150,6 +236,11 @@ function readEvent(rawBody: string): Read {
         paymentId: payment.data.id,
       },
     };
+  }
+  if (REFUND_EVENTS.has(type)) {
+    const refunded = readRefunds(data);
+    if (!refunded) return { kind: "malformed" };
+    return { kind: "event", event: { ...base, outcome: "refund", checkoutId: null, ...refunded } };
   }
   return { kind: "other", ...base };
 }

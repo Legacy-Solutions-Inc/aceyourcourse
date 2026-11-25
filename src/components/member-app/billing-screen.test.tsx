@@ -28,6 +28,7 @@ const PAID: OrderRow = {
   test: false,
   acknowledgementHref: "/app/billing/AYC-10482",
   invoice: { canRequest: true, line: null },
+  refund: null,
 };
 const FAILED: OrderRow = {
   ...PAID,
@@ -90,6 +91,32 @@ describe("BillingScreen", () => {
     expect(within(rows[1]!).queryByRole("link")).not.toBeInTheDocument();
   });
 
+  it("shows a refund under its Order: PARTIALLY REFUNDED with the amount, or REFUNDED (ticket 09)", () => {
+    const partial: OrderRow = { ...PAID, refund: "PARTIALLY REFUNDED · ₱300" };
+    const refunded: OrderRow = {
+      ...PAID,
+      reference: "AYC-10483",
+      status: "REFUNDED",
+      tone: "ended",
+      acknowledgementHref: "/app/billing/AYC-10483",
+      invoice: { canRequest: false, line: null },
+      refund: "REFUNDED ON 17 NOV 2026 · UNUSED DAYS REMOVED",
+    };
+    render(<BillingScreen {...INVOICE} passes={[]} orders={[partial, refunded]} />);
+    const [first, second] = within(screen.getByRole("list", { name: "Orders" })).getAllByRole(
+      "listitem",
+    );
+
+    expect(first).toHaveTextContent("PAID");
+    expect(first).toHaveTextContent("PARTIALLY REFUNDED · ₱300");
+    expect(second).toHaveTextContent("REFUNDED ON 17 NOV 2026 · UNUSED DAYS REMOVED");
+    expect(
+      within(second ?? document.body).getByRole("link", {
+        name: "Payment Acknowledgement for AYC-10483",
+      }),
+    ).toHaveAttribute("href", "/app/billing/AYC-10483");
+  });
+
   it("marks a Test Order TEST", () => {
     render(<BillingScreen {...INVOICE} passes={[]} orders={[PAID, FAILED]} />);
     const rows = within(screen.getByRole("list", { name: "Orders" })).getAllByRole("listitem");
@@ -131,6 +158,7 @@ describe("PaymentAcknowledgementDocument", () => {
     vatLine: "Prices include VAT",
     test: false,
     invoice: { canRequest: true, line: null },
+    refunded: null,
   };
   const renderIt = (view: Partial<AcknowledgementView> = {}, action = invoiceAction()) =>
     render(
@@ -178,6 +206,20 @@ describe("PaymentAcknowledgementDocument", () => {
       expect(document.getAllByText(text).length).toBeGreaterThan(0);
     }
     expect(document.getAllByText("₱1,299.00")).toHaveLength(2);
+  });
+
+  it("reads PARTIALLY REFUNDED or REFUNDED, with what was refunded and when (ticket 09)", () => {
+    renderIt({ status: "PARTIALLY REFUNDED", refunded: "₱300.00 on 16 Nov 2026" });
+    const document = screen.getByRole("article", { name: /^Payment Acknowledgement AYC-10482/ });
+    expect(document).toHaveTextContent("STATUSPARTIALLY REFUNDED");
+    expect(document).toHaveTextContent("REFUNDED₱300.00 on 16 Nov 2026");
+  });
+
+  it("says nothing of refunds on a Paid Order with none", () => {
+    renderIt();
+    expect(
+      screen.getByRole("article", { name: /^Payment Acknowledgement AYC-10482/ }),
+    ).not.toHaveTextContent("REFUNDED");
   });
 
   it("has no VAT line when there's none", () => {

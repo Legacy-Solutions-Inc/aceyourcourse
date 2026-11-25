@@ -7,8 +7,8 @@ import { csvCell, ORDERS_CSV_HEADER, ordersCsv, ordersCsvFilename } from "./orde
 // The Orders CSV for the accountant (Phase 4, ticket 07; story 147; spec,
 // Phase 4 planning decisions → Orders and sales figures), pure: a header row
 // always, then one row per Order, RFC 4180 quoted, with every cell that a
-// spreadsheet would run as a formula escaped. The refund and invoice columns
-// stay empty until tickets 08 and 09 fill them.
+// spreadsheet would run as a formula escaped. The Invoice Request (ticket 08)
+// and the amount refunded (ticket 09) have their own columns.
 
 const BOM = "﻿";
 const CRLF = "\r\n";
@@ -28,6 +28,8 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
     recordedStatus: "paid",
     paidAfterExpiry: false,
     invoice: null,
+    refunds: [],
+    refundedCentavos: 0,
     livemode: true,
     checkoutId: "cs_LiveCheckout0001",
     paymentId: "pay_LivePayment0001",
@@ -111,6 +113,17 @@ describe("ordersCsv", () => {
     expect(
       lines(ordersCsv([order({ invoice: { ...requested.invoice!, tin: null, name: "=Bea" } })]))[1],
     ).toMatch(/,Yes,'=Bea,"12 Sample St, Jaro",$/);
+  });
+
+  it("gives the amount refunded (ticket 09): a partial refund of a Paid Order, and a Refunded one's whole amount", () => {
+    const [, partial, refunded] = lines(
+      ordersCsv([
+        order({ refundedCentavos: 30_000 }),
+        order({ status: "refunded", recordedStatus: "refunded", refundedCentavos: 129_900 }),
+      ]),
+    );
+    expect(partial?.split(",").slice(9, 11)).toEqual(["Paid", "300.00"]);
+    expect(refunded?.split(",").slice(9, 11)).toEqual(["Refunded", "1299.00"]);
   });
 
   it("leaves a Pending Order's paid time and payment ID empty, and shows its status as every screen does", () => {

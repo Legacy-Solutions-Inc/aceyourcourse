@@ -10,18 +10,24 @@
         "type": "refund",
         "attributes": {
           "amount": 129900,
+          "balance_transaction_id": null,
           "currency": "PHP",
           "livemode": false,
+          "metadata": null,
+          "notes": null,
           "payment_id": "pay_FakePaid0001TestOnly",
+          "payout_id": null,
           "reason": "requested_by_customer",
           "status": "succeeded",
-          "created_at": 1763400000,
+          "available_at": 1763400000,
+          "created_at": 1763399000,
+          "refunded_at": 1763400000,
           "updated_at": 1763400000
         }
       },
       "previous_data": {},
-      "created_at": 1763351102,
-      "updated_at": 1763351102
+      "created_at": 1763400000,
+      "updated_at": 1763400000
     }
   }
 }

@@ -390,14 +390,18 @@ export type TopicPercents = Record<string, number | null>;
 
 // ── In-app notices (ticket 17) ──────────────────────────────────────────────
 
-/** What a notice tells the Member: a grant, an extension, or the end of their access. */
-export const NOTICE_KINDS = ["granted", "extended", "ended"] as const;
+/**
+ * What a notice tells the Member: a grant, an extension, the end of their
+ * access, or a full refund in PayMongo (Phase 4, ticket 09).
+ */
+export const NOTICE_KINDS = ["granted", "extended", "ended", "refunded"] as const;
 export type NoticeKind = (typeof NOTICE_KINDS)[number];
 
 /**
  * One in-app notice (spec, Phase 3 planning decisions → In-app notices): an
- * Owner's grant, extension or end of a Member's Access Pass, shown as a
- * dismissible banner until the Member dismisses it. No email is sent.
+ * Owner's grant, extension or end of a Member's Access Pass, or a full refund
+ * (ticket 09), shown as a dismissible banner until the Member dismisses it.
+ * No email is sent.
  */
 export interface MemberNotice {
   id: string;
@@ -412,6 +416,8 @@ export interface MemberNotice {
   createdAt: string;
   /** ISO time the Member dismissed it, or null while it shows. */
   dismissedAt: string | null;
+  /** The refunded Order's reference, "AYC-10483", for a refund's notice; null for any other. */
+  reference: string | null;
 }
 
 // ── Privacy Requests (ticket 18) ────────────────────────────────────────────
@@ -517,7 +523,8 @@ export type InvoiceRequestResult =
   | { ok: false; reason: "invalid"; fields: InvoiceFieldErrors };
 
 /** What a PayMongo webhook event did (ticket 05). */
-export type PaymentEventResult = "applied" | "no-change" | "duplicate" | "unknown-order";
+export type PaymentEventResult =
+  "applied" | "no-change" | "duplicate" | "unknown-order" | "ignored";
 
 /**
  * What the daily sweep did: the overdue Pending Orders it asked PayMongo
@@ -557,4 +564,11 @@ export type MemberOrder = Pick<
   paidAfterExpiry: boolean;
   /** Its Invoice Request (ticket 08), or null for none. */
   invoice: MemberInvoice | null;
+  /**
+   * What PayMongo refunded of it, in centavos (ticket 09): its succeeded
+   * refunds. Less than its price on a Paid Order is a partial refund.
+   */
+  refundedCentavos: number;
+  /** When its last refund was made (ISO), or null with none. */
+  refundedAt: string | null;
 };

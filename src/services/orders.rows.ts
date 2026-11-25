@@ -1,6 +1,7 @@
 import type * as schema from "@/lib/db/schema";
 import type { InvoiceRequest } from "@/lib/payments/invoice-requests";
 import type { Order } from "@/lib/payments/order-ledger";
+import type { OrderRefund } from "@/lib/payments/refunds";
 import { toPlanDays } from "@/lib/plans/plan-rules";
 
 // The Orders table's rows as Orders, and back (Phase 4, ticket 03). The
@@ -67,4 +68,23 @@ export const invoiceRequestToRow = (request: InvoiceRequest): InvoiceRequestRow 
   sentAt: request.sentAt === null ? null : new Date(request.sentAt),
   sentByEmail: request.sentBy?.email ?? null,
   sentByName: request.sentBy?.name ?? null,
+});
+
+// PayMongo's refunds (ticket 09): the refund's id is the key.
+type OrderRefundRow = typeof schema.orderRefunds.$inferSelect;
+
+export const orderRefundFromRow = (row: OrderRefundRow): OrderRefund => ({
+  id: row.refundId,
+  orderId: row.orderId,
+  amountCentavos: row.amountCentavos,
+  status: row.status,
+  refundedAt: row.refundedAt?.toISOString() ?? null,
+});
+
+export const orderRefundToRow = (refund: OrderRefund): OrderRefundRow => ({
+  refundId: refund.id,
+  orderId: refund.orderId,
+  amountCentavos: refund.amountCentavos,
+  status: refund.status,
+  refundedAt: refund.refundedAt === null ? null : new Date(refund.refundedAt),
 });

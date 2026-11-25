@@ -423,10 +423,15 @@ for (const size of SIZES) {
         paths.admin.plans,
         `${paths.admin.plans}?plan=new`,
         // Orders & payments (Phase 4, ticket 07), every Order with the TEST tag, and the
-        // sample data's Pending Order, which the live database doesn't have.
+        // sample data's Pending, partially refunded and Refunded Orders (ticket 09),
+        // which the live database doesn't have.
         paths.admin.orders,
         `${paths.admin.orders}?range=all&tests=1`,
-        ...(LIVE ? [] : [paths.admin.order("AYC-10006")]),
+        ...(LIVE
+          ? []
+          : ["AYC-10006", "AYC-10007", "AYC-10008"].map((reference) =>
+              paths.admin.order(reference),
+            )),
         "/admin/settings",
       ]) {
         await page.goto(path);

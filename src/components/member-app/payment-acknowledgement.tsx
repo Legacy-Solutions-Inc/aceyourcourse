@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
 
 import type { AcknowledgementView } from "./billing-view";
@@ -102,7 +103,15 @@ export function PaymentAcknowledgementDocument({
           <dt>PAYMONGO REF</dt>
           <dd className="break-all">{view.payMongoReference}</dd>
           <dt>STATUS</dt>
-          <dd className="font-bold text-ayc-success">{view.status}</dd>
+          <dd className={cn("font-bold", view.refunded ? "text-foreground" : "text-ayc-success")}>
+            {view.status}
+          </dd>
+          {view.refunded ? (
+            <>
+              <dt>REFUNDED</dt>
+              <dd>{view.refunded}</dd>
+            </>
+          ) : null}
         </dl>
       </article>
       <section

@@ -23,6 +23,8 @@ const ORDER: MemberOrder = {
   paidAfterExpiry: false,
   livemode: false,
   invoice: null,
+  refundedCentavos: 0,
+  refundedAt: null,
 };
 
 describe("orderScreen", () => {

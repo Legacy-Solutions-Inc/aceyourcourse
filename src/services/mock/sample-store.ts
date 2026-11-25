@@ -13,6 +13,7 @@ import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.
 import type { CardImageType } from "@/lib/cards/card-rules";
 import type { InvoiceRequest } from "@/lib/payments/invoice-requests";
 import { FIRST_REFERENCE_NUMBER, type Order } from "@/lib/payments/order-ledger";
+import type { OrderRefund } from "@/lib/payments/refunds";
 import type {
   AccessPass,
   AccessPassGrant,
@@ -193,6 +194,8 @@ export interface SampleStore {
   invoiceRequests: InvoiceRequest[];
   /** When each Order's status was last asked of the payments client, by Order id (ticket 04's backup). */
   orderStatusCheckedAt: Record<string, string>;
+  /** PayMongo's refunds of Orders, one per refund id, in the order first recorded (ticket 09). */
+  orderRefunds: OrderRefund[];
   /** The PayMongo webhook events already applied, in the order received (ticket 05). */
   paymentEvents: { eventId: string; type: string; orderId: string | null; receivedAt: string }[];
   /** The upload seam's files, by upload id. */
@@ -266,7 +269,12 @@ function createSampleStore(
     })),
     ...(withOrders
       ? sampleOrders(now, catalogue)
-      : { orders: [], nextOrderNumber: FIRST_REFERENCE_NUMBER, invoiceRequests: [] }),
+      : {
+          orders: [],
+          nextOrderNumber: FIRST_REFERENCE_NUMBER,
+          invoiceRequests: [],
+          orderRefunds: [],
+        }),
     orderNotes: {},
     orderStatusCheckedAt: {},
     paymentEvents: [],

@@ -104,8 +104,9 @@ test.describe("the Owner", () => {
       await expect(section(owner, "PROGRESS")).toContainText("CARDS GOT IT");
       await expect(section(owner, "DEVICE SWITCHES · 1")).toBeVisible();
       await expect(section(owner, "CONSENT")).toContainText("TERMS 2.0 · PRIVACY 2.0");
-      // Bea hasn't bought anything here (Phase 4, ticket 07).
-      await expect(section(owner, "ORDERS · 0")).toContainText("No Orders yet.");
+      // Bea's sample Order, ₱300 of it refunded (Phase 4, tickets 07 and 09).
+      await expect(section(owner, "ORDERS · 1")).toContainText("AYC-10007");
+      await expect(section(owner, "ORDERS · 1")).toContainText("PARTIALLY REFUNDED · ₱300");
       await expectNoBlockingViolations(owner);
       // On a phone, the profile and the sections stack, with no sideways scroll.
       const desktop = owner.viewportSize();

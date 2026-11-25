@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import checkoutPaid from "../../../test/fixtures/paymongo/event-checkout-paid.json";
 import paymentFailed from "../../../test/fixtures/paymongo/event-payment-failed.json";
 import paymentPaid from "../../../test/fixtures/paymongo/event-payment-paid.json";
+import paymentRefunded from "../../../test/fixtures/paymongo/event-payment-refunded.json";
 import refundUpdated from "../../../test/fixtures/paymongo/event-refund-updated.json";
 
 import { signPayMongoWebhook, verifyPayMongoWebhook } from "./webhook";
@@ -15,7 +16,8 @@ import { signPayMongoWebhook, verifyPayMongoWebhook } from "./webhook";
 // request carries `Paymongo-Signature: t=<timestamp>,te=<test>,li=<live>`,
 // the HMAC-SHA256 of "<t>.<raw body>" with the webhook's secret: te for a
 // test event, li for a live one. A verified body is read as an event buying
-// acts on (a paid checkout, a paid or failed payment) or one it ignores.
+// acts on (a paid checkout, a paid or failed payment, a refund: ticket 09)
+// or one it ignores.
 
 const SECRET = "whsk_TestOnlySecret0001";
 const T = 1_763_351_102;
@@ -175,12 +177,106 @@ describe("verifyPayMongoWebhook: the event", () => {
   });
 
   it("verifies but ignores an event buying doesn't act on, naming its type", () => {
-    expect(read(refundUpdated)).toEqual({
+    const sourceChargeable = structuredClone(paymentPaid);
+    sourceChargeable.data.attributes.type = "source.chargeable";
+    expect(read(sourceChargeable)).toEqual({
       ok: true,
       event: null,
-      id: "evt_FakeRefund0001",
-      type: "payment.refund.updated",
+      id: "evt_FakePaymentPaid0001",
+      type: "source.chargeable",
     });
+  });
+
+  // Refunds (ticket 09; docs.paymongo.com/reference/webhook-resource names
+  // payment.refunded and payment.refund.updated; its events page shows
+  // payment.refund.updated carrying a refund resource,
+  // docs.paymongo.com/reference/refund-resource). A refund event is read by
+  // the resource it carries: a refund, by its payment's id, or a payment, by
+  // the metadata its checkout gave it, with each refund it lists.
+  const REFUNDED_AT = new Date(1_763_400_000 * 1000).toISOString();
+  const FULL_REFUND = {
+    id: "ref_FakeRefund0001TestOnly",
+    amountCentavos: 129_900,
+    status: "succeeded",
+    refundedAt: REFUNDED_AT,
+  };
+
+  it("reads a refund resource: the refund, and the payment it refunds", () => {
+    expect(read(refundUpdated)).toEqual({
+      ok: true,
+      event: {
+        id: "evt_FakeRefund0001",
+        type: "payment.refund.updated",
+        outcome: "refund",
+        checkoutId: null,
+        orderId: null,
+        reference: null,
+        paymentId: "pay_FakePaid0001TestOnly",
+        livemode: false,
+        refunds: [FULL_REFUND],
+      },
+    });
+  });
+
+  it("reads a refunded payment: its metadata's Order and every refund it lists", () => {
+    expect(read(paymentRefunded)).toEqual({
+      ok: true,
+      event: {
+        id: "evt_FakePaymentRefunded0001",
+        type: "payment.refunded",
+        outcome: "refund",
+        checkoutId: null,
+        orderId: "0b6a3f1e-2c4d-4e5f-8a9b-1c2d3e4f5a6b",
+        reference: "AYC-10001",
+        paymentId: "pay_FakePaid0001TestOnly",
+        livemode: false,
+        refunds: [FULL_REFUND],
+      },
+    });
+  });
+
+  it("reads a partial refund's amount, in centavos", () => {
+    const partial = structuredClone(refundUpdated);
+    partial.data.attributes.data.attributes.amount = 30_000;
+    expect(read(partial)).toMatchObject({
+      event: { refunds: [{ ...FULL_REFUND, amountCentavos: 30_000 }] },
+    });
+  });
+
+  it("reads a refund that isn't refunded yet with no refund time", () => {
+    const pending = structuredClone(refundUpdated);
+    const attributes = pending.data.attributes.data.attributes as Record<string, unknown>;
+    attributes.status = "pending";
+    attributes.refunded_at = null;
+    expect(read(pending)).toMatchObject({
+      event: { refunds: [{ ...FULL_REFUND, status: "pending", refundedAt: null }] },
+    });
+  });
+
+  it("takes a succeeded refund's last update as its refund time when PayMongo gives none", () => {
+    const untimed = structuredClone(refundUpdated);
+    delete (untimed.data.attributes.data.attributes as { refunded_at?: number }).refunded_at;
+    expect(read(untimed)).toMatchObject({ event: { refunds: [FULL_REFUND] } });
+  });
+
+  it("reads a refund status it doesn't know as pending: it counts for nothing", () => {
+    const odd = structuredClone(refundUpdated);
+    odd.data.attributes.data.attributes.status = "reversed";
+    expect(read(odd)).toMatchObject({
+      event: { refunds: [{ ...FULL_REFUND, status: "pending", refundedAt: null }] },
+    });
+  });
+
+  it("skips a refund a refunded payment lists that it can't read", () => {
+    const odd = structuredClone(paymentRefunded);
+    (odd.data.attributes.data.attributes.refunds as unknown[]).push({ id: "ref_NoAttributes" });
+    expect(read(odd)).toMatchObject({ event: { refunds: [FULL_REFUND] } });
+  });
+
+  it("reads a refunded payment listing no refunds as one with none", () => {
+    const bare = structuredClone(paymentRefunded);
+    delete (bare.data.attributes.data.attributes as { refunds?: unknown }).refunds;
+    expect(read(bare)).toMatchObject({ ok: true, event: { outcome: "refund", refunds: [] } });
   });
 
   it("reads a checkout or payment with no metadata as about no Order of ours", () => {
@@ -201,6 +297,63 @@ describe("verifyPayMongoWebhook: the event", () => {
           attributes: {
             ...checkoutPaid.data.attributes,
             data: { ...checkoutPaid.data.attributes.data, id: 42 },
+          },
+        },
+      },
+    ],
+    [
+      "a refund with no payment",
+      {
+        data: {
+          ...refundUpdated.data,
+          attributes: {
+            ...refundUpdated.data.attributes,
+            data: {
+              ...refundUpdated.data.attributes.data,
+              attributes: { ...refundUpdated.data.attributes.data.attributes, payment_id: null },
+            },
+          },
+        },
+      },
+    ],
+    [
+      "a refund of no amount",
+      {
+        data: {
+          ...refundUpdated.data,
+          attributes: {
+            ...refundUpdated.data.attributes,
+            data: {
+              ...refundUpdated.data.attributes.data,
+              attributes: { ...refundUpdated.data.attributes.data.attributes, amount: 0 },
+            },
+          },
+        },
+      },
+    ],
+    [
+      "a refund of part of a centavo",
+      {
+        data: {
+          ...refundUpdated.data,
+          attributes: {
+            ...refundUpdated.data.attributes,
+            data: {
+              ...refundUpdated.data.attributes.data,
+              attributes: { ...refundUpdated.data.attributes.data.attributes, amount: 12.5 },
+            },
+          },
+        },
+      },
+    ],
+    [
+      "a refund event carrying something else",
+      {
+        data: {
+          ...refundUpdated.data,
+          attributes: {
+            ...refundUpdated.data.attributes,
+            data: { ...refundUpdated.data.attributes.data, type: "source" },
           },
         },
       },

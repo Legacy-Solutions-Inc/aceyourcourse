@@ -7,7 +7,9 @@ import { acknowledgementView, invoiceState, orderRow, passCard } from "./billing
 
 // Billing and the Payment Acknowledgement, worded (Phase 4, ticket 06;
 // BUILD-MAP §3 Billing and Receipt; stories 143, 144, 151u), pure. Every date
-// is the Manila calendar date. "Now" is 17 Nov 2026, 11:42 in Manila.
+// is the Manila calendar date. "Now" is 17 Nov 2026, 11:42 in Manila. A
+// refund (ticket 09) shows on the Order's row and its Acknowledgement:
+// REFUNDED, or PARTIALLY REFUNDED with the amount.
 const NOW = new Date("2026-11-17T03:42:00.000Z");
 
 const ORDER: MemberOrder = {
@@ -25,6 +27,8 @@ const ORDER: MemberOrder = {
   accessUntil: "2027-01-12T03:01:00.000Z",
   paidAfterExpiry: false,
   invoice: null,
+  refundedCentavos: 0,
+  refundedAt: null,
 };
 
 describe("passCard", () => {
@@ -74,6 +78,36 @@ describe("orderRow", () => {
       test: false,
       acknowledgementHref: "/app/billing/AYC-10482",
       invoice: { canRequest: true, line: null },
+      refund: null,
+    });
+  });
+
+  it("shows a partial refund's amount under a Paid Order, which keeps its Acknowledgement", () => {
+    expect(
+      orderRow({ ...ORDER, refundedCentavos: 30_000, refundedAt: "2026-11-16T03:00:00.000Z" }),
+    ).toMatchObject({
+      status: "PAID",
+      tone: "paid",
+      refund: "PARTIALLY REFUNDED · ₱300",
+      acknowledgementHref: "/app/billing/AYC-10482",
+    });
+  });
+
+  it("shows a Refunded Order as REFUNDED, on the Manila day of its refund, with its Acknowledgement and no invoice to ask for", () => {
+    // 00:30 on 17 Nov in Manila is 16:30 UTC on 16 Nov.
+    expect(
+      orderRow({
+        ...ORDER,
+        status: "refunded",
+        refundedCentavos: 129_900,
+        refundedAt: "2026-11-16T16:30:00.000Z",
+      }),
+    ).toMatchObject({
+      status: "REFUNDED",
+      tone: "ended",
+      refund: "REFUNDED ON 17 NOV 2026 · UNUSED DAYS REMOVED",
+      acknowledgementHref: "/app/billing/AYC-10482",
+      invoice: { canRequest: false, line: null },
     });
   });
 
@@ -184,6 +218,45 @@ describe("acknowledgementView", () => {
       vatLine: "Prices include VAT",
       test: false,
       invoice: { canRequest: true, line: null },
+      refunded: null,
+    });
+  });
+
+  it("reads PARTIALLY REFUNDED with the amount and day refunded, the access period as it was", () => {
+    const view = acknowledgementView(
+      {
+        ...ACK,
+        order: { ...ORDER, refundedCentavos: 30_000, refundedAt: "2026-11-16T03:00:00.000Z" },
+      },
+      FILLED,
+    );
+    expect(view).toMatchObject({
+      status: "PARTIALLY REFUNDED",
+      refunded: "₱300.00 on 16 Nov 2026",
+      period: "Access 14 Oct 2026 – 12 Jan 2027 · no auto-renewal",
+      amount: "₱1,299.00",
+    });
+  });
+
+  it("reads REFUNDED, with the whole amount refunded and its unused days removed", () => {
+    const view = acknowledgementView(
+      {
+        ...ACK,
+        order: {
+          ...ORDER,
+          status: "refunded",
+          refundedCentavos: 129_900,
+          refundedAt: "2026-11-16T03:00:00.000Z",
+        },
+        access: { startsAt: "2026-10-14T03:01:00.000Z", endsAt: "2026-11-16T03:00:00.000Z" },
+      },
+      FILLED,
+    );
+    expect(view).toMatchObject({
+      status: "REFUNDED",
+      refunded: "₱1,299.00 on 16 Nov 2026",
+      period: "Refunded 16 Nov 2026 · its unused days were removed",
+      invoice: { canRequest: false, line: null },
     });
   });
 

@@ -25,6 +25,7 @@ import {
 import { PRIVACY_REQUEST_STATUSES, PRIVACY_REQUEST_TYPES } from "@/lib/member-app/privacy-requests";
 import { FIRST_REFERENCE_NUMBER, ORDER_STATUSES } from "@/lib/payments/order-ledger";
 import { PAYMENT_METHODS } from "@/lib/payments/payment-methods";
+import { REFUND_STATUSES } from "@/lib/payments/refunds";
 import { REVIEWER_PDF_FAILURES } from "@/lib/reviewer-pdfs/job";
 import { PDF_NAME_MAX } from "@/lib/reviewer-pdfs/pdf-file";
 import { READER_ZOOMS } from "@/lib/reviewer-pdfs/reader";
@@ -1057,12 +1058,16 @@ export const accessPasses = pgTable(
 
 /**
  * Each Access Pass's history: every grant, extension and Paid Order that made
- * or extended it, in order (`seq`), each as the segment of days it added
- * (`starts_at` to `ends_at`), with who granted it as they were then. A row
- * with an `order_id` holds paid days: the Order's, recorded once (the unique
- * index), under the system actor "PayMongo (system)" with the reason "Order
- * AYC-…"; a row without one holds granted days (Phase 4, ticket 03; tickets
- * 09 and 10 tell them apart). Deleting the pass deletes its history.
+ * or extended it, in order (`seq`), each as the segment of days it holds
+ * (`starts_at` to `ends_at`), with the `days` it added and who granted it as
+ * they were then. A row with an `order_id` holds paid days: the Order's,
+ * recorded once (the unique index), under the system actor "PayMongo
+ * (system)" with the reason "Order AYC-…"; a row without one holds granted
+ * days (Phase 4, ticket 03; tickets 09 and 10 tell them apart). Taking
+ * unused days off (a full refund, ticket 09; "End granted access", ticket
+ * 10) rewrites the segments in place (the Order ledger's segment model), so
+ * a segment whose days all went has no length. Deleting the pass deletes its
+ * history.
  */
 export const accessPassGrants = pgTable(
   "access_pass_grants",
@@ -1091,7 +1096,7 @@ export const accessPassGrants = pgTable(
     index("access_pass_grants_user_id_exam_code_seq_idx").on(t.userId, t.examCode, t.seq),
     uniqueIndex("access_pass_grants_order_id_idx").on(t.orderId),
     check("access_pass_grants_days_range", sql`${t.days} between 1 and 365`),
-    check("access_pass_grants_ends_after_start", sql`${t.endsAt} > ${t.startsAt}`),
+    check("access_pass_grants_ends_not_before_start", sql`${t.endsAt} >= ${t.startsAt}`),
     check("access_pass_grants_reason_present", sql`btrim(${t.reason}) <> ''`),
   ],
 ).enableRLS();
@@ -1206,6 +1211,10 @@ export const orders = pgTable(
     uniqueIndex("orders_checkout_id_idx")
       .on(t.checkoutId)
       .where(sql`${t.checkoutId} is not null`),
+    // A refund event names the payment it refunds (ticket 09).
+    index("orders_payment_id_idx")
+      .on(t.paymentId)
+      .where(sql`${t.paymentId} is not null`),
     check("orders_reference_format", sql`${t.reference} ~ '^AYC-[0-9]{5,}$'`),
     check("orders_days", sql`${t.days} in (30, 90, 180, 365)`),
     check(
@@ -1234,6 +1243,39 @@ export const paymentEvents = pgTable(
     receivedAt: at("received_at").notNull(),
   },
   (t) => [index("payment_events_order_id_idx").on(t.orderId)],
+).enableRLS();
+
+export const refundStatus = pgEnum("refund_status", REFUND_STATUSES);
+
+/**
+ * PayMongo's refunds of Orders (Phase 4, ticket 09; spec, Phase 4 planning
+ * decisions → Refunds): one row per refund, by PayMongo's id, so two events
+ * carrying the same refund count it once. Refunds are made in the PayMongo
+ * dashboard, never in the app; only its verified events write here. An
+ * Order's refunded amount is the sum of its succeeded refunds; reaching the
+ * Order's amount makes it Refunded (src/lib/payments/refunds.ts).
+ * `refunded_at` is set once a refund has succeeded. RLS on with no policy:
+ * only the server reads or writes it.
+ */
+export const orderRefunds = pgTable(
+  "order_refunds",
+  {
+    refundId: text("refund_id").primaryKey(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    amountCentavos: integer("amount_centavos").notNull(),
+    status: refundStatus("status").notNull(),
+    refundedAt: at("refunded_at"),
+  },
+  (t) => [
+    index("order_refunds_order_id_idx").on(t.orderId),
+    check("order_refunds_amount_positive", sql`${t.amountCentavos} > 0`),
+    check(
+      "order_refunds_refunded_at_once_succeeded",
+      sql`(${t.status} = 'succeeded') = (${t.refundedAt} is not null)`,
+    ),
+  ],
 ).enableRLS();
 
 /**
@@ -1282,10 +1324,11 @@ export const memberNoticeKind = pgEnum("member_notice_kind", NOTICE_KINDS);
 
 /**
  * Each Member's in-app notices (ticket 17; spec, Phase 3 planning decisions →
- * In-app notices): one per grant, extension or end of an Access Pass, in the
- * order made (`seq`), shown as a dismissible banner until `dismissed_at` is
- * set. `ends_at` is the pass's end after the change. Deleting the Member or
- * the Exam deletes their notices. No email is sent.
+ * In-app notices): one per grant, extension or end of an Access Pass, or
+ * full refund (Phase 4, ticket 09), in the order made (`seq`), shown as a
+ * dismissible banner until `dismissed_at` is set. `ends_at` is the pass's
+ * end after the change; `reference` is a refund's Order. Deleting the Member
+ * or the Exam deletes their notices. No email is sent.
  */
 export const memberNotices = pgTable(
   "member_notices",
@@ -1302,10 +1345,13 @@ export const memberNotices = pgTable(
     endsAt: at("ends_at").notNull(),
     createdAt: at("created_at").notNull(),
     dismissedAt: at("dismissed_at"),
+    // The refunded Order's reference, for a refund's notice; null for any other.
+    reference: text("reference"),
   },
   (t) => [
     index("member_notices_user_id_seq_idx").on(t.userId, t.seq),
     index("member_notices_exam_code_idx").on(t.examCode),
+    check("member_notices_reference_format", sql`${t.reference} ~ '^AYC-[0-9]{5,}$'`),
   ],
 ).enableRLS();
 

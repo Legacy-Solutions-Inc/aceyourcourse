@@ -7,7 +7,8 @@ import type { Database } from "@/lib/db/connect";
 import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
 import { staffActivityToRow } from "@/services/admin.rows";
-import { databaseOrderStore } from "@/services/member.db";
+import { refundsOfOrder } from "@/lib/payments/refunds";
+import { databaseOrderStore, readOrderRefunds } from "@/services/member.db";
 import { invoiceRequestFromRow, invoiceRequestToRow, orderFromRow } from "@/services/orders.rows";
 import {
   type OrderRecord,
@@ -55,16 +56,18 @@ async function readRecord(
   const query = db.select().from(orders).where(eq(orders.reference, reference));
   const [row] = lock ? await query.for("update") : await query;
   if (!row) return null;
-  const [[stamp], [invoice]] = await Promise.all([
+  const [[stamp], [invoice], refunds] = await Promise.all([
     db
       .select()
       .from(recordStamps)
       .where(eq(recordStamps.record, orderNoteRecord(row.id))),
     db.select().from(invoiceRequests).where(eq(invoiceRequests.orderId, row.id)),
+    readOrderRefunds(db, [row.id]),
   ]);
   return {
     order: orderFromRow(row),
     invoice: invoice ? invoiceRequestFromRow(invoice) : null,
+    refunds,
     memberExists: row.userId !== null,
     note: row.internalNote,
     noteStamp: stamp ? { savedAt: stamp.updatedAt.toISOString(), savedBy: stamp.updatedBy } : null,
@@ -83,9 +86,16 @@ const databaseOrdersAdminStore: OrdersAdminStore = {
         .leftJoin(invoiceRequests, eq(invoiceRequests.orderId, orders.id))
         .where(and(...conditions))
         .orderBy(desc(orders.createdAt), desc(orders.reference));
+      const refundsOf = refundsOfOrder(
+        await readOrderRefunds(
+          getDb(),
+          rows.map(({ order }) => order.id),
+        ),
+      );
       return rows.map(({ order, invoice }) => ({
         order: orderFromRow(order),
         invoice: invoice && invoiceRequestFromRow(invoice),
+        refunds: refundsOf(order.id),
       }));
     }),
 

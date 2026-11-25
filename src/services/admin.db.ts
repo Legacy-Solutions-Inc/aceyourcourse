@@ -364,6 +364,10 @@ async function load(
     get paymentEvents() {
       return notLoaded("the PayMongo events");
     },
+    // The Member seam records them, and the Orders admin reads them (ticket 09).
+    get orderRefunds() {
+      return notLoaded("the Orders' refunds");
+    },
     // The Plans have their own reads and writes (admin.plans.db.ts). Deleting
     // an Exam drops its Plans from the sample data; here the table's cascade
     // does it, so the stand-in has none and keeps none.

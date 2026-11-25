@@ -22,20 +22,35 @@ import type { PlanDays } from "@/lib/plans/plan-rules";
 // - Pending → Expired: the daily sweep records an Order PayMongo didn't
 //   confirm within 24 hours (ticket 05). Before that, every read shows it
 //   Expired already (effectiveStatus).
+// - Paid → Refunded: a full refund in PayMongo (ticket 09; refunds.ts says
+//   when refunds are full). The Order's unused days come off the pass
+//   (removeUnusedDays below). A partial refund leaves the Order Paid, and
+//   Pending, Failed and Expired Orders granted nothing to refund.
 // - Paid and Refunded never move back. Each outcome is applied once: an
 //   outcome the table has no row for (the same one again, a failed event
-//   after a paid one) changes nothing.
+//   after a paid one, a paid event after a refund) changes nothing.
 //
 // The transitions are a table, so a later ticket adds a move by adding a row
 // (ticket 05: Failed → Paid and Expired → Paid; ticket 09: Paid → Refunded).
+//
+// The segment model (ticket 09; reused by ticket 10's "End granted access"):
+// an Access Pass's days stack as consecutive segments, one per history row
+// (access_pass_grants: each grant, extension and Paid Order adds its days at
+// the pass's end then, or at now when it had ended). passSegments reads the
+// segments as they stand; removeUnusedDays takes the part after now off the
+// segments chosen (one Order's for a refund, the granted ones for ticket 10)
+// and shifts every later segment earlier by as much, so their days are kept.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** An Order's states (CONTEXT.md → Order). This ticket moves Pending to Paid or Failed. */
 export const ORDER_STATUSES = ["pending", "paid", "failed", "expired", "refunded"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-/** What a payment's outcome can be: Paid or Failed from PayMongo, Expired from the daily sweep. */
-export type OrderOutcome = "paid" | "failed" | "expired";
+/**
+ * What a payment's outcome can be: Paid or Failed from PayMongo, Expired from
+ * the daily sweep, Refunded from PayMongo's refunds reaching the whole amount.
+ */
+export type OrderOutcome = "paid" | "failed" | "expired" | "refunded";
 
 export interface Order {
   id: string;
@@ -70,7 +85,7 @@ const TRANSITIONS: Readonly<
   Record<OrderStatus, Readonly<Partial<Record<OrderOutcome, OrderStatus>>>>
 > = {
   pending: { paid: "paid", failed: "failed", expired: "expired" },
-  paid: {},
+  paid: { refunded: "refunded" },
   failed: { paid: "paid" },
   expired: { paid: "paid" },
   refunded: {},
@@ -106,6 +121,99 @@ export function applyOutcome(
     paidDays: paid ? { days: order.days, ...passWithDays(passEndsAt, order.days, now) } : null,
   };
 }
+
+// ── The segment model ───────────────────────────────────────────────────────
+//
+// The history rows hold each segment as it stands now: removing days rewrites
+// the rows' starts_at and ends_at in place (the arms write the segments
+// removeUnusedDays gives back), rather than adding removal entries that every
+// later read would have to replay in time order. So a row is always the
+// segment its days fill, and the next removal, or ticket 10, reads the rows
+// as they are. What each row first added stays readable: its `days`, who
+// granted it and when, and Staff Activity's end before and after every
+// change. A segment whose days all went keeps its row, with no length.
+//
+// Rows from before that, which "End access now" (ticket 17) left running
+// past the end it set, are read as ending there: passSegments ends each
+// segment at the pass's end, and where a later row starts (one added after
+// the pass had ended starts at the moment it was added).
+
+/** One row of a pass's history as the segment model reads it: whose days, from and until. */
+export interface PassSegment {
+  /** The Paid Order whose days these are; null for a grant or an extension. */
+  orderId: string | null;
+  startsAt: string;
+  endsAt: string;
+}
+
+const ms = (iso: string) => new Date(iso).getTime();
+const iso = (time: number) => new Date(time).toISOString();
+
+/**
+ * Pure: a pass's segments as they stand, from its history rows in order and
+ * the pass's end: each row ends no later than the pass, nor than any later
+ * row's start. Each row keeps its other fields.
+ */
+export function passSegments<T extends PassSegment>(
+  history: readonly T[],
+  passEndsAt: string,
+): T[] {
+  // From the last row back: each ends no later than the pass, nor any row after it starts.
+  let limit = ms(passEndsAt);
+  return [...history]
+    .reverse()
+    .map((row) => {
+      const clipped = {
+        ...row,
+        startsAt: iso(Math.min(ms(row.startsAt), limit)),
+        endsAt: iso(Math.min(ms(row.endsAt), limit)),
+      };
+      limit = Math.min(limit, ms(row.startsAt));
+      return clipped;
+    })
+    .reverse();
+}
+
+/**
+ * Pure: a pass with the unused days of the segments `removes` chooses taken
+ * off at `now`, from its history rows in order and its end:
+ * - a chosen segment loses its part after now: all of it when it hasn't
+ *   started, the rest when it's part used, nothing when it's used up;
+ * - every later segment moves earlier by what went before it, keeping its
+ *   days, and the end moves earlier by everything that went;
+ * - the end never moves before now, and an end already past doesn't move.
+ * Gives every segment as it now stands (each row's other fields kept) and
+ * the pass's new end.
+ */
+export function removeUnusedDays<T extends PassSegment>(
+  history: readonly T[],
+  passEndsAt: string,
+  removes: (segment: T) => boolean,
+  now: Date,
+): { segments: T[]; endsAt: string } {
+  const at = now.getTime();
+  let removed = 0;
+  // After passSegments, a segment never starts before the one ahead of it
+  // ends, and any gap (a pass that lapsed) lies before now: only segments
+  // after now move.
+  const segments = passSegments(history, passEndsAt).map((segment) => {
+    const startsAt = ms(segment.startsAt) - removed;
+    let endsAt = ms(segment.endsAt) - removed;
+    const cut = Math.max(startsAt, at);
+    if (removes(segment) && endsAt > cut) {
+      removed += endsAt - cut;
+      endsAt = cut;
+    }
+    return { ...segment, startsAt: iso(startsAt), endsAt: iso(endsAt) };
+  });
+  return {
+    segments,
+    endsAt: removed > 0 ? iso(Math.max(at, ms(passEndsAt) - removed)) : passEndsAt,
+  };
+}
+
+/** Pure: whether an Order was ever Paid: Paid, or Refunded since (it has a Payment Acknowledgement). */
+export const wasPaid = (status: OrderStatus): boolean => status === "paid" || status === "refunded";
 
 /** How long a Pending Order waits for PayMongo before it's Expired. */
 export const ORDER_EXPIRES_AFTER_MS = 24 * 60 * 60 * 1000;

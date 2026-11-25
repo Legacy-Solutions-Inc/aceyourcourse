@@ -1,5 +1,5 @@
 import { DEFAULT_QUIZ_SETTINGS } from "@/lib/quizzes/quiz-rules";
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import type { AnyPgColumn, PgTable } from "drizzle-orm/pg-core";
 
 import { getDb } from "@/lib/db/client";
@@ -8,6 +8,7 @@ import { getStorage, isStorageConfigured } from "@/lib/supabase/admin";
 import { databaseArm } from "@/services/admin.db";
 import { deniedSignInFromRow, staffActivityFromRow } from "@/services/admin.rows";
 import {
+  accessPassGrantFromRow,
   accessPassGrantToRow,
   accessPassToRow,
   cardFromRow,
@@ -15,7 +16,7 @@ import {
   questionFromRow,
 } from "@/services/content.rows";
 import { databaseArm as memberDatabaseArm } from "@/services/member.db";
-import { orderFromRow, orderToRow } from "@/services/orders.rows";
+import { orderFromRow, orderRefundFromRow, orderToRow } from "@/services/orders.rows";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
@@ -238,6 +239,17 @@ export const DATABASE_ARM: AdminArm = {
     await getDb().insert(schema.orders).values(orderToRow(order));
   },
   orders: async () => byReference((await getDb().select().from(schema.orders)).map(orderFromRow)),
+  orderRefunds: async () =>
+    byId((await getDb().select().from(schema.orderRefunds)).map(orderRefundFromRow)),
+  passHistory: async (userId, examCode) => {
+    const { accessPassGrants } = schema;
+    const rows = await getDb()
+      .select()
+      .from(accessPassGrants)
+      .where(and(eq(accessPassGrants.userId, userId), eq(accessPassGrants.examCode, examCode)))
+      .orderBy(asc(accessPassGrants.seq));
+    return rows.map(accessPassGrantFromRow);
+  },
   memberRecords: async (userId) => {
     const db = getDb();
     const count = async (table: PgTable & { userId: AnyPgColumn }) =>

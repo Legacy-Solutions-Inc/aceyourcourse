@@ -40,6 +40,8 @@ const PENDING: AdminOrder = {
   recordedStatus: "pending",
   paidAfterExpiry: false,
   invoice: null,
+  refunds: [],
+  refundedCentavos: 0,
   livemode: true,
   checkoutId: "cs_sample10006",
   paymentId: null,
@@ -141,6 +143,58 @@ describe("OrderDetail", () => {
     });
     expect(screen.queryByRole("link", { name: "paolo.reyes@example.com" })).not.toBeInTheDocument();
     expect(screen.getByText("ACCOUNT DELETED")).toBeInTheDocument();
+  });
+
+  it("shows a partial refund's amount by the status, in the facts and on the timeline, the Order still Paid (ticket 09)", () => {
+    const partial: AdminOrder = {
+      ...PAID,
+      invoice: null,
+      priceCentavos: 129_900,
+      refunds: [
+        {
+          id: "ref_a",
+          orderId: PAID.id,
+          amountCentavos: 30_000,
+          status: "succeeded",
+          refundedAt: "2026-11-25T05:00:00.000Z",
+        },
+      ],
+      refundedCentavos: 30_000,
+    };
+    renderDetail({ detail: { order: partial, memberUserId: null, note: NOTE } });
+    const order = screen.getByRole("region", { name: "AYC-10003" });
+    expect(order).toHaveTextContent("PAID");
+    expect(order).toHaveTextContent("PARTIALLY REFUNDED · ₱300");
+    expect(order).toHaveTextContent("AMOUNT REFUNDED₱300 · in part");
+    expect(order).toHaveTextContent("Partially refunded in PayMongo · ₱300 · access unchanged");
+  });
+
+  it("shows a Refunded Order's refund in full, with no partial note", () => {
+    const refunded: AdminOrder = {
+      ...PAID,
+      invoice: null,
+      status: "refunded",
+      recordedStatus: "refunded",
+      priceCentavos: 49_900,
+      refunds: [
+        {
+          id: "ref_a",
+          orderId: PAID.id,
+          amountCentavos: 49_900,
+          status: "succeeded",
+          refundedAt: "2026-11-25T05:00:00.000Z",
+        },
+      ],
+      refundedCentavos: 49_900,
+    };
+    renderDetail({ detail: { order: refunded, memberUserId: null, note: NOTE } });
+    const order = screen.getByRole("region", { name: "AYC-10003" });
+    expect(order).toHaveTextContent("AMOUNT REFUNDED₱499 · in full");
+    expect(order).not.toHaveTextContent("PARTIALLY REFUNDED");
+    expect(order).toHaveTextContent("Refunded in full in PayMongo · ₱499 · unused days removed");
+    expect(screen.getByRole("region", { name: "STATUS NOTE" })).toHaveTextContent(
+      "the Member was told in the app",
+    );
   });
 
   it("tags a Test Order TEST", () => {

@@ -27,6 +27,7 @@ const MEMBER_SUITES = [
   "src/services/member.payment-events.test.ts",
   "src/services/member.billing.test.ts",
   "src/services/member.invoice-requests.test.ts",
+  "src/services/member.refunds.test.ts",
 ];
 /** Admin tests that aren't written over ADMIN_ARMS. */
 const NOT_ADMIN_SUITES = [

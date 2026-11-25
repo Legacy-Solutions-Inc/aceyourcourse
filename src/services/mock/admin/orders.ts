@@ -1,3 +1,4 @@
+import { refundsOfOrder } from "@/lib/payments/refunds";
 import { sampleOrderStore } from "@/services/member.mock";
 import { getSampleStore } from "@/services/mock/sample-store";
 import {
@@ -19,6 +20,9 @@ import {
 const invoiceOf = (orderId: string) =>
   getSampleStore().invoiceRequests.find((request) => request.orderId === orderId) ?? null;
 
+/** A sample Order's PayMongo refunds (ticket 09). */
+const refundsOf = (orderId: string) => refundsOfOrder(getSampleStore().orderRefunds)(orderId);
+
 function recordOf(reference: string): OrderRecord | null {
   const store = getSampleStore();
   const order = store.orders.find((candidate) => candidate.reference === reference);
@@ -27,6 +31,7 @@ function recordOf(reference: string): OrderRecord | null {
   return structuredClone({
     order,
     invoice: invoiceOf(order.id),
+    refunds: refundsOf(order.id),
     memberExists: userId !== null && store.members.some((member) => member.userId === userId),
     note: store.orderNotes[order.id] ?? null,
     noteStamp: store.stamps[orderNoteRecord(order.id)] ?? null,
@@ -41,7 +46,11 @@ const sampleOrdersAdminStore: OrdersAdminStore = {
           (order) =>
             (tests || order.livemode) && (since === null || new Date(order.createdAt) >= since),
         )
-        .map((order) => ({ order, invoice: invoiceOf(order.id) })),
+        .map((order) => ({
+          order,
+          invoice: invoiceOf(order.id),
+          refunds: refundsOf(order.id),
+        })),
     );
   },
   async readOrder(reference) {

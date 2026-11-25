@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DEFAULT_ORDER_QUERY } from "@/lib/admin/orders-list";
+import type { OrderRefund } from "@/lib/payments/refunds";
 import type { AdminOrderList } from "@/services/admin.types";
 
 import { ExportCsvButton } from "./export-csv-button";
@@ -80,6 +81,8 @@ describe("OrderList", () => {
       status: "paid",
       recordedStatus: "paid",
       paidAfterExpiry: false,
+      refunds: [] as OrderRefund[],
+      refundedCentavos: 0,
       livemode: true,
       checkoutId: null,
       paymentId: "pay_Sample10003",
@@ -117,6 +120,54 @@ describe("OrderList", () => {
 
     expect(screen.getAllByText("INVOICE REQUESTED")).toHaveLength(1);
     expect(screen.getByRole("row", { name: /AYC-10003/ })).toHaveTextContent("INVOICE REQUESTED");
+  });
+
+  it("shows a Refunded Order's status, and a partial refund's amount under PAID (ticket 09)", () => {
+    const row = (reference: string, fields: Partial<AdminOrderList["rows"][number]>) =>
+      ({
+        id: reference,
+        reference,
+        userId: null,
+        examCode: "CE",
+        planId: "plan-ce-90",
+        planName: "CE All-Access",
+        days: 90,
+        priceCentavos: 129_900,
+        method: "gcash",
+        status: "paid",
+        recordedStatus: "paid",
+        paidAfterExpiry: false,
+        invoice: null,
+        refunds: [],
+        refundedCentavos: 0,
+        livemode: true,
+        checkoutId: null,
+        paymentId: null,
+        buyerName: null,
+        buyerEmail: "buyer@example.com",
+        createdAt: "2026-11-25T01:00:00.000Z",
+        paidAt: "2026-11-25T01:01:00.000Z",
+        statusChangedAt: "2026-11-25T01:01:00.000Z",
+        ...fields,
+      }) as AdminOrderList["rows"][number];
+    renderList({
+      ...EMPTY,
+      rows: [
+        row("AYC-10007", { refundedCentavos: 30_000 }),
+        row("AYC-10008", {
+          status: "refunded",
+          recordedStatus: "refunded",
+          refundedCentavos: 129_900,
+        }),
+      ],
+    });
+
+    const partial = screen.getByRole("row", { name: /AYC-10007/ });
+    expect(partial).toHaveTextContent("PAID");
+    expect(partial).toHaveTextContent("PARTIALLY REFUNDED · ₱300");
+    const refunded = screen.getByRole("row", { name: /AYC-10008/ });
+    expect(refunded).toHaveTextContent("REFUNDED");
+    expect(refunded).not.toHaveTextContent("PARTIALLY");
   });
 
   it("offers a chip per status, linking to it", () => {

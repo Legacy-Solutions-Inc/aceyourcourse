@@ -97,6 +97,8 @@ const DETAIL: AdminMemberDetail = {
       recordedStatus: "paid",
       paidAfterExpiry: false,
       invoice: null,
+      refunds: [],
+      refundedCentavos: 0,
       livemode: false,
       checkoutId: null,
       paymentId: null,
@@ -120,6 +122,8 @@ const DETAIL: AdminMemberDetail = {
       recordedStatus: "pending",
       paidAfterExpiry: false,
       invoice: null,
+      refunds: [],
+      refundedCentavos: 0,
       livemode: true,
       checkoutId: "cs_Checkout0001",
       paymentId: null,
@@ -246,6 +250,15 @@ describe("MemberDetail", () => {
     expect(orders[1]).toHaveTextContent("AYC-10001");
     expect(orders[1]).toHaveTextContent("EXPIRED");
     expect(orders[1]).not.toHaveTextContent("TEST");
+  });
+
+  it("shows a partial refund under an Order's status (ticket 09)", () => {
+    const [paid, expired] = DETAIL.orders;
+    if (!paid || !expired) throw new Error("The detail has two Orders.");
+    renderDetail({ ...DETAIL, orders: [{ ...paid, refundedCentavos: 20_000 }, expired] });
+    const [first] = within(section("ORDERS · 2")).getAllByRole("listitem");
+    expect(first).toHaveTextContent("PAID");
+    expect(first).toHaveTextContent("PARTIALLY REFUNDED · ₱200");
   });
 
   it("says what a Member who just signed in doesn't have yet", () => {

@@ -1,0 +1,56 @@
+{
+  "data": {
+    "id": "evt_FakePaymentRefunded0001",
+    "type": "event",
+    "attributes": {
+      "type": "payment.refunded",
+      "livemode": false,
+      "data": {
+        "id": "pay_FakePaid0001TestOnly",
+        "type": "payment",
+        "attributes": {
+          "amount": 129900,
+          "currency": "PHP",
+          "fee": 2858,
+          "net_amount": 127042,
+          "livemode": false,
+          "payment_intent_id": "pi_FakeIntent0001TestOnly",
+          "source": {
+            "id": "src_FakeSource0002",
+            "type": "gcash"
+          },
+          "status": "refunded",
+          "metadata": {
+            "order_id": "0b6a3f1e-2c4d-4e5f-8a9b-1c2d3e4f5a6b",
+            "reference": "AYC-10001"
+          },
+          "refunds": [
+            {
+              "id": "ref_FakeRefund0001TestOnly",
+              "type": "refund",
+              "attributes": {
+                "amount": 129900,
+                "currency": "PHP",
+                "livemode": false,
+                "metadata": null,
+                "notes": null,
+                "payment_id": "pay_FakePaid0001TestOnly",
+                "reason": "requested_by_customer",
+                "status": "succeeded",
+                "created_at": 1763399000,
+                "refunded_at": 1763400000,
+                "updated_at": 1763400000
+              }
+            }
+          ],
+          "created_at": 1763351100,
+          "paid_at": 1763351102,
+          "updated_at": 1763400000
+        }
+      },
+      "previous_data": {},
+      "created_at": 1763400000,
+      "updated_at": 1763400000
+    }
+  }
+}

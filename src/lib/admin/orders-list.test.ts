@@ -41,6 +41,8 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
     recordedStatus: "paid",
     paidAfterExpiry: false,
     invoice: null,
+    refunds: [],
+    refundedCentavos: 0,
     livemode: true,
     checkoutId: "cs_1",
     paymentId: "pay_1",

@@ -109,13 +109,14 @@ export const passEntityPrefix = (userId: string) => `${userId}/`;
 export const passEntityId = (userId: string, examCode: string) =>
   `${passEntityPrefix(userId)}${examCode}`;
 
-/** Pure: the notice a change leaves the Member. */
+/** Pure: the notice a change leaves the Member; a refund's names its Order's reference (ticket 09). */
 export const noticeOf = (
   userId: string,
   examCode: string,
   kind: NoticeKind,
   endsAt: string,
   now: Date,
+  reference: string | null = null,
 ): MemberNotice => ({
   id: crypto.randomUUID(),
   userId,
@@ -124,6 +125,7 @@ export const noticeOf = (
   endsAt,
   createdAt: now.toISOString(),
   dismissedAt: null,
+  reference,
 });
 
 /** The Admin seam's Access Pass actions, over an arm's store. */

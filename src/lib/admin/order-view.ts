@@ -1,4 +1,6 @@
+import { formatPeso } from "@/lib/money";
 import { ORDER_EXPIRES_AFTER_MS, type OrderStatus } from "@/lib/payments/order-ledger";
+import { isFullyRefunded, isPartiallyRefunded } from "@/lib/payments/refunds";
 import { failureCopy, methodLabel, methodTag } from "@/lib/payments/payment-methods";
 import { periodLabel } from "@/lib/plans/plan-text";
 import type { AdminOrder, OrderStatusCheck } from "@/services/admin.types";
@@ -8,7 +10,9 @@ import type { AdminOrder, OrderStatusCheck } from "@/services/admin.types";
 // BUILD-MAP §3.9; mockup 752–785, 1481–1510), pure: its item and status, the
 // timeline by status ("Paid after expiry" where it applies), the status note,
 // what "Check status with PayMongo" found, and PayMongo's reference and
-// dashboard link.
+// dashboard link. Refunds (ticket 09): each succeeded refund is a timeline
+// step, the one reaching the whole amount refunding it in full, and a Paid
+// Order's partial refund reads "PARTIALLY REFUNDED · ₱300".
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -41,6 +45,41 @@ const expiredAt = (createdAt: string) =>
   new Date(new Date(createdAt).getTime() + ORDER_EXPIRES_AFTER_MS).toISOString();
 
 const EXPIRED_STEP = "Expired · no payment confirmed within 24 hours";
+
+/**
+ * Pure: an Order's refunds as timeline steps, oldest first: partial ones
+ * changed no access; the one reaching the whole amount refunded it in full.
+ * A Refunded Order with no refund recorded ends on its status change.
+ */
+function refundSteps(order: AdminOrder): TimelineStep[] {
+  if (order.refunds.length === 0) {
+    return order.status === "refunded"
+      ? [{ label: "Refunded in PayMongo", at: order.statusChangedAt, tone: "failed" }]
+      : [];
+  }
+  let refunded = 0;
+  return order.refunds.map(({ amountCentavos, refundedAt }) => {
+    refunded += amountCentavos;
+    const amount = formatPeso(amountCentavos);
+    return isFullyRefunded(order, refunded)
+      ? {
+          label: `Refunded in full in PayMongo · ${amount} · unused days removed`,
+          at: refundedAt,
+          tone: "failed",
+        }
+      : {
+          label: `Partially refunded in PayMongo · ${amount} · access unchanged`,
+          at: refundedAt,
+          tone: "info",
+        };
+  });
+}
+
+/** Pure: a Paid Order's partial refund, "PARTIALLY REFUNDED · ₱300"; null with none, or once Refunded. */
+export const partialRefundLabel = (
+  order: Pick<AdminOrder, "status" | "refundedCentavos">,
+): string | null =>
+  isPartiallyRefunded(order) ? `PARTIALLY REFUNDED · ${formatPeso(order.refundedCentavos)}` : null;
 
 /** Pure: an Order's timeline, by the status every screen shows. */
 export function orderTimeline(order: AdminOrder): TimelineStep[] {
@@ -87,15 +126,13 @@ export function orderTimeline(order: AdminOrder): TimelineStep[] {
           : [started, { label: `Paid with ${method}`, at: paidAt, tone: "info" as const }]),
         { label: "PayMongo confirmed · access granted", at: paidAt, tone: "done" },
       ];
-      return order.status === "refunded"
-        ? [...paid, { label: "Refunded in PayMongo", at: order.statusChangedAt, tone: "failed" }]
-        : paid;
+      return [...paid, ...refundSteps(order)];
     }
   }
 }
 
-const PAID_NOTE =
-  "Paid and confirmed by PayMongo. Access started right away. Refunds, if any, are issued from the PayMongo dashboard.";
+const PAID_START = "Paid and confirmed by PayMongo. Access started right away.";
+const PAID_NOTE = `${PAID_START} Refunds, if any, are issued from the PayMongo dashboard.`;
 
 /** Pure: the status note: what this status means, and what happens next. */
 export function statusNote(order: AdminOrder): string {
@@ -106,12 +143,17 @@ export function statusNote(order: AdminOrder): string {
       return "No payment was confirmed within 24 hours, so this Order expired and granted nothing. If PayMongo confirms a late payment, it still counts and access is granted.";
     case "failed":
       return `The payment didn’t go through and the Member wasn’t charged. They saw “${failureCopy(order.method).title}” with other ways to pay.`;
-    case "paid":
+    case "paid": {
+      const note =
+        order.refundedCentavos > 0
+          ? `${PAID_START} PayMongo refunded ${formatPeso(order.refundedCentavos)} of it, which changed no access: adjust it on the Member’s page if needed.`
+          : PAID_NOTE;
       return order.paidAfterExpiry
-        ? `Paid after expiry: PayMongo confirmed it more than 24 hours after checkout started, and the payment still counts. ${PAID_NOTE}`
-        : PAID_NOTE;
+        ? `Paid after expiry: PayMongo confirmed it more than 24 hours after checkout started, and the payment still counts. ${note}`
+        : note;
+    }
     case "refunded":
-      return "Refunded in PayMongo. This Order’s days came off the Access Pass.";
+      return "Refunded in full in PayMongo. This Order’s unused days came off the Access Pass, and the Member was told in the app.";
   }
 }
 

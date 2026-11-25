@@ -1,7 +1,8 @@
 import { isPassActive, passEndDate } from "@/lib/member-app/access";
 import { manilaDate, manilaDayStart } from "@/lib/manila-time";
 import { formatPeso, formatPesoWithCentavos } from "@/lib/money";
-import type { OrderStatus } from "@/lib/payments/order-ledger";
+import { type OrderStatus, wasPaid } from "@/lib/payments/order-ledger";
+import { isPartiallyRefunded } from "@/lib/payments/refunds";
 import { methodLabel } from "@/lib/payments/payment-methods";
 import { periodLabel } from "@/lib/plans/plan-text";
 import { paths } from "@/paths";
@@ -17,7 +18,10 @@ import type { MemberOrder, PaymentAcknowledgement } from "@/services/member.type
 // Pending Order older than 24 hours already reads Expired). A Paid Order
 // offers "Request official invoice" until its Invoice Request is made, then
 // says "Invoice requested", later "Invoice sent · check your email" (ticket
-// 08; story 151j).
+// 08; story 151j). A refund in PayMongo (ticket 09; spec, Phase 4 planning
+// decisions → Refunds) shows on the row and the Acknowledgement: a Refunded
+// Order reads REFUNDED, on the day refunded, and a Paid one with part
+// refunded "PARTIALLY REFUNDED · ₱300"; both keep their Acknowledgement.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -107,9 +111,23 @@ export interface OrderRow {
   amount: string;
   /** A Test Order: marked TEST. */
   test: boolean;
-  /** Only a Paid Order has a Payment Acknowledgement. */
+  /** Only a Paid Order (or a Refunded one) has a Payment Acknowledgement. */
   acknowledgementHref: string | null;
   invoice: InvoiceState;
+  /** "PARTIALLY REFUNDED · ₱300", or when a Refunded Order was refunded; null with no refund. */
+  refund: string | null;
+}
+
+/** Pure: an Order's refund as its row says it; null with none. */
+function refundLine(
+  order: Pick<MemberOrder, "status" | "refundedCentavos" | "refundedAt">,
+): string | null {
+  const { status, refundedCentavos, refundedAt } = order;
+  if (status === "refunded") {
+    const day = refundedAt ? ` ON ${dayOf(refundedAt).toUpperCase()}` : "";
+    return `REFUNDED${day} · UNUSED DAYS REMOVED`;
+  }
+  return isPartiallyRefunded(order) ? `PARTIALLY REFUNDED · ${formatPeso(refundedCentavos)}` : null;
 }
 
 /** Pure: an Order as Billing lists it. */
@@ -123,9 +141,11 @@ export function orderRow(order: MemberOrder): OrderRow {
     tone,
     amount: formatPeso(order.priceCentavos),
     test: !order.livemode,
-    acknowledgementHref:
-      order.status === "paid" ? paths.memberApp.acknowledgement(order.reference) : null,
+    acknowledgementHref: wasPaid(order.status)
+      ? paths.memberApp.acknowledgement(order.reference)
+      : null,
     invoice: invoiceState(order),
+    refund: refundLine(order),
   };
 }
 
@@ -145,17 +165,29 @@ export interface AcknowledgementView {
   vatLine: string | null;
   test: boolean;
   invoice: InvoiceState;
+  /** What PayMongo refunded and when, "₱300.00 on 16 Nov 2026"; null with no refund. */
+  refunded: string | null;
 }
 
-/** Pure: a Paid Order's Payment Acknowledgement, with the seller's business details. */
+/** Pure: an Acknowledgement's status: PAID, PARTIALLY REFUNDED or REFUNDED. */
+function acknowledgedStatus(order: MemberOrder): string {
+  return isPartiallyRefunded(order) ? "PARTIALLY REFUNDED" : STATUS[order.status].label;
+}
+
+/** Pure: a Paid or Refunded Order's Payment Acknowledgement, with the seller's business details. */
 export function acknowledgementView(
   { order, buyer, access, payMongoReference }: PaymentAcknowledgement,
   business: BusinessDetails,
 ): AcknowledgementView {
   const paidAt = order.paidAt ?? order.createdAt;
-  const period = access
+  const refundDay = order.refundedAt ? dayOf(order.refundedAt) : null;
+  let period = access
     ? `Access ${dayOf(access.startsAt)} – ${dayOf(access.endsAt)} · no auto-renewal`
     : "No auto-renewal";
+  // A refund took the Order's unused days off, so the period it first gave is gone.
+  if (order.status === "refunded") {
+    period = `Refunded${refundDay ? ` ${refundDay}` : ""} · its unused days were removed`;
+  }
   return {
     number: order.reference,
     date: dayOf(paidAt).toUpperCase(),
@@ -168,9 +200,13 @@ export function acknowledgementView(
     amount: formatPesoWithCentavos(order.priceCentavos),
     method: `${methodLabel(order.method)} via PayMongo`,
     payMongoReference: payMongoReference ?? "—",
-    status: STATUS[order.status].label,
+    status: acknowledgedStatus(order),
     vatLine: business.vatRegistered ? "Prices include VAT" : null,
     test: !order.livemode,
     invoice: invoiceState(order),
+    refunded:
+      order.refundedCentavos > 0
+        ? `${formatPesoWithCentavos(order.refundedCentavos)}${refundDay ? ` on ${refundDay}` : ""}`
+        : null,
   };
 }

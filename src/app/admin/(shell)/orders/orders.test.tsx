@@ -19,6 +19,8 @@ import OrdersPage from "./page";
 //   AYC-10004 Karen, ME 1 month, Card, Failed, 4 days ago
 //   AYC-10005 Tess, CE 1 month, Maya, Paid, a Test Order, 2 days ago
 //   AYC-10006 Paolo, ME 1 month, Maya, Pending, 1 hour ago
+//   AYC-10007 Bea, CE 3 months, QR Ph, Paid, ₱300 refunded (ticket 09), 50 minutes ago
+//   AYC-10008 Lou, CE 1 month, GCash, Refunded (ticket 09), 40 minutes ago
 const { jar } = vi.hoisted(() => ({ jar: new Map<string, string>() }));
 
 vi.mock("next/headers", () => ({
@@ -71,9 +73,16 @@ describe("the Orders list", () => {
       screen.getByRole("heading", { level: 1, name: "Orders & payments" }),
     ).toBeInTheDocument();
     expect(screen.getByText("SALES")).toBeInTheDocument();
-    expect(references()).toEqual(["AYC-10006", "AYC-10004", "AYC-10003", "AYC-10002"]);
+    expect(references()).toEqual([
+      "AYC-10008",
+      "AYC-10007",
+      "AYC-10006",
+      "AYC-10004",
+      "AYC-10003",
+      "AYC-10002",
+    ]);
     const tiles = screen.getByRole("region", { name: "Orders list" }).querySelector("dl");
-    expect(tiles).toHaveTextContent("PAID · LAST 30 DAYS₱1,798ORDERS4PENDING1FAILED1");
+    expect(tiles).toHaveTextContent("PAID · LAST 30 DAYS₱3,097ORDERS6PENDING1FAILED1");
     expect(screen.getByRole("button", { name: "Export CSV" })).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -96,6 +105,18 @@ describe("the Orders list", () => {
     expect(row).toHaveTextContent("GCash");
     expect(row).toHaveTextContent("₱499");
     expect(row).toHaveTextContent("PAID");
+  });
+
+  it("shows a Refunded Order's status, and a partial refund under PAID (ticket 09)", async () => {
+    signInAs(OWNER);
+    render(await ordersPage());
+
+    const row = (reference: string) =>
+      rows().find((candidate) => candidate.textContent?.includes(reference));
+    expect(row("AYC-10008")).toHaveTextContent("REFUNDED");
+    expect(row("AYC-10008")).not.toHaveTextContent("PARTIALLY");
+    expect(row("AYC-10007")).toHaveTextContent("PAID");
+    expect(row("AYC-10007")).toHaveTextContent("PARTIALLY REFUNDED · ₱300");
   });
 
   it("filters by GCash and Paid from the URL", async () => {
@@ -234,12 +255,24 @@ describe("GET /admin/orders/export", () => {
   it("holds exactly the default list's Orders with no filters, and only the header row when none match", async () => {
     signInAs(OWNER);
     expect(csvReferences(await (await exportCsv()).text())).toEqual([
+      "AYC-10008",
+      "AYC-10007",
       "AYC-10006",
       "AYC-10004",
       "AYC-10003",
       "AYC-10002",
     ]);
     expect(csvReferences(await (await exportCsv("?q=nobody")).text())).toEqual([]);
+  });
+
+  it("gives the amount refunded: Bea's ₱300 of a Paid Order, and all of Lou's Refunded one (ticket 09)", async () => {
+    signInAs(OWNER);
+    const lines = (await (await exportCsv("?q=example.com")).text()).split("\r\n");
+    const cells = (reference: string) =>
+      lines.find((line) => line.startsWith(`${reference},`))?.split(",") ?? [];
+    expect(cells("AYC-10007").slice(9, 11)).toEqual(["Paid", "300.00"]);
+    expect(cells("AYC-10008").slice(9, 11)).toEqual(["Refunded", "499.00"]);
+    expect(cells("AYC-10003").slice(9, 11)).toEqual(["Paid", ""]);
   });
 
   it("refuses an Editor and a signed-out visitor, logging nothing", async () => {

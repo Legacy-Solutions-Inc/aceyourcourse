@@ -152,6 +152,7 @@ function bothMembers(): MemberDataSource {
         endsAt: "2027-02-01T00:00:00.000Z",
         createdAt: "2026-11-03T00:00:00.000Z",
         dismissedAt: "2026-11-03T01:00:00.000Z",
+        reference: null,
       },
       {
         id: "notice-sam",
@@ -161,6 +162,7 @@ function bothMembers(): MemberDataSource {
         endsAt: "2027-03-01T00:00:00.000Z",
         createdAt: "2026-11-04T00:00:00.000Z",
         dismissedAt: null,
+        reference: null,
       },
     ],
   };
@@ -249,6 +251,8 @@ describe("buildMemberDataExport", () => {
           endsAt: "2027-02-01T00:00:00.000Z",
           createdAt: "2026-11-03T00:00:00.000Z",
           dismissedAt: "2026-11-03T01:00:00.000Z",
+          // A refund's notice names its Order (Phase 4, ticket 09); this one is a grant.
+          reference: null,
         },
       ],
     });

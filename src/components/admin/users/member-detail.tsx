@@ -1,7 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { OrderStatusTag, TestOrderTag } from "@/components/admin/orders/order-status-tag";
+import {
+  OrderStatusTag,
+  PartialRefundNote,
+  TestOrderTag,
+} from "@/components/admin/orders/order-status-tag";
 
 import type { AdminAction } from "@/lib/admin/action";
 import { formatChangedOn, formatLoggedAt } from "@/lib/admin/time";
@@ -226,6 +230,7 @@ function MemberOrderRow({ order }: { order: AdminOrder }) {
           {order.livemode ? null : <TestOrderTag />}
           <OrderStatusTag status={order.status} />
         </span>
+        <PartialRefundNote order={order} />
       </span>
     </li>
   );

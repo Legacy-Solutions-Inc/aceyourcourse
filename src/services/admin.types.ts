@@ -27,6 +27,7 @@ import type { CardImageType } from "@/lib/cards/card-rules";
 import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
 import type { PlanDays } from "@/lib/plans/plan-rules";
 import type { InvoiceRequest } from "@/lib/payments/invoice-requests";
+import type { OrderRefund } from "@/lib/payments/refunds";
 import type { Order, OrderStatus } from "@/lib/payments/order-ledger";
 import type { PaymentMethod } from "@/lib/payments/payment-methods";
 import type { MemberDataExport } from "@/lib/member-app/data-export";
@@ -941,6 +942,10 @@ export interface AdminOrder extends Order {
   paidAfterExpiry: boolean;
   /** Its Invoice Request (ticket 08), or null for none. */
   invoice: InvoiceRequest | null;
+  /** Its succeeded PayMongo refunds, oldest first (ticket 09). */
+  refunds: OrderRefund[];
+  /** What PayMongo refunded of it, in centavos: less than its price on a Paid Order is a partial refund. */
+  refundedCentavos: number;
 }
 
 /** The Orders list's tiles, for the Orders the filters match. */

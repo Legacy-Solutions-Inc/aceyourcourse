@@ -14,6 +14,7 @@ import { samplePaymentsFake } from "@/services/payments";
 
 import checkoutPaid from "../../../../../test/fixtures/paymongo/event-checkout-paid.json";
 import paymentFailed from "../../../../../test/fixtures/paymongo/event-payment-failed.json";
+import paymentRefunded from "../../../../../test/fixtures/paymongo/event-payment-refunded.json";
 import refundUpdated from "../../../../../test/fixtures/paymongo/event-refund-updated.json";
 
 // POST /api/paymongo/webhook (Phase 4, ticket 05; Testing Decisions → Phase
@@ -21,8 +22,9 @@ import refundUpdated from "../../../../../test/fixtures/paymongo/event-refund-up
 // the payments fake, whose webhooks are signed as PayMongo signs them with a
 // test-only secret. A request is trusted only once its signature checks out;
 // each event is applied once; Failed and Expired Orders can still become
-// Paid, and Paid never moves back. Without PAYMONGO_WEBHOOK_SECRET the route
-// doesn't exist.
+// Paid, and Paid never moves back. Refund events (ticket 09) take a fully
+// refunded Order's unused days off, once. Without PAYMONGO_WEBHOOK_SECRET
+// the route doesn't exist.
 
 const { secret } = vi.hoisted(() => ({ secret: { current: undefined as string | undefined } }));
 vi.mock("@/env.server", async (original) => {
@@ -238,8 +240,10 @@ describe("POST /api/paymongo/webhook", () => {
 
   it("acknowledges an event buying doesn't act on, changing nothing", async () => {
     await pendingOrder();
+    const other = structuredClone(paymentFailed);
+    other.data.attributes.type = "source.chargeable";
 
-    const response = await post(JSON.stringify(refundUpdated));
+    const response = await post(JSON.stringify(other));
 
     expect(response.status).toBe(200);
     expect(stored()).toEqual([{ reference: "AYC-10001", status: "pending" }]);
@@ -254,5 +258,101 @@ describe("POST /api/paymongo/webhook", () => {
 
     expect(response.status).toBe(200);
     expect(stored()).toEqual([{ reference: "AYC-10001", status: "pending" }]);
+  });
+});
+
+describe("POST /api/paymongo/webhook: refunds (ticket 09)", () => {
+  /** Bea's CE 3 months, paid through the fixture checkout, whose payment is pay_FakePaid0001TestOnly. */
+  async function paidOrder() {
+    const order = await pendingOrder();
+    expect((await post(aboutOrder(checkoutPaid, order))).status).toBe(200);
+    return order;
+  }
+  /** The fixture refund of pay_FakePaid0001TestOnly, for this many centavos, under its own event id. */
+  function refundOf(amount: number, eventId = refundUpdated.data.id) {
+    const event = structuredClone(refundUpdated);
+    event.data.id = eventId;
+    event.data.attributes.data.attributes.amount = amount;
+    return JSON.stringify(event);
+  }
+  const ninetyDays = () => new Date(BOOT.getTime() + 90 * DAY).toISOString();
+
+  it("refunds a Paid Order in full, ending access now, logged as PayMongo", async () => {
+    await paidOrder();
+    vi.setSystemTime(BOOT.getTime() + 5 * DAY);
+
+    const response = await post(refundOf(129_900));
+
+    expect(response.status).toBe(200);
+    expect(stored()).toEqual([{ reference: "AYC-10001", status: "refunded" }]);
+    expect(await passEnd()).toBe(new Date(BOOT.getTime() + 5 * DAY).toISOString());
+    expect(getSampleStore().staffActivity.at(-1)).toMatchObject({
+      actor: { email: "system:paymongo", name: "PayMongo (system)" },
+      action: "order-refunded",
+      before: { endsAt: ninetyDays() },
+    });
+  });
+
+  it("finds the Order by the metadata a refunded payment carries", async () => {
+    await paidOrder();
+
+    expect((await post(JSON.stringify(paymentRefunded))).status).toBe(200);
+
+    expect(stored()).toEqual([{ reference: "AYC-10001", status: "refunded" }]);
+  });
+
+  it("takes the days off once when PayMongo delivers the same refund event twice", async () => {
+    await paidOrder();
+    vi.setSystemTime(BOOT.getTime() + 5 * DAY);
+    await post(refundOf(129_900));
+    vi.setSystemTime(BOOT.getTime() + 6 * DAY);
+
+    expect((await post(refundOf(129_900))).status).toBe(200);
+
+    expect(await passEnd()).toBe(new Date(BOOT.getTime() + 5 * DAY).toISOString());
+    expect(
+      getSampleStore().staffActivity.filter(({ action }) => action === "order-refunded"),
+    ).toHaveLength(1);
+  });
+
+  it("records a partial refund, leaving the Order Paid and its days", async () => {
+    await paidOrder();
+
+    expect((await post(refundOf(30_000))).status).toBe(200);
+
+    expect(stored()).toEqual([{ reference: "AYC-10001", status: "paid" }]);
+    expect(await passEnd()).toBe(ninetyDays());
+    expect(getSampleStore().orderRefunds).toMatchObject([{ amountCentavos: 30_000 }]);
+  });
+
+  it("changes nothing for a refund event with a bad signature", async () => {
+    await paidOrder();
+    const body = refundOf(129_900);
+
+    const response = await post(body, signFakeWebhook(refundOf(1_000)));
+
+    expect(response.status).toBe(401);
+    expect(stored()).toEqual([{ reference: "AYC-10001", status: "paid" }]);
+    expect(await passEnd()).toBe(ninetyDays());
+    expect(getSampleStore().orderRefunds).toEqual([]);
+  });
+
+  it("ignores and logs a refund of an Order that was never Paid", async () => {
+    const order = await pendingOrder();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const event = structuredClone(paymentRefunded);
+    event.data.attributes.data.attributes.metadata = {
+      order_id: order.id,
+      reference: order.reference,
+    };
+
+    const response = await post(JSON.stringify(event));
+
+    expect(response.status).toBe(200);
+    expect(stored()).toEqual([{ reference: "AYC-10001", status: "pending" }]);
+    expect(getSampleStore().orderRefunds).toEqual([]);
+    expect(warn).toHaveBeenCalledWith(
+      "PayMongo event evt_FakePaymentRefunded0001 (payment.refunded) refunds an Order that was never Paid; ignored and logged.",
+    );
   });
 });

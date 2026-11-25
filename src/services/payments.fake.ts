@@ -31,7 +31,7 @@ export interface FakePaymentsClient extends PaymentsClient {
 }
 
 /** What the fake's checkout can report: PayMongo's outcomes (Expired is the sweep's own). */
-type SimulatedOutcome = Exclude<OrderOutcome, "expired">;
+type SimulatedOutcome = Extract<OrderOutcome, "paid" | "failed">;
 
 /** The fake's webhook secret: test fixtures only, never a real one. */
 const FAKE_WEBHOOK_SECRET = "whsk_fake_webhook_secret_test_only";

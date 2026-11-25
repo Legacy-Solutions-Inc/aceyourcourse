@@ -142,6 +142,8 @@ const shown = (stored: Order, fields: Partial<AdminOrder> = {}): AdminOrder => (
   recordedStatus: stored.status,
   paidAfterExpiry: false,
   invoice: null,
+  refunds: [],
+  refundedCentavos: 0,
   ...fields,
 });
 
@@ -622,6 +624,74 @@ describe.each(ADMIN_ARMS)("Admin seam: Orders ($name)", (arm) => {
       });
       const found = await seam.getMemberForAdmin(OWNER, "6b8d0f2a-4c6e-4a8b-9d1f-3e5a7c9b1d3f");
       expect(found).toMatchObject({ ok: true, value: { orders: [] } });
+    });
+  });
+
+  // Ticket 09: refunds are made in the PayMongo dashboard; its events record
+  // them through the Member seam, and every Admin read shows them.
+  describe("refunds PayMongo's events recorded", () => {
+    const refundOf = (reference: string, refunds: { id: string; amountCentavos: number }[]) =>
+      member.recordPaymentEvent({
+        id: `evt_Refund${reference.slice(4)}_${refunds.map(({ id }) => id).join("_")}`,
+        type: "payment.refund.updated",
+        outcome: "refund",
+        checkoutId: null,
+        orderId: null,
+        reference: null,
+        paymentId: `pay_Sample${reference.slice(4)}`,
+        livemode: true,
+        refunds: refunds.map((refund) => ({
+          ...refund,
+          status: "succeeded",
+          refundedAt: new Date().toISOString(),
+        })),
+      });
+
+    it("shows a partial refund's amount on a Paid Order in the list, the detail, the Member's page and the CSV", async () => {
+      later(HOUR);
+      expect(await refundOf("AYC-10001", [{ id: "ref_Part", amountCentavos: 30_000 }])).toBe(
+        "applied",
+      );
+      const refund = {
+        id: "ref_Part",
+        orderId: PAID_GCASH.id,
+        amountCentavos: 30_000,
+        status: "succeeded",
+        refundedAt: at(HOUR),
+      };
+
+      const row = (await list()).rows.find(({ reference }) => reference === "AYC-10001");
+      expect(row).toMatchObject({ status: "paid", refundedCentavos: 30_000, refunds: [refund] });
+      expect((await detail("AYC-10001")).order).toMatchObject({
+        status: "paid",
+        refundedCentavos: 30_000,
+        refunds: [refund],
+      });
+      const found = await seam.getMemberForAdmin(OWNER, BEA.userId);
+      if (!found.ok) throw new Error("The Member detail refused an Owner");
+      expect(found.value.orders.find(({ reference }) => reference === "AYC-10001")).toMatchObject({
+        refundedCentavos: 30_000,
+      });
+      const exported = await seam.exportOrdersCsv(OWNER, query({ q: "AYC-10001" }));
+      if (!exported.ok) throw new Error("The CSV export refused an Owner");
+      expect(csvLines(exported.value.csv)[1]?.split(",").slice(9, 11)).toEqual(["Paid", "300.00"]);
+    });
+
+    it("shows a full refund, partials adding up to it, as Refunded, under the Refunded filter too", async () => {
+      await refundOf("AYC-10001", [{ id: "ref_A", amountCentavos: 99_900 }]);
+      await refundOf("AYC-10001", [{ id: "ref_B", amountCentavos: 30_000 }]);
+
+      expect((await detail("AYC-10001")).order).toMatchObject({
+        status: "refunded",
+        recordedStatus: "refunded",
+        refundedCentavos: 129_900,
+      });
+      expect(references((await list({ status: "refunded" })).rows)).toEqual(["AYC-10001"]);
+      expect(references((await list({ status: "paid" })).rows)).not.toContain("AYC-10001");
+    });
+
+    it("shows nothing refunded on an Order with no refund", async () => {
+      expect((await detail("AYC-10001")).order).toMatchObject({ refundedCentavos: 0, refunds: [] });
     });
   });
 });

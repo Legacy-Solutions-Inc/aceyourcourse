@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PAYMONGO_SYSTEM_ACTOR } from "@/lib/payments/order-ledger";
 import { samplePlanId } from "@/services/mock/plans";
 import { createFakePaymentsClient, type FakePaymentsClient } from "@/services/payments.fake";
-import type { PaymentEvent, PaymentsClient } from "@/services/payments.types";
+import type { PaymentOutcomeEvent, PaymentsClient } from "@/services/payments.types";
 
 import { MEMBER_ARMS } from "../../test/member-arms";
 import { CE_OFFICIAL, withExamDates } from "../../test/member-inputs";
@@ -49,8 +49,8 @@ describe.each(MEMBER_ARMS)("Member seam: payment events and expiry ($name)", (ar
   /** A PayMongo event about an Order, by its id and reference as its checkout's metadata carries them. */
   const eventFor = (
     order: { id: string; reference: string },
-    fields: Partial<PaymentEvent> = {},
-  ): PaymentEvent => ({
+    fields: Partial<PaymentOutcomeEvent> = {},
+  ): PaymentOutcomeEvent => ({
     id: "evt_FakeCheckoutPaid0001",
     type: "checkout_session.payment.paid",
     outcome: "paid",

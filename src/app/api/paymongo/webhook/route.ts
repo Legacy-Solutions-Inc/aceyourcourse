@@ -9,10 +9,11 @@ import { paymentsClient } from "@/services/payments";
 //   event (400). Neither changes anything.
 // - Each event is applied once, by its id, through the same ledger as the
 //   status check, and logged in Staff Activity as "PayMongo (system)".
-// - An event about no Order of ours, an event type buying doesn't act on, and
-//   an event from the other mode (live on a test server, or test on a live
-//   one) are acknowledged with 200, so PayMongo stops retrying, and change
-//   nothing.
+// - An event about no Order of ours, an event type buying doesn't act on, a
+//   refund of an Order that was never Paid (ticket 09: logged in Staff
+//   Activity too), and an event from the other mode (live on a test server,
+//   or test on a live one) are acknowledged with 200, so PayMongo stops
+//   retrying, and change nothing.
 // - Without PAYMONGO_WEBHOOK_SECRET, or a payments client, the route answers
 //   404. The work is a few small writes, well inside PayMongo's 30 seconds.
 // Logs name the event's id and type, never the secret or the signature.
@@ -40,8 +41,13 @@ export async function POST(request: Request): Promise<Response> {
     );
     return Response.json(RECEIVED);
   }
-  if ((await recordPaymentEvent(event)) === "unknown-order") {
+  const recorded = await recordPaymentEvent(event);
+  if (recorded === "unknown-order") {
     console.warn(`PayMongo event ${event.id} (${event.type}) is about no Order here; ignored.`);
+  } else if (recorded === "ignored") {
+    console.warn(
+      `PayMongo event ${event.id} (${event.type}) refunds an Order that was never Paid; ignored and logged.`,
+    );
   }
   return Response.json(RECEIVED);
 }

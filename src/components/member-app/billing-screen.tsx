@@ -112,6 +112,11 @@ export function BillingScreen({ passes, orders, memberName, requestInvoice }: Bi
                     <span className="sr-only"> for {order.reference}</span>
                   </Link>
                 ) : null}
+                {order.refund ? (
+                  <p className="basis-full font-mono text-[11px] font-bold text-muted-foreground">
+                    {order.refund}
+                  </p>
+                ) : null}
                 {order.invoice.line ? (
                   <p className="basis-full text-[13px] font-semibold">{order.invoice.line}</p>
                 ) : null}

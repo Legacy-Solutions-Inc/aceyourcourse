@@ -21,7 +21,7 @@ import type { AdminOrderDetail, AdminOrderNote, OrderStatusCheck } from "@/servi
 import { CheckStatusButton } from "./check-status-button";
 import { InvoiceRequestPanel } from "./invoice-request-panel";
 import { OrderNoteForm } from "./order-note-form";
-import { OrderStatusTag, TestOrderTag } from "./order-status-tag";
+import { OrderStatusTag, PartialRefundNote, TestOrderTag } from "./order-status-tag";
 
 interface OrderDetailProps {
   detail: AdminOrderDetail;
@@ -47,7 +47,8 @@ const DOTS: Record<TimelineStep["tone"], string> = {
  * the internal note only Staff see; "Check status with PayMongo" while it's
  * recorded Pending, and the PayMongo dashboard link; and its Invoice Request,
  * with "Mark invoice sent" (ticket 08). Refunds are issued from the PayMongo
- * dashboard, never here.
+ * dashboard, never here; PayMongo's events record them (ticket 09), and they
+ * show in the facts, the timeline and the status note.
  */
 export function OrderDetail({ detail, saveNote, checkStatus, markInvoiceSent }: OrderDetailProps) {
   const { order, note } = detail;
@@ -60,9 +61,12 @@ export function OrderDetail({ detail, saveNote, checkStatus, markInvoiceSent }: 
           <h2 id="order-reference" className="font-mono text-xl font-bold">
             {order.reference}
           </h2>
-          <span className="flex items-center gap-1.5">
-            {order.livemode ? null : <TestOrderTag />}
-            <OrderStatusTag status={order.status} />
+          <span className="flex flex-col items-end gap-1">
+            <span className="flex items-center gap-1.5">
+              {order.livemode ? null : <TestOrderTag />}
+              <OrderStatusTag status={order.status} />
+            </span>
+            <PartialRefundNote order={order} />
           </span>
         </div>
         <dl className="grid grid-cols-1 gap-x-4 gap-y-2.5 text-sm wide:grid-cols-[160px_minmax(0,1fr)]">
@@ -75,6 +79,12 @@ export function OrderDetail({ detail, saveNote, checkStatus, markInvoiceSent }: 
           <Fact term="AMOUNT">
             <span className="font-extrabold">{formatPeso(order.priceCentavos)}</span>
           </Fact>
+          {order.refundedCentavos > 0 ? (
+            <Fact term="AMOUNT REFUNDED">
+              <span className="font-extrabold">{formatPeso(order.refundedCentavos)}</span>
+              {order.status === "refunded" ? " · in full" : " · in part"}
+            </Fact>
+          ) : null}
           <Fact term="METHOD">{methodLabel(order.method)}</Fact>
           <Fact term="PAYMONGO REF">
             <span className="font-mono text-[13px] wrap-anywhere">{reference ?? "None yet"}</span>

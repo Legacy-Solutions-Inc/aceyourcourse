@@ -10,7 +10,19 @@ import {
   type Order,
   type OrderOutcome,
   PAYMONGO_SYSTEM_ACTOR,
+  type PassSegment,
+  passSegments,
+  removeUnusedDays,
+  wasPaid,
 } from "@/lib/payments/order-ledger";
+import {
+  isFullyRefunded,
+  mergeRefunds,
+  type OrderRefund,
+  type PaymentRefund,
+  refundedCentavos,
+  succeededRefunds,
+} from "@/lib/payments/refunds";
 import { PAYMENT_METHODS } from "@/lib/payments/payment-methods";
 import { periodLabel } from "@/lib/plans/plan-text";
 import { paths } from "@/paths";
@@ -36,6 +48,7 @@ import type {
   InvoiceRequestResult,
   Member,
   MemberInvoice,
+  MemberNotice,
   MemberOrder,
   PaymentAcknowledgement,
   PaymentEventResult,
@@ -76,9 +89,25 @@ import type { CheckoutStatus, PaymentEvent, PaymentsClient } from "@/services/pa
 //   (checkCheckoutStatus), unthrottled.
 // - A Member only ever reads or checks their own Orders: another's reference
 //   answers nothing.
+// - Refunds (ticket 09): PayMongo's refund events, applied once per event as
+//   the outcomes are, record each refund once (refunds.ts). A partial refund
+//   leaves the Order Paid and access as it was; refunds reaching the whole
+//   amount make it Refunded and take its unused days off the pass (the Order
+//   ledger's segment model), with a notice for the Member. A refund of a
+//   Pending, Failed or Expired Order, which granted nothing, is ignored. Each
+//   is logged in Staff Activity as "PayMongo (system)" with the end before
+//   and after.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** An Order as one outcome finds it, with what Paid changes alongside it. */
+/**
+ * One row of the buyer's pass history for the Order's Exam (access_pass_grants),
+ * as the segment model reads it, with the arm's key for writing it back.
+ */
+export interface PassHistoryRow extends PassSegment {
+  key: number;
+}
+
+/** An Order as one outcome finds it, with what Paid and refunds change alongside it. */
 export interface OrderHolding {
   order: Order;
   /** The buyer's Member record; null once their account is deleted (ticket 14). */
@@ -87,11 +116,27 @@ export interface OrderHolding {
   pass: AccessPass | null;
   /** The buyer's Target Exam records, removed ones too, in the order first added. */
   targetExams: TargetExamRecord[];
+  /** The pass's history rows, in order; none without a pass (ticket 09). */
+  history: PassHistoryRow[];
+  /** The Order's PayMongo refunds recorded so far, in the order first recorded (ticket 09). */
+  refunds: OrderRefund[];
+}
+
+/**
+ * A full refund's change to the buyer's Access Pass (ticket 09): its new end,
+ * the history rows whose segment moved (rewritten in place: the segment
+ * model), the notice and the Staff Activity.
+ */
+export interface PassReduction {
+  endsAt: string;
+  segments: PassHistoryRow[];
+  notice: MemberNotice;
+  activity: StaffActivity;
 }
 
 /** What an outcome writes, all or nothing. */
 export interface OrderWrite {
-  /** The Order moved on. */
+  /** The Order, moved on or as it was. */
   order: Order;
   /**
    * For Paid: the change to the buyer's Access Pass, written as an Owner's
@@ -99,26 +144,32 @@ export interface OrderWrite {
    * Activity); null for Failed, Expired, or a Paid Order whose account is gone.
    */
   paid: PassWrite | null;
-  /** The Staff Activity for a move that changes no pass (Failed, Expired, Paid with no account); null with `paid`. */
+  /** The Staff Activity for a change to no pass (Failed, Expired, Paid with no account, refunds); null with `paid` or `reduction`. */
   activity: StaffActivity | null;
+  /** The PayMongo refunds to record: added, or moved on, by their id (ticket 09). */
+  refunds: OrderRefund[];
+  /** For a full refund: the Order's unused days off the buyer's pass; null otherwise. */
+  reduction: PassReduction | null;
 }
 
 /**
  * One of a Member's Orders, with the days its payment added to their pass,
- * from and until (null until Paid), and its Invoice Request (ticket 08; null
- * for none).
+ * from and until (null until Paid), its Invoice Request (ticket 08; null for
+ * none) and its PayMongo refunds (ticket 09).
  */
 export interface OwnOrder {
   order: Order;
   paidDays: { startsAt: string; endsAt: string } | null;
   invoice: InvoiceRequest | null;
+  refunds: OrderRefund[];
 }
 
-/** Where a payment event finds its Order: by its checkout's id, or our id or reference. */
+/** Where a payment event finds its Order: by its checkout's id, our id or reference, or its payment's id. */
 export interface OrderLookup {
   checkoutId: string | null;
   orderId: string | null;
   reference: string | null;
+  paymentId: string | null;
 }
 
 /** What recording a payment event did: nothing for one seen before, or the Order it found (or none). */
@@ -168,7 +219,8 @@ export interface OrderStore {
   ): Promise<T | null>;
   /**
    * Records a PayMongo event once, by its id, and runs `work` on the Order it
-   * finds (by checkout id, then our id, then reference) as withOrder does,
+   * finds (by checkout id, then our id, then reference, then payment id) as
+   * withOrder does,
    * all as one step: a write that fails leaves the event unrecorded, so
    * PayMongo's retry applies it. An event recorded before runs nothing.
    */
@@ -199,8 +251,14 @@ const memberInvoiceOf = (request: InvoiceRequest): MemberInvoice => ({
   sentAt: request.sentAt,
 });
 
-/** Pure: what the screens show of an Order at `now`: Expired once Pending past its 24 hours. */
-const memberOrderOf = ({ order, paidDays, invoice }: OwnOrder, now: Date): MemberOrder => ({
+/**
+ * Pure: what the screens show of an Order at `now`: Expired once Pending past
+ * its 24 hours; with what PayMongo refunded of it, and when last.
+ */
+const memberOrderOf = (
+  { order, paidDays, invoice, refunds }: OwnOrder,
+  now: Date,
+): MemberOrder => ({
   id: order.id,
   reference: order.reference,
   examCode: order.examCode,
@@ -215,6 +273,8 @@ const memberOrderOf = ({ order, paidDays, invoice }: OwnOrder, now: Date): Membe
   accessUntil: paidDays?.endsAt ?? null,
   paidAfterExpiry: paidAfterExpiry(order),
   invoice: invoice && memberInvoiceOf(invoice),
+  refundedCentavos: refundedCentavos(refunds),
+  refundedAt: succeededRefunds(refunds).at(-1)?.refundedAt ?? null,
 });
 
 /**
@@ -238,6 +298,8 @@ export function settleOrder(
     return {
       order: moved,
       paid: null,
+      refunds: [],
+      reduction: null,
       activity: activityRecord(
         PAYMONGO_SYSTEM_ACTOR,
         now,
@@ -289,7 +351,127 @@ export function settleOrder(
       ),
     },
     activity: null,
+    refunds: [],
+    reduction: null,
   };
+}
+
+/** What recording a refund event did: applied, changed nothing, or was ignored (an Order that was never Paid). */
+export type RefundSettlement = "applied" | "no-change" | "ignored";
+
+/**
+ * Pure: what a refund event's refunds write on an Order at `now` (ticket 09):
+ * - an Order that was never Paid (Pending, Failed, Expired) granted nothing
+ *   to take back: ignored, and logged, recording no refund;
+ * - each refund is recorded once (mergeRefunds): nothing new changes nothing;
+ * - a refund not yet succeeded, or one more on a Refunded Order, is recorded
+ *   and logged, and moves nothing else;
+ * - refunds short of the whole amount leave the Order Paid and access as it
+ *   was, logged with the amount refunded before and after;
+ * - refunds reaching the whole amount (partials adding up to it included)
+ *   make the Order Refunded and take its unused days off the buyer's pass,
+ *   only its own (removeUnusedDays), with a notice and Staff Activity giving
+ *   the end before and after. An account that's gone has no pass to change.
+ */
+export function settleRefunds(
+  holding: OrderHolding,
+  incoming: readonly PaymentRefund[],
+  now: Date,
+): { write: OrderWrite | null; result: RefundSettlement } {
+  const { order, member, pass, history } = holding;
+  const { id, reference, examCode, status } = order;
+  const writing = (fields: Partial<OrderWrite>): OrderWrite => ({
+    order,
+    paid: null,
+    activity: null,
+    refunds: [],
+    reduction: null,
+    ...fields,
+  });
+  const logged = (action: string, before: object, after: object) =>
+    activityRecord(PAYMONGO_SYSTEM_ACTOR, now, "order", id, action, before, after);
+
+  if (!wasPaid(status)) {
+    const activity = logged(
+      "order-refund-ignored",
+      { reference, status },
+      { reference, status, refundedCentavos: refundedCentavos(incoming) },
+    );
+    return { write: writing({ activity }), result: "ignored" };
+  }
+
+  const { refunds, changed } = mergeRefunds(id, holding.refunds, incoming, now);
+  if (changed.length === 0) return { write: null, result: "no-change" };
+  const before = refundedCentavos(holding.refunds);
+  const after = refundedCentavos(refunds);
+  if (status === "refunded" || after === before) {
+    // A refund not yet succeeded, or one more on a Refunded Order: recorded and logged, nothing else.
+    const activity = logged(
+      "order-refund-recorded",
+      { reference, refundedCentavos: before },
+      {
+        reference,
+        refundedCentavos: after,
+        refunds: changed.map(({ id: refundId, status: refundStatus, amountCentavos }) => ({
+          refundId,
+          status: refundStatus,
+          amountCentavos,
+        })),
+      },
+    );
+    return { write: writing({ refunds: changed, activity }), result: "applied" };
+  }
+
+  const endsBefore = pass?.endsAt ?? null;
+  const step = isFullyRefunded(order, after)
+    ? applyOutcome(order, "refunded", endsBefore, now)
+    : null;
+  if (!step?.changed) {
+    const activity = logged(
+      "order-partially-refunded",
+      { reference, refundedCentavos: before, endsAt: endsBefore },
+      { reference, refundedCentavos: after, endsAt: endsBefore },
+    );
+    return { write: writing({ refunds: changed, activity }), result: "applied" };
+  }
+
+  const refunded = step.order;
+  if (!member || !pass) {
+    const activity = logged(
+      "order-refunded",
+      { reference, status, refundedCentavos: before, endsAt: endsBefore },
+      { reference, status: refunded.status, refundedCentavos: after, endsAt: endsBefore },
+    );
+    return { write: writing({ order: refunded, refunds: changed, activity }), result: "applied" };
+  }
+
+  const { userId, email } = member;
+  const standing = passSegments(history, pass.endsAt);
+  const { segments, endsAt } = removeUnusedDays(
+    history,
+    pass.endsAt,
+    (row) => row.orderId === id,
+    now,
+  );
+  const reduction: PassReduction = {
+    endsAt,
+    // Only the rows the refund moved: the Order's, and the ones after it.
+    segments: segments.filter(
+      (row, index) =>
+        row.startsAt !== standing[index]?.startsAt || row.endsAt !== standing[index]?.endsAt,
+    ),
+    notice: noticeOf(userId, examCode, "refunded", endsAt, now, reference),
+    activity: activityRecord(
+      PAYMONGO_SYSTEM_ACTOR,
+      now,
+      "access-pass",
+      passEntityId(userId, examCode),
+      "order-refunded",
+      { email, examCode, endsAt: pass.endsAt },
+      { email, examCode, endsAt, reference, refundedCentavos: after },
+    ),
+  };
+  return { write: writing({ order: refunded, refunds: changed, reduction }), result: "applied" };
 }
 
 /**
@@ -416,16 +598,17 @@ export function orderCalls(store: OrderStore) {
 
   /**
    * The Payment Acknowledgement of one of the Member's own Paid Orders
-   * (ticket 06): the Order, the buyer as at Pay, the access period its days
-   * gave, and PayMongo's reference (the payment's id, or the checkout's while
-   * there's none). Null for anyone else's Order, or one that isn't Paid.
+   * (ticket 06), or Refunded ones (ticket 09: it then says so): the Order,
+   * the buyer as at Pay, the access period its days gave, and PayMongo's
+   * reference (the payment's id, or the checkout's while there's none). Null
+   * for anyone else's Order, or one that was never Paid.
    */
   async function getPaymentAcknowledgement(
     userId: string,
     reference: string,
   ): Promise<PaymentAcknowledgement | null> {
     const own = await ownOrder(userId, reference);
-    if (!own || own.order.status !== "paid") return null;
+    if (!own || !wasPaid(own.order.status)) return null;
     const { order, paidDays } = own;
     return {
       order: memberOrderOf(own, new Date()),
@@ -489,16 +672,19 @@ export function orderCalls(store: OrderStore) {
 
   /**
    * A verified PayMongo event: applied once, by its id, to the Order it's
-   * about, through the same ledger as the status check.
+   * about, through the same ledger as the status check; a refund event's
+   * refunds through settleRefunds (ticket 09).
    */
   async function recordPaymentEvent(event: PaymentEvent): Promise<PaymentEventResult> {
     const now = new Date();
+    const { checkoutId, orderId, reference, paymentId } = event;
     const recorded = await store.withPaymentEvent(
       { id: event.id, type: event.type, receivedAt: now },
-      { checkoutId: event.checkoutId, orderId: event.orderId, reference: event.reference },
-      (holding) => {
-        const write = settleOrder(holding, event.outcome, event.paymentId, now);
-        return { write, result: write ? ("applied" as const) : ("no-change" as const) };
+      { checkoutId, orderId, reference, paymentId },
+      (holding): { write: OrderWrite | null; result: PaymentEventResult } => {
+        if (event.outcome === "refund") return settleRefunds(holding, event.refunds, now);
+        const write = settleOrder(holding, event.outcome, paymentId, now);
+        return { write, result: write ? "applied" : "no-change" };
       },
     );
     if (!recorded.recorded) return "duplicate";

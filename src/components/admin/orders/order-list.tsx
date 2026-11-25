@@ -23,7 +23,7 @@ import { paths } from "@/paths";
 import { type AdminOrder, type AdminOrderList, ORDER_STATUS_FILTERS } from "@/services/admin.types";
 
 import { OrderFilters } from "./order-filters";
-import { OrderStatusTag, TestOrderTag } from "./order-status-tag";
+import { OrderStatusTag, PartialRefundNote, TestOrderTag } from "./order-status-tag";
 
 const chip =
   "flex min-h-9 items-center border-[1.5px] px-2.5 font-mono text-xs font-bold hover:bg-ayc-sand";
@@ -172,6 +172,7 @@ function OrderRow({ order }: { order: AdminOrder }) {
       <TableCell className="py-2.75 pr-3.5 pl-0 whitespace-normal">
         <span className="flex flex-col items-start gap-1">
           <OrderStatusTag status={order.status} />
+          <PartialRefundNote order={order} />
           {invoiceToSend(order) ? (
             <span className="font-mono text-[10px] font-bold text-ayc-warning">
               INVOICE REQUESTED

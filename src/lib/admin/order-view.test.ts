@@ -8,6 +8,7 @@ import {
   orderStatusLabel,
   orderStatusTag,
   orderTimeline,
+  partialRefundLabel,
   payMongoDashboardUrl,
   payMongoReference,
   statusNote,
@@ -16,7 +17,9 @@ import {
 // What the Order detail page says (Phase 4, ticket 07; story 148; BUILD-MAP
 // §3.9), pure: the item, the status, the timeline by status (with "Paid after
 // expiry" where it applies), the status note, what "Check status with
-// PayMongo" found, and the PayMongo reference and dashboard link.
+// PayMongo" found, and the PayMongo reference and dashboard link. Refunds
+// (ticket 09) show on the timeline and the status note, and a partial one
+// as "PARTIALLY REFUNDED · ₱300".
 
 const MADE = "2026-11-24T12:14:00.000Z";
 const PAID = "2026-11-24T12:16:00.000Z";
@@ -37,6 +40,8 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
     recordedStatus: "pending",
     paidAfterExpiry: false,
     invoice: null,
+    refunds: [],
+    refundedCentavos: 0,
     livemode: true,
     checkoutId: "cs_Checkout0001",
     paymentId: null,
@@ -130,6 +135,92 @@ describe("orderTimeline", () => {
       ).at(-1),
     ).toEqual({ label: "Refunded in PayMongo", at: refunded, tone: "failed" });
   });
+
+  // Ticket 09: each succeeded refund is a step, at the time PayMongo refunded it.
+  const refund = (id: string, amountCentavos: number, refundedAt: string) => ({
+    id,
+    orderId: "id-AYC-10483",
+    amountCentavos,
+    status: "succeeded" as const,
+    refundedAt,
+  });
+  const FIRST = "2026-11-26T01:00:00.000Z";
+  const SECOND = "2026-11-27T01:00:00.000Z";
+
+  it("ends a fully refunded Order with its refund and amount, its unused days removed", () => {
+    expect(
+      orderTimeline(
+        paid({
+          status: "refunded",
+          recordedStatus: "refunded",
+          priceCentavos: 49_900,
+          refunds: [refund("ref_a", 49_900, FIRST)],
+          refundedCentavos: 49_900,
+        }),
+      ).slice(-2),
+    ).toEqual([
+      { label: "PayMongo confirmed · access granted", at: PAID, tone: "done" },
+      {
+        label: "Refunded in full in PayMongo · ₱499 · unused days removed",
+        at: FIRST,
+        tone: "failed",
+      },
+    ]);
+  });
+
+  it("adds a partial refund to a Paid Order's timeline, access unchanged", () => {
+    expect(
+      orderTimeline(
+        paid({ refunds: [refund("ref_a", 30_000, FIRST)], refundedCentavos: 30_000 }),
+      ).at(-1),
+    ).toEqual({
+      label: "Partially refunded in PayMongo · ₱300 · access unchanged",
+      at: FIRST,
+      tone: "info",
+    });
+  });
+
+  it("shows partial refunds adding up to the whole amount, the last one refunding it in full", () => {
+    expect(
+      orderTimeline(
+        paid({
+          status: "refunded",
+          recordedStatus: "refunded",
+          priceCentavos: 49_900,
+          refunds: [refund("ref_a", 30_000, FIRST), refund("ref_b", 19_900, SECOND)],
+          refundedCentavos: 49_900,
+        }),
+      ).slice(-2),
+    ).toEqual([
+      {
+        label: "Partially refunded in PayMongo · ₱300 · access unchanged",
+        at: FIRST,
+        tone: "info",
+      },
+      {
+        label: "Refunded in full in PayMongo · ₱199 · unused days removed",
+        at: SECOND,
+        tone: "failed",
+      },
+    ]);
+  });
+});
+
+describe("partialRefundLabel (ticket 09)", () => {
+  it("names a Paid Order's partial refund: PARTIALLY REFUNDED · ₱300", () => {
+    expect(partialRefundLabel(paid({ refundedCentavos: 30_000 }))).toBe(
+      "PARTIALLY REFUNDED · ₱300",
+    );
+  });
+
+  it("names nothing for an Order with no refund, or a Refunded one (its status says so)", () => {
+    expect(partialRefundLabel(paid())).toBeNull();
+    expect(
+      partialRefundLabel(
+        paid({ status: "refunded", recordedStatus: "refunded", refundedCentavos: 129_900 }),
+      ),
+    ).toBeNull();
+  });
 });
 
 describe("statusNote", () => {
@@ -145,6 +236,18 @@ describe("statusNote", () => {
     );
     expect(statusNote(paid({ paidAfterExpiry: true }))).toMatch(
       /^Paid after expiry: PayMongo confirmed it more than 24 hours after checkout started/,
+    );
+  });
+
+  it("tells a partially refunded Order's amount, and that access didn't change (ticket 09)", () => {
+    expect(statusNote(paid({ refundedCentavos: 30_000 }))).toBe(
+      "Paid and confirmed by PayMongo. Access started right away. PayMongo refunded ₱300 of it, which changed no access: adjust it on the Member’s page if needed.",
+    );
+  });
+
+  it("tells a Refunded Order that its unused days came off and the Member was told", () => {
+    expect(statusNote(paid({ status: "refunded", recordedStatus: "refunded" }))).toBe(
+      "Refunded in full in PayMongo. This Order’s unused days came off the Access Pass, and the Member was told in the app.",
     );
   });
 
