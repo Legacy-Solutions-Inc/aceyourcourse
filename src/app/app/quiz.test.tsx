@@ -208,7 +208,7 @@ describe("the quiz page", () => {
     expect(payloadOf(page)).not.toContain("A secret question");
   });
 
-  it("tells the lapsed tester their pass ended, with their attempts and Best Score kept", async () => {
+  it("tells the lapsed tester their pass ended, with their progress in CE kept and Renew access", async () => {
     await asLapsed();
     const [question] = await writeQuestions(HYDROSTATICS, ["Pressure at depth?", "B"]);
     await submitting(FREE_QUIZ, [[question, "B"]]);
@@ -219,10 +219,12 @@ describe("the quiz page", () => {
       screen.getByRole("heading", { level: 2, name: "Your CE All-Access ended on 14 Nov 2026" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        /Renew to keep reviewing\. Your progress is kept: 1 attempt, best score 100%\./,
-      ),
+      screen.getByText(/Renew to keep reviewing\. Your progress is kept: 1 quiz taken\./),
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Renew access" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
   });
 
   it("says a Hidden quiz is no longer available", async () => {

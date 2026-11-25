@@ -55,6 +55,7 @@ function deleteMember(store: SampleStore, userId: string, requestId: string) {
   store.accessPasses = others(store.accessPasses);
   store.accessPassGrants = others(store.accessPassGrants);
   store.memberNotices = others(store.memberNotices);
+  store.renewalDismissals = others(store.renewalDismissals);
   store.cardMarks = others(store.cardMarks);
   store.studyDays = others(store.studyDays);
   store.deckPositions = others(store.deckPositions);

@@ -225,6 +225,8 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     dismissMemberNotice: member(() =>
       targetExams.dismissMemberNotice("6a0c8f8e-3f43-4c4a-9d5e-0b2f6c1d7e01"),
     ),
+    // A renewal banner (Phase 4, ticket 12): the sample Member holds no ME pass, so nothing is kept.
+    dismissRenewalBanner: member(() => targetExams.dismissRenewalBanner("ME")),
   },
   "./actions.ts": {
     signOut: anyone(() => root.signOut()),

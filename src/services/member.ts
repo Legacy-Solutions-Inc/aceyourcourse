@@ -3,12 +3,14 @@ import type { MemberAccess } from "@/lib/member-app/access";
 import type { MemberProgress } from "@/lib/member-app/progress";
 import type { PrivacyRequestType } from "@/lib/member-app/privacy-requests";
 import type { DeviceStatus } from "@/lib/member-app/device-token";
+import type { RenewalReminder } from "@/lib/member-app/renewal";
 import type { ReaderPlace } from "@/lib/reviewer-pdfs/reader";
 import type { AccessPass, CardMark, ContentKind, DeckPosition } from "@/services/content.types";
 import type { PageStamper } from "@/services/page-images.types";
 import type { PaymentEvent, PaymentsClient } from "@/services/payments.types";
 import { databaseArm } from "@/services/member.db";
 import type { InvoiceRequestInput } from "@/services/member.schema";
+import type { RenewalViewer } from "@/services/renewal.core";
 import * as mockImpl from "@/services/member.mock";
 import type {
   ActiveDevice,
@@ -368,6 +370,25 @@ export interface MemberService {
    */
   dismissNotice(userId: string, noticeId: string): Promise<boolean>;
 
+  // Renewal reminders (Phase 4, ticket 12; spec, Phase 4 planning decisions →
+  // Renewal reminders; renewal.core.ts): one banner per Exam whose Access
+  // Pass ends within the next 7 Manila days, on Home and that Exam's study
+  // screens. Each call is scoped to the User id given, and throws for one
+  // that isn't a User id. No email is sent.
+
+  /**
+   * The reminders this Member sees now, soonest end first, each with the
+   * Manila days its end falls before their Exam Date (null on or after it, or
+   * with none). Those they dismissed today are left out, and Staff get none.
+   */
+  listRenewalReminders(userId: string, viewer: RenewalViewer): Promise<RenewalReminder[]>;
+  /**
+   * Dismisses one Exam's reminder for this Member until the next Manila day,
+   * on every device. True when they hold a pass for that Exam; false,
+   * keeping nothing, otherwise.
+   */
+  dismissRenewalReminder(userId: string, examCode: string): Promise<boolean>;
+
   // Privacy Requests (ticket 18; spec, Phase 3 → Privacy Requests; Privacy
   // Policy §14): a Member asks from Account for a copy of their data or for
   // their account to be deleted, and Owners carry it out by hand (ticket 19).
@@ -527,6 +548,8 @@ export const getProgress = impl.getProgress;
 export const getTopicPercents = impl.getTopicPercents;
 export const listNotices = impl.listNotices;
 export const dismissNotice = impl.dismissNotice;
+export const listRenewalReminders = impl.listRenewalReminders;
+export const dismissRenewalReminder = impl.dismissRenewalReminder;
 export const listOpenPrivacyRequests = impl.listOpenPrivacyRequests;
 export const requestPrivacy = impl.requestPrivacy;
 export const listMemberPlans = impl.listMemberPlans;

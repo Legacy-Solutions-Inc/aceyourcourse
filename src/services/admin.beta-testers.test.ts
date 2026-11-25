@@ -6,8 +6,9 @@ import { sampleActor } from "../../test/admin-inputs";
 // The Admin seam's Beta Testers (spec, Phase 3 → The beta gate; stories 133a
 // and 133b), run against every arm. Owners keep a list of Google emails that
 // get into the Member App while its switch is off. The sample data starts
-// with two, added by the Owner: tester@example.com 3 days before boot, then
-// lapsed@example.com (whose CE pass has ended) 2 days before.
+// with three, added by the Owner: tester@example.com 3 days before boot,
+// lapsed@example.com (whose CE pass has ended) 2 days before, then
+// renewing@example.com (whose CE pass ends in 5 days) 1 day before.
 const BOOT = new Date("2026-11-17T03:42:00.000Z");
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -24,7 +25,12 @@ const LAPSED_TESTER = {
   addedAt: new Date(BOOT.getTime() - 2 * DAY).toISOString(),
   addedBy: ADDED_BY,
 };
-const SAMPLE_TESTERS = [SAMPLE_TESTER, LAPSED_TESTER];
+const RENEWING_TESTER = {
+  email: "renewing@example.com",
+  addedAt: new Date(BOOT.getTime() - DAY).toISOString(),
+  addedBy: ADDED_BY,
+};
+const SAMPLE_TESTERS = [SAMPLE_TESTER, LAPSED_TESTER, RENEWING_TESTER];
 const NEW_TESTER = "new.tester@example.com";
 
 describe.each(ADMIN_ARMS)("Admin seam: Beta Testers ($name)", (arm) => {
@@ -133,7 +139,9 @@ describe.each(ADMIN_ARMS)("Admin seam: Beta Testers ($name)", (arm) => {
         value: SAMPLE_TESTER,
         tags: [],
       });
-      expect(await seam.listBetaTesters(OWNER)).toMatchObject({ value: [LAPSED_TESTER] });
+      expect(await seam.listBetaTesters(OWNER)).toMatchObject({
+        value: [LAPSED_TESTER, RENEWING_TESTER],
+      });
     });
 
     it("records the removal in Staff Activity", async () => {

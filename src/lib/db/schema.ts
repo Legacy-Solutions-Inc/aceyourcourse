@@ -1355,6 +1355,35 @@ export const memberNotices = pgTable(
   ],
 ).enableRLS();
 
+// ── Renewal reminders ───────────────────────────────────────────────────────
+
+/**
+ * Each Member's latest dismissal of each Exam's renewal reminder (Phase 4,
+ * ticket 12; spec, Phase 4 planning decisions → Renewal reminders): one row
+ * per Member and Exam, `day` the Manila date it hides that Exam's banner for,
+ * replaced by the next dismissal. Kept on the server so it holds on every
+ * device. Deleting the Member or the Exam deletes it; the index on exam_code
+ * serves that cascade, which the primary key, led by user_id, can't. RLS on
+ * with no policy: only the server reads or writes it.
+ */
+export const renewalDismissals = pgTable(
+  "renewal_dismissals",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => members.userId, { onDelete: "cascade" }),
+    examCode: text("exam_code")
+      .notNull()
+      .references(() => exams.code, { onDelete: "cascade", onUpdate: "cascade" }),
+    day: date("day").notNull(),
+    dismissedAt: at("dismissed_at").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.examCode] }),
+    index("renewal_dismissals_exam_code_idx").on(t.examCode),
+  ],
+).enableRLS();
+
 // ── Privacy Requests ────────────────────────────────────────────────────────
 
 export const privacyRequestType = pgEnum("privacy_request_type", PRIVACY_REQUEST_TYPES);

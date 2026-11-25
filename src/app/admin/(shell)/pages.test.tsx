@@ -171,11 +171,12 @@ describe("Admin screens", () => {
     );
     const list = screen.getByRole("list", { name: "Beta Testers" });
     const rows = within(list).getAllByRole("listitem");
-    expect(rows).toHaveLength(2);
+    expect(rows).toHaveLength(3);
     expect(rows[0]).toHaveTextContent(
       /^tester@example\.comADDED \d{1,2} [A-Z]{3} \d{4} · BY ANGEL ROSE L\. LEPAÑA/,
     );
     expect(rows[1]).toHaveTextContent(/^lapsed@example\.com/);
+    expect(rows[2]).toHaveTextContent(/^renewing@example\.com/);
   });
 
   it.each(SCREENS.slice(0, 4))("%s is open to an Editor", async (title, Page) => {

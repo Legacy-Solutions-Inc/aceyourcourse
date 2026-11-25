@@ -468,6 +468,25 @@ describe("opening an item", () => {
     );
   });
 
+  it("keeps the lapsed tester's progress across CE on a locked item they never opened (Phase 4, ticket 12)", async () => {
+    await asLapsed();
+    // Marked while Simple Curves' deck is Free Preview, which the lapsed tester can still open.
+    await marks("lapsed@example.com", await writeCards(SIMPLE_CURVES, 2), ["got", "again"]);
+    render(await opening("quiz", QUIZ));
+
+    expect(
+      screen.getByText(
+        /Your access ended\. Renew to keep reviewing\. Your progress is kept: 2 cards marked\./,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Renew access" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
+    // Ended access shows the ended state, never a renewal banner.
+    expect(screen.queryByRole("region", { name: "Access ending soon" })).toBeNull();
+  });
+
   it.each([
     ["the tester", asTester],
     ["active Staff", () => memberOnDevice(OWNER.email, OWNER.name)],
@@ -519,5 +538,69 @@ describe("opening an item", () => {
     await memberOnDevice("stranger@example.com", "Sam Stranger").catch(() => undefined);
     jar.set("ayc_admin_sample", "stranger@example.com");
     await expect(opening("quiz", QUIZ)).rejects.toThrow(redirectsTo("/app/not-open-yet"));
+  });
+});
+
+// The renewal banner on CE's study screens (Phase 4, ticket 12; stories 141
+// and 142): while the Member's CE pass ends within 7 days, the Library and
+// each CE deck, quiz and Reviewer PDF show it above the screen. Which banners
+// show, and their words, are renewal.test.ts's; dismissing is the Member
+// seam's (member.renewal.test.ts).
+describe("the renewal banner", () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  /** Sets this sample Member's pass for an Exam to end `days` after now. */
+  function passEndsIn(email: string, examCode: string, days: number) {
+    const store = getSampleStore();
+    const userId = sampleUserId(email);
+    store.accessPasses = [
+      ...store.accessPasses.filter((p) => p.userId !== userId || p.examCode !== examCode),
+      { userId, examCode, endsAt: new Date(BOOT.getTime() + days * DAY).toISOString() },
+    ];
+  }
+  const banner = () => screen.getByRole("region", { name: "Access ending soon" });
+  // The tester's CE Exam Date is 10 Jan 2027: 49 days after 22 Nov.
+  const CE_TEXT = "Your CE All-Access ends 22 Nov, 49 days before your exam";
+
+  it("shows the tester whose CE pass ends in 5 days the banner on the Library, for CE alone", async () => {
+    passEndsIn("tester@example.com", "CE", 5);
+    passEndsIn("tester@example.com", "ME", 3);
+    await asTester();
+    render(await library());
+
+    const [only, ...others] = within(banner()).getAllByRole("listitem");
+    expect(others).toEqual([]);
+    expect(only).toHaveTextContent(CE_TEXT);
+    expect(within(only!).getByRole("link", { name: "Renew to cover your exam" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
+  });
+
+  it.each([
+    ["deck", FREE_DECK],
+    ["quiz", QUIZ],
+    ["reviewer-pdf", PDF],
+  ])("shows it above a CE %s", async (kind, id) => {
+    passEndsIn("tester@example.com", "CE", 5);
+    await asTester();
+    render(await opening(kind, id));
+
+    expect(within(banner()).getByText(CE_TEXT)).toBeInTheDocument();
+  });
+
+  it("shows none while the pass ends in 8 days", async () => {
+    passEndsIn("tester@example.com", "CE", 8);
+    await asTester();
+    render(await library());
+
+    expect(screen.queryByRole("region", { name: "Access ending soon" })).toBeNull();
+  });
+
+  it("never shows it to Staff", async () => {
+    passEndsIn(OWNER.email, "CE", 5);
+    await memberOnDevice(OWNER.email, OWNER.name);
+    render(await library());
+
+    expect(screen.queryByRole("region", { name: "Access ending soon" })).toBeNull();
   });
 });

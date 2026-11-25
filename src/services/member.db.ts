@@ -49,6 +49,7 @@ import {
 import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
 import { progressCalls, progressSubjectsOf, type ProgressStore } from "@/services/progress.core";
 import { quizStudyCalls, type QuizStudyStore } from "@/services/quiz-study.core";
+import { renewalCalls, type RenewalStore } from "@/services/renewal.core";
 import { reviewerStudyCalls, type ReviewerStudyStore } from "@/services/reviewer-study.core";
 import type { MemberService } from "@/services/member";
 import {
@@ -984,6 +985,35 @@ const dismissNotice: MemberService["dismissNotice"] = async (userId, noticeId) =
   });
 };
 
+// ── Renewal reminders ───────────────────────────────────────────────────────
+
+const databaseRenewalStore: RenewalStore = {
+  listAccessPasses: (userId) => listAccessPasses(userId),
+  listTargetExams: (userId) => listTargetExams(userId),
+  readDismissals: (userId) => {
+    const { renewalDismissals } = schema;
+    return inDatabase(() =>
+      getDb()
+        .select({ examCode: renewalDismissals.examCode, day: renewalDismissals.day })
+        .from(renewalDismissals)
+        .where(eq(renewalDismissals.userId, userId)),
+    );
+  },
+  writeDismissal: async (userId, { examCode, day }, at) => {
+    const { renewalDismissals } = schema;
+    await inDatabase(() =>
+      getDb()
+        .insert(renewalDismissals)
+        .values({ userId, examCode, day, dismissedAt: at })
+        // One per Member and Exam: the latest replaces the one before.
+        .onConflictDoUpdate({
+          target: [renewalDismissals.userId, renewalDismissals.examCode],
+          set: { day, dismissedAt: at },
+        }),
+    );
+  },
+};
+
 // ── Privacy Requests ────────────────────────────────────────────────────────
 
 type PrivacyRequestRow = typeof schema.privacyRequests.$inferSelect;
@@ -1487,6 +1517,7 @@ export const databaseArm: MemberService = {
   ...progressCalls(databaseProgressStore),
   listNotices,
   dismissNotice,
+  ...renewalCalls(databaseRenewalStore),
   listOpenPrivacyRequests,
   requestPrivacy,
   listMemberPlans,

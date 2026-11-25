@@ -340,6 +340,10 @@ async function load(
     get memberNotices() {
       return notLoaded("the Members' notices");
     },
+    // The Member seam reads and writes the renewal dismissals itself (Phase 4, ticket 12).
+    get renewalDismissals() {
+      return notLoaded("the renewal dismissals");
+    },
     // The Privacy Requests have their own reads (member.db.ts, admin.privacy-requests.db.ts).
     get privacyRequests() {
       return notLoaded("the Privacy Requests");

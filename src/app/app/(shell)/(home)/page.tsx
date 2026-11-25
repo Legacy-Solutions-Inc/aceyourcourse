@@ -4,12 +4,14 @@ import { Dashboard } from "@/components/member-app/dashboard";
 import { firstName } from "@/components/member-app/member-menu";
 import { MemberScreen } from "@/components/member-app/member-screen";
 import { Onboarding } from "@/components/member-app/onboarding";
+import { RenewalBanners } from "@/components/member-app/renewal-banners";
 import { readTargetExams, requireMember } from "@/lib/member-app/guard";
 import { manilaDate } from "@/lib/manila-time";
+import { readRenewalBanners } from "@/lib/member-app/renewal-read";
 import { paths } from "@/paths";
 import { getProgress, listPickableExams } from "@/services/member";
 
-import { addExam } from "../actions";
+import { addExam, dismissRenewalBanner } from "../actions";
 
 export const metadata: Metadata = { title: "Home" };
 
@@ -26,6 +28,9 @@ interface MemberHomePageProps {
  * route group so its loading skeleton (loading.tsx) shows on Home alone.
  * `restored` comes back from the add form when the Exam was one the Member
  * had removed.
+ *
+ * Above the dashboard, a banner for each Exam whose Access Pass ends within 7
+ * days (Phase 4, ticket 12), never for Staff.
  */
 export default async function MemberHomePage({ searchParams }: MemberHomePageProps) {
   const member = await requireMember(paths.memberApp.home);
@@ -44,9 +49,10 @@ export default async function MemberHomePage({ searchParams }: MemberHomePagePro
     );
   }
 
-  const [{ restored }, progress] = await Promise.all([
+  const [{ restored }, progress, renewals] = await Promise.all([
     searchParams,
     getProgress(member.userId, selected.examCode),
+    readRenewalBanners(member.userId),
   ]);
   const wasRestored = selected.examCode === restored;
   return (
@@ -54,6 +60,7 @@ export default async function MemberHomePage({ searchParams }: MemberHomePagePro
       eyebrow={`01 · HOME · ${selected.examCode} · ${selected.board}`}
       title={`Welcome, ${firstName(member)}`}
     >
+      <RenewalBanners banners={renewals} dismiss={dismissRenewalBanner} />
       {wasRestored ? (
         <p
           role="status"

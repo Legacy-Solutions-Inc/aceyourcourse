@@ -86,7 +86,7 @@ test.describe("a signed-out visitor", () => {
     await expect(page).toHaveURL(/\/app\/sign-in$/);
   });
 
-  test("sees the four sample Members in the development-only Sign in as list", async ({ page }) => {
+  test("sees the five sample Members in the development-only Sign in as list", async ({ page }) => {
     test.skip(LIVE, SKIP_LIVE);
     const list = await openSignInAs(page);
     await expect(list.getByText("SAMPLE DATA · DEVELOPMENT ONLY")).toBeVisible();
@@ -95,6 +95,7 @@ test.describe("a signed-out visitor", () => {
       /Angel Rose L\. Lepaña.*angel@aceyourcourse\.ph · Owner/,
       /Sam Stranger.*stranger@example\.com · Not a Beta Tester/,
       /Lou Lapsed.*lapsed@example\.com · Beta Tester · CE All-Access ended/,
+      /Rae Renewing.*renewing@example\.com · Beta Tester · CE All-Access ends in 5 days/,
     ]);
   });
 });

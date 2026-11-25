@@ -270,6 +270,7 @@ export const DATABASE_ARM: AdminArm = {
       accessPasses: await count(schema.accessPasses),
       accessPassGrants: await count(schema.accessPassGrants),
       notices: await count(schema.memberNotices),
+      renewalDismissals: await count(schema.renewalDismissals),
       cardMarks: await count(schema.cardMarks),
       studyDays: await count(schema.studyDays),
       deckPositions: await count(schema.deckPositions),

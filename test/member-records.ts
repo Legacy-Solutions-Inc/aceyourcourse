@@ -63,9 +63,10 @@ export async function writeStudyContent(arm: AdminArm): Promise<StudyContent> {
 
 /**
  * The Member's whole life in the Member App: they join and agree, pick ME
- * (which selects it), get CE granted (a pass, its grant, a notice, a Target Exam), claim a
- * device, then mark the card (a Study Day), stop in the deck, take the quiz,
- * and read and stop on a Reviewer PDF page. `token` makes their device's
+ * (which selects it), get CE granted (a pass, its grant, a notice, a Target
+ * Exam), dismiss CE's renewal reminder for today, claim a device, then mark
+ * the card (a Study Day), stop in the deck, take the quiz, and read and stop
+ * on a Reviewer PDF page. `token` makes their device's
  * token hash their own.
  */
 export async function studyEverything(
@@ -87,6 +88,10 @@ export async function studyEverything(
     reason: "Beta tester",
   });
   if (!granted.ok) throw new Error(`Not granted: ${JSON.stringify(granted)}`);
+  // CE's renewal reminder, dismissed for today (Phase 4, ticket 12).
+  if (!(await member.dismissRenewalReminder(userId, "CE"))) {
+    throw new Error("CE's renewal reminder wasn't dismissed.");
+  }
   await member.claimDevice(userId, {
     tokenHash: token.repeat(64),
     deviceLabel: "Chrome on Android",
@@ -131,6 +136,7 @@ export const MEMBER_RECORD_KINDS = [
   "accessPasses",
   "accessPassGrants",
   "notices",
+  "renewalDismissals",
   "cardMarks",
   "studyDays",
   "deckPositions",

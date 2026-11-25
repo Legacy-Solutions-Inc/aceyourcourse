@@ -9,6 +9,7 @@ import type { AccessPass, ContentKind, ContentRecords } from "@/services/content
 import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
 import { progressCalls, progressSubjectsOf, type ProgressStore } from "@/services/progress.core";
 import { quizStudyCalls, type QuizStudyStore } from "@/services/quiz-study.core";
+import { renewalCalls } from "@/services/renewal.core";
 import { reviewerStudyCalls, type ReviewerStudyStore } from "@/services/reviewer-study.core";
 import {
   agreedVersionsSchema,
@@ -488,6 +489,26 @@ export async function dismissNotice(userId: string, noticeId: string): Promise<b
   }
   return true;
 }
+
+// ── Renewal reminders ───────────────────────────────────────────────────────
+
+export const { listRenewalReminders, dismissRenewalReminder } = renewalCalls({
+  listAccessPasses,
+  listTargetExams,
+  async readDismissals(userId) {
+    return getSampleStore()
+      .renewalDismissals.filter((dismissal) => dismissal.userId === userId)
+      .map(({ examCode, day }) => ({ examCode, day }));
+  },
+  async writeDismissal(userId, { examCode, day }, at) {
+    const store = getSampleStore();
+    // One per Member and Exam, as the table's key: the latest replaces the one before.
+    const others = store.renewalDismissals.filter(
+      (dismissal) => dismissal.userId !== userId || dismissal.examCode !== examCode,
+    );
+    store.renewalDismissals = [...others, { userId, examCode, day, dismissedAt: at.toISOString() }];
+  },
+});
 
 // ── Privacy Requests ────────────────────────────────────────────────────────
 

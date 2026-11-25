@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { ShownRefusal } from "@/lib/member-app/access";
+import type { MemberProgress } from "@/lib/member-app/progress";
 import type { UnlockRoute } from "@/lib/member-app/unlock";
 import type { ContentKind } from "@/services/content.types";
 
@@ -19,6 +20,28 @@ export const quizKept = (attemptCount: number, bestScore: number | null): string
 /** Pure: what a refused Reviewer PDF keeps: the pages the Member viewed in it, when they viewed any. */
 export const pagesKept = (viewed: number): string | null =>
   viewed === 0 ? null : `${viewed} ${viewed === 1 ? "page" : "pages"} viewed`;
+
+/**
+ * Pure: what a Member keeps of a whole Exam once their pass ended (Phase 4,
+ * ticket 12; mockup `expired`): "312 cards marked, 14 quizzes taken", and the
+ * Reviewer PDF pages viewed, leaving out what's none. Cards marked are those
+ * last marked Got it or Review again. Null with no progress at all.
+ */
+export function examKept({
+  subjects,
+  quizzesTaken,
+  pages,
+}: Pick<MemberProgress, "subjects" | "quizzesTaken" | "pages">): string | null {
+  const marked = subjects
+    .flatMap(({ topics }) => topics)
+    .reduce((sum, { cards }) => sum + (cards ? cards.got + cards.again : 0), 0);
+  const quizzes =
+    quizzesTaken === 0 ? null : `${quizzesTaken} ${quizzesTaken === 1 ? "quiz" : "quizzes"} taken`;
+  const parts = [cardsKept(marked), quizzes, pagesKept(pages.viewed)].filter(
+    (part) => part !== null,
+  );
+  return parts.length === 0 ? null : parts.join(", ");
+}
 
 /**
  * Pure: what a refused deck, quiz or Reviewer PDF says is kept (mockup `expired`): the

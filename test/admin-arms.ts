@@ -274,6 +274,7 @@ export const SAMPLE_ARM: AdminArm = {
       accessPasses: mine(store.accessPasses),
       accessPassGrants: mine(store.accessPassGrants),
       notices: mine(store.memberNotices),
+      renewalDismissals: mine(store.renewalDismissals),
       cardMarks: mine(store.cardMarks),
       studyDays: mine(store.studyDays),
       deckPositions: mine(store.deckPositions),

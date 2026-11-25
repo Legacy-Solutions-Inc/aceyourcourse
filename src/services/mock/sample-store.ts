@@ -110,6 +110,16 @@ export interface SamplePrivacyRequest extends Omit<PrivacyRequest, "userId"> {
   deletedUserId: string | null;
 }
 
+/** A Member's latest dismissal of one Exam's renewal reminder (ticket 12), as the database row is. */
+export interface SampleRenewalDismissal {
+  userId: string;
+  examCode: string;
+  /** The Manila day (YYYY-MM-DD) it holds for. */
+  day: string;
+  /** ISO time it was made. */
+  dismissedAt: string;
+}
+
 /** A Member's Active Device record in the sample data. */
 export interface SampleActiveDevice {
   tokenHash: string;
@@ -180,6 +190,8 @@ export interface SampleStore {
   accessPassGrants: AccessPassGrant[];
   /** Every Member's in-app notices, in the order made (ticket 17): grants, extensions and ends. */
   memberNotices: MemberNotice[];
+  /** Each Member's latest dismissal of each Exam's renewal reminder (Phase 4, ticket 12). */
+  renewalDismissals: SampleRenewalDismissal[];
   /** Every Member's Privacy Requests, open and done, in the order asked (ticket 18). */
   privacyRequests: SamplePrivacyRequest[];
   /** The Plans for sale in the Member App, each with its last save (Phase 4, ticket 01). */
@@ -262,6 +274,7 @@ function createSampleStore(
     readerPositions: [],
     ...sampleAccessPasses(now, catalogue),
     memberNotices: [],
+    renewalDismissals: [],
     privacyRequests: [],
     plans: samplePlans(catalogue).map((plan) => ({
       ...plan,

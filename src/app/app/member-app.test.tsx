@@ -350,7 +350,7 @@ describe("the shell", () => {
 });
 
 describe("the sign-in screen", () => {
-  it("shows the mockup's copy, with the three sample Members behind Continue with Google", async () => {
+  it("shows the mockup's copy, with the sample Members behind Continue with Google", async () => {
     const user = userEvent.setup();
     render(await signInPage({ next: "/app/library" }));
 
@@ -380,6 +380,7 @@ describe("the sign-in screen", () => {
       "Angel Rose L. Lepañaangel@aceyourcourse.ph · Owner",
       "Sam Strangerstranger@example.com · Not a Beta Tester · sees “Not open yet”",
       "Lou Lapsedlapsed@example.com · Beta Tester · CE All-Access ended",
+      "Rae Renewingrenewing@example.com · Beta Tester · CE All-Access ends in 5 days",
     ]);
     for (const input of region.querySelectorAll<HTMLInputElement>('input[name="next"]')) {
       expect(input.value).toBe("/app/library");

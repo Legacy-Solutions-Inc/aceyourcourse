@@ -206,6 +206,9 @@ export const readerPositionInputSchema = z.object({
 /** A notice's id, as the Member App's "Dismiss" sends it. Anything else is no notice. */
 export const noticeIdSchema = z.string().uuid();
 
+/** The Exam a renewal banner's Dismiss sends (Phase 4, ticket 12): a code, trimmed; the seam decides whether it's one of theirs. */
+export const renewalExamCodeSchema = z.string().trim().min(1).max(20);
+
 /** A Privacy Request's type, as Account's buttons ask for it. */
 export const privacyRequestTypeSchema = z.enum(PRIVACY_REQUEST_TYPES);
 

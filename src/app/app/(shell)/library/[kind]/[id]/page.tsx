@@ -5,23 +5,32 @@ import { notFound, redirect } from "next/navigation";
 import { AttemptReview, ScoreLines, ScoreTally } from "@/components/member-app/attempt-review";
 import { DeckPlayer } from "@/components/member-app/deck-player";
 import { QuizPlayer } from "@/components/member-app/quiz-player";
+import { RenewalBanners } from "@/components/member-app/renewal-banners";
 import { ReviewerReader } from "@/components/member-app/reviewer-reader";
 import {
   cardsKept,
   EmptyStudy,
+  examKept,
   pagesKept,
   quizKept,
   RefusedStudy,
 } from "@/components/member-app/study-states";
 import { FocusScreen } from "@/components/member-app/focus-screen";
 import { formatDateTime } from "@/lib/manila-time";
-import type { MemberAccess } from "@/lib/member-app/access";
+import type { MemberAccess, ShownRefusal } from "@/lib/member-app/access";
 import { readMemberAccess, shownRefusal } from "@/lib/member-app/access-check";
 import { requireMemberWithExam } from "@/lib/member-app/guard";
 import { memberWatermark } from "@/lib/member-app/member-id";
+import { readRenewalBanners } from "@/lib/member-app/renewal-read";
 import { readUnlockRoutes } from "@/lib/member-app/unlock-read";
 import { paths } from "@/paths";
-import { openDeck, openQuiz, openReviewerPdf, reviewQuizAttempt } from "@/services/member";
+import {
+  getProgress,
+  openDeck,
+  openQuiz,
+  openReviewerPdf,
+  reviewQuizAttempt,
+} from "@/services/member";
 import { contentRefSchema } from "@/services/member.schema";
 import type { ContentItem, Member, RefusedQuiz, TargetExam } from "@/services/member.types";
 
@@ -31,6 +40,7 @@ import {
   saveStudyPosition,
   submitQuizAttempt,
 } from "../../actions";
+import { dismissRenewalBanner } from "../../../actions";
 
 export const metadata: Metadata = { title: "Library" };
 
@@ -53,6 +63,28 @@ function backFrom(item: ContentItem, selected: TargetExam) {
     : { href: paths.memberApp.library, label: "Back to the Library" };
 }
 
+/** The item's Exam's renewal banner while its Access Pass ends within 7 days (Phase 4, ticket 12). */
+async function renewalsFor(member: Member, examCode: string) {
+  const banners = await readRenewalBanners(member.userId, examCode);
+  return <RenewalBanners banners={banners} dismiss={dismissRenewalBanner} />;
+}
+
+/**
+ * What a refused item says the Member kept: once their pass ended, their
+ * progress in the item's whole Exam (Phase 4, ticket 12; mockup `expired`),
+ * otherwise their progress on the item itself.
+ */
+async function keptOf(
+  decision: ShownRefusal,
+  member: Member,
+  examCode: string,
+  onItem: string | null,
+): Promise<string | null> {
+  return decision.outcome === "expired"
+    ? examKept(await getProgress(member.userId, examCode))
+    : onItem;
+}
+
 /**
  * Opening a deck, quiz or Reviewer PDF from the Library. The gate, consent,
  * the Active Device and onboarding come first, so someone they don't let in
@@ -68,7 +100,11 @@ function backFrom(item: ContentItem, selected: TargetExam) {
  * or "no longer available" instead (the first two lead to the Exam's Plans
  * while one is on sale, ticket 02); nor does a correct choice before the
  * Member submits. The reader's pages come one at a time from the protected
- * page endpoint, stamped for the Member (src/app/app/reviewer-pdfs).
+ * page endpoint, stamped for the Member (src/app/app/reviewer-pdfs). Once
+ * the Member's pass ended, a refusal keeps their progress in the whole Exam
+ * and leads to "Renew access" (Phase 4, ticket 12). Each
+ * screen has the item's Exam's renewal banner above it while its Access
+ * Pass ends within 7 days (Phase 4, ticket 12).
  */
 export default async function ContentPage({ params, searchParams }: ContentPageProps) {
   // The kind and id are the browser's: one that isn't an item's is not found.
@@ -115,11 +151,12 @@ async function deckScreen({ id, member, selected, from }: DeckScreenProps) {
 
   let screen: React.ReactNode;
   if (opening.status === "refused") {
+    const decision = shownRefusal(opening.decision, from);
     screen = (
       <RefusedStudy
         {...heading}
-        decision={shownRefusal(opening.decision, from)}
-        kept={cardsKept(opening.marked)}
+        decision={decision}
+        kept={await keptOf(decision, member, item.examCode, cardsKept(opening.marked))}
         examCode={item.examCode}
         unlock={unlockOf(item.examCode)}
         back={back}
@@ -148,6 +185,7 @@ async function deckScreen({ id, member, selected, from }: DeckScreenProps) {
 
   return (
     <FocusScreen back={back} crumb={crumb} title={item.topicName}>
+      {await renewalsFor(member, item.examCode)}
       {screen}
     </FocusScreen>
   );
@@ -163,18 +201,24 @@ interface StudyScreenProps {
 }
 
 /** A refused quiz, or one of its attempts: why it won't open, with the Member's attempts and Best Score kept. */
-async function refusedQuizScreen(opening: RefusedQuiz, selected: TargetExam, from: string) {
+async function refusedQuizScreen(
+  opening: RefusedQuiz,
+  { member, selected, from }: Pick<StudyScreenProps, "member" | "selected" | "from">,
+) {
   const { item } = opening;
   const back = backFrom(item, selected);
   const crumb = quizCrumb(item);
   const unlockOf = await readUnlockRoutes();
+  const decision = shownRefusal(opening.decision, from);
+  const onQuiz = quizKept(opening.attemptCount, opening.bestScore);
   return (
     <FocusScreen back={back} crumb={crumb} title={item.topicName}>
+      {await renewalsFor(member, item.examCode)}
       <RefusedStudy
         crumb={crumb}
         title={item.topicName}
-        decision={shownRefusal(opening.decision, from)}
-        kept={quizKept(opening.attemptCount, opening.bestScore)}
+        decision={decision}
+        kept={await keptOf(decision, member, item.examCode, onQuiz)}
         examCode={item.examCode}
         unlock={unlockOf(item.examCode)}
         back={back}
@@ -190,13 +234,16 @@ async function quizScreen({ id, member, selected, from, access }: StudyScreenPro
     readUnlockRoutes(),
   ]);
   if (opening.status === "not-found") notFound();
-  if (opening.status === "refused") return refusedQuizScreen(opening, selected, from);
+  if (opening.status === "refused") {
+    return refusedQuizScreen(opening, { member, selected, from });
+  }
 
   const { item, quiz } = opening;
   const back = backFrom(item, selected);
   const crumb = quizCrumb(item);
   return (
     <FocusScreen back={back} crumb={crumb} title={item.topicName}>
+      {await renewalsFor(member, item.examCode)}
       {quiz.questions.length === 0 ? (
         <EmptyStudy crumb={crumb} title={item.topicName} kind="quiz" back={back} />
       ) : (
@@ -227,12 +274,15 @@ async function attemptScreen({
 }: StudyScreenProps & { attemptId: string }) {
   const opening = await reviewQuizAttempt(member.userId, { quizId: id, attemptId }, access);
   if (opening.status === "not-found") notFound();
-  if (opening.status === "refused") return refusedQuizScreen(opening, selected, from);
+  if (opening.status === "refused") {
+    return refusedQuizScreen(opening, { member, selected, from });
+  }
 
   const { item, attempt, bestScore, review } = opening;
   const when = formatDateTime(attempt.submittedAt);
   return (
     <FocusScreen back={backFrom(item, selected)} crumb={quizCrumb(item)} title={item.topicName}>
+      {await renewalsFor(member, item.examCode)}
       <section
         aria-labelledby="past-attempt"
         className="mx-auto flex w-full max-w-160 flex-col gap-4 border-[1.5px] bg-ayc-paper p-5 shadow-hard wide:my-4 wide:p-8"
@@ -277,11 +327,12 @@ async function reviewerScreen({ id, member, selected, from, access }: StudyScree
 
   let screen: React.ReactNode;
   if (opening.status === "refused") {
+    const decision = shownRefusal(opening.decision, from);
     screen = (
       <RefusedStudy
         {...heading}
-        decision={shownRefusal(opening.decision, from)}
-        kept={pagesKept(opening.viewed)}
+        decision={decision}
+        kept={await keptOf(decision, member, item.examCode, pagesKept(opening.viewed))}
         examCode={item.examCode}
         unlock={unlockOf(item.examCode)}
         back={back}
@@ -307,6 +358,7 @@ async function reviewerScreen({ id, member, selected, from, access }: StudyScree
 
   return (
     <FocusScreen back={back} crumb={crumb} title={item.topicName}>
+      {await renewalsFor(member, item.examCode)}
       {screen}
     </FocusScreen>
   );
