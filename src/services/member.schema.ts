@@ -6,11 +6,12 @@ import {
   isDeletionConfirmed,
   PRIVACY_REQUEST_TYPES,
 } from "@/lib/member-app/privacy-requests";
+import { ORDER_REFERENCE_PATTERN } from "@/lib/payments/order-ledger";
 import { QUIZ_CHOICES } from "@/lib/quizzes/quiz-rules";
 import { isReaderZoom } from "@/lib/reviewer-pdfs/reader";
 import { staffEmailSchema } from "@/services/admin.schema";
 import { CARD_MARK_VERDICTS, CONTENT_KINDS } from "@/services/content.types";
-import type { TargetExamRefusal } from "@/services/member.types";
+import type { PayRefusal, TargetExamRefusal } from "@/services/member.types";
 
 // The Member seam's zod schemas, shared by its arms.
 
@@ -86,6 +87,23 @@ const formText = z.string().trim().max(40).catch("");
 
 /** What the Target Exam forms send: the Exam picked and, where there is one, the date typed. */
 export const targetExamFormSchema = z.object({ examCode: formText, examDate: formText });
+
+/** What the Plans page says when Pay is refused (Phase 4, ticket 03). Nothing is charged. */
+export const PAY_REFUSALS: Record<PayRefusal, string> = {
+  unavailable: "Buying isn’t open yet. You weren’t charged.",
+  "bad-method": "Pick QR Ph, GCash, Maya or Card to pay with.",
+  "not-on-sale": "That plan isn’t on sale any more. Pick another one.",
+  "wrong-exam": "That plan isn’t for this exam. Pick one of the plans shown.",
+};
+
+/** What the Plans page's Pay sends: the Exam open on the page, the Plan picked and the method. */
+export const payFormSchema = z.object({ examCode: formText, plan: formText, method: formText });
+
+/** What sample mode's "Simulate paid" / "Simulate failed" sends: the Order and the outcome. */
+export const simulateFormSchema = z.object({
+  reference: z.string().regex(ORDER_REFERENCE_PATTERN),
+  outcome: z.enum(["paid", "failed"]),
+});
 
 /**
  * A deck, quiz or Reviewer PDF, as the address names it when a Member opens

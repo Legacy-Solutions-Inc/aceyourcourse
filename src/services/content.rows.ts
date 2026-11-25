@@ -116,6 +116,7 @@ export const accessPassGrantFromRow = (row: AccessPassGrantRow): AccessPassGrant
   reason: row.reason,
   grantedBy: { email: row.grantedByEmail, name: row.grantedByName },
   grantedAt: row.grantedAt.toISOString(),
+  orderId: row.orderId,
 });
 
 /** A grant as a row to add: its `seq` is the table's to give. */
@@ -129,6 +130,7 @@ export const accessPassGrantToRow = (grant: AccessPassGrant): Omit<AccessPassGra
   grantedByEmail: grant.grantedBy.email,
   grantedByName: grant.grantedBy.name,
   grantedAt: new Date(grant.grantedAt),
+  orderId: grant.orderId,
 });
 
 /** Pure: the SHA-256 of a front as a re-import matches it, which the cards table keeps. */

@@ -188,11 +188,12 @@ describe("the Plans page", () => {
     ]);
   });
 
-  it("reads Buying opens soon, disabled: buying isn't set up", async () => {
+  it("offers Pay with the picked Plan's price: sample mode has the payments fake", async () => {
     await memberOnDevice();
     render(await plansPage());
 
-    expect(screen.getByRole("button", { name: "Buying opens soon" })).toBeDisabled();
+    // A server with no payments client reads "Buying opens soon" (payments.test.tsx).
+    expect(screen.getByRole("button", { name: "Pay ₱1,299 with PayMongo" })).toBeEnabled();
   });
 
   it("has no Staff note for a Member", async () => {

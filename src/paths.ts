@@ -101,6 +101,8 @@ export const paths = {
     plans: "/app/plans",
     /** Plans open on one Exam's (ticket 02): where a lock's "See plans" and "Renew access" lead. */
     plansFor: (examCode: string) => `/app/plans?exam=${encodeURIComponent(examCode)}`,
+    /** One of the Member's Orders (ticket 03): Confirming payment, then Paid or Failed. */
+    order: (reference: string) => `/app/plans/orders/${encodeURIComponent(reference)}`,
     billing: "/app/billing",
     account: "/app/account",
     support: "/app/support",

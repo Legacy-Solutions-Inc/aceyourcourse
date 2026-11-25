@@ -72,7 +72,8 @@ export interface MemberDataExport {
   targetExams: TargetExamRecord[];
   consents: Own<ConsentRecord>[];
   accessPasses: (Own<AccessPass> & {
-    grants: Omit<AccessPassGrant, "userId" | "examCode" | "grantedBy">[];
+    // Ticket 14 adds the Member's Orders themselves, so a paid row's Order id stays out.
+    grants: Omit<AccessPassGrant, "userId" | "examCode" | "grantedBy" | "orderId">[];
   })[];
   cardMarks: Own<CardMark>[];
   quizAttempts: Own<QuizAttempt>[];
@@ -120,7 +121,7 @@ export function buildMemberDataExport(source: MemberDataSource, now: Date): Memb
       ...pass,
       grants: grants
         .filter((grant) => grant.examCode === pass.examCode)
-        .map(({ examCode: _, grantedBy: __, ...grant }) => grant),
+        .map(({ examCode: _, grantedBy: __, orderId: ___, ...grant }) => grant),
     })),
     cardMarks: own(source.cardMarks, userId, (mark) => `${mark.markedAt} ${mark.cardId}`),
     quizAttempts: structuredClone(own(source.quizAttempts, userId, (a) => a.submittedAt)),

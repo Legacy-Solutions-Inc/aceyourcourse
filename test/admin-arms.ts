@@ -1,3 +1,4 @@
+import type { Order } from "@/lib/payments/order-ledger";
 import { DEFAULT_QUIZ_SETTINGS } from "@/lib/quizzes/quiz-rules";
 import type { AdminService } from "@/services/admin";
 import * as sampleArm from "@/services/admin.mock";
@@ -130,6 +131,10 @@ export interface AdminArm {
    * seam's back, as a grant (ticket 17) will.
    */
   putAccessPass(pass: AccessPass, grants?: AccessPassGrant[]): Promise<void>;
+  /** Adds an Order behind the seam's back, as a Member's Pay does (Phase 4, ticket 03). */
+  putOrder(order: Order): Promise<void>;
+  /** Every Order, read behind the seam's back, by reference. */
+  orders(): Promise<Order[]>;
   /**
    * How many records of each kind the Member App keeps for a User id, read
    * behind the seam's back (ticket 19): what deleting an account must empty.
@@ -150,6 +155,12 @@ export const byMemberAndPage = (views: ReviewerPageView[]) =>
       a.page - b.page,
   );
 
+/** Pure: Orders by reference: "AYC-10002" before "AYC-10010". */
+export const byReference = (orders: Order[]) =>
+  [...orders].sort(
+    (a, b) => a.reference.length - b.reference.length || a.reference.localeCompare(b.reference),
+  );
+
 /** Pure: quizzes by id. */
 export const byId = <T extends { id: string }>(records: T[]) =>
   [...records].sort((a, b) => a.id.localeCompare(b.id));
@@ -168,7 +179,7 @@ export const byQuizAndPosition = (questions: Question[]) =>
 export const byDeckAndPosition = (cards: Card[]) =>
   [...cards].sort((a, b) => a.deckId.localeCompare(b.deckId) || a.position - b.position);
 
-const SAMPLE_ARM: AdminArm = {
+export const SAMPLE_ARM: AdminArm = {
   name: "sample data",
   seam: sampleArm,
   member: memberSampleArm,
@@ -233,6 +244,11 @@ const SAMPLE_ARM: AdminArm = {
     store.accessPasses = [...store.accessPasses, structuredClone(pass)];
     store.accessPassGrants = [...store.accessPassGrants, ...structuredClone(grants)];
   },
+  putOrder: async (order) => {
+    const store = getSampleStore();
+    store.orders = [...store.orders, structuredClone(order)];
+  },
+  orders: async () => byReference(structuredClone(getSampleStore().orders)),
   memberRecords: async (userId) => {
     const store = getSampleStore();
     const mine = (records: readonly { userId: string | null }[]) =>

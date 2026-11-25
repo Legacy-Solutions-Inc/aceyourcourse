@@ -1,6 +1,7 @@
 import { type DeviceStatus, deviceStatusFor } from "@/lib/member-app/device-token";
 import { noticesToShow } from "@/lib/member-app/notices";
 import { type PrivacyRequestType, privacyRequestDueOn } from "@/lib/member-app/privacy-requests";
+import { type Order, orderReference } from "@/lib/payments/order-ledger";
 import { readablePageCount } from "@/lib/reviewer-pdfs/status";
 import { contentItemOf, type ContentExam, libraryOf } from "@/services/content.rules";
 import type { AccessPass, ContentKind, ContentRecords } from "@/services/content.types";
@@ -46,7 +47,9 @@ import type {
   PrivacyRequestOutcome,
   TargetExam,
 } from "@/services/member.types";
+import { writeSamplePass } from "@/services/mock/pass-writes";
 import { getSampleStore, type SamplePrivacyRequest } from "@/services/mock/sample-store";
+import { orderCalls, type OrderStore } from "@/services/orders.core";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
 
 // The Member seam's sample arm: over the in-memory sample store
@@ -541,3 +544,69 @@ export async function listExamsOnSale(): Promise<string[]> {
   const { catalogue, plans } = getSampleStore();
   return examCodesOnSale(examsForMembers(structuredClone(catalogue)), structuredClone(plans));
 }
+
+// ── Buying (Phase 4, ticket 03) ─────────────────────────────────────────────
+
+/** The sample data's grants that hold an Order's paid days, by Order id. */
+const paidUntil = (orderId: string) =>
+  getSampleStore().accessPassGrants.find((grant) => grant.orderId === orderId)?.endsAt ?? null;
+
+// A Node process runs one call at a time here, so an outcome reads and writes
+// in one step, and two Pays take consecutive numbers.
+const sampleOrderStore: OrderStore = {
+  async readOnSale() {
+    const { catalogue, plans } = getSampleStore();
+    return {
+      exams: examsForMembers(structuredClone(catalogue)),
+      plans: structuredClone(plans.filter((plan) => plan.onSale)),
+    };
+  },
+  async readMember(userId) {
+    const member = getSampleStore().members.find((candidate) => candidate.userId === userId);
+    return member ? structuredClone(member) : null;
+  },
+  async addOrder(draft) {
+    const store = getSampleStore();
+    const order: Order = { ...draft, reference: orderReference(store.nextOrderNumber) };
+    store.nextOrderNumber += 1;
+    store.orders = [...store.orders, order];
+    return structuredClone(order);
+  },
+  async setCheckoutId(orderId, checkoutId) {
+    const store = getSampleStore();
+    store.orders = store.orders.map((order) =>
+      order.id === orderId ? { ...order, checkoutId } : order,
+    );
+  },
+  async findOwnOrder(userId, reference) {
+    const order = getSampleStore().orders.find(
+      (candidate) => candidate.reference === reference && candidate.userId === userId,
+    );
+    return order ? { order: structuredClone(order), accessUntil: paidUntil(order.id) } : null;
+  },
+  async withOrder(orderId, work) {
+    const store = getSampleStore();
+    const order = store.orders.find((candidate) => candidate.id === orderId);
+    if (!order) return null;
+    const { userId, examCode } = order;
+    const pass =
+      store.accessPasses.find((held) => held.userId === userId && held.examCode === examCode) ??
+      null;
+    const { write, result } = work(
+      structuredClone({
+        order,
+        member: store.members.find((candidate) => candidate.userId === userId) ?? null,
+        pass,
+        targetExams: userId ? (store.memberTargetExams[userId] ?? []) : [],
+      }),
+    );
+    if (!write) return result;
+
+    // The pass first, its Staff Activity before all: should that fail, the Order stays as it was.
+    if (write.paid && userId) writeSamplePass(userId, examCode, write.paid);
+    store.orders = store.orders.map((held) => (held.id === orderId ? write.order : held));
+    return result;
+  },
+};
+
+export const { payForPlan, getMemberOrder, checkOrderStatus } = orderCalls(sampleOrderStore);

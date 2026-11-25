@@ -11,6 +11,7 @@ import type {
 } from "@/services/admin.types";
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
 import type { CardImageType } from "@/lib/cards/card-rules";
+import { FIRST_REFERENCE_NUMBER, type Order } from "@/lib/payments/order-ledger";
 import type {
   AccessPass,
   AccessPassGrant,
@@ -180,6 +181,10 @@ export interface SampleStore {
   privacyRequests: SamplePrivacyRequest[];
   /** The Plans for sale in the Member App, each with its last save (Phase 4, ticket 01). */
   plans: AdminPlan[];
+  /** Every Order, in the order made (Phase 4, ticket 03). */
+  orders: Order[];
+  /** The number the next Order's reference carries: "AYC-10001" first, like order_reference_seq. */
+  nextOrderNumber: number;
   /** The upload seam's files, by upload id. */
   uploads: Record<string, SampleUpload>;
   /** The private content bucket's files, by path (ticket 06): card back images. */
@@ -236,6 +241,8 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
       ...plan,
       stamp: { savedAt: now.toISOString(), savedBy: null },
     })),
+    orders: [],
+    nextOrderNumber: FIRST_REFERENCE_NUMBER,
     reviewerPdfUploads: {},
     reviewerPdfFiles: {},
     uploads: {},

@@ -109,4 +109,6 @@ export const MEMBER_DATABASE_ARM: MemberArm = {
       })
       .where(eq(schema.privacyRequests.id, id));
   },
+  orders: () => ADMIN_DATABASE_ARM.orders(),
+  adminArm: ADMIN_DATABASE_ARM,
 };

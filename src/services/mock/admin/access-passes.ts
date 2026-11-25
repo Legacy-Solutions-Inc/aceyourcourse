@@ -1,4 +1,5 @@
 import { type AccessPassStore, accessPassCalls } from "@/services/access-passes.core";
+import { writeSamplePass } from "@/services/mock/pass-writes";
 import { getSampleStore } from "@/services/mock/sample-store";
 
 // The sample arm of the Admin seam's Access Pass actions (Phase 3, ticket 17):
@@ -24,22 +25,7 @@ const sampleAccessPassStore: AccessPassStore = {
       }),
     );
     if (!write) return result;
-
-    // The Staff Activity first: should it fail, nothing else is written.
-    store.staffActivity = [...store.staffActivity, write.activity];
-    const ends = { userId, examCode, endsAt: write.endsAt };
-    store.accessPasses = pass
-      ? store.accessPasses.map((held) => (held === pass ? ends : held))
-      : [...store.accessPasses, ends];
-    if (write.grant) store.accessPassGrants = [...store.accessPassGrants, write.grant];
-    const { targetExam } = write;
-    if (targetExam) {
-      const records = store.memberTargetExams[userId] ?? [];
-      store.memberTargetExams[userId] = records.some((r) => r.examCode === targetExam.examCode)
-        ? records.map((r) => (r.examCode === targetExam.examCode ? targetExam : r))
-        : [...records, targetExam];
-    }
-    store.memberNotices = [...store.memberNotices, write.notice];
+    writeSamplePass(userId, examCode, write);
     return result;
   },
 };

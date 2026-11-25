@@ -6,11 +6,9 @@ import { sampleActor } from "../../test/admin-inputs";
 import { PLAN_HAS_ORDERS, type PlanState, type PlanWrite, planCalls } from "./plans.core";
 
 // A Plan that has had an Order can't be deleted; it can only be switched off
-// (story 151r; spec, Phase 4 planning decisions → Plans & prices). Orders
-// arrive in ticket 03, which fills the store's `withOrders` with the Plans
-// that have one; until then no arm's Plan has any, so the rule is checked
-// here, over a store whose Plan has an Order. The arms' suite
-// (admin.plans.test.ts) covers the rest.
+// (story 151r; spec, Phase 4 planning decisions → Plans & prices), checked
+// here over a store whose Plan has an Order. The arms' suite
+// (admin.plans.test.ts) checks it with a fixture Order, and covers the rest.
 
 const OWNER = sampleActor("owner");
 

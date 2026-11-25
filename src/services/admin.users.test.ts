@@ -348,6 +348,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Users ($name)", (arm) => {
         reason: "Paid by bank transfer",
         grantedBy: { email: OWNER.email, name: OWNER.name },
         grantedAt: at(-33 * DAY),
+        orderId: null,
       };
       await arm.putAccessPass({ userId: BEA.userId, examCode: "ME", endsAt: at(10 * DAY) }, [
         { ...grant, userId: BEA.userId, examCode: "ME", startsAt: at(-20 * DAY) },

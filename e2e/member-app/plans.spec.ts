@@ -2,12 +2,13 @@ import { type Browser, expect as baseExpect, type Page, test } from "@playwright
 
 import { paths } from "../../src/paths";
 import { resetSampleData, signInAs as signInToAdmin } from "../admin/helpers";
-import { expectNoBlockingViolations, signInAndOnboard, signInAsMember } from "./helpers";
+import { expectNoBlockingViolations, LIVE, signInAndOnboard, signInAsMember } from "./helpers";
 
 // The Member's Plans page on sample data (Phase 4, ticket 02; stories 134,
 // 151c, 151e and 151m): a Member with CE opens Plans on CE and sees each CE
-// Plan with the date their access would end, and "Buying opens soon",
-// disabled, since no payments are set up. Locked CE content's "See plans",
+// Plan with the date their access would end, and Pay with the payments fake
+// (ticket 03; "Buying opens soon", disabled, in live mode, which has no
+// payments client here). Locked CE content's "See plans",
 // and ended access's "Renew access", open Plans on CE. A Plan an Owner
 // switches off leaves the page. Every Exam's starting Plans are on sale (CE:
 // 1, 3 and 6 months).
@@ -61,9 +62,7 @@ test.beforeEach(async ({ request }) => {
 });
 
 test.describe("a Member with CE", () => {
-  test("opens Plans on CE: each Plan with its end, and Buying opens soon, disabled", async ({
-    page,
-  }) => {
+  test("opens Plans on CE: each Plan with its end, and Pay", async ({ page }) => {
     await signInAndOnboard(page, "tester", "CE");
     await memberNav(page).getByRole("link", { name: /Plans/ }).click();
     await expect(page).toHaveURL(/\/app\/plans$/);
@@ -78,7 +77,8 @@ test.describe("a Member with CE", () => {
       ).toHaveCount(1);
     }
     await expect(planGroup(page).getByRole("radio", { name: /^3 months/ })).toBeChecked();
-    await expect(page.getByRole("button", { name: "Buying opens soon" })).toBeDisabled();
+    if (LIVE) await expect(page.getByRole("button", { name: "Buying opens soon" })).toBeDisabled();
+    else await expect(page.getByRole("button", { name: "Pay ₱1,299 with PayMongo" })).toBeEnabled();
 
     // The sidebar's current item fades to Plans: let it finish before measuring colours.
     await page.evaluate(() =>

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 import { BetaAccessNote } from "./content-state";
-import { PlanChooser } from "./plan-chooser";
+import { type PayAction, PlanChooser } from "./plan-chooser";
 import type { PlanRowView } from "./plans-view";
 
 /** One Exam pill: an Exam with a Plan on sale, linking to its Plans. */
@@ -24,6 +24,8 @@ export interface PlansProps {
   staff: boolean;
   /** Where Members ask AYC for access, while nothing is on sale. */
   contactEmail: string;
+  /** Pay, where this server has a payments client; null where buying isn't set up. */
+  pay: PayAction | null;
 }
 
 /**
@@ -32,7 +34,7 @@ export interface PlansProps {
  * the open Exam's Plans with the order summary. Staff can buy too, and are
  * told they open all content already.
  */
-export function Plans({ pills, exam, staff, contactEmail }: PlansProps) {
+export function Plans({ pills, exam, staff, contactEmail, pay }: PlansProps) {
   return (
     <>
       <p className="text-[15px]">Pay once for a fixed period. Nothing renews automatically.</p>
@@ -64,7 +66,7 @@ export function Plans({ pills, exam, staff, contactEmail }: PlansProps) {
         </nav>
       ) : null}
       {exam ? (
-        <PlanChooser key={exam.code} examCode={exam.code} rows={exam.rows} />
+        <PlanChooser key={exam.code} examCode={exam.code} rows={exam.rows} pay={pay} />
       ) : (
         <p className="max-w-prose text-[15px] leading-normal">
           No plans are on sale right now. <BetaAccessNote contactEmail={contactEmail} />

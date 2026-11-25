@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   bigint,
   boolean,
   check,
@@ -10,6 +11,7 @@ import {
   integer,
   jsonb,
   pgEnum,
+  pgSequence,
   pgTable,
   primaryKey,
   smallint,
@@ -21,6 +23,8 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { PRIVACY_REQUEST_STATUSES, PRIVACY_REQUEST_TYPES } from "@/lib/member-app/privacy-requests";
+import { FIRST_REFERENCE_NUMBER, ORDER_STATUSES } from "@/lib/payments/order-ledger";
+import { PAYMENT_METHODS } from "@/lib/payments/payment-methods";
 import { REVIEWER_PDF_FAILURES } from "@/lib/reviewer-pdfs/job";
 import { PDF_NAME_MAX } from "@/lib/reviewer-pdfs/pdf-file";
 import { READER_ZOOMS } from "@/lib/reviewer-pdfs/reader";
@@ -1040,9 +1044,13 @@ export const accessPasses = pgTable(
 ).enableRLS();
 
 /**
- * Each Access Pass's history: every grant that made or extended it, in order
- * (`seq`), with who granted it as they were then. Granting comes with ticket
- * 17; until then the table stays empty. Deleting the pass deletes its history.
+ * Each Access Pass's history: every grant, extension and Paid Order that made
+ * or extended it, in order (`seq`), each as the segment of days it added
+ * (`starts_at` to `ends_at`), with who granted it as they were then. A row
+ * with an `order_id` holds paid days: the Order's, recorded once (the unique
+ * index), under the system actor "PayMongo (system)" with the reason "Order
+ * AYC-…"; a row without one holds granted days (Phase 4, ticket 03; tickets
+ * 09 and 10 tell them apart). Deleting the pass deletes its history.
  */
 export const accessPassGrants = pgTable(
   "access_pass_grants",
@@ -1057,6 +1065,8 @@ export const accessPassGrants = pgTable(
     grantedByEmail: text("granted_by_email").notNull(),
     grantedByName: text("granted_by_name").notNull(),
     grantedAt: at("granted_at").notNull(),
+    // The Paid Order whose days these are; null for a grant or an extension.
+    orderId: uuid("order_id").references((): AnyPgColumn => orders.id),
   },
   (t) => [
     foreignKey({
@@ -1067,6 +1077,7 @@ export const accessPassGrants = pgTable(
       .onDelete("cascade")
       .onUpdate("cascade"),
     index("access_pass_grants_user_id_exam_code_seq_idx").on(t.userId, t.examCode, t.seq),
+    uniqueIndex("access_pass_grants_order_id_idx").on(t.orderId),
     check("access_pass_grants_days_range", sql`${t.days} between 1 and 365`),
     check("access_pass_grants_ends_after_start", sql`${t.endsAt} > ${t.startsAt}`),
     check("access_pass_grants_reason_present", sql`btrim(${t.reason}) <> ''`),
@@ -1114,6 +1125,79 @@ export const plans = pgTable(
       sql`${t.priceCentavos} between 100 and 9999900 and ${t.priceCentavos} % 100 = 0`,
     ),
     check("plans_name_present", sql`btrim(${t.name}) <> '' and char_length(${t.name}) <= 80`),
+  ],
+).enableRLS();
+
+// ── Orders ──────────────────────────────────────────────────────────────────
+
+/** The Orders' references count up from here: "AYC-10001" first. Gaps are fine. */
+export const orderReferenceSeq = pgSequence("order_reference_seq", {
+  startWith: FIRST_REFERENCE_NUMBER,
+});
+
+export const orderStatus = pgEnum("order_status", ORDER_STATUSES);
+export const paymentMethod = pgEnum("payment_method", PAYMENT_METHODS);
+
+/**
+ * The Orders (Phase 4, ticket 03; spec, Phase 4 → Order ledger, References;
+ * CONTEXT.md → Order): one Member's attempt to buy one Plan, made Pending at
+ * every Pay click. The Plan's name, days and price are copied at Pay, so a
+ * later change to the Plan never touches the Order. `reference` comes from
+ * order_reference_seq ("AYC-10001" upward, unique; test and live Orders share
+ * it). `livemode` is PayMongo's (false for a Test Order and with the payments
+ * fake); the checkout and payment ids are PayMongo's (null with the fake).
+ * The buyer's name and email are kept as at Pay, and `user_id` empties when
+ * the account is deleted, so an Order outlives it (ticket 14). A Plan that has
+ * had an Order can't be deleted (the restrict). `paid_at` is set once the
+ * Order has been Paid. The order ledger (src/lib/payments/order-ledger.ts)
+ * moves the status.
+ */
+export const orders = pgTable(
+  "orders",
+  {
+    id: uuid("id").primaryKey(),
+    reference: text("reference")
+      .notNull()
+      .unique("orders_reference_unique")
+      .default(sql`('AYC-' || nextval('order_reference_seq'))`),
+    // Null once the Member's account is deleted.
+    userId: uuid("user_id").references(() => members.userId, { onDelete: "set null" }),
+    examCode: text("exam_code")
+      .notNull()
+      .references(() => exams.code, { onDelete: "restrict", onUpdate: "cascade" }),
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => plans.id, { onDelete: "restrict" }),
+    planName: text("plan_name").notNull(),
+    days: integer("days").notNull(),
+    priceCentavos: integer("price_centavos").notNull(),
+    method: paymentMethod("method").notNull(),
+    status: orderStatus("status").notNull(),
+    livemode: boolean("livemode").notNull(),
+    checkoutId: text("checkout_id"),
+    paymentId: text("payment_id"),
+    buyerName: text("buyer_name"),
+    buyerEmail: text("buyer_email").notNull(),
+    createdAt: at("created_at").notNull(),
+    paidAt: at("paid_at"),
+    statusChangedAt: at("status_changed_at").notNull(),
+  },
+  (t) => [
+    index("orders_user_id_idx").on(t.userId),
+    index("orders_plan_id_idx").on(t.planId),
+    uniqueIndex("orders_checkout_id_idx")
+      .on(t.checkoutId)
+      .where(sql`${t.checkoutId} is not null`),
+    check("orders_reference_format", sql`${t.reference} ~ '^AYC-[0-9]{5,}$'`),
+    check("orders_days", sql`${t.days} in (30, 90, 180, 365)`),
+    check(
+      "orders_price_whole_pesos",
+      sql`${t.priceCentavos} between 100 and 9999900 and ${t.priceCentavos} % 100 = 0`,
+    ),
+    check(
+      "orders_paid_at_once_paid",
+      sql`(${t.status} in ('paid', 'refunded')) = (${t.paidAt} is not null)`,
+    ),
   ],
 ).enableRLS();
 

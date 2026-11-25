@@ -62,7 +62,7 @@ export function staffInput<Schema extends z.ZodTypeAny>(
 
 /** A Staff Activity record of one change, keeping copies of the values before and after. */
 export function activityRecord(
-  actor: StaffActor,
+  actor: Pick<StaffActor, "email" | "name">,
   now: Date,
   entity: string,
   entityId: string,

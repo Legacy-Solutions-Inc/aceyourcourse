@@ -69,6 +69,7 @@ const DETAIL: AdminMemberDetail = {
           reason: "Beta tester",
           grantedBy: OWNER,
           grantedAt: "2026-11-17T03:42:00.000Z",
+          orderId: null,
         },
       ],
     },

@@ -35,16 +35,15 @@ import { nextStamp } from "@/services/mock/sample-store";
 //   Activity record ("unmark-best-value") and new stamp.
 // - At most one On sale per Exam and duration: a save or a switch that would
 //   make a second is refused, and nothing is written.
-// - A Plan that has had an Order can't be deleted; it can be switched off.
-//   Orders arrive in ticket 03, which fills the store's `withOrders`; until
-//   then no Plan has any.
+// - A Plan that has had an Order (ticket 03) can't be deleted; it can be
+//   switched off.
 //
 // An edit runs the conflict check against the stamp its editor opened with.
 // The On sale switch always saves, but moves the stamp on, so an editor
 // opened before it conflicts instead of switching it back. Switching a Plan
 // off hides it from Members; it never touches an Access Pass. A Plan's price
-// is copied onto each Order at Pay (ticket 03), so a change applies to new
-// purchases only.
+// is copied onto each Order at Pay (orders.core.ts), so a change applies to
+// new purchases only.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FORBIDDEN = "ONLY AN OWNER CAN MANAGE PLANS";
@@ -64,7 +63,7 @@ export interface PlanState {
   plans: AdminPlan[];
   /** The catalogue's Exams, in order. */
   exams: PlanExam[];
-  /** The ids of the Plans that have had an Order (ticket 03; none until then). */
+  /** The ids of the Plans that have had an Order (ticket 03). */
   withOrders: ReadonlySet<string>;
 }
 

@@ -342,6 +342,13 @@ async function load(
     get privacyRequests() {
       return notLoaded("the Privacy Requests");
     },
+    // The Member seam reads and writes the Orders itself (ticket 03).
+    get orders() {
+      return notLoaded("the Orders");
+    },
+    get nextOrderNumber() {
+      return notLoaded("the Order references");
+    },
     // The Plans have their own reads and writes (admin.plans.db.ts). Deleting
     // an Exam drops its Plans from the sample data; here the table's cascade
     // does it, so the stand-in has none and keeps none.

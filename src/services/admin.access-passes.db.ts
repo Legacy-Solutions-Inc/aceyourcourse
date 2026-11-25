@@ -6,14 +6,8 @@ import { getDb } from "@/lib/db/client";
 import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
 import { type AccessPassStore, accessPassCalls } from "@/services/access-passes.core";
-import { staffActivityToRow } from "@/services/admin.rows";
-import { accessPassFromRow, accessPassGrantToRow } from "@/services/content.rows";
-import {
-  memberFromRow,
-  noticeToRow,
-  targetExamFromRow,
-  writeTargetExam,
-} from "@/services/member.db";
+import { accessPassFromRow } from "@/services/content.rows";
+import { memberFromRow, targetExamFromRow, writePass } from "@/services/member.db";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The Admin seam's Access Pass actions on Postgres (Phase 3, ticket 17): the
@@ -27,8 +21,7 @@ import {
 // Staff Guard (coding standards §3).
 // ─────────────────────────────────────────────────────────────────────────────
 
-const { accessPasses, accessPassGrants, exams, members, memberNotices } = schema;
-const { memberTargetExams, staffActivity } = schema;
+const { accessPasses, exams, members, memberTargetExams } = schema;
 
 const databaseAccessPassStore: AccessPassStore = {
   async withPass(userId, examCode, work) {
@@ -63,19 +56,7 @@ const databaseAccessPassStore: AccessPassStore = {
         });
         if (!write) return result;
 
-        const endsAt = new Date(write.endsAt);
-        await tx
-          .insert(accessPasses)
-          .values({ userId, examCode, endsAt })
-          .onConflictDoUpdate({
-            target: [accessPasses.userId, accessPasses.examCode],
-            set: { endsAt },
-          });
-        if (write.grant)
-          await tx.insert(accessPassGrants).values(accessPassGrantToRow(write.grant));
-        if (write.targetExam) await writeTargetExam(tx, userId, write.targetExam);
-        await tx.insert(memberNotices).values(noticeToRow(write.notice));
-        await tx.insert(staffActivity).values(staffActivityToRow(write.activity));
+        await writePass(tx, userId, examCode, write);
         return result;
       });
     } catch (error) {

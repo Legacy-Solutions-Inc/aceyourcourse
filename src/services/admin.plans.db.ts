@@ -20,11 +20,11 @@ import { type PlanState, type PlanStore, planCalls } from "@/services/plans.core
 // one Best value per Exam and one on sale per Exam and duration even so; the
 // Plans losing Best value are written first. Drizzle bypasses RLS, so
 // authorisation is the seam's role check and the Staff Guard (coding
-// standards §3). Orders arrive in ticket 03, which reads the Plans that have
-// one into `withOrders`.
+// standards §3). The Plans that have had an Order (ticket 03) are read into
+// `withOrders`; the Orders' restrict on plan_id refuses their delete even so.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const { exams, plans, staffActivity } = schema;
+const { exams, orders, plans, staffActivity } = schema;
 
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
@@ -35,7 +35,12 @@ async function readState(tx: Database | Transaction): Promise<PlanState> {
     .select({ code: exams.code, name: exams.name })
     .from(exams)
     .orderBy(asc(exams.position));
-  return { plans: planRows.map(planFromRow), exams: examRows, withOrders: new Set() };
+  const ordered = await tx.selectDistinct({ planId: orders.planId }).from(orders);
+  return {
+    plans: planRows.map(planFromRow),
+    exams: examRows,
+    withOrders: new Set(ordered.map(({ planId }) => planId)),
+  };
 }
 
 const databasePlanStore: PlanStore = {

@@ -1,14 +1,15 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { PlanRowView } from "./plans-view";
 import { Plans, type PlansProps } from "./plans";
 
 // The Member's Plans page body (Phase 4, ticket 02; BUILD-MAP §3 Plans;
-// stories 134, 151c and 151m): the Exam pills, the Plan rows as radio
-// buttons, the order summary with the Payment Method, and "Buying opens
-// soon", disabled, until buying arrives (ticket 03).
+// stories 134, 135, 151c and 151m): the Exam pills, the Plan rows as radio
+// buttons, the order summary with the Payment Method, and "Pay {price} with
+// PayMongo" wherever buying is set up (ticket 03), or "Buying opens soon",
+// disabled.
 
 const row = (fields: Partial<PlanRowView> & Pick<PlanRowView, "id" | "period">): PlanRowView => ({
   price: "₱499",
@@ -54,6 +55,7 @@ function renderPlans(props: Partial<PlansProps> = {}) {
       exam={{ code: "CE", rows: CE_ROWS }}
       staff={false}
       contactEmail="help@example.com"
+      pay={null}
       {...props}
     />,
   );
@@ -150,11 +152,58 @@ describe("Plans", () => {
     expect(within(methods).getByRole("radio", { name: "Maya" })).toBeChecked();
   });
 
-  it("reads Buying opens soon, disabled, until buying arrives", () => {
+  it("reads Buying opens soon, disabled, where buying isn't set up", () => {
     renderPlans();
     const button = within(summary()).getByRole("button", { name: "Buying opens soon" });
     expect(button).toBeDisabled();
     expect(within(summary()).queryByRole("button", { name: /^Pay / })).not.toBeInTheDocument();
+  });
+
+  it("offers Pay with the picked Plan's price wherever buying is set up", async () => {
+    const user = userEvent.setup();
+    renderPlans({ pay: async () => ({ error: null }) });
+
+    const button = within(summary()).getByRole("button", { name: "Pay ₱1,299 with PayMongo" });
+    expect(button).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Buying opens soon" })).not.toBeInTheDocument();
+
+    await user.click(within(planGroup()).getByRole("radio", { name: /^6 months/ }));
+    expect(
+      within(summary()).getByRole("button", { name: "Pay ₱2,299 with PayMongo" }),
+    ).toBeInTheDocument();
+  });
+
+  it("sends the Exam, the Plan picked and the method on Pay", async () => {
+    const user = userEvent.setup();
+    const pay = vi.fn(async (_previous: { error: string | null }, _form: FormData) => ({
+      error: null,
+    }));
+    renderPlans({ pay });
+
+    await user.click(within(planGroup()).getByRole("radio", { name: /^6 months/ }));
+    await user.click(screen.getByRole("radio", { name: "GCash" }));
+    await user.click(screen.getByRole("button", { name: "Pay ₱2,299 with PayMongo" }));
+
+    await waitFor(() => expect(pay).toHaveBeenCalledOnce());
+    const sent = pay.mock.calls[0]?.[1];
+    expect(Object.fromEntries(sent?.entries() ?? [])).toEqual({
+      examCode: "CE",
+      plan: "ce-180",
+      method: "gcash",
+    });
+  });
+
+  it("says why Pay was refused", async () => {
+    const user = userEvent.setup();
+    renderPlans({
+      pay: async () => ({ error: "That plan isn’t on sale any more. Pick another one." }),
+    });
+
+    await user.click(screen.getByRole("button", { name: "Pay ₱1,299 with PayMongo" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "That plan isn’t on sale any more. Pick another one.",
+    );
   });
 
   it("says payment is finished on PayMongo's page, and links the Terms of Use", () => {

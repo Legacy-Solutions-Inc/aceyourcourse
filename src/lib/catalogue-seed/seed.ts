@@ -167,10 +167,18 @@ const ADMIN_TABLES = [
 ];
 
 /**
+ * The Orders (Phase 4, ticket 03), with the Access Pass history rows that
+ * point at them: an Order keeps its Plan and Exam from being deleted, so a
+ * local load clears them before the catalogue.
+ */
+const ORDER_TABLES = [schema.accessPassGrants, schema.orders];
+
+/**
  * Deletes every Catalogue row, children before parents, with the Member App
- * content that hangs off its Subjects.
+ * content that hangs off its Subjects and the Orders for its Plans.
  */
 export async function clearCatalogue(db: Database | Transaction): Promise<void> {
+  for (const table of ORDER_TABLES) await db.delete(table);
   for (const table of CONTENT_TABLES) await db.delete(table);
   for (const table of [...TABLES].reverse()) await db.delete(table);
 }

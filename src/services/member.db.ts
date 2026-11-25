@@ -15,8 +15,11 @@ import { readablePageCount } from "@/lib/reviewer-pdfs/status";
 import { isStorageConfigured } from "@/lib/supabase/admin";
 import type { Plan } from "@/services/admin.types";
 import { type ContentExam, contentItemOf, libraryOf } from "@/services/content.rules";
+import type { PassWrite } from "@/services/access-passes.core";
+import { staffActivityToRow } from "@/services/admin.rows";
 import {
   accessPassFromRow,
+  accessPassGrantToRow,
   cardFromRow,
   contentFromRows,
   questionFromRow,
@@ -60,6 +63,8 @@ import type {
   MemberNotice,
   PrivacyRequest,
 } from "@/services/member.types";
+import { orderCalls, type OrderStore } from "@/services/orders.core";
+import { orderFromRow, orderToRow } from "@/services/orders.rows";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
 import { storageArm } from "@/services/uploads.storage";
 
@@ -1071,6 +1076,128 @@ const listExamsOnSale: MemberService["listExamsOnSale"] = async () => {
   }
 };
 
+// ── Buying (Phase 4, ticket 03) ─────────────────────────────────────────────
+
+/**
+ * Writes a change to a Member's Access Pass for an Exam in `tx`: the pass
+ * (made when they held none), its history row, the Target Exam record, the
+ * notice and the Staff Activity. An Owner's grant, extension or end
+ * (admin.access-passes.db.ts) and a Paid Order write the same way, inside the
+ * transaction that locked the Member's row.
+ */
+export async function writePass(
+  tx: Transaction,
+  userId: string,
+  examCode: string,
+  write: PassWrite,
+): Promise<void> {
+  const { accessPasses } = schema;
+  const endsAt = new Date(write.endsAt);
+  await tx
+    .insert(accessPasses)
+    .values({ userId, examCode, endsAt })
+    .onConflictDoUpdate({ target: [accessPasses.userId, accessPasses.examCode], set: { endsAt } });
+  if (write.grant)
+    await tx.insert(schema.accessPassGrants).values(accessPassGrantToRow(write.grant));
+  if (write.targetExam) await writeTargetExam(tx, userId, write.targetExam);
+  await tx.insert(schema.memberNotices).values(noticeToRow(write.notice));
+  await tx.insert(schema.staffActivity).values(staffActivityToRow(write.activity));
+}
+
+/**
+ * Orders on Postgres. A reference comes from order_reference_seq through the
+ * column's default, so two Pays at once never share one. An outcome runs in
+ * one transaction that locks the Order's row, then the buyer's Member row (as
+ * a grant does, admin.access-passes.db.ts) and pass, so two outcomes for the
+ * same Order or Member take turns; then the Order, the pass, its paid history
+ * row, the Target Exam, the notice and the Staff Activity are written
+ * together, or none of them. The paid history row's unique order_id keeps an
+ * Order's days to one row, whatever happens.
+ */
+const databaseOrderStore: OrderStore = {
+  readOnSale: () =>
+    inDatabase(async () => {
+      const db = getDb();
+      const [exams, plans] = await Promise.all([readExams(db), readPlansOnSale(db)]);
+      return { exams, plans };
+    }),
+  readMember: (userId) =>
+    inDatabase(async () => {
+      const [row] = await getDb()
+        .select()
+        .from(schema.members)
+        .where(eq(schema.members.userId, userId));
+      return row ? memberFromRow(row) : null;
+    }),
+  addOrder: ({ id, ...draft }) =>
+    inDatabase(async () => {
+      const { reference: _numbered, ...row } = orderToRow({ id, reference: "", ...draft });
+      const [added] = await getDb().insert(schema.orders).values(row).returning();
+      if (!added) throw new Error("The Order wasn't added.");
+      return orderFromRow(added);
+    }),
+  setCheckoutId: (orderId, checkoutId) =>
+    inDatabase(async () => {
+      await getDb().update(schema.orders).set({ checkoutId }).where(eq(schema.orders.id, orderId));
+    }),
+  findOwnOrder: (userId, reference) =>
+    inDatabase(async () => {
+      const { orders, accessPassGrants } = schema;
+      const [row] = await getDb()
+        .select({ order: orders, accessUntil: accessPassGrants.endsAt })
+        .from(orders)
+        .leftJoin(accessPassGrants, eq(accessPassGrants.orderId, orders.id))
+        .where(and(eq(orders.reference, reference), eq(orders.userId, userId)));
+      return row
+        ? { order: orderFromRow(row.order), accessUntil: row.accessUntil?.toISOString() ?? null }
+        : null;
+    }),
+  withOrder: (orderId, work) =>
+    inDatabase(() =>
+      getDb().transaction(async (tx) => {
+        const { orders, members, accessPasses, memberTargetExams } = schema;
+        const [orderRow] = await tx
+          .select()
+          .from(orders)
+          .where(eq(orders.id, orderId))
+          .for("update");
+        if (!orderRow) return null;
+        const order = orderFromRow(orderRow);
+        const { userId, examCode } = order;
+        const [member] = userId
+          ? await tx.select().from(members).where(eq(members.userId, userId)).for("update")
+          : [];
+        const [pass] = userId
+          ? await tx
+              .select()
+              .from(accessPasses)
+              .where(and(eq(accessPasses.userId, userId), eq(accessPasses.examCode, examCode)))
+              .for("update")
+          : [];
+        const targetExams = userId
+          ? await tx
+              .select()
+              .from(memberTargetExams)
+              .where(eq(memberTargetExams.userId, userId))
+              .orderBy(asc(memberTargetExams.seq))
+          : [];
+
+        const { write, result } = work({
+          order,
+          member: member ? memberFromRow(member) : null,
+          pass: pass ? accessPassFromRow(pass) : null,
+          targetExams: targetExams.map(targetExamFromRow),
+        });
+        if (!write) return result;
+
+        const { reference: _kept, id: _same, ...moved } = orderToRow(write.order);
+        await tx.update(orders).set(moved).where(eq(orders.id, orderId));
+        if (write.paid && member) await writePass(tx, member.userId, examCode, write.paid);
+        return result;
+      }),
+    ),
+};
+
 export const databaseArm: MemberService = {
   isBetaTester,
   getOrCreateMember,
@@ -1097,4 +1224,5 @@ export const databaseArm: MemberService = {
   requestPrivacy,
   listMemberPlans,
   listExamsOnSale,
+  ...orderCalls(databaseOrderStore),
 };

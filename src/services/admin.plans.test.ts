@@ -1,12 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { NOT_AN_EXAM } from "@/services/access-passes.core";
+import type { Order } from "@/lib/payments/order-ledger";
 import { PLAN_PRICE_TOO_LOW } from "@/lib/plans/plan-rules";
 import type { PlanForm } from "@/services/admin.schema";
 import type { AdminPlan, Plan } from "@/services/admin.types";
 import { sampleUserId } from "@/services/mock/members";
 import { samplePlanId } from "@/services/mock/plans";
-import { onSaleTaken } from "@/services/plans.core";
+import { onSaleTaken, PLAN_HAS_ORDERS } from "@/services/plans.core";
 
 import { ADMIN_ARMS } from "../../test/admin-arms";
 import { sampleActor } from "../../test/admin-inputs";
@@ -19,8 +20,7 @@ import { sampleActor } from "../../test/admin-inputs";
 // per Exam is Best value (ticking it clears the others, in the same write),
 // and at most one per Exam and duration is On sale. Switching a Plan off
 // hides it from Members and leaves every Access Pass as it was. A Plan that
-// has had an Order can't be deleted: plans.core.test.ts covers that rule,
-// since Orders arrive in ticket 03.
+// has had an Order can't be deleted (Orders from ticket 03).
 //
 // The data: the starting Plans, all on sale. CE has 30 days for ₱499, 90 days
 // for ₱1,299 (Best value) and 180 days for ₱2,299; ME, EE, MT and CPA each
@@ -428,6 +428,19 @@ describe.each(ADMIN_ARMS)("Admin seam: Plans ($name)", (arm) => {
       ]);
     });
 
+    it("refuses to delete a Plan that has had an Order, changing nothing", async () => {
+      await arm.putOrder(orderFor(CE_180));
+      const before = await snapshot();
+
+      expect(await seam.deletePlan(OWNER, CE_180)).toEqual({
+        ok: false,
+        error: { kind: "invalid", fieldErrors: {}, formError: PLAN_HAS_ORDERS },
+      });
+      expect(await snapshot()).toEqual(before);
+      // A Plan with no Order still deletes.
+      expect(await seam.deletePlan(OWNER, CE_30)).toMatchObject({ ok: true });
+    });
+
     it("answers not-found for a Plan that isn't there, and refuses an Editor", async () => {
       expect(await seam.deletePlan(OWNER, "no-such-plan")).toEqual({
         ok: false,
@@ -442,6 +455,33 @@ describe.each(ADMIN_ARMS)("Admin seam: Plans ($name)", (arm) => {
     });
   });
 });
+
+/**
+ * A fixture Order for a CE Plan, Pending, from a Member whose account has
+ * since gone (no User id), as a Member's Pay makes them (ticket 03).
+ */
+function orderFor(planId: string): Order {
+  return {
+    id: "3e2d1c0b-9a8f-4e7d-8c6b-5a4f3e2d1c0b",
+    reference: "AYC-10001",
+    userId: null,
+    examCode: "CE",
+    planId,
+    planName: "CE All-Access",
+    days: 180,
+    priceCentavos: 229_900,
+    method: "card",
+    status: "pending",
+    livemode: false,
+    checkoutId: null,
+    paymentId: null,
+    buyerName: "Bea Tester",
+    buyerEmail: "tester@example.com",
+    createdAt: BOOT.toISOString(),
+    paidAt: null,
+    statusChangedAt: BOOT.toISOString(),
+  };
+}
 
 /** A starting Plan on sale, not Best value. */
 function plain(examCode: string, days: 30 | 90 | 180 | 365, priceCentavos: number): Plan {

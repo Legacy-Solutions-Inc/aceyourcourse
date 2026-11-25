@@ -2,6 +2,7 @@ import type { z } from "zod";
 
 import type { AllowedVia, RefusedDecision } from "@/lib/member-app/access";
 import type { ExamDateSetBy } from "@/lib/member-app/exam-date";
+import type { Order } from "@/lib/payments/order-ledger";
 import type { PrivacyRequestStatus, PrivacyRequestType } from "@/lib/member-app/privacy-requests";
 import type { AttemptReview } from "@/lib/quizzes/grading";
 import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
@@ -460,3 +461,42 @@ export interface PlansExam {
    */
   examDate: string | null;
 }
+
+// ── Buying (Phase 4, ticket 03; spec, Phase 4 → Order ledger, Return flow;
+// Phase 4 planning decisions → Paying; stories 135–140) ───────────────────────
+
+/** What the Plans page's Pay sends: the Exam open on the page, the Plan picked and the method. */
+export interface PayInput {
+  examCode: string;
+  planId: string;
+  method: string;
+}
+
+/**
+ * Why Pay made no Order: buying isn't set up on this server, the method isn't
+ * one of the four, the Plan isn't on sale (or isn't a Plan), or it's another
+ * Exam's than the one posted.
+ */
+export type PayRefusal = "unavailable" | "bad-method" | "not-on-sale" | "wrong-exam";
+
+/** Pay's outcome: the Pending Order's reference and where to send the Member, or why not. */
+export type PayResult =
+  { ok: true; reference: string; redirectTo: string } | { ok: false; reason: PayRefusal };
+
+/** One of the Member's own Orders, as the Confirming payment, Paid and Failed screens show it. */
+export type MemberOrder = Pick<
+  Order,
+  | "id"
+  | "reference"
+  | "examCode"
+  | "planName"
+  | "days"
+  | "priceCentavos"
+  | "method"
+  | "status"
+  | "createdAt"
+  | "paidAt"
+> & {
+  /** Once Paid: the end of the Access Pass the Order's days gave (ISO); null until then. */
+  accessUntil: string | null;
+};

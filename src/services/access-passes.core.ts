@@ -106,10 +106,11 @@ const NO_SUCH_EXAM: AdminError = { kind: "invalid", fieldErrors: { examCode: [NO
 export const passEntityPrefix = (userId: string) => `${userId}/`;
 
 /** Pure: how Staff Activity names a Member's pass for an Exam. */
-const passEntityId = (userId: string, examCode: string) => `${passEntityPrefix(userId)}${examCode}`;
+export const passEntityId = (userId: string, examCode: string) =>
+  `${passEntityPrefix(userId)}${examCode}`;
 
 /** Pure: the notice a change leaves the Member. */
-const noticeOf = (
+export const noticeOf = (
   userId: string,
   examCode: string,
   kind: NoticeKind,
@@ -187,6 +188,7 @@ export function accessPassCalls(store: AccessPassStore) {
         reason,
         grantedBy: { email: actor.email, name: actor.name },
         grantedAt: now.toISOString(),
+        orderId: null,
       },
       targetExam: added?.record ?? null,
       notice: noticeOf(userId, examCode, kind, endsAt, now),

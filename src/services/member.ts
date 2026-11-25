@@ -6,6 +6,7 @@ import type { DeviceStatus } from "@/lib/member-app/device-token";
 import type { ReaderPlace } from "@/lib/reviewer-pdfs/reader";
 import type { AccessPass, CardMark, ContentKind, DeckPosition } from "@/services/content.types";
 import type { PageStamper } from "@/services/page-images.types";
+import type { PaymentsClient } from "@/services/payments.types";
 import { databaseArm } from "@/services/member.db";
 import * as mockImpl from "@/services/member.mock";
 import type {
@@ -24,8 +25,11 @@ import type {
   LibrarySubject,
   Member,
   MemberNotice,
+  MemberOrder,
   MemberUser,
   NewTargetExam,
+  PayInput,
+  PayResult,
   PickableExam,
   PlansExam,
   PrivacyRequest,
@@ -395,6 +399,40 @@ export interface MemberService {
    * every Member.
    */
   listExamsOnSale(): Promise<string[]>;
+
+  // Buying (Phase 4, ticket 03; spec, Phase 4 → Order ledger, Return flow,
+  // References; Phase 4 planning decisions → Paying; orders.core.ts). Each
+  // call is scoped to the User id given: a Member only ever buys for, reads
+  // or checks their own Orders. The payments client is the one this server
+  // has (payments.ts), or null when buying isn't set up.
+
+  /**
+   * Pay: makes a new Pending Order for this Member, every call, with the
+   * Plan's name, days and price as they are now (later changes to the Plan
+   * never touch it), the method and a reference from AYC-10001 upward, then
+   * starts the checkout for it. Gives the reference and where to send the
+   * Member. Refused, making nothing, with no payments client, a method that
+   * isn't one of the four, a Plan that isn't on sale for an Exam on the
+   * Website, and a Plan of another Exam than the one posted. Throws for a
+   * User id that isn't one.
+   */
+  payForPlan(userId: string, input: PayInput, client: PaymentsClient | null): Promise<PayResult>;
+  /** One of this Member's own Orders by its reference; null for anyone else's, or none. */
+  getMemberOrder(userId: string, reference: string): Promise<MemberOrder | null>;
+  /**
+   * Asks the payments client for a Pending Order's checkout status, applies
+   * a Paid or Failed outcome through the Order ledger, and gives the Order as
+   * it is then. Paid adds its days to the Member's Access Pass, keeps them as
+   * a paid history row, adds the Exam to their Target Exams if it isn't one,
+   * leaves a notice and logs Staff Activity under "PayMongo (system)", all or
+   * nothing, once. With no client, or an Order no longer Pending, it changes
+   * nothing. Null for anyone else's Order, or none.
+   */
+  checkOrderStatus(
+    userId: string,
+    reference: string,
+    client: PaymentsClient | null,
+  ): Promise<MemberOrder | null>;
 }
 
 const impl: MemberService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -435,3 +473,6 @@ export const listOpenPrivacyRequests = impl.listOpenPrivacyRequests;
 export const requestPrivacy = impl.requestPrivacy;
 export const listMemberPlans = impl.listMemberPlans;
 export const listExamsOnSale = impl.listExamsOnSale;
+export const payForPlan = impl.payForPlan;
+export const getMemberOrder = impl.getMemberOrder;
+export const checkOrderStatus = impl.checkOrderStatus;

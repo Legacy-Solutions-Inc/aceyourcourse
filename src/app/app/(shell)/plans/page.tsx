@@ -13,6 +13,9 @@ import { requireMemberWithExam } from "@/lib/member-app/guard";
 import { paths } from "@/paths";
 import { getWebsiteSettings } from "@/services/catalogue";
 import { listMemberPlans } from "@/services/member";
+import { paymentsClient } from "@/services/payments";
+
+import { pay } from "./actions";
 
 export const metadata: Metadata = { title: "Plans" };
 
@@ -29,9 +32,11 @@ interface PlansPageProps {
  * row says when the Member's access would end, counting the days left on
  * their own pass, and whether that covers their Exam Date. The address only
  * picks a pill: what's on sale, the pass and the date are read on the server
- * for the signed-in Member. Buying arrives in ticket 03: the button reads
- * "Buying opens soon", disabled. The gate, consent, the Active Device and
- * onboarding come first, coming back here with the Exam asked for.
+ * for the signed-in Member. Pay (ticket 03) makes a Pending Order and goes to
+ * the checkout wherever this server has a payments client (the fake in
+ * sample mode); elsewhere the button reads "Buying opens soon", disabled. The
+ * gate, consent, the Active Device and onboarding come first, coming back
+ * here with the Exam asked for.
  */
 export default async function PlansPage({ searchParams }: PlansPageProps) {
   const asked = askedExam((await searchParams).exam);
@@ -60,6 +65,7 @@ export default async function PlansPage({ searchParams }: PlansPageProps) {
         exam={open ? { code: open.examCode, rows: planRows(open, access.now) } : null}
         staff={access.activeStaff}
         contactEmail={contactEmail}
+        pay={paymentsClient() ? pay : null}
       />
     </MemberScreen>
   );

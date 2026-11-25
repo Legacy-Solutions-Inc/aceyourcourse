@@ -285,8 +285,8 @@ export interface AccessPass {
 }
 
 /**
- * One grant that made or extended an Access Pass, kept as its history.
- * Granting comes with ticket 17; until then the history is empty.
+ * One grant, extension or Paid Order that made or extended an Access Pass,
+ * kept as its history: the segment of days it added.
  */
 export interface AccessPassGrant {
   userId: string;
@@ -297,7 +297,12 @@ export interface AccessPassGrant {
   startsAt: string;
   endsAt: string;
   reason: string;
-  /** The Staff User who granted it, as they were then. */
+  /** The Staff User who granted it, as they were then; "PayMongo (system)" for paid days. */
   grantedBy: { email: string; name: string };
   grantedAt: string;
+  /**
+   * The Paid Order these days are, when they're paid days (Phase 4, ticket
+   * 03); null for a grant or an extension, which are granted days.
+   */
+  orderId: string | null;
 }

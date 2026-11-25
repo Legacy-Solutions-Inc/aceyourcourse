@@ -67,6 +67,7 @@ function bothMembers(): MemberDataSource {
         reason: "Beta tester",
         grantedBy: { email: "angel@aceyourcourse.ph", name: "Angel Reyes" },
         grantedAt: "2026-11-03T00:00:00.000Z",
+        orderId: null,
       },
       {
         userId: SAM,
@@ -77,6 +78,7 @@ function bothMembers(): MemberDataSource {
         reason: "Sam's grant",
         grantedBy: { email: "angel@aceyourcourse.ph", name: "Angel Reyes" },
         grantedAt: "2026-11-04T00:00:00.000Z",
+        orderId: null,
       },
     ],
     cardMarks: [

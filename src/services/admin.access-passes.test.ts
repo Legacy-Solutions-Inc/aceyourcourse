@@ -169,6 +169,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Access Passes ($name)", (arm) => {
               reason: "Beta tester",
               grantedBy: { email: OWNER.email, name: OWNER.name },
               grantedAt: at(NOW),
+              orderId: null,
             },
           ],
         },

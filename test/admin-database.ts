@@ -15,6 +15,7 @@ import {
   questionFromRow,
 } from "@/services/content.rows";
 import { databaseArm as memberDatabaseArm } from "@/services/member.db";
+import { orderFromRow, orderToRow } from "@/services/orders.rows";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
@@ -27,6 +28,7 @@ import {
   byDeckAndPosition,
   byId,
   byQuizAndPosition,
+  byReference,
 } from "./admin-arms";
 import {
   type CardImageUpload,
@@ -232,6 +234,10 @@ export const DATABASE_ARM: AdminArm = {
       await getDb().insert(schema.accessPassGrants).values(grants.map(accessPassGrantToRow));
     }
   },
+  putOrder: async (order) => {
+    await getDb().insert(schema.orders).values(orderToRow(order));
+  },
+  orders: async () => byReference((await getDb().select().from(schema.orders)).map(orderFromRow)),
   memberRecords: async (userId) => {
     const db = getDb();
     const count = async (table: PgTable & { userId: AnyPgColumn }) =>

@@ -13,6 +13,7 @@ import {
   recordConsent,
 } from "@/services/member.mock";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
+import { samplePlanId } from "@/services/mock/plans";
 import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
@@ -20,6 +21,8 @@ import { sampleActor } from "../../../test/admin-inputs";
 import * as account from "./(shell)/account/actions";
 import * as targetExams from "./(shell)/actions";
 import * as study from "./(shell)/library/actions";
+import * as orders from "./(shell)/plans/orders/[reference]/actions";
+import * as plans from "./(shell)/plans/actions";
 import * as root from "./actions";
 import * as consent from "./consent/actions";
 import * as device from "./device/actions";
@@ -31,8 +34,9 @@ import * as signIn from "./sign-in/actions";
 // each one is listed here with who may call it, and called as a browser would
 // by everyone it must refuse:
 //   - "member": behind the gate, then consent, then the Active Device (the
-//     Target Exam actions, the flashcard player's and the quiz screen's, and
-//     Account's Privacy Requests). Signed out goes to the sign-in screen, someone the
+//     Target Exam actions, the flashcard player's and the quiz screen's,
+//     Account's Privacy Requests, and Pay with sample mode's "Simulate paid"
+//     and "Simulate failed"). Signed out goes to the sign-in screen, someone the
 //     gate doesn't let in goes to "Not open yet", with no Member record made,
 //     a Member who hasn't agreed to the current Terms and Privacy Policy goes
 //     to the consent screen, and a request that isn't from the Member's Active
@@ -109,6 +113,23 @@ function examForm(examDate?: string) {
   return data;
 }
 
+/** The Plans page's Pay (Phase 4, ticket 03): CE 3 months with GCash. */
+function payForm() {
+  const data = new FormData();
+  data.set("examCode", "CE");
+  data.set("plan", samplePlanId("CE", 90));
+  data.set("method", "gcash");
+  return data;
+}
+
+/** Confirming payment's "Simulate paid" (sample mode only), for an Order nobody has yet. */
+function simulateForm() {
+  const data = new FormData();
+  data.set("reference", "AYC-10001");
+  data.set("outcome", "paid");
+  return data;
+}
+
 /** "Delete my account", confirmed as Account asks. */
 function deletionForm() {
   const data = new FormData();
@@ -166,6 +187,12 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
         answers: [{ questionId: freeQuestion, choice: "A" }],
       }),
     ),
+  },
+  "./(shell)/plans/actions.ts": {
+    pay: member(() => plans.pay({ error: null }, payForm())),
+  },
+  "./(shell)/plans/orders/[reference]/actions.ts": {
+    simulatePayment: member(() => orders.simulatePayment(simulateForm())),
   },
   "./(shell)/account/actions.ts": {
     requestDataCopy: member(() => account.requestDataCopy()),
@@ -229,7 +256,12 @@ const memberData = () => {
   const { memberActiveDevices, memberDeviceSwitches } = getSampleStore();
   const { cardMarks, studyDays, deckPositions, quizAttempts } = getSampleStore();
   const { reviewerPageViews, readerPositions, privacyRequests } = getSampleStore();
+  const { orders, accessPasses, accessPassGrants, memberNotices } = getSampleStore();
   return structuredClone({
+    orders,
+    accessPasses,
+    accessPassGrants,
+    memberNotices,
     members,
     memberConsents,
     memberTargetExams,
@@ -358,6 +390,12 @@ describe("the Member App's Server Actions and the gate", () => {
       expect(memberData()).toEqual(before);
     },
   );
+
+  it.each(GATED)("$name makes nobody the gate refuses an Order", async ({ call }) => {
+    jar.set("ayc_admin_sample", STRANGER);
+    await call().catch(() => {});
+    expect(getSampleStore().orders).toEqual([]);
+  });
 
   it.each(GATED)("$name gives nobody the gate refuses a Privacy Request", async ({ call }) => {
     jar.set("ayc_admin_sample", STRANGER);
