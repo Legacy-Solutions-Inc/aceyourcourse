@@ -448,10 +448,15 @@ money" strip; a live key (`sk_live_…`) takes real money.
    copy the secret key (`sk_test_…`). Never the public key (`pk_…`): the app
    logs "PAYMONGO_SECRET_KEY isn't a PayMongo secret key" and keeps buying off.
 2. **Register the webhook.** PayMongo's dashboard → Developers → Webhooks →
-   add `https://<site-url>/api/paymongo/webhook` for
-   `checkout_session.payment.paid` and any other payment events the webhook
-   route (ticket 05) lists. Copy its signing secret (`whsk_…`). Test and live
-   mode each have their own webhook and secret.
+   add `https://<site-url>/api/paymongo/webhook` and tick these events:
+   `checkout_session.payment.paid`, `payment.paid` and `payment.failed`. The
+   app acknowledges any other event and ignores it. Copy the webhook's
+   signing secret (`whsk_…`). Test and live mode each have their own webhook
+   and secret. Until `PAYMONGO_WEBHOOK_SECRET` is set, the URL answers 404.
+   - The daily Order expiry sweep (`/api/paymongo/expiry-sweep`, in
+     `vercel.json` beside the Reviewer PDF cron) runs with the same
+     `CRON_SECRET`. Check that the Vercel plan allows two cron jobs
+     (Settings → Cron Jobs lists both after the deploy).
 3. **Set both in Vercel** (step 9): `PAYMONGO_SECRET_KEY` and
    `PAYMONGO_WEBHOOK_SECRET`, Production, **Sensitive**. Redeploy: the key is
    read when the server starts.

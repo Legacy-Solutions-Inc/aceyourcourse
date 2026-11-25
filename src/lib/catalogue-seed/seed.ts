@@ -171,7 +171,7 @@ const ADMIN_TABLES = [
  * point at them: an Order keeps its Plan and Exam from being deleted, so a
  * local load clears them before the catalogue.
  */
-const ORDER_TABLES = [schema.accessPassGrants, schema.orders];
+const ORDER_TABLES = [schema.paymentEvents, schema.accessPassGrants, schema.orders];
 
 /**
  * Deletes every Catalogue row, children before parents, with the Member App

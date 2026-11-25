@@ -220,5 +220,9 @@ export const paths = {
     reviewerPdfRun: "/api/reviewer-pdfs/run",
     /** GET, once a day (vercel.json): restarts the jobs whose runs have stopped. */
     reviewerPdfCron: "/api/reviewer-pdfs/cron",
+    /** GET, once a day (vercel.json): records overdue Pending Orders Expired, or Paid (ticket 05). */
+    orderExpirySweep: "/api/paymongo/expiry-sweep",
+    /** POST: PayMongo's webhook events (ticket 05). */
+    payMongoWebhook: "/api/paymongo/webhook",
   },
 } as const;

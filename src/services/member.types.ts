@@ -484,7 +484,27 @@ export type PayRefusal =
 export type PayResult =
   { ok: true; reference: string; redirectTo: string } | { ok: false; reason: PayRefusal };
 
-/** One of the Member's own Orders, as the Confirming payment, Paid and Failed screens show it. */
+/** What a PayMongo webhook event did (ticket 05). */
+export type PaymentEventResult = "applied" | "no-change" | "duplicate" | "unknown-order";
+
+/**
+ * What the daily sweep did: the overdue Pending Orders it asked PayMongo
+ * about, how many became Paid or Expired, and how many were left Pending
+ * because PayMongo couldn't answer (or settling failed). An Order moved on
+ * by a webhook meanwhile is in none of the last three.
+ */
+export interface ExpirySweep {
+  checked: number;
+  paid: number;
+  expired: number;
+  unanswered: number;
+}
+
+/**
+ * One of the Member's own Orders, as the Confirming payment, Paid and Failed
+ * screens show it. Its status is as at the read: a Pending Order older than
+ * 24 hours reads Expired (ticket 05).
+ */
 export type MemberOrder = Pick<
   Order,
   | "id"
@@ -500,4 +520,6 @@ export type MemberOrder = Pick<
 > & {
   /** Once Paid: the end of the Access Pass the Order's days gave (ISO); null until then. */
   accessUntil: string | null;
+  /** Whether its payment was confirmed more than 24 hours after it was made (ticket 05). */
+  paidAfterExpiry: boolean;
 };

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { runReviewerPdfJob } from "@/services/admin";
 import { pageRenderer, startReviewerPdfRun } from "@/services/reviewer-pdf-runs";
 
-import { jobAccessRefusal } from "../job-access";
+import { cronRefusal } from "../../cron-access";
 
 // POST /api/reviewer-pdfs/run {id} (Phase 3, ticket 12; ADR 0012): one run of
 // a Reviewer PDF's job, for the server itself (each run starts the next, and
@@ -20,7 +20,7 @@ export const maxDuration = 300;
 const runRequest = z.object({ id: z.string().uuid() });
 
 export async function POST(request: Request): Promise<Response> {
-  const refusal = jobAccessRefusal(request);
+  const refusal = cronRefusal(request);
   if (refusal) return refusal;
   const body = runRequest.safeParse(await request.json().catch(() => null));
   if (!body.success) return new Response(null, { status: 400 });

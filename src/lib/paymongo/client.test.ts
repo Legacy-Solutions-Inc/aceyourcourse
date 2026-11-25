@@ -7,9 +7,11 @@ import created from "../../../test/fixtures/paymongo/checkout-created.json";
 import paid from "../../../test/fixtures/paymongo/checkout-paid.json";
 import pending from "../../../test/fixtures/paymongo/checkout-pending.json";
 import refused from "../../../test/fixtures/paymongo/error.json";
+import checkoutPaidEvent from "../../../test/fixtures/paymongo/event-checkout-paid.json";
 
 import { PAYMONGO_CHECKOUT_ORIGIN } from "./checkout-origin";
 import { createPayMongoClient, payMongoMethod } from "./client";
+import { signPayMongoWebhook } from "./webhook";
 
 // The real payments client (Phase 4, ticket 04; spec, Phase 4 → PayMongo
 // integration; Phase 4 planning decisions → Paying, Recording an outcome),
@@ -287,12 +289,36 @@ describe("checkoutStatus", () => {
 });
 
 describe("verifyWebhook", () => {
-  it("refuses every webhook until ticket 05 checks PayMongo's signature", async () => {
+  const WEBHOOK_SECRET = "whsk_TestOnlySecret0001";
+  const raw = JSON.stringify(checkoutPaidEvent);
+  const signed = signPayMongoWebhook(raw, WEBHOOK_SECRET, { t: 1_763_351_102, mode: "test" });
+
+  it("reads an event PayMongo signed with the webhook's secret", async () => {
+    const client = createPayMongoClient({
+      secretKey: TEST_KEY,
+      webhookSecret: WEBHOOK_SECRET,
+      siteUrl: SITE,
+    });
+
+    expect(await client.verifyWebhook(raw, signed)).toMatchObject({
+      ok: true,
+      event: { id: "evt_FakeCheckoutPaid0001", outcome: "paid" },
+    });
+  });
+
+  it("refuses an event signed with another secret", async () => {
+    const client = createPayMongoClient({
+      secretKey: TEST_KEY,
+      webhookSecret: "whsk_Another",
+      siteUrl: SITE,
+    });
+
+    expect(await client.verifyWebhook(raw, signed)).toEqual({ ok: false, reason: "bad-signature" });
+  });
+
+  it("refuses every webhook without a webhook secret", async () => {
     const { client } = clientAnswering(answer(200, created));
 
-    expect(await client.verifyWebhook("{}", "t=1,te=abc")).toEqual({
-      ok: false,
-      reason: "bad-signature",
-    });
+    expect(await client.verifyWebhook(raw, signed)).toEqual({ ok: false, reason: "bad-signature" });
   });
 });

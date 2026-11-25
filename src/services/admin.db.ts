@@ -352,6 +352,9 @@ async function load(
     get orderStatusCheckedAt() {
       return notLoaded("the Orders' status checks");
     },
+    get paymentEvents() {
+      return notLoaded("the PayMongo events");
+    },
     // The Plans have their own reads and writes (admin.plans.db.ts). Deleting
     // an Exam drops its Plans from the sample data; here the table's cascade
     // does it, so the stand-in has none and keeps none.

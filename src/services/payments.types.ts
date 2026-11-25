@@ -55,21 +55,30 @@ export type CheckoutStatus =
   | { status: "paid"; paymentId: string | null }
   | { status: "failed"; paymentId: string | null };
 
-/** A webhook's event, once its signature checks out. */
+/** A webhook's event buying acts on, once its signature checks out (ticket 05). */
 export interface PaymentEvent {
-  /** The provider's event id: each event is applied once (ticket 05). */
+  /** The provider's event id: each event is applied once. */
   id: string;
-  outcome: OrderOutcome;
-  /** The Order it's about, by its checkout's id and our id. */
+  /** The provider's event type, such as "checkout_session.payment.paid". */
+  type: string;
+  outcome: Exclude<OrderOutcome, "expired">;
+  /** The Order it's about: by its checkout's id, or our id and reference from the checkout's metadata. */
   checkoutId: string | null;
   orderId: string | null;
+  reference: string | null;
   paymentId: string | null;
   livemode: boolean;
 }
 
-/** A webhook checked: its event, or why it was refused (nothing is applied then). */
+/**
+ * A webhook checked: its event; a verified event buying doesn't act on (by
+ * its id and type, acknowledged and ignored); or why it was refused (nothing
+ * is applied then).
+ */
 export type WebhookCheck =
-  { ok: true; event: PaymentEvent } | { ok: false; reason: "bad-signature" | "malformed" };
+  | { ok: true; event: PaymentEvent }
+  | { ok: true; event: null; id: string; type: string }
+  | { ok: false; reason: "bad-signature" | "malformed" };
 
 export interface PaymentsClient {
   /** Which client this is: "fake" in tests and sample mode, "paymongo" with a key. */

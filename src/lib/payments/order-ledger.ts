@@ -15,8 +15,16 @@ import type { PlanDays } from "@/lib/plans/plan-rules";
 //   Exam: from the pass's end while it's active, otherwise from now
 //   (access-pass.ts). Paid is the only state that grants access.
 // - Pending → Failed grants nothing.
-// - Each outcome is applied once: an outcome the table has no row for (the
-//   same one again, or anything after Paid) changes nothing.
+// - Failed → Paid (a retry on the same PayMongo page succeeds) and Expired →
+//   Paid (a late payment) grant the days as Pending → Paid does (ticket 05).
+//   A payment confirmed more than 24 hours after the Order was made is "Paid
+//   after expiry" (paidAfterExpiry).
+// - Pending → Expired: the daily sweep records an Order PayMongo didn't
+//   confirm within 24 hours (ticket 05). Before that, every read shows it
+//   Expired already (effectiveStatus).
+// - Paid and Refunded never move back. Each outcome is applied once: an
+//   outcome the table has no row for (the same one again, a failed event
+//   after a paid one) changes nothing.
 //
 // The transitions are a table, so a later ticket adds a move by adding a row
 // (ticket 05: Failed → Paid and Expired → Paid; ticket 09: Paid → Refunded).
@@ -26,8 +34,8 @@ import type { PlanDays } from "@/lib/plans/plan-rules";
 export const ORDER_STATUSES = ["pending", "paid", "failed", "expired", "refunded"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-/** What a payment's outcome can be. */
-export type OrderOutcome = "paid" | "failed";
+/** What a payment's outcome can be: Paid or Failed from PayMongo, Expired from the daily sweep. */
+export type OrderOutcome = "paid" | "failed" | "expired";
 
 export interface Order {
   id: string;
@@ -61,10 +69,10 @@ export interface Order {
 const TRANSITIONS: Readonly<
   Record<OrderStatus, Readonly<Partial<Record<OrderOutcome, OrderStatus>>>>
 > = {
-  pending: { paid: "paid", failed: "failed" },
+  pending: { paid: "paid", failed: "failed", expired: "expired" },
   paid: {},
-  failed: {},
-  expired: {},
+  failed: { paid: "paid" },
+  expired: { paid: "paid" },
   refunded: {},
 };
 
@@ -97,6 +105,34 @@ export function applyOutcome(
     order: { ...order, status: next, statusChangedAt: at, ...(paid ? { paidAt: at } : {}) },
     paidDays: paid ? { days: order.days, ...passWithDays(passEndsAt, order.days, now) } : null,
   };
+}
+
+/** How long a Pending Order waits for PayMongo before it's Expired. */
+export const ORDER_EXPIRES_AFTER_MS = 24 * 60 * 60 * 1000;
+
+/** Pure: whether a Pending Order made at `createdAt` is past its 24 hours at `now`. */
+export const isOverdue = (createdAt: string, now: Date): boolean =>
+  now.getTime() - new Date(createdAt).getTime() > ORDER_EXPIRES_AFTER_MS;
+
+/**
+ * Pure: an Order's state as every screen shows it at `now`: a Pending Order
+ * older than 24 hours is Expired, whether or not the daily sweep has
+ * recorded it yet. Every other state is as stored.
+ */
+export function effectiveStatus(
+  order: Pick<Order, "status" | "createdAt">,
+  now: Date,
+): OrderStatus {
+  return order.status === "pending" && isOverdue(order.createdAt, now) ? "expired" : order.status;
+}
+
+/** Pure: whether a Paid Order's payment was confirmed more than 24 hours after it was made. */
+export function paidAfterExpiry(order: Pick<Order, "status" | "createdAt" | "paidAt">): boolean {
+  return (
+    order.paidAt !== null &&
+    order.status !== "pending" &&
+    isOverdue(order.createdAt, new Date(order.paidAt))
+  );
 }
 
 /**

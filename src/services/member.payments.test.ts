@@ -277,6 +277,7 @@ describe.each(MEMBER_ARMS)("Member seam: buying ($name)", (arm) => {
         createdAt: BOOT.toISOString(),
         paidAt: null,
         accessUntil: null,
+        paidAfterExpiry: false,
       });
     });
 
@@ -411,7 +412,7 @@ describe.each(MEMBER_ARMS)("Member seam: buying ($name)", (arm) => {
   });
 
   describe("checkOrderStatus: Failed and pending", () => {
-    it("marks a Failed Order Failed and grants nothing", async () => {
+    it("marks a Failed Order Failed and grants nothing, logging only the Order's move (ticket 05)", async () => {
       await arm.putAccessPass({ userId: BEA.userId, examCode: "CE", endsAt: inDays(20) });
 
       const order = await bought("failed");
@@ -420,7 +421,13 @@ describe.each(MEMBER_ARMS)("Member seam: buying ($name)", (arm) => {
       expect(await passEnd(BEA.userId, "CE")).toBe(inDays(20));
       expect(await history(BEA.userId)).toEqual([]);
       expect(await seam.listNotices(BEA.userId)).toEqual([]);
-      expect(await arm.adminArm.staffActivity()).toEqual([]);
+      expect(await arm.adminArm.staffActivity()).toEqual([
+        expect.objectContaining({
+          actor: { ...PAYMONGO_SYSTEM_ACTOR },
+          entity: "order",
+          action: "order-failed",
+        }),
+      ]);
     });
 
     it("leaves an Order pending while the checkout is", async () => {

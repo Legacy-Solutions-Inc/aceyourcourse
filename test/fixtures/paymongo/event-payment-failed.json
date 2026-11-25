@@ -1,0 +1,35 @@
+{
+  "data": {
+    "id": "evt_FakePaymentFailed0001",
+    "type": "event",
+    "attributes": {
+      "type": "payment.failed",
+      "livemode": false,
+      "data": {
+        "id": "pay_FakeFailed0001TestOnly",
+        "type": "payment",
+        "attributes": {
+          "amount": 129900,
+          "currency": "PHP",
+          "livemode": false,
+          "payment_intent_id": "pi_FakeIntent0001TestOnly",
+          "source": {
+            "id": "src_FakeSource0001",
+            "type": "gcash"
+          },
+          "status": "failed",
+          "metadata": {
+            "order_id": "0b6a3f1e-2c4d-4e5f-8a9b-1c2d3e4f5a6b",
+            "reference": "AYC-10001"
+          },
+          "created_at": 1763351100,
+          "paid_at": null,
+          "updated_at": 1763351102
+        }
+      },
+      "previous_data": {},
+      "created_at": 1763351102,
+      "updated_at": 1763351102
+    }
+  }
+}

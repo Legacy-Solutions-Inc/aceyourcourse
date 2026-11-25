@@ -187,6 +187,8 @@ export interface SampleStore {
   nextOrderNumber: number;
   /** When each Order's status was last asked of the payments client, by Order id (ticket 04's backup). */
   orderStatusCheckedAt: Record<string, string>;
+  /** The PayMongo webhook events already applied, in the order received (ticket 05). */
+  paymentEvents: { eventId: string; type: string; orderId: string | null; receivedAt: string }[];
   /** The upload seam's files, by upload id. */
   uploads: Record<string, SampleUpload>;
   /** The private content bucket's files, by path (ticket 06): card back images. */
@@ -246,6 +248,7 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     orders: [],
     nextOrderNumber: FIRST_REFERENCE_NUMBER,
     orderStatusCheckedAt: {},
+    paymentEvents: [],
     reviewerPdfUploads: {},
     reviewerPdfFiles: {},
     uploads: {},

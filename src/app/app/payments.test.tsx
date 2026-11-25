@@ -312,6 +312,25 @@ describe("the Order's page", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Still waiting for PayMongo.");
   });
 
+  it("shows an Order still Pending after 24 hours as Expired: off to Billing, before any sweep (ticket 05)", async () => {
+    await signedIn();
+    const reference = await paid();
+    vi.setSystemTime(new Date(BOOT.getTime() + 24 * 60 * MINUTE + MINUTE));
+
+    await expect(orderPage(reference)).rejects.toThrow(redirectsTo("/app/billing"));
+    expect(getSampleStore().orders[0]?.status).toBe("pending");
+  });
+
+  it("still shows Confirming payment at 23 h 59 m", async () => {
+    await signedIn();
+    const reference = await paid();
+    vi.setSystemTime(new Date(BOOT.getTime() + 24 * 60 * MINUTE - MINUTE));
+
+    render(await orderPage(reference));
+
+    expect(screen.getByText("CONFIRMING PAYMENT")).toBeInTheDocument();
+  });
+
   it("answers not found for another Member's Order", async () => {
     await signedInAsStranger();
     const reference = await paid();

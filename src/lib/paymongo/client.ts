@@ -3,6 +3,7 @@ import "server-only";
 import { z } from "zod";
 
 import { PAYMONGO_CHECKOUT_ORIGIN } from "@/lib/paymongo/checkout-origin";
+import { verifyPayMongoWebhook } from "@/lib/paymongo/webhook";
 import type { PaymentMethod } from "@/lib/payments/payment-methods";
 import type {
   CheckoutOrder,
@@ -25,7 +26,9 @@ import type {
 //   is paid; otherwise still pending, as a failed try can be retried on the
 //   same page (PayMongo, Key concepts → Payment attempts and retries). An
 //   answer about another session or another Order's reference is ignored.
-// - verifyWebhook: ticket 05.
+// - verifyWebhook (ticket 05): checks PayMongo's signature with the
+//   webhook's secret (PAYMONGO_WEBHOOK_SECRET) and reads the event
+//   (webhook.ts). Without the secret, every webhook is refused.
 // The secret key is the Basic auth username, with no password. It stays on
 // the server: this module is server-only, and nothing it logs or answers
 // carries the key or PayMongo's raw response.
@@ -57,6 +60,8 @@ export const payMongoMethod = (method: PaymentMethod): string => PAYMONGO_METHOD
 export interface PayMongoClientOptions {
   /** PAYMONGO_SECRET_KEY: sk_test_… or sk_live_…. */
   secretKey: string;
+  /** PAYMONGO_WEBHOOK_SECRET: what PayMongo signs its webhooks with; without it, every webhook is refused. */
+  webhookSecret?: string;
   /** This site's address, which the return addresses are built on. */
   siteUrl: string;
   fetch?: typeof globalThis.fetch;
@@ -94,6 +99,7 @@ type Answer = { ok: true; body: unknown } | { ok: false; why: string };
 
 export function createPayMongoClient({
   secretKey,
+  webhookSecret = "",
   siteUrl,
   fetch = globalThis.fetch,
   log = (message) => console.error(message),
@@ -201,9 +207,8 @@ export function createPayMongoClient({
     livemode: secretKey.startsWith("sk_live_"),
     startCheckout,
     checkoutStatus,
-    // Ticket 05 checks PayMongo's signature with PAYMONGO_WEBHOOK_SECRET. Until then nothing is applied.
-    async verifyWebhook() {
-      return { ok: false, reason: "bad-signature" };
+    async verifyWebhook(rawBody, signature) {
+      return verifyPayMongoWebhook(rawBody, signature, webhookSecret);
     },
   };
 }

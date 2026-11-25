@@ -1,14 +1,10 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-
-import { z } from "zod";
-
+import { signPayMongoWebhook, verifyPayMongoWebhook } from "@/lib/paymongo/webhook";
 import type { OrderOutcome } from "@/lib/payments/order-ledger";
 import type {
   CheckoutOrder,
   CheckoutRef,
   CheckoutStart,
   CheckoutStatus,
-  PaymentEvent,
   PaymentsClient,
   WebhookCheck,
 } from "@/services/payments.types";
@@ -19,8 +15,9 @@ import type {
 // screen (the Order's success path), with no checkout id, unless told to
 // refuse, as PayMongo answering an error would. Its status is whatever was
 // simulated for the Order ("Simulate paid", "Simulate failed"), pending until
-// then. Its webhooks are signed with a test-only secret, so
-// fixtures can be made with fakeWebhook().
+// then. Its webhooks are PayMongo's, checked as the real client checks them
+// (webhook.ts) but with a test-only secret, so fixtures are signed with
+// signFakeWebhook().
 
 export interface FakePaymentsClient extends PaymentsClient {
   /** The checkouts started, in order. */
@@ -30,52 +27,29 @@ export interface FakePaymentsClient extends PaymentsClient {
   /** Refuses every checkout from now on, as PayMongo answering an error would. */
   refuseCheckouts(): void;
   /** Makes an Order's checkout report this outcome from now on. */
-  simulate(orderId: string, outcome: OrderOutcome): void;
+  simulate(orderId: string, outcome: SimulatedOutcome): void;
 }
+
+/** What the fake's checkout can report: PayMongo's outcomes (Expired is the sweep's own). */
+type SimulatedOutcome = Exclude<OrderOutcome, "expired">;
 
 /** The fake's webhook secret: test fixtures only, never a real one. */
-const FAKE_WEBHOOK_SECRET = "fake-webhook-secret-test-only";
+const FAKE_WEBHOOK_SECRET = "whsk_fake_webhook_secret_test_only";
 
-/** Pure: the fake's signature of a webhook's raw body. */
-export const signFakeWebhook = (body: string): string =>
-  createHmac("sha256", FAKE_WEBHOOK_SECRET).update(body).digest("hex");
-
-/** A fixture webhook: an event's body and its signature. */
-export function fakeWebhook(event: PaymentEvent): { body: string; signature: string } {
-  const body = JSON.stringify(event);
-  return { body, signature: signFakeWebhook(body) };
-}
-
-const eventSchema = z.object({
-  id: z.string().min(1),
-  outcome: z.enum(["paid", "failed"]),
-  checkoutId: z.string().nullable(),
-  orderId: z.string().nullable(),
-  paymentId: z.string().nullable(),
-  livemode: z.boolean(),
-});
-
-/** Whether a signature is the fake's for this body, compared in constant time. */
-function signedByFake(body: string, signature: string | null): boolean {
-  if (!signature) return false;
-  const expected = Buffer.from(signFakeWebhook(body));
-  const given = Buffer.from(signature);
-  return given.length === expected.length && timingSafeEqual(given, expected);
-}
-
-function readEvent(body: string): PaymentEvent | null {
-  try {
-    const parsed = eventSchema.safeParse(JSON.parse(body));
-    return parsed.success ? parsed.data : null;
-  } catch {
-    return null;
-  }
-}
+/**
+ * Pure: a Paymongo-Signature header for a fixture body, signed as PayMongo
+ * signs (t, te, li; webhook.ts) with the fake's secret, in test mode unless
+ * told otherwise.
+ */
+export const signFakeWebhook = (
+  body: string,
+  { mode = "test", t = Math.floor(Date.now() / 1000) }: { mode?: "test" | "live"; t?: number } = {},
+): string => signPayMongoWebhook(body, FAKE_WEBHOOK_SECRET, { t, mode });
 
 export function createFakePaymentsClient(): FakePaymentsClient {
   const started: CheckoutOrder[] = [];
   const statusChecks: CheckoutRef[] = [];
-  const outcomes = new Map<string, OrderOutcome>();
+  const outcomes = new Map<string, SimulatedOutcome>();
   let refusing = false;
   return {
     kind: "fake",
@@ -99,9 +73,7 @@ export function createFakePaymentsClient(): FakePaymentsClient {
       return outcome ? { status: outcome, paymentId: null } : { status: "pending" };
     },
     async verifyWebhook(body, signature): Promise<WebhookCheck> {
-      if (!signedByFake(body, signature)) return { ok: false, reason: "bad-signature" };
-      const event = readEvent(body);
-      return event ? { ok: true, event } : { ok: false, reason: "malformed" };
+      return verifyPayMongoWebhook(body, signature, FAKE_WEBHOOK_SECRET);
     },
   };
 }

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { createFakePaymentsClient, fakeWebhook, signFakeWebhook } from "./payments.fake";
+import checkoutPaid from "../../test/fixtures/paymongo/event-checkout-paid.json";
+
+import { createFakePaymentsClient, signFakeWebhook } from "./payments.fake";
 import type { CheckoutOrder } from "./payments.types";
 
 // The payments fake (Phase 4, ticket 03; Testing Decisions → Phase 4 seams →
@@ -69,26 +71,26 @@ describe("the payments fake", () => {
 });
 
 describe("the payments fake's webhooks", () => {
-  const event = {
-    id: "evt_fake_1",
-    outcome: "paid" as const,
-    checkoutId: null,
-    orderId: ORDER.orderId,
-    paymentId: "pay_fake_1",
-    livemode: false,
-  };
+  const body = JSON.stringify(checkoutPaid);
 
-  it("reads the event of a fixture signed with the test secret", async () => {
-    const { body, signature } = fakeWebhook(event);
-    expect(await createFakePaymentsClient().verifyWebhook(body, signature)).toEqual({
+  it("reads a PayMongo event signed with the fake's test secret", async () => {
+    expect(
+      await createFakePaymentsClient().verifyWebhook(body, signFakeWebhook(body)),
+    ).toMatchObject({
       ok: true,
-      event,
+      event: { id: "evt_FakeCheckoutPaid0001", outcome: "paid", livemode: false },
     });
   });
 
+  it("signs as PayMongo does: t, te for a test event, li empty", () => {
+    expect(signFakeWebhook(body, { t: 1_763_351_102 })).toMatch(
+      /^t=1763351102,te=[0-9a-f]{64},li=$/,
+    );
+  });
+
   it("refuses a body changed after signing", async () => {
-    const { body, signature } = fakeWebhook(event);
-    const tampered = body.replace("evt_fake_1", "evt_fake_2");
+    const signature = signFakeWebhook(body);
+    const tampered = body.replace("AYC-10001", "AYC-10002");
     expect(await createFakePaymentsClient().verifyWebhook(tampered, signature)).toEqual({
       ok: false,
       reason: "bad-signature",
@@ -96,7 +98,6 @@ describe("the payments fake's webhooks", () => {
   });
 
   it.each([null, "", "nonsense"])("refuses the signature %j", async (signature) => {
-    const { body } = fakeWebhook(event);
     expect(await createFakePaymentsClient().verifyWebhook(body, signature)).toEqual({
       ok: false,
       reason: "bad-signature",
@@ -104,16 +105,8 @@ describe("the payments fake's webhooks", () => {
   });
 
   it("refuses a signed body that isn't an event", async () => {
-    const body = JSON.stringify({ hello: "there" });
-    expect(await createFakePaymentsClient().verifyWebhook(body, signFakeWebhook(body))).toEqual({
-      ok: false,
-      reason: "malformed",
-    });
-  });
-
-  it("refuses a signed body that isn't JSON", async () => {
-    const body = "{not json";
-    expect(await createFakePaymentsClient().verifyWebhook(body, signFakeWebhook(body))).toEqual({
+    const other = JSON.stringify({ hello: "there" });
+    expect(await createFakePaymentsClient().verifyWebhook(other, signFakeWebhook(other))).toEqual({
       ok: false,
       reason: "malformed",
     });

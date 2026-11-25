@@ -4,9 +4,11 @@ import { passEndDate } from "@/lib/member-app/access";
 
 import {
   applyOutcome,
+  effectiveStatus,
   isOrderReference,
   type Order,
   orderReference,
+  paidAfterExpiry,
   FIRST_REFERENCE_NUMBER,
 } from "./order-ledger";
 
@@ -123,12 +125,122 @@ describe("applyOutcome: each outcome once", () => {
     expect(applyOutcome(failed, "failed", null, NOW)).toEqual({ changed: false });
   });
 
-  it("never moves a Paid Order back to Failed", () => {
+  it("never moves a Paid Order back to Failed: a failed event after a paid one changes nothing", () => {
     expect(applyOutcome(paid, "failed", inDays(110), NOW)).toEqual({ changed: false });
   });
 
-  it.each(["expired", "refunded"] as const)("changes nothing for an Order %s", (status) => {
-    expect(applyOutcome({ ...PENDING, status }, "paid", null, NOW)).toEqual({ changed: false });
+  it("never expires a Paid Order", () => {
+    expect(applyOutcome(paid, "expired", inDays(110), NOW)).toEqual({ changed: false });
+  });
+
+  it.each(["paid", "failed", "expired"] as const)(
+    "never moves a Refunded Order on %s",
+    (outcome) => {
+      expect(applyOutcome({ ...PENDING, status: "refunded" }, outcome, null, NOW)).toEqual({
+        changed: false,
+      });
+    },
+  );
+
+  it("changes nothing when Expired is applied twice, or to a Failed Order", () => {
+    const expired = { ...PENDING, status: "expired" as const };
+    expect(applyOutcome(expired, "expired", null, NOW)).toEqual({ changed: false });
+    expect(applyOutcome(failed, "expired", null, NOW)).toEqual({ changed: false });
+  });
+});
+
+describe("applyOutcome: Failed and Expired can still become Paid (ticket 05)", () => {
+  it("makes a Failed Order Paid when a retry on the same PayMongo page succeeds", () => {
+    const failed = { ...PENDING, status: "failed" as const, statusChangedAt: inDays(-1 / 48) };
+
+    expect(applyOutcome(failed, "paid", inDays(20), NOW)).toEqual({
+      changed: true,
+      order: {
+        ...failed,
+        status: "paid",
+        paidAt: NOW.toISOString(),
+        statusChangedAt: NOW.toISOString(),
+      },
+      paidDays: { days: 90, startsAt: inDays(20), endsAt: inDays(110) },
+    });
+  });
+
+  it("makes an Expired Order Paid, granting its days from now: a late payment still counts", () => {
+    const expired = {
+      ...PENDING,
+      status: "expired" as const,
+      createdAt: inDays(-2),
+      statusChangedAt: inDays(-1),
+    };
+
+    expect(applyOutcome(expired, "paid", null, NOW)).toEqual({
+      changed: true,
+      order: {
+        ...expired,
+        status: "paid",
+        paidAt: NOW.toISOString(),
+        statusChangedAt: NOW.toISOString(),
+      },
+      paidDays: { days: 90, startsAt: NOW.toISOString(), endsAt: inDays(90) },
+    });
+  });
+
+  it("records a Pending Order Expired, granting nothing", () => {
+    expect(applyOutcome(PENDING, "expired", inDays(20), NOW)).toEqual({
+      changed: true,
+      order: { ...PENDING, status: "expired", statusChangedAt: NOW.toISOString() },
+      paidDays: null,
+    });
+  });
+});
+
+describe("effectiveStatus: a Pending Order older than 24 hours is Expired at read time", () => {
+  const HOUR = DAY / 24;
+  const madeHoursAgo = (hours: number) => ({
+    ...PENDING,
+    createdAt: new Date(NOW.getTime() - hours * HOUR).toISOString(),
+  });
+
+  it("keeps it Pending at 23 h 59 m", () => {
+    expect(effectiveStatus(madeHoursAgo(23 + 59 / 60), NOW)).toBe("pending");
+  });
+
+  it("keeps it Pending at exactly 24 h", () => {
+    expect(effectiveStatus(madeHoursAgo(24), NOW)).toBe("pending");
+  });
+
+  it("shows it Expired at 24 h 01 m", () => {
+    expect(effectiveStatus(madeHoursAgo(24 + 1 / 60), NOW)).toBe("expired");
+  });
+
+  it.each(["paid", "failed", "expired", "refunded"] as const)(
+    "leaves a %s Order as it is, however old",
+    (status) => {
+      expect(effectiveStatus({ ...madeHoursAgo(72), status }, NOW)).toBe(status);
+    },
+  );
+});
+
+describe("paidAfterExpiry", () => {
+  const madeAt = inDays(-3);
+  const paidOrder = (paidAt: string) => ({
+    ...PENDING,
+    status: "paid" as const,
+    createdAt: madeAt,
+    paidAt,
+    statusChangedAt: paidAt,
+  });
+
+  it("marks a payment confirmed more than 24 hours after the Order was made", () => {
+    expect(paidAfterExpiry(paidOrder(inDays(1 + 1 / 1440, new Date(madeAt))))).toBe(true);
+  });
+
+  it("doesn't mark one confirmed within 24 hours", () => {
+    expect(paidAfterExpiry(paidOrder(inDays(1, new Date(madeAt))))).toBe(false);
+  });
+
+  it("doesn't mark an Order that isn't paid", () => {
+    expect(paidAfterExpiry({ ...PENDING, createdAt: madeAt })).toBe(false);
   });
 });
 

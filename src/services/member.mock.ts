@@ -49,7 +49,14 @@ import type {
 } from "@/services/member.types";
 import { writeSamplePass } from "@/services/mock/pass-writes";
 import { getSampleStore, type SamplePrivacyRequest } from "@/services/mock/sample-store";
-import { orderCalls, type OrderStore } from "@/services/orders.core";
+import {
+  orderCalls,
+  type OrderHolding,
+  type EventRecording,
+  type OrderLookup,
+  type OrderStore,
+  type OrderWrite,
+} from "@/services/orders.core";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
 
 // The Member seam's sample arm: over the in-memory sample store
@@ -594,29 +601,89 @@ const sampleOrderStore: OrderStore = {
     return order ? { order: structuredClone(order), accessUntil: paidUntil(order.id) } : null;
   },
   async withOrder(orderId, work) {
+    return holdSampleOrder(orderId, work);
+  },
+  async withPaymentEvent<T>(
+    event: { id: string; type: string; receivedAt: Date },
+    lookup: OrderLookup,
+    work: (holding: OrderHolding) => { write: OrderWrite | null; result: T },
+  ): Promise<EventRecording<T>> {
     const store = getSampleStore();
-    const order = store.orders.find((candidate) => candidate.id === orderId);
-    if (!order) return null;
-    const { userId, examCode } = order;
-    const pass =
-      store.accessPasses.find((held) => held.userId === userId && held.examCode === examCode) ??
-      null;
-    const { write, result } = work(
-      structuredClone({
-        order,
-        member: store.members.find((candidate) => candidate.userId === userId) ?? null,
-        pass,
-        targetExams: userId ? (store.memberTargetExams[userId] ?? []) : [],
-      }),
+    if (store.paymentEvents.some((seen) => seen.eventId === event.id)) return { recorded: false };
+    const order = findSampleOrder(lookup);
+    // The Order first: should its write fail, the event stays unrecorded.
+    const result = order ? holdSampleOrder(order.id, work) : null;
+    store.paymentEvents = [
+      ...store.paymentEvents,
+      {
+        eventId: event.id,
+        type: event.type,
+        orderId: order?.id ?? null,
+        receivedAt: event.receivedAt.toISOString(),
+      },
+    ];
+    return order && result !== null
+      ? { recorded: true, found: true, result }
+      : { recorded: true, found: false };
+  },
+  async listOverdueOrders(madeBefore) {
+    return structuredClone(
+      getSampleStore()
+        .orders.filter(
+          (order) => order.status === "pending" && new Date(order.createdAt) < madeBefore,
+        )
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     );
-    if (!write) return result;
-
-    // The pass first, its Staff Activity before all: should that fail, the Order stays as it was.
-    if (write.paid && userId) writeSamplePass(userId, examCode, write.paid);
-    store.orders = store.orders.map((held) => (held.id === orderId ? write.order : held));
-    return result;
   },
 };
 
-export const { payForPlan, getMemberOrder, checkOrderStatus, pollOrderStatus } =
-  orderCalls(sampleOrderStore);
+/** The sample Order a payment event is about: by its checkout's id, then our id, then its reference. */
+function findSampleOrder({ checkoutId, orderId, reference }: OrderLookup): Order | null {
+  const { orders } = getSampleStore();
+  return (
+    (checkoutId ? orders.find((order) => order.checkoutId === checkoutId) : undefined) ??
+    (orderId ? orders.find((order) => order.id === orderId) : undefined) ??
+    (reference ? orders.find((order) => order.reference === reference) : undefined) ??
+    null
+  );
+}
+
+/**
+ * Runs `work` on a sample Order and its buyer's pass, then writes what it
+ * gives: the Staff Activity first (should it fail, nothing else is), then
+ * the pass, then the Order. A Node process runs one call at a time here.
+ */
+function holdSampleOrder<T>(
+  orderId: string,
+  work: (holding: OrderHolding) => { write: OrderWrite | null; result: T },
+): T | null {
+  const store = getSampleStore();
+  const order = store.orders.find((candidate) => candidate.id === orderId);
+  if (!order) return null;
+  const { userId, examCode } = order;
+  const pass =
+    store.accessPasses.find((held) => held.userId === userId && held.examCode === examCode) ?? null;
+  const { write, result } = work(
+    structuredClone({
+      order,
+      member: store.members.find((candidate) => candidate.userId === userId) ?? null,
+      pass,
+      targetExams: userId ? (store.memberTargetExams[userId] ?? []) : [],
+    }),
+  );
+  if (!write) return result;
+
+  if (write.activity) store.staffActivity = [...store.staffActivity, write.activity];
+  if (write.paid && userId) writeSamplePass(userId, examCode, write.paid);
+  store.orders = store.orders.map((held) => (held.id === orderId ? write.order : held));
+  return result;
+}
+
+export const {
+  payForPlan,
+  getMemberOrder,
+  checkOrderStatus,
+  pollOrderStatus,
+  recordPaymentEvent,
+  expireOverdueOrders,
+} = orderCalls(sampleOrderStore);

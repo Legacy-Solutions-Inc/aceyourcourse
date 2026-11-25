@@ -1,6 +1,19 @@
 import "server-only";
 
-import { and, asc, type Column, count, desc, eq, isNotNull, isNull, lte, or } from "drizzle-orm";
+import {
+  and,
+  asc,
+  type Column,
+  count,
+  desc,
+  eq,
+  isNotNull,
+  isNull,
+  lt,
+  lte,
+  or,
+  type SQL,
+} from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import type { Transaction } from "@/lib/db/connect";
@@ -63,7 +76,12 @@ import type {
   MemberNotice,
   PrivacyRequest,
 } from "@/services/member.types";
-import { orderCalls, type OrderStore } from "@/services/orders.core";
+import {
+  orderCalls,
+  type OrderHolding,
+  type OrderStore,
+  type OrderWrite,
+} from "@/services/orders.core";
 import { orderFromRow, orderToRow } from "@/services/orders.rows";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
 import { storageArm } from "@/services/uploads.storage";
@@ -1176,50 +1194,104 @@ const databaseOrderStore: OrderStore = {
         : null;
     }),
   withOrder: (orderId, work) =>
+    inDatabase(() => getDb().transaction((tx) => holdOrder(tx, orderId, work))),
+  // The event's row and what it changed commit together: a repeat finds the
+  // row (the insert does nothing) and changes nothing, and a failed write
+  // leaves no row, so PayMongo's retry applies it.
+  withPaymentEvent: (event, { checkoutId, orderId, reference }, work) =>
     inDatabase(() =>
       getDb().transaction(async (tx) => {
-        const { orders, members, accessPasses, memberTargetExams } = schema;
-        const [orderRow] = await tx
-          .select()
-          .from(orders)
-          .where(eq(orders.id, orderId))
-          .for("update");
-        if (!orderRow) return null;
-        const order = orderFromRow(orderRow);
-        const { userId, examCode } = order;
-        const [member] = userId
-          ? await tx.select().from(members).where(eq(members.userId, userId)).for("update")
-          : [];
-        const [pass] = userId
-          ? await tx
-              .select()
-              .from(accessPasses)
-              .where(and(eq(accessPasses.userId, userId), eq(accessPasses.examCode, examCode)))
-              .for("update")
-          : [];
-        const targetExams = userId
-          ? await tx
-              .select()
-              .from(memberTargetExams)
-              .where(eq(memberTargetExams.userId, userId))
-              .orderBy(asc(memberTargetExams.seq))
-          : [];
-
-        const { write, result } = work({
-          order,
-          member: member ? memberFromRow(member) : null,
-          pass: pass ? accessPassFromRow(pass) : null,
-          targetExams: targetExams.map(targetExamFromRow),
-        });
-        if (!write) return result;
-
-        const { reference: _kept, id: _same, ...moved } = orderToRow(write.order);
-        await tx.update(orders).set(moved).where(eq(orders.id, orderId));
-        if (write.paid && member) await writePass(tx, member.userId, examCode, write.paid);
-        return result;
+        const { orders, paymentEvents } = schema;
+        const find = async (condition: SQL) =>
+          (await tx.select({ id: orders.id }).from(orders).where(condition))[0]?.id ?? null;
+        const found =
+          (checkoutId ? await find(eq(orders.checkoutId, checkoutId)) : null) ??
+          (orderId && UUID.test(orderId) ? await find(eq(orders.id, orderId)) : null) ??
+          (reference ? await find(eq(orders.reference, reference)) : null);
+        const recorded = await tx
+          .insert(paymentEvents)
+          .values({
+            eventId: event.id,
+            type: event.type,
+            orderId: found,
+            receivedAt: event.receivedAt,
+          })
+          .onConflictDoNothing()
+          .returning({ id: paymentEvents.eventId });
+        if (recorded.length === 0) return { recorded: false } as const;
+        if (!found) return { recorded: true, found: false } as const;
+        const result = await holdOrder(tx, found, work);
+        // Found in this transaction and held by the event's foreign key, the
+        // Order can't be gone; should it be, roll back, so PayMongo retries.
+        if (result === null) throw new Error(`The Order for PayMongo event ${event.id} vanished.`);
+        return { recorded: true, found: true, result } as const;
       }),
     ),
+  listOverdueOrders: (madeBefore) =>
+    inDatabase(async () => {
+      const { orders } = schema;
+      const rows = await getDb()
+        .select()
+        .from(orders)
+        .where(and(eq(orders.status, "pending"), lt(orders.createdAt, madeBefore)))
+        .orderBy(asc(orders.createdAt));
+      return rows.map(orderFromRow);
+    }),
 };
+
+/** An Order id as Postgres takes it: the metadata PayMongo echoes could carry anything. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Runs `work` on an Order inside `tx`: locks the Order's row, then the
+ * buyer's Member row (as a grant does, admin.access-passes.db.ts) and pass,
+ * so two outcomes for the same Order or Member take turns; then writes the
+ * Order, the pass and its history, the Target Exam, the notice and the Staff
+ * Activity together. Null for an id no Order has.
+ */
+async function holdOrder<T>(
+  tx: Transaction,
+  orderId: string,
+  work: (holding: OrderHolding) => { write: OrderWrite | null; result: T },
+): Promise<T | null> {
+  const { orders, members, accessPasses, memberTargetExams } = schema;
+  const [orderRow] = await tx.select().from(orders).where(eq(orders.id, orderId)).for("update");
+  if (!orderRow) return null;
+  const order = orderFromRow(orderRow);
+  const { userId, examCode } = order;
+  const [member] = userId
+    ? await tx.select().from(members).where(eq(members.userId, userId)).for("update")
+    : [];
+  const [pass] = userId
+    ? await tx
+        .select()
+        .from(accessPasses)
+        .where(and(eq(accessPasses.userId, userId), eq(accessPasses.examCode, examCode)))
+        .for("update")
+    : [];
+  const targetExams = userId
+    ? await tx
+        .select()
+        .from(memberTargetExams)
+        .where(eq(memberTargetExams.userId, userId))
+        .orderBy(asc(memberTargetExams.seq))
+    : [];
+
+  const { write, result } = work({
+    order,
+    member: member ? memberFromRow(member) : null,
+    pass: pass ? accessPassFromRow(pass) : null,
+    targetExams: targetExams.map(targetExamFromRow),
+  });
+  if (!write) return result;
+
+  const { reference: _kept, id: _same, ...moved } = orderToRow(write.order);
+  await tx.update(orders).set(moved).where(eq(orders.id, orderId));
+  if (write.paid && member) await writePass(tx, member.userId, examCode, write.paid);
+  if (write.activity)
+    await tx.insert(schema.staffActivity).values(staffActivityToRow(write.activity));
+  return result;
+}
 
 export const databaseArm: MemberService = {
   isBetaTester,

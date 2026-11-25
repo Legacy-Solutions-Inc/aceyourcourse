@@ -2,7 +2,10 @@ import { z } from "zod";
 
 import {
   applyOutcome,
+  effectiveStatus,
   isOrderReference,
+  ORDER_EXPIRES_AFTER_MS,
+  paidAfterExpiry,
   type Order,
   type OrderOutcome,
   PAYMONGO_SYSTEM_ACTOR,
@@ -11,7 +14,7 @@ import { PAYMENT_METHODS } from "@/lib/payments/payment-methods";
 import { periodLabel } from "@/lib/plans/plan-text";
 import { paths } from "@/paths";
 import { noticeOf, passEntityId, type PassWrite } from "@/services/access-passes.core";
-import type { Plan } from "@/services/admin.types";
+import type { Plan, StaffActivity } from "@/services/admin.types";
 import type { AccessPass } from "@/services/content.types";
 import { activityRecord } from "@/services/content-editor.core";
 import { memberUserIdSchema } from "@/services/member.schema";
@@ -22,8 +25,16 @@ import {
   type MemberExam,
   type TargetExamRecord,
 } from "@/services/member.rules";
-import type { Member, MemberOrder, PayInput, PayRefusal, PayResult } from "@/services/member.types";
-import type { PaymentsClient } from "@/services/payments.types";
+import type {
+  ExpirySweep,
+  Member,
+  MemberOrder,
+  PaymentEventResult,
+  PayInput,
+  PayRefusal,
+  PayResult,
+} from "@/services/member.types";
+import type { PaymentEvent, PaymentsClient } from "@/services/payments.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The Member seam's buying (Phase 4, ticket 03; spec, Phase 4 → Order ledger,
@@ -74,10 +85,25 @@ export interface OrderWrite {
   /**
    * For Paid: the change to the buyer's Access Pass, written as an Owner's
    * grant is (its paid history row, the Target Exam, the notice and the Staff
-   * Activity); null for Failed.
+   * Activity); null for Failed, Expired, or a Paid Order whose account is gone.
    */
   paid: PassWrite | null;
+  /** The Staff Activity for a move that changes no pass (Failed, Expired, Paid with no account); null with `paid`. */
+  activity: StaffActivity | null;
 }
+
+/** Where a payment event finds its Order: by its checkout's id, or our id or reference. */
+export interface OrderLookup {
+  checkoutId: string | null;
+  orderId: string | null;
+  reference: string | null;
+}
+
+/** What recording a payment event did: nothing for one seen before, or the Order it found (or none). */
+export type EventRecording<T> =
+  | { recorded: false }
+  | { recorded: true; found: false }
+  | { recorded: true; found: true; result: T };
 
 /** The backup's least time between two status checks of one Order, on any server. */
 export const STATUS_CHECK_EVERY_MS = 10_000;
@@ -119,6 +145,19 @@ export interface OrderStore {
     orderId: string,
     work: (holding: OrderHolding) => { write: OrderWrite | null; result: T },
   ): Promise<T | null>;
+  /**
+   * Records a PayMongo event once, by its id, and runs `work` on the Order it
+   * finds (by checkout id, then our id, then reference) as withOrder does,
+   * all as one step: a write that fails leaves the event unrecorded, so
+   * PayMongo's retry applies it. An event recorded before runs nothing.
+   */
+  withPaymentEvent<T>(
+    event: { id: string; type: string; receivedAt: Date },
+    lookup: OrderLookup,
+    work: (holding: OrderHolding) => { write: OrderWrite | null; result: T },
+  ): Promise<EventRecording<T>>;
+  /** Every Pending Order made before `madeBefore`, oldest first: what the daily sweep checks. */
+  listOverdueOrders(madeBefore: Date): Promise<Order[]>;
 }
 
 const payInputSchema = z.object({
@@ -127,8 +166,8 @@ const payInputSchema = z.object({
   method: z.enum(PAYMENT_METHODS),
 });
 
-/** Pure: what the screens show of an Order. */
-const memberOrderOf = (order: Order, accessUntil: string | null): MemberOrder => ({
+/** Pure: what the screens show of an Order at `now`: Expired once Pending past its 24 hours. */
+const memberOrderOf = (order: Order, accessUntil: string | null, now: Date): MemberOrder => ({
   id: order.id,
   reference: order.reference,
   examCode: order.examCode,
@@ -136,10 +175,11 @@ const memberOrderOf = (order: Order, accessUntil: string | null): MemberOrder =>
   days: order.days,
   priceCentavos: order.priceCentavos,
   method: order.method,
-  status: order.status,
+  status: effectiveStatus(order, now),
   createdAt: order.createdAt,
   paidAt: order.paidAt,
   accessUntil,
+  paidAfterExpiry: paidAfterExpiry(order),
 });
 
 /**
@@ -156,11 +196,27 @@ export function settleOrder(
   const step = applyOutcome(order, outcome, pass?.endsAt ?? null, now);
   if (!step.changed) return null;
   const moved = { ...step.order, paymentId: paymentId ?? step.order.paymentId };
+  const { reference } = order;
+  const late = paidAfterExpiry(moved) ? { paidAfterExpiry: true } : {};
   const { paidDays } = step;
-  if (!paidDays || !member) return { order: moved, paid: null };
+  if (!paidDays || !member) {
+    return {
+      order: moved,
+      paid: null,
+      activity: activityRecord(
+        PAYMONGO_SYSTEM_ACTOR,
+        now,
+        "order",
+        order.id,
+        `order-${moved.status}`,
+        { reference, status: order.status },
+        { reference, status: moved.status, ...late },
+      ),
+    };
+  }
 
   const { userId, email } = member;
-  const { examCode, reference } = order;
+  const { examCode } = order;
   const endsBefore = pass?.endsAt ?? null;
   const added = grantedTargetExam(targetExams, examCode, now);
   const targetExam = added?.change ?? null;
@@ -186,9 +242,18 @@ export function settleOrder(
         passEntityId(userId, examCode),
         "order-paid",
         { email, examCode, endsAt: endsBefore },
-        { email, examCode, endsAt: paidDays.endsAt, days: paidDays.days, reference, targetExam },
+        {
+          email,
+          examCode,
+          endsAt: paidDays.endsAt,
+          days: paidDays.days,
+          reference,
+          targetExam,
+          ...late,
+        },
       ),
     },
+    activity: null,
   };
 }
 
@@ -275,7 +340,7 @@ export function orderCalls(store: OrderStore) {
 
   async function getMemberOrder(userId: string, reference: string): Promise<MemberOrder | null> {
     const own = await ownOrder(userId, reference);
-    return own && memberOrderOf(own.order, own.accessUntil);
+    return own && memberOrderOf(own.order, own.accessUntil, new Date());
   }
 
   /** Asks the client for an Order's checkout status, and applies Paid or Failed through the ledger. */
@@ -311,14 +376,80 @@ export function orderCalls(store: OrderStore) {
       client !== null &&
       order.status === "pending" &&
       (!throttled || (await store.claimStatusCheck(order.id, new Date(), STATUS_CHECK_EVERY_MS)));
-    if (!asking) return memberOrderOf(order, own.accessUntil);
+    if (!asking) return memberOrderOf(order, own.accessUntil, new Date());
     await applyCheckoutStatus(order, client);
     return getMemberOrder(userId, reference);
+  }
+
+  /**
+   * A verified PayMongo event: applied once, by its id, to the Order it's
+   * about, through the same ledger as the status check.
+   */
+  async function recordPaymentEvent(event: PaymentEvent): Promise<PaymentEventResult> {
+    const now = new Date();
+    const recorded = await store.withPaymentEvent(
+      { id: event.id, type: event.type, receivedAt: now },
+      { checkoutId: event.checkoutId, orderId: event.orderId, reference: event.reference },
+      (holding) => {
+        const write = settleOrder(holding, event.outcome, event.paymentId, now);
+        return { write, result: write ? ("applied" as const) : ("no-change" as const) };
+      },
+    );
+    if (!recorded.recorded) return "duplicate";
+    return recorded.found ? recorded.result : "unknown-order";
+  }
+
+  /**
+   * The daily sweep: asks the payments client once more about each Pending
+   * Order older than 24 hours, then records it Paid if it says so, otherwise
+   * Expired. When PayMongo can't answer about a checkout it started (an
+   * outage), or settling one fails, the Order is left Pending for the next
+   * day's sweep: every screen shows it Expired meanwhile. With no client,
+   * each is Expired (a late payment still counts).
+   */
+  async function expireOverdueOrders(client: PaymentsClient | null): Promise<ExpirySweep> {
+    const now = new Date();
+    const overdue = await store.listOverdueOrders(new Date(now.getTime() - ORDER_EXPIRES_AFTER_MS));
+    const counts: ExpirySweep = { checked: overdue.length, paid: 0, expired: 0, unanswered: 0 };
+    for (const order of overdue) {
+      try {
+        const moved = await sweepOrder(order, client);
+        if (moved === "paid") counts.paid += 1;
+        else if (moved === "expired") counts.expired += 1;
+        else if (moved === "unanswered") counts.unanswered += 1;
+      } catch {
+        console.error(
+          `The expiry sweep couldn't settle ${order.reference}; it's left for the next sweep.`,
+        );
+        counts.unanswered += 1;
+      }
+    }
+    return counts;
+  }
+
+  /** One overdue Order: Paid, Expired, left for PayMongo's answer, or already moved on (null). */
+  async function sweepOrder(order: Order, client: PaymentsClient | null) {
+    const status = client
+      ? await client.checkoutStatus({
+          orderId: order.id,
+          reference: order.reference,
+          checkoutId: order.checkoutId,
+        })
+      : ({ status: "unknown" } as const);
+    if (status.status === "unknown" && client && order.checkoutId) return "unanswered" as const;
+    const outcome = status.status === "paid" ? "paid" : "expired";
+    const paymentId = status.status === "paid" ? status.paymentId : null;
+    return store.withOrder(order.id, (holding) => {
+      const write = settleOrder(holding, outcome, paymentId, new Date());
+      return { write, result: write?.order.status ?? null };
+    });
   }
 
   return {
     payForPlan,
     getMemberOrder,
+    recordPaymentEvent,
+    expireOverdueOrders,
     checkOrderStatus: (userId: string, reference: string, client: PaymentsClient | null) =>
       statusOf(userId, reference, client, false),
     pollOrderStatus: (userId: string, reference: string, client: PaymentsClient | null) =>

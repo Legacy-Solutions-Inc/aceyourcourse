@@ -1204,6 +1204,23 @@ export const orders = pgTable(
   ],
 ).enableRLS();
 
+/**
+ * The PayMongo webhook events already applied (Phase 4, ticket 05): one row
+ * per event id, written in the same transaction as what the event changed,
+ * so a repeat delivery changes nothing. `order_id` is the Order it was about,
+ * or null for none of ours; it outlives the Order (set null).
+ */
+export const paymentEvents = pgTable(
+  "payment_events",
+  {
+    eventId: text("event_id").primaryKey(),
+    type: text("type").notNull(),
+    orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
+    receivedAt: at("received_at").notNull(),
+  },
+  (t) => [index("payment_events_order_id_idx").on(t.orderId)],
+).enableRLS();
+
 // ── In-app notices ──────────────────────────────────────────────────────────
 
 export const memberNoticeKind = pgEnum("member_notice_kind", NOTICE_KINDS);

@@ -24,6 +24,7 @@ const ORDER: MemberOrder = {
   createdAt: "2026-11-17T03:42:00.000Z",
   paidAt: null,
   accessUntil: null,
+  paidAfterExpiry: false,
 };
 const PAID: MemberOrder = {
   ...ORDER,

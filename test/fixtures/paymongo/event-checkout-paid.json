@@ -1,0 +1,68 @@
+{
+  "data": {
+    "id": "evt_FakeCheckoutPaid0001",
+    "type": "event",
+    "attributes": {
+      "type": "checkout_session.payment.paid",
+      "livemode": false,
+      "data": {
+        "id": "cs_FakeCreated0001TestOnly",
+        "type": "checkout_session",
+        "attributes": {
+          "reference_number": "AYC-10001",
+          "status": "active",
+          "livemode": false,
+          "metadata": {
+            "order_id": "0b6a3f1e-2c4d-4e5f-8a9b-1c2d3e4f5a6b",
+            "reference": "AYC-10001"
+          },
+          "payment_intent": {
+            "id": "pi_FakeIntent0001TestOnly",
+            "type": "payment_intent",
+            "attributes": {
+              "amount": 129900,
+              "currency": "PHP",
+              "status": "succeeded",
+              "metadata": {
+                "order_id": "0b6a3f1e-2c4d-4e5f-8a9b-1c2d3e4f5a6b",
+                "reference": "AYC-10001"
+              }
+            }
+          },
+          "payments": [
+            {
+              "id": "pay_FakePaid0001TestOnly",
+              "type": "payment",
+              "attributes": {
+                "amount": 129900,
+                "currency": "PHP",
+                "fee": 2858,
+                "net_amount": 127042,
+                "livemode": false,
+                "payment_intent_id": "pi_FakeIntent0001TestOnly",
+                "source": {
+                  "id": "src_FakeSource0002",
+                  "type": "gcash"
+                },
+                "status": "paid",
+                "metadata": {
+                  "order_id": "0b6a3f1e-2c4d-4e5f-8a9b-1c2d3e4f5a6b",
+                  "reference": "AYC-10001"
+                },
+                "created_at": 1763351100,
+                "paid_at": 1763351102,
+                "updated_at": 1763351102
+              }
+            }
+          ],
+          "payment_method_types": ["gcash"],
+          "created_at": 1763350920,
+          "updated_at": 1763351102
+        }
+      },
+      "previous_data": {},
+      "created_at": 1763351102,
+      "updated_at": 1763351102
+    }
+  }
+}

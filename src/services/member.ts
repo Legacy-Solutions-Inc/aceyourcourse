@@ -6,7 +6,7 @@ import type { DeviceStatus } from "@/lib/member-app/device-token";
 import type { ReaderPlace } from "@/lib/reviewer-pdfs/reader";
 import type { AccessPass, CardMark, ContentKind, DeckPosition } from "@/services/content.types";
 import type { PageStamper } from "@/services/page-images.types";
-import type { PaymentsClient } from "@/services/payments.types";
+import type { PaymentEvent, PaymentsClient } from "@/services/payments.types";
 import { databaseArm } from "@/services/member.db";
 import * as mockImpl from "@/services/member.mock";
 import type {
@@ -25,7 +25,9 @@ import type {
   LibrarySubject,
   Member,
   MemberNotice,
+  ExpirySweep,
   MemberOrder,
+  PaymentEventResult,
   MemberUser,
   NewTargetExam,
   PayInput,
@@ -445,6 +447,23 @@ export interface MemberService {
     reference: string,
     client: PaymentsClient | null,
   ): Promise<MemberOrder | null>;
+  /**
+   * A verified PayMongo webhook event (ticket 05): applied once, by its id,
+   * to the Order it's about (by its checkout's id, or our id or reference
+   * from the checkout's metadata), through the same ledger as the status
+   * check, and logged in Staff Activity under "PayMongo (system)". Failed and
+   * Expired Orders can still become Paid; a Paid Order never moves back.
+   * "duplicate" for an event applied before, "unknown-order" for one about no
+   * Order of ours (both change nothing).
+   */
+  recordPaymentEvent(event: PaymentEvent): Promise<PaymentEventResult>;
+  /**
+   * The daily sweep (ticket 05): asks the payments client once more about
+   * each Pending Order older than 24 hours, and records it Paid if it says
+   * so, otherwise Expired; one PayMongo can't answer about stays Pending for
+   * the next sweep. Gives the counts.
+   */
+  expireOverdueOrders(client: PaymentsClient | null): Promise<ExpirySweep>;
 }
 
 const impl: MemberService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -489,3 +508,5 @@ export const payForPlan = impl.payForPlan;
 export const getMemberOrder = impl.getMemberOrder;
 export const checkOrderStatus = impl.checkOrderStatus;
 export const pollOrderStatus = impl.pollOrderStatus;
+export const recordPaymentEvent = impl.recordPaymentEvent;
+export const expireOverdueOrders = impl.expireOverdueOrders;

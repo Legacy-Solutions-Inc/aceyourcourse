@@ -75,7 +75,11 @@ export function samplePaymentsFake(): FakePaymentsClient | null {
 
 const payMongo =
   (paymentsMode === "test" || paymentsMode === "live") && serverEnv.PAYMONGO_SECRET_KEY
-    ? createPayMongoClient({ secretKey: serverEnv.PAYMONGO_SECRET_KEY, siteUrl: config.site.url })
+    ? createPayMongoClient({
+        secretKey: serverEnv.PAYMONGO_SECRET_KEY,
+        webhookSecret: serverEnv.PAYMONGO_WEBHOOK_SECRET,
+        siteUrl: config.site.url,
+      })
     : null;
 
 /** The payments client this server has, or null when buying isn't set up. */
