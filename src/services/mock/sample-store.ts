@@ -185,6 +185,8 @@ export interface SampleStore {
   orders: Order[];
   /** The number the next Order's reference carries: "AYC-10001" first, like order_reference_seq. */
   nextOrderNumber: number;
+  /** When each Order's status was last asked of the payments client, by Order id (ticket 04's backup). */
+  orderStatusCheckedAt: Record<string, string>;
   /** The upload seam's files, by upload id. */
   uploads: Record<string, SampleUpload>;
   /** The private content bucket's files, by path (ticket 06): card back images. */
@@ -243,6 +245,7 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     })),
     orders: [],
     nextOrderNumber: FIRST_REFERENCE_NUMBER,
+    orderStatusCheckedAt: {},
     reviewerPdfUploads: {},
     reviewerPdfFiles: {},
     uploads: {},

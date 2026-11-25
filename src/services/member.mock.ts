@@ -572,11 +572,20 @@ const sampleOrderStore: OrderStore = {
     store.orders = [...store.orders, order];
     return structuredClone(order);
   },
-  async setCheckoutId(orderId, checkoutId) {
+  async recordCheckout(orderId, { checkoutId, livemode }) {
     const store = getSampleStore();
     store.orders = store.orders.map((order) =>
-      order.id === orderId ? { ...order, checkoutId } : order,
+      order.id === orderId ? { ...order, checkoutId, livemode } : order,
     );
+  },
+  async claimStatusCheck(orderId, now, everyMs) {
+    const store = getSampleStore();
+    const order = store.orders.find((candidate) => candidate.id === orderId);
+    if (order?.status !== "pending") return false;
+    const last = store.orderStatusCheckedAt[orderId];
+    if (last && now.getTime() - new Date(last).getTime() < everyMs) return false;
+    store.orderStatusCheckedAt = { ...store.orderStatusCheckedAt, [orderId]: now.toISOString() };
+    return true;
   },
   async findOwnOrder(userId, reference) {
     const order = getSampleStore().orders.find(
@@ -609,4 +618,5 @@ const sampleOrderStore: OrderStore = {
   },
 };
 
-export const { payForPlan, getMemberOrder, checkOrderStatus } = orderCalls(sampleOrderStore);
+export const { payForPlan, getMemberOrder, checkOrderStatus, pollOrderStatus } =
+  orderCalls(sampleOrderStore);

@@ -1,4 +1,5 @@
 import { LOCAL_SUPABASE_URL } from "@/lib/db/local-database";
+import { PAYMONGO_CHECKOUT_ORIGIN } from "@/lib/paymongo/checkout-origin";
 
 export interface CspOptions {
   /** Dev enables 'unsafe-eval' (HMR) and local Supabase/websocket origins. */
@@ -62,7 +63,12 @@ export function buildCsp(nonce: string, opts: CspOptions): string {
     ["frame-ancestors", ["'none'"]],
     // This template renders no <base> element; lock it down entirely.
     ["base-uri", ["'none'"]],
-    ["form-action", ["'self'"]],
+    // Pay's Server Action redirects to PayMongo's hosted checkout (ticket 04).
+    // With JavaScript, Next follows it by navigating, which form-action
+    // doesn't govern; without it, the form posts natively and the redirect
+    // after it is checked against form-action, so PayMongo's checkout origin
+    // is allowed, and nothing else off the site.
+    ["form-action", ["'self'", PAYMONGO_CHECKOUT_ORIGIN]],
     ["object-src", ["'none'"]],
   ];
 

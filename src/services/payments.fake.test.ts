@@ -19,7 +19,7 @@ const ORDER: CheckoutOrder = {
   successPath: "/app/plans/orders/AYC-10001",
   cancelPath: "/app/plans?exam=CE",
 };
-const REF = { orderId: ORDER.orderId, checkoutId: null };
+const REF = { orderId: ORDER.orderId, reference: ORDER.reference, checkoutId: null };
 
 describe("the payments fake", () => {
   it("is the fake, with test money only", () => {
@@ -31,10 +31,25 @@ describe("the payments fake", () => {
   it("sends the Member straight to the Confirming payment screen, with no checkout id", async () => {
     const fake = createFakePaymentsClient();
     expect(await fake.startCheckout(ORDER)).toEqual({
+      ok: true,
       checkoutId: null,
       redirectTo: "/app/plans/orders/AYC-10001",
+      livemode: false,
     });
     expect(fake.started).toEqual([ORDER]);
+  });
+
+  it("can refuse to start checkouts, as PayMongo answering an error would", async () => {
+    const fake = createFakePaymentsClient();
+    fake.refuseCheckouts();
+    expect(await fake.startCheckout(ORDER)).toEqual({ ok: false });
+    expect(fake.started).toEqual([]);
+  });
+
+  it("keeps each status asked for", async () => {
+    const fake = createFakePaymentsClient();
+    await fake.checkoutStatus(REF);
+    expect(fake.statusChecks).toEqual([REF]);
   });
 
   it("reports a checkout pending until an outcome is simulated", async () => {
@@ -47,7 +62,7 @@ describe("the payments fake", () => {
     fake.simulate(ORDER.orderId, outcome);
     expect(await fake.checkoutStatus(REF)).toEqual({ status: outcome, paymentId: null });
     // Another Order's checkout is still pending.
-    expect(await fake.checkoutStatus({ orderId: "other", checkoutId: null })).toEqual({
+    expect(await fake.checkoutStatus({ ...REF, orderId: "other" })).toEqual({
       status: "pending",
     });
   });

@@ -56,6 +56,7 @@ function renderPlans(props: Partial<PlansProps> = {}) {
       staff={false}
       contactEmail="help@example.com"
       pay={null}
+      cancelled={false}
       {...props}
     />,
   );
@@ -204,6 +205,28 @@ describe("Plans", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "That plan isn’t on sale any more. Pick another one.",
     );
+  });
+
+  it("says the checkout couldn't start, with no way off the page, when PayMongo answered an error", async () => {
+    const user = userEvent.setup();
+    renderPlans({ pay: async () => ({ error: "Couldn’t start the payment. Try again." }) });
+
+    await user.click(screen.getByRole("button", { name: "Pay ₱1,299 with PayMongo" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Couldn’t start the payment. Try again.",
+    );
+    expect(screen.getByRole("button", { name: "Pay ₱1,299 with PayMongo" })).toBeEnabled();
+  });
+
+  it("says the payment was cancelled, and nothing charged, back from PayMongo's Cancel", () => {
+    renderPlans({ cancelled: true });
+    expect(screen.getByRole("status")).toHaveTextContent("Payment cancelled · you weren’t charged");
+  });
+
+  it("says nothing of a cancelled payment otherwise", () => {
+    renderPlans();
+    expect(screen.queryByText(/Payment cancelled/)).not.toBeInTheDocument();
   });
 
   it("says payment is finished on PayMongo's page, and links the Terms of Use", () => {

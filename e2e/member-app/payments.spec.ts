@@ -10,7 +10,10 @@ import { expectNoBlockingViolations, LIVE, SKIP_LIVE, signInAndOnboard } from ".
 // waits on Confirming payment, clicks "Simulate paid", sees the Paid screen
 // with the date their access ends, and opens CE content that was locked.
 // Another picks Card and clicks "Simulate failed", and sees the card-declined
-// copy with the way back to Plans. Live mode has no payments client here.
+// copy with the way back to Plans. One more comes back by PayMongo's cancel
+// address (ticket 04; with the fake, the Member visits it themselves) and is
+// told nothing was charged, the Order still Pending. Sample mode has no TEST
+// PAYMENTS strip: that's a test key's. Live mode has no payments client here.
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -117,4 +120,22 @@ test("a Card payment that fails shows the card-declined copy and the way back", 
 
   await page.getByRole("link", { name: "Try another method" }).click();
   await expect(page).toHaveURL(/\/app\/plans\?exam=CE$/);
+});
+
+test("coming back from Cancel on PayMongo's page says nothing was charged, the Order still Pending", async ({
+  page,
+}) => {
+  await signInAndOnboard(page, "tester", "CE");
+  await payForCe(page, "1 month", "QR Ph", "₱499");
+  const order = page.url();
+
+  await page.goto(paths.memberApp.plansCancelled("CE"));
+
+  await expect(page.getByRole("status")).toHaveText("Payment cancelled · you weren’t charged");
+  await expect(page.getByRole("link", { name: /^CE/ })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByText(/TEST PAYMENTS/)).toHaveCount(0);
+  await expectNoBlockingViolations(page);
+
+  await page.goto(order);
+  await expect(page.getByText("CONFIRMING PAYMENT")).toBeVisible();
 });

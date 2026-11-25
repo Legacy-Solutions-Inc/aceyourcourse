@@ -477,7 +477,8 @@ export interface PayInput {
  * one of the four, the Plan isn't on sale (or isn't a Plan), or it's another
  * Exam's than the one posted.
  */
-export type PayRefusal = "unavailable" | "bad-method" | "not-on-sale" | "wrong-exam";
+export type PayRefusal =
+  "unavailable" | "bad-method" | "not-on-sale" | "wrong-exam" | "checkout-failed";
 
 /** Pay's outcome: the Pending Order's reference and where to send the Member, or why not. */
 export type PayResult =

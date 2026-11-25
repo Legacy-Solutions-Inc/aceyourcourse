@@ -19,6 +19,14 @@ describe("buildCsp", () => {
     expect(buildCsp(NONCE, { isDev: false })).not.toContain("base-uri 'self'");
   });
 
+  it("lets a form's redirect go to PayMongo's checkout, and nowhere else off the site (ticket 04)", () => {
+    for (const isDev of [false, true]) {
+      expect(buildCsp(NONCE, { isDev })).toContain(
+        "form-action 'self' https://checkout.paymongo.com;",
+      );
+    }
+  });
+
   it("prod: adds upgrade-insecure-requests (valueless, no trailing space)", () => {
     const csp = buildCsp(NONCE, { isDev: false });
     expect(csp).toContain("upgrade-insecure-requests");

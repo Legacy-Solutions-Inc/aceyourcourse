@@ -4,6 +4,7 @@ import { noticeText } from "@/lib/member-app/notices";
 import { PAYMONGO_SYSTEM_ACTOR } from "@/lib/payments/order-ledger";
 import { samplePlanId } from "@/services/mock/plans";
 import { createFakePaymentsClient, type FakePaymentsClient } from "@/services/payments.fake";
+import type { PaymentsClient } from "@/services/payments.types";
 
 import { sampleActor } from "../../test/admin-inputs";
 import { MEMBER_ARMS } from "../../test/member-arms";
@@ -128,8 +129,45 @@ describe.each(MEMBER_ARMS)("Member seam: buying ($name)", (arm) => {
           method: "gcash",
           buyer: { name: "Bea Tester", email: "tester@example.com" },
           successPath: "/app/plans/orders/AYC-10001",
-          cancelPath: "/app/plans?exam=CE",
+          cancelPath: "/app/plans?exam=CE&payment=cancelled",
         },
+      ]);
+    });
+
+    it("records the checkout PayMongo started: its id and livemode, and sends the Member there", async () => {
+      const payMongo: PaymentsClient = {
+        ...fake,
+        kind: "paymongo",
+        startCheckout: async () => ({
+          ok: true,
+          checkoutId: "cs_FakeCreated0001TestOnly",
+          redirectTo: "https://checkout.paymongo.com/cs_FakeCreated0001TestOnly",
+          livemode: false,
+        }),
+      };
+
+      expect(
+        await seam.payForPlan(
+          BEA.userId,
+          { examCode: "CE", planId: CE_90, method: "gcash" },
+          payMongo,
+        ),
+      ).toEqual({
+        ok: true,
+        reference: "AYC-10001",
+        redirectTo: "https://checkout.paymongo.com/cs_FakeCreated0001TestOnly",
+      });
+      expect(await arm.orders()).toMatchObject([
+        { status: "pending", checkoutId: "cs_FakeCreated0001TestOnly", livemode: false },
+      ]);
+    });
+
+    it("keeps the Order Pending and sends the Member nowhere when the checkout can't start", async () => {
+      fake.refuseCheckouts();
+
+      expect(await payCe90()).toEqual({ ok: false, reason: "checkout-failed" });
+      expect(await arm.orders()).toMatchObject([
+        { reference: "AYC-10001", status: "pending", checkoutId: null },
       ]);
     });
 
@@ -413,6 +451,128 @@ describe.each(MEMBER_ARMS)("Member seam: buying ($name)", (arm) => {
       expect(await seam.checkOrderStatus(BEA.userId, "AYC-10001", fake)).toBeNull();
       expect((await arm.orders())[0]?.status).toBe("pending");
       expect(await seam.listAccessPasses(SAM.userId)).toEqual([]);
+    });
+  });
+
+  describe("pollOrderStatus: the status-check backup", () => {
+    const later = (ms: number) => vi.setSystemTime(new Date(BOOT.getTime() + ms));
+    const paidOrder = async () => {
+      await payCe90();
+      const [order] = await arm.orders();
+      return order!;
+    };
+
+    it("applies Paid once PayMongo says so, with no webhook: the Member sees Paid", async () => {
+      const order = await paidOrder();
+      fake.simulate(order.id, "paid");
+      later(15_000);
+
+      expect(await seam.pollOrderStatus(BEA.userId, "AYC-10001", fake)).toMatchObject({
+        status: "paid",
+        accessUntil: new Date(BOOT.getTime() + 15_000 + 90 * DAY).toISOString(),
+      });
+      expect(fake.statusChecks).toEqual([
+        { orderId: order.id, reference: "AYC-10001", checkoutId: null },
+      ]);
+      expect(await passEnd(BEA.userId, "CE")).toBe(
+        new Date(BOOT.getTime() + 15_000 + 90 * DAY).toISOString(),
+      );
+    });
+
+    it("asks at most once every 10 seconds per Order", async () => {
+      await paidOrder();
+      later(15_000);
+      await seam.pollOrderStatus(BEA.userId, "AYC-10001", fake);
+      later(18_000);
+      await seam.pollOrderStatus(BEA.userId, "AYC-10001", fake);
+      later(24_999);
+      await seam.pollOrderStatus(BEA.userId, "AYC-10001", fake);
+      expect(fake.statusChecks).toHaveLength(1);
+
+      later(25_000);
+      await seam.pollOrderStatus(BEA.userId, "AYC-10001", fake);
+      expect(fake.statusChecks).toHaveLength(2);
+    });
+
+    it("asks once when two polls arrive together, as from two servers", async () => {
+      await paidOrder();
+      later(15_000);
+
+      await Promise.all([
+        seam.pollOrderStatus(BEA.userId, "AYC-10001", fake),
+        seam.pollOrderStatus(BEA.userId, "AYC-10001", fake),
+      ]);
+
+      expect(fake.statusChecks).toHaveLength(1);
+    });
+
+    it("keeps each Order's checks apart", async () => {
+      await payCe90();
+      await payCe90();
+      later(15_000);
+
+      await seam.pollOrderStatus(BEA.userId, "AYC-10001", fake);
+      await seam.pollOrderStatus(BEA.userId, "AYC-10002", fake);
+
+      expect(fake.statusChecks.map((ref) => ref.reference)).toEqual(["AYC-10001", "AYC-10002"]);
+    });
+
+    it("changes nothing while PayMongo says still pending", async () => {
+      await paidOrder();
+      later(15_000);
+
+      expect(await seam.pollOrderStatus(BEA.userId, "AYC-10001", fake)).toMatchObject({
+        status: "pending",
+        accessUntil: null,
+      });
+      expect(await arm.orders()).toMatchObject([{ status: "pending", paidAt: null }]);
+      expect(await seam.listAccessPasses(BEA.userId)).toEqual([]);
+      expect(await seam.listNotices(BEA.userId)).toEqual([]);
+    });
+
+    it("changes nothing when PayMongo's answer was about another Order's checkout", async () => {
+      await paidOrder();
+      const confused: PaymentsClient = {
+        ...fake,
+        checkoutStatus: async () => ({ status: "unknown" }),
+      };
+      later(15_000);
+
+      expect(await seam.pollOrderStatus(BEA.userId, "AYC-10001", confused)).toMatchObject({
+        status: "pending",
+      });
+      expect(await seam.listAccessPasses(BEA.userId)).toEqual([]);
+    });
+
+    it("asks nothing for an Order no longer Pending", async () => {
+      await bought("paid");
+      later(15_000);
+
+      expect(await seam.pollOrderStatus(BEA.userId, "AYC-10001", fake)).toMatchObject({
+        status: "paid",
+      });
+      expect(fake.statusChecks).toHaveLength(1);
+    });
+
+    it("asks nothing with no payments client", async () => {
+      await paidOrder();
+      later(15_000);
+
+      expect(await seam.pollOrderStatus(BEA.userId, "AYC-10001", null)).toMatchObject({
+        status: "pending",
+      });
+      expect(fake.statusChecks).toEqual([]);
+    });
+
+    it("never reads, asks about or settles another Member's Order", async () => {
+      await payCe90(SAM.userId);
+      const [order] = await arm.orders();
+      fake.simulate(order!.id, "paid");
+      later(15_000);
+
+      expect(await seam.pollOrderStatus(BEA.userId, "AYC-10001", fake)).toBeNull();
+      expect(fake.statusChecks).toEqual([]);
+      expect((await arm.orders())[0]?.status).toBe("pending");
     });
   });
 });

@@ -1,0 +1,12 @@
+{
+  "errors": [
+    {
+      "code": "parameter_invalid",
+      "detail": "amount must be at least 2000.",
+      "source": {
+        "pointer": "attributes.line_items.0.amount",
+        "attribute": "amount"
+      }
+    }
+  ]
+}

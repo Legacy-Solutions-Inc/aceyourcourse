@@ -5,6 +5,8 @@ import { z } from "zod";
 import type { OrderOutcome } from "@/lib/payments/order-ledger";
 import type {
   CheckoutOrder,
+  CheckoutRef,
+  CheckoutStart,
   CheckoutStatus,
   PaymentEvent,
   PaymentsClient,
@@ -14,14 +16,19 @@ import type {
 // The payments fake (Phase 4, ticket 03): stands in for PayMongo in tests and
 // in sample mode, so every screen can be clicked through with no keys and no
 // network. Its checkout sends the Member straight to the Confirming payment
-// screen (the Order's success path), with no checkout id. Its status is
-// whatever was simulated for the Order ("Simulate paid", "Simulate failed"),
-// pending until then. Its webhooks are signed with a test-only secret, so
+// screen (the Order's success path), with no checkout id, unless told to
+// refuse, as PayMongo answering an error would. Its status is whatever was
+// simulated for the Order ("Simulate paid", "Simulate failed"), pending until
+// then. Its webhooks are signed with a test-only secret, so
 // fixtures can be made with fakeWebhook().
 
 export interface FakePaymentsClient extends PaymentsClient {
   /** The checkouts started, in order. */
   readonly started: readonly CheckoutOrder[];
+  /** The statuses asked for, in order. */
+  readonly statusChecks: readonly CheckoutRef[];
+  /** Refuses every checkout from now on, as PayMongo answering an error would. */
+  refuseCheckouts(): void;
   /** Makes an Order's checkout report this outcome from now on. */
   simulate(orderId: string, outcome: OrderOutcome): void;
 }
@@ -67,20 +74,28 @@ function readEvent(body: string): PaymentEvent | null {
 
 export function createFakePaymentsClient(): FakePaymentsClient {
   const started: CheckoutOrder[] = [];
+  const statusChecks: CheckoutRef[] = [];
   const outcomes = new Map<string, OrderOutcome>();
+  let refusing = false;
   return {
     kind: "fake",
     livemode: false,
     started,
+    statusChecks,
     simulate(orderId, outcome) {
       outcomes.set(orderId, outcome);
     },
-    async startCheckout(order) {
-      started.push(order);
-      return { checkoutId: null, redirectTo: order.successPath };
+    refuseCheckouts() {
+      refusing = true;
     },
-    async checkoutStatus({ orderId }): Promise<CheckoutStatus> {
-      const outcome = outcomes.get(orderId);
+    async startCheckout(order): Promise<CheckoutStart> {
+      if (refusing) return { ok: false };
+      started.push(order);
+      return { ok: true, checkoutId: null, redirectTo: order.successPath, livemode: false };
+    },
+    async checkoutStatus(ref): Promise<CheckoutStatus> {
+      statusChecks.push(ref);
+      const outcome = outcomes.get(ref.orderId);
       return outcome ? { status: outcome, paymentId: null } : { status: "pending" };
     },
     async verifyWebhook(body, signature): Promise<WebhookCheck> {

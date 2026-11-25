@@ -26,17 +26,28 @@ export interface PlansProps {
   contactEmail: string;
   /** Pay, where this server has a payments client; null where buying isn't set up. */
   pay: PayAction | null;
+  /** Whether the Member just came back from Cancel on PayMongo's page (ticket 04). */
+  cancelled: boolean;
 }
 
 /**
  * The Plans page's body (mockup L412–450; BUILD-MAP §3 Plans; stories 134,
  * 151c and 151m): what a Plan is, a pill per Exam with a Plan on sale, and
  * the open Exam's Plans with the order summary. Staff can buy too, and are
- * told they open all content already.
+ * told they open all content already. Back from Cancel on PayMongo's page,
+ * it says nothing was charged (story 151f).
  */
-export function Plans({ pills, exam, staff, contactEmail, pay }: PlansProps) {
+export function Plans({ pills, exam, staff, contactEmail, pay, cancelled }: PlansProps) {
   return (
     <>
+      {cancelled ? (
+        <p
+          role="status"
+          className="max-w-xl border-[1.5px] border-ayc-navy bg-ayc-paper px-4 py-3 text-[15px] font-semibold"
+        >
+          Payment cancelled · you weren’t charged
+        </p>
+      ) : null}
       <p className="text-[15px]">Pay once for a fixed period. Nothing renews automatically.</p>
       {staff ? (
         <p

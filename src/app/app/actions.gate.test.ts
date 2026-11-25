@@ -193,6 +193,7 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
   },
   "./(shell)/plans/orders/[reference]/actions.ts": {
     simulatePayment: member(() => orders.simulatePayment(simulateForm())),
+    checkPayment: member(() => orders.checkPayment("AYC-10001")),
   },
   "./(shell)/account/actions.ts": {
     requestDataCopy: member(() => account.requestDataCopy()),

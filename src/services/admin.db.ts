@@ -349,6 +349,9 @@ async function load(
     get nextOrderNumber() {
       return notLoaded("the Order references");
     },
+    get orderStatusCheckedAt() {
+      return notLoaded("the Orders' status checks");
+    },
     // The Plans have their own reads and writes (admin.plans.db.ts). Deleting
     // an Exam drops its Plans from the sample data; here the table's cascade
     // does it, so the stand-in has none and keeps none.

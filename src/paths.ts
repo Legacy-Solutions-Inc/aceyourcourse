@@ -101,6 +101,9 @@ export const paths = {
     plans: "/app/plans",
     /** Plans open on one Exam's (ticket 02): where a lock's "See plans" and "Renew access" lead. */
     plansFor: (examCode: string) => `/app/plans?exam=${encodeURIComponent(examCode)}`,
+    /** Where PayMongo's Cancel returns to (ticket 04): Plans for the Exam, saying nothing was charged. */
+    plansCancelled: (examCode: string) =>
+      `/app/plans?exam=${encodeURIComponent(examCode)}&payment=cancelled`,
     /** One of the Member's Orders (ticket 03): Confirming payment, then Paid or Failed. */
     order: (reference: string) => `/app/plans/orders/${encodeURIComponent(reference)}`,
     billing: "/app/billing",

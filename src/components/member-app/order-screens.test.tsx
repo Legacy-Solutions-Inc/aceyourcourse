@@ -37,7 +37,7 @@ const simulate = async () => {};
 
 describe("ConfirmingPayment", () => {
   it("says it's waiting for PayMongo to confirm the Member's method, with the Plan and reference", () => {
-    render(<ConfirmingPayment order={ORDER} stillWaiting={false} simulate={null} />);
+    render(<ConfirmingPayment order={ORDER} stillWaiting={false} check={null} simulate={null} />);
 
     expect(screen.getByText("CONFIRMING PAYMENT")).toBeInTheDocument();
     expect(
@@ -57,12 +57,12 @@ describe("ConfirmingPayment", () => {
   });
 
   it("says nothing of still waiting at first", () => {
-    render(<ConfirmingPayment order={ORDER} stillWaiting={false} simulate={null} />);
+    render(<ConfirmingPayment order={ORDER} stillWaiting={false} check={null} simulate={null} />);
     expect(screen.queryByText(/Still waiting/)).not.toBeInTheDocument();
   });
 
   it("after about 2 minutes, says it's still waiting and points to Support", () => {
-    render(<ConfirmingPayment order={ORDER} stillWaiting simulate={null} />);
+    render(<ConfirmingPayment order={ORDER} stillWaiting check={null} simulate={null} />);
 
     const note = screen.getByRole("status");
     expect(note).toHaveTextContent("Still waiting for PayMongo.");
@@ -74,7 +74,9 @@ describe("ConfirmingPayment", () => {
   });
 
   it("offers Simulate paid and Simulate failed in sample mode, for this Order", () => {
-    render(<ConfirmingPayment order={ORDER} stillWaiting={false} simulate={simulate} />);
+    render(
+      <ConfirmingPayment order={ORDER} stillWaiting={false} check={null} simulate={simulate} />,
+    );
 
     const sample = screen.getByRole("region", { name: "SAMPLE DATA · NO PAYMONGO" });
     expect(within(sample).getByRole("button", { name: "Simulate paid" })).toHaveAttribute(
@@ -89,7 +91,7 @@ describe("ConfirmingPayment", () => {
   });
 
   it("offers no simulation anywhere else", () => {
-    render(<ConfirmingPayment order={ORDER} stillWaiting={false} simulate={null} />);
+    render(<ConfirmingPayment order={ORDER} stillWaiting={false} check={null} simulate={null} />);
     expect(screen.queryByRole("button", { name: /Simulate/ })).not.toBeInTheDocument();
   });
 });

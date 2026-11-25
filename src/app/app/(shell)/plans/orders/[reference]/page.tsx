@@ -12,9 +12,9 @@ import { isOrderReference } from "@/lib/payments/order-ledger";
 import { paths } from "@/paths";
 import { getWebsiteSettings } from "@/services/catalogue";
 import { getMemberOrder } from "@/services/member";
-import { samplePaymentsFake } from "@/services/payments";
+import { paymentsClient, samplePaymentsFake } from "@/services/payments";
 
-import { simulatePayment } from "./actions";
+import { checkPayment, simulatePayment } from "./actions";
 
 export const metadata: Metadata = { title: "Payment" };
 
@@ -25,8 +25,9 @@ interface OrderPageProps {
 /**
  * One of the Member's Orders (Phase 4, ticket 03; mockup L546–574; spec,
  * Phase 4 → Return flow; stories 136–140), by its reference: Confirming
- * payment while it's Pending, reading it again every few seconds, then Paid
- * or Failed. Expired and Refunded Orders are shown in Billing. Only the
+ * payment while it's Pending, reading it again every few seconds (and, after
+ * about 15 seconds, having the server ask PayMongo: ticket 04), then Paid or
+ * Failed. Expired and Refunded Orders are shown in Billing. Only the
  * Order's own Member can open it: anyone else's reference, or one that isn't
  * an Order's, answers not found. The gate, consent, the Active Device and
  * onboarding come first, coming back here.
@@ -46,6 +47,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
         <ConfirmingPayment
           order={order}
           stillWaiting={stillWaiting(order.createdAt, new Date())}
+          check={paymentsClient() ? checkPayment.bind(null, order.reference) : null}
           simulate={samplePaymentsFake() ? simulatePayment : null}
         />
       );

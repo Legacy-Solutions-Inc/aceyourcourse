@@ -5,9 +5,9 @@ import { notFound } from "next/navigation";
 
 import { requireMemberWithExam } from "@/lib/member-app/guard";
 import { paths } from "@/paths";
-import { checkOrderStatus, getMemberOrder } from "@/services/member";
-import { simulateFormSchema } from "@/services/member.schema";
-import { samplePaymentsFake } from "@/services/payments";
+import { checkOrderStatus, getMemberOrder, pollOrderStatus } from "@/services/member";
+import { orderReferenceSchema, simulateFormSchema } from "@/services/member.schema";
+import { paymentsClient, samplePaymentsFake } from "@/services/payments";
 
 // Sample mode's "Simulate paid" and "Simulate failed" (Phase 4, ticket 03;
 // spec, Phase 4 planning decisions → The key decides): the payments fake
@@ -33,4 +33,25 @@ export async function simulatePayment(formData: FormData): Promise<void> {
   fake.simulate(order.id, outcome);
   await checkOrderStatus(member.userId, reference, fake);
   revalidatePath(paths.memberApp.order(reference));
+}
+
+/**
+ * The status-check backup (ticket 04; spec, Phase 4 planning decisions →
+ * Recording an outcome): Confirming payment's poller calls it after about 15
+ * seconds with no outcome. It asks the payments client for the status of one
+ * of the signed-in Member's own Pending Orders, at most once every 10 seconds
+ * per Order however many screens or servers ask, and records the outcome
+ * through the Order ledger, as the webhook will. PayMongo's answer is Paid or
+ * still pending (a failed try can be retried on its page; the webhook,
+ * ticket 05, records failures); the fake can answer Failed too. Anything else (another
+ * Member's Order, an address that isn't a reference, no client) asks nothing
+ * and says nothing. The poller reads the Order again after it.
+ */
+export async function checkPayment(reference: string): Promise<void> {
+  const sent = orderReferenceSchema.safeParse(reference);
+  const { member } = await requireMemberWithExam(
+    sent.success ? paths.memberApp.order(sent.data) : paths.memberApp.plans,
+  );
+  if (!sent.success) return;
+  await pollOrderStatus(member.userId, sent.data, paymentsClient());
 }

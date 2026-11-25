@@ -20,8 +20,11 @@ import { pay } from "./actions";
 export const metadata: Metadata = { title: "Plans" };
 
 interface PlansPageProps {
-  /** `exam`: the Exam whose Plans to open on, by its code. */
-  searchParams: Promise<{ exam?: string | string[] }>;
+  /**
+   * `exam`: the Exam whose Plans to open on, by its code. `payment=cancelled`:
+   * back from Cancel on PayMongo's page (ticket 04).
+   */
+  searchParams: Promise<{ exam?: string | string[]; payment?: string | string[] }>;
 }
 
 /**
@@ -34,12 +37,15 @@ interface PlansPageProps {
  * picks a pill: what's on sale, the pass and the date are read on the server
  * for the signed-in Member. Pay (ticket 03) makes a Pending Order and goes to
  * the checkout wherever this server has a payments client (the fake in
- * sample mode); elsewhere the button reads "Buying opens soon", disabled. The
+ * sample mode, PayMongo's with a key); elsewhere the button reads "Buying
+ * opens soon", disabled. Back from Cancel on PayMongo's page it says nothing
+ * was charged (ticket 04). The
  * gate, consent, the Active Device and onboarding come first, coming back
  * here with the Exam asked for.
  */
 export default async function PlansPage({ searchParams }: PlansPageProps) {
-  const asked = askedExam((await searchParams).exam);
+  const { exam: examParam, payment } = await searchParams;
+  const asked = askedExam(examParam);
   const from = asked ? paths.memberApp.plansFor(asked) : paths.memberApp.plans;
   const { member, targetExams, selected } = await requireMemberWithExam(from);
   const [exams, access, { contactEmail }] = await Promise.all([
@@ -66,6 +72,7 @@ export default async function PlansPage({ searchParams }: PlansPageProps) {
         staff={access.activeStaff}
         contactEmail={contactEmail}
         pay={paymentsClient() ? pay : null}
+        cancelled={payment === "cancelled"}
       />
     </MemberScreen>
   );

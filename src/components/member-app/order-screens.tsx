@@ -7,7 +7,7 @@ import { paths } from "@/paths";
 import type { MemberOrder } from "@/services/member.types";
 
 import { PlansLink } from "./content-state";
-import { OrderPoller } from "./order-poller";
+import { OrderPoller, type OrderPollerProps } from "./order-poller";
 import { orderLine, receiptLine } from "./order-view";
 
 // The Order screens (Phase 4, ticket 03; mockup L546–574; BUILD-MAP §3 Pay
@@ -42,6 +42,8 @@ interface ConfirmingPaymentProps {
   order: MemberOrder;
   /** Whether the Order has waited about 2 minutes: then it says so and points to Support. */
   stillWaiting: boolean;
+  /** The status-check backup for this Order (ticket 04), or null where there's no payments client. */
+  check: OrderPollerProps["check"];
   /** Sample mode's "Simulate paid" / "Simulate failed" action; null anywhere else. */
   simulate: ((formData: FormData) => Promise<void>) | null;
 }
@@ -51,10 +53,15 @@ interface ConfirmingPaymentProps {
  * Member's method, reading the Order again every few seconds. In sample mode
  * it offers "Simulate paid" and "Simulate failed".
  */
-export function ConfirmingPayment({ order, stillWaiting, simulate }: ConfirmingPaymentProps) {
+export function ConfirmingPayment({
+  order,
+  stillWaiting,
+  check,
+  simulate,
+}: ConfirmingPaymentProps) {
   return (
     <OrderCard shadow="shadow-ayc-navy">
-      <OrderPoller />
+      <OrderPoller check={check} />
       <div aria-hidden="true" className="flex h-1.5 gap-1">
         <span className="flex-1 bg-ayc-blue" />
         <span className="flex-1 bg-ayc-blue" />

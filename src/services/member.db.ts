@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, type Column, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, type Column, count, desc, eq, isNotNull, isNull, lte, or } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import type { Transaction } from "@/lib/db/connect";
@@ -1136,9 +1136,32 @@ const databaseOrderStore: OrderStore = {
       if (!added) throw new Error("The Order wasn't added.");
       return orderFromRow(added);
     }),
-  setCheckoutId: (orderId, checkoutId) =>
+  recordCheckout: (orderId, { checkoutId, livemode }) =>
     inDatabase(async () => {
-      await getDb().update(schema.orders).set({ checkoutId }).where(eq(schema.orders.id, orderId));
+      await getDb()
+        .update(schema.orders)
+        .set({ checkoutId, livemode })
+        .where(eq(schema.orders.id, orderId));
+    }),
+  // One conditional update claims the check, so two servers never both ask PayMongo.
+  claimStatusCheck: (orderId, now, everyMs) =>
+    inDatabase(async () => {
+      const { orders } = schema;
+      const claimed = await getDb()
+        .update(orders)
+        .set({ statusCheckedAt: now })
+        .where(
+          and(
+            eq(orders.id, orderId),
+            eq(orders.status, "pending"),
+            or(
+              isNull(orders.statusCheckedAt),
+              lte(orders.statusCheckedAt, new Date(now.getTime() - everyMs)),
+            ),
+          ),
+        )
+        .returning({ id: orders.id });
+      return claimed.length > 0;
     }),
   findOwnOrder: (userId, reference) =>
     inDatabase(async () => {

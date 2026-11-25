@@ -12,6 +12,8 @@ import {
 import { sampleUserId } from "@/services/mock/members";
 import { samplePlanId } from "@/services/mock/plans";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
+import { createFakePaymentsClient } from "@/services/payments.fake";
+import type { PaymentsClient } from "@/services/payments.types";
 
 import { sampleActor } from "../../../test/admin-inputs";
 import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
@@ -26,7 +28,13 @@ import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 // in 90 days, on 15 Feb 2027.
 const { jar, payments } = vi.hoisted(() => ({
   jar: new Map<string, string>(),
-  payments: { configured: true },
+  payments: {
+    configured: true,
+    /** A client standing in for this server's, when a test sets one (PayMongo's, made from the fake). */
+    client: null as PaymentsClient | null,
+    /** Whether the server shows the TEST PAYMENTS strip, as a test key would. */
+    strip: false,
+  },
 }));
 
 vi.mock("next/headers", () => ({
@@ -51,7 +59,8 @@ vi.mock("@/services/payments", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/payments")>();
   return {
     ...actual,
-    paymentsClient: () => (payments.configured ? actual.paymentsClient() : null),
+    paymentsClient: () => payments.client ?? (payments.configured ? actual.paymentsClient() : null),
+    showTestPaymentsStrip: () => payments.strip,
     samplePaymentsFake: () => (payments.configured ? actual.samplePaymentsFake() : null),
   };
 });
@@ -97,8 +106,28 @@ function payForm(fields: { examCode?: string; plan?: string; method?: string } =
 
 const pay = async (form = payForm()) =>
   (await import("./(shell)/plans/actions")).pay({ error: null }, form);
-const plansPage = async () =>
-  (await import("./(shell)/plans/page")).default({ searchParams: Promise.resolve({}) });
+const plansPage = async (searchParams: Record<string, string> = {}) =>
+  (await import("./(shell)/plans/page")).default({ searchParams: Promise.resolve(searchParams) });
+const checkPayment = async (reference: string) =>
+  (await import("./(shell)/plans/orders/[reference]/actions")).checkPayment(reference);
+const SECOND = 1_000;
+
+/** PayMongo's client as Pay sees it with a test key: the fake, starting a real-looking checkout. */
+function payMongoTest() {
+  const fake = createFakePaymentsClient();
+  const client: PaymentsClient = {
+    ...fake,
+    kind: "paymongo",
+    startCheckout: async () => ({
+      ok: true,
+      checkoutId: "cs_FakeCreated0001TestOnly",
+      redirectTo: "https://checkout.paymongo.com/cs_FakeCreated0001TestOnly",
+      livemode: false,
+    }),
+  };
+  payments.client = client;
+  return fake;
+}
 const orderPage = async (reference: string) =>
   (await import("./(shell)/plans/orders/[reference]/page")).default({
     params: Promise.resolve({ reference }),
@@ -123,6 +152,8 @@ beforeEach(() => {
   vi.setSystemTime(BOOT);
   jar.clear();
   payments.configured = true;
+  payments.client = null;
+  payments.strip = false;
   resetSampleStore();
 });
 
@@ -200,6 +231,50 @@ describe("Pay on the Plans page", () => {
 
     expect(await pay()).toEqual({ error: "Buying isn’t open yet. You weren’t charged." });
     expect(getSampleStore().orders).toEqual([]);
+  });
+
+  it("goes to PayMongo's checkout page with a test key, recording the session and livemode false", async () => {
+    payMongoTest();
+    await signedIn();
+
+    await expect(pay()).rejects.toThrow(
+      redirectsTo("https://checkout.paymongo.com/cs_FakeCreated0001TestOnly"),
+    );
+    expect(getSampleStore().orders).toEqual([
+      expect.objectContaining({
+        reference: "AYC-10001",
+        status: "pending",
+        checkoutId: "cs_FakeCreated0001TestOnly",
+        livemode: false,
+      }),
+    ]);
+  });
+
+  it("says it couldn't start the payment, going nowhere, when PayMongo answers an error", async () => {
+    const fake = createFakePaymentsClient();
+    fake.refuseCheckouts();
+    payments.client = fake;
+    await signedIn();
+
+    expect(await pay()).toEqual({ error: "Couldn’t start the payment. Try again." });
+    expect(getSampleStore().orders).toEqual([
+      expect.objectContaining({ reference: "AYC-10001", status: "pending", checkoutId: null }),
+    ]);
+  });
+
+  it("says the payment was cancelled back from PayMongo's Cancel, on that Exam's Plans", async () => {
+    await signedIn();
+    render(await plansPage({ exam: "CE", payment: "cancelled" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Payment cancelled · you weren’t charged");
+    expect(screen.getByRole("link", { name: /^CE/ })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("says nothing of a cancelled payment otherwise", async () => {
+    await signedIn();
+    render(await plansPage({ exam: "CE", payment: "anything" }));
+
+    expect(screen.queryByText(/Payment cancelled/)).not.toBeInTheDocument();
   });
 
   it("sends someone signed out to sign in, making no Order", async () => {
@@ -332,5 +407,133 @@ describe("Simulate paid and Simulate failed", () => {
 
     await expect(simulate(reference, "refunded")).rejects.toThrow("NEXT_NOT_FOUND");
     expect(getSampleStore().orders[0]?.status).toBe("pending");
+  });
+});
+
+describe("the status-check backup on Confirming payment", () => {
+  /** Pays with PayMongo's test checkout; gives the Order's reference and the fake answering for PayMongo. */
+  async function paidWithPayMongo() {
+    const fake = payMongoTest();
+    await expect(pay()).rejects.toThrow(/^NEXT_REDIRECT https:\/\/checkout\.paymongo\.com\//);
+    const order = getSampleStore().orders.at(-1);
+    if (!order) throw new Error("Pay made no Order.");
+    return { fake, order };
+  }
+
+  it("has the poller ask the server where there's a payments client", async () => {
+    await signedIn();
+    const { order } = await paidWithPayMongo();
+
+    const page = (await orderPage(order.reference)) as React.ReactElement<{
+      check: unknown;
+    }>;
+
+    expect(page.props.check).toEqual(expect.any(Function));
+  });
+
+  it("gives the poller nothing to ask where there's no payments client", async () => {
+    await signedIn();
+    const reference = await paid();
+    payments.configured = false;
+
+    const page = (await orderPage(reference)) as React.ReactElement<{ check: unknown }>;
+
+    expect(page.props.check).toBeNull();
+  });
+
+  it("shows Paid once PayMongo says paid, with no webhook", async () => {
+    await signedIn();
+    const { fake, order } = await paidWithPayMongo();
+    fake.simulate(order.id, "paid");
+    vi.setSystemTime(new Date(BOOT.getTime() + 15 * SECOND));
+
+    await checkPayment(order.reference);
+    render(await orderPage(order.reference));
+
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("You’re in.");
+    expect(fake.statusChecks).toEqual([
+      {
+        orderId: order.id,
+        reference: "AYC-10001",
+        checkoutId: "cs_FakeCreated0001TestOnly",
+      },
+    ]);
+  });
+
+  it("asks PayMongo at most once every 10 seconds per Order", async () => {
+    await signedIn();
+    const { fake, order } = await paidWithPayMongo();
+
+    vi.setSystemTime(new Date(BOOT.getTime() + 15 * SECOND));
+    await checkPayment(order.reference);
+    vi.setSystemTime(new Date(BOOT.getTime() + 18 * SECOND));
+    await checkPayment(order.reference);
+    expect(fake.statusChecks).toHaveLength(1);
+
+    vi.setSystemTime(new Date(BOOT.getTime() + 25 * SECOND));
+    await checkPayment(order.reference);
+    expect(fake.statusChecks).toHaveLength(2);
+  });
+
+  it("changes nothing while PayMongo says still pending", async () => {
+    const userId = await signedIn();
+    const { order } = await paidWithPayMongo();
+    const passes = await listAccessPasses(userId);
+    vi.setSystemTime(new Date(BOOT.getTime() + 15 * SECOND));
+
+    await checkPayment(order.reference);
+
+    expect(getSampleStore().orders[0]?.status).toBe("pending");
+    expect(await listAccessPasses(userId)).toEqual(passes);
+  });
+
+  it("never asks about or settles another Member's Order", async () => {
+    await signedInAsStranger();
+    const { fake, order } = await paidWithPayMongo();
+    fake.simulate(order.id, "paid");
+
+    await signedIn();
+    vi.setSystemTime(new Date(BOOT.getTime() + 15 * SECOND));
+    await checkPayment(order.reference);
+
+    expect(fake.statusChecks).toEqual([]);
+    expect(getSampleStore().orders[0]?.status).toBe("pending");
+  });
+
+  it("asks nothing for an address that isn't a reference", async () => {
+    await signedIn();
+    const { fake } = await paidWithPayMongo();
+
+    await checkPayment("AYC-10001; drop table orders");
+
+    expect(fake.statusChecks).toEqual([]);
+  });
+
+  it("sends someone signed out to sign in, asking nothing", async () => {
+    const fake = payMongoTest();
+
+    await expect(checkPayment("AYC-10001")).rejects.toThrow(/^NEXT_REDIRECT \/app\/sign-in/);
+    expect(fake.statusChecks).toEqual([]);
+  });
+});
+
+describe("the TEST PAYMENTS strip", () => {
+  const memberApp = async () =>
+    render((await import("./layout")).default({ children: <p>A Member App screen</p> }));
+
+  it("heads every Member App screen with a test key", async () => {
+    payments.strip = true;
+    await memberApp();
+
+    expect(screen.getByRole("note", { name: "TEST PAYMENTS" })).toHaveTextContent(
+      "TEST PAYMENTS · no real money",
+    );
+    expect(screen.getByText("A Member App screen")).toBeInTheDocument();
+  });
+
+  it("isn't there with a live key, the fake or no key", async () => {
+    await memberApp();
+
+    expect(screen.queryByText(/TEST PAYMENTS/)).not.toBeInTheDocument();
   });
 });

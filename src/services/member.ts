@@ -413,7 +413,8 @@ export interface MemberService {
    * starts the checkout for it. Gives the reference and where to send the
    * Member. Refused, making nothing, with no payments client, a method that
    * isn't one of the four, a Plan that isn't on sale for an Exam on the
-   * Website, and a Plan of another Exam than the one posted. Throws for a
+   * Website, and a Plan of another Exam than the one posted. Refused too
+   * when the checkout can't start, leaving the Order Pending. Throws for a
    * User id that isn't one.
    */
   payForPlan(userId: string, input: PayInput, client: PaymentsClient | null): Promise<PayResult>;
@@ -429,6 +430,17 @@ export interface MemberService {
    * nothing. Null for anyone else's Order, or none.
    */
   checkOrderStatus(
+    userId: string,
+    reference: string,
+    client: PaymentsClient | null,
+  ): Promise<MemberOrder | null>;
+  /**
+   * The status-check backup (ticket 04), for the Confirming payment screen:
+   * checkOrderStatus, but asking the payments client at most once every 10
+   * seconds per Order, however many screens or servers poll. A poll inside
+   * that time changes nothing and gives the Order as it is.
+   */
+  pollOrderStatus(
     userId: string,
     reference: string,
     client: PaymentsClient | null,
@@ -476,3 +488,4 @@ export const listExamsOnSale = impl.listExamsOnSale;
 export const payForPlan = impl.payForPlan;
 export const getMemberOrder = impl.getMemberOrder;
 export const checkOrderStatus = impl.checkOrderStatus;
+export const pollOrderStatus = impl.pollOrderStatus;

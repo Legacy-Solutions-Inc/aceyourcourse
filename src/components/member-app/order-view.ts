@@ -15,6 +15,8 @@ import type { MemberOrder } from "@/services/member.types";
 
 /** How often Confirming payment reads the Order again. */
 export const POLL_MS = 3_000;
+/** How long Confirming payment waits with no outcome before it also has the server ask PayMongo (ticket 04). */
+export const STATUS_CHECK_AFTER_MS = 15_000;
 /** How long Confirming payment waits before it says it's still waiting. */
 export const STILL_WAITING_MS = 2 * 60 * 1000;
 

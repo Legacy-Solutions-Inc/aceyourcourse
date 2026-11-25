@@ -6,7 +6,9 @@ import { toPlanDays } from "@/lib/plans/plan-rules";
 // Member seam reads and writes them here; the Orders Admin (ticket 07) will
 // read them the same way.
 
-type OrderRow = typeof schema.orders.$inferSelect;
+// status_checked_at isn't part of an Order: only the status-check backup's
+// claim reads and writes it (ticket 04), so writing an Order never moves it.
+type OrderRow = Omit<typeof schema.orders.$inferSelect, "statusCheckedAt">;
 
 export const orderFromRow = (row: OrderRow): Order => ({
   id: row.id,

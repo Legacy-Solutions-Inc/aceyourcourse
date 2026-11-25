@@ -94,14 +94,18 @@ export const PAY_REFUSALS: Record<PayRefusal, string> = {
   "bad-method": "Pick QR Ph, GCash, Maya or Card to pay with.",
   "not-on-sale": "That plan isn’t on sale any more. Pick another one.",
   "wrong-exam": "That plan isn’t for this exam. Pick one of the plans shown.",
+  "checkout-failed": "Couldn’t start the payment. Try again.",
 };
 
 /** What the Plans page's Pay sends: the Exam open on the page, the Plan picked and the method. */
 export const payFormSchema = z.object({ examCode: formText, plan: formText, method: formText });
 
+/** An Order's reference, as the Order's address and its screens send it: "AYC-10001". */
+export const orderReferenceSchema = z.string().regex(ORDER_REFERENCE_PATTERN);
+
 /** What sample mode's "Simulate paid" / "Simulate failed" sends: the Order and the outcome. */
 export const simulateFormSchema = z.object({
-  reference: z.string().regex(ORDER_REFERENCE_PATTERN),
+  reference: orderReferenceSchema,
   outcome: z.enum(["paid", "failed"]),
 });
 

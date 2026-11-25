@@ -36,13 +36,22 @@ import type { PaymentsClient } from "@/services/payments.types";
 //   Order is made for the signed-in Member, every click, with the Plan's
 //   name, days and price read here, never from the form, and the checkout is
 //   started for it.
+// - Pay's checkout (ticket 04): the checkout's id and livemode are recorded
+//   on the Order. When the checkout can't start (PayMongo answering an
+//   error), Pay is refused and the Member stays on Plans; the Order stays
+//   Pending, and expires (ticket 05).
 // - The status check: asks the payments client for the checkout's status and
-//   applies the outcome through the Order ledger (order-ledger.ts). Paid
+//   applies the outcome through the Order ledger (order-ledger.ts). "Still
+//   pending", or an answer the client couldn't trust, changes nothing. Paid
 //   writes the Order, the Member's Access Pass, its paid history row, the
 //   Target Exam (added, or brought back, like a grant), an in-app notice and
 //   Staff Activity under "PayMongo (system)", all or nothing. An outcome
 //   already applied changes nothing. Ticket 05's webhook and expiry sweep
 //   settle Orders the same way (settleOrder).
+// - The status-check backup (ticket 04): Confirming payment asks for the
+//   status itself, so an outcome lands with a slow webhook or none (local
+//   development). It asks PayMongo at most once every 10 seconds per Order,
+//   claimed in the store, so two servers never both ask.
 // - A Member only ever reads or checks their own Orders: another's reference
 //   answers nothing.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -70,6 +79,9 @@ export interface OrderWrite {
   paid: PassWrite | null;
 }
 
+/** The backup's least time between two status checks of one Order, on any server. */
+export const STATUS_CHECK_EVERY_MS = 10_000;
+
 /** How an arm reads and writes Orders. */
 export interface OrderStore {
   /** The Exams Members can study, and every Plan on sale, as they are now. */
@@ -78,8 +90,17 @@ export interface OrderStore {
   readMember(userId: string): Promise<Member | null>;
   /** Adds a Pending Order, numbering its reference from the next one free; gives it numbered. */
   addOrder(order: Omit<Order, "reference">): Promise<Order>;
-  /** Records the checkout's id the payments client gave an Order. */
-  setCheckoutId(orderId: string, checkoutId: string): Promise<void>;
+  /** Records the checkout the payments client started for an Order: its id (null with the fake) and livemode. */
+  recordCheckout(
+    orderId: string,
+    checkout: { checkoutId: string | null; livemode: boolean },
+  ): Promise<void>;
+  /**
+   * Claims the next status check of a Pending Order at `now`, in one step:
+   * true, recording `now`, unless the Order isn't Pending or was checked less
+   * than `everyMs` before `now`; false then, recording nothing.
+   */
+  claimStatusCheck(orderId: string, now: Date, everyMs: number): Promise<boolean>;
   /**
    * The Member's own Order with this reference, with the end of the pass its
    * paid days gave (null until Paid); null for no Order of theirs.
@@ -226,10 +247,23 @@ export function orderCalls(store: OrderStore) {
       method,
       buyer: { name: order.buyerName, email: order.buyerEmail },
       successPath: paths.memberApp.order(order.reference),
-      cancelPath: paths.memberApp.plansFor(order.examCode),
+      cancelPath: paths.memberApp.plansCancelled(order.examCode),
     });
-    if (checkout.checkoutId) await store.setCheckoutId(order.id, checkout.checkoutId);
-    return { ok: true, reference: order.reference, redirectTo: checkout.redirectTo };
+    if (!checkout.ok) return refuse("checkout-failed");
+    const { checkoutId, livemode, redirectTo } = checkout;
+    if (checkoutId || livemode !== order.livemode) {
+      try {
+        await store.recordCheckout(order.id, { checkoutId, livemode });
+      } catch {
+        // A checkout the Order doesn't know of can't be checked: the Member
+        // isn't sent there, and the unpaid session is left to lapse.
+        console.error(
+          `The checkout for ${order.reference} wasn't recorded, so the Member wasn't sent to it.`,
+        );
+        return refuse("checkout-failed");
+      }
+    }
+    return { ok: true, reference: order.reference, redirectTo };
   }
 
   /** The Member's own Order, or null; an address that isn't a reference reads nothing. */
@@ -244,26 +278,50 @@ export function orderCalls(store: OrderStore) {
     return own && memberOrderOf(own.order, own.accessUntil);
   }
 
-  async function checkOrderStatus(
+  /** Asks the client for an Order's checkout status, and applies Paid or Failed through the ledger. */
+  async function applyCheckoutStatus(order: Order, client: PaymentsClient): Promise<void> {
+    const status = await client.checkoutStatus({
+      orderId: order.id,
+      reference: order.reference,
+      checkoutId: order.checkoutId,
+    });
+    if (status.status !== "paid" && status.status !== "failed") return;
+    const now = new Date();
+    await store.withOrder(order.id, (holding) => ({
+      write: settleOrder(holding, status.status, status.paymentId, now),
+      result: null,
+    }));
+  }
+
+  /**
+   * The Member's own Order, after asking the client for its status while it's
+   * Pending; `throttled`, only when no status check of it was claimed in the
+   * last 10 seconds.
+   */
+  async function statusOf(
     userId: string,
     reference: string,
     client: PaymentsClient | null,
+    throttled: boolean,
   ): Promise<MemberOrder | null> {
     const own = await ownOrder(userId, reference);
     if (!own) return null;
     const { order } = own;
-    if (!client || order.status !== "pending") return memberOrderOf(order, own.accessUntil);
-
-    const status = await client.checkoutStatus({ orderId: order.id, checkoutId: order.checkoutId });
-    if (status.status !== "pending") {
-      const now = new Date();
-      await store.withOrder(order.id, (holding) => ({
-        write: settleOrder(holding, status.status, status.paymentId, now),
-        result: null,
-      }));
-    }
+    const asking =
+      client !== null &&
+      order.status === "pending" &&
+      (!throttled || (await store.claimStatusCheck(order.id, new Date(), STATUS_CHECK_EVERY_MS)));
+    if (!asking) return memberOrderOf(order, own.accessUntil);
+    await applyCheckoutStatus(order, client);
     return getMemberOrder(userId, reference);
   }
 
-  return { payForPlan, getMemberOrder, checkOrderStatus };
+  return {
+    payForPlan,
+    getMemberOrder,
+    checkOrderStatus: (userId: string, reference: string, client: PaymentsClient | null) =>
+      statusOf(userId, reference, client, false),
+    pollOrderStatus: (userId: string, reference: string, client: PaymentsClient | null) =>
+      statusOf(userId, reference, client, true),
+  };
 }

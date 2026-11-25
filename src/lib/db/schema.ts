@@ -1181,6 +1181,9 @@ export const orders = pgTable(
     createdAt: at("created_at").notNull(),
     paidAt: at("paid_at"),
     statusChangedAt: at("status_changed_at").notNull(),
+    // When the status-check backup last asked PayMongo (ticket 04): at most
+    // once every 10 seconds per Order, claimed with one conditional update.
+    statusCheckedAt: at("status_checked_at"),
   },
   (t) => [
     index("orders_user_id_idx").on(t.userId),
