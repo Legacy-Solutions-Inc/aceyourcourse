@@ -56,6 +56,7 @@ import * as privacy from "@/services/admin.privacy-requests.db";
 import * as plans from "@/services/admin.plans.db";
 import * as orders from "@/services/admin.orders.db";
 import * as sales from "@/services/admin.sales.db";
+import * as staffActivity from "@/services/admin.staff-activity.db";
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
@@ -827,6 +828,9 @@ export const databaseArm: AdminService = {
   checkOrderWithPayMongo: orders.checkOrderWithPayMongo,
   markInvoiceSent: orders.markInvoiceSent,
   exportOrdersCsv: orders.exportOrdersCsv,
+
+  // Staff Activity reads its own table, by keyset (admin.staff-activity.db.ts; ticket 15).
+  listStaffActivity: staffActivity.listStaffActivity,
 
   // The catalogue part runs the sample arm's code over the catalogue it loads;
   // an Owner's sales read their own records (admin.sales.db.ts; ticket 11).

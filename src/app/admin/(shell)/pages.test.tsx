@@ -112,7 +112,7 @@ describe("Admin screens", () => {
     },
   );
 
-  it("shows the Owner Settings' five parts with the sample data's values", async () => {
+  it("shows the Owner Settings' five parts with the sample data's values, and the way to Staff Activity", async () => {
     signInAs("angel@aceyourcourse.ph");
     render(await SettingsPage());
     expect(screen.getByLabelText("EMAIL ADDRESS")).toHaveValue("aceyourcourseinc@gmail.com");
@@ -127,8 +127,13 @@ describe("Admin screens", () => {
       "BUSINESS DETAILS",
       "STORE & SOCIAL LINKS",
       "ADMIN ACCOUNTS",
+      "STAFF ACTIVITY",
     ]);
     expect(screen.getByLabelText("BUSINESS NAME")).toHaveValue("Ace Your Course");
+    expect(screen.getByRole("link", { name: "Open Staff Activity" })).toHaveAttribute(
+      "href",
+      "/admin/settings/activity",
+    );
   });
 
   it("lists the sample staff list in ADMIN ACCOUNTS, with the Owner's own row first", async () => {

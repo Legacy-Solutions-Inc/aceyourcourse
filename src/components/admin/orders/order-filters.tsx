@@ -14,11 +14,12 @@ const SELECT =
 /**
  * The Orders list's search, Payment Method, range, "Include test orders",
  * "Invoice requested" (ticket 08: the Orders whose official invoice was
- * requested and not yet sent) and "Paid after expiry" (ticket 11: the
- * Overview's Needs attention opens it) (mockup 663–668; BUILD-MAP §3.9): each
- * lives in the URL, so the server filters the list and a reload or a shared
- * link keeps it. The status chips are links beside them. A change shows at
- * once, while the server filters.
+ * requested and not yet sent), "Paid after expiry" (ticket 11) and "Paid,
+ * account deleted" (ticket 14: the Orders paid after their account was
+ * deleted, to refund), which the Overview's Needs attention opens (mockup
+ * 663–668; BUILD-MAP §3.9): each lives in the URL, so the server filters the
+ * list and a reload or a shared link keeps it. The status chips are links
+ * beside them. A change shows at once, while the server filters.
  */
 export function OrderFilters({ query }: { query: OrderListQuery }) {
   const router = useRouter();
@@ -98,6 +99,15 @@ export function OrderFilters({ query }: { query: OrderListQuery }) {
           className="size-4 accent-ayc-navy"
         />
         Paid after expiry
+      </label>
+      <label className="flex min-h-10 cursor-pointer items-center gap-2 text-[13px] font-semibold">
+        <input
+          type="checkbox"
+          checked={shown.paidWithoutAccount}
+          onChange={(event) => go({ ...shown, paidWithoutAccount: event.target.checked })}
+          className="size-4 accent-ayc-navy"
+        />
+        Paid, account deleted
       </label>
     </>
   );

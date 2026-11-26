@@ -113,6 +113,7 @@ describe.each(MEMBER_ARMS)("Member seam: buying ($name)", (arm) => {
           createdAt: BOOT.toISOString(),
           paidAt: null,
           statusChangedAt: BOOT.toISOString(),
+          paidWithoutAccount: false,
         },
       ]);
     });

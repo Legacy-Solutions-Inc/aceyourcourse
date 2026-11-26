@@ -151,6 +151,41 @@ export interface StaffActivity {
   after: unknown;
 }
 
+/** A Staff Activity record with its place in the log: a later record always has a higher `seq`. */
+export interface StaffActivityEntry extends StaffActivity {
+  seq: number;
+}
+
+/** Who appears in Staff Activity: each email once, with the name its latest record gives. */
+export interface StaffActivityActor {
+  email: string;
+  name: string;
+}
+
+/** The Staff Activity list's filters and cursor, as its URL holds them (ticket 15). */
+export interface StaffActivityQuery {
+  /** Only this actor's records, by the email recorded, or everyone's. */
+  actor: string | null;
+  /** Only this area's records (src/lib/admin/staff-activity-view.ts), or every area's. */
+  area: string | null;
+  /** The cursor: only records older than this `seq`, or the newest. */
+  before: number | null;
+}
+
+/**
+ * The Staff Activity list for Owners (Phase 4, ticket 15): one page of the
+ * records the filters match, newest first; the cursor of the next (older)
+ * page, or null on the last; and every actor and entity ever recorded, for
+ * the filters.
+ */
+export interface StaffActivityList {
+  query: StaffActivityQuery;
+  entries: StaffActivityEntry[];
+  next: number | null;
+  actors: StaffActivityActor[];
+  entities: string[];
+}
+
 /** Who is signing in: their verified email, and their name when the sign-in gives one. */
 export interface SignInIdentity {
   email: string;
@@ -874,7 +909,7 @@ export interface AdminPrivacyRequestDetail extends AdminPrivacyRequest {
   /**
    * Why "Delete this account" is refused now, or null when it isn't: the
    * Member's email is on the staff list (an active Staff User or an Invite),
-   * or they're the last Owner.
+   * or they're the last Owner, or they have a payment in progress (ticket 14).
    */
   deletionBlocked: string | null;
   /**
@@ -884,6 +919,11 @@ export interface AdminPrivacyRequestDetail extends AdminPrivacyRequest {
   deletionUnfinished: boolean;
   /** Whether the Member's email is on the Beta Tester list, where deleting the account leaves it. */
   betaTester: boolean;
+  /**
+   * The Member's Orders ever Paid (Refunded ones too), which deleting the
+   * account keeps for tax records, without it (ticket 14); 0 with no Member.
+   */
+  paidOrders: number;
 }
 
 /** "Download this Member's data" (story 133q): the JSON file, and the name it downloads as. */
@@ -977,6 +1017,8 @@ export interface OrderListQuery {
   invoiceRequested: boolean;
   /** "Paid after expiry" (ticket 11): only the Orders PayMongo confirmed after they expired. */
   paidAfterExpiry: boolean;
+  /** "Paid, account deleted" (ticket 14): only the Orders paid after their account was deleted. */
+  paidWithoutAccount: boolean;
 }
 
 /** An Order as the Admin shows it. */
@@ -1012,7 +1054,7 @@ export interface PaymentWork {
   invoicesToSend: number;
   /** The Orders paid after expiry, made in the last 7 Manila days. */
   paidAfterExpiry: number;
-  /** The Orders paid after their account was deleted, to refund in PayMongo (ticket 14; none until then). */
+  /** The Orders of any age paid after their account was deleted and still Paid, to refund in PayMongo (ticket 14). */
   paidAccountDeleted: number;
 }
 

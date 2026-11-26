@@ -6,7 +6,11 @@ import { getDb } from "@/lib/db/client";
 import * as schema from "@/lib/db/schema";
 import { getStorage, isStorageConfigured } from "@/lib/supabase/admin";
 import { databaseArm } from "@/services/admin.db";
-import { deniedSignInFromRow, staffActivityFromRow } from "@/services/admin.rows";
+import {
+  deniedSignInFromRow,
+  staffActivityFromRow,
+  staffActivityToRow,
+} from "@/services/admin.rows";
 import {
   accessPassGrantFromRow,
   accessPassGrantToRow,
@@ -156,6 +160,12 @@ export const DATABASE_ARM: AdminArm = {
     (await getDb().select().from(schema.staffActivity).orderBy(asc(schema.staffActivity.seq))).map(
       staffActivityFromRow,
     ),
+  putStaffActivity: async (records) => {
+    // One at a time, so each record's seq follows the one before it.
+    for (const record of records) {
+      await getDb().insert(schema.staffActivity).values(staffActivityToRow(record));
+    }
+  },
   deniedSignIns: async () =>
     (await getDb().select().from(schema.deniedSignIns).orderBy(asc(schema.deniedSignIns.seq))).map(
       deniedSignInFromRow,

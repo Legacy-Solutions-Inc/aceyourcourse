@@ -87,6 +87,7 @@ const NOTED_ORDER: Order = {
   createdAt: new Date().toISOString(),
   paidAt: null,
   statusChangedAt: new Date().toISOString(),
+  paidWithoutAccount: false,
 };
 
 /** Bea's Paid Order, whose official invoice she has asked for (ticket 08). */
@@ -154,6 +155,8 @@ const READS = [
   // The Orders list and one Order's detail page (Phase 4, ticket 07).
   "listOrdersForAdmin",
   "getOrderForAdmin",
+  // The Staff Activity list itself (Phase 4, ticket 15): reading it records nothing.
+  "listStaffActivity",
 ] as const satisfies readonly (keyof AdminService)[];
 
 /**

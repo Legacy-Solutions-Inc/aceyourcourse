@@ -1,4 +1,5 @@
 import { isPassActive } from "@/lib/member-app/access";
+import { awaitsRefund } from "@/lib/payments/order-ledger";
 import { sampleOrderRecord } from "@/services/mock/admin/orders";
 import { getSampleStore } from "@/services/mock/sample-store";
 import { salesCalls, type SalesStore } from "@/services/sales.core";
@@ -20,7 +21,8 @@ const sampleSalesStore: SalesStore = {
             after(order.paidAt) ||
             order.status === "pending" ||
             refunds.some((refund) => after(refund.refundedAt)) ||
-            (invoice !== null && invoice.sentAt === null),
+            (invoice !== null && invoice.sentAt === null) ||
+            awaitsRefund(order),
         ),
     );
   },

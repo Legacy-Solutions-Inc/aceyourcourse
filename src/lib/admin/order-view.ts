@@ -1,5 +1,5 @@
 import { formatPeso } from "@/lib/money";
-import { ORDER_EXPIRES_AFTER_MS, type OrderStatus } from "@/lib/payments/order-ledger";
+import { expiresAt, type OrderStatus } from "@/lib/payments/order-ledger";
 import { isFullyRefunded, isPartiallyRefunded } from "@/lib/payments/refunds";
 import { failureCopy, methodLabel, methodTag } from "@/lib/payments/payment-methods";
 import { periodLabel } from "@/lib/plans/plan-text";
@@ -12,7 +12,10 @@ import type { AdminOrder, OrderStatusCheck } from "@/services/admin.types";
 // what "Check status with PayMongo" found, and PayMongo's reference and
 // dashboard link. Refunds (ticket 09): each succeeded refund is a timeline
 // step, the one reaching the whole amount refunding it in full, and a Paid
-// Order's partial refund reads "PARTIALLY REFUNDED · ₱300".
+// Order's partial refund reads "PARTIALLY REFUNDED · ₱300". An Order kept
+// after its account was deleted reads "Account deleted" (ticket 14), and one
+// paid after that gave no access: its timeline and note say so, and to
+// refund it in PayMongo.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -29,6 +32,14 @@ export const orderStatusLabel = (status: OrderStatus): string => STATUS_LABELS[s
 /** Pure: a status as its tag reads it: "PAID". */
 export const orderStatusTag = (status: OrderStatus): string => STATUS_LABELS[status].toUpperCase();
 
+/**
+ * Pure: whether an Order was kept after its buyer's account was deleted
+ * (ticket 14): every Order is made by a signed-in Member, and only deleting
+ * their account empties it.
+ */
+export const isAccountDeleted = ({ userId }: Pick<AdminOrder, "userId">): boolean =>
+  userId === null;
+
 /** Pure: what the Order bought: "CE All-Access · 3 months". */
 export const orderItem = ({ planName, days }: Pick<AdminOrder, "planName" | "days">): string =>
   `${planName} · ${periodLabel(days)}`;
@@ -40,15 +51,12 @@ export interface TimelineStep {
   tone: "info" | "done" | "waiting" | "failed";
 }
 
-/** Pure: when an Order made at `createdAt` showed as Expired. */
-const expiredAt = (createdAt: string) =>
-  new Date(new Date(createdAt).getTime() + ORDER_EXPIRES_AFTER_MS).toISOString();
-
 const EXPIRED_STEP = "Expired · no payment confirmed within 24 hours";
 
 /**
  * Pure: an Order's refunds as timeline steps, oldest first: partial ones
- * changed no access; the one reaching the whole amount refunded it in full.
+ * changed no access; the one reaching the whole amount refunded it in full,
+ * its unused days removed (none for one paid with no account: it gave none).
  * A Refunded Order with no refund recorded ends on its status change.
  */
 function refundSteps(order: AdminOrder): TimelineStep[] {
@@ -61,14 +69,16 @@ function refundSteps(order: AdminOrder): TimelineStep[] {
   return order.refunds.map(({ amountCentavos, refundedAt }) => {
     refunded += amountCentavos;
     const amount = formatPeso(amountCentavos);
+    // An Order paid with no account gave no access, so its refunds change none.
+    const gaveAccess = !order.paidWithoutAccount;
     return isFullyRefunded(order, refunded)
       ? {
-          label: `Refunded in full in PayMongo · ${amount} · unused days removed`,
+          label: `Refunded in full in PayMongo · ${amount}${gaveAccess ? " · unused days removed" : ""}`,
           at: refundedAt,
           tone: "failed",
         }
       : {
-          label: `Partially refunded in PayMongo · ${amount} · access unchanged`,
+          label: `Partially refunded in PayMongo · ${amount}${gaveAccess ? " · access unchanged" : ""}`,
           at: refundedAt,
           tone: "info",
         };
@@ -88,7 +98,7 @@ export function orderTimeline(order: AdminOrder): TimelineStep[] {
   const sent: TimelineStep = { label: `Sent to ${method}`, at: order.createdAt, tone: "info" };
   const expired: TimelineStep = {
     label: EXPIRED_STEP,
-    at: expiredAt(order.createdAt),
+    at: expiresAt(order.createdAt),
     tone: "failed",
   };
 
@@ -124,7 +134,13 @@ export function orderTimeline(order: AdminOrder): TimelineStep[] {
               { label: `Paid after expiry · with ${method}`, at: paidAt, tone: "info" as const },
             ]
           : [started, { label: `Paid with ${method}`, at: paidAt, tone: "info" as const }]),
-        { label: "PayMongo confirmed · access granted", at: paidAt, tone: "done" },
+        order.paidWithoutAccount
+          ? {
+              label: "PayMongo confirmed · account deleted, no access given",
+              at: paidAt,
+              tone: "failed",
+            }
+          : { label: "PayMongo confirmed · access granted", at: paidAt, tone: "done" },
       ];
       return [...paid, ...refundSteps(order)];
     }
@@ -133,6 +149,8 @@ export function orderTimeline(order: AdminOrder): TimelineStep[] {
 
 const PAID_START = "Paid and confirmed by PayMongo. Access started right away.";
 const PAID_NOTE = `${PAID_START} Refunds, if any, are issued from the PayMongo dashboard.`;
+const PAID_WITHOUT_ACCOUNT =
+  "PayMongo confirmed this payment after the Member’s account was deleted, so it gave no access.";
 
 /** Pure: the status note: what this status means, and what happens next. */
 export function statusNote(order: AdminOrder): string {
@@ -144,6 +162,13 @@ export function statusNote(order: AdminOrder): string {
     case "failed":
       return `The payment didn’t go through and the Member wasn’t charged. They saw “${failureCopy(order.method).title}” with other ways to pay.`;
     case "paid": {
+      if (order.paidWithoutAccount) {
+        const sofar =
+          order.refundedCentavos > 0
+            ? `: ${formatPeso(order.refundedCentavos)} of it is refunded so far`
+            : "";
+        return `${PAID_WITHOUT_ACCOUNT} Refund it in the PayMongo dashboard${sofar}.`;
+      }
       const note =
         order.refundedCentavos > 0
           ? `${PAID_START} PayMongo refunded ${formatPeso(order.refundedCentavos)} of it, which changed no access: adjust it on the Member’s page if needed.`
@@ -153,7 +178,9 @@ export function statusNote(order: AdminOrder): string {
         : note;
     }
     case "refunded":
-      return "Refunded in full in PayMongo. This Order’s unused days came off the Access Pass, and the Member was told in the app.";
+      return order.paidWithoutAccount
+        ? "Refunded in full in PayMongo. It was paid after the Member’s account was deleted, so it never gave access."
+        : "Refunded in full in PayMongo. This Order’s unused days came off the Access Pass, and the Member was told in the app.";
   }
 }
 

@@ -73,6 +73,12 @@ describe("OrderList", () => {
     expect(replace).toHaveBeenLastCalledWith("/admin/orders?late=1", { scroll: false });
   });
 
+  it("keeps only the Orders paid after their account was deleted when ticked (ticket 14)", async () => {
+    const { user } = renderList();
+    await user.click(screen.getByRole("checkbox", { name: "Paid, account deleted" }));
+    expect(replace).toHaveBeenLastCalledWith("/admin/orders?noaccount=1", { scroll: false });
+  });
+
   it("tags an Order whose invoice was requested and not yet sent", () => {
     const order = {
       id: "00000000-0000-4000-8000-000000010003",
@@ -97,6 +103,7 @@ describe("OrderList", () => {
       createdAt: "2026-11-25T01:00:00.000Z",
       paidAt: "2026-11-25T01:01:00.000Z",
       statusChangedAt: "2026-11-25T01:01:00.000Z",
+      paidWithoutAccount: false,
     } as const;
     const request = {
       orderId: order.id,
@@ -154,6 +161,7 @@ describe("OrderList", () => {
         createdAt: "2026-11-25T01:00:00.000Z",
         paidAt: "2026-11-25T01:01:00.000Z",
         statusChangedAt: "2026-11-25T01:01:00.000Z",
+        paidWithoutAccount: false,
         ...fields,
       }) as AdminOrderList["rows"][number];
     renderList({
@@ -174,6 +182,61 @@ describe("OrderList", () => {
     const refunded = screen.getByRole("row", { name: /AYC-10008/ });
     expect(refunded).toHaveTextContent("REFUNDED");
     expect(refunded).not.toHaveTextContent("PARTIALLY");
+  });
+
+  it("marks Orders kept after their account was deleted, and one paid after it to refund (ticket 14)", () => {
+    const row = (reference: string, fields: Partial<AdminOrderList["rows"][number]>) =>
+      ({
+        id: reference,
+        reference,
+        userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
+        examCode: "CE",
+        planId: "plan-ce-30",
+        planName: "CE All-Access",
+        days: 30,
+        priceCentavos: 49_900,
+        method: "maya",
+        status: "paid",
+        recordedStatus: "paid",
+        paidAfterExpiry: false,
+        invoice: null,
+        refunds: [],
+        refundedCentavos: 0,
+        livemode: true,
+        checkoutId: null,
+        paymentId: null,
+        buyerName: null,
+        buyerEmail: "rina.cruz@example.com",
+        createdAt: "2026-11-25T01:00:00.000Z",
+        paidAt: "2026-11-25T01:01:00.000Z",
+        statusChangedAt: "2026-11-25T01:01:00.000Z",
+        paidWithoutAccount: false,
+        ...fields,
+      }) as AdminOrderList["rows"][number];
+    renderList({
+      ...EMPTY,
+      rows: [
+        row("AYC-10001", {}),
+        row("AYC-10002", { userId: null }),
+        row("AYC-10003", { userId: null, paidWithoutAccount: true }),
+        row("AYC-10004", {
+          userId: null,
+          paidWithoutAccount: true,
+          status: "refunded",
+          recordedStatus: "refunded",
+          refundedCentavos: 49_900,
+        }),
+      ],
+    });
+
+    const shown = (reference: string) => screen.getByRole("row", { name: new RegExp(reference) });
+    expect(shown("AYC-10001")).not.toHaveTextContent("ACCOUNT DELETED");
+    expect(shown("AYC-10002")).toHaveTextContent("rina.cruz@example.comACCOUNT DELETED");
+    expect(shown("AYC-10002")).not.toHaveTextContent("REFUND IN PAYMONGO");
+    expect(shown("AYC-10003")).toHaveTextContent("ACCOUNT DELETED");
+    expect(shown("AYC-10003")).toHaveTextContent("REFUND IN PAYMONGO");
+    // Refunded since: settled.
+    expect(shown("AYC-10004")).not.toHaveTextContent("REFUND IN PAYMONGO");
   });
 
   it("offers a chip per status, linking to it", () => {

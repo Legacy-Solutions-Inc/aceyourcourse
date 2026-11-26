@@ -413,18 +413,23 @@ export const deniedSignIns = pgTable(
  * values before and after, in the order they were written (`seq`). It keeps
  * the actor's email and name, so it outlives their removal from the staff list.
  */
-export const staffActivity = pgTable("staff_activity", {
-  id: uuid("id").primaryKey(),
-  seq: bigint("seq", { mode: "number" }).generatedAlwaysAsIdentity(),
-  at: at("at").notNull(),
-  actorEmail: text("actor_email").notNull(),
-  actorName: text("actor_name").notNull(),
-  entity: text("entity").notNull(),
-  entityId: text("entity_id").notNull(),
-  action: text("action").notNull(),
-  before: jsonb("before"),
-  after: jsonb("after"),
-}).enableRLS();
+export const staffActivity = pgTable(
+  "staff_activity",
+  {
+    id: uuid("id").primaryKey(),
+    seq: bigint("seq", { mode: "number" }).generatedAlwaysAsIdentity(),
+    at: at("at").notNull(),
+    actorEmail: text("actor_email").notNull(),
+    actorName: text("actor_name").notNull(),
+    entity: text("entity").notNull(),
+    entityId: text("entity_id").notNull(),
+    action: text("action").notNull(),
+    before: jsonb("before"),
+    after: jsonb("after"),
+  },
+  // The Staff Activity list for Owners pages newest first by keyset on seq (ticket 15).
+  (t) => [index("staff_activity_seq_idx").on(t.seq)],
+).enableRLS();
 
 /**
  * Each editable record's last save: when, and by whom. A record is what one
@@ -1204,6 +1209,9 @@ export const orders = pgTable(
     // The Orders admin's internal note, which only Staff see (ticket 07);
     // null for none. Its stamp is the record "order-note:<id>" (record_stamps).
     internalNote: text("internal_note"),
+    // Its payment landed after the account was deleted, so it granted nothing
+    // and an Owner refunds it in PayMongo (ticket 14). Set by the ledger.
+    paidWithoutAccount: boolean("paid_without_account").notNull().default(false),
   },
   (t) => [
     index("orders_user_id_idx").on(t.userId),
@@ -1224,6 +1232,11 @@ export const orders = pgTable(
     check(
       "orders_paid_at_once_paid",
       sql`(${t.status} in ('paid', 'refunded')) = (${t.paidAt} is not null)`,
+    ),
+    // Only a paid Order with no account can have been paid without one.
+    check(
+      "orders_paid_without_account_detached",
+      sql`not ${t.paidWithoutAccount} or (${t.userId} is null and ${t.paidAt} is not null)`,
     ),
   ],
 ).enableRLS();

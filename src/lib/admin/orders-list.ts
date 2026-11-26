@@ -19,7 +19,7 @@ import {
 // BUILD-MAP §3.9), pure, so both arms of the Admin seam filter the same way.
 //
 // - The URL holds the search and filters, so a reload or a shared link keeps
-//   them: ?q=10482&status=paid&method=gcash&range=7d&tests=1&invoice=requested&late=1.
+//   them: ?q=10482&status=paid&method=gcash&range=7d&tests=1&invoice=requested&late=1&noaccount=1.
 //   Anything it doesn't know falls back to its default, and the defaults are
 //   left out.
 // - "Search by order number or email": part of the reference or of the
@@ -34,7 +34,11 @@ import {
 //   invoice was requested and isn't marked sent yet: the ones to send.
 // - "Paid after expiry" (ticket 11) keeps only the Orders PayMongo confirmed
 //   more than 24 hours after they were made (the Order ledger's
-//   paidAfterExpiry), whatever their status since.
+//   paidAfterExpiry), whatever their status since, whose days were added: one
+//   paid with no account (ticket 14) is under "Paid, account deleted".
+// - "Paid, account deleted" (ticket 14) keeps only the Orders whose payment
+//   landed after their account was deleted (the Order's paidWithoutAccount),
+//   which granted nothing.
 // - The tiles count the Orders the filters match.
 // - The Overview's Needs attention (ticket 11) counts its payment items with
 //   the very filters its links open (PAYMENT_WORK), so a count and its list
@@ -45,8 +49,8 @@ type SearchParams = Record<string, string | string[] | undefined>;
 
 /**
  * The Orders list as it opens: no search, any status, every method, the last
- * 30 days, no Test Orders, and every Order whatever its Invoice Request or
- * when it was paid.
+ * 30 days, no Test Orders, and every Order whatever its Invoice Request, when
+ * it was paid, or whether its account was there to be paid for.
  */
 export const DEFAULT_ORDER_QUERY: OrderListQuery = {
   q: null,
@@ -56,6 +60,7 @@ export const DEFAULT_ORDER_QUERY: OrderListQuery = {
   tests: false,
   invoiceRequested: false,
   paidAfterExpiry: false,
+  paidWithoutAccount: false,
 };
 
 /** How many Manila days each range holds, today included. */
@@ -94,12 +99,14 @@ export function parseOrdersParams(params: SearchParams): OrderListQuery {
     tests: value("tests") === "1",
     invoiceRequested: value("invoice").toLowerCase() === INVOICE_REQUESTED,
     paidAfterExpiry: value("late") === "1",
+    paidWithoutAccount: value("noaccount") === "1",
   };
 }
 
 /** Pure: the search params for a query, leaving the defaults out. */
 function searchOf(query: OrderListQuery): string {
-  const { q, status, method, range, tests, invoiceRequested, paidAfterExpiry } = query;
+  const { q, status, method, range, tests, invoiceRequested, paidAfterExpiry, paidWithoutAccount } =
+    query;
   const params = new URLSearchParams();
   if (q) params.set("q", q);
   if (status !== DEFAULT_ORDER_QUERY.status) params.set("status", status);
@@ -108,6 +115,7 @@ function searchOf(query: OrderListQuery): string {
   if (tests) params.set("tests", "1");
   if (invoiceRequested) params.set("invoice", INVOICE_REQUESTED);
   if (paidAfterExpiry) params.set("late", "1");
+  if (paidWithoutAccount) params.set("noaccount", "1");
   const search = params.toString();
   return search ? `?${search}` : "";
 }
@@ -161,7 +169,8 @@ export function filterOrders(
         (query.method === "all" || order.method === query.method) &&
         (since === null || new Date(order.createdAt) >= since) &&
         (!query.invoiceRequested || invoiceToSend(order)) &&
-        (!query.paidAfterExpiry || order.paidAfterExpiry) &&
+        (!query.paidAfterExpiry || (order.paidAfterExpiry && !order.paidWithoutAccount)) &&
+        (!query.paidWithoutAccount || order.paidWithoutAccount) &&
         matchesSearch(order, query.q),
     )
     .sort(newestOrderFirst);
@@ -184,18 +193,25 @@ export function orderStats(rows: readonly AdminOrder[]): OrderStats {
  * 24 hours, so the last 30 days hold them all), the invoice requests to send
  * on Orders of any age, and the Orders paid after expiry made in the last 7
  * days (so the item clears itself: the user's choice) and still Paid (one
- * since refunded is settled). Test Orders are left out of each.
+ * since refunded is settled), and (ticket 14) the Orders of any age paid
+ * after their account was deleted and still Paid, which a refund in PayMongo
+ * settles. Test Orders are left out of each.
  */
 export const PAYMENT_WORK = {
   pending: { ...DEFAULT_ORDER_QUERY, status: "pending" },
   invoicesToSend: { ...DEFAULT_ORDER_QUERY, range: "all", invoiceRequested: true },
   paidAfterExpiry: { ...DEFAULT_ORDER_QUERY, status: "paid", range: "7d", paidAfterExpiry: true },
+  paidAccountDeleted: {
+    ...DEFAULT_ORDER_QUERY,
+    status: "paid",
+    range: "all",
+    paidWithoutAccount: true,
+  },
 } as const satisfies Record<string, OrderListQuery>;
 
 /**
  * Pure: the payment work waiting at `now`, counted over the Orders with the
- * filters PAYMENT_WORK's links open. "Paid, account deleted" is none until
- * ticket 14 records which Paid Orders landed on a deleted account.
+ * filters PAYMENT_WORK's links open.
  */
 export function paymentWork(orders: readonly AdminOrder[], now: Date): PaymentWork {
   const pending = filterOrders(orders, PAYMENT_WORK.pending, now);
@@ -205,7 +221,7 @@ export function paymentWork(orders: readonly AdminOrder[], now: Date): PaymentWo
     oldestPendingAt: pending.at(-1)?.createdAt ?? null,
     invoicesToSend: filterOrders(orders, PAYMENT_WORK.invoicesToSend, now).length,
     paidAfterExpiry: filterOrders(orders, PAYMENT_WORK.paidAfterExpiry, now).length,
-    paidAccountDeleted: 0,
+    paidAccountDeleted: filterOrders(orders, PAYMENT_WORK.paidAccountDeleted, now).length,
   };
 }
 

@@ -1,13 +1,15 @@
 import { expect as baseExpect, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
-import { LIVE, resetSampleData, signInAs } from "./helpers";
+import { LIVE, resetSampleData, sampleEmail, signInAs } from "./helpers";
 
 // Settings on sample data (ticket 02): an Owner edits the contact email, the
 // store and social links and the trust figures, and each save is live on the
 // Website at once. Plus the conflict check between two Owners, Reset, and an
 // Editor refused. The business details for Payment Acknowledgements (Phase 4,
-// ticket 06) save the same way; billing.spec.ts shows them on one.
+// ticket 06) save the same way; billing.spec.ts shows them on one. Staff
+// Activity (Phase 4, ticket 15) lists the Owner's save, read-only, and refuses
+// an Editor.
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -281,5 +283,64 @@ test("an Editor is refused Settings with the owners-only 403 screen", async ({ p
   await signInAs(page, "editor");
   await expect(page).toHaveURL(/\/admin$/);
   await page.goto(paths.admin.settings);
+  await expect(page).toHaveURL(/\/admin\/denied\?reason=owners-only$/);
+});
+
+// Staff Activity (Phase 4, ticket 15): read-only, under Settings, Owners only.
+const activityList = (page: Page) => page.getByRole("list", { name: "Staff Activity" });
+const activityItems = (page: Page) => activityList(page).locator(":scope > li");
+
+test("an Owner's save is at the top of Staff Activity under their name, and the list filters by them", async ({
+  page,
+}) => {
+  await openSettings(page);
+  const before = todayInManila();
+  await saveContactEmail(page, NEW_EMAIL);
+  await expect(contactPart(page).getByRole("status")).toHaveText("✓ SAVED · LIVE ON THE SITE");
+
+  await page.getByRole("link", { name: "Open Staff Activity" }).click();
+  await expect(page).toHaveURL(/\/admin\/settings\/activity$/);
+  await expect(page.getByRole("heading", { level: 2, name: "STAFF ACTIVITY" })).toBeVisible();
+  const top = activityItems(page).first();
+  await expect(top).toContainText("Angel Rose L. Lepaña");
+  await expect(top).toContainText(sampleEmail("owner"));
+  await expect(top).toContainText("Settings");
+  await expect(top.getByRole("list", { name: "What changed" })).toContainText(
+    "Changed: contactEmail",
+  );
+  // Dated today in Manila, as the Admin writes a time: "26 Nov 2026, 1:30 am".
+  await expect(top.locator("time")).toHaveText(
+    new RegExp(`^(${savedOn(before)}),\\s\\d{1,2}:\\d{2}\\s[ap]m$`, "i"),
+  );
+  await top.getByText("Before and after").click();
+  await expect(top.getByText(NEW_EMAIL)).toBeVisible();
+
+  await page
+    .getByRole("combobox", { name: "Staff member" })
+    .selectOption({ label: `Angel Rose L. Lepaña · ${sampleEmail("owner")}` });
+  await expect(page).toHaveURL(/actor=angel%40aceyourcourse\.ph$/);
+  await expect(activityItems(page)).not.toHaveCount(0);
+  for (const item of await activityItems(page).all()) {
+    await expect(item).toContainText("Angel Rose L. Lepaña");
+  }
+
+  await page.getByRole("combobox", { name: "Area" }).selectOption({ label: "Settings" });
+  await expect(page).toHaveURL(/actor=angel%40aceyourcourse\.ph&area=settings$/);
+  await expect(activityItems(page).first()).toContainText("Changed: contactEmail");
+});
+
+test("a filter nothing matches shows No activity, with a way back to all of it", async ({
+  page,
+}) => {
+  await signInAs(page, "owner", `${paths.admin.staffActivity}?actor=nobody%40example.com`);
+  await expect(page.getByText("No activity")).toBeVisible();
+  await page.getByRole("link", { name: "Show all activity" }).click();
+  await expect(page).toHaveURL(/\/admin\/settings\/activity$/);
+});
+
+test("an Editor is refused Staff Activity with the owners-only 403 screen", async ({ page }) => {
+  await signInAs(page, "editor");
+  await expect(page).toHaveURL(/\/admin$/);
+  await page.goto(paths.admin.staffActivity);
   await expect(page).toHaveURL(/\/admin\/denied\?reason=owners-only$/);
 });

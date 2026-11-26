@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { Order } from "@/lib/payments/order-ledger";
+
 import { buildMemberDataExport, type MemberDataSource, memberDataFilename } from "./data-export";
 
 // A Member's data copy (spec, Phase 3 planning decisions → Privacy Requests
@@ -13,6 +15,30 @@ const BEA = "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21";
 const SAM = "1c9d7e52-3b0a-4f6e-8d2c-5a4b3c2d1e0f";
 // 10:00 on 20 Nov 2026 in Manila.
 const NOW = new Date("2026-11-20T02:00:00.000Z");
+
+/** An Order of `userId`'s (Phase 4, ticket 14): CE 3 months by GCash, live, Paid. */
+const order = (userId: string, reference: string, fields: Partial<Order> = {}): Order => ({
+  id: `order-${reference}`,
+  reference,
+  userId,
+  examCode: "CE",
+  planId: "plan-ce-90",
+  planName: "CE All-Access",
+  days: 90,
+  priceCentavos: 129_900,
+  method: "gcash",
+  status: "paid",
+  livemode: true,
+  checkoutId: `cs_${reference}`,
+  paymentId: `pay_${reference}`,
+  buyerName: "Bea Tester",
+  buyerEmail: "tester@example.com",
+  createdAt: "2026-11-08T01:00:00.000Z",
+  paidAt: "2026-11-08T01:02:00.000Z",
+  statusChangedAt: "2026-11-08T01:02:00.000Z",
+  paidWithoutAccount: false,
+  ...fields,
+});
 
 /** Bea's records and Sam's, side by side, as the sample data holds them. */
 function bothMembers(): MemberDataSource {
@@ -165,6 +191,56 @@ function bothMembers(): MemberDataSource {
         reference: null,
       },
     ],
+    // Newest first, as the Admin reads them (ticket 14).
+    orders: [
+      {
+        // Made 25 hours ago and never confirmed: every screen shows it Expired.
+        order: order(BEA, "AYC-10003", {
+          status: "pending",
+          method: "maya",
+          checkoutId: null,
+          paymentId: null,
+          createdAt: "2026-11-19T01:00:00.000Z",
+          paidAt: null,
+          statusChangedAt: "2026-11-19T01:00:00.000Z",
+        }),
+        invoice: null,
+        refunds: [],
+      },
+      {
+        order: order(SAM, "AYC-10002", { buyerName: null, buyerEmail: "stranger@example.com" }),
+        invoice: null,
+        refunds: [],
+      },
+      {
+        order: order(BEA, "AYC-10001"),
+        invoice: {
+          orderId: "order-AYC-10001",
+          name: "Sample Builders Inc.",
+          address: "12 Sample St, Jaro, Iloilo City",
+          tin: "123-456-789-000",
+          requestedAt: "2026-11-09T01:00:00.000Z",
+          sentAt: "2026-11-10T01:00:00.000Z",
+          sentBy: { email: "angel@aceyourcourse.ph", name: "Angel" },
+        },
+        refunds: [
+          {
+            id: "ref_pending",
+            orderId: "order-AYC-10001",
+            amountCentavos: 10_000,
+            status: "pending",
+            refundedAt: null,
+          },
+          {
+            id: "ref_done",
+            orderId: "order-AYC-10001",
+            amountCentavos: 30_000,
+            status: "succeeded",
+            refundedAt: "2026-11-11T01:00:00.000Z",
+          },
+        ],
+      },
+    ],
   };
 }
 
@@ -172,7 +248,8 @@ describe("buildMemberDataExport", () => {
   it("gives every section of the Member's data, and only theirs", () => {
     expect(buildMemberDataExport(bothMembers(), NOW)).toEqual({
       format: "ayc-member-data",
-      version: 1,
+      // Version 2 adds the Member's Orders (ticket 14); every other section is as version 1's.
+      version: 2,
       exportedAt: NOW.toISOString(),
       profile: {
         userId: BEA,
@@ -255,6 +332,48 @@ describe("buildMemberDataExport", () => {
           reference: null,
         },
       ],
+      // Oldest first; each as bought, as every screen shows it now, with the
+      // refunds that went through and the Invoice Request.
+      orders: [
+        {
+          reference: "AYC-10001",
+          examCode: "CE",
+          planName: "CE All-Access",
+          days: 90,
+          priceCentavos: 129_900,
+          method: "gcash",
+          status: "paid",
+          livemode: true,
+          createdAt: "2026-11-08T01:00:00.000Z",
+          paidAt: "2026-11-08T01:02:00.000Z",
+          buyer: { name: "Bea Tester", email: "tester@example.com" },
+          payMongoReference: "pay_AYC-10001",
+          refunds: [{ amountCentavos: 30_000, refundedAt: "2026-11-11T01:00:00.000Z" }],
+          invoiceRequest: {
+            name: "Sample Builders Inc.",
+            address: "12 Sample St, Jaro, Iloilo City",
+            tin: "123-456-789-000",
+            requestedAt: "2026-11-09T01:00:00.000Z",
+            sentAt: "2026-11-10T01:00:00.000Z",
+          },
+        },
+        {
+          reference: "AYC-10003",
+          examCode: "CE",
+          planName: "CE All-Access",
+          days: 90,
+          priceCentavos: 129_900,
+          method: "maya",
+          status: "expired",
+          livemode: true,
+          createdAt: "2026-11-19T01:00:00.000Z",
+          paidAt: null,
+          buyer: { name: "Bea Tester", email: "tester@example.com" },
+          payMongoReference: null,
+          refunds: [],
+          invoiceRequest: null,
+        },
+      ],
     });
   });
 
@@ -266,6 +385,10 @@ describe("buildMemberDataExport", () => {
     expect(file).not.toContain("notice-sam");
     expect(file).not.toContain("Firefox on Windows");
     expect(file).not.toContain("angel@aceyourcourse.ph");
+    // Sam's Order, and who on the staff marked an invoice sent (ticket 14).
+    expect(file).not.toContain("AYC-10002");
+    expect(file).not.toContain("stranger@example.com");
+    expect(file).not.toContain('"Angel"');
   });
 
   it("gives a Member with nothing kept yet every section, empty", () => {
@@ -290,6 +413,7 @@ describe("buildMemberDataExport", () => {
       resume: { decks: [], reviewerPdfs: [] },
       devices: { activeDevice: null, switches: [] },
       notices: [],
+      orders: [],
     });
   });
 

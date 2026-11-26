@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { orderItem, orderStatusTag } from "@/lib/admin/order-view";
+import { isAccountDeleted, orderItem, orderStatusTag } from "@/lib/admin/order-view";
 import {
   DEFAULT_ORDER_QUERY,
   invoiceToSend,
@@ -17,6 +17,7 @@ import {
 } from "@/lib/admin/orders-list";
 import { formatDate } from "@/lib/manila-time";
 import { formatPeso } from "@/lib/money";
+import { awaitsRefund } from "@/lib/payments/order-ledger";
 import { methodLabel } from "@/lib/payments/payment-methods";
 import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
@@ -33,7 +34,9 @@ const head = "h-auto px-0 py-2.5 font-mono text-[10px] font-bold tracking-[0.06e
  * Orders & payments (mockup 659–676; BUILD-MAP §3.9; story 147): the tiles for
  * the Orders the filters match, the search, status chips, Payment Method,
  * range and "Include test orders", all in the URL, then the Orders, newest
- * first. An Order's reference opens its detail page.
+ * first. An Order's reference opens its detail page. An Order kept after its
+ * account was deleted says ACCOUNT DELETED under the buyer's email, and one
+ * paid after that, still Paid, says REFUND IN PAYMONGO (ticket 14).
  */
 export function OrderList({ list }: { list: AdminOrderList }) {
   const { query, rows, stats } = list;
@@ -150,6 +153,9 @@ function OrderRow({ order }: { order: AdminOrder }) {
       <TableCell className="px-0 py-2.75 pr-2.5 whitespace-normal">
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="text-sm wrap-anywhere">{order.buyerEmail}</span>
+          {isAccountDeleted(order) ? (
+            <span className="font-mono text-[10px] font-bold text-ayc-slate">ACCOUNT DELETED</span>
+          ) : null}
           <span className="flex flex-col gap-0.5 wide:hidden">
             {item}
             <span className="flex flex-wrap gap-x-2">
@@ -176,6 +182,11 @@ function OrderRow({ order }: { order: AdminOrder }) {
           {invoiceToSend(order) ? (
             <span className="font-mono text-[10px] font-bold text-ayc-warning">
               INVOICE REQUESTED
+            </span>
+          ) : null}
+          {awaitsRefund(order) ? (
+            <span className="font-mono text-[10px] font-bold text-ayc-warning">
+              REFUND IN PAYMONGO
             </span>
           ) : null}
         </span>

@@ -38,6 +38,7 @@ const PAID: Order = {
   createdAt: inDays(-10),
   paidAt: inDays(-10),
   statusChangedAt: inDays(-10),
+  paidWithoutAccount: false,
 };
 
 /** A history row's segment: whose days, from and until (days from now). */

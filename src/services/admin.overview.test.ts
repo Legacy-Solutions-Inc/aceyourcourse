@@ -142,6 +142,7 @@ describe.each(ADMIN_ARMS)("Admin seam: the Owner's sales figures ($name)", (arm)
       buyerName: BEA.name,
       buyerEmail: BEA.email,
       statusChangedAt: paidAt ?? createdAt,
+      paidWithoutAccount: false,
       ...fields,
       createdAt,
       paidAt,
@@ -287,6 +288,21 @@ describe.each(ADMIN_ARMS)("Admin seam: the Owner's sales figures ($name)", (arm)
       paidAfterExpiry: 1,
       paidAccountDeleted: 0,
     });
+  });
+
+  it("counts the payments that landed after an account was deleted, however long ago, until refunded (ticket 14)", async () => {
+    const noAccount = { userId: null, paidWithoutAccount: true } as const;
+    await arm.putOrder(order("AYC-10001", 499, { ...noAccount, paidAt: inDays(-90) }));
+    await arm.putOrder(order("AYC-10002", 499, { ...noAccount, paidAt: inDays(-1) }));
+    await arm.putOrder(
+      order("AYC-10003", 499, { ...noAccount, paidAt: inDays(-80), status: "refunded" }),
+    );
+    // Paid before its account was deleted: kept for tax records, nothing to refund.
+    await arm.putOrder(order("AYC-10004", 499, { userId: null, paidAt: inDays(-70) }));
+
+    const { sales } = await seam.getOverview(OWNER);
+
+    expect(sales?.payments.paidAccountDeleted).toBe(2);
   });
 
   it("gives the PAID TODAY card: today's money, the Orders paid today and the Pending", async () => {

@@ -65,7 +65,8 @@ export interface AdminArm {
   deleteReviewElsewhere(id: string): Promise<void>;
   /**
    * Deletes a Member's record behind the seam's back, as deleting their
-   * account will (ticket 19). Their Privacy Requests stay, with no Member.
+   * account will (ticket 19). Their Privacy Requests and Orders (ticket 14)
+   * stay, with no Member.
    */
   deleteMemberElsewhere(userId: string): Promise<void>;
   /**
@@ -79,6 +80,11 @@ export interface AdminArm {
     purpose?: UploadRequest["purpose"];
   }): Promise<{ path: string; publicUrl: string }>;
   staffActivity(): Promise<StaffActivity[]>;
+  /**
+   * Appends Staff Activity records, in order, behind the seam's back, as other
+   * Staff Users' writes or PayMongo's outcomes would (ticket 15).
+   */
+  putStaffActivity(records: readonly StaffActivity[]): Promise<void>;
   deniedSignIns(): Promise<DeniedSignIn[]>;
   /**
    * Gives a Topic a Hidden deck or quiz, or a Draft Reviewer PDF, behind the
@@ -204,9 +210,17 @@ export const SAMPLE_ARM: AdminArm = {
   deleteMemberElsewhere: async (userId) => {
     const store = getSampleStore();
     store.members = store.members.filter((member) => member.userId !== userId);
+    // Their Orders stay, with no account, as the database's set null leaves them (ticket 14).
+    store.orders = store.orders.map((order) =>
+      order.userId === userId ? { ...order, userId: null } : order,
+    );
   },
   uploadPhoto: uploadSamplePhoto,
   staffActivity: async () => structuredClone(getSampleStore().staffActivity),
+  putStaffActivity: async (records) => {
+    const store = getSampleStore();
+    store.staffActivity = [...store.staffActivity, ...structuredClone(records)];
+  },
   deniedSignIns: async () => structuredClone(getSampleStore().deniedSignIns),
   putContent: async (kind, topicId) => {
     const store = getSampleStore();

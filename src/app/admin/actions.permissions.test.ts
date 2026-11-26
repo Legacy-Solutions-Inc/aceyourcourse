@@ -143,7 +143,16 @@ const BEA_ORDER = "AYC-10001";
  * the Admin uses the Active Device modules (src/app/app/device.test.tsx).
  */
 const BEA_PHONE = "b".repeat(64);
-/** Bea's Privacy Requests, made before each test: a data copy, and a deletion (ticket 19). */
+/**
+ * Lou, a second Member, with no Orders: Bea's Pending Order would block
+ * deleting her account (ticket 14), and only the Guard is under test here.
+ */
+const LOU = {
+  userId: "5e1d3c7b-9a2f-4e6d-8c1b-3a5f7e9d2c4b",
+  email: "lapsed@example.com",
+  name: "Lou Lapsed",
+};
+/** The Privacy Requests made before each test: Bea's data copy, and Lou's deletion (ticket 19). */
 const requests = { copy: "", deletion: "" };
 
 const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
@@ -274,7 +283,7 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     ),
     deleteAccount: owner(() =>
       users.deleteAccount(IDLE, {
-        input: { requestId: requests.deletion, confirmation: BEA.email },
+        input: { requestId: requests.deletion, confirmation: LOU.email },
       }),
     ),
     markRequestDone: owner(() =>
@@ -666,6 +675,7 @@ beforeEach(async () => {
       createdAt: store.bootedAt,
       paidAt: null,
       statusChangedAt: store.bootedAt,
+      paidWithoutAccount: false,
     },
   ];
   // An Invoice Request on it, for "Mark invoice sent" (ticket 08); only the Guard is under test here.
@@ -680,9 +690,10 @@ beforeEach(async () => {
       sentBy: null,
     },
   ];
-  // Bea asks, from Account, for a copy of her data and for her account to be deleted.
+  // Bea asks, from Account, for a copy of her data, and Lou for her account to be deleted.
+  await getOrCreateMember(LOU);
   requests.copy = (await requestPrivacy(BEA.userId, "data-copy")).request.id;
-  requests.deletion = (await requestPrivacy(BEA.userId, "deletion")).request.id;
+  requests.deletion = (await requestPrivacy(LOU.userId, "deletion")).request.id;
 });
 
 describe("the action registry", () => {

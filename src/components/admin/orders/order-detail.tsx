@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import type { AdminAction } from "@/lib/admin/action";
 import {
+  isAccountDeleted,
   orderItem,
   orderTimeline,
   payMongoDashboardUrl,
@@ -176,7 +177,7 @@ function Fact({ term: name, children }: { term: string; children: ReactNode }) {
 /** The buyer: a link to their Member detail page while their Member record is there. */
 function Member({ detail }: { detail: AdminOrderDetail }) {
   const { memberUserId, order } = detail;
-  const { buyerEmail, buyerName, userId } = order;
+  const { buyerEmail, buyerName } = order;
   return (
     <span className="flex flex-col gap-0.5">
       {memberUserId ? (
@@ -190,7 +191,7 @@ function Member({ detail }: { detail: AdminOrderDetail }) {
         <span className="font-semibold wrap-anywhere">{buyerEmail}</span>
       )}
       {buyerName ? <span className="text-[13px] text-muted-foreground">{buyerName}</span> : null}
-      {userId === null ? (
+      {isAccountDeleted(order) ? (
         <span className="font-mono text-[10px] font-bold text-ayc-slate">ACCOUNT DELETED</span>
       ) : null}
     </span>

@@ -5,13 +5,16 @@ import {
   addTargetExam,
   getOrCreateMember,
   listAccessPasses,
+  listNotices,
   payForPlan,
 } from "@/services/member.mock";
+import { salesOverview } from "@/services/mock/admin/sales";
 import { samplePlanId } from "@/services/mock/plans";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import { signFakeWebhook } from "@/services/payments.fake";
 import { samplePaymentsFake } from "@/services/payments";
 
+import { sampleActor } from "../../../../../test/admin-inputs";
 import checkoutPaid from "../../../../../test/fixtures/paymongo/event-checkout-paid.json";
 import paymentFailed from "../../../../../test/fixtures/paymongo/event-payment-failed.json";
 import paymentRefunded from "../../../../../test/fixtures/paymongo/event-payment-refunded.json";
@@ -23,8 +26,9 @@ import refundUpdated from "../../../../../test/fixtures/paymongo/event-refund-up
 // test-only secret. A request is trusted only once its signature checks out;
 // each event is applied once; Failed and Expired Orders can still become
 // Paid, and Paid never moves back. Refund events (ticket 09) take a fully
-// refunded Order's unused days off, once. Without PAYMONGO_WEBHOOK_SECRET
-// the route doesn't exist.
+// refunded Order's unused days off, once. A payment on an Order whose account
+// was deleted (ticket 14) is recorded Paid with no grant, for Needs attention.
+// Without PAYMONGO_WEBHOOK_SECRET the route doesn't exist.
 
 const { secret } = vi.hoisted(() => ({ secret: { current: undefined as string | undefined } }));
 vi.mock("@/env.server", async (original) => {
@@ -236,6 +240,39 @@ describe("POST /api/paymongo/webhook", () => {
     expect(getSampleStore().staffActivity.at(-1)).toMatchObject({
       after: { reference: "AYC-10001", paidAfterExpiry: true },
     });
+  });
+
+  it("records a late payment on a deleted account's Order Paid, granting nothing, for Needs attention (ticket 14)", async () => {
+    const order = await pendingOrder();
+    vi.setSystemTime(new Date(BOOT.getTime() + 25 * HOUR));
+    // Expired, then Bea's account deleted: her live Order stays, with no account.
+    const store = getSampleStore();
+    store.orders = store.orders.map((held) => ({
+      ...held,
+      status: "expired",
+      statusChangedAt: new Date().toISOString(),
+      livemode: true,
+      userId: null,
+    }));
+    store.members = store.members.filter((member) => member.userId !== BEA.userId);
+    store.memberTargetExams = {};
+
+    const response = await post(aboutOrder(checkoutPaid, order));
+
+    expect(response.status).toBe(200);
+    expect(getSampleStore().orders).toMatchObject([
+      { reference: "AYC-10001", status: "paid", userId: null, paidWithoutAccount: true },
+    ]);
+    expect(await listAccessPasses(BEA.userId)).toEqual([]);
+    expect(await listNotices(BEA.userId)).toEqual([]);
+    expect(getSampleStore().staffActivity.at(-1)).toMatchObject({
+      actor: { email: "system:paymongo", name: "PayMongo (system)" },
+      entity: "order",
+      action: "order-paid",
+      after: { reference: "AYC-10001", paidWithoutAccount: true },
+    });
+    const sales = await salesOverview(sampleActor("owner"));
+    expect(sales?.payments).toMatchObject({ paidAccountDeleted: 1, paidAfterExpiry: 0 });
   });
 
   it("acknowledges an event buying doesn't act on, changing nothing", async () => {

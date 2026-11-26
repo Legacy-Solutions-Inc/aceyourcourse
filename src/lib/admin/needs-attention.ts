@@ -1,6 +1,6 @@
 import { MARKETPLACES } from "@/content/website";
 import { examPagesHref } from "@/lib/admin/exam-pages-view";
-import { DEFAULT_ORDER_QUERY, ordersHref, PAYMENT_WORK } from "@/lib/admin/orders-list";
+import { ordersHref, PAYMENT_WORK } from "@/lib/admin/orders-list";
 import { hasMissingLinks, productListHref, storeLinkStatuses } from "@/lib/admin/product-list";
 import { dayMonth, promoStatus } from "@/lib/admin/promo-status";
 import { seoCheck } from "@/lib/admin/seo-check";
@@ -148,8 +148,7 @@ function paidAccountDeletedItem({ payments }: NeedsAttentionInput): AttentionIte
         ? "1 payment landed after the Member’s account was deleted, so it gave no access. Refund it in the PayMongo dashboard."
         : `${count} payments landed after the Members’ accounts were deleted, so they gave no access. Refund them in the PayMongo dashboard.`,
     action: "Review",
-    // Ticket 14 gives the Orders list a filter for these, with the rule that finds them.
-    href: ordersHref({ ...DEFAULT_ORDER_QUERY, status: "paid", range: "all" }),
+    href: ordersHref(PAYMENT_WORK.paidAccountDeleted),
     tone: "warning",
   };
 }

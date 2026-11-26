@@ -480,6 +480,7 @@ function orderFor(planId: string): Order {
     createdAt: BOOT.toISOString(),
     paidAt: null,
     statusChangedAt: BOOT.toISOString(),
+    paidWithoutAccount: false,
   };
 }
 

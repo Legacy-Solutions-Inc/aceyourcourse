@@ -17,8 +17,9 @@ import { type AdminOrderRecord, adminOrderOf } from "@/services/orders-admin.cor
 // - Owners only: an Editor gets null, so the figures never reach their page,
 //   whatever it would show.
 // - The arm reads what happened since an instant (Orders paid, refunds made)
-//   and what's waiting (Pending payments, invoice requests to send), and the
-//   Access Passes active now; the pure rules count it all
+//   and what's waiting (Pending payments, invoice requests to send, payments
+//   that landed after an account was deleted: ticket 14), and the Access
+//   Passes active now; the pure rules count it all
 //   (src/lib/payments/sales-figures.ts for the money and the Members,
 //   paymentWork in src/lib/admin/orders-list.ts for Needs attention's
 //   payment items, with the Orders list's own filters).
@@ -29,8 +30,9 @@ import { type AdminOrderRecord, adminOrderOf } from "@/services/orders-admin.cor
 export interface SalesStore {
   /**
    * The live Orders (never Test Orders) that were paid at or after `since`,
-   * have a refund made at or after it, are recorded Pending, or have an
-   * official invoice requested and not yet sent; each with its Invoice
+   * have a refund made at or after it, are recorded Pending, have an
+   * official invoice requested and not yet sent, or (ticket 14) are Paid
+   * after their account was deleted, of any age; each with its Invoice
    * Request and refunds, in any order.
    */
   listSalesOrders(since: Date): Promise<AdminOrderRecord[]>;

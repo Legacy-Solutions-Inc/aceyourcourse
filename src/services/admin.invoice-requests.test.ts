@@ -69,6 +69,7 @@ function order(reference: string, fields: Partial<Order>): Order {
     buyerName: BEA.name,
     buyerEmail: BEA.email,
     statusChangedAt: paidAt ?? createdAt,
+    paidWithoutAccount: false,
     ...fields,
     status,
     createdAt,
@@ -269,12 +270,15 @@ describe.each(ADMIN_ARMS)("Admin seam: Invoice Requests ($name)", (arm) => {
       const exported = await seam.exportOrdersCsv(OWNER, query());
       const lines = exported.ok ? csvLines(exported.value.csv) : [];
 
-      expect(lines[0]).toMatch(/,Invoice requested,Invoice name,Invoice address,Invoice TIN$/);
+      // The Account deleted column (ticket 14) comes after them.
+      expect(lines[0]).toMatch(
+        /,Invoice requested,Invoice name,Invoice address,Invoice TIN,Account deleted$/,
+      );
       const rowOf = (reference: string) => lines.find((line) => line.startsWith(reference));
       expect(rowOf("AYC-10001")).toMatch(
-        /,Yes,Sample Builders Inc\.,"12 Sample St, Jaro, Iloilo City",123-456-789-000$/,
+        /,Yes,Sample Builders Inc\.,"12 Sample St, Jaro, Iloilo City",123-456-789-000,No$/,
       );
-      expect(rowOf("AYC-10002")).toMatch(/,No,,,$/);
+      expect(rowOf("AYC-10002")).toMatch(/,No,,,,No$/);
     });
 
     it("holds just the requests to send under the filter", async () => {

@@ -2,7 +2,7 @@ import { manilaDate } from "@/lib/manila-time";
 import { methodLabel } from "@/lib/payments/payment-methods";
 import type { AdminOrder } from "@/services/admin.types";
 
-import { orderItem, orderStatusLabel } from "./order-view";
+import { isAccountDeleted, orderItem, orderStatusLabel } from "./order-view";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The Orders list's CSV export, for the accountant who issues the official
@@ -14,8 +14,11 @@ import { orderItem, orderStatusLabel } from "./order-view";
 //   as at Pay, the item, Exam and days, the amount, the Payment Method, the
 //   status (as every screen shows it; "(test)" on a Test Order), the amount
 //   refunded (its succeeded refunds, ticket 09; empty with none), PayMongo's
-//   payment ID, and the Invoice Request: whether there is one ("Yes" or
-//   "No"), with its name, address and TIN (ticket 08).
+//   payment ID, the Invoice Request: whether there is one ("Yes" or "No"),
+//   with its name, address and TIN (ticket 08), and whether the account was
+//   deleted (ticket 14: "Yes" for an Order kept, with no account, as a tax
+//   record). It comes last, so the columns before it stay where an
+//   accountant's spreadsheet expects them.
 // - Amounts are plain numbers in pesos ("1299.00"), so a spreadsheet adds
 //   them up.
 // - RFC 4180: rows end with CRLF, and a cell holding a comma, a quote or a
@@ -43,6 +46,7 @@ export const ORDERS_CSV_HEADER = [
   "Invoice name",
   "Invoice address",
   "Invoice TIN",
+  "Account deleted",
 ] as const;
 
 const BOM = "﻿";
@@ -96,6 +100,7 @@ function rowOf(order: AdminOrder): string[] {
     invoice?.name ?? "",
     invoice?.address ?? "",
     invoice?.tin ?? "",
+    isAccountDeleted(order) ? "Yes" : "No",
   ];
 }
 

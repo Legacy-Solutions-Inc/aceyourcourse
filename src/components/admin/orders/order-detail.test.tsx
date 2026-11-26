@@ -50,6 +50,7 @@ const PENDING: AdminOrder = {
   createdAt: MADE,
   paidAt: null,
   statusChangedAt: MADE,
+  paidWithoutAccount: false,
 };
 
 const NOTE: AdminOrderNote = {

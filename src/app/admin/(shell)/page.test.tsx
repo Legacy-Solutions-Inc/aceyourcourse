@@ -213,10 +213,10 @@ describe("Overview page", () => {
     it("lists the payment work first in Needs attention, each opening the filtered Orders", async () => {
       await renderOverview(OWNER);
 
-      expect(screen.getByText("6 things need you today.")).toBeInTheDocument();
+      expect(screen.getByText("7 things need you today.")).toBeInTheDocument();
       expect(
         rows()
-          .slice(0, 3)
+          .slice(0, 4)
           .map((row) => [row.textContent, row.getAttribute("href")]),
       ).toEqual([
         [
@@ -230,6 +230,10 @@ describe("Overview page", () => {
         [
           "1 Order paid after expiryPayMongo confirmed it after the Order had expired, in the last 7 days, and its days were added. Check the Member didn’t pay twice.Review →",
           "/admin/orders?status=paid&range=7d&late=1",
+        ],
+        [
+          "Paid, account deleted · refund in PayMongo1 payment landed after the Member’s account was deleted, so it gave no access. Refund it in the PayMongo dashboard.Review →",
+          "/admin/orders?status=paid&range=all&noaccount=1",
         ],
       ]);
     });

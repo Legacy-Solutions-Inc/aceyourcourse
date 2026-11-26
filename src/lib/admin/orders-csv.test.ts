@@ -7,8 +7,9 @@ import { csvCell, ORDERS_CSV_HEADER, ordersCsv, ordersCsvFilename } from "./orde
 // The Orders CSV for the accountant (Phase 4, ticket 07; story 147; spec,
 // Phase 4 planning decisions → Orders and sales figures), pure: a header row
 // always, then one row per Order, RFC 4180 quoted, with every cell that a
-// spreadsheet would run as a formula escaped. The Invoice Request (ticket 08)
-// and the amount refunded (ticket 09) have their own columns.
+// spreadsheet would run as a formula escaped. The Invoice Request (ticket 08),
+// the amount refunded (ticket 09) and whether the account was deleted (ticket
+// 14) have their own columns.
 
 const BOM = "﻿";
 const CRLF = "\r\n";
@@ -17,7 +18,7 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
   return {
     id: "id-1",
     reference: "AYC-10482",
-    userId: null,
+    userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
     examCode: "CE",
     planId: "plan-ce-90",
     planName: "CE All-Access",
@@ -39,6 +40,7 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
     // 9:01 in Manila on 25 Nov.
     paidAt: "2026-11-25T01:01:00.000Z",
     statusChangedAt: "2026-11-25T01:01:00.000Z",
+    paidWithoutAccount: false,
     ...fields,
   };
 }
@@ -69,6 +71,7 @@ describe("ordersCsv", () => {
       "Invoice name",
       "Invoice address",
       "Invoice TIN",
+      "Account deleted",
     ]);
   });
 
@@ -91,8 +94,19 @@ describe("ordersCsv", () => {
         "",
         "",
         "",
+        "No",
       ].join(","),
     );
+  });
+
+  it("says Yes under Account deleted for an Order kept after its account was deleted (ticket 14)", () => {
+    const [, kept, orphaned] = lines(
+      ordersCsv([order({ userId: null }), order({ userId: null, paidWithoutAccount: true })]),
+    );
+    expect(kept?.split(",").at(-1)).toBe("Yes");
+    // The buyer's name and email as at Pay stay.
+    expect(kept?.split(",").slice(2, 4)).toEqual(["Maria Santos", "maria.santos@example.com"]);
+    expect(orphaned?.split(",").at(-1)).toBe("Yes");
   });
 
   it("gives an Order's Invoice Request: Yes, with its name, address (quoted for its comma) and TIN", () => {
@@ -108,11 +122,11 @@ describe("ordersCsv", () => {
       },
     });
     expect(lines(ordersCsv([requested]))[1]).toMatch(
-      /,Yes,Sample Builders Inc\.,"12 Sample St, Jaro",123-456-789-000$/,
+      /,Yes,Sample Builders Inc\.,"12 Sample St, Jaro",123-456-789-000,No$/,
     );
     expect(
       lines(ordersCsv([order({ invoice: { ...requested.invoice!, tin: null, name: "=Bea" } })]))[1],
-    ).toMatch(/,Yes,'=Bea,"12 Sample St, Jaro",$/);
+    ).toMatch(/,Yes,'=Bea,"12 Sample St, Jaro",,No$/);
   });
 
   it("gives the amount refunded (ticket 09): a partial refund of a Paid Order, and a Refunded one's whole amount", () => {

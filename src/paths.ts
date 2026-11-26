@@ -140,6 +140,12 @@ export const paths = {
     reviews: "/admin/reviews",
     settings: "/admin/settings",
     /**
+     * Staff Activity (Owners only; Phase 4, ticket 15), under Settings, with
+     * its filters and cursor in the search params
+     * (src/lib/admin/staff-activity-view.ts).
+     */
+    staffActivity: "/admin/settings/activity",
+    /**
      * Users (Owners only): the Users list (ticket 16), with its search, filter
      * and page in the search params (src/lib/admin/users-list.ts).
      */

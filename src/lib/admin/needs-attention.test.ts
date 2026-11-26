@@ -378,7 +378,8 @@ describe("needsAttention", () => {
           detail:
             "1 payment landed after the Member’s account was deleted, so it gave no access. Refund it in the PayMongo dashboard.",
           action: "Review",
-          href: "/admin/orders?status=paid&range=all",
+          // The Orders list's "Paid, account deleted" filter (ticket 14).
+          href: "/admin/orders?status=paid&range=all&noaccount=1",
           tone: "warning",
         },
       ]);

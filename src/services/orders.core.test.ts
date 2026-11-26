@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { orderReference } from "@/lib/payments/order-ledger";
+import { type Order, orderReference, PAYMONGO_SYSTEM_ACTOR } from "@/lib/payments/order-ledger";
 import { examsForMembers } from "@/services/member.rules";
 import { samplePlanId } from "@/services/mock/plans";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import type { PaymentsClient } from "@/services/payments.types";
 import { createFakePaymentsClient } from "@/services/payments.fake";
 
-import { orderCalls, type OrderStore } from "./orders.core";
+import { orderCalls, type OrderHolding, type OrderStore, settleOrder } from "./orders.core";
 
 // Pay when the Order's checkout can't be kept (Phase 4, ticket 04): PayMongo
 // started a Checkout Session, but recording it on the Order failed. The
@@ -86,5 +86,77 @@ describe("payForPlan when the checkout can't be recorded", () => {
     expect(console.error).toHaveBeenCalledWith(
       "The checkout for AYC-10001 wasn't recorded, so the Member wasn't sent to it.",
     );
+  });
+});
+
+// The Order ledger's outcome on an Order whose account was deleted (ticket 14):
+// settleOrder records Paid with no grant, marks it paid without an account for
+// an Owner to refund in PayMongo, and logs it under PayMongo (system).
+describe("settleOrder on an Order with no account", () => {
+  const NOW = new Date("2026-11-18T05:42:00.000Z");
+  const EXPIRED: Order = {
+    id: "00000000-0000-4000-8000-000000010001",
+    reference: "AYC-10001",
+    userId: null,
+    examCode: "CE",
+    planId: samplePlanId("CE", 90),
+    planName: "CE All-Access",
+    days: 90,
+    priceCentavos: 129_900,
+    method: "gcash",
+    status: "expired",
+    livemode: true,
+    checkoutId: "cs_Sample10001",
+    paymentId: null,
+    buyerName: BEA.name,
+    buyerEmail: BEA.email,
+    createdAt: "2026-11-17T03:42:00.000Z",
+    paidAt: null,
+    statusChangedAt: "2026-11-18T03:42:00.000Z",
+    paidWithoutAccount: false,
+  };
+  const gone = (order: Order): OrderHolding => ({
+    order,
+    member: null,
+    pass: null,
+    targetExams: [],
+    history: [],
+    refunds: [],
+  });
+
+  it("records a late payment Paid, granting nothing, marked to refund in PayMongo", () => {
+    expect(settleOrder(gone(EXPIRED), "paid", "pay_Late0001", NOW)).toEqual({
+      order: {
+        ...EXPIRED,
+        status: "paid",
+        paidAt: NOW.toISOString(),
+        statusChangedAt: NOW.toISOString(),
+        paymentId: "pay_Late0001",
+        paidWithoutAccount: true,
+      },
+      paid: null,
+      refunds: [],
+      reduction: null,
+      activity: expect.objectContaining({
+        actor: { ...PAYMONGO_SYSTEM_ACTOR },
+        entity: "order",
+        entityId: EXPIRED.id,
+        action: "order-paid",
+        before: { reference: "AYC-10001", status: "expired" },
+        after: {
+          reference: "AYC-10001",
+          status: "paid",
+          paidAfterExpiry: true,
+          paidWithoutAccount: true,
+        },
+      }),
+    });
+  });
+
+  it("leaves a failed or expired outcome unmarked: it was never paid", () => {
+    const pending: Order = { ...EXPIRED, status: "pending", statusChangedAt: EXPIRED.createdAt };
+    const write = settleOrder(gone(pending), "failed", null, NOW);
+    expect(write?.order).toMatchObject({ status: "failed", paidWithoutAccount: false });
+    expect(write?.activity?.after).toEqual({ reference: "AYC-10001", status: "failed" });
   });
 });

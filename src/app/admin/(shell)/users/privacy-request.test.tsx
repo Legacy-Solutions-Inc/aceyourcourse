@@ -148,6 +148,7 @@ describe("downloading a Member's data", () => {
         "resume",
         "devices",
         "notices",
+        "orders",
       ].sort(),
     );
     expect(file.profile).toMatchObject(BEA);

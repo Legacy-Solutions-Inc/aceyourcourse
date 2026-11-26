@@ -4,6 +4,7 @@ import type { AdminOrder } from "@/services/admin.types";
 
 import {
   checkMessage,
+  isAccountDeleted,
   orderItem,
   orderStatusLabel,
   orderStatusTag,
@@ -50,6 +51,7 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
     createdAt: MADE,
     paidAt: null,
     statusChangedAt: MADE,
+    paidWithoutAccount: false,
     ...fields,
   };
 }
@@ -168,6 +170,24 @@ describe("orderTimeline", () => {
     ]);
   });
 
+  it("ends an Order paid after its account was deleted with no access given, and its refund with none removed (ticket 14)", () => {
+    const orphaned = paid({ userId: null, paidWithoutAccount: true, priceCentavos: 49_900 });
+    expect(orderTimeline(orphaned).at(-1)).toEqual({
+      label: "PayMongo confirmed · account deleted, no access given",
+      at: PAID,
+      tone: "failed",
+    });
+    expect(
+      orderTimeline({
+        ...orphaned,
+        status: "refunded",
+        recordedStatus: "refunded",
+        refunds: [refund("ref_a", 49_900, FIRST)],
+        refundedCentavos: 49_900,
+      }).at(-1),
+    ).toEqual({ label: "Refunded in full in PayMongo · ₱499", at: FIRST, tone: "failed" });
+  });
+
   it("adds a partial refund to a Paid Order's timeline, access unchanged", () => {
     expect(
       orderTimeline(
@@ -251,6 +271,19 @@ describe("statusNote", () => {
     );
   });
 
+  it("tells an Order paid after its account was deleted to refund it, and once refunded that it gave no access (ticket 14)", () => {
+    const orphaned = paid({ userId: null, paidWithoutAccount: true });
+    expect(statusNote(orphaned)).toBe(
+      "PayMongo confirmed this payment after the Member’s account was deleted, so it gave no access. Refund it in the PayMongo dashboard.",
+    );
+    expect(statusNote({ ...orphaned, refundedCentavos: 30_000 })).toBe(
+      "PayMongo confirmed this payment after the Member’s account was deleted, so it gave no access. Refund it in the PayMongo dashboard: ₱300 of it is refunded so far.",
+    );
+    expect(statusNote({ ...orphaned, status: "refunded", recordedStatus: "refunded" })).toBe(
+      "Refunded in full in PayMongo. It was paid after the Member’s account was deleted, so it never gave access.",
+    );
+  });
+
   it("tells a Failed Order what the Member saw", () => {
     expect(statusNote(order({ status: "failed", method: "card" }))).toBe(
       "The payment didn’t go through and the Member wasn’t charged. They saw “Your card was declined” with other ways to pay.",
@@ -261,6 +294,14 @@ describe("statusNote", () => {
     expect(statusNote(order({ status: "expired" }))).toBe(
       "No payment was confirmed within 24 hours, so this Order expired and granted nothing. If PayMongo confirms a late payment, it still counts and access is granted.",
     );
+  });
+});
+
+describe("isAccountDeleted (ticket 14)", () => {
+  it("is an Order kept with no account, whether paid before the deletion or after", () => {
+    expect(isAccountDeleted(paid())).toBe(false);
+    expect(isAccountDeleted(paid({ userId: null }))).toBe(true);
+    expect(isAccountDeleted(paid({ userId: null, paidWithoutAccount: true }))).toBe(true);
   });
 });
 

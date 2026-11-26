@@ -10,10 +10,11 @@ import { LIVE, resetSampleData, signInAs } from "./helpers";
 // Phase 4, ticket 11: an Owner also sees the sales tiles, the paid-sales
 // chart, the sidebar's PAID TODAY card, and the payment work first in Needs
 // attention, each item opening the filtered Orders list; an Editor sees none
-// of it. The sample Orders (timed from the reset) give three payment items:
+// of it. The sample Orders (timed from the reset) give four payment items:
 // Paolo's AYC-10006 Pending an hour, Maria's AYC-10002 with an invoice to
-// send, and Maria's AYC-10011 paid after expiry. A live database has none of
-// them: its only Orders are the payments fake's Test Orders, which never count.
+// send, Maria's AYC-10011 paid after expiry, and (ticket 14) Rina's AYC-10013,
+// paid after her account was deleted. A live database has none of them: its
+// only Orders are the payments fake's Test Orders, which never count.
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -24,7 +25,7 @@ const manilaDay = (days: number) =>
   new Date(Date.now() + 8 * 60 * 60 * 1000 + days * DAY).toISOString().slice(0, 10);
 
 /** The Owner's payment items the sample Orders give; none on a live database. */
-const PAYMENT_ITEMS = LIVE ? 0 : 3;
+const PAYMENT_ITEMS = LIVE ? 0 : 4;
 
 const needsAttention = (page: Page) => page.getByRole("list", { name: "Needs attention" });
 const quickAction = (page: Page, name: string) =>
@@ -189,7 +190,7 @@ test.describe("an Owner's sales (Phase 4, ticket 11)", () => {
     ).toContainText("₱9992 orders · 1 pending");
   });
 
-  test("opens the payments pending, the invoice requests to send and the Orders paid after expiry", async ({
+  test("opens the payments pending, the invoice requests to send, the Orders paid after expiry and those paid after the account went", async ({
     page,
   }) => {
     await openOverview(page);
@@ -197,6 +198,7 @@ test.describe("an Owner's sales (Phase 4, ticket 11)", () => {
     await expect(rows.nth(0)).toContainText("1 payment pendingOldest is 1 hour old.");
     await expect(rows.nth(1)).toContainText("1 invoice request to send");
     await expect(rows.nth(2)).toContainText("1 Order paid after expiry");
+    await expect(rows.nth(3)).toContainText("Paid, account deleted · refund in PayMongo");
 
     const orders = page
       .getByRole("region", { name: "Orders list" })
@@ -206,13 +208,20 @@ test.describe("an Owner's sales (Phase 4, ticket 11)", () => {
       [0, /\/admin\/orders\?status=pending$/, ["AYC-10006"]],
       [1, /\/admin\/orders\?range=all&invoice=requested$/, ["AYC-10002"]],
       [2, /\/admin\/orders\?status=paid&range=7d&late=1$/, ["AYC-10011"]],
+      [3, /\/admin\/orders\?status=paid&range=all&noaccount=1$/, ["AYC-10013"]],
     ] as const) {
       await page.goto(paths.admin.overview);
       await rows.nth(row).click();
       await expect(page).toHaveURL(url);
       await expect(orders).toHaveText([...references]);
     }
-    await expect(page.getByRole("checkbox", { name: "Paid after expiry" })).toBeChecked();
+    await expect(page.getByRole("checkbox", { name: "Paid, account deleted" })).toBeChecked();
+    await expect(
+      page
+        .getByRole("region", { name: "Orders list" })
+        .getByRole("row")
+        .filter({ hasText: "AYC-10013" }),
+    ).toContainText("REFUND IN PAYMONGO");
   });
 });
 

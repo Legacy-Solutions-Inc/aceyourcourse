@@ -2141,6 +2141,7 @@ export const orderListQuerySchema = z.object({
   tests: z.boolean(),
   invoiceRequested: z.boolean(),
   paidAfterExpiry: z.boolean(),
+  paidWithoutAccount: z.boolean(),
 });
 
 /** An Order's reference, as an address carries it: any text, so one that isn't an Order's answers not-found. */

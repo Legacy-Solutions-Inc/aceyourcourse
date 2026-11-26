@@ -19,6 +19,9 @@ import type { PlanDays } from "@/lib/plans/plan-rules";
 //   Paid (a late payment) grant the days as Pending → Paid does (ticket 05).
 //   A payment confirmed more than 24 hours after the Order was made is "Paid
 //   after expiry" (paidAfterExpiry).
+// - Paid on an Order whose account was deleted grants nothing: the Order is
+//   marked paidWithoutAccount, for an Owner to refund in PayMongo (ticket
+//   14; settleOrder in src/services/orders.core.ts).
 // - Pending → Expired: the daily sweep records an Order PayMongo didn't
 //   confirm within 24 hours (ticket 05). Before that, every read shows it
 //   Expired already (effectiveStatus).
@@ -78,6 +81,12 @@ export interface Order {
   createdAt: string;
   paidAt: string | null;
   statusChangedAt: string;
+  /**
+   * Whether its payment landed after the buyer's account was deleted
+   * (ticket 14): recorded Paid with no grant, so an Owner refunds it in
+   * PayMongo. Set once, by the ledger, and never cleared.
+   */
+  paidWithoutAccount: boolean;
 }
 
 /** The moves each outcome makes from each state; one not here changes nothing. */
@@ -273,6 +282,10 @@ export const wasPaid = (status: OrderStatus): boolean => status === "paid" || st
 /** How long a Pending Order waits for PayMongo before it's Expired. */
 export const ORDER_EXPIRES_AFTER_MS = 24 * 60 * 60 * 1000;
 
+/** Pure: when a Pending Order made at `createdAt` expires, as an ISO time: 24 hours later. */
+export const expiresAt = (createdAt: string): string =>
+  new Date(new Date(createdAt).getTime() + ORDER_EXPIRES_AFTER_MS).toISOString();
+
 /** Pure: whether a Pending Order made at `createdAt` is past its 24 hours at `now`. */
 export const isOverdue = (createdAt: string, now: Date): boolean =>
   now.getTime() - new Date(createdAt).getTime() > ORDER_EXPIRES_AFTER_MS;
@@ -288,6 +301,13 @@ export function effectiveStatus(
 ): OrderStatus {
   return order.status === "pending" && isOverdue(order.createdAt, now) ? "expired" : order.status;
 }
+
+/**
+ * Pure: whether an Order paid after its account was deleted is still Paid,
+ * so an Owner has yet to refund it in PayMongo (ticket 14).
+ */
+export const awaitsRefund = (order: Pick<Order, "status" | "paidWithoutAccount">): boolean =>
+  order.paidWithoutAccount && order.status === "paid";
 
 /** Pure: whether a Paid Order's payment was confirmed more than 24 hours after it was made. */
 export function paidAfterExpiry(order: Pick<Order, "status" | "createdAt" | "paidAt">): boolean {

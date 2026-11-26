@@ -63,6 +63,8 @@ import type {
   AdminOrderNote,
   AdminOverview,
   PaidToday,
+  StaffActivityList,
+  StaffActivityQuery,
   AdminPlan,
   AdminPlans,
   AdminPrivacyRequest,
@@ -1125,6 +1127,23 @@ export interface AdminService {
    * logged in Staff Activity.
    */
   exportOrdersCsv(actor: StaffActor, query: OrderListQuery): Promise<AdminResult<OrdersCsv>>;
+
+  // Staff Activity (Owners only; Phase 4, ticket 15; spec, Phase 4 → Orders
+  // Admin): the permanent record of every Admin write and of PayMongo's
+  // outcomes ("PayMongo (system)"). Read-only: the seam has no way to change
+  // or delete a record, and reading records nothing. Refuses an Editor, since
+  // the values can hold personal data.
+
+  /**
+   * One page of the records the filters match (who made them, by the email
+   * recorded; the area), newest first, 50 to a page, older pages by the
+   * cursor (the last record's seq), so records added meanwhile are never
+   * repeated or skipped; with every actor and entity recorded, for the filters.
+   */
+  listStaffActivity(
+    actor: StaffActor,
+    query: StaffActivityQuery,
+  ): Promise<AdminResult<StaffActivityList>>;
 }
 
 const impl: AdminService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -1247,3 +1266,4 @@ export const saveOrderNote = impl.saveOrderNote;
 export const checkOrderWithPayMongo = impl.checkOrderWithPayMongo;
 export const markInvoiceSent = impl.markInvoiceSent;
 export const exportOrdersCsv = impl.exportOrdersCsv;
+export const listStaffActivity = impl.listStaffActivity;

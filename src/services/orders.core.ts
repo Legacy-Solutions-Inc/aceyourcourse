@@ -97,6 +97,12 @@ import type { CheckoutStatus, PaymentEvent, PaymentsClient } from "@/services/pa
 //   Pending, Failed or Expired Order, which granted nothing, is ignored. Each
 //   is logged in Staff Activity as "PayMongo (system)" with the end before
 //   and after.
+// - A deleted account's Orders (ticket 14) belong to no Member, so no
+//   Member's read finds them, a new account for the same person included. A
+//   payment that lands on one anyway (a late payment, or a retry) is
+//   recorded Paid with no grant, no notice and no Target Exam, marked
+//   paidWithoutAccount for an Owner to refund in PayMongo, and logged as
+//   "PayMongo (system)".
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** An Order as one outcome finds it, with what Paid and refunds change alongside it. */
@@ -271,8 +277,10 @@ const memberOrderOf = (
 
 /**
  * Pure: what an outcome writes on an Order at `now`: nothing when the ledger
- * makes no move; the Order alone for Failed, or for Paid on an account that's
- * gone; otherwise the Order, its days on the pass and everything Paid writes.
+ * makes no move; the Order alone for Failed or Expired; for Paid on an
+ * account that's gone (ticket 14), the Order alone, marked paidWithoutAccount
+ * for an Owner to refund in PayMongo, granting nothing; otherwise the Order,
+ * its days on the pass and everything Paid writes.
  */
 export function settleOrder(
   { order, member, pass, targetExams }: OrderHolding,
@@ -282,11 +290,18 @@ export function settleOrder(
 ): OrderWrite | null {
   const step = applyOutcome(order, outcome, pass?.endsAt ?? null, now);
   if (!step.changed) return null;
-  const moved = { ...step.order, paymentId: paymentId ?? step.order.paymentId };
+  const { paidDays } = step;
+  const paidWithNoAccount = paidDays !== null && !member;
+  const moved: Order = {
+    ...step.order,
+    paymentId: paymentId ?? step.order.paymentId,
+    // With no Member record there's no account for the Order to belong to.
+    ...(paidWithNoAccount ? { userId: null, paidWithoutAccount: true } : {}),
+  };
   const { reference } = order;
   const late = paidAfterExpiry(moved) ? { paidAfterExpiry: true } : {};
-  const { paidDays } = step;
   if (!paidDays || !member) {
+    const noAccount = paidWithNoAccount ? { paidWithoutAccount: true } : {};
     return {
       order: moved,
       paid: null,
@@ -299,7 +314,7 @@ export function settleOrder(
         order.id,
         `order-${moved.status}`,
         { reference, status: order.status },
-        { reference, status: moved.status, ...late },
+        { reference, status: moved.status, ...late, ...noAccount },
       ),
     };
   }
@@ -542,6 +557,7 @@ export function orderCalls(store: OrderStore) {
       createdAt: at,
       paidAt: null,
       statusChangedAt: at,
+      paidWithoutAccount: false,
     });
     const checkout = await client.startCheckout({
       orderId: order.id,

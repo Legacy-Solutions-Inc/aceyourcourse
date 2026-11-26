@@ -4,11 +4,13 @@ import {
   memberDataFilename,
 } from "@/lib/member-app/data-export";
 import { isLastOwner, LAST_OWNER } from "@/lib/admin/staff-rules";
+import { formatDateTime } from "@/lib/manila-time";
 import {
   ALREADY_DELETED,
   isAccountDeletionConfirmed,
   isPrivacyRequestOverdue,
 } from "@/lib/member-app/privacy-requests";
+import { effectiveStatus, expiresAt, type Order, wasPaid } from "@/lib/payments/order-ledger";
 import { passEntityPrefix } from "@/services/access-passes.core";
 import {
   CONFIRMATION_WRONG,
@@ -64,6 +66,14 @@ import { ordinal } from "@/services/users.core";
 //   active Staff User or an Invite, expired or not) is refused until they're
 //   removed from Staff; the last Owner can never be removed, so never
 //   deleted.
+// - Orders (Phase 4, ticket 14; story 151y): deleting an account keeps its
+//   Orders as tax records, with no account (the Orders admin shows them as
+//   "Account deleted"), each with its refunds and Invoice Request. A payment
+//   in progress (a Pending Order not yet past its 24 hours, as every screen
+//   shows it) blocks the deletion until it's confirmed or expires, so no
+//   payment lands on an account that's gone; one that still does is the
+//   ledger's (settleOrder: Paid, granting nothing). The confirmation counts
+//   the paid Orders kept, and a data copy holds the Member's Orders.
 // - "Mark done": either type, with the date and who, for a request carried
 //   out another way (a deletion withdrawn, or one from Staff that can't be
 //   carried out); deleting an account marks its request done itself. A
@@ -92,6 +102,10 @@ export const AUTH_ADMIN_MISSING =
 export const FINISH_DELETING =
   "Finish deleting the account first: its sign-in is still there. Delete again to finish.";
 
+/** Pure: why an account with a payment in progress can't be deleted, and until when, in Manila. */
+const paymentInProgress = (until: string) =>
+  `This Member has a payment in progress. Try again after it’s confirmed or expires (by ${formatDateTime(until)}).`;
+
 /** A Privacy Request with its Member, as an arm reads it: everything the list shows but the flag. */
 export type StoredPrivacyRequest = Omit<AdminPrivacyRequest, "overdue">;
 
@@ -107,14 +121,17 @@ export interface PrivacyRequestRecord extends StoredPrivacyRequest {
   invites: Pick<Invite, "email">[];
   /** Whether the Member's email is on the Beta Tester list (false with no Member). */
   betaTester: boolean;
+  /** The Member's Orders, Test Orders too (none with no Member): what deleting depends on (ticket 14). */
+  orders: Pick<Order, "status" | "createdAt">[];
 }
 
 /** What carrying out a request writes, all as one step. */
 export interface PrivacyWrite {
   /**
    * Deletes every record of this User id's Member and their Access Passes,
-   * empties their requests' Member, and keeps the id on this request; takes
-   * the email out of the earlier Staff Activity about the account.
+   * empties their requests' and Orders' Member (the Orders stay, ticket 14),
+   * and keeps the id on this request; takes the email out of the earlier
+   * Staff Activity about the account.
    */
   deleteMemberOf: string | null;
   /** Marks the request done. */
@@ -192,6 +209,30 @@ export function deletionBlock(
   return listedAs ? STAFF_FIRST : null;
 }
 
+/**
+ * Pure: why a Member with these Orders can't have their account deleted at
+ * `now`, or null when they can (ticket 14): a payment is in progress while
+ * any Order shows Pending (not yet past its 24 hours), until the last of
+ * them expires.
+ */
+function paymentBlock(
+  orders: readonly Pick<Order, "status" | "createdAt">[],
+  now: Date,
+): string | null {
+  const expiries = orders
+    .filter((order) => effectiveStatus(order, now) === "pending")
+    .map(({ createdAt }) => expiresAt(createdAt));
+  // ISO times in UTC sort as text: the last is the latest.
+  const last = expiries.sort().at(-1);
+  return last ? paymentInProgress(last) : null;
+}
+
+/** Pure: why this request's account can't be deleted at `now`, or null when it can (or it's gone). */
+function blockOf(record: PrivacyRequestRecord, now: Date): string | null {
+  if (!record.member) return null;
+  return deletionBlock(record, record.member.email) ?? paymentBlock(record.orders, now);
+}
+
 /** The keys in Staff Activity's values that hold a Member's personal data. */
 const PERSONAL_KEYS = ["email", "name"] as const;
 
@@ -258,11 +299,13 @@ export function privacyRequestCalls(store: PrivacyRequestsStore) {
     if (refusal) return refusal;
     const record = await read(requestId);
     if (!record) return NOT_FOUND;
+    const now = new Date();
     return saved({
-      ...listed(record, new Date()),
-      deletionBlocked: record.member ? deletionBlock(record, record.member.email) : null,
+      ...listed(record, now),
+      deletionBlocked: blockOf(record, now),
       deletionUnfinished: record.status === "open" && record.deletedUserId !== null,
       betaTester: record.betaTester,
+      paidOrders: record.orders.filter(({ status }) => wasPaid(status)).length,
     });
   }
 
@@ -328,7 +371,7 @@ export function privacyRequestCalls(store: PrivacyRequestsStore) {
         if (!userId) return refuse(formError(ALREADY_DELETED));
         // A retry finds no Member: they were confirmed, and checked, the first time.
         if (record.member) {
-          const blocked = deletionBlock(record, record.member.email);
+          const blocked = blockOf(record, now);
           if (blocked) return refuse(formError(blocked));
           if (!isAccountDeletionConfirmed(confirmation, record.member.email)) {
             return refuse({ kind: "invalid", fieldErrors: { confirmation: [CONFIRMATION_WRONG] } });

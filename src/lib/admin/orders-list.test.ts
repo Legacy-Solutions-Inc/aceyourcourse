@@ -53,6 +53,7 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
     createdAt: "2026-11-25T01:00:00.000Z",
     paidAt: "2026-11-25T01:01:00.000Z",
     statusChangedAt: "2026-11-25T01:01:00.000Z",
+    paidWithoutAccount: false,
     ...fields,
   };
 }
@@ -74,6 +75,7 @@ describe("parseOrdersParams", () => {
       tests: false,
       invoiceRequested: false,
       paidAfterExpiry: false,
+      paidWithoutAccount: false,
     });
   });
 
@@ -87,6 +89,7 @@ describe("parseOrdersParams", () => {
         tests: "1",
         invoice: "Requested",
         late: "1",
+        noaccount: "1",
       }),
     ).toEqual({
       q: "AYC-10482",
@@ -96,6 +99,7 @@ describe("parseOrdersParams", () => {
       tests: true,
       invoiceRequested: true,
       paidAfterExpiry: true,
+      paidWithoutAccount: true,
     });
   });
 
@@ -109,6 +113,7 @@ describe("parseOrdersParams", () => {
         tests: "yes",
         invoice: "sent",
         late: "yes",
+        noaccount: "yes",
       }),
     ).toEqual(DEFAULT_ORDER_QUERY);
   });
@@ -136,15 +141,16 @@ describe("ordersHref and ordersExportHref", () => {
       tests: true,
       invoiceRequested: true,
       paidAfterExpiry: true,
+      paidWithoutAccount: true,
     });
     const href = ordersHref(filtered);
     expect(href).toBe(
-      "/admin/orders?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested&late=1",
+      "/admin/orders?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested&late=1&noaccount=1",
     );
     const params = Object.fromEntries(new URL(href, "https://example.com").searchParams);
     expect(parseOrdersParams(params)).toEqual(filtered);
     expect(ordersExportHref(filtered)).toBe(
-      "/admin/orders/export?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested&late=1",
+      "/admin/orders/export?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested&late=1&noaccount=1",
     );
   });
 });
@@ -235,11 +241,27 @@ describe("filterOrders", () => {
       recordedStatus: "refunded",
     });
     const onTime = order();
-    const rows = [late, lateThenRefunded, onTime];
+    // Paid after expiry with no account (ticket 14): its days weren't added, so it's
+    // under "Paid, account deleted" instead.
+    const lateNoAccount = order({ paidAfterExpiry: true, userId: null, paidWithoutAccount: true });
+    const rows = [late, lateThenRefunded, onTime, lateNoAccount];
 
     expect(references(filterOrders(rows, query({ paidAfterExpiry: true }), NOW))).toEqual([
       lateThenRefunded.reference,
       late.reference,
+    ]);
+    expect(filterOrders(rows, query(), NOW)).toHaveLength(4);
+  });
+
+  it("keeps, under Paid, account deleted, only the Orders paid after their account was deleted (ticket 14)", () => {
+    const orphaned = order({ paidWithoutAccount: true });
+    // Paid, then its account deleted: kept with no account, and nothing to refund.
+    const keptForTax = order({ userId: null });
+    const onAccount = order({ userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21" });
+    const rows = [orphaned, keptForTax, onAccount];
+
+    expect(references(filterOrders(rows, query({ paidWithoutAccount: true }), NOW))).toEqual([
+      orphaned.reference,
     ]);
     expect(filterOrders(rows, query(), NOW)).toHaveLength(3);
   });
@@ -390,11 +412,32 @@ describe("paymentWork: what Needs attention lists (ticket 11)", () => {
     expect(paymentWork(rows, NOW).paidAfterExpiry).toBe(2);
   });
 
+  it("counts the Orders paid after their account was deleted, of any age, while still Paid (ticket 14)", () => {
+    const lateNoAccount = order({ paidWithoutAccount: true, paidAfterExpiry: true });
+    const rows = [
+      order({ paidWithoutAccount: true, createdAt: ago(24 * 90) }),
+      lateNoAccount,
+      // Refunded in PayMongo since: settled.
+      order({ paidWithoutAccount: true, status: "refunded", recordedStatus: "refunded" }),
+      order({ paidWithoutAccount: true, livemode: false }),
+      // Paid before its account was deleted: kept for tax records, nothing to refund.
+      order({ userId: null }),
+    ];
+
+    expect(paymentWork(rows, NOW).paidAccountDeleted).toBe(2);
+    // Listed once: not also as paid after expiry, which says its days were added.
+    expect(paymentWork([lateNoAccount], NOW)).toMatchObject({
+      paidAccountDeleted: 1,
+      paidAfterExpiry: 0,
+    });
+  });
+
   it("counts exactly the Orders each item's link lists", () => {
     const rows = [
       pending(3),
       order({ invoice: request, createdAt: ago(24 * 45) }),
       order({ paidAfterExpiry: true, createdAt: ago(30) }),
+      order({ paidWithoutAccount: true, createdAt: ago(24 * 60) }),
     ];
     const work = paymentWork(rows, NOW);
 
@@ -403,12 +446,19 @@ describe("paymentWork: what Needs attention lists (ticket 11)", () => {
     expect(filterOrders(rows, PAYMENT_WORK.paidAfterExpiry, NOW)).toHaveLength(
       work.paidAfterExpiry,
     );
+    expect(filterOrders(rows, PAYMENT_WORK.paidAccountDeleted, NOW)).toHaveLength(
+      work.paidAccountDeleted,
+    );
+    expect(work.paidAccountDeleted).toBe(1);
     expect(ordersHref(PAYMENT_WORK.pending)).toBe("/admin/orders?status=pending");
     expect(ordersHref(PAYMENT_WORK.invoicesToSend)).toBe(
       "/admin/orders?range=all&invoice=requested",
     );
     expect(ordersHref(PAYMENT_WORK.paidAfterExpiry)).toBe(
       "/admin/orders?status=paid&range=7d&late=1",
+    );
+    expect(ordersHref(PAYMENT_WORK.paidAccountDeleted)).toBe(
+      "/admin/orders?status=paid&range=all&noaccount=1",
     );
   });
 

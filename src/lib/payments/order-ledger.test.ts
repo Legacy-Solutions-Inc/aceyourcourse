@@ -4,7 +4,9 @@ import { passEndDate } from "@/lib/member-app/access";
 
 import {
   applyOutcome,
+  awaitsRefund,
   effectiveStatus,
+  expiresAt,
   isOrderReference,
   type Order,
   orderReference,
@@ -41,6 +43,7 @@ const PENDING: Order = {
   createdAt: inDays(-1 / 24),
   paidAt: null,
   statusChangedAt: inDays(-1 / 24),
+  paidWithoutAccount: false,
 };
 
 describe("applyOutcome: Pending → Paid", () => {
@@ -219,6 +222,20 @@ describe("effectiveStatus: a Pending Order older than 24 hours is Expired at rea
       expect(effectiveStatus({ ...madeHoursAgo(72), status }, NOW)).toBe(status);
     },
   );
+});
+
+describe("expiresAt", () => {
+  it("gives when a Pending Order made at an instant expires: 24 hours later", () => {
+    expect(expiresAt("2026-11-19T01:00:00.000Z")).toBe("2026-11-20T01:00:00.000Z");
+  });
+});
+
+describe("awaitsRefund (ticket 14)", () => {
+  it("is an Order paid with no account and still Paid: one to refund in PayMongo", () => {
+    expect(awaitsRefund({ status: "paid", paidWithoutAccount: true })).toBe(true);
+    expect(awaitsRefund({ status: "refunded", paidWithoutAccount: true })).toBe(false);
+    expect(awaitsRefund({ status: "paid", paidWithoutAccount: false })).toBe(false);
+  });
 });
 
 describe("paidAfterExpiry", () => {

@@ -634,6 +634,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Access Passes ($name)", (arm) => {
       createdAt: paidAt,
       paidAt,
       statusChangedAt: paidAt,
+      paidWithoutAccount: false,
     });
     /** A history row: granted by the Owner, or paid by `order`. */
     const historyRow = (

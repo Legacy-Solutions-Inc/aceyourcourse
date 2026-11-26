@@ -40,6 +40,12 @@ const button =
 /** Pure: a date or an instant as its day in Manila, "19 NOV 2026". */
 const day = (iso: string) => formatDate(iso).toUpperCase();
 
+/** Pure: what deleting keeps of the Member's paid Orders (ticket 14); nothing to say for none. */
+const keptOrdersLine = (paidOrders: number) =>
+  paidOrders === 0
+    ? null
+    : ` ${paidOrders} paid ${paidOrders === 1 ? "Order is" : "Orders are"} kept for tax records, without the account.`;
+
 /** One fact about the request: its mono term, then the value, named by the term. */
 function Fact({ id, name, children }: { id: string; name: string; children: ReactNode }) {
   return (
@@ -64,10 +70,11 @@ function Fact({ id, name, children }: { id: string; name: string; children: Reac
  *   from the support inbox: the Admin sends nothing.
  * - A deletion: "Delete this account" asks for the Member's email first, and
  *   says what goes (the sign-in, every Member App record, their Access
- *   Passes with no refund) and that it can't be undone. The server refuses
- *   an email on the staff list, so the screen says why instead of offering
- *   it; a deletion whose Supabase User wasn't deleted offers "Finish
- *   deleting".
+ *   Passes with no refund), how many paid Orders stay for tax records
+ *   (ticket 14), and that it can't be undone. The server refuses an email on
+ *   the staff list, or a Member with a payment in progress (ticket 14), so
+ *   the screen says why instead of offering it; a deletion whose Supabase
+ *   User wasn't deleted offers "Finish deleting".
  * - "Mark done", for either type, but not a half-done deletion. On a deletion
  *   whose account is still there it deletes nothing, and says so.
  *
@@ -209,9 +216,9 @@ export function PrivacyRequestDetail({ request, actions }: PrivacyRequestDetailP
               </form>
               <p className="text-sm text-muted-foreground">
                 A JSON file of everything kept about them: profile, Target Exams, consents, Access
-                Passes, progress, resume state, device log and notices. Email it from the support
-                inbox to {member.email}. The Admin sends nothing. Each download is logged in Staff
-                Activity.
+                Passes, progress, resume state, device log, notices, and Orders with any invoice
+                requests. Email it from the support inbox to {member.email}. The Admin sends
+                nothing. Each download is logged in Staff Activity.
               </p>
             </>
           ) : (
@@ -306,6 +313,7 @@ export function PrivacyRequestDetail({ request, actions }: PrivacyRequestDetailP
               This deletes {member.email}’s sign-in, every Member App record (Target Exams,
               progress, device log, notices) and their Access Passes, with no refund. It can’t be
               undone.
+              {keptOrdersLine(request.paidOrders)}
               {request.betaTester
                 ? " Their email stays on the Beta Tester list: remove it there if they shouldn’t come back."
                 : null}

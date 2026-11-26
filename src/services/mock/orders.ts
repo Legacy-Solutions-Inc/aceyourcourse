@@ -25,9 +25,13 @@ import { stableUuid } from "./stable-uuid";
 // partially refunded (₱300) and stays Paid, and Lou's is Refunded. Their
 // Access Passes are the sample data's own (members.ts), so these Orders add
 // no history rows. The Overview's sales (ticket 11) add three more Paid ones
-// over the last two weeks, one paid after it expired; they come last, so the
-// references before them stay as the other tickets' specs name them, though
-// they were made earlier. Unit tests start without any of them
+// over the last two weeks, one paid after it expired; they come after the
+// rest, so the references before them stay as the other tickets' specs name
+// them, though they were made earlier. Ticket 14 adds two more, both older
+// than 30 days: Lou's CE 3 months, whose days her lapsed pass used up, so
+// deleting her account keeps two paid Orders; and one paid a day after its
+// buyer's account was deleted, with no account, for the Overview's "Paid,
+// account deleted · refund in PayMongo". Unit tests start without any of them
 // (resetSampleStore), so a first Pay there is AYC-10001. Never add a real
 // person's address here.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -52,6 +56,8 @@ interface SampleOrder {
   invoice?: { name: string; address: string; tin: string | null; requestedAgo: number };
   /** Its succeeded PayMongo refunds, each refunded this long before boot (ticket 09). */
   refunds?: { amountCentavos: number; refundedAgo: number }[];
+  /** Paid after its buyer's account was deleted: no account, and nothing granted (ticket 14). */
+  paidWithoutAccount?: true;
 }
 
 const MARIA = { name: "Maria Santos", email: "maria.santos@example.com" };
@@ -59,13 +65,15 @@ const PAOLO = { name: "Paolo Reyes", email: "paolo.reyes@example.com" };
 const KAREN = { name: "Karen Villanueva", email: "karen.villanueva@example.com" };
 const JOSE = { name: "Jose Lopez", email: "jose.lopez@example.com" };
 const TESS = { name: "Tess Buyer", email: "tess.buyer@example.com" };
+const RINA = { name: "Rina Cruz", email: "rina.cruz@example.com" };
 // Sample Members of the "Sign in as" list (members.ts).
 const BEA = { name: "Bea Tester", email: "tester@example.com" };
 const LOU = { name: "Lou Lapsed", email: "lapsed@example.com" };
 
 /**
  * Oldest first, so the references count up with time, as Pays make them; the
- * Overview's three (ticket 11) are added after, though made earlier.
+ * Overview's three (ticket 11) and ticket 14's two are added after, though
+ * made earlier.
  */
 const SAMPLE_ORDERS: readonly SampleOrder[] = [
   // Outside the last 30 days: only "All time" shows it.
@@ -193,6 +201,31 @@ const SAMPLE_ORDERS: readonly SampleOrder[] = [
     paidAgo: 2 * DAY - 26 * HOUR,
     livemode: true,
   },
+  // Ticket 14's, both outside the last 30 days. Lou's CE 3 months: its days
+  // ran out 3 days before boot, as her pass did.
+  {
+    buyer: LOU,
+    examCode: "CE",
+    days: 90,
+    priceCentavos: 129_900,
+    method: "card",
+    status: "paid",
+    madeAgo: 93 * DAY,
+    livemode: true,
+  },
+  // Paid 30 hours after it was made, by which time Rina's account was deleted.
+  {
+    buyer: RINA,
+    examCode: "CE",
+    days: 30,
+    priceCentavos: 49_900,
+    method: "maya",
+    status: "paid",
+    madeAgo: 40 * DAY,
+    paidAgo: 40 * DAY - 30 * HOUR,
+    livemode: true,
+    paidWithoutAccount: true,
+  },
 ];
 
 /**
@@ -223,7 +256,7 @@ export function sampleOrders(
     return {
       id: stableUuid(`sample-order:${reference}`),
       reference,
-      userId: sampleUserId(sample.buyer.email),
+      userId: sample.paidWithoutAccount ? null : sampleUserId(sample.buyer.email),
       examCode: sample.examCode,
       planId: samplePlanId(sample.examCode, sample.days),
       planName: defaultPlanName(sample.examCode),
@@ -244,6 +277,7 @@ export function sampleOrders(
           : settled
             ? settledAt
             : createdAt,
+      paidWithoutAccount: sample.paidWithoutAccount ?? false,
     };
   });
   const invoiceRequests = samples.flatMap(({ invoice }, index): InvoiceRequest[] => {

@@ -108,6 +108,7 @@ const DETAIL: AdminMemberDetail = {
       createdAt: "2026-11-18T03:42:00.000Z",
       paidAt: "2026-11-18T03:44:00.000Z",
       statusChangedAt: "2026-11-18T03:44:00.000Z",
+      paidWithoutAccount: false,
     },
     {
       id: "00000000-0000-4000-8000-000000010001",
@@ -133,6 +134,7 @@ const DETAIL: AdminMemberDetail = {
       createdAt: "2026-11-17T03:50:00.000Z",
       paidAt: null,
       statusChangedAt: "2026-11-17T03:50:00.000Z",
+      paidWithoutAccount: false,
     },
   ],
 };

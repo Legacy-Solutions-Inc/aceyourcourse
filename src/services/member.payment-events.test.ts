@@ -250,6 +250,74 @@ describe.each(MEMBER_ARMS)("Member seam: payment events and expiry ($name)", (ar
         after: { reference: "AYC-10001", paidAfterExpiry: true },
       });
     });
+
+    describe("on an Order whose account was deleted (ticket 14)", () => {
+      /** Bea's Order, settled `outcome`, then her account deleted: the Order stays, with no account. */
+      async function detached(outcome: "expired" | "failed") {
+        const order = await pending();
+        if (outcome === "expired") {
+          vi.setSystemTime(at(25 * HOUR));
+          await seam.expireOverdueOrders(fake);
+        } else {
+          await seam.recordPaymentEvent(
+            eventFor(order, { id: "evt_FakePaymentFailed0001", outcome: "failed" }),
+          );
+        }
+        await arm.adminArm.deleteMemberElsewhere(BEA.userId);
+        vi.setSystemTime(at(26 * HOUR));
+        return order;
+      }
+
+      it.each(["expired", "failed"] as const)(
+        "records a payment on a %s Order as Paid with no account, granting nothing",
+        async (outcome) => {
+          const order = await detached(outcome);
+          const held = async () => ({
+            passes: await seam.listAccessPasses(BEA.userId),
+            notices: await seam.listNotices(BEA.userId),
+            targetExams: await seam.listTargetExams(BEA.userId),
+          });
+          const before = await held();
+
+          expect(await seam.recordPaymentEvent(eventFor(order))).toBe("applied");
+
+          expect(await arm.orders()).toMatchObject([
+            {
+              reference: order.reference,
+              userId: null,
+              status: "paid",
+              paidAt: at(26 * HOUR).toISOString(),
+              paidWithoutAccount: true,
+              buyerEmail: BEA.email,
+            },
+          ]);
+          // No pass, notice or Target Exam for the account that's gone.
+          expect(await held()).toEqual(before);
+          expect(before.passes).toEqual([]);
+          expect((await activity()).at(-1)).toEqual({
+            actor: { ...PAYMONGO_SYSTEM_ACTOR },
+            entity: "order",
+            action: "order-paid",
+            after: expect.objectContaining({
+              reference: order.reference,
+              status: "paid",
+              paidWithoutAccount: true,
+            }),
+          });
+        },
+      );
+
+      it("leaves an Order Paid before the account went as it was: not Paid with no account", async () => {
+        const order = await pending();
+        await seam.recordPaymentEvent(eventFor(order));
+
+        await arm.adminArm.deleteMemberElsewhere(BEA.userId);
+
+        expect(await arm.orders()).toMatchObject([
+          { userId: null, status: "paid", paidWithoutAccount: false },
+        ]);
+      });
+    });
   });
 
   describe("expiry at read time", () => {

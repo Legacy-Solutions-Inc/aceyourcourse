@@ -27,6 +27,7 @@ const PAID: Order = {
   createdAt: "2026-11-17T03:42:00.000Z",
   paidAt: "2026-11-17T03:43:00.000Z",
   statusChangedAt: "2026-11-17T03:43:00.000Z",
+  paidWithoutAccount: false,
 };
 
 describe("orders.rows", () => {

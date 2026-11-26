@@ -9,6 +9,7 @@ import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
 import { isReaderZoom } from "@/lib/reviewer-pdfs/reader";
 import { passEntityPrefix } from "@/services/access-passes.core";
+import { adminOrderRecords } from "@/services/admin.orders.db";
 import { staffActivityFromRow, staffActivityToRow } from "@/services/admin.rows";
 import {
   accessPassFromRow,
@@ -40,17 +41,23 @@ import {
 //
 // Carrying a request out runs in one transaction that takes the staff list's
 // write lock (so an Invite or a role change can't slip in between the staff
-// check and the deletion) and locks the request and its Member's row. Deleting
-// a Member deletes their Access Passes (the grants cascade) and their members
-// row, whose foreign keys cascade to every other Member App record and empty
-// their requests' user_id. The earlier Staff Activity about the account loses
-// the Member's email in the same transaction, and the call's own record is
-// written last, so a failure anywhere rolls every row back. Drizzle bypasses
+// check and the deletion) and locks the request, the Member's Orders (ticket
+// 14), then their Member row, in the order a payment's outcome locks an Order
+// and its Member (member.db.ts), so the two never deadlock. The Orders are
+// read again under the Member's lock: a Pay inserting one waits on that row,
+// so the check sees every payment in progress. Deleting a Member deletes
+// their Access Passes (the grants cascade) and their members row, whose
+// foreign keys cascade to every other Member App record and empty their
+// requests' and Orders' user_id (the Orders stay, ticket 14). The earlier
+// Staff Activity about the account loses the Member's email in the same
+// transaction, and the call's own record is written last, so a failure
+// anywhere rolls every row back. Drizzle bypasses
 // RLS, so authorisation is the seam's role check and the Staff Guard (coding
 // standards §3).
 // ─────────────────────────────────────────────────────────────────────────────
 
 const { accessPasses, accessPassGrants, betaTesters, members, privacyRequests } = schema;
+const { orders, invoiceRequests } = schema;
 const { staff, staffActivity } = schema;
 const { memberTargetExams, memberActiveDevices, memberConsents, memberDeviceSwitches } = schema;
 const { cardMarks, quizAttempts, quizAttemptAnswers, reviewerPageViews, studyDays } = schema;
@@ -96,9 +103,17 @@ const databasePrivacyRequestsStore: PrivacyRequestsStore = {
           .where(eq(privacyRequests.id, id))
           .for("update");
         if (!row) return null;
+        const ordersOf = (userId: string) =>
+          tx
+            .select({ status: orders.status, createdAt: orders.createdAt })
+            .from(orders)
+            .where(eq(orders.userId, userId))
+            .for("update");
+        if (row.userId) await ordersOf(row.userId);
         const [member] = row.userId
           ? await tx.select().from(members).where(eq(members.userId, row.userId)).for("update")
           : [];
+        const held = member ? await ordersOf(member.userId) : [];
         const listed = await tx
           .select({ email: staff.email, role: staff.role, status: staff.status })
           .from(staff);
@@ -119,6 +134,10 @@ const databasePrivacyRequestsStore: PrivacyRequestsStore = {
             .filter(({ status }) => status === "invited")
             .map(({ email }) => ({ email })),
           betaTester: tester !== undefined,
+          orders: held.map(({ status, createdAt }) => ({
+            status,
+            createdAt: createdAt.toISOString(),
+          })),
         };
         const { write, result } = work(record);
         if (!write) return result;
@@ -194,6 +213,7 @@ const databasePrivacyRequestsStore: PrivacyRequestsStore = {
         readerSpots,
         switches,
         notices,
+        theirOrders,
       ] = await Promise.all([
         db
           .select()
@@ -222,6 +242,11 @@ const databasePrivacyRequestsStore: PrivacyRequestsStore = {
         db.select().from(readerPositions).where(theirs(readerPositions)),
         db.select().from(memberDeviceSwitches).where(theirs(memberDeviceSwitches)),
         db.select().from(memberNotices).where(theirs(memberNotices)),
+        db
+          .select({ order: orders, invoice: invoiceRequests })
+          .from(orders)
+          .leftJoin(invoiceRequests, eq(invoiceRequests.orderId, orders.id))
+          .where(eq(orders.userId, userId)),
       ]);
       return {
         member: memberFromRow(member),
@@ -259,6 +284,7 @@ const databasePrivacyRequestsStore: PrivacyRequestsStore = {
         }),
         deviceSwitches: switches.map(deviceSwitchFromRow),
         notices: notices.map(noticeFromRow),
+        orders: await adminOrderRecords(theirOrders),
       };
     } catch (error) {
       throw asDatabaseError(error);

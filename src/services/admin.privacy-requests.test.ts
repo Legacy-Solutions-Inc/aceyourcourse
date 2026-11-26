@@ -6,7 +6,10 @@ import {
   type FakeAuthAdmin,
 } from "@/services/auth-admin.fake";
 import type { MemberUser } from "@/services/member.types";
+import { DEFAULT_ORDER_QUERY } from "@/lib/admin/orders-list";
 import { LAST_OWNER } from "@/lib/admin/staff-rules";
+import type { Order } from "@/lib/payments/order-ledger";
+import { samplePlanId } from "@/services/mock/plans";
 import { ALREADY_DELETED } from "@/lib/member-app/privacy-requests";
 import { CONFIRMATION_WRONG } from "@/services/admin.schema";
 import {
@@ -54,6 +57,48 @@ const SAM = {
   email: "stranger@example.com",
   name: null,
 };
+
+const HOUR = 60 * 60_000;
+const isoAt = (ms: number) => new Date(BOOT.getTime() + ms).toISOString();
+
+/**
+ * A fixture Order (ticket 14), as a Member's Pay and its outcome leave one:
+ * the buyer's, CE 3 months by GCash, live, made `fields.createdAt` (a day
+ * ago by default) and Paid two minutes after.
+ */
+function orderOf(buyer: MemberUser, reference: string, fields: Partial<Order> = {}): Order {
+  const createdAt = fields.createdAt ?? isoAt(-DAY);
+  const status = fields.status ?? "paid";
+  const paid = status === "paid" || status === "refunded";
+  const paidAt = paid ? new Date(new Date(createdAt).getTime() + 2 * 60_000).toISOString() : null;
+  return {
+    // "AYC-10001" → "00000000-0000-4000-8000-000000010001".
+    id: `00000000-0000-4000-8000-${reference.slice(4).padStart(12, "0")}`,
+    reference,
+    userId: buyer.userId,
+    examCode: "CE",
+    planId: samplePlanId("CE", 90),
+    planName: "CE All-Access",
+    days: 90,
+    priceCentavos: 129_900,
+    method: "gcash",
+    livemode: true,
+    checkoutId: null,
+    paymentId: paid ? `pay_Sample${reference.slice(4)}` : null,
+    buyerName: buyer.name,
+    buyerEmail: buyer.email,
+    statusChangedAt: paidAt ?? createdAt,
+    paidWithoutAccount: false,
+    ...fields,
+    status,
+    createdAt,
+    paidAt,
+  };
+}
+
+/** What deleting an account with a payment in progress says, with when it expires in Manila. */
+const paymentInProgress = (by: string) =>
+  `This Member has a payment in progress. Try again after it’s confirmed or expires (by ${by}).`;
 
 describe.each(ADMIN_ARMS)("Admin seam: Privacy Requests ($name)", (arm) => {
   const { seam, member } = arm;
@@ -219,7 +264,29 @@ describe.each(ADMIN_ARMS)("Admin seam: carrying out Privacy Requests ($name)", (
         deletionUnfinished: false,
         // tester@example.com is on the sample Beta Tester list.
         betaTester: true,
+        paidOrders: 0,
       });
+    });
+
+    it("counts the paid Orders that deleting the account keeps, Refunded ones too (ticket 14)", async () => {
+      await arm.putOrder(orderOf(BEA, "AYC-10001"));
+      await arm.putOrder(orderOf(BEA, "AYC-10002", { status: "refunded" }));
+      await arm.putOrder(orderOf(BEA, "AYC-10003", { status: "failed" }));
+      await arm.putOrder(orderOf(BEA, "AYC-10004", { status: "expired" }));
+      await arm.putOrder(orderOf(SAM, "AYC-10005"));
+
+      expect((await detail(await ask(BEA, "deletion"))).paidOrders).toBe(2);
+    });
+
+    it("says the account can't be deleted while a payment is in progress, until it expires", async () => {
+      await arm.putOrder(orderOf(BEA, "AYC-10001", { status: "pending", createdAt: isoAt(-HOUR) }));
+      const id = await ask(BEA, "deletion");
+
+      // Made at 09:00 on 19 Nov in Manila: it expires 24 hours later.
+      expect((await detail(id)).deletionBlocked).toBe(paymentInProgress("20 Nov 2026, 9:00 am"));
+
+      vi.setSystemTime(new Date(BOOT.getTime() + 23 * HOUR + 1));
+      expect((await detail(id)).deletionBlocked).toBeNull();
     });
 
     it("says why the account can't be deleted while its email is on the staff list", async () => {
@@ -279,7 +346,7 @@ describe.each(ADMIN_ARMS)("Admin seam: carrying out Privacy Requests ($name)", (
       const { data } = result.value;
       expect(data).toMatchObject({
         format: "ayc-member-data",
-        version: 1,
+        version: 2,
         exportedAt: BOOT.toISOString(),
         profile: { ...BEA, selectedExamCode: "ME" },
         devices: { activeDevice: { deviceLabel: "Chrome on Android" } },
@@ -302,6 +369,53 @@ describe.each(ADMIN_ARMS)("Admin seam: carrying out Privacy Requests ($name)", (
       expect(data.resume.reviewerPdfs).toHaveLength(1);
       expect(data.devices.switches).toHaveLength(1);
       expect(data.notices).toEqual([expect.objectContaining({ examCode: "CE", kind: "granted" })]);
+      expect(data.orders).toEqual([]);
+    });
+
+    it("adds the Member's Orders, each with its Invoice Request, and no one else's (ticket 14)", async () => {
+      const paid = orderOf(BEA, "AYC-10001", { createdAt: isoAt(-2 * DAY) });
+      await arm.putOrder(paid);
+      await arm.putOrder(orderOf(BEA, "AYC-10002", { status: "failed", method: "maya" }));
+      await arm.putOrder(orderOf(SAM, "AYC-10003"));
+      const asked = await member.requestInvoice(BEA.userId, "AYC-10001", {
+        name: "Sample Builders Inc.",
+        address: "12 Sample St, Jaro, Iloilo City",
+        tin: "123-456-789-000",
+      });
+      expect(asked).toEqual({ ok: true });
+      const id = await ask(BEA, "data-copy");
+
+      const result = await seam.exportMemberData(OWNER, id);
+
+      if (!result.ok) throw new Error(`Refused: ${JSON.stringify(result.error)}`);
+      const { data } = result.value;
+      expect(data.version).toBe(2);
+      expect(data.orders).toEqual([
+        {
+          reference: "AYC-10001",
+          examCode: "CE",
+          planName: "CE All-Access",
+          days: 90,
+          priceCentavos: 129_900,
+          method: "gcash",
+          status: "paid",
+          livemode: true,
+          createdAt: paid.createdAt,
+          paidAt: paid.paidAt,
+          buyer: { name: BEA.name, email: BEA.email },
+          payMongoReference: "pay_Sample10001",
+          refunds: [],
+          invoiceRequest: {
+            name: "Sample Builders Inc.",
+            address: "12 Sample St, Jaro, Iloilo City",
+            tin: "123-456-789-000",
+            requestedAt: BOOT.toISOString(),
+            sentAt: null,
+          },
+        },
+        expect.objectContaining({ reference: "AYC-10002", status: "failed", invoiceRequest: null }),
+      ]);
+      expect(JSON.stringify(data)).not.toContain("AYC-10003");
     });
 
     it("never includes another Member's data", async () => {
@@ -631,6 +745,114 @@ describe.each(ADMIN_ARMS)("Admin seam: carrying out Privacy Requests ($name)", (
           error: { kind: "not-found" },
         });
       }
+    });
+
+    describe("with Orders (ticket 14)", () => {
+      it("keeps the Member's Orders with no account, as bought, and the Owner still finds them", async () => {
+        const first = orderOf(BEA, "AYC-10001", { createdAt: isoAt(-30 * DAY) });
+        const second = orderOf(BEA, "AYC-10002", { method: "maya" });
+        const sams = orderOf(SAM, "AYC-10003");
+        for (const order of [first, second, sams]) await arm.putOrder(order);
+        await member.requestInvoice(BEA.userId, "AYC-10002", {
+          name: "Bea Tester",
+          address: "Jaro, Iloilo City",
+        });
+        const id = await ask(BEA, "deletion");
+
+        expect(await deleteAccount(id, BEA.email)).toMatchObject({
+          ok: true,
+          value: { status: "done" },
+        });
+
+        expect(await arm.orders()).toEqual([
+          { ...first, userId: null },
+          { ...second, userId: null },
+          sams,
+        ]);
+        const listed = await seam.listOrdersForAdmin(OWNER, {
+          ...DEFAULT_ORDER_QUERY,
+          range: "all",
+        });
+        if (!listed.ok) throw new Error("Refused an Owner");
+        expect(
+          listed.value.rows.map(({ reference, userId, buyerName, buyerEmail }) => ({
+            reference,
+            userId,
+            buyerName,
+            buyerEmail,
+          })),
+        ).toEqual([
+          { reference: "AYC-10003", userId: SAM.userId, buyerName: null, buyerEmail: SAM.email },
+          { reference: "AYC-10002", userId: null, buyerName: BEA.name, buyerEmail: BEA.email },
+          { reference: "AYC-10001", userId: null, buyerName: BEA.name, buyerEmail: BEA.email },
+        ]);
+        const kept = await seam.getOrderForAdmin(OWNER, "AYC-10002");
+        expect(kept).toMatchObject({
+          ok: true,
+          value: {
+            memberUserId: null,
+            order: { status: "paid", invoice: { name: "Bea Tester", sentAt: null } },
+          },
+        });
+        const csv = await seam.exportOrdersCsv(OWNER, { ...DEFAULT_ORDER_QUERY, range: "all" });
+        if (!csv.ok) throw new Error("Refused an Owner");
+        expect(csv.value.rows).toBe(3);
+        expect(csv.value.csv).toContain(`AYC-10001,`);
+        expect(csv.value.csv).toContain(BEA.email);
+      });
+
+      it("refuses while the Member has a payment in progress, deleting nothing", async () => {
+        await arm.putOrder(
+          orderOf(BEA, "AYC-10001", { status: "pending", createdAt: isoAt(-3 * HOUR) }),
+        );
+        await arm.putOrder(
+          orderOf(BEA, "AYC-10002", { status: "pending", createdAt: isoAt(-HOUR) }),
+        );
+        const id = await ask(BEA, "deletion");
+        const before = await arm.memberRecords(BEA.userId);
+
+        // The later of the two expires last: at 09:00 on 20 Nov in Manila.
+        expect(await deleteAccount(id, BEA.email)).toEqual(
+          refusedWith(paymentInProgress("20 Nov 2026, 9:00 am")),
+        );
+
+        expect(await arm.memberRecords(BEA.userId)).toEqual(before);
+        expect(auth.deleted).toEqual([]);
+        expect(await activityFor(id)).toEqual([]);
+        expect(await detail(id)).toMatchObject({ status: "open", member: BEA });
+        expect((await arm.orders()).map(({ userId }) => userId)).toEqual([BEA.userId, BEA.userId]);
+      });
+
+      it.each([
+        ["recorded Expired", "expired"],
+        ["Pending past its 24 hours, before the daily sweep records it", "pending"],
+      ] as const)("deletes once the payment has expired: %s", async (_when, status) => {
+        await arm.putOrder(orderOf(BEA, "AYC-10001", { status, createdAt: isoAt(-25 * HOUR) }));
+        const id = await ask(BEA, "deletion");
+
+        expect(await deleteAccount(id, BEA.email)).toMatchObject({ ok: true });
+
+        expect(await arm.orders()).toMatchObject([
+          { reference: "AYC-10001", userId: null, status },
+        ]);
+        expect(auth.deleted).toEqual([BEA.userId]);
+      });
+
+      it("never shows the kept Orders in the Member App, not even to a new account for the same person", async () => {
+        await arm.putOrder(orderOf(BEA, "AYC-10001"));
+        const id = await ask(BEA, "deletion");
+        await deleteAccount(id, BEA.email);
+
+        await member.getOrCreateMember(BEA);
+
+        expect(await member.listMemberOrders(BEA.userId)).toEqual([]);
+        expect(await member.getMemberOrder(BEA.userId, "AYC-10001")).toBeNull();
+        expect(await member.getPaymentAcknowledgement(BEA.userId, "AYC-10001")).toBeNull();
+        expect(await seam.getMemberForAdmin(OWNER, BEA.userId)).toMatchObject({
+          ok: true,
+          value: { orders: [] },
+        });
+      });
     });
 
     it("deletes nothing when Staff Activity can't be written", async () => {

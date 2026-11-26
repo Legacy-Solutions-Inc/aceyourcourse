@@ -232,6 +232,20 @@
       "when": 1795626081067,
       "tag": "20261125170121_renewal_dismissals",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1795650825328,
+      "tag": "20261125235345_orders_paid_without_account",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1795651196430,
+      "tag": "20261125235956_staff_activity_seq_idx",
+      "breakpoints": true
     }
   ]
 }

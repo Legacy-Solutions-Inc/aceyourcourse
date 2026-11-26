@@ -34,6 +34,7 @@ export const orderFromRow = (row: OrderRow): Order => ({
   createdAt: row.createdAt.toISOString(),
   paidAt: row.paidAt?.toISOString() ?? null,
   statusChangedAt: row.statusChangedAt.toISOString(),
+  paidWithoutAccount: row.paidWithoutAccount,
 });
 
 export const orderToRow = (order: Order): OrderRow => ({

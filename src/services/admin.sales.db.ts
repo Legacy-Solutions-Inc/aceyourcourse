@@ -13,7 +13,8 @@ import { salesCalls, type SalesStore } from "@/services/sales.core";
 // (src/services/sales.core.ts) over the orders, their refunds and Invoice
 // Requests, and the Access Passes. Each read takes only what the figures
 // count: live Orders paid or refunded since the instant asked, or still
-// waiting (recorded Pending, or an invoice to send); and the passes active
+// waiting (recorded Pending, an invoice to send, or, ticket 14, Paid after
+// their account was deleted, to refund); and the passes active
 // now whose holder has a Member record, with whether that Member's email is
 // an active Staff User's. The pure rules do the counting, as in the sample
 // arm. Drizzle bypasses RLS, so authorisation is the seam's role check and
@@ -51,6 +52,7 @@ const databaseSalesStore: SalesStore = {
                 gte(orders.paidAt, since),
                 eq(orders.status, "pending"),
                 and(isNotNull(invoiceRequests.orderId), isNull(invoiceRequests.sentAt)),
+                and(eq(orders.paidWithoutAccount, true), eq(orders.status, "paid")),
                 refundedSince,
               ),
             ),

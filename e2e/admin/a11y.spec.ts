@@ -433,6 +433,8 @@ for (const size of SIZES) {
               paths.admin.order(reference),
             )),
         "/admin/settings",
+        // Staff Activity (Phase 4, ticket 15), filtered so it's the same on any data.
+        `${paths.admin.staffActivity}?actor=nobody%40example.com`,
       ]) {
         await page.goto(path);
         await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
