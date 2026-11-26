@@ -12,9 +12,10 @@ import {
 import { FindYourExam } from "./find-your-exam";
 
 // "Find your exam" (docs/mockup/website/Home_v2.dc.html L86–137, L326–338):
-// a tab per Exam with Live Products, each with its Subjects and its Live
-// Products by units sold. The mockup's "Other courses" tab and "Coming to the
-// site" row were dropped.
+// a tab for each of the first four Exams with Live Products, each with its
+// Subjects and its Live Products by units sold. Any more Exams are behind
+// "+ Other exams", a link to every reviewer: the mockup's "Other courses" tab,
+// as a link. Its "Coming to the site" row was dropped.
 
 const CE = testExam();
 const ME = testExam({
@@ -157,6 +158,37 @@ describe("FindYourExam", () => {
       "/products/me-formula-flash-cards",
     );
     expect(panel().getByText("Step 2 · Choose a format · 1 reviewer")).toBeInTheDocument();
+  });
+
+  it("shows the first four Exams as tabs, and links the rest to every reviewer as Other exams", () => {
+    const exam = (code: string, name: string) => testExam({ code, board: code, name });
+    const exams = [
+      CE,
+      ME,
+      exam("EE", "Electrical Engineering"),
+      exam("MT", "Medical Technology"),
+      exam("CPA", "Accountancy"),
+    ];
+    const products = exams.map(({ code }) =>
+      testLiveProduct({ id: code, slug: `${code}-cards`, examCode: code }),
+    );
+    render(<FindYourExam exams={exams} products={products} memberAppLive={false} />);
+
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+      "CECivil Engineering",
+      "MEMechanical Engineering",
+      "EEElectrical Engineering",
+      "MTMedical Technology",
+    ]);
+    const other = screen.getByRole("link", { name: "Other exams" });
+    expect(other).toHaveAttribute("href", "/products");
+    // A tab list holds tabs only, so the link sits beside it.
+    expect(screen.getByRole("tablist")).not.toContainElement(other);
+  });
+
+  it("has no Other exams link while every Exam has a tab", () => {
+    renderSection();
+    expect(screen.queryByRole("link", { name: /Other exams/ })).toBeNull();
   });
 
   it("renders nothing when no Exam has Live Products", () => {

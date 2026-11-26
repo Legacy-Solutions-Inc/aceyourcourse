@@ -26,6 +26,18 @@ interface AdminSidebarProps {
   paidToday?: PaidToday | null;
 }
 
+/** The logo with the ADMIN tag, atop the sidebar and in the mobile Menu bar. */
+export function AdminBrand() {
+  return (
+    <span className="flex items-center gap-2">
+      <BrandLogo alt={config.site.name} />
+      <span className="border-[1.5px] bg-accent px-1.25 py-1 font-mono text-[10px] leading-none font-bold tracking-[0.08em] text-accent-foreground">
+        ADMIN
+      </span>
+    </span>
+  );
+}
+
 const itemClass =
   "flex min-h-11 items-center gap-2.5 px-2.5 text-[15px] font-semibold transition-colors motion-reduce:transition-none";
 
@@ -51,12 +63,7 @@ export function AdminSidebar({
   return (
     <div className="flex min-h-full flex-col gap-4.5 px-3.5 pt-4.5 pb-5.5">
       <div className="flex items-center justify-between gap-2.5 px-1 py-0.5">
-        <span className="flex items-center gap-2">
-          <BrandLogo alt={config.site.name} />
-          <span className="border-[1.5px] bg-accent px-1.25 py-1 font-mono text-[10px] leading-none font-bold tracking-[0.08em] text-accent-foreground">
-            ADMIN
-          </span>
-        </span>
+        <AdminBrand />
         {inDrawer ? (
           <SheetClose asChild>
             <button

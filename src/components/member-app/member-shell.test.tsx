@@ -8,7 +8,8 @@ import { NotOpenYet } from "./not-open-yet";
 import { ShareStreak, ShellStreakProvider, type StreakRead } from "./shell-streak";
 
 // The Member App's shell (BUILD-MAP §2): the sidebar's seven numbered items
-// and its footer, the mobile drawer around it (the "Menu" button opens it;
+// and its footer, the mobile drawer around it (the "Menu" button, in a bar
+// across the top, opens it;
 // Escape, ✕, the scrim or a link close it), and the "Not open yet" screen.
 const nav = vi.hoisted(() => ({ pathname: "/app/library" }));
 vi.mock("next/navigation", () => ({ usePathname: () => nav.pathname }));
@@ -262,6 +263,13 @@ describe("MemberDrawer", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("puts the Menu button in a bar across the top, with the logo", () => {
+    const { menu } = renderDrawer();
+    const bar = screen.getByRole("navigation", { name: "Member App menu" });
+    expect(bar).toContainElement(menu);
+    expect(within(bar).getByRole("img", { name: "Ace Your Course" })).toBeInTheDocument();
+  });
+
   it("opens the menu, and Escape closes it with focus back on the Menu button", async () => {
     const { user, menu } = renderDrawer();
     await user.click(menu);
@@ -295,10 +303,11 @@ describe("MemberDrawer", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("has no Menu button on a focus screen, which has a back bar instead", () => {
+  it("has no Menu bar on a focus screen, which has a back bar instead", () => {
     nav.pathname = "/app/library/deck/3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b";
     render(<MemberDrawer {...shell} exams={[CE, ME]} />);
     expect(screen.queryByRole("button", { name: "Menu" })).toBeNull();
+    expect(screen.queryByRole("navigation", { name: "Member App menu" })).toBeNull();
   });
 
   it("closes when a screen is chosen", async () => {

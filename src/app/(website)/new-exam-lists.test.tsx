@@ -60,11 +60,13 @@ describe("CHE, with a Live Product on the Website", () => {
     expect(examLinks(screen.getByRole("contentinfo")).at(-1)).toBe("/exams/che");
   });
 
-  it("is last in Home's Find your exam", async () => {
+  it("is behind Other exams in Home's Find your exam, which has tabs for the first four", async () => {
     const { default: HomePage } = await import("./page");
     render(await HomePage());
     const tabs = screen.getAllByRole("tab").map((tab) => tab.textContent ?? "");
-    expect(tabs.at(-1)).toMatch(/^CHE/);
+    expect(tabs).toHaveLength(4);
+    expect(tabs.some((tab) => tab.startsWith("CHE"))).toBe(false);
+    expect(screen.getByRole("link", { name: "Other exams" })).toHaveAttribute("href", "/products");
   });
 
   it("is the last Exam chip on the Products and Reviews pages", async () => {

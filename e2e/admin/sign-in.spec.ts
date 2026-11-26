@@ -486,6 +486,20 @@ test.describe("Other email", () => {
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
+  test("the Menu button is in a bar across the top, which stays there as the screen scrolls", async ({
+    page,
+  }) => {
+    await signInAs(page, "owner");
+    await expect(page).toHaveURL(/\/admin$/);
+    const bar = page.getByRole("navigation", { name: "Admin menu" });
+    await expect(bar.getByRole("button", { name: "Menu", exact: true })).toBeVisible();
+    expect((await bar.boundingBox())?.y).toBe(0);
+
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    expect((await bar.boundingBox())?.y).toBe(0);
+  });
+
   test("the Menu button opens the drawer; Escape and the scrim close it and focus returns", async ({
     page,
   }) => {

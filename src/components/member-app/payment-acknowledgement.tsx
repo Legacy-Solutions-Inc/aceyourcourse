@@ -33,7 +33,7 @@ export function PaymentAcknowledgementDocument({
   return (
     <main
       id="main"
-      className="mx-auto flex w-full max-w-5xl min-w-0 flex-1 flex-col gap-4 px-4 pt-6 pb-24 wide:px-10 wide:pt-10 wide:pb-10 print:p-0"
+      className="mx-auto flex w-full max-w-5xl min-w-0 flex-1 flex-col gap-4 px-4 pt-6 pb-10 wide:px-10 wide:pt-10 print:p-0"
     >
       <div className="flex flex-wrap gap-2 print:hidden">
         <Link

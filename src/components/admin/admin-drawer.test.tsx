@@ -7,8 +7,8 @@ import { AdminDrawer } from "./admin-drawer";
 import { AdminSidebar } from "./admin-sidebar";
 
 // The sidebar's menu and user block, and the mobile drawer around it: the
-// "Menu" button opens it, and Escape, the close button or a link close it,
-// with focus back on the button.
+// "Menu" button, in a bar across the top, opens it, and Escape, the close
+// button or a link close it, with focus back on the button.
 vi.mock("next/navigation", () => ({ usePathname: () => "/admin/reviews" }));
 
 const OWNER = {
@@ -97,6 +97,14 @@ describe("AdminDrawer", () => {
     const { menu } = renderDrawer();
     expect(menu).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("puts the Menu button in a bar across the top, with the logo and the ADMIN tag", () => {
+    const { menu } = renderDrawer();
+    const bar = screen.getByRole("navigation", { name: "Admin menu" });
+    expect(bar).toContainElement(menu);
+    expect(within(bar).getByRole("img", { name: "Ace Your Course" })).toBeInTheDocument();
+    expect(within(bar).getByText("ADMIN")).toBeInTheDocument();
   });
 
   it("opens the menu, and Escape closes it with focus back on the Menu button", async () => {

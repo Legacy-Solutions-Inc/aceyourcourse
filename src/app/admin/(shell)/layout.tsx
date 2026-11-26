@@ -22,8 +22,8 @@ async function paidTodayOf(actor: StaffActor): Promise<PaidToday | null> {
 }
 
 /**
- * The signed-in Admin shell: the 268 px sidebar, or below 760 px the "Menu"
- * button and drawer, around each screen. The menu follows the Staff Role.
+ * The signed-in Admin shell: the 268 px sidebar, or below 760 px the bar
+ * across the top with the "Menu" button and drawer, around each screen. The menu follows the Staff Role.
  *
  * A layout doesn't re-render when Staff move between screens, so it can't be
  * the Guard: every page calls requireStaff or requireOwner itself. When nobody
@@ -50,8 +50,10 @@ export default async function AdminShellLayout({ children }: { children: React.R
           <AdminSidebar menu={menu} actor={actor} signOutAction={signOut} paidToday={paidToday} />
         </div>
       </aside>
-      <div className="flex min-w-0 flex-1 flex-col">{children}</div>
-      <AdminDrawer menu={menu} actor={actor} signOutAction={signOut} paidToday={paidToday} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <AdminDrawer menu={menu} actor={actor} signOutAction={signOut} paidToday={paidToday} />
+        {children}
+      </div>
     </div>
   );
 }

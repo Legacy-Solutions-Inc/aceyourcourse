@@ -22,7 +22,7 @@ import { dismissMemberNotice, switchExam } from "./actions";
  * extension or end of their access, each dismissible.
  *
  * Printing (a Payment Acknowledgement, Phase 4 ticket 06) leaves the shell
- * out: the sidebar, the Menu button and the notices.
+ * out: the sidebar, the Menu bar and the notices.
  *
  * A layout doesn't re-render when a Member moves between screens, so it can't
  * be the gate: every page calls requireMember itself. When the gate doesn't
@@ -68,6 +68,12 @@ export default async function MemberShellLayout({ children }: { children: React.
           </div>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
+          <MemberDrawer
+            user={user}
+            exams={exams}
+            switchAction={switchExam}
+            signOutAction={signOut}
+          />
           <div className="print:hidden">
             <MemberNotices
               notices={notices.map((notice) => ({ id: notice.id, text: noticeText(notice) }))}
@@ -75,14 +81,6 @@ export default async function MemberShellLayout({ children }: { children: React.
             />
           </div>
           {children}
-        </div>
-        <div className="print:hidden">
-          <MemberDrawer
-            user={user}
-            exams={exams}
-            switchAction={switchExam}
-            signOutAction={signOut}
-          />
         </div>
       </div>
     </ShellStreakProvider>

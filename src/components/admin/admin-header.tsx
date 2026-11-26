@@ -19,10 +19,12 @@ interface AdminHeaderProps {
 /**
  * Each screen's header (mockup 72–79): the group label and title, the
  * "SAMPLE DATA" tag with Reset, "View site ↗" and the screen's primary action.
+ * It stays at the top as the screen scrolls from 760 px up; below that, the
+ * Menu bar does, and this scrolls away under it so the two don't fill a phone.
  */
 export function AdminHeader({ group, title, sampleData, primaryAction }: AdminHeaderProps) {
   return (
-    <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b-[1.5px] bg-background px-4 py-3.5 wide:px-7">
+    <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b-[1.5px] bg-background px-4 py-3.5 wide:sticky wide:top-0 wide:z-30 wide:px-7">
       <div className="flex flex-col gap-0.5">
         <p className="font-mono text-[11px] font-medium tracking-[0.06em] text-ayc-blue">{group}</p>
         <h1 className="text-[26px] leading-tight font-extrabold tracking-[-0.02em]">{title}</h1>
