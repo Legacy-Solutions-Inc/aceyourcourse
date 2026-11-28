@@ -4,9 +4,10 @@ import type { Course, CourseModule, Lesson } from "@/services/courses.types";
 import { stableUuid } from "./stable-uuid";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// The sample video Courses (Phase 5, ticket 01; spec, Phase 5 planning
-// decisions → Sample data): three CE Courses with Modules and Lessons and no
-// videos yet, so every Lesson has no video and every Course stays Hidden.
+// The sample video Courses (Phase 5, tickets 01 and 02; spec, Phase 5
+// planning decisions → Sample data): three CE Courses with Modules and
+// Lessons. Every Lesson has a ready (fake) video with a made-up length and is
+// Published, so every Course is Visible.
 // One is Included in CE All-Access; two are sold separately, one on sale at
 // ₱1,499 and one not on sale, with no price yet. The ids are made from names, so they're the same on
 // every restart and in the database seed.
@@ -98,6 +99,12 @@ const SAMPLE_COURSES: readonly SampleCourse[] = [
 /** The sample Courses were made in this order, a minute apart. */
 const MADE_FROM = Date.UTC(2026, 10, 28, 0, 0);
 
+/** Pure: the nth sample Lesson's fake video id (the video fake plays any id). */
+export const sampleVideoId = (n: number) => `sample-video-${String(n).padStart(2, "0")}`;
+
+/** Pure: the nth sample Lesson's made-up length: between 8 and 23 minutes. */
+const sampleVideoSeconds = (n: number) => 480 + ((n * 263) % 900);
+
 /** Pure: a sample Course's id, from its title. */
 export const sampleCourseId = (title: string) => stableUuid(`course:${title}`);
 
@@ -129,7 +136,7 @@ export function sampleCourses(catalogue: CatalogueSeed): {
       title: sample.title,
       description: sample.description,
       coverSrc: null,
-      visibility: "hidden",
+      visibility: "visible",
       access: sample.access,
       priceCentavos: sample.priceCentavos,
       onSale: sample.onSale,
@@ -151,7 +158,11 @@ export function sampleCourses(catalogue: CatalogueSeed): {
           title: lesson.title,
           notes: lesson.notes ?? "",
           freePreview: lesson.freePreview ?? false,
-          state: "no-video",
+          state: "published",
+          videoId: sampleVideoId(lessons.length + 1),
+          videoSeconds: sampleVideoSeconds(lessons.length + 1),
+          replacementVideoId: null,
+          replacementState: null,
         });
       });
     });

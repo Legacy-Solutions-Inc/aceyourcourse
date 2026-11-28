@@ -14,8 +14,7 @@ export type CourseAccess = (typeof COURSE_ACCESS)[number];
 
 /**
  * A Lesson's state: no video yet, its upload running, VdoCipher processing
- * it, ready but unpublished (draft), published, or its upload failed. Every
- * Lesson is "no-video" until ticket 02 adds uploads.
+ * it, ready but unpublished (draft), published, or its upload failed.
  */
 export const LESSON_STATES = [
   "no-video",
@@ -26,6 +25,13 @@ export const LESSON_STATES = [
   "upload-failed",
 ] as const;
 export type LessonState = (typeof LESSON_STATES)[number];
+
+/**
+ * Where "Replace video" is on a Lesson with a ready video: the new video
+ * uploading, processing, or its upload failed. The ready one plays meanwhile.
+ */
+export const LESSON_REPLACEMENT_STATES = ["uploading", "processing", "upload-failed"] as const;
+export type LessonReplacementState = (typeof LESSON_REPLACEMENT_STATES)[number];
 
 export interface Course {
   id: string;
@@ -66,4 +72,11 @@ export interface Lesson {
   /** Any signed-in Member can watch it. */
   freePreview: boolean;
   state: LessonState;
+  /** Its VdoCipher video's id: null only with no video. */
+  videoId: string | null;
+  /** The video's length in whole seconds, once it's ready (draft or published). */
+  videoSeconds: number | null;
+  /** "Replace video"'s new video, while it uploads or processes, or if its upload failed; else null. */
+  replacementVideoId: string | null;
+  replacementState: LessonReplacementState | null;
 }

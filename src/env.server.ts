@@ -5,7 +5,7 @@ import { z } from "zod";
 /**
  * Server-only environment. The companion to `src/env.ts`, which validates the
  * PUBLIC (`NEXT_PUBLIC_*`) vars. This module holds the server secrets —
- * `DATABASE_URL`, `SUPABASE_SECRET_KEY`, `CRON_SECRET` and the `PAYMONGO_*` keys — validated apart so that, thanks
+ * `DATABASE_URL`, `SUPABASE_SECRET_KEY`, `CRON_SECRET`, the `PAYMONGO_*` keys and `VDOCIPHER_API_SECRET` — validated apart so that, thanks
  * to the `import "server-only"` marker above, they can never be referenced
  * from — and thus never inlined into — the client bundle. Do NOT reference
  * either from `src/env.ts`, `src/config.ts`, or any client component.
@@ -57,6 +57,13 @@ const serverEnvSchema = z.object({
   // Supabase's secret key (sb_secret_…), which bypasses RLS. Used for Storage
   // only (ticket 17). Optional, and never NEXT_PUBLIC_.
   SUPABASE_SECRET_KEY: optionalEnv(z.string().min(1).optional()),
+  // VdoCipher's API secret (Phase 5, ticket 02; ADR 0013), from the client's
+  // VdoCipher dashboard → Config → API keys; the user sets it. Set: Lesson
+  // videos upload to VdoCipher and play in its DRM player. Unset: the Lesson
+  // editor reads "Connect the video service to upload". Sample mode always
+  // uses the video fake. Read through src/services/video.ts, never directly.
+  // Never NEXT_PUBLIC_.
+  VDOCIPHER_API_SECRET: optionalEnv(z.string().trim().min(1).optional()),
 });
 
 /** The validated, typed server environment. */
@@ -87,6 +94,7 @@ export const serverEnv = parseServerEnv({
   PAYMONGO_SECRET_KEY: process.env.PAYMONGO_SECRET_KEY,
   PAYMONGO_WEBHOOK_SECRET: process.env.PAYMONGO_WEBHOOK_SECRET,
   SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
+  VDOCIPHER_API_SECRET: process.env.VDOCIPHER_API_SECRET,
 });
 
 /**

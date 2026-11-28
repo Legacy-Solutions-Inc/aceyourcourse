@@ -17,6 +17,7 @@ import { hashDeviceToken } from "@/lib/member-app/device-token";
 import type { Order } from "@/lib/payments/order-ledger";
 import { createFakeAuthAdmin } from "@/services/auth-admin.fake";
 import { createFakeRenderer } from "@/services/page-images.fake";
+import { createFakeVideoService } from "@/services/video.fake";
 
 import {
   SAVES,
@@ -161,6 +162,8 @@ const READS = [
   // The Course builder's list and one Course (Phase 5, ticket 01).
   "listCoursesForAdmin",
   "getCourseForAdmin",
+  // The Lesson editor's preview: a playback pass, nothing saved (ticket 02).
+  "previewLessonVideo",
 ] as const satisfies readonly (keyof AdminService)[];
 
 /**
@@ -348,6 +351,17 @@ const PSAD_COURSE = sampleCourseId("PSAD Masterclass");
 const PSAD_STEEL = sampleModuleId("PSAD Masterclass", "Steel design");
 const PSAD_BEAMS = sampleLessonId("PSAD Masterclass", "Reinforced concrete", "Beams in flexure");
 const NO_SUCH_COURSE = "6e3d2c1b-0a9f-4e8d-9c7b-6a5f4e3d2c1b";
+/** The video service the Lesson video writes are given, and the upload one starts (ticket 02). */
+const videos = createFakeVideoService({ processingMs: 0 });
+const upload = { video: "" };
+const VIDEO_FILE = { id: PSAD_BEAMS, name: "beams.mp4", type: "video/mp4", size: 1024 };
+
+/** Starts "Replace video" on PSAD's first Lesson, keeping the new video's id. */
+async function startUpload(seam: AdminService) {
+  const started = await seam.startLessonUpload(EDITOR, VIDEO_FILE, videos);
+  if (!started.ok) throw new Error(`No upload: ${JSON.stringify(started.error)}`);
+  upload.video = started.value.videoId;
+}
 const NEW_COURSE = {
   title: "Steel Lectures",
   description: "",
@@ -387,10 +401,8 @@ const WRITES: Record<string, Write> = {
     actor: EDITOR,
     entity: "course",
     entityId: PSAD_COURSE,
-    setUp: async (seam, arm) => {
-      await arm.setLessonState(PSAD_BEAMS, "published");
-    },
-    saves: (seam, actor) => seam.setCourseVisibility(actor, PSAD_COURSE, true),
+    // The sample Courses are Visible (ticket 02): hiding one saves.
+    saves: (seam, actor) => seam.setCourseVisibility(actor, PSAD_COURSE, false),
     refused: (seam, actor) => seam.setCourseVisibility(actor, NO_SUCH_COURSE, true),
     refusal: "not-found",
   },
@@ -398,8 +410,8 @@ const WRITES: Record<string, Write> = {
     actor: EDITOR,
     entity: "course",
     entityId: PSAD_COURSE,
-    saves: (seam, actor) => seam.deleteCourse(actor, PSAD_COURSE),
-    refused: (seam, actor) => seam.deleteCourse(actor, NO_SUCH_COURSE),
+    saves: (seam, actor) => seam.deleteCourse(actor, PSAD_COURSE, videos),
+    refused: (seam, actor) => seam.deleteCourse(actor, NO_SUCH_COURSE, videos),
     refusal: "not-found",
   },
   createCourseModule: {
@@ -492,8 +504,37 @@ const WRITES: Record<string, Write> = {
     actor: EDITOR,
     entity: "lesson",
     entityId: PSAD_BEAMS,
-    saves: (seam, actor) => seam.deleteLesson(actor, PSAD_BEAMS),
-    refused: (seam, actor) => seam.deleteLesson(actor, NO_SUCH_COURSE),
+    saves: (seam, actor) => seam.deleteLesson(actor, PSAD_BEAMS, videos),
+    refused: (seam, actor) => seam.deleteLesson(actor, NO_SUCH_COURSE, videos),
+    refusal: "not-found",
+  },
+  startLessonUpload: {
+    actor: EDITOR,
+    entity: "lesson",
+    entityId: PSAD_BEAMS,
+    saves: (seam, actor) => seam.startLessonUpload(actor, VIDEO_FILE, videos),
+    refused: (seam, actor) =>
+      seam.startLessonUpload(actor, { ...VIDEO_FILE, name: "beams.avi" }, videos),
+    refusal: "invalid",
+  },
+  finishLessonUpload: {
+    actor: EDITOR,
+    entity: "lesson",
+    entityId: PSAD_BEAMS,
+    setUp: (seam) => startUpload(seam),
+    saves: (seam, actor) =>
+      seam.finishLessonUpload(actor, { id: PSAD_BEAMS, video: upload.video, outcome: "sent" }),
+    refused: (seam, actor) =>
+      seam.finishLessonUpload(actor, { id: NO_SUCH_COURSE, video: "v", outcome: "sent" }),
+    refusal: "not-found",
+  },
+  checkLessonVideo: {
+    actor: EDITOR,
+    entity: "lesson",
+    entityId: PSAD_BEAMS,
+    setUp: (seam) => startUpload(seam),
+    saves: (seam, actor) => seam.checkLessonVideo(actor, PSAD_BEAMS, videos),
+    refused: (seam, actor) => seam.checkLessonVideo(actor, NO_SUCH_COURSE, videos),
     refusal: "not-found",
   },
   inviteStaff: {

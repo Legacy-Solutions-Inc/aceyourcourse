@@ -153,10 +153,23 @@ export interface AdminArm {
    */
   memberRecords(userId: string): Promise<MemberRecordCounts>;
   /**
-   * Sets a Lesson's state behind the seam's back, as ticket 02's uploads will
-   * (a ready video makes it "draft"), so Publish and Visible can save.
+   * Sets a Lesson's state behind the seam's back, with a video to match
+   * (lessonVideoFor): none for "no-video", a test video otherwise, with a
+   * length once it's ready (draft or published), and no replacement.
    */
   setLessonState(id: string, state: LessonState): Promise<void>;
+}
+
+/** Pure: a Lesson's video fields to go with a state set behind the seam's back. */
+export function lessonVideoFor(id: string, state: LessonState) {
+  const ready = state === "draft" || state === "published";
+  return {
+    state,
+    videoId: state === "no-video" ? null : `test-video-${id.slice(0, 8)}`,
+    videoSeconds: ready ? 600 : null,
+    replacementVideoId: null,
+    replacementState: null,
+  };
 }
 
 /** Pure: Card Marks by card, then Member. */
@@ -307,7 +320,7 @@ export const SAMPLE_ARM: AdminArm = {
   setLessonState: async (id, state) => {
     const store = getSampleStore();
     store.lessons = store.lessons.map((lesson) =>
-      lesson.id === id ? { ...lesson, state } : lesson,
+      lesson.id === id ? { ...lesson, ...lessonVideoFor(id, state) } : lesson,
     );
   },
   breakStaffActivity: async () => {

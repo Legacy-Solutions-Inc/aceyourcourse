@@ -156,4 +156,8 @@ export const {
   moveLessonToModule,
   setLessonPublished,
   deleteLesson,
+  startLessonUpload,
+  finishLessonUpload,
+  checkLessonVideo,
+  previewLessonVideo,
 } = courseEditorCalls(sampleCourseStore);

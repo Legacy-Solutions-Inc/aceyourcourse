@@ -9,15 +9,19 @@ import { LessonEditor } from "@/components/admin/courses/lesson-editor";
 import { requireStaff } from "@/lib/admin/guard";
 import { paths } from "@/paths";
 import { getCourseForAdmin, listCoursesForAdmin } from "@/services/admin";
+import { videoService } from "@/services/video";
 
 import {
   addCourse,
   addCourseModule,
   addLesson,
+  checkLessonVideoStatus,
   createCourseCoverUpload,
+  createLessonUpload,
   moveCourseModuleInCourse,
   moveLessonInModule,
   moveLessonToOtherModule,
+  previewLesson,
   removeCourse,
   removeCourseModule,
   removeLesson,
@@ -26,6 +30,7 @@ import {
   saveCourseVisibility,
   saveLesson,
   saveLessonPublished,
+  saveLessonUploadOutcome,
 } from "./actions";
 
 export const metadata: Metadata = { title: "Courses & videos" };
@@ -46,7 +51,7 @@ function hereOf(course: string | undefined, view: string | undefined, lesson: st
 }
 
 /**
- * Courses & videos, for any Staff User (Phase 5, ticket 01; BUILD-MAP §3.7),
+ * Courses & videos, for any Staff User (Phase 5, tickets 01 and 02; BUILD-MAP §3.7),
  * read fresh on every request: the Courses list, and beside it the Course
  * picked (`course`): its Modules and Lessons, its settings (`view=settings`),
  * or one Lesson in the Lesson editor (`lesson`); "new" opens a new Course's
@@ -85,7 +90,16 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
           course={{ id: opened.course.id, title: opened.course.title }}
           moduleTitle={lessonModule.title}
           lesson={lesson}
-          actions={{ saveLesson, saveLessonPublished, removeLesson }}
+          video={{ connected: videoService() !== null, watermark: actor.email }}
+          actions={{
+            saveLesson,
+            saveLessonPublished,
+            removeLesson,
+            createLessonUpload,
+            saveLessonUploadOutcome,
+            checkLessonVideoStatus,
+            previewLesson,
+          }}
         />
       );
     } else if (view === "settings") {

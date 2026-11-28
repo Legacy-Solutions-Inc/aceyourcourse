@@ -253,6 +253,13 @@
       "when": 1795830173666,
       "tag": "20261128014253_courses",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1795839212295,
+      "tag": "20261128041332_lesson_videos",
+      "breakpoints": true
     }
   ]
 }

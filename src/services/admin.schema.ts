@@ -6,6 +6,7 @@ import {
   LESSON_NOTES_MAX,
   LESSON_TITLE_MAX,
   MODULE_TITLE_MAX,
+  videoFileRefusal,
 } from "@/lib/courses/course-rules";
 import { parsePeso } from "@/lib/admin/peso";
 import { fullTitle, WHOLE_TITLE_MAX } from "@/lib/admin/seo-check";
@@ -2285,6 +2286,32 @@ export const lessonToModuleInputSchema = z.object({ id: lessonId, module: module
 export type LessonToModuleInput = z.input<typeof lessonToModuleInputSchema>;
 export const lessonPublishInputSchema = z.object({ id: lessonId, published: flag });
 export const lessonIdInputSchema = z.object({ id: lessonId });
+
+/**
+ * "Upload video" or "Replace video" (ticket 02): the Lesson and the file
+ * picked, by its name, type and size, checked (an MP4 or MOV of up to 4 GB)
+ * before upload permission is asked. The file itself never reaches us.
+ */
+export const lessonUploadInputSchema = z
+  .object({
+    id: lessonId,
+    name: z.string().trim().min(1).max(500),
+    type: z.string().max(200),
+    size: z.number().int().nonnegative(),
+  })
+  .superRefine((file, context) => {
+    const reason = videoFileRefusal(file);
+    if (reason) context.addIssue({ code: z.ZodIssueCode.custom, path: ["file"], message: reason });
+  });
+export type LessonUploadInput = z.input<typeof lessonUploadInputSchema>;
+
+/** The browser's word on an upload it sent (ticket 02): the Lesson, its video's id, and how it went. */
+export const lessonUploadOutcomeInputSchema = z.object({
+  id: lessonId,
+  video: z.string().trim().min(1).max(200),
+  outcome: z.enum(["sent", "failed"]),
+});
+export type LessonUploadOutcomeInput = z.input<typeof lessonUploadOutcomeInputSchema>;
 
 /** The word a Lesson's delete must be confirmed with, typed exactly. */
 export const DELETE_WORD = "DELETE";

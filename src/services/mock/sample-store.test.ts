@@ -89,7 +89,7 @@ describe("the sample agreements", () => {
 // The sample video Courses (Phase 5, ticket 01): three CE Courses with
 // Modules and Lessons and no videos yet, all Hidden.
 describe("the sample Courses", () => {
-  it("start with three CE Courses, their Modules and Lessons, and no videos", () => {
+  it("start with three Visible CE Courses, their Modules and Published Lessons with ready videos", () => {
     const { courses, courseModules, lessons } = resetSampleStore();
     expect(
       courses.map(({ title, subjectCode, access, priceCentavos, onSale, visibility }) => ({
@@ -107,7 +107,7 @@ describe("the sample Courses", () => {
         access: "included",
         priceCentavos: null,
         onSale: false,
-        visibility: "hidden",
+        visibility: "visible",
       },
       {
         title: "PSAD Masterclass",
@@ -115,7 +115,7 @@ describe("the sample Courses", () => {
         access: "sold-separately",
         priceCentavos: 149_900,
         onSale: true,
-        visibility: "hidden",
+        visibility: "visible",
       },
       {
         title: "HPGE Crash Course",
@@ -123,7 +123,7 @@ describe("the sample Courses", () => {
         access: "sold-separately",
         priceCentavos: null,
         onSale: false,
-        visibility: "hidden",
+        visibility: "visible",
       },
     ]);
     const surveying = courses[0]?.id;
@@ -134,7 +134,9 @@ describe("the sample Courses", () => {
     );
     expect(surveyingLessons).toHaveLength(5);
     expect(surveyingLessons.filter((lesson) => lesson.freePreview)).toHaveLength(1);
-    expect(new Set(lessons.map((lesson) => lesson.state))).toEqual(new Set(["no-video"]));
+    expect(new Set(lessons.map((lesson) => lesson.state))).toEqual(new Set(["published"]));
+    expect(new Set(lessons.map((lesson) => lesson.videoId)).size).toBe(lessons.length);
+    expect(lessons.every((lesson) => (lesson.videoSeconds ?? 0) > 0)).toBe(true);
   });
 
   it("leaves out a Course whose Subject the catalogue doesn't have", () => {

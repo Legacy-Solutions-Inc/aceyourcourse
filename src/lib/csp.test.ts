@@ -56,9 +56,27 @@ describe("buildCsp", () => {
     expect(csp).toContain("wss://abc.supabase.co");
   });
 
-  it("without supabaseUrl, connect-src is just 'self' in prod", () => {
+  it("without supabaseUrl, connect-src is 'self' and VdoCipher's upload host in prod", () => {
     const csp = buildCsp(NONCE, { isDev: false });
-    expect(csp).toMatch(/connect-src 'self'(;|$)/);
+    expect(csp).toMatch(/connect-src 'self' https:\/\/\*\.amazonaws\.com(;|$)/);
+  });
+
+  it("adds only VdoCipher's player as a frame, and its upload host as a connection (Phase 5, ticket 02)", () => {
+    const directive = (name: string, isDev = false) =>
+      buildCsp(NONCE, { isDev })
+        .split("; ")
+        .find((entry) => entry.startsWith(`${name} `));
+    for (const isDev of [false, true]) {
+      expect(directive("frame-src", isDev)).toBe("frame-src 'self' https://player.vdocipher.com");
+    }
+    expect(directive("connect-src")).toBe("connect-src 'self' https://*.amazonaws.com");
+    // Nothing else of VdoCipher's, and no new script, style, image or font source.
+    const csp = buildCsp(NONCE, { isDev: false });
+    expect(csp.match(/vdocipher/g)).toHaveLength(1);
+    expect(directive("script-src")).toBe(`script-src 'self' 'nonce-${NONCE}' 'strict-dynamic'`);
+    expect(directive("style-src")).toBe("style-src 'self' 'unsafe-inline'");
+    expect(directive("font-src")).toBe("font-src 'self' data:");
+    expect(directive("default-src")).toBe("default-src 'self'");
   });
 
   it("session replay OFF (default): no worker-src directive", () => {

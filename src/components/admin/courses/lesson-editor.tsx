@@ -16,6 +16,7 @@ import { DELETE_WORD } from "@/services/admin.schema";
 import type { AdminLesson } from "@/services/admin.types";
 import type { Lesson } from "@/services/courses.types";
 
+import { LessonVideo, type LessonVideoActions } from "./lesson-video";
 import {
   conflictOf,
   fieldErrorsOf,
@@ -27,7 +28,7 @@ import {
   TEXT_BUTTON,
 } from "./course-ui";
 
-export interface LessonEditorActions {
+export interface LessonEditorActions extends LessonVideoActions {
   saveLesson: AdminAction<AdminLesson>;
   saveLessonPublished: AdminAction<AdminLesson>;
   removeLesson: AdminAction<Lesson>;
@@ -38,6 +39,8 @@ interface LessonEditorProps {
   /** The Module the Lesson is in, for the heading. */
   moduleTitle: string;
   lesson: AdminLesson;
+  /** Whether this server has a video service, and the Staff member's email for the preview's watermark. */
+  video: { connected: boolean; watermark: string };
   actions: LessonEditorActions;
 }
 
@@ -49,12 +52,13 @@ export function savedPositionsLine(count: number): string {
 }
 
 /**
- * The Lesson editor (Phase 5, ticket 01; BUILD-MAP §3.7): the title, the
- * video (none yet: ticket 02 adds uploads), notes shown under the video, Free
- * Preview, Publish or Unpublish, Save, and Delete lesson, which needs DELETE
- * typed. The server enforces every rule (Publish needs a ready video).
+ * The Lesson editor (Phase 5, tickets 01 and 02; BUILD-MAP §3.7): the title,
+ * the video (upload, processing, preview, Replace video: LessonVideo), notes
+ * shown under the video, Free Preview, Publish or Unpublish, Save, and Delete
+ * lesson, which needs DELETE typed. The server enforces every rule (Publish
+ * needs a title and a ready video; a Visible Course keeps a Published Lesson).
  */
-export function LessonEditor({ course, moduleTitle, lesson, actions }: LessonEditorProps) {
+export function LessonEditor({ course, moduleTitle, lesson, video, actions }: LessonEditorProps) {
   const router = useRouter();
   const notesId = useId();
   const previewId = useId();
@@ -147,15 +151,12 @@ export function LessonEditor({ course, moduleTitle, lesson, actions }: LessonEdi
           error={errors.title}
           onChange={(event) => setTitle(event.target.value)}
         />
-        <div className="flex flex-col gap-1.5">
-          <p className={LABEL}>VIDEO</p>
-          <div className="flex aspect-video max-w-md flex-col items-center justify-center gap-1 border-[1.5px] border-dashed bg-white p-4 text-center">
-            <span className={TAG}>NO VIDEO</span>
-            <p className="text-[13px] text-muted-foreground">
-              Video uploads come with the video service.
-            </p>
-          </div>
-        </div>
+        <LessonVideo
+          lesson={lesson}
+          connected={video.connected}
+          watermark={video.watermark}
+          actions={actions}
+        />
         <div className="flex flex-col gap-1.5">
           <label htmlFor={notesId} className={LABEL}>
             LESSON NOTES · SHOWN UNDER THE VIDEO

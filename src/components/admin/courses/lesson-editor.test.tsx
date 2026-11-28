@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AdminActionState } from "@/lib/admin/action";
-import type { AdminLesson } from "@/services/admin.types";
+import type { AdminLesson, AdminLessonPreview, AdminLessonUpload } from "@/services/admin.types";
 import type { Lesson } from "@/services/courses.types";
 
 import { CONCRETE, COURSE, OPENED } from "../../../../test/course-fixtures";
@@ -39,6 +39,20 @@ function renderEditor(actions: Partial<LessonEditorActions> = {}, lesson: AdminL
       status: "saved",
       value: lesson,
     })),
+    createLessonUpload: vi.fn(async (): Promise<AdminActionState<AdminLessonUpload>> => ({
+      status: "failed",
+    })),
+    saveLessonUploadOutcome: vi.fn(async (): Promise<AdminActionState<AdminLesson>> => ({
+      status: "saved",
+      value: lesson,
+    })),
+    checkLessonVideoStatus: vi.fn(async (): Promise<AdminActionState<AdminLesson>> => ({
+      status: "saved",
+      value: lesson,
+    })),
+    previewLesson: vi.fn(async (): Promise<AdminActionState<AdminLessonPreview>> => ({
+      status: "failed",
+    })),
     ...actions,
   };
   render(
@@ -46,6 +60,7 @@ function renderEditor(actions: Partial<LessonEditorActions> = {}, lesson: AdminL
       course={{ id: COURSE.id, title: COURSE.title }}
       moduleTitle={CONCRETE.title}
       lesson={lesson}
+      video={{ connected: true, watermark: "editor@example.com" }}
       actions={all}
     />,
   );

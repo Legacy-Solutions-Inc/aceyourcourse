@@ -2,18 +2,22 @@
 
 import { adminAction } from "@/lib/admin/action";
 import {
+  checkLessonVideo,
   createCourse,
   createCourseModule,
   createLesson,
   deleteCourse,
   deleteCourseModule,
   deleteLesson,
+  finishLessonUpload,
   moveCourseModule,
   moveLesson,
   moveLessonToModule,
+  previewLessonVideo,
   renameCourseModule,
   setCourseVisibility,
   setLessonPublished,
+  startLessonUpload,
   updateCourse,
   updateLesson,
 } from "@/services/admin";
@@ -28,15 +32,19 @@ import {
   lessonFormSchema,
   lessonMoveInputSchema,
   lessonPublishInputSchema,
+  lessonIdInputSchema,
   lessonToModuleInputSchema,
+  lessonUploadInputSchema,
+  lessonUploadOutcomeInputSchema,
   newCourseFormSchema,
   newCourseModuleFormSchema,
   newLessonFormSchema,
 } from "@/services/admin.schema";
 import { createUpload } from "@/services/uploads";
 import { uploadFileSchema, uploadOwnerSchema } from "@/services/uploads.types";
+import { videoService } from "@/services/video";
 
-// The Course builder's Server Actions (Phase 5, ticket 01): any Staff User,
+// The Course builder's Server Actions (Phase 5, tickets 01 and 02): any Staff User,
 // Editor or Owner, makes Courses, their Modules and their Lessons. Like every
 // Admin action, each runs the Staff Guard first, so a Member or someone signed
 // out never reaches the seam, which checks every rule again. None writes how
@@ -66,7 +74,7 @@ export const saveCourseVisibility = adminAction(
 /** Delete course, after the confirmation: its Modules and Lessons go with it. */
 export const removeCourse = adminAction(
   { role: "staff", schema: courseIdInputSchema },
-  async (actor, { id }) => deleteCourse(actor, id),
+  async (actor, { id }) => deleteCourse(actor, id, videoService()),
 );
 
 /** "+ Module": last in its Course. */
@@ -123,5 +131,36 @@ export const saveLessonPublished = adminAction(
 /** Delete lesson, only with DELETE typed to confirm. */
 export const removeLesson = adminAction(
   { role: "staff", schema: lessonDeleteInputSchema },
-  async (actor, { id }) => deleteLesson(actor, id),
+  async (actor, { id }) => deleteLesson(actor, id, videoService()),
+);
+
+// Lesson videos (Phase 5, ticket 02): only Staff get upload permission and a
+// preview's playback pass; the file goes from the browser straight to the
+// video service, never through here.
+
+/**
+ * "Upload video" or "Replace video": the file checked (MP4 or MOV, up to 4
+ * GB), then one-time upload permission for this Lesson, recorded on it.
+ */
+export const createLessonUpload = adminAction(
+  { role: "staff", schema: lessonUploadInputSchema },
+  async (actor, file) => startLessonUpload(actor, file, videoService()),
+);
+
+/** The browser's word that the file was sent, or that sending it failed. */
+export const saveLessonUploadOutcome = adminAction(
+  { role: "staff", schema: lessonUploadOutcomeInputSchema },
+  finishLessonUpload,
+);
+
+/** The editor's status poll while a video uploads or processes. */
+export const checkLessonVideoStatus = adminAction(
+  { role: "staff", schema: lessonIdInputSchema },
+  async (actor, { id }) => checkLessonVideo(actor, id, videoService()),
+);
+
+/** The preview: a playback pass watermarked with the Staff member's email. */
+export const previewLesson = adminAction(
+  { role: "staff", schema: lessonIdInputSchema },
+  async (actor, { id }) => previewLessonVideo(actor, id, videoService()),
 );

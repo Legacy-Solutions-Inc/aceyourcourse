@@ -44,6 +44,7 @@ import type {
   ReviewerPdfUpload,
   TopicContent,
 } from "@/services/content.types";
+import type { PlaybackPass, UploadTarget } from "@/services/video.types";
 import type { Course, Lesson } from "@/services/courses.types";
 import type {
   ActiveDevice,
@@ -1139,6 +1140,23 @@ export interface AdminLesson extends Lesson {
   stamp: RecordStamp;
   /** How many Members have a saved position in it: 0 until ticket 04 stores them. */
   savedPositions: number;
+}
+
+/**
+ * Upload permission for a Lesson's video (ticket 02): the Lesson as it now is
+ * (uploading, or still playing its ready video while the replacement
+ * uploads), the new video's id, and where the browser sends the file.
+ */
+export interface AdminLessonUpload {
+  lesson: AdminLesson;
+  videoId: string;
+  target: UploadTarget;
+}
+
+/** The Lesson editor's preview (ticket 02): a playback pass watermarked with the Staff member's email, and the length. */
+export interface AdminLessonPreview {
+  pass: PlaybackPass;
+  seconds: number;
 }
 
 /** A Module in the builder, with its last save and its Lessons in order. */

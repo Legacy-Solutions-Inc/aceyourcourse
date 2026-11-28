@@ -514,6 +514,21 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     removeLesson: staff(() =>
       courses.removeLesson(IDLE, { input: { id: PSAD_BEAMS, confirm: "DELETE" } }),
     ),
+    // Lesson videos (ticket 02): only Staff get upload permission and a preview's pass.
+    createLessonUpload: staff(() =>
+      courses.createLessonUpload(IDLE, {
+        input: { id: PSAD_BEAMS, name: "beams.mp4", type: "video/mp4", size: 1024 },
+      }),
+    ),
+    saveLessonUploadOutcome: staff(() =>
+      courses.saveLessonUploadOutcome(IDLE, {
+        input: { id: PSAD_BEAMS, video: "fake-video-1", outcome: "sent" },
+      }),
+    ),
+    checkLessonVideoStatus: staff(() =>
+      courses.checkLessonVideoStatus(IDLE, { input: { id: PSAD_BEAMS } }),
+    ),
+    previewLesson: staff(() => courses.previewLesson(IDLE, { input: { id: PSAD_BEAMS } })),
   },
   "./(shell)/products/actions.ts": {
     setProductFlag: staff(() =>
@@ -716,9 +731,8 @@ beforeEach(async () => {
       failure: null,
     },
   };
-  // The sample Courses (Phase 5, ticket 01): a Lesson with a ready video to
-  // publish, a Published one so its Course can be made Visible (as ticket 02's
-  // uploads will make them), and an empty Module to delete.
+  // The sample Courses (Phase 5, tickets 01 and 02): a Lesson whose ready
+  // video is unpublished, to publish, and an empty Module to delete.
   store.lessons = store.lessons.map((lesson) =>
     lesson.id === PSAD_BEAMS
       ? { ...lesson, state: "draft" }

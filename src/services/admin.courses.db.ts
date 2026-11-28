@@ -218,6 +218,10 @@ const databaseCourseStore: CourseEditorStore = {
                 notes: fromExcluded("notes"),
                 freePreview: fromExcluded("free_preview"),
                 state: fromExcluded("state"),
+                videoId: fromExcluded("video_id"),
+                videoSeconds: fromExcluded("video_seconds"),
+                replacementVideoId: fromExcluded("replacement_video_id"),
+                replacementState: fromExcluded("replacement_state"),
               },
             });
         }
@@ -261,4 +265,8 @@ export const {
   moveLessonToModule,
   setLessonPublished,
   deleteLesson,
+  startLessonUpload,
+  finishLessonUpload,
+  checkLessonVideo,
+  previewLessonVideo,
 } = courseEditorCalls(databaseCourseStore);

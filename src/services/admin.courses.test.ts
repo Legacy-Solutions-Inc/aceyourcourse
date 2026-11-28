@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { NewCourseForm } from "@/services/admin.schema";
 import type { AdminCourse, StaffActor } from "@/services/admin.types";
 import { sampleCourseId } from "@/services/mock/courses";
+import { createFakeVideoService } from "@/services/video.fake";
 
 import { sampleActor, UNUSED_EXAM, withUnusedExam } from "../../test/admin-inputs";
 import { ADMIN_ARMS } from "../../test/admin-arms";
@@ -36,9 +37,11 @@ const NEW_COURSE: NewCourseForm = {
 
 describe.each(ADMIN_ARMS)("the Course builder ($name)", (arm) => {
   const { seam } = arm;
+  let video = createFakeVideoService();
 
   beforeEach(async () => {
     await arm.reset();
+    video = createFakeVideoService();
   });
 
   async function courseOf(id: string): Promise<AdminCourse> {
@@ -80,7 +83,7 @@ describe.each(ADMIN_ARMS)("the Course builder ($name)", (arm) => {
   }
 
   describe("the sample Courses", () => {
-    it("lists the three, oldest first, each with its Exam, Lesson count and Hidden", async () => {
+    it("lists the three, oldest first, each with its Exam, Lesson count and Visible", async () => {
       const list = await seam.listCoursesForAdmin(EDITOR);
       expect(list.courses).toEqual([
         {
@@ -89,7 +92,7 @@ describe.each(ADMIN_ARMS)("the Course builder ($name)", (arm) => {
           examCode: "CE",
           subjectCode: "MSTC",
           lessons: 5,
-          visibility: "hidden",
+          visibility: "visible",
         },
         {
           id: PSAD,
@@ -97,7 +100,7 @@ describe.each(ADMIN_ARMS)("the Course builder ($name)", (arm) => {
           examCode: "CE",
           subjectCode: "PSAD",
           lessons: 3,
-          visibility: "hidden",
+          visibility: "visible",
         },
         {
           id: HPGE,
@@ -105,7 +108,7 @@ describe.each(ADMIN_ARMS)("the Course builder ($name)", (arm) => {
           examCode: "CE",
           subjectCode: "HPGE",
           lessons: 3,
-          visibility: "hidden",
+          visibility: "visible",
         },
       ]);
       expect(list.exams.find((exam) => exam.code === "CE")?.subjects.map((s) => s.code)).toEqual([
@@ -115,13 +118,18 @@ describe.each(ADMIN_ARMS)("the Course builder ($name)", (arm) => {
       ]);
     });
 
-    it("has Surveying & Curves Lectures included, in 2 Modules, with 1 Free Preview Lesson and no videos", async () => {
+    it("has Surveying & Curves Lectures included, in 2 Modules, with 1 Free Preview Lesson, every Lesson Published with a ready video", async () => {
       const course = await courseOf(SURVEYING);
       expect(course.course).toMatchObject({ access: "included", priceCentavos: null });
       expect(course.modules.map((module) => module.lessons.length)).toEqual([3, 2]);
       const lessons = course.modules.flatMap((module) => module.lessons);
       expect(lessons.filter((lesson) => lesson.freePreview)).toHaveLength(1);
-      expect(new Set(lessons.map((lesson) => lesson.state))).toEqual(new Set(["no-video"]));
+      expect(new Set(lessons.map((lesson) => lesson.state))).toEqual(new Set(["published"]));
+      for (const lesson of lessons) {
+        expect(lesson.videoId).toEqual(expect.any(String));
+        expect(lesson.videoSeconds).toBeGreaterThan(0);
+        expect(lesson.replacementVideoId).toBeNull();
+      }
       expect(lessons.every((lesson) => lesson.savedPositions === 0)).toBe(true);
     });
 
@@ -250,7 +258,9 @@ describe.each(ADMIN_ARMS)("the Course builder ($name)", (arm) => {
         },
       ]);
 
-      const { appended: deleted } = await appendedBy(() => seam.deleteLesson(OWNER, lesson.id));
+      const { appended: deleted } = await appendedBy(() =>
+        seam.deleteLesson(OWNER, lesson.id, video),
+      );
       expect(deleted).toMatchObject([{ entity: "lesson", action: "delete", after: null }]);
       const { appended: moduleGone } = await appendedBy(() =>
         seam.deleteCourseModule(OWNER, module.id),
@@ -283,21 +293,24 @@ describe.each(ADMIN_ARMS)("the Course builder ($name)", (arm) => {
     it("deletes a Course with its Modules and Lessons", async () => {
       const course = await courseOf(SURVEYING);
       const lesson = course.modules[0]?.lessons[0];
-      const { result, appended } = await appendedBy(() => seam.deleteCourse(EDITOR, SURVEYING));
+      const { result, appended } = await appendedBy(() =>
+        seam.deleteCourse(EDITOR, SURVEYING, video),
+      );
       expect(result.ok).toBe(true);
       expect(appended).toMatchObject([{ entity: "course", action: "delete", after: null }]);
       expect(await seam.getCourseForAdmin(EDITOR, SURVEYING)).toBeNull();
       expect((await seam.listCoursesForAdmin(EDITOR)).courses).toHaveLength(2);
-      expect(await seam.deleteLesson(EDITOR, lesson?.id ?? UNKNOWN)).toEqual({
+      expect(await seam.deleteLesson(EDITOR, lesson?.id ?? UNKNOWN, video)).toEqual({
         ok: false,
         error: { kind: "not-found" },
       });
     });
 
     it("publishes a Lesson whose video is ready, and only then lets the Course be Visible", async () => {
-      const lesson = (await courseOf(SURVEYING)).modules[0]?.lessons[0];
-      if (!lesson) throw new Error("No Lesson");
-      // Ticket 02's upload makes a Lesson with a ready video a draft.
+      const id = await newCourse();
+      const loads = await newModule(id, "Loads");
+      const lesson = await newLesson(loads.id, "Dead loads");
+      // An upload made it a draft with a ready video.
       await arm.setLessonState(lesson.id, "draft");
       const { result, appended } = await appendedBy(() =>
         seam.setLessonPublished(EDITOR, lesson.id, true),
@@ -311,25 +324,43 @@ describe.each(ADMIN_ARMS)("the Course builder ($name)", (arm) => {
           after: { state: "published" },
         },
       ]);
-      const shown = await appendedBy(() => seam.setCourseVisibility(EDITOR, SURVEYING, true));
+      const shown = await appendedBy(() => seam.setCourseVisibility(EDITOR, id, true));
       expect(shown.result).toEqual({ ok: true, value: { visibility: "visible" }, tags: [] });
       expect(shown.appended).toMatchObject([{ entity: "course", action: "show" }]);
+      // Hidden again, its Lesson can go back to a draft.
+      expect((await seam.setCourseVisibility(EDITOR, id, false)).ok).toBe(true);
       const unpublished = await seam.setLessonPublished(EDITOR, lesson.id, false);
       expect(unpublished).toMatchObject({ ok: true, value: { state: "draft" } });
     });
 
-    it("hides a Visible Course when its last Published Lesson is unpublished or deleted", async () => {
-      const [first, second] = (await courseOf(SURVEYING)).modules[0]?.lessons ?? [];
-      if (!first || !second) throw new Error("No Lessons");
+    it("refuses to unpublish a Visible Course's last Published Lesson, and hides it when that Lesson is deleted", async () => {
+      const id = await newCourse();
+      const loads = await newModule(id, "Loads");
+      const first = await newLesson(loads.id, "Dead loads");
+      const second = await newLesson(loads.id, "Live loads");
       await arm.setLessonState(first.id, "published");
       await arm.setLessonState(second.id, "published");
-      expect((await seam.setCourseVisibility(EDITOR, SURVEYING, true)).ok).toBe(true);
+      expect((await seam.setCourseVisibility(EDITOR, id, true)).ok).toBe(true);
 
       // Another Published Lesson is left: it stays Visible.
       expect((await seam.setLessonPublished(EDITOR, first.id, false)).ok).toBe(true);
-      expect((await courseOf(SURVEYING)).course.visibility).toBe("visible");
+      expect((await courseOf(id)).course.visibility).toBe("visible");
 
-      const { appended } = await appendedBy(() => seam.deleteLesson(EDITOR, second.id));
+      // The last one can't be unpublished while the Course is Visible.
+      const refused = await appendedBy(() => seam.setLessonPublished(EDITOR, second.id, false));
+      expect(refused.result).toEqual({
+        ok: false,
+        error: {
+          kind: "invalid",
+          fieldErrors: {},
+          formError: "A visible course needs a published lesson. Hide the course first.",
+        },
+      });
+      expect(refused.appended).toEqual([]);
+      expect((await courseOf(id)).modules[0]?.lessons[1]?.state).toBe("published");
+
+      // Deleting it hides the Course.
+      const { appended } = await appendedBy(() => seam.deleteLesson(EDITOR, second.id, video));
       expect(appended).toMatchObject([
         { entity: "lesson", action: "delete" },
         {
@@ -339,13 +370,7 @@ describe.each(ADMIN_ARMS)("the Course builder ($name)", (arm) => {
           after: { visibility: "hidden" },
         },
       ]);
-      expect((await courseOf(SURVEYING)).course.visibility).toBe("hidden");
-
-      await arm.setLessonState(first.id, "published");
-      expect((await seam.setCourseVisibility(EDITOR, SURVEYING, true)).ok).toBe(true);
-      const unpublished = await appendedBy(() => seam.setLessonPublished(EDITOR, first.id, false));
-      expect(unpublished.appended.map((record) => record.action)).toEqual(["unpublish", "hide"]);
-      expect((await courseOf(SURVEYING)).course.visibility).toBe("hidden");
+      expect((await courseOf(id)).course.visibility).toBe("hidden");
     });
 
     it("takes a finished cover upload as the Course's cover", async () => {
@@ -444,8 +469,11 @@ describe.each(ADMIN_ARMS)("the Course builder ($name)", (arm) => {
     });
 
     it("refuses to make a Course Visible without a Published Lesson", async () => {
+      const id = await newCourse();
+      const loads = await newModule(id, "Loads");
+      await newLesson(loads.id, "Dead loads");
       const { result, appended } = await appendedBy(() =>
-        seam.setCourseVisibility(EDITOR, SURVEYING, true),
+        seam.setCourseVisibility(EDITOR, id, true),
       );
       expect(result).toEqual({
         ok: false,
@@ -456,15 +484,16 @@ describe.each(ADMIN_ARMS)("the Course builder ($name)", (arm) => {
         },
       });
       expect(appended).toEqual([]);
-      expect((await courseOf(SURVEYING)).course.visibility).toBe("hidden");
+      expect((await courseOf(id)).course.visibility).toBe("hidden");
       // Hidden always saves, and changes nothing here.
-      expect(await seam.setCourseVisibility(EDITOR, SURVEYING, false)).toMatchObject({ ok: true });
+      expect(await seam.setCourseVisibility(EDITOR, id, false)).toMatchObject({ ok: true });
     });
 
     it("refuses to publish a Lesson without a video", async () => {
-      const lesson = (await courseOf(SURVEYING)).modules[0]?.lessons[0];
+      const id = await newCourse();
+      const lesson = await newLesson((await newModule(id, "Loads")).id, "Dead loads");
       const { result, appended } = await appendedBy(() =>
-        seam.setLessonPublished(EDITOR, lesson?.id ?? UNKNOWN, true),
+        seam.setLessonPublished(EDITOR, lesson.id, true),
       );
       expect(result).toEqual({
         ok: false,
@@ -626,7 +655,7 @@ describe.each(ADMIN_ARMS)("the Course builder ($name)", (arm) => {
       const results = await Promise.all([
         seam.createCourseModule(EDITOR, { course: UNKNOWN, title: "x" }),
         seam.createLesson(EDITOR, { module: UNKNOWN, title: "x" }),
-        seam.deleteCourse(EDITOR, UNKNOWN),
+        seam.deleteCourse(EDITOR, UNKNOWN, video),
         seam.setLessonPublished(EDITOR, UNKNOWN, true),
       ]);
       expect(results).toEqual(Array(4).fill({ ok: false, error: { kind: "not-found" } }));

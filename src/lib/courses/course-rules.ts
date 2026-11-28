@@ -1,9 +1,9 @@
 import { formatPeso } from "@/lib/money";
 import type { ContentVisibility } from "@/services/content.types";
-import type { CourseAccess, LessonState } from "@/services/courses.types";
+import type { CourseAccess, LessonReplacementState, LessonState } from "@/services/courses.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// The Course builder's rules (Phase 5, ticket 01; spec, Phase 5 planning
+// The Course builder's rules (Phase 5, tickets 01 and 02; spec, Phase 5 planning
 // decisions → A Course, The Course builder, Hiding, unpublishing and
 // deleting). Pure, and shared by the Admin seam, which enforces them, and the
 // builder's screens, which show the same words.
@@ -18,6 +18,13 @@ export const LESSON_NOTES_MAX = 5000;
 export const NEEDS_PUBLISHED_LESSON = "Needs at least one published lesson";
 export const ADD_A_VIDEO = "ADD A VIDEO BEFORE PUBLISHING";
 export const WAIT_FOR_VIDEO = "WAIT FOR THE VIDEO TO FINISH UPLOADING";
+export const ADD_A_TITLE = "ADD A TITLE BEFORE PUBLISHING";
+export const NEEDS_PUBLISHED_LESSON_TO_STAY =
+  "A visible course needs a published lesson. Hide the course first.";
+export const PICK_A_VIDEO_FILE = "PICK AN MP4 OR MOV VIDEO";
+export const VIDEO_TOO_BIG = "KEEP THE VIDEO TO 4 GB OR LESS";
+export const CONNECT_VIDEO_SERVICE = "Connect the video service to upload";
+export const CONNECT_VIDEO_SERVICE_REFUSAL = CONNECT_VIDEO_SERVICE.toUpperCase();
 
 /** Pure: why a Course can't take this Subject (one of its Exam's, picked from the list), or null. */
 export function subjectRefusal(
@@ -38,9 +45,10 @@ export function visibilityRefusal(
   return visibility === "visible" && publishedLessons === 0 ? NEEDS_PUBLISHED_LESSON : null;
 }
 
-/** Pure: why a Lesson in this state can't be published, or null: it needs a ready video. */
-export function publishRefusal(state: LessonState): string | null {
-  switch (state) {
+/** Pure: why a Lesson can't be published, or null: it needs a title and a ready video. */
+export function publishRefusal(lesson: { state: LessonState; title: string }): string | null {
+  if (!lesson.title.trim()) return ADD_A_TITLE;
+  switch (lesson.state) {
     case "no-video":
     case "upload-failed":
       return ADD_A_VIDEO;
@@ -51,6 +59,76 @@ export function publishRefusal(state: LessonState): string | null {
     case "published":
       return null;
   }
+}
+
+/**
+ * Pure: why a Published Lesson can't be unpublished, or null: a Visible
+ * Course must keep a Published Lesson, so its last one is refused until the
+ * Course is hidden. `publishedAfter` counts the Course's Published Lessons
+ * once this one is unpublished.
+ */
+export function unpublishRefusal(
+  visibility: ContentVisibility,
+  publishedAfter: number,
+): string | null {
+  return visibility === "visible" && publishedAfter === 0 ? NEEDS_PUBLISHED_LESSON_TO_STAY : null;
+}
+
+/** Pure: whether a Lesson's video is ready to play (a draft or Published Lesson). */
+export const hasReadyVideo = (state: LessonState): boolean =>
+  state === "draft" || state === "published";
+
+/** Pure: whether a video (a Lesson's, or its replacement's) is still uploading or processing. */
+export const videoInFlight = (state: LessonState | LessonReplacementState | null): boolean =>
+  state === "uploading" || state === "processing";
+
+/** The largest Lesson video an upload takes: 4 GB. */
+export const VIDEO_MAX_BYTES = 4 * 1024 ** 3;
+
+const VIDEO_KINDS: Record<string, readonly string[]> = {
+  mp4: ["video/mp4"],
+  mov: ["video/quicktime"],
+};
+
+/**
+ * Pure: why a file can't be a Lesson's video, checked before upload
+ * permission is asked: an MP4 or MOV (by its name, and its type when the
+ * browser gives one) of up to 4 GB.
+ */
+export function videoFileRefusal(file: {
+  name: string;
+  type: string;
+  size: number;
+}): string | null {
+  const extension = /\.([a-z0-9]+)$/i.exec(file.name)?.[1]?.toLowerCase() ?? "";
+  const types = VIDEO_KINDS[extension];
+  if (!types || (file.type !== "" && !types.includes(file.type))) return PICK_A_VIDEO_FILE;
+  if (!Number.isFinite(file.size) || file.size <= 0) return PICK_A_VIDEO_FILE;
+  if (file.size > VIDEO_MAX_BYTES) return VIDEO_TOO_BIG;
+  return null;
+}
+
+/**
+ * Pure: an upload's progress line, "41% · about 6 min left · keep this page
+ * open", from how much is sent (0 to 1) and the seconds left, if known yet.
+ */
+export function uploadProgressLine(sent: number, secondsLeft: number | null): string {
+  const percent = `${Math.floor(Math.min(Math.max(sent, 0), 1) * 100)}%`;
+  if (secondsLeft === null || !Number.isFinite(secondsLeft)) {
+    return `${percent} · keep this page open`;
+  }
+  const left =
+    secondsLeft < 60 ? "less than a minute left" : `about ${Math.round(secondsLeft / 60)} min left`;
+  return `${percent} · ${left} · keep this page open`;
+}
+
+/** Pure: a video's length, "12:34", or "1:02:03" from an hour on. */
+export function videoLength(seconds: number): string {
+  const whole = Math.max(0, Math.round(seconds));
+  const hours = Math.floor(whole / 3600);
+  const minutes = Math.floor((whole % 3600) / 60);
+  const rest = String(whole % 60).padStart(2, "0");
+  return hours > 0 ? `${hours}:${String(minutes).padStart(2, "0")}:${rest}` : `${minutes}:${rest}`;
 }
 
 /** Pure: why a Module holding this many Lessons can't be deleted, or null when it's empty. */

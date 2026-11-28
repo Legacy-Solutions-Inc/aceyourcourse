@@ -349,6 +349,7 @@ shows its value again.
 | `CRON_SECRET`                          | 16+ random characters (`openssl rand -hex 32`), for the Reviewer PDF job's cron | **yes, Sensitive** |
 | `PAYMONGO_SECRET_KEY`                  | PayMongo's `sk_test_…` key during the beta, `sk_live_…` at go-live (step 13)    | **yes, Sensitive** |
 | `PAYMONGO_WEBHOOK_SECRET`              | the `whsk_…` signing secret of the webhook you register in step 13              | **yes, Sensitive** |
+| `VDOCIPHER_API_SECRET`                 | the client's VdoCipher API secret (step 14); unset until the account is open    | **yes, Sensitive** |
 | `NEXT_PUBLIC_LOG_LEVEL`                | `WARN` (unset logs everything)                                                  | no                 |
 | `NEXT_PUBLIC_AUTH_STRATEGY`            | leave unset (`SUPABASE`, the only one)                                          | no                 |
 | `NEXT_PUBLIC_SITE_VERSION`             | optional, e.g. the release's git sha                                            | no                 |
@@ -476,6 +477,37 @@ money" strip; a live key (`sk_live_…`) takes real money.
    copy the live secret key (`sk_live_…`) and register the same webhook URL
    again for its live secret. Replace both variables in Vercel and redeploy.
    The TEST strip disappears, and new Orders record `livemode` true.
+
+## 14. Set up VdoCipher video
+
+Lesson videos stream from VdoCipher (ADR 0013), on an account that is the
+client's. You set its key; nobody pastes it into chat, an issue or the repo.
+Video is decided by `VDOCIPHER_API_SECRET` alone: unset, the Lesson editor
+reads "Connect the video service to upload" with upload off (the rest of the
+Course builder works); set, Staff upload straight from the Lesson editor to
+VdoCipher, and videos play in its DRM player with the viewer's email drawn
+across them.
+
+1. **The client opens the account** at vdocipher.com under the business's
+   email (not yours or a staff member's own), so it stays theirs. It starts
+   on the **30-day free trial: 4 videos and 5 GB of streaming**, no card.
+2. **Get the API secret.** In VdoCipher's dashboard → Config → API keys,
+   create a key and copy its secret. Only the client and you see it.
+3. **Set it in Vercel** (step 9): `VDOCIPHER_API_SECRET`, Production,
+   **Sensitive**. Never give it a `NEXT_PUBLIC_` name: that ships it to every
+   browser. Redeploy: the key is read when the server starts.
+4. **Test an upload.** In the Admin → Courses & videos, open a Lesson, upload
+   a short MP4 and keep the page open. It reads the upload's progress, then
+   "Processing" while VdoCipher prepares it (a few minutes), then the video's
+   length. Preview it: your email drifts across the video. The browser sends
+   the file straight to VdoCipher; it never passes through the site.
+5. **The client buys Starter** (USD 149 a year: 1 TB of streaming, 100 GB of
+   storage) **before uploading more than 4 videos**, the trial's limit.
+   Heavier watching later means a bigger VdoCipher plan, with no code change.
+   - Deleting a Lesson or a Course deletes its videos from VdoCipher, which
+     keeps them in its trash for 7 days (still counted in storage). A delete
+     VdoCipher refuses is listed in Settings → Staff Activity as "video
+     delete failed"; delete that video in VdoCipher's dashboard by hand.
 
 ## Rollback
 

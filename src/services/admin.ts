@@ -27,6 +27,8 @@ import type {
   CourseModuleForm,
   LessonForm,
   LessonToModuleInput,
+  LessonUploadInput,
+  LessonUploadOutcomeInput,
   NewCourseForm,
   NewCourseModuleForm,
   NewLessonForm,
@@ -62,6 +64,8 @@ import type {
   AdminCourseList,
   AdminCourseModule,
   AdminCourseSummary,
+  AdminLessonPreview,
+  AdminLessonUpload,
   AdminDeck,
   AdminDeckSettings,
   AdminLesson,
@@ -133,6 +137,7 @@ import type {
 } from "@/services/admin.types";
 import type { ContentVisibility, Topic } from "@/services/content.types";
 import type { Course, CourseModule, Lesson } from "@/services/courses.types";
+import type { VideoService } from "@/services/video.types";
 import type { AuthAdmin } from "@/services/auth-admin.types";
 import type { PdfRenderer } from "@/services/page-images.types";
 import type { PaymentsClient } from "@/services/payments.types";
@@ -1191,8 +1196,16 @@ export interface AdminService {
     id: string,
     visible: boolean,
   ): Promise<AdminResult<{ visibility: ContentVisibility }>>;
-  /** Deletes a Course with its Modules and Lessons. */
-  deleteCourse(actor: StaffActor, id: string): Promise<AdminResult<Course>>;
+  /**
+   * Deletes a Course with its Modules and Lessons, then their videos at the
+   * video service (a delete it refuses is logged in Staff Activity, never
+   * blocking).
+   */
+  deleteCourse(
+    actor: StaffActor,
+    id: string,
+    video: VideoService | null,
+  ): Promise<AdminResult<Course>>;
   /** "+ Module": last in its Course. */
   createCourseModule(
     actor: StaffActor,
@@ -1224,14 +1237,64 @@ export interface AdminService {
   moveLesson(actor: StaffActor, id: string, direction: ReviewMove): Promise<AdminResult<string[]>>;
   /** "Move to Module…": last in another Module of its Course; gives that Module's order. */
   moveLessonToModule(actor: StaffActor, input: LessonToModuleInput): Promise<AdminResult<string[]>>;
-  /** Publish or Unpublish: publishing needs a ready video ("ADD A VIDEO BEFORE PUBLISHING"). */
+  /**
+   * Publish or Unpublish: publishing needs a title and a ready video ("ADD A
+   * VIDEO BEFORE PUBLISHING"); unpublishing a Visible Course's last Published
+   * Lesson is refused ("Hide the course first").
+   */
   setLessonPublished(
     actor: StaffActor,
     id: string,
     published: boolean,
   ): Promise<AdminResult<AdminLesson>>;
-  /** Deletes a Lesson (after typing DELETE in the builder). */
-  deleteLesson(actor: StaffActor, id: string): Promise<AdminResult<Lesson>>;
+  /**
+   * Deletes a Lesson (after typing DELETE in the builder), then its videos at
+   * the video service (a delete it refuses is logged, never blocking).
+   */
+  deleteLesson(
+    actor: StaffActor,
+    id: string,
+    video: VideoService | null,
+  ): Promise<AdminResult<Lesson>>;
+
+  // Lesson videos (Phase 5, ticket 02; spec, Phase 5 planning decisions →
+  // Uploads, Access and playback): each is given this server's video service
+  // (video.ts), or null when it isn't connected.
+
+  /**
+   * "Upload video" or "Replace video": checks the file (an MP4 or MOV of up
+   * to 4 GB), asks the service for one-time upload permission for a Lesson
+   * that's there, and records the new video on it (uploading; or, beside a
+   * ready video, as its replacement) before the browser sends the file.
+   * Refused with no service ("CONNECT THE VIDEO SERVICE TO UPLOAD").
+   */
+  startLessonUpload(
+    actor: StaffActor,
+    input: LessonUploadInput,
+    video: VideoService | null,
+  ): Promise<AdminResult<AdminLessonUpload>>;
+  /** The browser's word on an upload: sent (processing) or failed ("Upload failed · Try again"). */
+  finishLessonUpload(
+    actor: StaffActor,
+    input: LessonUploadOutcomeInput,
+  ): Promise<AdminResult<AdminLessonUpload["lesson"]>>;
+  /**
+   * The editor's status poll: asks the service about the Lesson's video in
+   * flight and makes it ready (a draft with its length; a replacement takes
+   * over and the old video is deleted) or failed. Nothing in flight: the
+   * Lesson as it is.
+   */
+  checkLessonVideo(
+    actor: StaffActor,
+    id: string,
+    video: VideoService | null,
+  ): Promise<AdminResult<AdminLessonUpload["lesson"]>>;
+  /** The Lesson editor's preview: a playback pass watermarked with the Staff member's email, no device check. */
+  previewLessonVideo(
+    actor: StaffActor,
+    id: string,
+    video: VideoService | null,
+  ): Promise<AdminResult<AdminLessonPreview>>;
 }
 
 const impl: AdminService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -1371,3 +1434,7 @@ export const moveLesson = impl.moveLesson;
 export const moveLessonToModule = impl.moveLessonToModule;
 export const setLessonPublished = impl.setLessonPublished;
 export const deleteLesson = impl.deleteLesson;
+export const startLessonUpload = impl.startLessonUpload;
+export const finishLessonUpload = impl.finishLessonUpload;
+export const checkLessonVideo = impl.checkLessonVideo;
+export const previewLessonVideo = impl.previewLessonVideo;

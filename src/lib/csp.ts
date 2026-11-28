@@ -1,5 +1,6 @@
 import { LOCAL_SUPABASE_URL } from "@/lib/db/local-database";
 import { PAYMONGO_CHECKOUT_ORIGIN } from "@/lib/paymongo/checkout-origin";
+import { VDOCIPHER_PLAYER_ORIGIN, VDOCIPHER_UPLOAD_SOURCE } from "@/lib/vdocipher/hosts";
 
 export interface CspOptions {
   /** Dev enables 'unsafe-eval' (HMR) and local Supabase/websocket origins. */
@@ -35,7 +36,9 @@ export function buildCsp(nonce: string, opts: CspOptions): string {
     ...(isDev ? ["'unsafe-eval'"] : []),
   ];
 
-  const connectSrc = ["'self'"];
+  // The Lesson editor sends a video straight to VdoCipher's upload host
+  // (Phase 5, ticket 02), never through the site.
+  const connectSrc = ["'self'", VDOCIPHER_UPLOAD_SOURCE];
   if (supabaseUrl) {
     try {
       const url = new URL(supabaseUrl);
@@ -60,6 +63,9 @@ export function buildCsp(nonce: string, opts: CspOptions): string {
     ["img-src", imgSrc],
     ["font-src", ["'self'", "data:"]],
     ["connect-src", connectSrc],
+    // Lesson videos play in VdoCipher's embedded DRM player (Phase 5, ticket
+    // 02): the only frame the site embeds.
+    ["frame-src", ["'self'", VDOCIPHER_PLAYER_ORIGIN]],
     ["frame-ancestors", ["'none'"]],
     // This template renders no <base> element; lock it down entirely.
     ["base-uri", ["'none'"]],

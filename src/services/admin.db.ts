@@ -869,6 +869,10 @@ export const databaseArm: AdminService = {
   moveLessonToModule: courseBuilder.moveLessonToModule,
   setLessonPublished: courseBuilder.setLessonPublished,
   deleteLesson: courseBuilder.deleteLesson,
+  startLessonUpload: courseBuilder.startLessonUpload,
+  finishLessonUpload: courseBuilder.finishLessonUpload,
+  checkLessonVideo: courseBuilder.checkLessonVideo,
+  previewLessonVideo: courseBuilder.previewLessonVideo,
 
   // The catalogue part runs the sample arm's code over the catalogue it loads;
   // an Owner's sales read their own records (admin.sales.db.ts; ticket 11).

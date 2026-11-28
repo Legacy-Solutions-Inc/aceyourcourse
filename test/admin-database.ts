@@ -34,6 +34,7 @@ import {
   byId,
   byQuizAndPosition,
   byReference,
+  lessonVideoFor,
 } from "./admin-arms";
 import {
   type CardImageUpload,
@@ -291,7 +292,10 @@ export const DATABASE_ARM: AdminArm = {
     };
   },
   setLessonState: async (id, state) => {
-    await getDb().update(schema.lessons).set({ state }).where(eq(schema.lessons.id, id));
+    await getDb()
+      .update(schema.lessons)
+      .set(lessonVideoFor(id, state))
+      .where(eq(schema.lessons.id, id));
   },
   // A trigger that refuses every Staff Activity row: the save's last write.
   // The database tests run one file at a time, so no other test meets it.

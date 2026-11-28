@@ -15,13 +15,20 @@ const XML_ESCAPES: Record<string, string> = {
   "'": "&apos;",
 };
 
-/** Pure: a CSS background-image that tiles `text` across what it's on. */
-export function watermarkBackground(text: string): string {
+/**
+ * Pure: a CSS background-image that tiles `text` across what it's on, dark
+ * and faint unless told otherwise (the sample video player draws it light, on
+ * its dark frame).
+ */
+export function watermarkBackground(
+  text: string,
+  { fill = "#0e1a2e", opacity = 0.13 }: { fill?: string; opacity?: number } = {},
+): string {
   const escaped = text.replace(/[&<>"']/g, (character) => XML_ESCAPES[character] ?? character);
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="120">` +
     `<text x="120" y="64" text-anchor="middle" transform="rotate(-24 120 60)" ` +
-    `font-family="monospace" font-size="12" fill="#0e1a2e" fill-opacity="0.13">${escaped}</text>` +
+    `font-family="monospace" font-size="12" fill="${fill}" fill-opacity="${opacity}">${escaped}</text>` +
     `</svg>`;
   // encodeURIComponent leaves ( ) ' unencoded: encode them too, so nothing ends the url().
   const encoded = encodeURIComponent(svg).replace(

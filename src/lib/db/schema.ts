@@ -50,7 +50,7 @@ import {
   CONTENT_VISIBILITIES,
   REVIEWER_PDF_STATUSES,
 } from "@/services/content.types";
-import { COURSE_ACCESS, LESSON_STATES } from "@/services/courses.types";
+import { COURSE_ACCESS, LESSON_REPLACEMENT_STATES, LESSON_STATES } from "@/services/courses.types";
 import { NOTICE_KINDS } from "@/services/member.types";
 
 /**
@@ -1458,6 +1458,7 @@ export const privacyRequests = pgTable(
 
 export const courseAccess = pgEnum("course_access", COURSE_ACCESS);
 export const lessonState = pgEnum("lesson_state", LESSON_STATES);
+export const lessonReplacementState = pgEnum("lesson_replacement_state", LESSON_REPLACEMENT_STATES);
 
 /**
  * The video Courses (Phase 5, ticket 01; spec, Phase 5 planning decisions →
@@ -1540,9 +1541,11 @@ export const courseModules = pgTable(
 
 /**
  * Each Module's Lessons, in its order (`position`): a title, notes shown
- * under the video (plain text with line breaks), Free Preview, and a state.
- * Every Lesson has no video until ticket 02 adds uploads, with the video's
- * columns.
+ * under the video (plain text with line breaks), Free Preview, a state, and
+ * its VdoCipher video (ticket 02): the video's id and, once ready, its length
+ * in seconds. "Replace video" on a Lesson with a ready video keeps that one
+ * playing while the new one uploads and processes (`replacement_*`); once
+ * the new one is ready it takes over.
  */
 export const lessons = pgTable(
   "lessons",
@@ -1556,9 +1559,26 @@ export const lessons = pgTable(
     notes: text("notes").notNull().default(""),
     freePreview: boolean("free_preview").notNull().default(false),
     state: lessonState("state").notNull().default("no-video"),
+    videoId: text("video_id"),
+    videoSeconds: integer("video_seconds"),
+    replacementVideoId: text("replacement_video_id"),
+    replacementState: lessonReplacementState("replacement_state"),
   },
   (t) => [
     index("lessons_module_id_position_idx").on(t.moduleId, t.position),
+    check("lessons_video_seconds_positive", sql`${t.videoSeconds} > 0`),
+    // Every state but "no video" has a video; a ready one (draft, published) has its length.
+    check("lessons_video_when_state", sql`(${t.state} = 'no-video') = (${t.videoId} is null)`),
+    check(
+      "lessons_length_when_ready",
+      sql`(${t.state} in ('draft', 'published')) = (${t.videoSeconds} is not null)`,
+    ),
+    // A replacement only for a Lesson with a ready video, with its own state.
+    check(
+      "lessons_replacement_when_ready",
+      sql`(${t.replacementVideoId} is null) = (${t.replacementState} is null)
+        and (${t.replacementVideoId} is null or ${t.state} in ('draft', 'published'))`,
+    ),
     check("lessons_position_positive", sql`${t.position} > 0`),
     check(
       "lessons_title_length",

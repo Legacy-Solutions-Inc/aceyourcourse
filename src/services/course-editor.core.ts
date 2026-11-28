@@ -1,10 +1,14 @@
 import { z } from "zod";
 
 import {
+  CONNECT_VIDEO_SERVICE_REFUSAL,
+  hasReadyVideo,
   lessonsAfterMoveToModule,
   moduleDeleteRefusal,
   publishRefusal,
   subjectRefusal,
+  unpublishRefusal,
+  videoInFlight,
   visibilityRefusal,
 } from "@/lib/courses/course-rules";
 import {
@@ -23,6 +27,10 @@ import {
   lessonPublishInputSchema,
   type LessonToModuleInput,
   lessonToModuleInputSchema,
+  type LessonUploadInput,
+  lessonUploadInputSchema,
+  type LessonUploadOutcomeInput,
+  lessonUploadOutcomeInputSchema,
   type NewCourseForm,
   newCourseFormSchema,
   type NewCourseModuleForm,
@@ -38,6 +46,8 @@ import type {
   AdminCourseSummary,
   AdminError,
   AdminLesson,
+  AdminLessonPreview,
+  AdminLessonUpload,
   AdminResult,
   CourseExamChoice,
   RecordStamp,
@@ -58,6 +68,7 @@ import type { ContentVisibility } from "@/services/content.types";
 import type { Course, CourseModule, Lesson } from "@/services/courses.types";
 import { nextStamp } from "@/services/mock/sample-store";
 import type { UploadLookup } from "@/services/uploads.types";
+import type { VideoService } from "@/services/video.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The Admin seam's Course builder (Phase 5, ticket 01; spec, Phase 5 planning
@@ -82,6 +93,25 @@ import type { UploadLookup } from "@/services/uploads.types";
 //      one Staff Activity record per entity it changes, and
 //   5. once saved, deletes a replaced cover's file (a failure is logged).
 // Nothing cached reads Courses yet, so no write returns a cache tag.
+//
+// Lesson videos (ticket 02; spec, Phase 5 planning decisions → Uploads,
+// Hiding, unpublishing and deleting, Access and playback): each call that
+// needs VdoCipher is given this server's video service (video.ts), or null
+// when it isn't connected.
+// - Upload permission is asked only for a Lesson that's there, after the file
+//   checks, and the new video is recorded on the Lesson (uploading) before the
+//   browser sends anything. On a Lesson with a ready video it's "Replace
+//   video": the ready one keeps playing while the new one uploads and
+//   processes, and takes over only once the new one is ready. Trying again
+//   after a failure starts over, deleting the video it replaces.
+// - The browser says when it has sent the file, or that it failed; while the
+//   editor is open it asks for the status every few seconds, which makes the
+//   Lesson a draft with the video's length once VdoCipher has it ready.
+// - Deleting a Lesson or a Course deletes its videos once the delete is
+//   saved. A video VdoCipher won't delete never blocks it: it's logged in
+//   Staff Activity ("video-delete-failed") to be deleted by hand.
+// Video changes leave the Lesson's save stamp alone, as Publish does, so an
+// open form's Save doesn't turn into a conflict.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Which Course: its own id, a Module's, or a Lesson's. */
@@ -172,6 +202,8 @@ const ALREADY_LAST_MODULE = "IT’S ALREADY THE LAST MODULE";
 const ALREADY_FIRST_LESSON = "IT’S ALREADY THE FIRST LESSON IN ITS MODULE";
 const ALREADY_LAST_LESSON = "IT’S ALREADY THE LAST LESSON IN ITS MODULE";
 const UPLOAD_COVER_AGAIN = "UPLOAD THE COVER AGAIN";
+const VIDEO_SERVICE_DIDNT_ANSWER = "THE VIDEO SERVICE DIDN’T ANSWER · TRY AGAIN";
+const VIDEO_NOT_READY = "THE VIDEO ISN’T READY YET";
 const WAIT_FOR_COVER = "WAIT FOR THE COVER TO FINISH UPLOADING";
 
 const NO_WRITES: Omit<CourseWrites, "activity"> = {
@@ -195,9 +227,10 @@ const publishedIn = (lessons: readonly Lesson[]) =>
   lessons.filter((lesson) => lesson.state === "published").length;
 
 /**
- * Pure: what a change to the Lessons does to a Visible Course: the last
- * Published Lesson unpublished or deleted makes it Hidden, since a Course is
- * Visible only with one (as a deck's last card hides it).
+ * Pure: what deleting a Lesson does to a Visible Course: its last Published
+ * Lesson deleted makes it Hidden, since a Course is Visible only with one (as
+ * a deck's last card hides it). Unpublishing that last one is refused
+ * instead (ticket 02: "Hide the course first").
  */
 function hiddenAfter(
   current: CourseState,
@@ -221,6 +254,38 @@ function hiddenAfter(
       ),
     ],
   };
+}
+
+/** Pure: the Lesson's video still uploading or processing (its own, or its replacement), if any. */
+function inFlight(lesson: Lesson): { videoId: string; replacing: boolean } | null {
+  if (videoInFlight(lesson.state) && lesson.videoId) {
+    return { videoId: lesson.videoId, replacing: false };
+  }
+  if (lesson.replacementVideoId && videoInFlight(lesson.replacementState)) {
+    return { videoId: lesson.replacementVideoId, replacing: true };
+  }
+  return null;
+}
+
+/** A Lesson's video, as Staff Activity keeps it. */
+const videoOf = ({
+  state,
+  videoId,
+  videoSeconds,
+  replacementVideoId,
+  replacementState,
+}: Lesson) => ({ state, videoId, videoSeconds, replacementVideoId, replacementState });
+
+/** Pure: the videos a deleted Lesson leaves at the video service. */
+const videosOf = (lesson: Lesson) =>
+  [lesson.videoId, lesson.replacementVideoId]
+    .filter((videoId): videoId is string => videoId !== null)
+    .map((videoId) => ({ lesson: lesson.id, videoId }));
+
+/** A video to delete at the service, and the Lesson it was on. */
+interface VideoToDelete {
+  lesson: string;
+  videoId: string;
 }
 
 /** A Course's settings, as Staff Activity keeps them. */
@@ -316,6 +381,38 @@ export function courseEditorCalls(store: CourseEditorStore) {
     const unused = unusedCovers(saved.value).filter((src): src is string => src !== null);
     if (unused.length > 0) await store.removeCovers(unused);
     return { ok: true, value: saved.value, tags: [] };
+  }
+
+  /**
+   * Deletes videos at the video service once nothing uses them. Each one it
+   * can't delete (refused, unreachable, or no service connected) is logged
+   * in Staff Activity instead; never throws.
+   */
+  async function deleteVideos(
+    actor: StaffActor,
+    video: VideoService | null,
+    videos: readonly VideoToDelete[],
+  ): Promise<void> {
+    const failed: VideoToDelete[] = [];
+    for (const item of videos) {
+      if (!(await video?.deleteVideo(item.videoId))) failed.push(item);
+    }
+    if (failed.length === 0) return;
+    const now = new Date();
+    try {
+      await store.save(null, () => ({
+        ok: true,
+        value: null,
+        writes: {
+          ...NO_WRITES,
+          activity: failed.map((item) =>
+            activity(actor, now, "lesson", item.lesson, "video-delete-failed", item, null),
+          ),
+        },
+      }));
+    } catch (error) {
+      console.error("A failed video delete couldn't be logged in Staff Activity.", error);
+    }
   }
 
   async function listCoursesForAdmin(_actor: StaffActor): Promise<AdminCourseList> {
@@ -504,18 +601,22 @@ export function courseEditorCalls(store: CourseEditorStore) {
     });
   }
 
-  async function deleteCourse(actor: StaffActor, id: string): Promise<AdminResult<Course>> {
+  async function deleteCourse(
+    actor: StaffActor,
+    id: string,
+    video: VideoService | null,
+  ): Promise<AdminResult<Course>> {
     const form = staffInput(actor, courseIdInputSchema, { id });
     if (!form.ok) return form;
     const now = new Date();
-    return saveThen(
+    const saved = await store.save(
       { course: form.value.id },
-      (current): CoursePlan<Course> => {
+      (current): CoursePlan<{ course: Course; videos: VideoToDelete[] }> => {
         if (!current) return NOT_FOUND;
         const { course, modules, lessons } = current;
         return {
           ok: true,
-          value: structuredClone(course),
+          value: { course: structuredClone(course), videos: lessons.flatMap(videosOf) },
           writes: {
             ...NO_WRITES,
             removedCourse: course.id,
@@ -541,8 +642,12 @@ export function courseEditorCalls(store: CourseEditorStore) {
           },
         };
       },
-      (course) => [course.coverSrc],
     );
+    if (!saved.ok) return saved;
+    const { course, videos } = saved.value;
+    if (course.coverSrc) await store.removeCovers([course.coverSrc]);
+    await deleteVideos(actor, video, videos);
+    return { ok: true, value: course, tags: [] };
   }
 
   async function createCourseModule(
@@ -695,6 +800,10 @@ export function courseEditorCalls(store: CourseEditorStore) {
         notes: "",
         freePreview: false,
         state: "no-video",
+        videoId: null,
+        videoSeconds: null,
+        replacementVideoId: null,
+        replacementState: null,
       };
       const stamp = nextStamp({ savedAt: current.seededAt, savedBy: null }, actor.name, now);
       return {
@@ -845,29 +954,24 @@ export function courseEditorCalls(store: CourseEditorStore) {
       const lesson = current?.lessons.find((candidate) => candidate.id === id);
       if (!current || !lesson) return NOT_FOUND;
       const stamp = stampOf(current, lessonRecordOf(id));
+      const state = form.value.published ? "published" : "draft";
       if (form.value.published) {
-        const reason = publishRefusal(lesson.state);
+        const reason = publishRefusal(lesson);
         if (reason) return refused(formError(reason));
-        if (lesson.state === "published") {
-          return { ok: true, value: adminLessonOf(lesson, stamp), writes: null };
-        }
-      } else if (lesson.state !== "published") {
+      } else if (lesson.state === "published") {
+        const after = publishedIn(current.lessons) - 1;
+        const reason = unpublishRefusal(current.course.visibility, after);
+        if (reason) return refused(formError(reason));
+      }
+      if (lesson.state === state || (!form.value.published && lesson.state !== "published")) {
         return { ok: true, value: adminLessonOf(lesson, stamp), writes: null };
       }
-      const state = form.value.published ? "published" : "draft";
       const changed: Lesson = { ...lesson, state };
-      const hidden = hiddenAfter(
-        current,
-        current.lessons.map((candidate) => (candidate.id === id ? changed : candidate)),
-        actor,
-        now,
-      );
       return {
         ok: true,
         value: adminLessonOf(changed, stamp),
         writes: {
           ...NO_WRITES,
-          ...(hidden.course ? { course: hidden.course } : {}),
           lessons: [changed],
           activity: [
             activity(
@@ -879,18 +983,21 @@ export function courseEditorCalls(store: CourseEditorStore) {
               { state: lesson.state },
               { state },
             ),
-            ...hidden.activity,
           ],
         },
       };
     });
   }
 
-  async function deleteLesson(actor: StaffActor, id: string): Promise<AdminResult<Lesson>> {
+  async function deleteLesson(
+    actor: StaffActor,
+    id: string,
+    video: VideoService | null,
+  ): Promise<AdminResult<Lesson>> {
     const form = staffInput(actor, lessonIdInputSchema, { id });
     if (!form.ok) return form;
     const now = new Date();
-    return saveThen({ lesson: id }, (current): CoursePlan<Lesson> => {
+    const saved = await store.save({ lesson: id }, (current): CoursePlan<Lesson> => {
       const lesson = current?.lessons.find((candidate) => candidate.id === id);
       if (!current || !lesson) return NOT_FOUND;
       const rest = lessonsIn(current.lessons, lesson.moduleId).filter(
@@ -919,6 +1026,221 @@ export function courseEditorCalls(store: CourseEditorStore) {
         },
       };
     });
+    if (!saved.ok) return saved;
+    await deleteVideos(actor, video, videosOf(saved.value));
+    return { ok: true, value: saved.value, tags: [] };
+  }
+
+  /** The Lesson a key names in a Course read, with its stamp, or null. */
+  const lessonIn = (current: CourseState | null, id: string) => {
+    const lesson = current?.lessons.find((candidate) => candidate.id === id);
+    return current && lesson ? { lesson, stamp: stampOf(current, lessonRecordOf(id)) } : null;
+  };
+
+  async function startLessonUpload(
+    actor: StaffActor,
+    input: LessonUploadInput,
+    video: VideoService | null,
+  ): Promise<AdminResult<AdminLessonUpload>> {
+    const form = staffInput(actor, lessonUploadInputSchema, input);
+    if (!form.ok) return form;
+    if (!video) return refused(formError(CONNECT_VIDEO_SERVICE_REFUSAL));
+    const { id } = form.value;
+    const before = lessonIn(await store.read({ lesson: id }), id);
+    if (!before) return NOT_FOUND;
+    const permission = await video.uploadPermission(before.lesson.title);
+    if (!permission) return refused(formError(VIDEO_SERVICE_DIDNT_ANSWER));
+    const { videoId, target } = permission;
+    const now = new Date();
+    const saved = await store.save(
+      { lesson: id },
+      (current): CoursePlan<{ upload: AdminLessonUpload; dropped: string | null }> => {
+        const found = lessonIn(current, id);
+        if (!found) return NOT_FOUND;
+        const { lesson, stamp } = found;
+        // With a ready video it's a replacement: the ready one plays until the new one is ready.
+        const replacing = hasReadyVideo(lesson.state);
+        const changed: Lesson = replacing
+          ? { ...lesson, replacementVideoId: videoId, replacementState: "uploading" }
+          : { ...lesson, state: "uploading", videoId, videoSeconds: null };
+        return {
+          ok: true,
+          value: {
+            upload: { lesson: adminLessonOf(changed, stamp), videoId, target },
+            dropped: replacing ? lesson.replacementVideoId : lesson.videoId,
+          },
+          writes: {
+            ...NO_WRITES,
+            lessons: [changed],
+            activity: [
+              activity(
+                actor,
+                now,
+                "lesson",
+                id,
+                replacing ? "replace-video" : "upload-video",
+                videoOf(lesson),
+                videoOf(changed),
+              ),
+            ],
+          },
+        };
+      },
+    );
+    if (!saved.ok) {
+      // The Lesson went while permission was asked: nothing will use the new video.
+      await deleteVideos(actor, video, [{ lesson: id, videoId }]);
+      return saved;
+    }
+    const { upload, dropped } = saved.value;
+    if (dropped) await deleteVideos(actor, video, [{ lesson: id, videoId: dropped }]);
+    return { ok: true, value: upload, tags: [] };
+  }
+
+  async function finishLessonUpload(
+    actor: StaffActor,
+    input: LessonUploadOutcomeInput,
+  ): Promise<AdminResult<AdminLesson>> {
+    const form = staffInput(actor, lessonUploadOutcomeInputSchema, input);
+    if (!form.ok) return form;
+    const { id, video: videoId, outcome } = form.value;
+    const now = new Date();
+    return saveThen({ lesson: id }, (current): CoursePlan<AdminLesson> => {
+      const found = lessonIn(current, id);
+      if (!found) return NOT_FOUND;
+      const { lesson, stamp } = found;
+      let changed: Lesson | null = null;
+      if (lesson.videoId === videoId && lesson.state === "uploading") {
+        changed = { ...lesson, state: outcome === "sent" ? "processing" : "upload-failed" };
+      } else if (lesson.replacementVideoId === videoId && lesson.replacementState === "uploading") {
+        changed = {
+          ...lesson,
+          replacementState: outcome === "sent" ? "processing" : "upload-failed",
+        };
+      }
+      // A word about a video the Lesson has moved on from changes nothing.
+      if (!changed) return { ok: true, value: adminLessonOf(lesson, stamp), writes: null };
+      return {
+        ok: true,
+        value: adminLessonOf(changed, stamp),
+        writes: {
+          ...NO_WRITES,
+          lessons: [changed],
+          activity: [
+            activity(
+              actor,
+              now,
+              "lesson",
+              id,
+              outcome === "sent" ? "video-uploaded" : "upload-failed",
+              videoOf(lesson),
+              videoOf(changed),
+            ),
+          ],
+        },
+      };
+    });
+  }
+
+  async function checkLessonVideo(
+    actor: StaffActor,
+    id: string,
+    video: VideoService | null,
+  ): Promise<AdminResult<AdminLesson>> {
+    const form = staffInput(actor, lessonIdInputSchema, { id });
+    if (!form.ok) return form;
+    const before = lessonIn(await store.read({ lesson: id }), id);
+    if (!before) return NOT_FOUND;
+    const asked = inFlight(before.lesson);
+    if (!asked || !video) {
+      return { ok: true, value: adminLessonOf(before.lesson, before.stamp), tags: [] };
+    }
+    const status = await video.videoStatus(asked.videoId);
+    const now = new Date();
+    const saved = await store.save(
+      { lesson: id },
+      (current): CoursePlan<{ lesson: AdminLesson; dropped: string | null }> => {
+        const found = lessonIn(current, id);
+        if (!found) return NOT_FOUND;
+        const { lesson, stamp } = found;
+        const unchanged = {
+          ok: true as const,
+          value: { lesson: adminLessonOf(lesson, stamp), dropped: null },
+          writes: null,
+        };
+        // The Lesson moved on while the service was asked (another upload, a delete of it).
+        const still = inFlight(lesson);
+        if (still?.videoId !== asked.videoId) return unchanged;
+        let changed: Lesson | null = null;
+        let action = "";
+        let dropped: string | null = null;
+        if (status.status === "ready") {
+          action = "video-ready";
+          if (still.replacing) {
+            // The new video takes over; the old one goes once this is saved.
+            dropped = lesson.videoId;
+            changed = {
+              ...lesson,
+              videoId: still.videoId,
+              videoSeconds: status.seconds,
+              replacementVideoId: null,
+              replacementState: null,
+            };
+          } else {
+            changed = { ...lesson, state: "draft", videoSeconds: status.seconds };
+          }
+        } else if (status.status === "failed") {
+          action = "video-failed";
+          changed = still.replacing
+            ? { ...lesson, replacementState: "upload-failed" }
+            : { ...lesson, state: "upload-failed" };
+        } else if (status.status === "processing") {
+          // The file arrived though the browser never said so (closed mid-way, say).
+          action = "video-uploaded";
+          if (still.replacing && lesson.replacementState === "uploading") {
+            changed = { ...lesson, replacementState: "processing" };
+          } else if (!still.replacing && lesson.state === "uploading") {
+            changed = { ...lesson, state: "processing" };
+          }
+        }
+        if (!changed) return unchanged;
+        return {
+          ok: true,
+          value: { lesson: adminLessonOf(changed, stamp), dropped },
+          writes: {
+            ...NO_WRITES,
+            lessons: [changed],
+            activity: [
+              activity(actor, now, "lesson", id, action, videoOf(lesson), videoOf(changed)),
+            ],
+          },
+        };
+      },
+    );
+    if (!saved.ok) return saved;
+    const { lesson, dropped } = saved.value;
+    if (dropped) await deleteVideos(actor, video, [{ lesson: id, videoId: dropped }]);
+    return { ok: true, value: lesson, tags: [] };
+  }
+
+  async function previewLessonVideo(
+    actor: StaffActor,
+    id: string,
+    video: VideoService | null,
+  ): Promise<AdminResult<AdminLessonPreview>> {
+    const form = staffInput(actor, lessonIdInputSchema, { id });
+    if (!form.ok) return form;
+    if (!video) return refused(formError(CONNECT_VIDEO_SERVICE_REFUSAL));
+    const found = lessonIn(await store.read({ lesson: id }), id);
+    if (!found) return NOT_FOUND;
+    const { videoId, videoSeconds } = found.lesson;
+    if (!hasReadyVideo(found.lesson.state) || !videoId || videoSeconds === null) {
+      return refused(formError(VIDEO_NOT_READY));
+    }
+    // Staff watch with their own email drawn across the video, and no device check.
+    const pass = await video.playbackPass(videoId, actor.email);
+    if (!pass) return refused(formError(VIDEO_SERVICE_DIDNT_ANSWER));
+    return { ok: true, value: { pass, seconds: videoSeconds }, tags: [] };
   }
 
   return {
@@ -938,5 +1260,9 @@ export function courseEditorCalls(store: CourseEditorStore) {
     moveLessonToModule,
     setLessonPublished,
     deleteLesson,
+    startLessonUpload,
+    finishLessonUpload,
+    checkLessonVideo,
+    previewLessonVideo,
   };
 }
