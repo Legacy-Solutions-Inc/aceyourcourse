@@ -68,8 +68,16 @@ Ace Your Course is one application with three Surfaces.
   _Avoid_: reviewer (unqualified), slides, notes.
 
 - **Course** — a video course made of Modules and Lessons, e.g. PSAD
-  Masterclass. Never used for an Exam.
+  Masterclass. It belongs to one Exam and one of that Exam's Subjects, never
+  to a Topic. Never used for an Exam.
   _Avoid_: class, program.
+
+- **Module** — an ordered group of Lessons within one Course, e.g.
+  "Reinforced Concrete".
+  _Avoid_: chapter, section, unit.
+
+- **Lesson** — one video in a Module, with notes shown under it.
+  _Avoid_: video (for the Lesson itself), lecture, episode.
 
 ### Studying
 
@@ -113,7 +121,9 @@ Ace Your Course is one application with three Surfaces.
   _Avoid_: subscription, entitlement, license.
 
 - **Course Ownership** — a Member's permanent right to one separately sold
-  Course, independent of any Access Pass.
+  Course, independent of any Access Pass. It comes from a Paid Order or is
+  given by an Owner. Only a full refund ends a paid one; an Owner can remove a
+  given one. An Access Pass never opens a separately sold Course.
 
 - **Order** — one Member's attempt to buy one Plan or one Course through
   PayMongo. It is **Pending**, **Paid**, **Failed**, **Expired** (Pending for
