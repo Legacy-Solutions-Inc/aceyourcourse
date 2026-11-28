@@ -1,3 +1,5 @@
+import type { Order } from "@/lib/payments/order-ledger";
+import type { OrderRefund } from "@/lib/payments/refunds";
 import { DEFAULT_QUIZ_SETTINGS } from "@/lib/quizzes/quiz-rules";
 import type { AdminService } from "@/services/admin";
 import * as sampleArm from "@/services/admin.mock";
@@ -63,7 +65,8 @@ export interface AdminArm {
   deleteReviewElsewhere(id: string): Promise<void>;
   /**
    * Deletes a Member's record behind the seam's back, as deleting their
-   * account will (ticket 19). Their Privacy Requests stay, with no Member.
+   * account will (ticket 19). Their Privacy Requests and Orders (ticket 14)
+   * stay, with no Member.
    */
   deleteMemberElsewhere(userId: string): Promise<void>;
   /**
@@ -77,6 +80,11 @@ export interface AdminArm {
     purpose?: UploadRequest["purpose"];
   }): Promise<{ path: string; publicUrl: string }>;
   staffActivity(): Promise<StaffActivity[]>;
+  /**
+   * Appends Staff Activity records, in order, behind the seam's back, as other
+   * Staff Users' writes or PayMongo's outcomes would (ticket 15).
+   */
+  putStaffActivity(records: readonly StaffActivity[]): Promise<void>;
   deniedSignIns(): Promise<DeniedSignIn[]>;
   /**
    * Gives a Topic a Hidden deck or quiz, or a Draft Reviewer PDF, behind the
@@ -130,6 +138,14 @@ export interface AdminArm {
    * seam's back, as a grant (ticket 17) will.
    */
   putAccessPass(pass: AccessPass, grants?: AccessPassGrant[]): Promise<void>;
+  /** Adds an Order behind the seam's back, as a Member's Pay does (Phase 4, ticket 03). */
+  putOrder(order: Order): Promise<void>;
+  /** Every Order, read behind the seam's back, by reference. */
+  orders(): Promise<Order[]>;
+  /** Every Order's PayMongo refunds, read behind the seam's back, by refund id (ticket 09). */
+  orderRefunds(): Promise<OrderRefund[]>;
+  /** A Member's Access Pass history for an Exam, read behind the seam's back, in order (ticket 09). */
+  passHistory(userId: string, examCode: string): Promise<AccessPassGrant[]>;
   /**
    * How many records of each kind the Member App keeps for a User id, read
    * behind the seam's back (ticket 19): what deleting an account must empty.
@@ -150,6 +166,12 @@ export const byMemberAndPage = (views: ReviewerPageView[]) =>
       a.page - b.page,
   );
 
+/** Pure: Orders by reference: "AYC-10002" before "AYC-10010". */
+export const byReference = (orders: Order[]) =>
+  [...orders].sort(
+    (a, b) => a.reference.length - b.reference.length || a.reference.localeCompare(b.reference),
+  );
+
 /** Pure: quizzes by id. */
 export const byId = <T extends { id: string }>(records: T[]) =>
   [...records].sort((a, b) => a.id.localeCompare(b.id));
@@ -168,7 +190,7 @@ export const byQuizAndPosition = (questions: Question[]) =>
 export const byDeckAndPosition = (cards: Card[]) =>
   [...cards].sort((a, b) => a.deckId.localeCompare(b.deckId) || a.position - b.position);
 
-const SAMPLE_ARM: AdminArm = {
+export const SAMPLE_ARM: AdminArm = {
   name: "sample data",
   seam: sampleArm,
   member: memberSampleArm,
@@ -188,9 +210,17 @@ const SAMPLE_ARM: AdminArm = {
   deleteMemberElsewhere: async (userId) => {
     const store = getSampleStore();
     store.members = store.members.filter((member) => member.userId !== userId);
+    // Their Orders stay, with no account, as the database's set null leaves them (ticket 14).
+    store.orders = store.orders.map((order) =>
+      order.userId === userId ? { ...order, userId: null } : order,
+    );
   },
   uploadPhoto: uploadSamplePhoto,
   staffActivity: async () => structuredClone(getSampleStore().staffActivity),
+  putStaffActivity: async (records) => {
+    const store = getSampleStore();
+    store.staffActivity = [...store.staffActivity, ...structuredClone(records)];
+  },
   deniedSignIns: async () => structuredClone(getSampleStore().deniedSignIns),
   putContent: async (kind, topicId) => {
     const store = getSampleStore();
@@ -233,6 +263,18 @@ const SAMPLE_ARM: AdminArm = {
     store.accessPasses = [...store.accessPasses, structuredClone(pass)];
     store.accessPassGrants = [...store.accessPassGrants, ...structuredClone(grants)];
   },
+  putOrder: async (order) => {
+    const store = getSampleStore();
+    store.orders = [...store.orders, structuredClone(order)];
+  },
+  orders: async () => byReference(structuredClone(getSampleStore().orders)),
+  orderRefunds: async () => byId(structuredClone(getSampleStore().orderRefunds)),
+  passHistory: async (userId, examCode) =>
+    structuredClone(
+      getSampleStore().accessPassGrants.filter(
+        (grant) => grant.userId === userId && grant.examCode === examCode,
+      ),
+    ),
   memberRecords: async (userId) => {
     const store = getSampleStore();
     const mine = (records: readonly { userId: string | null }[]) =>
@@ -246,6 +288,7 @@ const SAMPLE_ARM: AdminArm = {
       accessPasses: mine(store.accessPasses),
       accessPassGrants: mine(store.accessPassGrants),
       notices: mine(store.memberNotices),
+      renewalDismissals: mine(store.renewalDismissals),
       cardMarks: mine(store.cardMarks),
       studyDays: mine(store.studyDays),
       deckPositions: mine(store.deckPositions),

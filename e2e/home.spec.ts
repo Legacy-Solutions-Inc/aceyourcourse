@@ -90,7 +90,11 @@ test.describe("Home on a 1280 px screen", () => {
     );
     await expect(page.getByRole("heading", { name: "Four steps to your reviewer" })).toBeVisible();
     await expect(page.getByRole("tab", { name: /^CE/ })).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByRole("tab")).toHaveCount(5);
+    await expect(page.getByRole("tab")).toHaveCount(4);
+    await expect(page.getByRole("link", { name: "Other exams" })).toHaveAttribute(
+      "href",
+      "/products",
+    );
     await expect(bestSellers(page).getByRole("listitem")).toHaveCount(6);
   });
 
@@ -377,10 +381,12 @@ test.describe("Home on a 390 px phone", () => {
 
   test("keeps a Subject's full name on screen", async ({ page }) => {
     await openHome(page);
-    await page.getByRole("tab", { name: /^CPA/ }).click();
+    await page.getByRole("tab", { name: /^MT/ }).click();
     // Tapping a chip focuses it, which shows its full name.
-    await page.getByRole("button", { name: /^MS · / }).click();
-    await expect(page.locator("[data-subject-tooltip]")).toHaveText("Management Services");
+    await page.getByRole("button", { name: /^ISBB · / }).click();
+    await expect(page.locator("[data-subject-tooltip]")).toHaveText(
+      "Immunology-Serology & Blood Banking",
+    );
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
   });
 });

@@ -19,6 +19,12 @@ function isIsoDate(value: string): boolean {
 
 const sectionSchema = z.object({
   id: z.string(),
+  anchor: z
+    .string()
+    .regex(/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/, "must be a lower-case slug like payments-and-refunds")
+    // "s3" would be the id of the third section: two elements, one id.
+    .refine((anchor) => !/^s\d+$/.test(anchor), "must not look like a section number")
+    .optional(),
   title: nonBlank,
   paragraphs: z.array(nonBlank).min(1, "must have at least one paragraph"),
 });
@@ -35,9 +41,22 @@ export const legalDocumentSchema: z.ZodType<LegalDocument> = z.object({
     .array(sectionSchema)
     .min(1, "must have at least one section")
     // The page numbers each section by its position and links to it by id, so
-    // the ids run s1, s2, … in order. That also keeps them unique.
+    // the ids run s1, s2, … in order. That also keeps them unique. An anchor,
+    // where a section has one, is unique too.
     .superRefine((sections, ctx) => {
+      const anchors = new Map<string, number>();
       sections.forEach((section, index) => {
+        if (section.anchor !== undefined) {
+          const earlier = anchors.get(section.anchor);
+          if (earlier !== undefined) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: [index, "anchor"],
+              message: `section ${earlier + 1} already has the anchor "${section.anchor}"`,
+            });
+          }
+          anchors.set(section.anchor, index);
+        }
         const expected = `s${index + 1}`;
         if (section.id !== expected) {
           ctx.addIssue({

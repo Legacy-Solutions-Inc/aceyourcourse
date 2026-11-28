@@ -4,6 +4,7 @@ import { adminScreen } from "@/components/admin/admin-menu";
 import { AdminScreen } from "@/components/admin/admin-screen";
 import { AdminAccounts } from "@/components/admin/settings/admin-accounts";
 import { SettingsEditor } from "@/components/admin/settings/settings-editor";
+import { StaffActivityCard } from "@/components/admin/settings/staff-activity-card";
 import { config } from "@/config";
 import { requireOwner } from "@/lib/admin/guard";
 import { paths } from "@/paths";
@@ -15,6 +16,7 @@ import {
   changeStaffMemberRole,
   removeStaffMember,
   renewStaffInvite,
+  saveBusinessDetails,
   saveContactEmail,
   saveLinks,
   saveTrustFigures,
@@ -24,7 +26,9 @@ export const metadata: Metadata = { title: adminScreen("settings").title };
 
 /**
  * Settings, for Owners only: the contact email, the store and social links,
- * the trust figures, and the Admin accounts, read fresh on every request.
+ * the trust figures, the business details printed on Payment
+ * Acknowledgements (Phase 4, ticket 06), and the Admin accounts, read fresh
+ * on every request, with the way to Staff Activity (ticket 15).
  */
 export default async function SettingsPage() {
   const actor = await requireOwner(paths.admin.settings);
@@ -35,21 +39,24 @@ export default async function SettingsPage() {
     <AdminScreen screen="settings">
       <SettingsEditor
         initial={settings}
-        actions={{ saveContactEmail, saveLinks, saveTrustFigures }}
+        actions={{ saveContactEmail, saveLinks, saveTrustFigures, saveBusinessDetails }}
         accounts={
-          <AdminAccounts
-            list={staff.value}
-            you={actor.email}
-            now={new Date().toISOString()}
-            siteUrl={config.site.url}
-            actions={{
-              addInvite,
-              renewStaffInvite,
-              cancelStaffInvite,
-              changeStaffMemberRole,
-              removeStaffMember,
-            }}
-          />
+          <>
+            <AdminAccounts
+              list={staff.value}
+              you={actor.email}
+              now={new Date().toISOString()}
+              siteUrl={config.site.url}
+              actions={{
+                addInvite,
+                renewStaffInvite,
+                cancelStaffInvite,
+                changeStaffMemberRole,
+                removeStaffMember,
+              }}
+            />
+            <StaffActivityCard />
+          </>
         }
       />
     </AdminScreen>

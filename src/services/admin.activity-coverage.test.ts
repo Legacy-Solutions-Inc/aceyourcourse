@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { aboutSectionFormValues } from "@/lib/admin/about-form";
 import { faqFormValues } from "@/lib/admin/faq-form";
+import { DEFAULT_ORDER_QUERY } from "@/lib/admin/orders-list";
 import { productFormValues } from "@/lib/admin/product-form";
 import { announcementFormValues, promoBannerFormValues } from "@/lib/admin/promo-form";
 import { reviewFormValues } from "@/lib/admin/review-form";
@@ -10,7 +11,9 @@ import type { AdminService } from "@/services/admin";
 import type { AdminResult, StaffActor } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
+import { samplePlanId } from "@/services/mock/plans";
 import { hashDeviceToken } from "@/lib/member-app/device-token";
+import type { Order } from "@/lib/payments/order-ledger";
 import { createFakeAuthAdmin } from "@/services/auth-admin.fake";
 import { createFakeRenderer } from "@/services/page-images.fake";
 
@@ -51,6 +54,55 @@ const BEA = {
 const SURVEYING = sampleTopicId("CE", "MSTC", "Surveying");
 const UNKNOWN_TOPIC = "3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b";
 
+/** CE's starting 30-day Plan, as its editor sends it, and a 365-day CE Plan to add. */
+const CE_30_PLAN = samplePlanId("CE", 30);
+const CE_30_FORM = {
+  name: "CE All-Access",
+  examCode: "CE",
+  days: "30",
+  price: "499",
+  bestValue: false,
+  onSale: true,
+};
+const CE_YEAR_PLAN = { ...CE_30_FORM, days: "365", price: "3,999", onSale: false };
+const NO_SUCH_PLAN = "5d2c1b0a-9e8f-4d7c-8b6a-5f4e3d2c1b0a";
+
+/** A Pending Order from an account since deleted, which an Owner may note (ticket 07). */
+const NOTED_ORDER: Order = {
+  id: "00000000-0000-4000-8000-000000010001",
+  reference: "AYC-10001",
+  userId: null,
+  examCode: "CE",
+  planId: CE_30_PLAN,
+  planName: "CE All-Access",
+  days: 30,
+  priceCentavos: 49_900,
+  method: "gcash",
+  status: "pending",
+  livemode: true,
+  checkoutId: null,
+  paymentId: null,
+  buyerName: "Gone Member",
+  buyerEmail: "gone@example.com",
+  createdAt: new Date().toISOString(),
+  paidAt: null,
+  statusChangedAt: new Date().toISOString(),
+  paidWithoutAccount: false,
+};
+
+/** Bea's Paid Order, whose official invoice she has asked for (ticket 08). */
+const INVOICED_ORDER: Order = {
+  ...NOTED_ORDER,
+  id: "00000000-0000-4000-8000-000000010002",
+  reference: "AYC-10002",
+  userId: BEA.userId,
+  status: "paid",
+  paymentId: "pay_Sample10002",
+  buyerName: BEA.name,
+  buyerEmail: BEA.email,
+  paidAt: new Date().toISOString(),
+};
+
 /** An ISO time `days` from now. */
 const inDays = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
@@ -66,7 +118,9 @@ const READS = [
   // The Privacy Requests list (ticket 18), and one request's screen (ticket 19).
   "listPrivacyRequests",
   "getPrivacyRequestForAdmin",
+  // The Overview, with an Owner's sales, and the sidebar's PAID TODAY card (Phase 4, ticket 11).
   "getOverview",
+  "getPaidToday",
   "getSettingsForAdmin",
   "listProductsForAdmin",
   "listExamsForAdmin",
@@ -96,7 +150,21 @@ const READS = [
   "listReviewerPdfsForAdmin",
   "getReviewerPdfForAdmin",
   "getReviewerPdfPageForAdmin",
+  // Plans & prices (Phase 4, ticket 01).
+  "listPlansForAdmin",
+  // The Orders list and one Order's detail page (Phase 4, ticket 07).
+  "listOrdersForAdmin",
+  "getOrderForAdmin",
+  // The Staff Activity list itself (Phase 4, ticket 15): reading it records nothing.
+  "listStaffActivity",
 ] as const satisfies readonly (keyof AdminService)[];
+
+/**
+ * "Check status with PayMongo" (ticket 07): what it changes is PayMongo's
+ * outcome, recorded by the Order ledger under "PayMongo (system)", as the
+ * webhook's is (admin.orders.test.ts checks it), never as the Owner's write.
+ */
+const STATUS_CHECKS = ["checkOrderWithPayMongo"] as const satisfies readonly (keyof AdminService)[];
 
 /**
  * The Reviewer PDF job's runs and the cron's restarts (ticket 12): they
@@ -1084,6 +1152,75 @@ const WRITES: Record<string, Write> = {
       ),
     refusal: "invalid",
   },
+  // Plans & prices (Phase 4, ticket 01).
+  createPlan: {
+    actor: OWNER,
+    entity: "plan",
+    entityId: null,
+    saves: (seam, actor) => seam.createPlan(actor, { ...CE_YEAR_PLAN }),
+    refused: (seam, actor) => seam.createPlan(actor, { ...CE_YEAR_PLAN, price: "0" }),
+    refusal: "invalid",
+  },
+  updatePlan: {
+    actor: OWNER,
+    entity: "plan",
+    entityId: CE_30_PLAN,
+    saves: (seam, actor) => seam.updatePlan(actor, CE_30_PLAN, { ...CE_30_FORM, price: "549" }),
+    refused: (seam, actor) => seam.updatePlan(actor, NO_SUCH_PLAN, CE_30_FORM),
+    refusal: "not-found",
+  },
+  setPlanOnSale: {
+    actor: OWNER,
+    entity: "plan",
+    entityId: CE_30_PLAN,
+    saves: (seam, actor) => seam.setPlanOnSale(actor, CE_30_PLAN, false),
+    refused: (seam, actor) => seam.setPlanOnSale(actor, NO_SUCH_PLAN, false),
+    refusal: "not-found",
+  },
+  deletePlan: {
+    actor: OWNER,
+    entity: "plan",
+    entityId: CE_30_PLAN,
+    saves: (seam, actor) => seam.deletePlan(actor, CE_30_PLAN),
+    refused: (seam, actor) => seam.deletePlan(actor, NO_SUCH_PLAN),
+    refusal: "not-found",
+  },
+  // Orders & payments (Phase 4, ticket 07).
+  saveOrderNote: {
+    actor: OWNER,
+    entity: "order",
+    entityId: NOTED_ORDER.id,
+    setUp: async (_seam, arm) => arm.putOrder(NOTED_ORDER),
+    saves: (seam, actor) =>
+      seam.saveOrderNote(actor, { reference: NOTED_ORDER.reference, note: "Asked about Maya" }),
+    refused: (seam, actor) => seam.saveOrderNote(actor, { reference: "AYC-99999", note: "Hi" }),
+    refusal: "not-found",
+  },
+  markInvoiceSent: {
+    actor: OWNER,
+    entity: "order",
+    entityId: INVOICED_ORDER.id,
+    setUp: async (_seam, arm) => {
+      await arm.member.getOrCreateMember(BEA);
+      await arm.putOrder(INVOICED_ORDER);
+      await arm.member.requestInvoice(BEA.userId, INVOICED_ORDER.reference, {
+        name: BEA.name,
+        address: "Jaro, Iloilo City",
+      });
+    },
+    saves: (seam, actor) => seam.markInvoiceSent(actor, INVOICED_ORDER.reference),
+    refused: (seam, actor) => seam.markInvoiceSent(actor, "AYC-99999"),
+    refusal: "not-found",
+  },
+  exportOrdersCsv: {
+    actor: OWNER,
+    entity: "orders",
+    entityId: "csv",
+    saves: (seam, actor) => seam.exportOrdersCsv(actor, DEFAULT_ORDER_QUERY),
+    refused: (seam, actor) =>
+      seam.exportOrdersCsv(actor, { ...DEFAULT_ORDER_QUERY, range: "90d" as "30d" }),
+    refusal: "invalid",
+  },
 };
 
 /** resolveSignIn writes too: the first sign-in with an Invite's email activates it. */
@@ -1095,6 +1232,7 @@ describe("the Staff Activity table", () => {
       ...READS,
       ...SIGN_IN_RECORDS,
       ...JOB_CALLS,
+      ...STATUS_CHECKS,
       ACTIVATION,
       ...Object.keys(WRITES),
     ].sort();

@@ -18,6 +18,7 @@ interface SettingsEditorProps {
     saveContactEmail: SettingsAction;
     saveLinks: SettingsAction;
     saveTrustFigures: SettingsAction;
+    saveBusinessDetails: SettingsAction;
   };
   /** ADMIN ACCOUNTS, shown under the links (mockup 694–699). */
   accounts?: ReactNode;
@@ -25,7 +26,8 @@ interface SettingsEditorProps {
 
 /**
  * Settings (mockup 678–702; BUILD-MAP §3.11): the contact email, the store and
- * social links, and the trust figures, each saved on its own. They are one
+ * social links, the trust figures, and the business details printed on
+ * Payment Acknowledgements (Phase 4, ticket 06), each saved on its own. They are one
  * record with one stamp, so each part's save hands the new stamp to the
  * others, and while one part is saving the others wait for it: saving the
  * email and then the links is never a conflict.
@@ -52,6 +54,7 @@ export function SettingsEditor({ initial, actions, accounts }: SettingsEditorPro
             action={actions.saveTrustFigures}
             {...shared}
           />
+          <BusinessDetailsForm initial={initial} action={actions.saveBusinessDetails} {...shared} />
         </div>
         <div className="flex min-w-0 flex-col gap-4.5">
           <LinksForm initial={initial} action={actions.saveLinks} {...shared} />
@@ -273,6 +276,83 @@ function TrustFiguresForm({ initial, asOf, ...options }: PartProps & { asOf: str
       <p className="font-mono text-[11px] text-muted-foreground">
         AS OF {formatAsOfDate(asOf)} · SAVING SETS IT TO TODAY
       </p>
+    </SettingsPart>
+  );
+}
+
+function businessValues({ values }: AdminWebsiteSettings) {
+  const { name, address, tin, vatRegistered } = values.business;
+  return { business: { name, address: address ?? "", tin: tin ?? "", vatRegistered } };
+}
+
+/** The seller on every Payment Acknowledgement (Phase 4, ticket 06; story 151u). */
+function BusinessDetailsForm({ initial, ...options }: PartProps) {
+  const form = useAdminForm({
+    ...options,
+    initialValues: businessValues(initial),
+    valuesFrom: businessValues,
+    title: "Business details",
+    invalidMessage: "FIX THE DETAILS MARKED IN RED",
+  });
+  const vatRegistered = form.values.business.vatRegistered;
+  return (
+    <SettingsPart
+      title="BUSINESS DETAILS"
+      description="Printed as the seller on every Payment Acknowledgement in the Member App’s Billing. Until they’re filled in, only the name shows."
+      form={form}
+      saveLabel="Save details"
+      savedMessage="✓ SAVED · ON EVERY ACKNOWLEDGEMENT"
+    >
+      <AdminTextField
+        label="BUSINESS NAME"
+        autoComplete="organization"
+        error={form.fieldError("business.name")}
+        {...form.text("business.name")}
+      />
+      <AdminTextField
+        label="ADDRESS"
+        autoComplete="street-address"
+        error={form.fieldError("business.address")}
+        {...form.text("business.address")}
+      />
+      <AdminTextField
+        label="TIN (OPTIONAL)"
+        autoComplete="off"
+        error={form.fieldError("business.tin")}
+        {...form.text("business.tin")}
+      />
+      <fieldset className="flex flex-col gap-1.5">
+        <legend className="mb-1.5 font-mono text-[11px] font-bold tracking-[0.06em] text-muted-foreground">
+          VAT-REGISTERED
+        </legend>
+        <div className="flex gap-4">
+          {(
+            [
+              ["Yes", true],
+              ["No", false],
+            ] as const
+          ).map(([label, value]) => (
+            <label key={label} className="flex min-h-10 items-center gap-2 text-sm font-semibold">
+              <input
+                type="radio"
+                name="business.vatRegistered"
+                checked={vatRegistered === value}
+                onChange={() => form.change("business.vatRegistered", value)}
+                className="size-4 accent-ayc-navy"
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+        {form.fieldError("business.vatRegistered") ? (
+          <p className="font-mono text-[11px] font-bold text-destructive">
+            {form.fieldError("business.vatRegistered")}
+          </p>
+        ) : null}
+        <p className="font-mono text-[11px] text-muted-foreground">
+          YES ADDS “PRICES INCLUDE VAT” TO EVERY ACKNOWLEDGEMENT
+        </p>
+      </fieldset>
     </SettingsPart>
   );
 }

@@ -98,14 +98,15 @@ describe("AccountPrivacy", () => {
   });
 
   describe("a deletion", () => {
-    it("warns first: removed within 30 days, paid access not refunded, progress lost", async () => {
+    it("warns first: removed within 30 days, paid access not refunded, progress lost, payment records kept", async () => {
       const { user, requestDeletionAction } = renderPrivacy();
       expect(screen.queryByRole("group")).not.toBeInTheDocument();
 
       await user.click(deleteButton());
 
       expect(confirmation()).toHaveTextContent(
-        "Your account, your progress and your Access Passes are removed within 30 days. Access you paid for isn’t refunded, and your progress is lost for good.",
+        // Payment records stay (Phase 4, ticket 14).
+        "Your account, your progress and your Access Passes are removed within 30 days. Access you paid for isn’t refunded, and your progress is lost for good. Payment records are kept as the law requires.",
       );
       expect(within(confirmation()).getByLabelText("Type DELETE to confirm")).toHaveFocus();
       expect(requestDeletionAction).not.toHaveBeenCalled();

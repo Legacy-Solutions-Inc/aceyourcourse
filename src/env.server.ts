@@ -5,7 +5,7 @@ import { z } from "zod";
 /**
  * Server-only environment. The companion to `src/env.ts`, which validates the
  * PUBLIC (`NEXT_PUBLIC_*`) vars. This module holds the server secrets —
- * `DATABASE_URL`, `SUPABASE_SECRET_KEY` and `CRON_SECRET` — validated apart so that, thanks
+ * `DATABASE_URL`, `SUPABASE_SECRET_KEY`, `CRON_SECRET` and the `PAYMONGO_*` keys — validated apart so that, thanks
  * to the `import "server-only"` marker above, they can never be referenced
  * from — and thus never inlined into — the client bundle. Do NOT reference
  * either from `src/env.ts`, `src/config.ts`, or any client component.
@@ -45,6 +45,15 @@ const serverEnvSchema = z.object({
   // deploy-time setting, so it flips with no code change. Read through the
   // Catalogue seam's `getWebsiteSettings().memberAppLive`, never directly.
   MEMBER_APP_LIVE: optionalEnv(z.enum(["true", "false"]).optional()),
+  // PayMongo's secret key (Phase 4, ticket 04): sk_test_… takes PayMongo's
+  // test payments (the beta, under a "TEST PAYMENTS" strip), sk_live_… real
+  // money. Unset, or not a PayMongo secret key: buying stays off ("Buying
+  // opens soon"). Read through src/services/payments.ts, never directly.
+  // Never NEXT_PUBLIC_.
+  PAYMONGO_SECRET_KEY: optionalEnv(z.string().trim().min(1).optional()),
+  // The secret PayMongo signs its webhooks with (whsk_…), checked by the
+  // webhook route (ticket 05). Never NEXT_PUBLIC_.
+  PAYMONGO_WEBHOOK_SECRET: optionalEnv(z.string().trim().min(1).optional()),
   // Supabase's secret key (sb_secret_…), which bypasses RLS. Used for Storage
   // only (ticket 17). Optional, and never NEXT_PUBLIC_.
   SUPABASE_SECRET_KEY: optionalEnv(z.string().min(1).optional()),
@@ -75,6 +84,8 @@ export const serverEnv = parseServerEnv({
   CRON_SECRET: process.env.CRON_SECRET,
   DATABASE_URL: process.env.DATABASE_URL,
   MEMBER_APP_LIVE: process.env.MEMBER_APP_LIVE,
+  PAYMONGO_SECRET_KEY: process.env.PAYMONGO_SECRET_KEY,
+  PAYMONGO_WEBHOOK_SECRET: process.env.PAYMONGO_WEBHOOK_SECRET,
   SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
 });
 

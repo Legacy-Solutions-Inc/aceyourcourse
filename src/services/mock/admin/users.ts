@@ -1,3 +1,4 @@
+import { refundsOfOrder } from "@/lib/payments/refunds";
 import type { AdminUserRow, UserRole } from "@/services/admin.types";
 import * as memberArm from "@/services/member.mock";
 import type { Member } from "@/services/member.types";
@@ -78,6 +79,13 @@ const sampleUsersStore: UsersStore = {
           .map(({ userId: _, examCode: __, ...grant }) => grant),
       })),
       consents: store.memberConsents.filter((record) => record.userId === userId),
+      orders: store.orders
+        .filter((order) => order.userId === userId)
+        .map((order) => ({
+          order,
+          invoice: store.invoiceRequests.find((request) => request.orderId === order.id) ?? null,
+          refunds: refundsOfOrder(store.orderRefunds)(order.id),
+        })),
     });
   },
 

@@ -21,8 +21,9 @@ import {
 // The Member App's shell, sign-in, beta gate and consent on sample data
 // (Phase 3, tickets 01 and 02). The Member App switch is off on the e2e
 // server, so only active Staff and Beta Testers get past sign-in; everyone
-// else sees "Not open yet". Each sample Member starts with nothing agreed, so
-// their first visit shows the consent screen, and with no Target Exam, so
+// else sees "Not open yet". Each sample Member starts with nothing agreed (the
+// renewing tester with v2.0, ticket 13), so their first visit shows the
+// consent screen, and with no Target Exam, so
 // Home then shows onboarding (ticket 03, target-exams.spec.ts). The Beta
 // Tester list is read on every request, so an Owner's change applies to the
 // other person's next click.
@@ -86,7 +87,7 @@ test.describe("a signed-out visitor", () => {
     await expect(page).toHaveURL(/\/app\/sign-in$/);
   });
 
-  test("sees the four sample Members in the development-only Sign in as list", async ({ page }) => {
+  test("sees the five sample Members in the development-only Sign in as list", async ({ page }) => {
     test.skip(LIVE, SKIP_LIVE);
     const list = await openSignInAs(page);
     await expect(list.getByText("SAMPLE DATA · DEVELOPMENT ONLY")).toBeVisible();
@@ -95,6 +96,7 @@ test.describe("a signed-out visitor", () => {
       /Angel Rose L\. Lepaña.*angel@aceyourcourse\.ph · Owner/,
       /Sam Stranger.*stranger@example\.com · Not a Beta Tester/,
       /Lou Lapsed.*lapsed@example\.com · Beta Tester · CE All-Access ended/,
+      /Rae Renewing.*renewing@example\.com · Beta Tester · CE All-Access ends in 5 days · agreed to Legal v2\.0/,
     ]);
   });
 });
@@ -155,11 +157,8 @@ test.describe("a Beta Tester", () => {
     await signInAndOnboard(page, "tester");
     await expect(welcome(page, "Bea")).toBeVisible();
 
-    for (const [label, path] of [
-      ["Courses", "/app/courses"],
-      ["Plans", "/app/plans"],
-      ["Billing", "/app/billing"],
-    ] as const) {
+    // Billing has its own screen since Phase 4, ticket 06 (billing.spec.ts).
+    for (const [label, path] of [["Courses", "/app/courses"]] as const) {
       await memberNav(page)
         .getByRole("link", { name: new RegExp(label) })
         .click();
@@ -223,7 +222,7 @@ test.describe("the consent screen", () => {
     await expect(consentHeading(page)).toBeVisible();
     await expect(
       page.getByRole("list", { name: "What we keep, and why" }).getByRole("listitem"),
-    ).toHaveCount(4);
+    ).toHaveCount(5);
     // Outside the shell, as in the mockup: no menu yet.
     await expect(page.getByRole("navigation")).toHaveCount(0);
 
@@ -248,14 +247,21 @@ test.describe("the consent screen", () => {
       "href",
       "/legal/privacy",
     );
-    await expect(consent.terms).toHaveAccessibleName(/version 2\.0/);
+    await expect(consent.terms).toHaveAccessibleName(/version 2\.1/);
   });
 
   test("comes before every Member App address until the Member agrees", async ({ page }) => {
     await signInAsMember(page, "tester");
     await expect(consentHeading(page)).toBeVisible();
 
-    for (const path of [paths.memberApp.home, paths.memberApp.library, paths.memberApp.account]) {
+    for (const path of [
+      paths.memberApp.home,
+      paths.memberApp.library,
+      paths.memberApp.plans,
+      paths.memberApp.billing,
+      paths.memberApp.account,
+      paths.memberApp.support,
+    ]) {
       await page.goto(path);
       await expect(page).toHaveURL(new RegExp(`/app/consent\\?next=${encodeURIComponent(path)}$`));
     }
@@ -285,6 +291,33 @@ test.describe("the consent screen", () => {
     await expect(page).toHaveURL(/\/app\/library$/);
   });
 
+  // Legal v2.1 (Phase 4, ticket 13): the renewing tester starts having agreed
+  // to v2.0, so their next visit asks once more, then goes on.
+  test("asks a Member who agreed to v2.0 once more, for v2.1, then goes Home and doesn't ask again", async ({
+    page,
+  }) => {
+    await signInAsMember(page, "renewing");
+    await expect(page).toHaveURL(/\/app\/consent\?next=%2Fapp$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: "We’ve updated our Terms and Privacy Policy" }),
+    ).toBeVisible();
+    const consent = consentScreen(page);
+    await expect(consent.terms).toHaveAccessibleName(/version 2\.1/);
+    await expect(consent.privacy).toHaveAccessibleName(/version 2\.1/);
+    await expectNoBlockingViolations(page);
+
+    await agreeToConsent(page);
+    // Rae has no Target Exam yet, so Home shows onboarding.
+    await expect(page).toHaveURL(/\/app$/);
+    await expect(onboardingHeading(page, "Rae")).toBeVisible();
+
+    // Asked once: later visits, and the consent address itself, go straight on.
+    await page.goto(paths.memberApp.home);
+    await expect(onboardingHeading(page, "Rae")).toBeVisible();
+    await page.goto(paths.memberApp.consent(paths.memberApp.home));
+    await expect(page).toHaveURL(/\/app$/);
+  });
+
   test("offers Sign out to someone who doesn't want to agree", async ({ page }) => {
     await signInAsMember(page, "tester");
     await page.getByRole("button", { name: "Sign out" }).click();
@@ -305,6 +338,20 @@ test.describe("the consent screen", () => {
 
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 375, height: 812 } });
+
+  test("the Menu button is in a bar across the top, which stays there as the page scrolls", async ({
+    page,
+  }) => {
+    await signInAndOnboard(page, "tester");
+    await expect(welcome(page, "Bea")).toBeVisible();
+    const bar = page.getByRole("navigation", { name: "Member App menu" });
+    await expect(bar.getByRole("button", { name: "Menu" })).toBeVisible();
+    expect((await bar.boundingBox())?.y).toBe(0);
+
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    expect((await bar.boundingBox())?.y).toBe(0);
+  });
 
   test("the Menu button opens the drawer; Escape, ✕ and the scrim close it", async ({ page }) => {
     await signInAndOnboard(page, "tester");
@@ -464,8 +511,9 @@ test.describe("accessibility", () => {
         await expect(welcome(page, "Bea")).toBeVisible();
         await expectNoBlockingViolations(page);
 
-        // The Library is built (ticket 05; its checks are in library.spec.ts); Plans isn't yet.
-        await page.goto(paths.memberApp.plans);
+        // The Library, Plans and Billing are built (their checks are in
+        // library.spec.ts, plans.spec.ts and billing.spec.ts); Courses isn't yet.
+        await page.goto(paths.memberApp.courses);
         await expect(page.getByRole("heading", { level: 1 })).toHaveText("Coming in the beta");
         await expectNoBlockingViolations(page);
       });

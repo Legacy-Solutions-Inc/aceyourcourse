@@ -59,8 +59,8 @@ test.describe("the Owner", () => {
       "aria-current",
       "page",
     );
-    // The sample data's two testers: the tester and the lapsed tester.
-    await expect(rows(page)).toHaveCount(2);
+    // The sample data's three testers: the tester, the lapsed tester and the renewing tester.
+    await expect(rows(page)).toHaveCount(3);
     await expect(row(page, SAMPLE_TESTER)).toContainText(/ADDED \d{1,2} [A-Z]{3} \d{4} · BY ANGEL/);
   });
 
@@ -69,7 +69,7 @@ test.describe("the Owner", () => {
 
     await add(page, "New.Tester@Example.com");
     await expect(status(page)).toHaveText(`✓ ADDED · ${NEW_TESTER.toUpperCase()} IS A BETA TESTER`);
-    await expect(rows(page)).toHaveCount(3);
+    await expect(rows(page)).toHaveCount(4);
     await expect(row(page, NEW_TESTER)).toContainText("BY ANGEL ROSE L. LEPAÑA");
     await expect(testers(page).getByLabel("GOOGLE ACCOUNT EMAIL")).toHaveValue("");
 
@@ -86,7 +86,7 @@ test.describe("the Owner", () => {
     await expect(status(page)).toHaveText(
       `✓ REMOVED · ${NEW_TESTER.toUpperCase()} IS NO LONGER A BETA TESTER`,
     );
-    await expect(rows(page)).toHaveCount(2);
+    await expect(rows(page)).toHaveCount(3);
     await page.reload();
     await expect(row(page, NEW_TESTER)).toHaveCount(0);
     await expect(row(page, SAMPLE_TESTER)).toBeVisible();
@@ -120,7 +120,7 @@ test.describe("the Owner", () => {
       "aria-invalid",
       "true",
     );
-    await expect(rows(page)).toHaveCount(2);
+    await expect(rows(page)).toHaveCount(3);
   });
 });
 

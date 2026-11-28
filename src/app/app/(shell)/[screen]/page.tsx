@@ -16,9 +16,9 @@ export async function generateMetadata({ params }: ComingSoonPageProps): Promise
 }
 
 /**
- * The menu's screens that aren't built yet (Courses, Plans, Billing): each
- * says it's coming in the beta. A later ticket's own
- * folder takes its address over from this one. The gate runs first, so
+ * The menu's screens that aren't built yet (Courses): each says it's
+ * coming in the beta. A later ticket's own folder takes its address over from
+ * this one, as Plans and Billing did (Phase 4, tickets 02 and 06). The gate runs first, so
  * someone it doesn't let in learns nothing about which addresses exist, and a
  * Member who is still onboarding goes to Home to pick their Exam.
  */

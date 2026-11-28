@@ -21,7 +21,12 @@ const DOCUMENT: LegalDocument = {
       title: "Who we are",
       paragraphs: ["We make reviewers.", `Our contact is ${EMAIL}. Write any time.`],
     },
-    { id: "s2", title: "What we collect", paragraphs: ["Page views only."] },
+    {
+      id: "s2",
+      anchor: "what-we-collect",
+      title: "What we collect",
+      paragraphs: ["Page views only."],
+    },
   ],
 };
 
@@ -59,6 +64,22 @@ describe("LegalBody", () => {
     expect(first).toContainElement(screen.getByRole("heading", { name: "1 Who we are" }));
     expect(first).toContainElement(screen.getByText("We make reviewers."));
     expect(document.getElementById("s2")).toContainElement(screen.getByText("Page views only."));
+  });
+
+  // The Plans page links the Terms' "#payments-and-refunds": the section's
+  // heading carries its anchor, while the Contents keep linking its number.
+  it("puts a section's stable anchor on its heading, keeping its numbered id", () => {
+    render(<LegalBody document={DOCUMENT} contactEmail={EMAIL} />);
+
+    const anchored = document.getElementById("what-we-collect");
+    expect(anchored).toBe(screen.getByRole("heading", { level: 2, name: "2 What we collect" }));
+    expect(document.getElementById("s2")).toContainElement(anchored);
+    expect(document.getElementById("s1")?.querySelector("h2")).not.toHaveAttribute("id");
+    expect(
+      within(screen.getByRole("navigation", { name: "Contents" })).getByRole("link", {
+        name: "2. What we collect",
+      }),
+    ).toHaveAttribute("href", "#s2");
   });
 
   it("links the contact email wherever it appears", () => {

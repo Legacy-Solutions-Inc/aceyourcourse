@@ -9,6 +9,9 @@ import { isLocalDatabase } from "@/lib/db/local-database";
 //   replaces a variable that is set, and the env schemas read "" as unset.
 // - With all four PLAYWRIGHT_* values (CI, from the runner's local Supabase),
 //   it runs live on that Supabase. Each URL must name this machine.
+// - Either way PayMongo's keys are set, empty (Phase 4, ticket 04): an e2e
+//   run never reaches PayMongo. Sample mode buys with the payments fake; a
+//   live run has no payments client ("Buying opens soon").
 // ─────────────────────────────────────────────────────────────────────────────
 
 const LIVE_VARIABLES = [
@@ -26,10 +29,14 @@ export interface E2eServer {
     NEXT_PUBLIC_SUPABASE_URL: string;
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: string;
     SUPABASE_SECRET_KEY: string;
+    PAYMONGO_SECRET_KEY: "";
+    PAYMONGO_WEBHOOK_SECRET: "";
   };
 }
 
-/** Pure: the e2e server's database and Supabase env, from the shell running Playwright. */
+const NO_PAYMONGO = { PAYMONGO_SECRET_KEY: "", PAYMONGO_WEBHOOK_SECRET: "" } as const;
+
+/** Pure: the e2e server's database, Supabase and PayMongo env, from the shell running Playwright. */
 export function e2eServerEnv(shell: Record<string, string | undefined>): E2eServer {
   const set = LIVE_VARIABLES.filter((name) => shell[name]);
   if (set.length === 0) {
@@ -40,6 +47,7 @@ export function e2eServerEnv(shell: Record<string, string | undefined>): E2eServ
         NEXT_PUBLIC_SUPABASE_URL: "",
         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "",
         SUPABASE_SECRET_KEY: "",
+        ...NO_PAYMONGO,
       },
     };
   }
@@ -65,6 +73,7 @@ export function e2eServerEnv(shell: Record<string, string | undefined>): E2eServ
       NEXT_PUBLIC_SUPABASE_URL: shell.PLAYWRIGHT_SUPABASE_URL ?? "",
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: shell.PLAYWRIGHT_SUPABASE_PUBLISHABLE_KEY ?? "",
       SUPABASE_SECRET_KEY: shell.PLAYWRIGHT_SUPABASE_SECRET_KEY ?? "",
+      ...NO_PAYMONGO,
     },
   };
 }

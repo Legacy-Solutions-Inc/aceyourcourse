@@ -5,6 +5,9 @@ import { claimDevice, getOrCreateMember, recordConsent } from "@/services/member
 import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
+import { AGREED_TO_CURRENT } from "../../../../test/member-inputs";
+import { redirectsTo } from "../../../../test/redirects";
+
 // "Sign in on this device" in live mode (Phase 3, ticket 04; story 108): on
 // "Session ended" it starts Google sign-in, coming back through
 // /auth/callback to the /app path the Member was on, and the callback claims
@@ -47,9 +50,6 @@ const TESTER = "tester@example.com";
 const BEA = { userId: sampleUserId(TESTER), email: TESTER, name: "Bea Tester" };
 const GOOGLE = "https://accounts.google.example/o/oauth2/auth?state=x";
 
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
-
 async function signInOnThisDevice(next: string) {
   const data = new FormData();
   data.set("next", next);
@@ -59,7 +59,7 @@ async function signInOnThisDevice(next: string) {
 /** Bea, agreed, on a device another one replaced. */
 async function replacedBea() {
   await getOrCreateMember(BEA);
-  await recordConsent(BEA.userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(BEA.userId, AGREED_TO_CURRENT);
   await claimDevice(BEA.userId, {
     tokenHash: hashDeviceToken("the-other-device"),
     deviceLabel: "Safari on iOS",

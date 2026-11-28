@@ -13,7 +13,7 @@ interface FocusScreenProps {
 /**
  * A focus screen (BUILD-MAP §2: flashcards, quiz, reviewer…): on desktop a
  * breadcrumb, "LIBRARY / MSTC · FLASHCARDS", above the screen; below 760 px
- * a back bar with ← and a two-line crumb, and no Menu button (the drawer
+ * a back bar with ← and a two-line crumb, and no Menu bar (the drawer
  * hides itself on these screens). The screen's own heading is the child's.
  */
 export function FocusScreen({ back, crumb, title, children }: FocusScreenProps) {

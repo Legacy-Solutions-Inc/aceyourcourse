@@ -38,6 +38,32 @@ describe("POST /api/dev/sample-data/reset", () => {
     expect(vi.mocked(revalidateTag).mock.calls).toEqual([["catalogue"]]);
   });
 
+  it("brings back the sample Orders, as a server restart makes them", async () => {
+    getSampleStore().orders = [];
+    const { POST } = await import("./route");
+
+    await POST(post());
+
+    const { orders, nextOrderNumber } = getSampleStore();
+    expect(orders.map(({ reference }) => reference)).toEqual([
+      "AYC-10001",
+      "AYC-10002",
+      "AYC-10003",
+      "AYC-10004",
+      "AYC-10005",
+      "AYC-10006",
+      "AYC-10007",
+      "AYC-10008",
+      "AYC-10009",
+      "AYC-10010",
+      "AYC-10011",
+      "AYC-10012",
+      "AYC-10013",
+    ]);
+    expect(nextOrderNumber).toBe(10_014);
+    expect(getSampleStore().orderRefunds).toHaveLength(2);
+  });
+
   it("answers a POST from this site's own pages", async () => {
     const { POST } = await import("./route");
     expect((await POST(post({ origin: "http://localhost:3000" }))).status).toBe(204);

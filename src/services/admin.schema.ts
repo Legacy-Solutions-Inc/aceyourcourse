@@ -12,10 +12,15 @@ import { MAX_QUERY_LENGTH } from "@/lib/catalogue/product-filters";
 import { isMarketplaceUrl, isOnHost } from "@/lib/catalogue/store-links";
 import { isCalendarDate } from "@/lib/manila-time";
 import { EXTEND_DAYS, GRANT_MAX_DAYS } from "@/lib/member-app/access-pass";
+import { PAYMENT_METHODS } from "@/lib/payments/payment-methods";
+import { normaliseTin } from "@/lib/payments/tin";
+import { isPlanDays, parsePlanPrice, type PlanDays } from "@/lib/plans/plan-rules";
 import { PDF_NAME_MAX } from "@/lib/reviewer-pdfs/pdf-file";
 import { variationLabel } from "@/lib/catalogue/price";
 import {
   type AdminError,
+  ORDER_RANGES,
+  ORDER_STATUS_FILTERS,
   type RequiredRole,
   type StaffActor,
   USER_FILTERS,
@@ -232,6 +237,47 @@ export const trustFiguresSchema = z.object({
   }),
 });
 
+const BUSINESS_NAME = "ENTER THE BUSINESS NAME";
+const TIN = "ENTER 9 DIGITS, LIKE 123-456-789, WITH A 3- OR 5-DIGIT BRANCH CODE IF ANY";
+const VAT = "CHOOSE WHETHER THE BUSINESS IS VAT-REGISTERED";
+
+/** Pure: a blank text field as empty (null), anything else as it is. */
+const blankAsNull = (value: unknown) =>
+  typeof value === "string" && value.trim() === "" ? null : value;
+
+/**
+ * The business details printed as the seller on every Payment
+ * Acknowledgement (Phase 4, ticket 06): a name, an address and a TIN
+ * (both optional; blank clears them), and whether the business is
+ * VAT-registered. The TIN is kept with dashes.
+ */
+export const businessDetailsSchema = z.object({
+  business: z.object({
+    name: z
+      .string({ invalid_type_error: BUSINESS_NAME, required_error: BUSINESS_NAME })
+      .trim()
+      .min(1, BUSINESS_NAME)
+      .max(120, "KEEP THE NAME TO 120 CHARACTERS"),
+    address: z.preprocess(
+      blankAsNull,
+      z.string().trim().max(300, "KEEP THE ADDRESS TO 300 CHARACTERS").nullable(),
+    ),
+    tin: z.preprocess(
+      blankAsNull,
+      z
+        .string({ invalid_type_error: TIN })
+        .nullable()
+        .transform((typed, context) => {
+          if (typed === null) return null;
+          const tin = normaliseTin(typed);
+          if (tin === null) context.addIssue({ code: z.ZodIssueCode.custom, message: TIN });
+          return tin;
+        }),
+    ),
+    vatRegistered: z.boolean({ invalid_type_error: VAT, required_error: VAT }),
+  }),
+});
+
 /**
  * A Settings save: any of its parts, each whole. Anything else in the input,
  * such as the announcement, is dropped.
@@ -239,6 +285,7 @@ export const trustFiguresSchema = z.object({
 export const websiteSettingsUpdateSchema = contactSettingsSchema
   .merge(linkSettingsSchema)
   .merge(trustFiguresSchema)
+  .merge(businessDetailsSchema)
   .partial()
   .refine((update) => Object.keys(update).length > 0, "NOTHING TO SAVE");
 
@@ -2003,3 +2050,115 @@ export const reviewerPdfFreePreviewInputSchema = z.object({
   id: reviewerPdfId,
   freePreview: onOrOff,
 });
+
+// ── Plans (Owners only; Phase 4, ticket 01) ─────────────────────────────────
+// A Plan as the Plans & prices editor holds it (spec, Phase 4 → Plans; Phase 4
+// planning decisions → Plans & prices): a name, an Exam, 30, 90, 180 or 365
+// days, a price in whole pesos from ₱1 to ₱99,999 (src/lib/plans/plan-rules.ts),
+// stored in centavos, Best value and On sale. The Server Actions check only
+// the form's shape; the seam parses it with these rules, then checks the Exam
+// is in the catalogue and the Plans' own rules (one Best value per Exam, one
+// on sale per Exam and duration).
+
+export const PLAN_NAME_MAX = 80;
+
+export const PLAN_NAME_MISSING = "ADD A NAME";
+export const PLAN_NAME_TOO_LONG = `KEEP THE NAME TO ${PLAN_NAME_MAX} CHARACTERS`;
+export const PLAN_DAYS_ERROR = "PICK 1, 3, 6 OR 12 MONTHS";
+
+/** A price as typed or sent: its centavos, or why it isn't a Plan's price. */
+const planPrice = z.unknown().transform((value, ctx) => {
+  const price = parsePlanPrice(value);
+  if (price.ok) return price.centavos;
+  ctx.addIssue({ code: z.ZodIssueCode.custom, message: price.message });
+  return z.NEVER;
+});
+
+/** A Plan's days as sent: a number, or the select's text ("90"). Only 30, 90, 180 or 365. */
+const planDays = z.preprocess(typedDays, z.custom<PlanDays>(isPlanDays, PLAN_DAYS_ERROR));
+
+const planName = z
+  .string({ required_error: PLAN_NAME_MISSING, invalid_type_error: PLAN_NAME_MISSING })
+  .trim()
+  .min(1, PLAN_NAME_MISSING)
+  .max(PLAN_NAME_MAX, PLAN_NAME_TOO_LONG);
+
+/** The editor's fields, with every rule that needs nothing but the form. */
+export const planFormSchema = z
+  .object({
+    name: planName,
+    examCode: passExamCode,
+    days: planDays,
+    price: planPrice,
+    bestValue: z.boolean(),
+    onSale: z.boolean(),
+  })
+  .transform(({ price, ...plan }) => ({ ...plan, priceCentavos: price }));
+
+/** The Plans & prices editor's values, as it sends them. */
+export type PlanForm = z.input<typeof planFormSchema>;
+/** A Plan's fields once they pass the form's rules. */
+export type PlanInput = z.output<typeof planFormSchema>;
+
+/** A Plan's id, as the screen addresses it: any text, so one that isn't a Plan's answers not-found. */
+const planId = z.string().trim().min(1).max(100);
+
+/** The editor's shape, for the Server Actions: the seam checks the rules. */
+const planFormFields = z.object({
+  name: z.string().max(1_000),
+  examCode: z.string().max(100),
+  days: z.union([z.string().max(20), z.number()]),
+  price: z.union([z.string().max(40), z.number()]),
+  bestValue: z.boolean(),
+  onSale: z.boolean(),
+});
+
+/** "Add plan": a new Plan's form, its shape checked. */
+export const addPlanInputSchema = planFormFields;
+
+/** "Save": the Plan and its form, its shape checked. */
+export const savePlanInputSchema = planFormFields.extend({ id: planId });
+
+/** A Plan's On sale switch in the list. */
+export const planOnSaleInputSchema = z.object({ id: planId, onSale: onOrOff });
+
+/** The Plan a delete is for. */
+export const planIdInputSchema = z.object({ id: planId });
+
+// ── Orders & payments (Owners only; Phase 4, ticket 07) ─────────────────────
+
+/** The Orders list's search and filters, as the seam takes them (parseOrdersParams makes them). */
+export const orderListQuerySchema = z.object({
+  q: z
+    .string()
+    .trim()
+    .max(MAX_QUERY_LENGTH)
+    .nullable()
+    .transform((q) => q || null),
+  status: z.enum(ORDER_STATUS_FILTERS),
+  method: z.union([z.literal("all"), z.enum(PAYMENT_METHODS)]),
+  range: z.enum(ORDER_RANGES),
+  tests: z.boolean(),
+  invoiceRequested: z.boolean(),
+  paidAfterExpiry: z.boolean(),
+  paidWithoutAccount: z.boolean(),
+});
+
+/** An Order's reference, as an address carries it: any text, so one that isn't an Order's answers not-found. */
+const orderReference = z.string().trim().min(1).max(40);
+
+/** The longest internal note an Order keeps. */
+export const ORDER_NOTE_MAX = 2_000;
+export const ORDER_NOTE_TOO_LONG = `KEEP THE NOTE TO ${ORDER_NOTE_MAX.toLocaleString("en-PH")} CHARACTERS`;
+
+/** "Save note": an Order's internal note, trimmed; a blank one clears it. */
+export const orderNoteInputSchema = z.object({
+  reference: orderReference,
+  note: z.string().trim().max(ORDER_NOTE_MAX, ORDER_NOTE_TOO_LONG),
+});
+
+/** "Save note"'s values, as the form sends them. */
+export type OrderNoteInput = z.input<typeof orderNoteInputSchema>;
+
+/** The Order "Check status with PayMongo" is for. */
+export const orderReferenceInputSchema = z.object({ reference: orderReference });

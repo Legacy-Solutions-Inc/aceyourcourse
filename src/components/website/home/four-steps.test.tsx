@@ -22,7 +22,7 @@ describe("FourSteps", () => {
     expect(section()).not.toHaveTextContent(/\bapp\b/i);
     expect(section().querySelector('a[href^="/app"]')).toBeNull();
     expect(titles()).toEqual([
-      "Pick your board exam",
+      "Select the licensure exam you want to review",
       "Choose your format",
       "Review anywhere",
       "Order from our official stores",
@@ -39,7 +39,7 @@ describe("FourSteps", () => {
   it("shows the mockup's steps, with See app plans, while the switch is on", () => {
     render(<FourSteps memberAppLive />);
     expect(titles()).toEqual([
-      "Pick your board exam",
+      "Select the licensure exam you want to review",
       "Choose physical, app, or both",
       "Review anywhere",
       "Watch anywhere",
@@ -51,6 +51,16 @@ describe("FourSteps", () => {
       ["See app plans", "/app/plans"],
     ]);
     expect(section()).toHaveTextContent("a countdown to your exam date in the app");
+  });
+
+  it("has the same first step either way, which leads to Find your exam", () => {
+    for (const memberAppLive of [false, true]) {
+      const { unmount } = render(<FourSteps memberAppLive={memberAppLive} />);
+      expect(steps()[0]).toHaveTextContent(
+        "Each board exam has its own reviewers. Pick yours to see them all.",
+      );
+      unmount();
+    }
   });
 
   it("numbers the steps 01 to 04 in an ordered list", () => {

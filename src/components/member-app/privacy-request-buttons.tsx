@@ -131,7 +131,7 @@ export function DeleteAccount({ action, pending }: DeleteAccountProps) {
       <p id={warningId} className="max-w-prose text-sm leading-normal">
         Your account, your progress and your Access Passes are removed within{" "}
         {PRIVACY_REQUEST_DAYS.deletion} days. Access you paid for isn’t refunded, and your progress
-        is lost for good.
+        is lost for good. Payment records are kept as the law requires.
       </p>
       <form action={formAction} className="flex flex-col gap-3">
         <label className="flex flex-col gap-1.5 text-sm font-bold">

@@ -6,6 +6,7 @@ import { expect, type Locator, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
 import { sampleContentId, sampleTopicId } from "../../src/services/mock/content";
+import { samplePlanId } from "../../src/services/mock/plans";
 import {
   LIVE,
   openSignInAs,
@@ -308,6 +309,20 @@ const KEYBOARD_SCREENS: {
     },
   },
   {
+    name: "Plans & prices, with a Plan's editor and its delete dialog",
+    who: "owner",
+    path: `${paths.admin.plans}?exam=ce&plan=${samplePlanId("CE", 90)}`,
+    ready: (page) => page.getByRole("form", { name: "Edit plan" }),
+    dialog: {
+      open: (page) =>
+        page
+          .getByRole("form", { name: "Edit plan" })
+          .getByRole("button", { name: "Delete plan" })
+          .click(),
+      name: "Delete “CE All-Access · 3 months”?",
+    },
+  },
+  {
     name: "Settings, with the add-invite modal",
     who: "owner",
     path: paths.admin.settings,
@@ -404,7 +419,22 @@ for (const size of SIZES) {
         // Users: the Users list (ticket 16) and the Beta Testers tab (ticket 01).
         "/admin/users",
         paths.admin.betaTesters,
+        // Plans & prices (Phase 4, ticket 01), with the new Plan's editor and its preview.
+        paths.admin.plans,
+        `${paths.admin.plans}?plan=new`,
+        // Orders & payments (Phase 4, ticket 07), every Order with the TEST tag, and the
+        // sample data's Pending, partially refunded and Refunded Orders (ticket 09),
+        // which the live database doesn't have.
+        paths.admin.orders,
+        `${paths.admin.orders}?range=all&tests=1`,
+        ...(LIVE
+          ? []
+          : ["AYC-10006", "AYC-10007", "AYC-10008"].map((reference) =>
+              paths.admin.order(reference),
+            )),
         "/admin/settings",
+        // Staff Activity (Phase 4, ticket 15), filtered so it's the same on any data.
+        `${paths.admin.staffActivity}?actor=nobody%40example.com`,
       ]) {
         await page.goto(path);
         await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -424,6 +454,11 @@ for (const size of SIZES) {
       await expect(form.getByRole("status")).toContainText("WRITING THE NEXT ONE", {
         timeout: 15_000,
       });
+      // On a phone the "✓ SAVED" toast lies across the bottom, over Save and the pointer still
+      // resting on "Save & add next", and a pointer on a toast keeps it open. Move the pointer
+      // off, then wait for it to close, as it does for someone who doesn't touch it.
+      await page.mouse.move(0, 0);
+      await expect(page.locator("[data-sonner-toast]")).toHaveCount(0, { timeout: 15_000 });
       // Every field's message, and a formula that won't render in the preview.
       await form.getByLabel(/^BACK/).fill("$\\frac{1}{$");
       await form.getByLabel(/^NOTE/).fill("n".repeat(1001));
@@ -433,6 +468,22 @@ for (const size of SIZES) {
 
       await page.getByRole("button", { name: "Delete card 1" }).click();
       await settled(page.getByRole("dialog", { name: /^Delete card 1/ }));
+      await expectNoBlockingViolations(page);
+    });
+
+    test("no serious or critical accessibility violations on an Order's detail page, after a status check and a saved note", async ({
+      page,
+    }) => {
+      test.skip(LIVE, "The sample Orders are in the in-memory sample data only.");
+      await signInAs(page, "owner", paths.admin.order("AYC-10006"));
+      await page.getByRole("button", { name: "Check status with PayMongo" }).click();
+      await expect(page.getByText("CHECKED JUST NOW · STILL PENDING AT MAYA")).toBeVisible({
+        timeout: 15_000,
+      });
+      const note = page.getByRole("form", { name: "Internal note" });
+      await note.getByLabel("INTERNAL NOTE").fill("Asked about Maya");
+      await note.getByRole("button", { name: "Save note" }).click();
+      await expect(note.getByRole("status")).toHaveText("✓ NOTE SAVED · ONLY ADMINS SEE IT");
       await expectNoBlockingViolations(page);
     });
 

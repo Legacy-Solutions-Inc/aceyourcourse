@@ -53,6 +53,10 @@ import * as reviewerPdfs from "@/services/admin.reviewer-pdfs.db";
 import * as users from "@/services/admin.users.db";
 import * as passes from "@/services/admin.access-passes.db";
 import * as privacy from "@/services/admin.privacy-requests.db";
+import * as plans from "@/services/admin.plans.db";
+import * as orders from "@/services/admin.orders.db";
+import * as sales from "@/services/admin.sales.db";
+import * as staffActivity from "@/services/admin.staff-activity.db";
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
@@ -337,10 +341,46 @@ async function load(
     get memberNotices() {
       return notLoaded("the Members' notices");
     },
+    // The Member seam reads and writes the renewal dismissals itself (Phase 4, ticket 12).
+    get renewalDismissals() {
+      return notLoaded("the renewal dismissals");
+    },
     // The Privacy Requests have their own reads (member.db.ts, admin.privacy-requests.db.ts).
     get privacyRequests() {
       return notLoaded("the Privacy Requests");
     },
+    // The Member seam reads and writes the Orders itself (ticket 03).
+    get orders() {
+      return notLoaded("the Orders");
+    },
+    get nextOrderNumber() {
+      return notLoaded("the Order references");
+    },
+    get orderStatusCheckedAt() {
+      return notLoaded("the Orders' status checks");
+    },
+    // The Orders admin reads and writes the internal notes itself (admin.orders.db.ts).
+    get orderNotes() {
+      return notLoaded("the Orders' internal notes");
+    },
+    // The Member seam and the Orders admin read and write them themselves (ticket 08).
+    get invoiceRequests() {
+      return notLoaded("the Invoice Requests");
+    },
+    get paymentEvents() {
+      return notLoaded("the PayMongo events");
+    },
+    // The Member seam records them, and the Orders admin reads them (ticket 09).
+    get orderRefunds() {
+      return notLoaded("the Orders' refunds");
+    },
+    // The Plans have their own reads and writes (admin.plans.db.ts). Deleting
+    // an Exam drops its Plans from the sample data; here the table's cascade
+    // does it, so the stand-in has none and keeps none.
+    get plans() {
+      return [];
+    },
+    set plans(_plans) {},
     // Read only: a rollback couldn't undo a change to the sample data's uploads.
     get uploads() {
       return sample.uploads;
@@ -775,8 +815,33 @@ export const databaseArm: AdminService = {
   exportMemberData: privacy.exportMemberData,
   deleteMemberAccount: privacy.deleteMemberAccount,
   markPrivacyRequestDone: privacy.markPrivacyRequestDone,
+  // The Plans for sale, read and written by their own module (Phase 4, ticket 01).
+  listPlansForAdmin: plans.listPlansForAdmin,
+  createPlan: plans.createPlan,
+  updatePlan: plans.updatePlan,
+  setPlanOnSale: plans.setPlanOnSale,
+  deletePlan: plans.deletePlan,
+  // The Orders admin has its own reads and writes (admin.orders.db.ts).
+  listOrdersForAdmin: orders.listOrdersForAdmin,
+  getOrderForAdmin: orders.getOrderForAdmin,
+  saveOrderNote: orders.saveOrderNote,
+  checkOrderWithPayMongo: orders.checkOrderWithPayMongo,
+  markInvoiceSent: orders.markInvoiceSent,
+  exportOrdersCsv: orders.exportOrdersCsv,
 
-  getOverview: read(CATALOGUE, sampleArm.getOverview),
+  // Staff Activity reads its own table, by keyset (admin.staff-activity.db.ts; ticket 15).
+  listStaffActivity: staffActivity.listStaffActivity,
+
+  // The catalogue part runs the sample arm's code over the catalogue it loads;
+  // an Owner's sales read their own records (admin.sales.db.ts; ticket 11).
+  getOverview: async (actor) => {
+    const [catalogue, owners] = await Promise.all([
+      read(CATALOGUE, sampleArm.getOverviewCatalogue)(actor),
+      sales.salesOverview(actor),
+    ]);
+    return { ...catalogue, sales: owners };
+  },
+  getPaidToday: sales.getPaidToday,
 
   getSettingsForAdmin: read(CATALOGUE, sampleArm.getSettingsForAdmin),
   updateWebsiteSettings: stampedWrite(sampleArm.updateWebsiteSettings),

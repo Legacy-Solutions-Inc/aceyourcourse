@@ -1,6 +1,7 @@
 import type { BetaTester } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import type { AccessPass, AccessPassGrant } from "@/services/content.types";
+import type { ConsentRecord, Member } from "@/services/member.types";
 import { SAMPLE_USERS } from "@/services/mock/staff";
 
 import { stableUuid } from "./stable-uuid";
@@ -11,7 +12,7 @@ import { stableUuid } from "./stable-uuid";
 // their Access Passes (ticket 05). Never add a real person's address here.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type SampleMemberKey = "tester" | "owner" | "stranger" | "lapsed";
+export type SampleMemberKey = "tester" | "owner" | "stranger" | "lapsed" | "renewing";
 
 export interface SampleMember {
   key: SampleMemberKey;
@@ -47,6 +48,12 @@ export const SAMPLE_MEMBERS: readonly SampleMember[] = [
     email: "lapsed@example.com",
     startsAs: "Beta Tester · CE All-Access ended",
   },
+  {
+    key: "renewing",
+    name: "Rae Renewing",
+    email: "renewing@example.com",
+    startsAs: "Beta Tester · CE All-Access ends in 5 days · agreed to Legal v2.0",
+  },
 ];
 
 function sampleMember(key: SampleMemberKey): SampleMember {
@@ -59,7 +66,8 @@ const DAY = 24 * 60 * 60 * 1000;
 
 /**
  * The Beta Testers the sample data starts with, added by the Owner: the
- * sample tester 3 days before boot, then the lapsed tester 2 days before.
+ * sample tester 3 days before boot, then the lapsed tester 2 days before, and
+ * the renewing tester 1 day before (Phase 4, ticket 12).
  */
 export function sampleBetaTesters(bootedAt: Date): BetaTester[] {
   const { email, name } = sampleOwner();
@@ -67,6 +75,7 @@ export function sampleBetaTesters(bootedAt: Date): BetaTester[] {
     [
       ["tester", 3],
       ["lapsed", 2],
+      ["renewing", 1],
     ] as const
   ).map(([key, daysAgo]) => ({
     email: sampleMember(key).email,
@@ -77,7 +86,9 @@ export function sampleBetaTesters(bootedAt: Date): BetaTester[] {
 
 /**
  * The sample Access Passes, timed from `bootedAt`: the tester's CE pass ends
- * 90 days after boot, and the lapsed tester's ended 3 days before. The
+ * 90 days after boot, the lapsed tester's ended 3 days before, and the
+ * renewing tester's ends 5 days after, within its renewal reminder's week
+ * (Phase 4, ticket 12). The
  * stranger has none. They're keyed by the User id "Sign in as" gives each
  * Member, so a pass is waiting before its Member's first sign-in. Granting
  * comes with ticket 17, so the grant history starts empty. A catalogue
@@ -91,6 +102,7 @@ export function sampleAccessPasses(
     [
       ["tester", 90],
       ["lapsed", -3],
+      ["renewing", 5],
     ] as const
   ).map(([key, days]) => ({
     userId: sampleUserId(sampleMember(key).email),
@@ -99,6 +111,25 @@ export function sampleAccessPasses(
   }));
   const exists = (code: string) => catalogue.exams.some((exam) => exam.code === code);
   return { accessPasses: passes.filter((pass) => exists(pass.examCode)), accessPassGrants: [] };
+}
+
+/**
+ * The sample agreements (Phase 4, ticket 13): the renewing tester joined the
+ * day before boot and agreed to Legal v2.0 then, so their next visit asks them
+ * to agree to the current versions. The dev server's data and the e2e specs'
+ * reset have them; unit tests start without, unless they ask.
+ */
+export function sampleAgreements(bootedAt: Date): {
+  members: Member[];
+  memberConsents: ConsentRecord[];
+} {
+  const { email, name } = sampleMember("renewing");
+  const userId = sampleUserId(email);
+  const dayBefore = new Date(bootedAt.getTime() - DAY).toISOString();
+  return {
+    members: [{ userId, email, name, joinedAt: dayBefore }],
+    memberConsents: [{ userId, termsVersion: "2.0", privacyVersion: "2.0", agreedAt: dayBefore }],
+  };
 }
 
 /**

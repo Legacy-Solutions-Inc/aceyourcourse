@@ -113,16 +113,11 @@ describe("Home", () => {
     expect(ticker).toHaveTextContent("CE · ME · EE · MT · CPA");
   });
 
-  it("offers every Exam in Find your exam, CE first, with its Live Products by units sold", async () => {
+  it("offers the first four Exams in Find your exam, CE first, and Other exams for the rest", async () => {
     await renderHome();
     const tabs = screen.getAllByRole("tab");
-    expect(tabs.map((tab) => tab.firstElementChild?.textContent)).toEqual([
-      "CE",
-      "ME",
-      "EE",
-      "MT",
-      "CPA",
-    ]);
+    expect(tabs.map((tab) => tab.firstElementChild?.textContent)).toEqual(["CE", "ME", "EE", "MT"]);
+    expect(screen.getByRole("link", { name: "Other exams" })).toHaveAttribute("href", "/products");
     expect(tabs[0]).toHaveAttribute("aria-selected", "true");
     const panel = within(screen.getByRole("tabpanel"));
     const rows = within(panel.getByRole("list", { name: /Choose a format/ }));

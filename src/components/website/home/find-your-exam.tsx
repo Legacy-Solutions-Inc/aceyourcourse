@@ -21,6 +21,9 @@ const badge = "font-mono text-[10px] leading-none font-bold tracking-[0.04em] up
 const panelLink =
   "flex min-h-12.5 items-center border-[1.5px] border-ayc-navy px-5 text-[15px] font-bold no-underline transition-colors motion-reduce:transition-none";
 
+/** Exams past this many are behind "+ Other exams", so the row stays one line. */
+const MAX_TABS = 4;
+
 interface FindYourExamProps {
   /** Every Exam on the Website, in order. */
   exams: Exam[];
@@ -30,19 +33,23 @@ interface FindYourExamProps {
 }
 
 /**
- * "Find your exam" (#exams): a tab per Exam with Live Products, operable with
- * the arrow keys. Each panel shows the Exam, its Subjects, a link to its Exam
- * page and its Live Products by units sold. "Review {code} in the app" shows
- * only while the Member App switch is on and one of them is in the app.
- * Renders nothing when no Exam has Live Products.
+ * "Find your exam" (#exams): a tab for each of the first four Exams with Live
+ * Products, operable with the arrow keys. Each panel shows the Exam, its
+ * Subjects, a link to its Exam page and its Live Products by units sold.
+ * "Review {code} in the app" shows only while the Member App switch is on and
+ * one of them is in the app. Any more Exams are behind "+ Other exams" (the
+ * mockup's "Other courses" tab), a link to every reviewer beside the tabs: a
+ * tab list holds tabs only. Renders nothing when no Exam has Live Products.
  */
 export function FindYourExam({ exams, products, memberAppLive }: FindYourExamProps) {
   const headingId = useId();
   const live = products.filter((product) => product.state === "live");
-  const tabs = exams.flatMap((exam) => {
+  const withProducts = exams.flatMap((exam) => {
     const examProducts = live.filter((product) => product.examCode === exam.code);
     return examProducts.length > 0 ? [{ exam, products: examProducts }] : [];
   });
+  const tabs = withProducts.slice(0, MAX_TABS);
+  const more = withProducts.length > MAX_TABS;
   const [first] = tabs;
   if (!first) return null;
 
@@ -64,23 +71,45 @@ export function FindYourExam({ exams, products, memberAppLive }: FindYourExamPro
         </h2>
       </div>
       <Tabs defaultValue={first.exam.code} className="gap-6">
-        <TabsList
-          aria-label={copy.examsLabel}
-          className="grid w-full grid-cols-[repeat(auto-fit,minmax(min(100%,150px),1fr))] gap-2.5 rounded-none bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-auto"
-        >
-          {tabs.map(({ exam }) => (
-            <TabsTrigger
-              key={exam.code}
-              value={exam.code}
-              className="h-auto flex-col items-start gap-1 rounded-none border-[1.5px] border-ayc-navy bg-ayc-paper px-4 py-3.5 text-left whitespace-normal text-ayc-navy transition-[transform,box-shadow,background-color] hover:text-ayc-navy focus-visible:border-ayc-navy focus-visible:ring-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ayc-blue data-[state=active]:-translate-x-0.5 data-[state=active]:-translate-y-0.5 data-[state=active]:bg-ayc-navy data-[state=active]:text-ayc-cream data-[state=active]:shadow-[5px_5px_0_var(--ayc-orange)] motion-reduce:transition-none"
+        {/* With "+ Other exams", five equal cards from 760 px: four tabs and the link. */}
+        <div className={cn("grid gap-2.5", more && "wide:grid-cols-5")}>
+          <TabsList
+            aria-label={copy.examsLabel}
+            className={cn(
+              "grid w-full grid-cols-[repeat(auto-fit,minmax(min(100%,150px),1fr))] gap-2.5 rounded-none bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-auto",
+              more && "wide:col-span-4 wide:grid-cols-4",
+            )}
+          >
+            {tabs.map(({ exam }) => (
+              <TabsTrigger
+                key={exam.code}
+                value={exam.code}
+                className="h-auto flex-col items-start gap-1 rounded-none border-[1.5px] border-ayc-navy bg-ayc-paper px-4 py-3.5 text-left whitespace-normal text-ayc-navy transition-[transform,box-shadow,background-color] hover:text-ayc-navy focus-visible:border-ayc-navy focus-visible:ring-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ayc-blue data-[state=active]:-translate-x-0.5 data-[state=active]:-translate-y-0.5 data-[state=active]:bg-ayc-navy data-[state=active]:text-ayc-cream data-[state=active]:shadow-[5px_5px_0_var(--ayc-orange)] motion-reduce:transition-none"
+              >
+                <span className="font-mono text-[clamp(22px,2.4vw,30px)] leading-none font-bold">
+                  {exam.code}
+                </span>
+                <span className="text-[13px] leading-tight font-semibold">{exam.name}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {more ? (
+            <Link
+              href={paths.products.list}
+              className="flex flex-col items-start gap-1 border-[1.5px] border-dashed border-ayc-navy px-4 py-3.5 text-ayc-navy no-underline transition-colors hover:bg-ayc-sand hover:text-ayc-navy focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ayc-blue motion-reduce:transition-none"
             >
-              <span className="font-mono text-[clamp(22px,2.4vw,30px)] leading-none font-bold">
-                {exam.code}
+              <span
+                aria-hidden="true"
+                className="font-mono text-[clamp(22px,2.4vw,30px)] leading-none font-bold"
+              >
+                +
               </span>
-              <span className="text-[13px] leading-tight font-semibold">{exam.name}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+              <span className="text-[13px] leading-tight font-semibold">
+                {copy.otherExams}&nbsp;<span aria-hidden="true">→</span>
+              </span>
+            </Link>
+          ) : null}
+        </div>
         {tabs.map(({ exam, products: examProducts }) => (
           <TabsContent key={exam.code} value={exam.code}>
             <ExamPanel exam={exam} products={examProducts} memberAppLive={memberAppLive} />

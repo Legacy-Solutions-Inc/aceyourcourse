@@ -276,6 +276,8 @@ Secrets are server-only, and never get a `NEXT_PUBLIC_` name.
 | `MEMBER_APP_LIVE`                      | `false`                                   | unset (off) until the Member App launches  | no      |
 | `ADMIN_PASSWORD_SIGN_IN`               | unset (`pnpm dev` has the box anyway)     | `true` only while testing; unset at launch | no      |
 | `CRON_SECRET`                          | unset (the job runs in the dev server)    | 16+ random characters (Reviewer PDF job)   | **yes** |
+| `PAYMONGO_SECRET_KEY`                  | unset, or a `sk_test_…` key               | `sk_test_…` in the beta, `sk_live_…` later | **yes** |
+| `PAYMONGO_WEBHOOK_SECRET`              | unset (webhooks can't reach localhost)    | the webhook's `whsk_…` signing secret      | **yes** |
 | `NEXT_PUBLIC_LOG_LEVEL`                | `ALL`                                     | `WARN`                                     | no      |
 | `NEXT_PUBLIC_AUTH_STRATEGY`            | `SUPABASE`, the only one                  | unset (`SUPABASE`)                         | no      |
 | `NEXT_PUBLIC_SITE_VERSION`             | empty                                     | optional, e.g. the git sha                 | no      |

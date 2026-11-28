@@ -2,6 +2,7 @@
 // through src/services/admin.ts; these are its inputs and outputs.
 
 import type {
+  BusinessDetails,
   AboutContent,
   AboutSectionKey,
   Exam,
@@ -24,6 +25,12 @@ import type { ImportCounts, ImportProblem } from "@/lib/content-import/plan";
 import type { ImportMode } from "@/lib/content-import/modes";
 import type { CardImageType } from "@/lib/cards/card-rules";
 import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
+import type { PlanDays } from "@/lib/plans/plan-rules";
+import type { InvoiceRequest } from "@/lib/payments/invoice-requests";
+import type { OrderRefund } from "@/lib/payments/refunds";
+import type { Order, OrderStatus } from "@/lib/payments/order-ledger";
+import type { SalesFigures } from "@/lib/payments/sales-figures";
+import type { PaymentMethod } from "@/lib/payments/payment-methods";
 import type { MemberDataExport } from "@/lib/member-app/data-export";
 import type { MemberProgress } from "@/lib/member-app/progress";
 import type {
@@ -144,6 +151,41 @@ export interface StaffActivity {
   after: unknown;
 }
 
+/** A Staff Activity record with its place in the log: a later record always has a higher `seq`. */
+export interface StaffActivityEntry extends StaffActivity {
+  seq: number;
+}
+
+/** Who appears in Staff Activity: each email once, with the name its latest record gives. */
+export interface StaffActivityActor {
+  email: string;
+  name: string;
+}
+
+/** The Staff Activity list's filters and cursor, as its URL holds them (ticket 15). */
+export interface StaffActivityQuery {
+  /** Only this actor's records, by the email recorded, or everyone's. */
+  actor: string | null;
+  /** Only this area's records (src/lib/admin/staff-activity-view.ts), or every area's. */
+  area: string | null;
+  /** The cursor: only records older than this `seq`, or the newest. */
+  before: number | null;
+}
+
+/**
+ * The Staff Activity list for Owners (Phase 4, ticket 15): one page of the
+ * records the filters match, newest first; the cursor of the next (older)
+ * page, or null on the last; and every actor and entity ever recorded, for
+ * the filters.
+ */
+export interface StaffActivityList {
+  query: StaffActivityQuery;
+  entries: StaffActivityEntry[];
+  next: number | null;
+  actors: StaffActivityActor[];
+  entities: string[];
+}
+
 /** Who is signing in: their verified email, and their name when the sign-in gives one. */
 export interface SignInIdentity {
   email: string;
@@ -165,6 +207,8 @@ export interface EditableWebsiteSettings {
   shopLinks: WebsiteSettings["shopLinks"];
   socialLinks: SocialLinks;
   shopStats: ShopStats;
+  /** The seller on Payment Acknowledgements (Phase 4, ticket 06). */
+  business: BusinessDetails;
 }
 
 /** Settings as the Admin reads them: the values, and when and by whom they were last saved. */
@@ -470,7 +514,7 @@ export interface AdminAnnouncement {
 /**
  * What the Overview works out what needs Staff from (src/lib/admin/needs-attention.ts):
  * every Product, hidden and Coming Soon ones included, the Exams and their
- * page records, and the settings it checks.
+ * page records, and the settings it checks; and for an Owner, the sales.
  */
 export interface AdminOverview {
   products: Product[];
@@ -478,6 +522,34 @@ export interface AdminOverview {
   /** Only the Exams that have one; the others have the defaults. */
   examPages: ExamPage[];
   settings: OverviewSettings;
+  /** Owners only (Phase 4, ticket 11): null for an Editor, whatever the page shows. */
+  sales: SalesOverview | null;
+}
+
+/**
+ * The Overview's sales for an Owner (Phase 4, ticket 11; stories 151, 151w
+ * and 151x): the money (src/lib/payments/sales-figures.ts), the Member
+ * figures, and the payment work waiting for Needs attention.
+ */
+export interface SalesOverview {
+  figures: SalesFigures;
+  /** Members with an active Access Pass, paid or granted; Staff left out. */
+  activeMembers: number;
+  /** Access Passes ending in the next 7 days; Staff's left out. */
+  passesEndingSoon: number;
+  payments: PaymentWork;
+}
+
+/** The sidebar's "PAID TODAY" card, for Owners only (ticket 11). */
+export interface PaidToday {
+  /** Today in Manila, YYYY-MM-DD. */
+  date: string;
+  /** Today's money so far, refunds made today taken off, in centavos. */
+  netCentavos: number;
+  /** The Orders paid today. */
+  orders: number;
+  /** The Pending payments not yet expired. */
+  pending: number;
 }
 
 /** The Website's settings the Overview checks: the shop pages, the trust figures and the promo banner. */
@@ -762,9 +834,24 @@ export interface AdminUserList {
   pageCount: number;
 }
 
-/** One of a Member's Access Passes, with every grant that made or extended it, oldest first. */
-export interface AdminAccessPass extends Pick<AccessPass, "examCode" | "endsAt"> {
+/** One of a Member's Access Passes as an arm reads it, with every history row that made it, oldest first. */
+export interface AccessPassRecord extends Pick<AccessPass, "examCode" | "endsAt"> {
+  /** Grants, extensions and Paid Orders' days (orderId set), in the order added. */
   grants: Omit<AccessPassGrant, "userId" | "examCode">[];
+}
+
+/**
+ * What "End access now" would do to a pass at the read (Phase 4, ticket 10;
+ * story 151t): end it now, when it holds no paid days after its granted
+ * ones ("End access now"); or end it on `endsAt`, the paid days kept ("End
+ * granted access").
+ */
+export type PassEnding = { kind: "now" } | { kind: "keeps-paid"; endsAt: string };
+
+/** One of a Member's Access Passes on their detail page. */
+export interface AdminAccessPass extends AccessPassRecord {
+  /** What ending its granted days would do now; null when there are none to end (it has ended, or only paid days are left). */
+  ending: PassEnding | null;
 }
 
 /** A Member's progress in one of their Target Exams (ticket 15's calculator). */
@@ -788,6 +875,8 @@ export interface AdminMemberDetail {
   deviceSwitches: Omit<DeviceSwitch, "userId">[];
   /** Every agreement to the Terms and Privacy Policy, newest first. */
   consents: Omit<ConsentRecord, "userId">[];
+  /** Every Order they made, newest first, each as the Orders list shows it (Phase 4, ticket 07). */
+  orders: AdminOrder[];
 }
 
 /** What a forced sign-out did: the Active Device it cleared, and why. */
@@ -820,7 +909,7 @@ export interface AdminPrivacyRequestDetail extends AdminPrivacyRequest {
   /**
    * Why "Delete this account" is refused now, or null when it isn't: the
    * Member's email is on the staff list (an active Staff User or an Invite),
-   * or they're the last Owner.
+   * or they're the last Owner, or they have a payment in progress (ticket 14).
    */
   deletionBlocked: string | null;
   /**
@@ -830,6 +919,11 @@ export interface AdminPrivacyRequestDetail extends AdminPrivacyRequest {
   deletionUnfinished: boolean;
   /** Whether the Member's email is on the Beta Tester list, where deleting the account leaves it. */
   betaTester: boolean;
+  /**
+   * The Member's Orders ever Paid (Refunded ones too), which deleting the
+   * account keeps for tax records, without it (ticket 14); 0 with no Member.
+   */
+  paidOrders: number;
 }
 
 /** "Download this Member's data" (story 133q): the JSON file, and the name it downloads as. */
@@ -858,4 +952,154 @@ export interface AccessPassChange {
    * null for an extension or an end.
    */
   targetExam: "added" | "restored" | null;
+}
+
+// ── Plans (Owners only; Phase 4, ticket 01) ─────────────────────────────────
+
+/**
+ * A Plan: what the Member App sells (CONTEXT.md, Plan): all of one Exam's
+ * content (ADR 0010) for 30, 90, 180 or 365 days, at a price in centavos
+ * (whole pesos). At most one per Exam is Best value, and at most one per Exam
+ * and duration is On sale; one that's off is hidden from Members and leaves
+ * every Access Pass as it is. A Plan never renews by itself.
+ */
+export interface Plan {
+  id: string;
+  examCode: string;
+  name: string;
+  days: PlanDays;
+  priceCentavos: number;
+  bestValue: boolean;
+  onSale: boolean;
+}
+
+/** A Plan as the Admin opens it, with its stamp for the conflict check. */
+export interface AdminPlan extends Plan {
+  stamp: RecordStamp;
+}
+
+/** The Plans & prices screen: every Plan, by Exam, duration and name, and the Exams in order. */
+export interface AdminPlans {
+  plans: AdminPlan[];
+  exams: Pick<Exam, "code" | "name">[];
+}
+
+// ── Orders & payments (Owners only; Phase 4, ticket 07) ─────────────────────
+
+/** The Orders list's status chips: any, then each state as every screen shows it. */
+export const ORDER_STATUS_FILTERS = [
+  "any",
+  "paid",
+  "pending",
+  "failed",
+  "expired",
+  "refunded",
+] as const;
+export type OrderStatusFilter = (typeof ORDER_STATUS_FILTERS)[number];
+
+/** The Orders list's Payment Method filter: every method, or one of the four. */
+export type OrderMethodFilter = "all" | PaymentMethod;
+
+/** The Orders list's date range, on Manila days: the last 7, the last 30 (the default), or all time. */
+export const ORDER_RANGES = ["7d", "30d", "all"] as const;
+export type OrderRange = (typeof ORDER_RANGES)[number];
+
+/** The Orders list's search and filters, as its URL holds them. */
+export interface OrderListQuery {
+  /** "Search by order number or email": part of a reference or of the buyer's email, or none. */
+  q: string | null;
+  status: OrderStatusFilter;
+  method: OrderMethodFilter;
+  range: OrderRange;
+  /** "Include test orders": Test Orders are left out unless it's ticked. */
+  tests: boolean;
+  /** "Invoice requested" (ticket 08): only the Orders whose invoice was requested and not yet sent. */
+  invoiceRequested: boolean;
+  /** "Paid after expiry" (ticket 11): only the Orders PayMongo confirmed after they expired. */
+  paidAfterExpiry: boolean;
+  /** "Paid, account deleted" (ticket 14): only the Orders paid after their account was deleted. */
+  paidWithoutAccount: boolean;
+}
+
+/** An Order as the Admin shows it. */
+export interface AdminOrder extends Order {
+  /** Its status as every screen shows it: a Pending Order past its 24 hours reads Expired. */
+  status: OrderStatus;
+  /** The status recorded on it, which the status check reads. */
+  recordedStatus: OrderStatus;
+  paidAfterExpiry: boolean;
+  /** Its Invoice Request (ticket 08), or null for none. */
+  invoice: InvoiceRequest | null;
+  /** Its succeeded PayMongo refunds, oldest first (ticket 09). */
+  refunds: OrderRefund[];
+  /** What PayMongo refunded of it, in centavos: less than its price on a Paid Order is a partial refund. */
+  refundedCentavos: number;
+}
+
+/** The Orders list's tiles, for the Orders the filters match. */
+export interface OrderStats {
+  /** The Paid Orders' amounts, in centavos. */
+  paidCentavos: number;
+  orders: number;
+  pending: number;
+  failed: number;
+}
+
+/** The payment work waiting for an Owner, as the Overview's Needs attention lists it (ticket 11). */
+export interface PaymentWork {
+  /** The Pending payments not yet expired, and when the oldest of them was made (null for none). */
+  pending: number;
+  oldestPendingAt: string | null;
+  /** The official invoices requested and not yet marked sent. */
+  invoicesToSend: number;
+  /** The Orders paid after expiry, made in the last 7 Manila days. */
+  paidAfterExpiry: number;
+  /** The Orders of any age paid after their account was deleted and still Paid, to refund in PayMongo (ticket 14). */
+  paidAccountDeleted: number;
+}
+
+/** The Orders list: the Orders its filters match, newest first, and their tiles. */
+export interface AdminOrderList {
+  query: OrderListQuery;
+  rows: AdminOrder[];
+  stats: OrderStats;
+}
+
+/** An Order's internal note, which only Staff see, with its stamp for the conflict check. */
+export interface AdminOrderNote {
+  reference: string;
+  /** The note's text; "" while it has none. */
+  text: string;
+  stamp: RecordStamp;
+}
+
+/** One Order's detail page. */
+export interface AdminOrderDetail {
+  order: AdminOrder;
+  /**
+   * The buyer's User id while their Member record is there, for the link to
+   * their detail page; null once their account is deleted.
+   */
+  memberUserId: string | null;
+  note: AdminOrderNote;
+}
+
+/**
+ * What "Check status with PayMongo" found: still pending, Paid or Failed now
+ * (applied through the Order ledger), PayMongo couldn't say, or the Order
+ * isn't recorded Pending, so nothing was asked.
+ */
+export type OrderCheckOutcome = "still-pending" | "paid" | "failed" | "unknown" | "not-pending";
+
+/** "Check status with PayMongo": what it found, and the Order as it is now. */
+export interface OrderStatusCheck {
+  outcome: OrderCheckOutcome;
+  order: AdminOrder;
+}
+
+/** The Orders list's CSV export: the file's name and text, and how many Orders it holds. */
+export interface OrdersCsv {
+  filename: string;
+  csv: string;
+  rows: number;
 }

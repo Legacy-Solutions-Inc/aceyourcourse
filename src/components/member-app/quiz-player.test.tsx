@@ -147,7 +147,7 @@ function renderPlayer(overrides: Partial<QuizPlayerProps> = {}) {
     quiz: quizOf(),
     watermark: "tester@example.com · 3F1A5C2E",
     examCode: "CE",
-    contactEmail: "help@example.com",
+    unlock: { kind: "plans", href: "/app/plans?exam=CE" },
     back: { href: "/app/library?subject=MSTC", label: "Back to MSTC topics" },
     actions,
     ...overrides,
@@ -436,6 +436,10 @@ describe("submitting", () => {
     await answerAllAndFinish();
 
     expect(screen.getByRole("heading", { name: "Unlock with CE All-Access" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "See plans" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
     expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
   });
 

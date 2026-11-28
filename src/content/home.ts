@@ -70,9 +70,10 @@ export interface HomeStep {
 }
 
 // The first step never mentions the Member App, so both variants share it.
+// The client's wording for its title; like the other steps', it has no full stop.
 const pickYourExam: HomeStep = {
-  title: "Pick your board exam",
-  description: "Select the licensure exam you want to review.",
+  title: "Select the licensure exam you want to review",
+  description: "Each board exam has its own reviewers. Pick yours to see them all.",
   cta: "Find your exam",
   target: { section: "exams" },
 };
@@ -245,6 +246,8 @@ export const homeCopy = {
     eyebrow: "Step 1 · Pick your board",
     heading: "Find your exam",
     examsLabel: "Board exams",
+    /** The card after the first four Exams' tabs, a link to every reviewer. */
+    otherExams: "Other exams",
     subjects: "Subjects covered",
     allReviewers: (examCode: string) => `All ${examCode} reviewers`,
     /** Shown only while the Member App switch is on. */

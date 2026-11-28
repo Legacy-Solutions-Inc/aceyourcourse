@@ -1,0 +1,1 @@
+CREATE INDEX "staff_activity_seq_idx" ON "staff_activity" USING btree ("seq");

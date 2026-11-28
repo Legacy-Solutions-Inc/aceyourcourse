@@ -23,8 +23,9 @@ import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import { sampleActor } from "../../../test/admin-inputs";
 import { uploadSampleCardImage } from "../../../test/card-images";
 import { imageBytes } from "../../../test/image-bytes";
-import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 import { markStudyCard, saveStudyPosition } from "./(shell)/library/actions";
+import { redirectsTo } from "../../../test/redirects";
 
 // Studying a deck in the Member App (Phase 3, ticket 08; stories 95–97, 104
 // and 106), on sample data: the deck page as a browser loads it, and the
@@ -66,14 +67,11 @@ const PASS_DECK = sampleContentId(topic("Spiral Curves"), "deck");
 const HIDDEN_DECK = sampleContentId(topic("Algebra"), "deck");
 const deckPage = (id: string) => `/app/library/deck/${id}`;
 
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
-
 /** Signed in as this sample User, a Member who has agreed, with CE selected, on this browser. */
 async function memberOnDevice(email: string, name: string) {
   const userId = sampleUserId(email);
   await getOrCreateMember({ userId, email, name });
-  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(userId, AGREED_TO_CURRENT);
   await addTargetExam(userId, { examCode: "CE", examDate: "2027-01-10" });
   await onThisDevice(userId);
   jar.set("ayc_admin_sample", email);
@@ -177,7 +175,10 @@ describe("the deck page", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "Unlock with CE All-Access" }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/During the beta, access comes from AYC/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "See plans" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
     expect(document.body.innerHTML).not.toContain("A secret formula");
     // Nor in what the server would send for the page's client parts.
     expect(JSON.stringify(page)).not.toContain("A secret formula");

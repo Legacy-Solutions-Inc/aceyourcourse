@@ -19,10 +19,17 @@ import {
 import { getDb } from "@/lib/db/client";
 import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
+import { refundsOfOrder } from "@/lib/payments/refunds";
 import { staffActivityToRow } from "@/services/admin.rows";
 import type { AdminUserRow, UserFilter, UserRole } from "@/services/admin.types";
 import { accessPassGrantFromRow } from "@/services/content.rows";
-import { consentFromRow, databaseArm as memberArm, memberFromRow } from "@/services/member.db";
+import {
+  consentFromRow,
+  databaseArm as memberArm,
+  memberFromRow,
+  readOrderRefunds,
+} from "@/services/member.db";
+import { invoiceRequestFromRow, orderFromRow } from "@/services/orders.rows";
 import { type UsersStore, usersCalls } from "@/services/users.core";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -187,7 +194,7 @@ const databaseUsersStore: UsersStore = {
       const db = getDb();
       const [row] = await db.select().from(members).where(eq(members.userId, userId));
       if (!row) return null;
-      const [roles, testers, passes, grants, consents] = await Promise.all([
+      const [roles, testers, passes, grants, consents, orders] = await Promise.all([
         rolesOf([row.email]),
         betaTestersOf([row.email]),
         db
@@ -205,7 +212,18 @@ const databaseUsersStore: UsersStore = {
           .from(memberConsents)
           .where(eq(memberConsents.userId, userId))
           .orderBy(asc(memberConsents.seq)),
+        db
+          .select({ order: schema.orders, invoice: schema.invoiceRequests })
+          .from(schema.orders)
+          .leftJoin(schema.invoiceRequests, eq(schema.invoiceRequests.orderId, schema.orders.id))
+          .where(eq(schema.orders.userId, userId)),
       ]);
+      const refundsOf = refundsOfOrder(
+        await readOrderRefunds(
+          db,
+          orders.map(({ order }) => order.id),
+        ),
+      );
       return {
         member: memberFromRow(row),
         role: roles.get(row.email) ?? "member",
@@ -221,6 +239,11 @@ const databaseUsersStore: UsersStore = {
             }),
         })),
         consents: consents.map(consentFromRow),
+        orders: orders.map(({ order, invoice }) => ({
+          order: orderFromRow(order),
+          invoice: invoice && invoiceRequestFromRow(invoice),
+          refunds: refundsOf(order.id),
+        })),
       };
     }),
 

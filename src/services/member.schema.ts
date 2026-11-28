@@ -6,11 +6,18 @@ import {
   isDeletionConfirmed,
   PRIVACY_REQUEST_TYPES,
 } from "@/lib/member-app/privacy-requests";
+import { ORDER_REFERENCE_PATTERN } from "@/lib/payments/order-ledger";
+import { normaliseTin } from "@/lib/payments/tin";
 import { QUIZ_CHOICES } from "@/lib/quizzes/quiz-rules";
 import { isReaderZoom } from "@/lib/reviewer-pdfs/reader";
 import { staffEmailSchema } from "@/services/admin.schema";
 import { CARD_MARK_VERDICTS, CONTENT_KINDS } from "@/services/content.types";
-import type { TargetExamRefusal } from "@/services/member.types";
+import type {
+  InvoiceFieldErrors,
+  InvoiceRefusal,
+  PayRefusal,
+  TargetExamRefusal,
+} from "@/services/member.types";
 
 // The Member seam's zod schemas, shared by its arms.
 
@@ -86,6 +93,27 @@ const formText = z.string().trim().max(40).catch("");
 
 /** What the Target Exam forms send: the Exam picked and, where there is one, the date typed. */
 export const targetExamFormSchema = z.object({ examCode: formText, examDate: formText });
+
+/** What the Plans page says when Pay is refused (Phase 4, ticket 03). Nothing is charged. */
+export const PAY_REFUSALS: Record<PayRefusal, string> = {
+  unavailable: "Buying isn’t open yet. You weren’t charged.",
+  "bad-method": "Pick QR Ph, GCash, Maya or Card to pay with.",
+  "not-on-sale": "That plan isn’t on sale any more. Pick another one.",
+  "wrong-exam": "That plan isn’t for this exam. Pick one of the plans shown.",
+  "checkout-failed": "Couldn’t start the payment. Try again.",
+};
+
+/** What the Plans page's Pay sends: the Exam open on the page, the Plan picked and the method. */
+export const payFormSchema = z.object({ examCode: formText, plan: formText, method: formText });
+
+/** An Order's reference, as the Order's address and its screens send it: "AYC-10001". */
+export const orderReferenceSchema = z.string().regex(ORDER_REFERENCE_PATTERN);
+
+/** What sample mode's "Simulate paid" / "Simulate failed" sends: the Order and the outcome. */
+export const simulateFormSchema = z.object({
+  reference: orderReferenceSchema,
+  outcome: z.enum(["paid", "failed"]),
+});
 
 /**
  * A deck, quiz or Reviewer PDF, as the address names it when a Member opens
@@ -178,6 +206,9 @@ export const readerPositionInputSchema = z.object({
 /** A notice's id, as the Member App's "Dismiss" sends it. Anything else is no notice. */
 export const noticeIdSchema = z.string().uuid();
 
+/** The Exam a renewal banner's Dismiss sends (Phase 4, ticket 12): a code, trimmed; the seam decides whether it's one of theirs. */
+export const renewalExamCodeSchema = z.string().trim().min(1).max(20);
+
 /** A Privacy Request's type, as Account's buttons ask for it. */
 export const privacyRequestTypeSchema = z.enum(PRIVACY_REQUEST_TYPES);
 
@@ -191,3 +222,63 @@ export const deletionRequestFormSchema = z.object({
     .catch("")
     .refine(isDeletionConfirmed, { message: DELETION_NOT_CONFIRMED }),
 });
+
+// ── Invoice Requests (Phase 4, ticket 08) ───────────────────────────────────
+
+/** The longest name and address an Invoice Request keeps. */
+export const INVOICE_NAME_MAX = 120;
+export const INVOICE_ADDRESS_MAX = 300;
+
+export const INVOICE_NAME_REQUIRED = "Enter the name to put on the invoice.";
+export const INVOICE_ADDRESS_REQUIRED = "Enter the address to put on the invoice.";
+export const INVOICE_TIN_SHAPE =
+  "Enter 9 digits, like 123-456-789, with a 3- or 5-digit branch code if any.";
+
+const requiredText = (message: string, max: number, what: string) =>
+  z
+    .string({ invalid_type_error: message, required_error: message })
+    .trim()
+    .min(1, message)
+    .max(max, `Keep the ${what} to ${max} characters.`);
+
+/**
+ * "Request official invoice": the name and address to put on the invoice,
+ * required and trimmed, and a TIN for businesses, optional (blank is none),
+ * checked with the shared TIN validator and kept with dashes.
+ */
+export const invoiceRequestInputSchema = z.object({
+  name: requiredText(INVOICE_NAME_REQUIRED, INVOICE_NAME_MAX, "name"),
+  address: requiredText(INVOICE_ADDRESS_REQUIRED, INVOICE_ADDRESS_MAX, "address"),
+  tin: z
+    .string({ invalid_type_error: INVOICE_TIN_SHAPE })
+    .optional()
+    .transform((typed, context) => {
+      if (typed === undefined || typed.trim() === "") return null;
+      const tin = normaliseTin(typed);
+      if (tin === null)
+        context.addIssue({ code: z.ZodIssueCode.custom, message: INVOICE_TIN_SHAPE });
+      return tin;
+    }),
+});
+
+/** "Request official invoice"'s values, as the form sends them. */
+export type InvoiceRequestInput = z.input<typeof invoiceRequestInputSchema>;
+
+/** One message per field the form refused: the first one each field has. */
+export function invoiceFieldErrors(error: z.ZodError): InvoiceFieldErrors {
+  const fields: InvoiceFieldErrors = {};
+  for (const issue of error.issues) {
+    const field = issue.path[0];
+    if ((field === "name" || field === "address" || field === "tin") && !fields[field]) {
+      fields[field] = issue.message;
+    }
+  }
+  return fields;
+}
+
+/** What "Request official invoice" says when it's refused for the Order, not a field. */
+export const INVOICE_REFUSALS: Record<InvoiceRefusal, string> = {
+  "not-found": "We couldn't find that Order.",
+  "not-paid": "Only a Paid Order has an official invoice.",
+  "already-requested": "You've already requested this Order's invoice.",
+};

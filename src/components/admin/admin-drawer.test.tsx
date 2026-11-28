@@ -7,8 +7,8 @@ import { AdminDrawer } from "./admin-drawer";
 import { AdminSidebar } from "./admin-sidebar";
 
 // The sidebar's menu and user block, and the mobile drawer around it: the
-// "Menu" button opens it, and Escape, the close button or a link close it,
-// with focus back on the button.
+// "Menu" button, in a bar across the top, opens it, and Escape, the close
+// button or a link close it, with focus back on the button.
 vi.mock("next/navigation", () => ({ usePathname: () => "/admin/reviews" }));
 
 const OWNER = {
@@ -38,7 +38,10 @@ describe("AdminSidebar", () => {
     expect(screen.getByRole("list", { name: "WEBSITE" })).toHaveTextContent(
       "02Pages & promo03Products & store links04Reviews & FAQs",
     );
-    expect(screen.getByRole("list", { name: "SETTINGS" })).toHaveTextContent("07Settings");
+    expect(screen.getByRole("list", { name: "SALES" })).toHaveTextContent(
+      "07Plans & prices08Orders & payments",
+    );
+    expect(screen.getByRole("list", { name: "SETTINGS" })).toHaveTextContent("09Settings");
   });
 
   it("shows the signed-in Staff User with their Staff Role and Sign out", () => {
@@ -48,6 +51,33 @@ describe("AdminSidebar", () => {
     expect(screen.getByText("EDITOR")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign out" })).toHaveAttribute("type", "submit");
     expect(screen.queryByRole("link", { name: "Settings" })).not.toBeInTheDocument();
+  });
+
+  // Phase 4, ticket 11: the layout reads the card for Owners only; an Editor's is null.
+  it("shows an Owner's PAID TODAY card, opening Orders", () => {
+    render(
+      <AdminSidebar
+        menu={adminMenu("owner")}
+        actor={OWNER}
+        signOutAction={signOut}
+        paidToday={{ date: "2026-10-22", netCentavos: 624_000, orders: 9, pending: 4 }}
+      />,
+    );
+    const card = screen.getByRole("link", { name: /^PAID TODAY/ });
+    expect(card).toHaveTextContent(/^PAID TODAY22 OCT₱6,2409 orders · 4 pending$/);
+    expect(card).toHaveAttribute("href", "/admin/orders");
+  });
+
+  it("shows no PAID TODAY card without one, as for an Editor", () => {
+    render(
+      <AdminSidebar
+        menu={adminMenu("editor")}
+        actor={EDITOR}
+        signOutAction={signOut}
+        paidToday={null}
+      />,
+    );
+    expect(screen.queryByText("PAID TODAY")).not.toBeInTheDocument();
   });
 
   it("has no close button outside the drawer", () => {
@@ -67,6 +97,14 @@ describe("AdminDrawer", () => {
     const { menu } = renderDrawer();
     expect(menu).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("puts the Menu button in a bar across the top, with the logo and the ADMIN tag", () => {
+    const { menu } = renderDrawer();
+    const bar = screen.getByRole("navigation", { name: "Admin menu" });
+    expect(bar).toContainElement(menu);
+    expect(within(bar).getByRole("img", { name: "Ace Your Course" })).toBeInTheDocument();
+    expect(within(bar).getByText("ADMIN")).toBeInTheDocument();
   });
 
   it("opens the menu, and Escape closes it with focus back on the Menu button", async () => {

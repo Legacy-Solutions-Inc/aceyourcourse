@@ -51,6 +51,12 @@ function validSeed(): CatalogueSeed {
         instagram: "https://www.instagram.com/aceyourcourseph",
       },
       contactEmail: "aceyourcourseinc@gmail.com",
+      business: {
+        name: "Ace Your Course",
+        address: "Iloilo City, Iloilo",
+        tin: "123-456-789-000",
+        vatRegistered: true,
+      },
       shopStats: { rating: 4.8, ratingCount: 874, followers: "3.7K", asOf: "2026-10-29" },
       announcement: {
         id: "test-1",
@@ -308,6 +314,18 @@ describe("validateCatalogueSeed", () => {
     const seed = validSeed();
     seed.settings.contactEmail = "aceyourcourse-at-gmail";
     expect(errorsFor(seed)).toEqual([expect.stringMatching(/^settings\.contactEmail: /)]);
+  });
+
+  it("rejects business details with a TIN not kept with dashes (Phase 4, ticket 06)", () => {
+    const seed = validSeed();
+    seed.settings.business.tin = "123456789";
+    expect(errorsFor(seed)).toEqual([expect.stringMatching(/^settings\.business\.tin: /)]);
+  });
+
+  it("rejects business details with no name", () => {
+    const seed = validSeed();
+    seed.settings.business.name = " ";
+    expect(errorsFor(seed)).toEqual([expect.stringMatching(/^settings\.business\.name: /)]);
   });
 
   it("rejects a non-https shop link, naming the field", () => {

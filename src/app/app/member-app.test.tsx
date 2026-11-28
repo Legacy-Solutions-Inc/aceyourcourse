@@ -15,6 +15,7 @@ import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
 import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { redirectsTo } from "../../../test/redirects";
 
 // The Member App's pages and Server Actions on sample data (Phase 3, tickets
 // 01 and 02), each called as a browser would reach it, by everyone the gate
@@ -78,8 +79,6 @@ const signedInAs = (email: string) => {
   jar.set(DEVICE_COOKIE, TEST_DEVICE_TOKEN);
 };
 /** Matches the error redirect() throws for exactly this URL. */
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 const NOT_OPEN_YET = redirectsTo("/app/not-open-yet");
 const members = () => getSampleStore().members;
 const consents = () => getSampleStore().memberConsents;
@@ -119,6 +118,9 @@ const signInPage = async (query: { next?: string; error?: string } = {}) =>
 const notOpenYetPage = async () => (await import("./not-open-yet/page")).default();
 const library = async () =>
   (await import("./(shell)/library/page")).default({ searchParams: Promise.resolve({}) });
+const plans = async () =>
+  (await import("./(shell)/plans/page")).default({ searchParams: Promise.resolve({}) });
+const billing = async () => (await import("./(shell)/billing/page")).default();
 const signInAs = async (fields: Record<string, string>) =>
   (await import("./sign-in/actions")).signInAs({ error: null, email: "" }, form(fields));
 
@@ -127,8 +129,8 @@ const GATED_PAGES: [string, () => Promise<unknown>][] = [
   ["/app", home],
   ["/app/library", library],
   ["/app/courses", () => comingSoon("courses")],
-  ["/app/plans", () => comingSoon("plans")],
-  ["/app/billing", () => comingSoon("billing")],
+  ["/app/plans", plans],
+  ["/app/billing", billing],
   ["/app/account", account],
   ["/app/add-exam", addExamPage],
   ["/app/support", support],
@@ -262,21 +264,21 @@ describe("Home", () => {
 });
 
 describe("the screens that aren't built yet", () => {
-  it.each([
-    ["courses", "03 · COURSES"],
-    ["plans", "04 · PLANS"],
-    ["billing", "05 · BILLING"],
-  ])("/app/%s says it's coming in the beta", async (segment, eyebrow) => {
-    await agreedAs(TESTER, "Bea Tester");
-    signedInAs(TESTER);
-    render(await comingSoon(segment));
+  // Billing has its own screen since Phase 4, ticket 06 (billing.test.tsx).
+  it.each([["courses", "03 · COURSES"]])(
+    "/app/%s says it's coming in the beta",
+    async (segment, eyebrow) => {
+      await agreedAs(TESTER, "Bea Tester");
+      signedInAs(TESTER);
+      render(await comingSoon(segment));
 
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Coming in the beta" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(eyebrow)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Back to Home" })).toHaveAttribute("href", "/app");
-  });
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Coming in the beta" }),
+      ).toBeInTheDocument();
+      expect(screen.getByText(eyebrow)).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Back to Home" })).toHaveAttribute("href", "/app");
+    },
+  );
 
   it("answers 404 for an address that is no screen, once the gate and consent let the Member in", async () => {
     await agreedAs(TESTER, "Bea Tester");
@@ -347,7 +349,7 @@ describe("the shell", () => {
 });
 
 describe("the sign-in screen", () => {
-  it("shows the mockup's copy, with the three sample Members behind Continue with Google", async () => {
+  it("shows the mockup's copy, with the sample Members behind Continue with Google", async () => {
     const user = userEvent.setup();
     render(await signInPage({ next: "/app/library" }));
 
@@ -377,6 +379,7 @@ describe("the sign-in screen", () => {
       "Angel Rose L. Lepañaangel@aceyourcourse.ph · Owner",
       "Sam Strangerstranger@example.com · Not a Beta Tester · sees “Not open yet”",
       "Lou Lapsedlapsed@example.com · Beta Tester · CE All-Access ended",
+      "Rae Renewingrenewing@example.com · Beta Tester · CE All-Access ends in 5 days · agreed to Legal v2.0",
     ]);
     for (const input of region.querySelectorAll<HTMLInputElement>('input[name="next"]')) {
       expect(input.value).toBe("/app/library");

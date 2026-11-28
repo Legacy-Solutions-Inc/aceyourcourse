@@ -69,10 +69,12 @@ const DETAIL: AdminMemberDetail = {
           reason: "Beta tester",
           grantedBy: OWNER,
           grantedAt: "2026-11-17T03:42:00.000Z",
+          orderId: null,
         },
       ],
+      ending: { kind: "now" },
     },
-    { examCode: "ME", endsAt: "2026-11-14T03:42:00.000Z", grants: [] },
+    { examCode: "ME", endsAt: "2026-11-14T03:42:00.000Z", grants: [], ending: null },
   ],
   progress: [{ examCode: "CE", progress: PROGRESS }],
   activeDevice: { deviceLabel: "Safari on macOS", claimedAt: "2026-11-19T03:00:00.000Z" },
@@ -81,6 +83,60 @@ const DETAIL: AdminMemberDetail = {
     { deviceLabel: "Chrome on Android", switchedAt: "2026-11-17T03:45:00.000Z" },
   ],
   consents: [{ termsVersion: "2.0", privacyVersion: "2.0", agreedAt: "2026-11-17T03:44:00.000Z" }],
+  orders: [
+    {
+      id: "00000000-0000-4000-8000-000000010002",
+      reference: "AYC-10002",
+      userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
+      examCode: "CE",
+      planId: "plan-ce-30",
+      planName: "CE All-Access",
+      days: 30,
+      priceCentavos: 49_900,
+      method: "maya",
+      status: "paid",
+      recordedStatus: "paid",
+      paidAfterExpiry: false,
+      invoice: null,
+      refunds: [],
+      refundedCentavos: 0,
+      livemode: false,
+      checkoutId: null,
+      paymentId: null,
+      buyerName: "Bea Tester",
+      buyerEmail: "tester@example.com",
+      createdAt: "2026-11-18T03:42:00.000Z",
+      paidAt: "2026-11-18T03:44:00.000Z",
+      statusChangedAt: "2026-11-18T03:44:00.000Z",
+      paidWithoutAccount: false,
+    },
+    {
+      id: "00000000-0000-4000-8000-000000010001",
+      reference: "AYC-10001",
+      userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
+      examCode: "CE",
+      planId: "plan-ce-90",
+      planName: "CE All-Access",
+      days: 90,
+      priceCentavos: 129_900,
+      method: "gcash",
+      status: "expired",
+      recordedStatus: "pending",
+      paidAfterExpiry: false,
+      invoice: null,
+      refunds: [],
+      refundedCentavos: 0,
+      livemode: true,
+      checkoutId: "cs_Checkout0001",
+      paymentId: null,
+      buyerName: "Bea Tester",
+      buyerEmail: "tester@example.com",
+      createdAt: "2026-11-17T03:50:00.000Z",
+      paidAt: null,
+      statusChangedAt: "2026-11-17T03:50:00.000Z",
+      paidWithoutAccount: false,
+    },
+  ],
 };
 
 const EMPTY: AdminMemberDetail = {
@@ -93,6 +149,7 @@ const EMPTY: AdminMemberDetail = {
   activeDevice: null,
   deviceSwitches: [],
   consents: [],
+  orders: [],
 };
 
 const section = (name: string) => screen.getByRole("region", { name });
@@ -180,11 +237,31 @@ describe("MemberDetail", () => {
     );
   });
 
-  it("labels the purchase history as arriving with Payments", () => {
+  it("lists the Member's Orders, newest first, each linking to its detail page", () => {
     renderDetail();
-    expect(section("PURCHASE HISTORY")).toHaveTextContent(
-      "Purchases arrive with Payments (Phase 4).",
-    );
+    const orders = within(section("ORDERS · 2")).getAllByRole("listitem");
+    expect(orders).toHaveLength(2);
+    expect(
+      within(orders[0] ?? document.body).getByRole("link", { name: "AYC-10002" }),
+    ).toHaveAttribute("href", "/admin/orders/AYC-10002");
+    expect(orders[0]).toHaveTextContent("CE All-Access · 1 month");
+    expect(orders[0]).toHaveTextContent("₱499");
+    expect(orders[0]).toHaveTextContent("PAID");
+    expect(orders[0]).toHaveTextContent("TEST");
+    expect(orders[0]).toHaveTextContent("18 Nov 2026");
+    // A Pending Order past its 24 hours shows Expired, as everywhere.
+    expect(orders[1]).toHaveTextContent("AYC-10001");
+    expect(orders[1]).toHaveTextContent("EXPIRED");
+    expect(orders[1]).not.toHaveTextContent("TEST");
+  });
+
+  it("shows a partial refund under an Order's status (ticket 09)", () => {
+    const [paid, expired] = DETAIL.orders;
+    if (!paid || !expired) throw new Error("The detail has two Orders.");
+    renderDetail({ ...DETAIL, orders: [{ ...paid, refundedCentavos: 20_000 }, expired] });
+    const [first] = within(section("ORDERS · 2")).getAllByRole("listitem");
+    expect(first).toHaveTextContent("PAID");
+    expect(first).toHaveTextContent("PARTIALLY REFUNDED · ₱200");
   });
 
   it("says what a Member who just signed in doesn't have yet", () => {
@@ -204,6 +281,7 @@ describe("MemberDetail", () => {
     expect(section("CONSENT")).toHaveTextContent(
       "Hasn’t agreed to the Terms and Privacy Policy yet.",
     );
+    expect(section("ORDERS · 0")).toHaveTextContent("No Orders yet.");
   });
 
   it("names Staff by their Staff Role", () => {

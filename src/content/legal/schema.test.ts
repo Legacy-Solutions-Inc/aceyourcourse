@@ -128,6 +128,46 @@ describe("legalDocumentSchema", () => {
     ).toEqual(["sections.0.title: must not be blank"]);
   });
 
+  // A stable anchor, for a section linked from elsewhere (the Plans page links
+  // the Terms' "Payments and refunds"): its number can change, its anchor can't.
+  describe("a section's anchor", () => {
+    const anchored = (...anchors: (string | undefined)[]) =>
+      testDocument({
+        sections: anchors.map((anchor, index) => ({
+          id: `s${index + 1}`,
+          title: `Section ${index + 1}`,
+          paragraphs: ["Text."],
+          ...(anchor === undefined ? {} : { anchor }),
+        })),
+      });
+
+    it("is optional, and a lower-case slug", () => {
+      expect(issuesOf(anchored(undefined, "payments-and-refunds"))).toEqual([]);
+      expect(issuesOf(anchored("refunds2"))).toEqual([]);
+    });
+
+    it.each(["Payments", "payments and refunds", "-payments", "payments-", "", "2-refunds"])(
+      "rejects the anchor %j",
+      (anchor) => {
+        expect(issuesOf(anchored(anchor))).toEqual([
+          "sections.0.anchor: must be a lower-case slug like payments-and-refunds",
+        ]);
+      },
+    );
+
+    it("can't look like a section number, which another section's id would take", () => {
+      expect(issuesOf(anchored("s2", undefined))).toEqual([
+        "sections.0.anchor: must not look like a section number",
+      ]);
+    });
+
+    it("is unique", () => {
+      expect(issuesOf(anchored("refunds", "refunds"))).toEqual([
+        'sections.1.anchor: section 1 already has the anchor "refunds"',
+      ]);
+    });
+  });
+
   it("keeps the meta description within 160 characters", () => {
     expect(issuesOf(testDocument({ description: "x".repeat(160) }))).toEqual([]);
     expect(issuesOf(testDocument({ description: "x".repeat(161) }))).toEqual([

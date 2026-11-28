@@ -205,4 +205,11 @@ describe("passChangeText", () => {
       "✓ ENDED CE ACCESS · THEY SEE THE EXPIRED STATE",
     );
   });
+
+  it("says an end that kept paid days ended the granted ones, with the end in Manila (ticket 10)", () => {
+    // 00:30 on 15 Apr 2027 in Manila is still 14 Apr in UTC.
+    expect(
+      passChangeText("end-granted", { ...change, days: null, endsAt: "2027-04-14T16:30:00.000Z" }),
+    ).toBe("✓ ENDED CE GRANTED DAYS · ACCESS UNTIL 15 APR 2027");
+  });
 });

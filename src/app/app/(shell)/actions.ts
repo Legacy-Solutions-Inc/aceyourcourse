@@ -8,12 +8,14 @@ import { paths } from "@/paths";
 import {
   addTargetExam,
   dismissNotice,
+  dismissRenewalReminder,
   removeTargetExam,
   selectTargetExam,
   setExamDate,
 } from "@/services/member";
 import {
   noticeIdSchema,
+  renewalExamCodeSchema,
   TARGET_EXAM_REFUSALS,
   targetExamFormSchema,
 } from "@/services/member.schema";
@@ -114,6 +116,21 @@ export async function dismissMemberNotice(noticeId: unknown): Promise<{ ok: bool
   const sent = noticeIdSchema.safeParse(noticeId);
   if (!sent.success) return { ok: false };
   const ok = await dismissNotice(member.userId, sent.data);
+  if (ok) redrawShell();
+  return { ok };
+}
+
+/**
+ * "Dismiss" on a renewal banner (Phase 4, ticket 12): hides that Exam's
+ * banner for the signed-in Member until the next Manila day, on every
+ * device. Who they are comes from the session alone; the Exam is the
+ * browser's, and the seam keeps nothing for one they hold no pass for.
+ */
+export async function dismissRenewalBanner(examCode: unknown): Promise<{ ok: boolean }> {
+  const member = await requireMember(paths.memberApp.home);
+  const sent = renewalExamCodeSchema.safeParse(examCode);
+  if (!sent.success) return { ok: false };
+  const ok = await dismissRenewalReminder(member.userId, sent.data);
   if (ok) redrawShell();
   return { ok };
 }

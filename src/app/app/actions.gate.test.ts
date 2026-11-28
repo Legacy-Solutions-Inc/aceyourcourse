@@ -13,13 +13,18 @@ import {
   recordConsent,
 } from "@/services/member.mock";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
+import { samplePlanId } from "@/services/mock/plans";
 import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
+import { AGREED_TO_CURRENT } from "../../../test/member-inputs";
 import * as account from "./(shell)/account/actions";
+import * as billing from "./(shell)/billing/actions";
 import * as targetExams from "./(shell)/actions";
 import * as study from "./(shell)/library/actions";
+import * as orders from "./(shell)/plans/orders/[reference]/actions";
+import * as plans from "./(shell)/plans/actions";
 import * as root from "./actions";
 import * as consent from "./consent/actions";
 import * as device from "./device/actions";
@@ -31,8 +36,9 @@ import * as signIn from "./sign-in/actions";
 // each one is listed here with who may call it, and called as a browser would
 // by everyone it must refuse:
 //   - "member": behind the gate, then consent, then the Active Device (the
-//     Target Exam actions, the flashcard player's and the quiz screen's, and
-//     Account's Privacy Requests). Signed out goes to the sign-in screen, someone the
+//     Target Exam actions, the flashcard player's and the quiz screen's,
+//     Account's Privacy Requests, and Pay with sample mode's "Simulate paid"
+//     and "Simulate failed"). Signed out goes to the sign-in screen, someone the
 //     gate doesn't let in goes to "Not open yet", with no Member record made,
 //     a Member who hasn't agreed to the current Terms and Privacy Policy goes
 //     to the consent screen, and a request that isn't from the Member's Active
@@ -109,6 +115,23 @@ function examForm(examDate?: string) {
   return data;
 }
 
+/** The Plans page's Pay (Phase 4, ticket 03): CE 3 months with GCash. */
+function payForm() {
+  const data = new FormData();
+  data.set("examCode", "CE");
+  data.set("plan", samplePlanId("CE", 90));
+  data.set("method", "gcash");
+  return data;
+}
+
+/** Confirming payment's "Simulate paid" (sample mode only), for an Order nobody has yet. */
+function simulateForm() {
+  const data = new FormData();
+  data.set("reference", "AYC-10001");
+  data.set("outcome", "paid");
+  return data;
+}
+
 /** "Delete my account", confirmed as Account asks. */
 function deletionForm() {
   const data = new FormData();
@@ -120,9 +143,17 @@ function deletionForm() {
 function consentForm() {
   const data = new FormData();
   for (const name of ["terms", "privacy"]) data.set(name, "agreed");
-  data.set("termsVersion", "2.0");
-  data.set("privacyVersion", "2.0");
+  data.set("termsVersion", AGREED_TO_CURRENT.termsVersion);
+  data.set("privacyVersion", AGREED_TO_CURRENT.privacyVersion);
   data.set("next", "/app");
+  return data;
+}
+
+/** "Request official invoice"'s form, filled in. */
+function invoiceForm() {
+  const data = new FormData();
+  data.set("name", "Bea Tester");
+  data.set("address", "Jaro, Iloilo City");
   return data;
 }
 
@@ -167,6 +198,19 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
       }),
     ),
   },
+  "./(shell)/plans/actions.ts": {
+    pay: member(() => plans.pay({ error: null }, payForm())),
+  },
+  "./(shell)/plans/orders/[reference]/actions.ts": {
+    simulatePayment: member(() => orders.simulatePayment(simulateForm())),
+    checkPayment: member(() => orders.checkPayment("AYC-10001")),
+  },
+  "./(shell)/billing/actions.ts": {
+    // No Order of theirs has this reference, so nothing is recorded.
+    requestOfficialInvoice: member(() =>
+      billing.requestOfficialInvoice("AYC-10001", { error: null, fields: {} }, invoiceForm()),
+    ),
+  },
   "./(shell)/account/actions.ts": {
     requestDataCopy: member(() => account.requestDataCopy()),
     requestDeletion: member(() => account.requestDeletion({ error: null }, deletionForm())),
@@ -182,6 +226,8 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     dismissMemberNotice: member(() =>
       targetExams.dismissMemberNotice("6a0c8f8e-3f43-4c4a-9d5e-0b2f6c1d7e01"),
     ),
+    // A renewal banner (Phase 4, ticket 12): the sample Member holds no ME pass, so nothing is kept.
+    dismissRenewalBanner: member(() => targetExams.dismissRenewalBanner("ME")),
   },
   "./actions.ts": {
     signOut: anyone(() => root.signOut()),
@@ -217,7 +263,7 @@ const MEMBER_ONLY = ENTRIES.filter((entry) => entry.who === "member");
 async function agreedTester() {
   const userId = sampleUserId(TESTER);
   await getOrCreateMember({ userId, email: TESTER, name: "Bea Tester" });
-  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(userId, AGREED_TO_CURRENT);
   await addTargetExam(userId, { examCode: "ME", examDate: "2099-02-08" });
   jar.set("ayc_admin_sample", TESTER);
   return userId;
@@ -229,7 +275,14 @@ const memberData = () => {
   const { memberActiveDevices, memberDeviceSwitches } = getSampleStore();
   const { cardMarks, studyDays, deckPositions, quizAttempts } = getSampleStore();
   const { reviewerPageViews, readerPositions, privacyRequests } = getSampleStore();
+  const { orders, accessPasses, accessPassGrants, memberNotices } = getSampleStore();
+  const { invoiceRequests } = getSampleStore();
   return structuredClone({
+    orders,
+    invoiceRequests,
+    accessPasses,
+    accessPassGrants,
+    memberNotices,
     members,
     memberConsents,
     memberTargetExams,
@@ -358,6 +411,12 @@ describe("the Member App's Server Actions and the gate", () => {
       expect(memberData()).toEqual(before);
     },
   );
+
+  it.each(GATED)("$name makes nobody the gate refuses an Order", async ({ call }) => {
+    jar.set("ayc_admin_sample", STRANGER);
+    await call().catch(() => {});
+    expect(getSampleStore().orders).toEqual([]);
+  });
 
   it.each(GATED)("$name gives nobody the gate refuses a Privacy Request", async ({ call }) => {
     jar.set("ayc_admin_sample", STRANGER);

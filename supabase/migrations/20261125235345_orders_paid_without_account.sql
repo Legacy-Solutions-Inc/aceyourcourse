@@ -1,0 +1,2 @@
+ALTER TABLE "orders" ADD COLUMN "paid_without_account" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "orders" ADD CONSTRAINT "orders_paid_without_account_detached" CHECK (not "orders"."paid_without_account" or ("orders"."user_id" is null and "orders"."paid_at" is not null));

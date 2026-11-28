@@ -28,6 +28,7 @@ import {
   listProducts,
   listReviews,
 } from "@/services/catalogue";
+import { listExamsOnSale } from "@/services/member";
 
 interface ExamPageProps {
   params: Promise<{ code: string }>;
@@ -109,6 +110,8 @@ export default async function ExamPage({ params }: ExamPageProps) {
   const topSeller = live[0] ?? null;
   const numberOneId = topSeller?.shopee ? topSeller.id : null;
   const showAppLinks = settings.memberAppLive && live.some((product) => product.availableInApp);
+  // "See {code} plans" only leads somewhere while the Exam has a Plan on sale (Phase 4, ticket 02).
+  const showAppPlans = showAppLinks && (await listExamsOnSale()).includes(exam.code);
   // The offer is of its Product's whole set (the CE bundle's 3-in-1). The seam
   // gives it only while that Product is Live.
   const offer = sections.bundleOffer ? page.bundleOffer : null;
@@ -156,7 +159,8 @@ export default async function ExamPage({ params }: ExamPageProps) {
         examCode={exam.code}
         cards={sampleCards[exam.code] ?? []}
         printedSetSlug={topSeller?.slug ?? null}
-        showAppPlans={showAppLinks}
+        showAppIntro={showAppLinks}
+        showAppPlans={showAppPlans}
       />
       {offer && offerPrice ? (
         <ExamPromoBanner

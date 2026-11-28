@@ -156,7 +156,7 @@ test.describe("the Owner", () => {
     await expect(page.getByText(todaysDateLine(), { exact: true })).toBeVisible();
   });
 
-  test("sees the seven screens and View site, and each opens with its header", async ({ page }) => {
+  test("sees the nine screens and View site, and each opens with its header", async ({ page }) => {
     await signInAs(page, "owner");
     await expect(page).toHaveURL(/\/admin$/);
 
@@ -168,7 +168,9 @@ test.describe("the Owner", () => {
       "04Reviews & FAQs",
       "05Member App content",
       "06Users",
-      "07Settings",
+      "07Plans & prices",
+      "08Orders & payments",
+      "09Settings",
       "View site ↗",
     ]);
     await expect(nav.getByRole("link", { name: "View site" })).toHaveAttribute("href", "/");
@@ -179,6 +181,8 @@ test.describe("the Owner", () => {
       ["WEBSITE", "Reviews & FAQs", "/admin/reviews"],
       ["MEMBER APP", "Member App content", "/admin/content"],
       ["MEMBER APP", "Users", "/admin/users"],
+      ["SALES", "Plans & prices", "/admin/plans"],
+      ["SALES", "Orders & payments", "/admin/orders"],
       ["SETTINGS", "Settings", "/admin/settings"],
       ["HOME", "Overview", "/admin"],
     ] as const) {
@@ -481,6 +485,20 @@ test.describe("Other email", () => {
 
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 375, height: 812 } });
+
+  test("the Menu button is in a bar across the top, which stays there as the screen scrolls", async ({
+    page,
+  }) => {
+    await signInAs(page, "owner");
+    await expect(page).toHaveURL(/\/admin$/);
+    const bar = page.getByRole("navigation", { name: "Admin menu" });
+    await expect(bar.getByRole("button", { name: "Menu", exact: true })).toBeVisible();
+    expect((await bar.boundingBox())?.y).toBe(0);
+
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    expect((await bar.boundingBox())?.y).toBe(0);
+  });
 
   test("the Menu button opens the drawer; Escape and the scrim close it and focus returns", async ({
     page,

@@ -8,6 +8,7 @@ import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
 import { ANDROID_CHROME, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { redirectsTo } from "../../../test/redirects";
 
 // The Member App gate on the server, with the sample identity: the sample
 // cookie names the signed-in User, and the switch, the staff list and the Beta
@@ -67,8 +68,6 @@ async function onTheActiveDevice(userId: string) {
 }
 
 /** Matches the error redirect() throws for exactly this URL. */
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 const NOT_OPEN_YET = redirectsTo("/app/not-open-yet");
 const DEVICE_SCREEN = (next: string) => redirectsTo(`/app/device?next=${encodeURIComponent(next)}`);
 

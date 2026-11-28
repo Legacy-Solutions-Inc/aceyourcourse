@@ -1,3 +1,4 @@
+import { sampleOrderRecord } from "@/services/mock/admin/orders";
 import { getSampleStore, type SampleStore } from "@/services/mock/sample-store";
 import {
   type PrivacyRequestRecord,
@@ -11,8 +12,9 @@ import {
 // and 19): the shared calls (src/services/privacy-requests.core.ts) over the
 // in-memory sample store, which holds the Members, every record the Member
 // App keeps for them, and the requests they made. Like the database, a
-// request outlives its Member's account, with no Member. A Node process runs
-// one call at a time here, so a call reads and writes in one step.
+// request outlives its Member's account, with no Member, and so do their
+// Orders (ticket 14). A Node process runs one call at a time here, so a call
+// reads and writes in one step.
 
 /** A request as the list reads it, with its Member, or none once their account is deleted. */
 function storedRequest(store: SampleStore, id: string): StoredPrivacyRequest | null {
@@ -40,8 +42,9 @@ function without<T>(records: Record<string, T>, userId: string): Record<string, 
 
 /**
  * Deletes every record of a Member, and their Access Passes with the grants
- * behind them, as the database's cascades do; empties their requests' Member,
- * and keeps the User id on the deletion request.
+ * behind them, as the database's cascades do; empties their requests' and
+ * Orders' Member (the Orders stay, ticket 14), and keeps the User id on the
+ * deletion request.
  */
 function deleteMember(store: SampleStore, userId: string, requestId: string) {
   const others = <T extends { userId: string }>(records: T[]) =>
@@ -55,6 +58,7 @@ function deleteMember(store: SampleStore, userId: string, requestId: string) {
   store.accessPasses = others(store.accessPasses);
   store.accessPassGrants = others(store.accessPassGrants);
   store.memberNotices = others(store.memberNotices);
+  store.renewalDismissals = others(store.renewalDismissals);
   store.cardMarks = others(store.cardMarks);
   store.studyDays = others(store.studyDays);
   store.deckPositions = others(store.deckPositions);
@@ -66,6 +70,9 @@ function deleteMember(store: SampleStore, userId: string, requestId: string) {
     userId: request.userId === userId ? null : request.userId,
     deletedUserId: request.id === requestId ? userId : request.deletedUserId,
   }));
+  store.orders = store.orders.map((order) =>
+    order.userId === userId ? { ...order, userId: null } : order,
+  );
 }
 
 const samplePrivacyRequestsStore: PrivacyRequestsStore = {
@@ -86,6 +93,11 @@ const samplePrivacyRequestsStore: PrivacyRequestsStore = {
       staff: store.staff.map(({ email, role }) => ({ email, role })),
       invites: store.invites.map(({ email }) => ({ email })),
       betaTester: member ? store.betaTesters.some(({ email }) => email === member.email) : false,
+      orders: member
+        ? store.orders
+            .filter((order) => order.userId === member.userId)
+            .map(({ status, createdAt }) => ({ status, createdAt }))
+        : [],
     };
     const { write, result } = work(record);
     if (!write) return result;
@@ -135,6 +147,7 @@ const samplePrivacyRequestsStore: PrivacyRequestsStore = {
       readerPositions: mine(store.readerPositions),
       deviceSwitches: mine(store.memberDeviceSwitches),
       notices: mine(store.memberNotices),
+      orders: store.orders.filter((order) => order.userId === userId).map(sampleOrderRecord),
     });
   },
 };

@@ -5,7 +5,8 @@ import type { MemberNotice } from "@/services/member.types";
 
 // The Member App's in-app notices (spec, Phase 3 planning decisions → In-app
 // notices): one dismissible banner per notice, for a grant, an extension or
-// the end of access. No email, and no notification centre.
+// the end of access. No email, and no notification centre. A full refund in
+// PayMongo leaves one too (Phase 4, ticket 09), naming the Order.
 
 const BEA = "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21";
 
@@ -18,6 +19,7 @@ function notice(overrides: Partial<MemberNotice>): MemberNotice {
     endsAt: "2026-12-19T04:00:00.000Z",
     createdAt: "2026-11-19T04:00:00.000Z",
     dismissedAt: null,
+    reference: null,
     ...overrides,
   };
 }
@@ -37,6 +39,55 @@ describe("noticeText", () => {
 
   it("says access has ended", () => {
     expect(noticeText(notice({ kind: "ended", examCode: "ME" }))).toBe("Your ME access has ended");
+  });
+
+  it("says when access now ends once an Owner ended the granted days, on its Manila day (ticket 10)", () => {
+    // 00:30 on 15 Apr 2027 in Manila is still 14 Apr in UTC.
+    expect(noticeText(notice({ kind: "shortened", endsAt: "2027-04-14T16:30:00.000Z" }))).toBe(
+      "Your CE access now ends 15 Apr 2027",
+    );
+  });
+
+  it("says a refund was processed and when the pass now ends (ticket 09)", () => {
+    expect(
+      noticeText(
+        notice({ kind: "refunded", reference: "AYC-10483", endsAt: "2026-12-19T04:00:00.000Z" }),
+      ),
+    ).toBe("Your refund for AYC-10483 was processed. CE All-Access now ends 19 Dec 2026");
+  });
+
+  it("says the pass has ended when the refund ended it then", () => {
+    expect(
+      noticeText(
+        notice({
+          kind: "refunded",
+          reference: "AYC-10483",
+          endsAt: "2026-11-19T04:00:00.000Z",
+          createdAt: "2026-11-19T04:00:00.000Z",
+        }),
+      ),
+    ).toBe("Your refund for AYC-10483 was processed. CE All-Access has ended");
+  });
+
+  it("says the pass has ended when it had ended before the refund", () => {
+    expect(
+      noticeText(
+        notice({
+          kind: "refunded",
+          reference: "AYC-10483",
+          endsAt: "2026-11-10T04:00:00.000Z",
+          createdAt: "2026-11-19T04:00:00.000Z",
+        }),
+      ),
+    ).toBe("Your refund for AYC-10483 was processed. CE All-Access has ended");
+  });
+
+  it("dates a refund's end in Manila, the next day there just after midnight", () => {
+    expect(
+      noticeText(
+        notice({ kind: "refunded", reference: "AYC-10483", endsAt: "2026-12-19T16:30:00.000Z" }),
+      ),
+    ).toBe("Your refund for AYC-10483 was processed. CE All-Access now ends 20 Dec 2026");
   });
 
   it("dates the end in Manila, the next day there just after midnight", () => {

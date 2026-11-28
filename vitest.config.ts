@@ -22,6 +22,13 @@ const MEMBER_SUITES = [
   "src/services/member.progress.test.ts",
   "src/services/member.notices.test.ts",
   "src/services/member.privacy-requests.test.ts",
+  "src/services/member.plans.test.ts",
+  "src/services/member.payments.test.ts",
+  "src/services/member.payment-events.test.ts",
+  "src/services/member.billing.test.ts",
+  "src/services/member.invoice-requests.test.ts",
+  "src/services/member.refunds.test.ts",
+  "src/services/member.renewal.test.ts",
 ];
 /** Admin tests that aren't written over ADMIN_ARMS. */
 const NOT_ADMIN_SUITES = [

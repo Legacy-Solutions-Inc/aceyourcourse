@@ -9,13 +9,14 @@ import { ConsentForm } from "./consent-form";
 /**
  * What the Member App keeps, and why: the consent screen's list (mockup
  * `consent`). It summarises the Privacy Policy, so it changes with it: check
- * it whenever PRIVACY_POLICY_VERSION changes (written for v2.0).
+ * it whenever PRIVACY_POLICY_VERSION changes (written for v2.1).
  */
 const KEPT = [
   "Your Google name and email, to sign you in.",
   "Your Target Exams, exam dates and study progress, to run your countdown and dashboard.",
   "Which device is your Active Device, with a log of each switch, so only one device is signed in at a time.",
   "Your email and Member ID, stamped on each Reviewer PDF page you open, so a shared page can be traced to its account.",
+  "Your Orders and Invoice Requests, if you buy, kept as long as the tax rules require, even after your account is deleted.",
 ];
 
 const KEPT_TITLE = "What we keep, and why";

@@ -21,7 +21,8 @@ import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
-import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { redirectsTo } from "../../../test/redirects";
 
 // The Library and opening an item (Phase 3, ticket 05; spec → Content model
 // and Access decision seam; stories 93, 94, 103, 133i and 133m), on sample
@@ -65,9 +66,6 @@ const HIDDEN_QUIZ = sampleContentId(SPIRAL_CURVES, "quiz");
 /** Simple Curves' Reviewer PDF, Published, from before uploads: it has no pages (the reader is reviewer-reader.test.tsx). */
 const PDF = sampleContentId(SIMPLE_CURVES, "reviewer-pdf");
 
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
-
 /**
  * Signed in as this sample User, a Member who has agreed and has `exam` as
  * their selected Target Exam, using the Member App on this browser.
@@ -75,7 +73,7 @@ const redirectsTo = (url: string) =>
 async function memberOnDevice(email: string, name: string, exam = "CE") {
   const userId = sampleUserId(email);
   await getOrCreateMember({ userId, email, name });
-  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(userId, AGREED_TO_CURRENT);
   await addTargetExam(userId, { examCode: exam, examDate: "2027-01-10" });
   await onThisDevice(userId);
   jar.set("ayc_admin_sample", email);
@@ -221,17 +219,39 @@ describe("the Library", () => {
       }),
     ).toBeInTheDocument();
     expect(itemsIn("Spiral Curves")).toEqual(["🔒Flashcards"]);
+    // CE has Plans on sale: unlocking it is buying one (ticket 02).
+    expect(
+      within(row("Simple Curves")).getByRole("link", { name: /Unlock with CE All-Access$/ }),
+    ).toHaveAttribute("href", "/app/plans?exam=CE");
+
+    const unlock = screen.getByRole("region", { name: "🔒 UNLOCK WITH CE ALL-ACCESS" });
+    expect(within(unlock).getByRole("link", { name: "See plans" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
+    expect(unlock).not.toHaveTextContent("During the beta");
+  });
+
+  it("keeps the contact us note for an Exam with no Plan on sale", async () => {
+    const store = getSampleStore();
+    store.plans = store.plans.map((plan) => ({
+      ...plan,
+      onSale: plan.examCode !== "CE" && plan.onSale,
+    }));
+    await asNewTester();
+    render(await library());
+
     expect(
       within(row("Simple Curves")).getByRole("link", { name: /Unlock with CE All-Access$/ }),
     ).toHaveAttribute("href", "#unlock");
-
     const unlock = screen.getByRole("region", { name: "🔒 UNLOCK WITH CE ALL-ACCESS" });
     expect(unlock).toHaveTextContent("During the beta, access comes from AYC. Ask us at");
-    const { contactEmail } = getSampleStore().catalogue.settings;
+    const { contactEmail } = store.catalogue.settings;
     expect(within(unlock).getByRole("link", { name: contactEmail })).toHaveAttribute(
       "href",
       `mailto:${contactEmail}`,
     );
+    expect(within(unlock).queryByRole("link", { name: "See plans" })).not.toBeInTheDocument();
   });
 
   it("opens every Visible and Published item for active Staff with no pass", async () => {
@@ -408,9 +428,26 @@ describe("opening an item", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "Unlock with CE All-Access" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "See plans" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
+    expect(screen.queryByText(/During the beta/)).not.toBeInTheDocument();
+  });
+
+  it("keeps the contact us note on a locked quiz whose Exam has no Plan on sale", async () => {
+    const store = getSampleStore();
+    store.plans = store.plans.map((plan) => ({
+      ...plan,
+      onSale: plan.examCode !== "CE" && plan.onSale,
+    }));
+    await asNewTester();
+    render(await opening("quiz", QUIZ));
+
     expect(
       screen.getByText(/During the beta, access comes from AYC\. Ask us at/),
     ).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "See plans" })).not.toBeInTheDocument();
   });
 
   it("tells the lapsed tester their access ended, and that their progress is kept", async () => {
@@ -423,6 +460,29 @@ describe("opening an item", () => {
     expect(
       screen.getByText(/Your access ended\. Renew to keep reviewing\. Your progress is kept\./),
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Renew access" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
+  });
+
+  it("keeps the lapsed tester's progress across CE on a locked item they never opened (Phase 4, ticket 12)", async () => {
+    await asLapsed();
+    // Marked while Simple Curves' deck is Free Preview, which the lapsed tester can still open.
+    await marks("lapsed@example.com", await writeCards(SIMPLE_CURVES, 2), ["got", "again"]);
+    render(await opening("quiz", QUIZ));
+
+    expect(
+      screen.getByText(
+        /Your access ended\. Renew to keep reviewing\. Your progress is kept: 2 cards marked\./,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Renew access" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
+    // Ended access shows the ended state, never a renewal banner.
+    expect(screen.queryByRole("region", { name: "Access ending soon" })).toBeNull();
   });
 
   it.each([
@@ -476,5 +536,69 @@ describe("opening an item", () => {
     await memberOnDevice("stranger@example.com", "Sam Stranger").catch(() => undefined);
     jar.set("ayc_admin_sample", "stranger@example.com");
     await expect(opening("quiz", QUIZ)).rejects.toThrow(redirectsTo("/app/not-open-yet"));
+  });
+});
+
+// The renewal banner on CE's study screens (Phase 4, ticket 12; stories 141
+// and 142): while the Member's CE pass ends within 7 days, the Library and
+// each CE deck, quiz and Reviewer PDF show it above the screen. Which banners
+// show, and their words, are renewal.test.ts's; dismissing is the Member
+// seam's (member.renewal.test.ts).
+describe("the renewal banner", () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  /** Sets this sample Member's pass for an Exam to end `days` after now. */
+  function passEndsIn(email: string, examCode: string, days: number) {
+    const store = getSampleStore();
+    const userId = sampleUserId(email);
+    store.accessPasses = [
+      ...store.accessPasses.filter((p) => p.userId !== userId || p.examCode !== examCode),
+      { userId, examCode, endsAt: new Date(BOOT.getTime() + days * DAY).toISOString() },
+    ];
+  }
+  const banner = () => screen.getByRole("region", { name: "Access ending soon" });
+  // The tester's CE Exam Date is 10 Jan 2027: 49 days after 22 Nov.
+  const CE_TEXT = "Your CE All-Access ends 22 Nov, 49 days before your exam";
+
+  it("shows the tester whose CE pass ends in 5 days the banner on the Library, for CE alone", async () => {
+    passEndsIn("tester@example.com", "CE", 5);
+    passEndsIn("tester@example.com", "ME", 3);
+    await asTester();
+    render(await library());
+
+    const [only, ...others] = within(banner()).getAllByRole("listitem");
+    expect(others).toEqual([]);
+    expect(only).toHaveTextContent(CE_TEXT);
+    expect(within(only!).getByRole("link", { name: "Renew to cover your exam" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
+  });
+
+  it.each([
+    ["deck", FREE_DECK],
+    ["quiz", QUIZ],
+    ["reviewer-pdf", PDF],
+  ])("shows it above a CE %s", async (kind, id) => {
+    passEndsIn("tester@example.com", "CE", 5);
+    await asTester();
+    render(await opening(kind, id));
+
+    expect(within(banner()).getByText(CE_TEXT)).toBeInTheDocument();
+  });
+
+  it("shows none while the pass ends in 8 days", async () => {
+    passEndsIn("tester@example.com", "CE", 8);
+    await asTester();
+    render(await library());
+
+    expect(screen.queryByRole("region", { name: "Access ending soon" })).toBeNull();
+  });
+
+  it("never shows it to Staff", async () => {
+    passEndsIn(OWNER.email, "CE", 5);
+    await memberOnDevice(OWNER.email, OWNER.name);
+    render(await library());
+
+    expect(screen.queryByRole("region", { name: "Access ending soon" })).toBeNull();
   });
 });

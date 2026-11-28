@@ -347,6 +347,8 @@ shows its value again.
 | `MEMBER_APP_LIVE`                      | leave **unset** (off) until the Member App launches                             | no                 |
 | `ADMIN_PASSWORD_SIGN_IN`               | `true` only while you test the deployed site (see step 6); **unset** at go-live | no                 |
 | `CRON_SECRET`                          | 16+ random characters (`openssl rand -hex 32`), for the Reviewer PDF job's cron | **yes, Sensitive** |
+| `PAYMONGO_SECRET_KEY`                  | PayMongo's `sk_test_…` key during the beta, `sk_live_…` at go-live (step 13)    | **yes, Sensitive** |
+| `PAYMONGO_WEBHOOK_SECRET`              | the `whsk_…` signing secret of the webhook you register in step 13              | **yes, Sensitive** |
 | `NEXT_PUBLIC_LOG_LEVEL`                | `WARN` (unset logs everything)                                                  | no                 |
 | `NEXT_PUBLIC_AUTH_STRATEGY`            | leave unset (`SUPABASE`, the only one)                                          | no                 |
 | `NEXT_PUBLIC_SITE_VERSION`             | optional, e.g. the release's git sha                                            | no                 |
@@ -433,6 +435,47 @@ Google: after launch, every save from your machine is a live edit.
 **Check:** `env | grep -c -e DATABASE_URL -e SUPABASE_SECRET_KEY` prints `0`.
 
 ---
+
+## 13. Set up PayMongo payments
+
+The PayMongo account is the client's. You set its keys; nobody pastes a key
+into chat, an issue or the repo. Buying is decided by `PAYMONGO_SECRET_KEY`
+alone: unset, the Plans page reads "Buying opens soon"; a test key
+(`sk_test_…`) takes PayMongo's test payments under a "TEST PAYMENTS · no real
+money" strip; a live key (`sk_live_…`) takes real money.
+
+1. **Get the test keys.** In PayMongo's dashboard (test mode) → Developers,
+   copy the secret key (`sk_test_…`). Never the public key (`pk_…`): the app
+   logs "PAYMONGO_SECRET_KEY isn't a PayMongo secret key" and keeps buying off.
+2. **Register the webhook.** PayMongo's dashboard → Developers → Webhooks →
+   add `https://<site-url>/api/paymongo/webhook` and tick these events:
+   `checkout_session.payment.paid`, `payment.paid` and `payment.failed`. The
+   app acknowledges any other event and ignores it. Copy the webhook's
+   signing secret (`whsk_…`). Test and live mode each have their own webhook
+   and secret. Until `PAYMONGO_WEBHOOK_SECRET` is set, the URL answers 404.
+   - The daily Order expiry sweep (`/api/paymongo/expiry-sweep`, in
+     `vercel.json` beside the Reviewer PDF cron) runs with the same
+     `CRON_SECRET`. Check that the Vercel plan allows two cron jobs
+     (Settings → Cron Jobs lists both after the deploy).
+3. **Set both in Vercel** (step 9): `PAYMONGO_SECRET_KEY` and
+   `PAYMONGO_WEBHOOK_SECRET`, Production, **Sensitive**. Redeploy: the key is
+   read when the server starts.
+4. **Test a purchase.** Sign in to the Member App on production (test keys:
+   no real money; a Test Order still grants a real Access Pass, which you can
+   end from the Admin). Pick a Plan and a method, pay with one of PayMongo's
+   test methods, and check you come back to "Payment confirmed". Without a
+   webhook, the Confirming payment screen asks PayMongo itself after about 15
+   seconds, so it works on `pnpm dev` with a test key in `.env` too.
+   - To test on a Vercel **Preview** instead: a Preview gets none of
+     Production's variables (step 9), so it needs its own keys and a database
+     that isn't production's, and PayMongo can reach it only through
+     Deployment Protection → Protection Bypass for Automation (add the bypass
+     to the webhook URL as `?x-vercel-protection-bypass=<secret>`). Testing on
+     production with test keys is simpler.
+5. **Go live** once PayMongo approves the account: in PayMongo's live mode,
+   copy the live secret key (`sk_live_…`) and register the same webhook URL
+   again for its live secret. Replace both variables in Vercel and redeploy.
+   The TEST strip disappears, and new Orders record `livemode` true.
 
 ## Rollback
 

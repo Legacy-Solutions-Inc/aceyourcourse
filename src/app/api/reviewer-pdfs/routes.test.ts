@@ -180,13 +180,17 @@ describe("the cron endpoint", () => {
 
 describe("Vercel Cron's schedule", () => {
   // Once a day, at 18:00 UTC (02:00 in Manila): Vercel's Hobby plan allows
-  // no more, and runs it at some point within that hour.
-  it("calls the cron endpoint once a day", async () => {
+  // no more, and runs it at some point within that hour. The Order expiry
+  // sweep (Phase 4, ticket 05) runs at the same time.
+  it("calls each cron endpoint once a day", async () => {
     const { readFileSync } = await import("node:fs");
     const { paths } = await import("@/paths");
     const config = JSON.parse(readFileSync("vercel.json", "utf8")) as {
       crons?: { path: string; schedule: string }[];
     };
-    expect(config.crons).toEqual([{ path: paths.jobs.reviewerPdfCron, schedule: "0 18 * * *" }]);
+    expect(config.crons).toEqual([
+      { path: paths.jobs.reviewerPdfCron, schedule: "0 18 * * *" },
+      { path: paths.jobs.orderExpirySweep, schedule: "0 18 * * *" },
+    ]);
   });
 });

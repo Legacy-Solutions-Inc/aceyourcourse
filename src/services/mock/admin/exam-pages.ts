@@ -453,7 +453,11 @@ export async function deleteExam(actor: StaffActor, code: string): Promise<Admin
     },
     tags: [CATALOGUE_TAGS.exams, CATALOGUE_TAGS.examPages],
   });
-  // Like the database's cascade, its Topics (all empty) go with it.
-  if (result.ok) deleteTopics(actor, new Date(), inExam(examCode));
+  // Like the database's cascade, its Topics (all empty) and its Plans go with it.
+  if (result.ok) {
+    deleteTopics(actor, new Date(), inExam(examCode));
+    const store = getSampleStore();
+    store.plans = store.plans.filter((plan) => plan.examCode !== examCode);
+  }
   return result;
 }

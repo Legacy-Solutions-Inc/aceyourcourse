@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { MemberAccess } from "@/lib/member-app/access";
@@ -24,11 +24,11 @@ import {
 } from "@/services/member.mock";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
 import { sampleUserId } from "@/services/mock/members";
-import { resetSampleStore } from "@/services/mock/sample-store";
+import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import { createFakeRenderer, fakeStamper } from "@/services/page-images.fake";
 
 import { sampleActor } from "../../../test/admin-inputs";
-import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 import { uploadSampleReviewerPdf } from "../../../test/reviewer-pdf-uploads";
 import { pdfOfPages } from "../../../test/reviewer-pdfs";
 
@@ -65,6 +65,7 @@ vi.mock("next/navigation", () => ({
 const BOOT = new Date("2026-11-17T03:42:00.000Z");
 const DAY = 24 * 60 * 60 * 1000;
 const EDITOR = sampleActor("editor");
+const OWNER = sampleActor("owner");
 const TESTER = "tester@example.com";
 const LAPSED = "lapsed@example.com";
 
@@ -78,7 +79,7 @@ const QUIZ = sampleContentId(SIMPLE_CURVES, "quiz");
 async function memberOnDevice(email: string, name: string) {
   const userId = sampleUserId(email);
   await getOrCreateMember({ userId, email, name });
-  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(userId, AGREED_TO_CURRENT);
   await addTargetExam(userId, { examCode: "CE", examDate: "2027-01-10" });
   await onThisDevice(userId);
   jar.set("ayc_admin_sample", email);
@@ -282,5 +283,66 @@ describe("Home's dashboard", () => {
 
     expect(region("Start studying CE")).toBeInTheDocument();
     expect(region("Study streak")).toHaveTextContent("No streak yet");
+  });
+});
+
+// The renewal banners on Home (Phase 4, ticket 12; stories 141 and 142): one
+// per Exam whose pass ends within 7 days, above the dashboard, each
+// dismissed on its own until the next Manila day. The tester's CE Exam Date
+// is 10 Jan 2027.
+describe("Home's renewal banners", () => {
+  /** Sets this sample Member's pass for an Exam to end `days` after now. */
+  function passEndsIn(email: string, examCode: string, days: number) {
+    const store = getSampleStore();
+    const userId = sampleUserId(email);
+    store.accessPasses = [
+      ...store.accessPasses.filter((p) => p.userId !== userId || p.examCode !== examCode),
+      { userId, examCode, endsAt: new Date(BOOT.getTime() + days * DAY).toISOString() },
+    ];
+  }
+  const banners = () =>
+    screen.queryByRole("region", { name: "Access ending soon" })
+      ? within(region("Access ending soon"))
+          .getAllByRole("listitem")
+          .map((item) => item.querySelector("p")?.textContent)
+      : [];
+
+  it("shows one per Exam ending soon, soonest first, each dismissed on its own until the next Manila day", async () => {
+    passEndsIn(TESTER, "CE", 5);
+    passEndsIn(TESTER, "ME", 2);
+    await memberOnDevice(TESTER, "Bea Tester");
+    const { dismissRenewalBanner } = await import("./(shell)/actions");
+
+    render(await home());
+    expect(banners()).toEqual([
+      "Your ME All-Access ends 19 Nov",
+      "Your CE All-Access ends 22 Nov, 49 days before your exam",
+    ]);
+
+    expect(await dismissRenewalBanner("CE")).toEqual({ ok: true });
+    cleanup();
+    render(await home());
+    expect(banners()).toEqual(["Your ME All-Access ends 19 Nov"]);
+
+    // 00:00 the next day in Manila.
+    vi.setSystemTime(new Date("2026-11-17T16:00:00.000Z"));
+    cleanup();
+    render(await home());
+    expect(banners()).toEqual([
+      "Your ME All-Access ends 19 Nov",
+      "Your CE All-Access ends 22 Nov, 49 days before your exam",
+    ]);
+  });
+
+  it("shows none for the lapsed tester, whose pass has ended, nor for active Staff", async () => {
+    await memberOnDevice(LAPSED, "Lou Lapsed");
+    render(await home());
+    expect(banners()).toEqual([]);
+
+    cleanup();
+    passEndsIn(OWNER.email, "CE", 5);
+    await memberOnDevice(OWNER.email, OWNER.name);
+    render(await home());
+    expect(banners()).toEqual([]);
   });
 });

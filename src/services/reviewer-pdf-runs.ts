@@ -2,7 +2,6 @@ import "server-only";
 
 import { isDatabaseConfigured, serverEnv } from "@/env.server";
 import { getSiteURL } from "@/lib/get-site-url";
-import { type CronAccess, cronAccess } from "@/lib/reviewer-pdfs/cron-auth";
 import { paths } from "@/paths";
 import { runReviewerPdfJob } from "@/services/admin";
 import type { ReviewerPdfRun } from "@/services/admin.types";
@@ -99,12 +98,3 @@ export const startReviewerPdfRun = createRunStarter({
   send: (url, init) => fetch(url, init),
   run: (id) => runReviewerPdfJob(id, pageRenderer),
 });
-
-/**
- * Whether a request may use the Reviewer PDF job's endpoints: it must carry
- * this server's CRON_SECRET as a bearer token, and there are none while the
- * server has no secret.
- */
-export function jobEndpointAccess(authorization: string | null): CronAccess {
-  return cronAccess(authorization, serverEnv.CRON_SECRET);
-}

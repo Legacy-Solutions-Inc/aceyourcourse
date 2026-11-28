@@ -1,13 +1,18 @@
 import { DEFAULT_QUIZ_SETTINGS } from "@/lib/quizzes/quiz-rules";
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import type { AnyPgColumn, PgTable } from "drizzle-orm/pg-core";
 
 import { getDb } from "@/lib/db/client";
 import * as schema from "@/lib/db/schema";
 import { getStorage, isStorageConfigured } from "@/lib/supabase/admin";
 import { databaseArm } from "@/services/admin.db";
-import { deniedSignInFromRow, staffActivityFromRow } from "@/services/admin.rows";
 import {
+  deniedSignInFromRow,
+  staffActivityFromRow,
+  staffActivityToRow,
+} from "@/services/admin.rows";
+import {
+  accessPassGrantFromRow,
   accessPassGrantToRow,
   accessPassToRow,
   cardFromRow,
@@ -15,6 +20,7 @@ import {
   questionFromRow,
 } from "@/services/content.rows";
 import { databaseArm as memberDatabaseArm } from "@/services/member.db";
+import { orderFromRow, orderRefundFromRow, orderToRow } from "@/services/orders.rows";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
@@ -27,6 +33,7 @@ import {
   byDeckAndPosition,
   byId,
   byQuizAndPosition,
+  byReference,
 } from "./admin-arms";
 import {
   type CardImageUpload,
@@ -153,6 +160,12 @@ export const DATABASE_ARM: AdminArm = {
     (await getDb().select().from(schema.staffActivity).orderBy(asc(schema.staffActivity.seq))).map(
       staffActivityFromRow,
     ),
+  putStaffActivity: async (records) => {
+    // One at a time, so each record's seq follows the one before it.
+    for (const record of records) {
+      await getDb().insert(schema.staffActivity).values(staffActivityToRow(record));
+    }
+  },
   deniedSignIns: async () =>
     (await getDb().select().from(schema.deniedSignIns).orderBy(asc(schema.deniedSignIns.seq))).map(
       deniedSignInFromRow,
@@ -232,6 +245,21 @@ export const DATABASE_ARM: AdminArm = {
       await getDb().insert(schema.accessPassGrants).values(grants.map(accessPassGrantToRow));
     }
   },
+  putOrder: async (order) => {
+    await getDb().insert(schema.orders).values(orderToRow(order));
+  },
+  orders: async () => byReference((await getDb().select().from(schema.orders)).map(orderFromRow)),
+  orderRefunds: async () =>
+    byId((await getDb().select().from(schema.orderRefunds)).map(orderRefundFromRow)),
+  passHistory: async (userId, examCode) => {
+    const { accessPassGrants } = schema;
+    const rows = await getDb()
+      .select()
+      .from(accessPassGrants)
+      .where(and(eq(accessPassGrants.userId, userId), eq(accessPassGrants.examCode, examCode)))
+      .orderBy(asc(accessPassGrants.seq));
+    return rows.map(accessPassGrantFromRow);
+  },
   memberRecords: async (userId) => {
     const db = getDb();
     const count = async (table: PgTable & { userId: AnyPgColumn }) =>
@@ -252,6 +280,7 @@ export const DATABASE_ARM: AdminArm = {
       accessPasses: await count(schema.accessPasses),
       accessPassGrants: await count(schema.accessPassGrants),
       notices: await count(schema.memberNotices),
+      renewalDismissals: await count(schema.renewalDismissals),
       cardMarks: await count(schema.cardMarks),
       studyDays: await count(schema.studyDays),
       deckPositions: await count(schema.deckPositions),

@@ -1,12 +1,15 @@
 import { type DeviceStatus, deviceStatusFor } from "@/lib/member-app/device-token";
 import { noticesToShow } from "@/lib/member-app/notices";
 import { type PrivacyRequestType, privacyRequestDueOn } from "@/lib/member-app/privacy-requests";
+import { type Order, orderReference } from "@/lib/payments/order-ledger";
+import { type OrderRefund, refundsOfOrder } from "@/lib/payments/refunds";
 import { readablePageCount } from "@/lib/reviewer-pdfs/status";
 import { contentItemOf, type ContentExam, libraryOf } from "@/services/content.rules";
 import type { AccessPass, ContentKind, ContentRecords } from "@/services/content.types";
 import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
 import { progressCalls, progressSubjectsOf, type ProgressStore } from "@/services/progress.core";
 import { quizStudyCalls, type QuizStudyStore } from "@/services/quiz-study.core";
+import { renewalCalls } from "@/services/renewal.core";
 import { reviewerStudyCalls, type ReviewerStudyStore } from "@/services/reviewer-study.core";
 import {
   agreedVersionsSchema,
@@ -20,8 +23,10 @@ import {
 } from "@/services/member.schema";
 import {
   applyChange,
+  examCodesOnSale,
   examsForMembers,
   pickableExams,
+  plansExams,
   targetExamOperations,
   targetExams,
   type MemberExams,
@@ -39,11 +44,22 @@ import type {
   MemberNotice,
   MemberUser,
   PickableExam,
+  PlansExam,
   PrivacyRequest,
   PrivacyRequestOutcome,
   TargetExam,
 } from "@/services/member.types";
+import { samplePassHistory, writeSamplePass } from "@/services/mock/pass-writes";
 import { getSampleStore, type SamplePrivacyRequest } from "@/services/mock/sample-store";
+import {
+  orderCalls,
+  type OrderHolding,
+  type EventRecording,
+  type OrderLookup,
+  type OrderStore,
+  type OrderWrite,
+  type PassReduction,
+} from "@/services/orders.core";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
 
 // The Member seam's sample arm: over the in-memory sample store
@@ -474,6 +490,26 @@ export async function dismissNotice(userId: string, noticeId: string): Promise<b
   return true;
 }
 
+// ── Renewal reminders ───────────────────────────────────────────────────────
+
+export const { listRenewalReminders, dismissRenewalReminder } = renewalCalls({
+  listAccessPasses,
+  listTargetExams,
+  async readDismissals(userId) {
+    return getSampleStore()
+      .renewalDismissals.filter((dismissal) => dismissal.userId === userId)
+      .map(({ examCode, day }) => ({ examCode, day }));
+  },
+  async writeDismissal(userId, { examCode, day }, at) {
+    const store = getSampleStore();
+    // One per Member and Exam, as the table's key: the latest replaces the one before.
+    const others = store.renewalDismissals.filter(
+      (dismissal) => dismissal.userId !== userId || dismissal.examCode !== examCode,
+    );
+    store.renewalDismissals = [...others, { userId, examCode, day, dismissedAt: at.toISOString() }];
+  },
+});
+
 // ── Privacy Requests ────────────────────────────────────────────────────────
 
 /** One of a Member's own requests, as the Member App reads it. */
@@ -520,3 +556,238 @@ export async function requestPrivacy(
   store.privacyRequests = [...store.privacyRequests, request];
   return { request: ownRequest(request, wanted), created: true };
 }
+
+// ── Plans (Phase 4, ticket 02) ──────────────────────────────────────────────
+
+export async function listMemberPlans(userId: string): Promise<PlansExam[]> {
+  const wanted = memberUserIdSchema.parse(userId);
+  const { catalogue, plans } = getSampleStore();
+  return plansExams({
+    exams: examsForMembers(structuredClone(catalogue)),
+    plans: structuredClone(plans),
+    targetExams: await listTargetExams(wanted),
+    passes: await listAccessPasses(wanted),
+  });
+}
+
+export async function listExamsOnSale(): Promise<string[]> {
+  const { catalogue, plans } = getSampleStore();
+  return examCodesOnSale(examsForMembers(structuredClone(catalogue)), structuredClone(plans));
+}
+
+// ── Buying (Phase 4, ticket 03) ─────────────────────────────────────────────
+
+/** A sample Order's Invoice Request, or null for none. */
+function invoiceOf(orderId: string) {
+  const request = getSampleStore().invoiceRequests.find((held) => held.orderId === orderId);
+  return request ? structuredClone(request) : null;
+}
+
+/** The days a sample Order's payment added to its buyer's pass: its paid history row. */
+function paidDaysOf(orderId: string) {
+  const grant = getSampleStore().accessPassGrants.find((held) => held.orderId === orderId);
+  return grant ? { startsAt: grant.startsAt, endsAt: grant.endsAt } : null;
+}
+
+/** A sample Order's PayMongo refunds, in the order first recorded (ticket 09). */
+function refundsOf(orderId: string) {
+  return structuredClone(refundsOfOrder(getSampleStore().orderRefunds)(orderId));
+}
+
+// A Node process runs one call at a time here, so an outcome reads and writes
+// in one step, and two Pays take consecutive numbers. The Orders admin's
+// "Check status with PayMongo" (ticket 07) settles Orders through it too.
+export const sampleOrderStore: OrderStore = {
+  async readOnSale() {
+    const { catalogue, plans } = getSampleStore();
+    return {
+      exams: examsForMembers(structuredClone(catalogue)),
+      plans: structuredClone(plans.filter((plan) => plan.onSale)),
+    };
+  },
+  async readMember(userId) {
+    const member = getSampleStore().members.find((candidate) => candidate.userId === userId);
+    return member ? structuredClone(member) : null;
+  },
+  async addOrder(draft) {
+    const store = getSampleStore();
+    const order: Order = { ...draft, reference: orderReference(store.nextOrderNumber) };
+    store.nextOrderNumber += 1;
+    store.orders = [...store.orders, order];
+    return structuredClone(order);
+  },
+  async recordCheckout(orderId, { checkoutId, livemode }) {
+    const store = getSampleStore();
+    store.orders = store.orders.map((order) =>
+      order.id === orderId ? { ...order, checkoutId, livemode } : order,
+    );
+  },
+  async claimStatusCheck(orderId, now, everyMs) {
+    const store = getSampleStore();
+    const order = store.orders.find((candidate) => candidate.id === orderId);
+    if (order?.status !== "pending") return false;
+    const last = store.orderStatusCheckedAt[orderId];
+    if (last && now.getTime() - new Date(last).getTime() < everyMs) return false;
+    store.orderStatusCheckedAt = { ...store.orderStatusCheckedAt, [orderId]: now.toISOString() };
+    return true;
+  },
+  async findOwnOrder(userId, reference) {
+    const order = getSampleStore().orders.find(
+      (candidate) => candidate.reference === reference && candidate.userId === userId,
+    );
+    return order
+      ? {
+          order: structuredClone(order),
+          paidDays: paidDaysOf(order.id),
+          invoice: invoiceOf(order.id),
+          refunds: refundsOf(order.id),
+        }
+      : null;
+  },
+  async listOwnOrders(userId) {
+    return getSampleStore()
+      .orders.filter((order) => order.userId === userId)
+      .sort(
+        (a, b) => b.createdAt.localeCompare(a.createdAt) || b.reference.localeCompare(a.reference),
+      )
+      .map((order) => ({
+        order: structuredClone(order),
+        paidDays: paidDaysOf(order.id),
+        invoice: invoiceOf(order.id),
+        refunds: refundsOf(order.id),
+      }));
+  },
+  async withOrder(orderId, work) {
+    return holdSampleOrder(orderId, work);
+  },
+  async withPaymentEvent<T>(
+    event: { id: string; type: string; receivedAt: Date },
+    lookup: OrderLookup,
+    work: (holding: OrderHolding) => { write: OrderWrite | null; result: T },
+  ): Promise<EventRecording<T>> {
+    const store = getSampleStore();
+    if (store.paymentEvents.some((seen) => seen.eventId === event.id)) return { recorded: false };
+    const order = findSampleOrder(lookup);
+    // The Order first: should its write fail, the event stays unrecorded.
+    const result = order ? holdSampleOrder(order.id, work) : null;
+    store.paymentEvents = [
+      ...store.paymentEvents,
+      {
+        eventId: event.id,
+        type: event.type,
+        orderId: order?.id ?? null,
+        receivedAt: event.receivedAt.toISOString(),
+      },
+    ];
+    return order && result !== null
+      ? { recorded: true, found: true, result }
+      : { recorded: true, found: false };
+  },
+  async listOverdueOrders(madeBefore) {
+    return structuredClone(
+      getSampleStore()
+        .orders.filter(
+          (order) => order.status === "pending" && new Date(order.createdAt) < madeBefore,
+        )
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    );
+  },
+  async addInvoiceRequest(request) {
+    const store = getSampleStore();
+    if (store.invoiceRequests.some((held) => held.orderId === request.orderId)) return false;
+    store.invoiceRequests = [...store.invoiceRequests, structuredClone(request)];
+    return true;
+  },
+};
+
+/**
+ * The sample Order a payment event is about: by its checkout's id, then our
+ * id, then its reference, then its payment's id (a refund's, ticket 09).
+ */
+function findSampleOrder({ checkoutId, orderId, reference, paymentId }: OrderLookup): Order | null {
+  const { orders } = getSampleStore();
+  return (
+    (checkoutId ? orders.find((order) => order.checkoutId === checkoutId) : undefined) ??
+    (orderId ? orders.find((order) => order.id === orderId) : undefined) ??
+    (reference ? orders.find((order) => order.reference === reference) : undefined) ??
+    (paymentId ? orders.find((order) => order.paymentId === paymentId) : undefined) ??
+    null
+  );
+}
+
+/**
+ * Runs `work` on a sample Order, its buyer's pass with its history (each row
+ * keyed by its place in the history) and its refunds, then writes what it
+ * gives: the Staff Activity first (should it fail, nothing else is), then
+ * the pass, then the refunds, then the Order. A Node process runs one call
+ * at a time here.
+ */
+function holdSampleOrder<T>(
+  orderId: string,
+  work: (holding: OrderHolding) => { write: OrderWrite | null; result: T },
+): T | null {
+  const store = getSampleStore();
+  const order = store.orders.find((candidate) => candidate.id === orderId);
+  if (!order) return null;
+  const { userId, examCode } = order;
+  const held = (row: { userId: string | null; examCode: string }) =>
+    row.userId === userId && row.examCode === examCode;
+  const pass = store.accessPasses.find(held) ?? null;
+  const history = pass && userId ? samplePassHistory(userId, examCode) : [];
+  const { write, result } = work(
+    structuredClone({
+      order,
+      member: store.members.find((candidate) => candidate.userId === userId) ?? null,
+      pass,
+      targetExams: userId ? (store.memberTargetExams[userId] ?? []) : [],
+      history,
+      refunds: refundsOfOrder(store.orderRefunds)(orderId),
+    }),
+  );
+  if (!write) return result;
+
+  if (write.activity) store.staffActivity = [...store.staffActivity, write.activity];
+  if (write.paid && userId) writeSamplePass(userId, examCode, write.paid);
+  if (write.reduction && userId) writeSampleReduction(userId, examCode, write.reduction);
+  store.orderRefunds = mergeById(store.orderRefunds, write.refunds);
+  store.orders = store.orders.map((kept) => (kept.id === orderId ? write.order : kept));
+  return result;
+}
+
+/** Records refunds by their id: one already there is replaced in its place, a new one added after. */
+function mergeById(refunds: readonly OrderRefund[], changed: readonly OrderRefund[]) {
+  const byId = new Map(refunds.map((refund) => [refund.id, refund]));
+  for (const refund of changed) byId.set(refund.id, structuredClone(refund));
+  return [...byId.values()];
+}
+
+/**
+ * Writes a full refund's change to a sample pass (ticket 09): the Staff
+ * Activity first, then the pass's end, the history rows it moved (by their
+ * place) and the notice.
+ */
+function writeSampleReduction(userId: string, examCode: string, write: PassReduction) {
+  const store = getSampleStore();
+  store.staffActivity = [...store.staffActivity, write.activity];
+  store.accessPasses = store.accessPasses.map((pass) =>
+    pass.userId === userId && pass.examCode === examCode ? { ...pass, endsAt: write.endsAt } : pass,
+  );
+  const moved = new Map(write.segments.map((segment) => [segment.key, segment]));
+  store.accessPassGrants = store.accessPassGrants.map((row, key) => {
+    const segment = moved.get(key);
+    return segment ? { ...row, startsAt: segment.startsAt, endsAt: segment.endsAt } : row;
+  });
+  store.memberNotices = [...store.memberNotices, write.notice];
+}
+
+export const {
+  payForPlan,
+  getMemberOrder,
+  listMemberOrders,
+  getPaymentAcknowledgement,
+  requestInvoice,
+  checkOrderStatus,
+  pollOrderStatus,
+  recordPaymentEvent,
+  expireOverdueOrders,
+} = orderCalls(sampleOrderStore);

@@ -29,3 +29,15 @@ export function formatPeso(centavos: number): string {
   const pesos = centavos / 100;
   return centavos % 100 === 0 ? wholePeso.format(pesos) : pesoWithCentavos.format(pesos);
 }
+
+/**
+ * Pure: an integer centavo amount as pesos with its centavos always shown,
+ * for amounts on a printed record: 129900 → "₱1,299.00". Throws a RangeError
+ * for a fractional or non-finite amount.
+ */
+export function formatPesoWithCentavos(centavos: number): string {
+  if (!Number.isInteger(centavos)) {
+    throw new RangeError(`formatPesoWithCentavos expects whole centavos, got ${centavos}`);
+  }
+  return pesoWithCentavos.format(centavos / 100);
+}

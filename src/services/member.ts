@@ -3,10 +3,14 @@ import type { MemberAccess } from "@/lib/member-app/access";
 import type { MemberProgress } from "@/lib/member-app/progress";
 import type { PrivacyRequestType } from "@/lib/member-app/privacy-requests";
 import type { DeviceStatus } from "@/lib/member-app/device-token";
+import type { RenewalReminder } from "@/lib/member-app/renewal";
 import type { ReaderPlace } from "@/lib/reviewer-pdfs/reader";
 import type { AccessPass, CardMark, ContentKind, DeckPosition } from "@/services/content.types";
 import type { PageStamper } from "@/services/page-images.types";
+import type { PaymentEvent, PaymentsClient } from "@/services/payments.types";
 import { databaseArm } from "@/services/member.db";
+import type { InvoiceRequestInput } from "@/services/member.schema";
+import type { RenewalViewer } from "@/services/renewal.core";
 import * as mockImpl from "@/services/member.mock";
 import type {
   ActiveDevice,
@@ -24,9 +28,17 @@ import type {
   LibrarySubject,
   Member,
   MemberNotice,
+  ExpirySweep,
+  InvoiceRequestResult,
+  MemberOrder,
+  PaymentAcknowledgement,
+  PaymentEventResult,
   MemberUser,
   NewTargetExam,
+  PayInput,
+  PayResult,
   PickableExam,
+  PlansExam,
   PrivacyRequest,
   PrivacyRequestOutcome,
   QuizOpening,
@@ -358,6 +370,25 @@ export interface MemberService {
    */
   dismissNotice(userId: string, noticeId: string): Promise<boolean>;
 
+  // Renewal reminders (Phase 4, ticket 12; spec, Phase 4 planning decisions →
+  // Renewal reminders; renewal.core.ts): one banner per Exam whose Access
+  // Pass ends within the next 7 Manila days, on Home and that Exam's study
+  // screens. Each call is scoped to the User id given, and throws for one
+  // that isn't a User id. No email is sent.
+
+  /**
+   * The reminders this Member sees now, soonest end first, each with the
+   * Manila days its end falls before their Exam Date (null on or after it, or
+   * with none). Those they dismissed today are left out, and Staff get none.
+   */
+  listRenewalReminders(userId: string, viewer: RenewalViewer): Promise<RenewalReminder[]>;
+  /**
+   * Dismisses one Exam's reminder for this Member until the next Manila day,
+   * on every device. True when they hold a pass for that Exam; false,
+   * keeping nothing, otherwise.
+   */
+  dismissRenewalReminder(userId: string, examCode: string): Promise<boolean>;
+
   // Privacy Requests (ticket 18; spec, Phase 3 → Privacy Requests; Privacy
   // Policy §14): a Member asks from Account for a copy of their data or for
   // their account to be deleted, and Owners carry it out by hand (ticket 19).
@@ -373,6 +404,114 @@ export interface MemberService {
    * User id that isn't one, and a User with no Member record.
    */
   requestPrivacy(userId: string, type: PrivacyRequestType): Promise<PrivacyRequestOutcome>;
+
+  // Plans (Phase 4, ticket 02; spec, Phase 4 planning decisions → Who buys,
+  // and which Exams; Phase 4 seams → Member seam, extended). Reads only, fresh
+  // each time: an Owner switching a Plan off takes it off the Plans page on
+  // the next request. Buying comes with ticket 03.
+
+  /**
+   * The Plans page's read for this Member: each Exam on the Website with at
+   * least one Plan on sale, in the catalogue's order, with its Plans on sale
+   * shortest first, when the Member's own Access Pass for it ends, and the
+   * Exam Date a Plan would count towards (theirs for a Target Exam, otherwise
+   * the Official Exam Date). Never another Member's pass or date. Throws for
+   * a User id that isn't one.
+   */
+  listMemberPlans(userId: string): Promise<PlansExam[]>;
+  /**
+   * The codes of the Exams on the Website with at least one Plan on sale, in
+   * the catalogue's order: where a lock's "See plans" can lead. The same for
+   * every Member.
+   */
+  listExamsOnSale(): Promise<string[]>;
+
+  // Buying (Phase 4, ticket 03; spec, Phase 4 → Order ledger, Return flow,
+  // References; Phase 4 planning decisions → Paying; orders.core.ts). Each
+  // call is scoped to the User id given: a Member only ever buys for, reads
+  // or checks their own Orders. The payments client is the one this server
+  // has (payments.ts), or null when buying isn't set up.
+
+  /**
+   * Pay: makes a new Pending Order for this Member, every call, with the
+   * Plan's name, days and price as they are now (later changes to the Plan
+   * never touch it), the method and a reference from AYC-10001 upward, then
+   * starts the checkout for it. Gives the reference and where to send the
+   * Member. Refused, making nothing, with no payments client, a method that
+   * isn't one of the four, a Plan that isn't on sale for an Exam on the
+   * Website, and a Plan of another Exam than the one posted. Refused too
+   * when the checkout can't start, leaving the Order Pending. Throws for a
+   * User id that isn't one.
+   */
+  payForPlan(userId: string, input: PayInput, client: PaymentsClient | null): Promise<PayResult>;
+  /** One of this Member's own Orders by its reference; null for anyone else's, or none. */
+  getMemberOrder(userId: string, reference: string): Promise<MemberOrder | null>;
+  /**
+   * Billing (ticket 06): every Order of this Member's, newest first, as at
+   * the read (a Pending Order older than 24 hours reads Expired).
+   */
+  listMemberOrders(userId: string): Promise<MemberOrder[]>;
+  /**
+   * The Payment Acknowledgement of one of this Member's own Paid Orders
+   * (ticket 06): null for anyone else's Order, one that isn't Paid, or none.
+   */
+  getPaymentAcknowledgement(
+    userId: string,
+    reference: string,
+  ): Promise<PaymentAcknowledgement | null>;
+  /**
+   * "Request official invoice" (ticket 08): records the name, address and
+   * TIN to put on the official invoice of one of this Member's own Paid
+   * Orders, once. Refused for anyone else's Order (as not found), one that
+   * isn't Paid, a second request, or a form with a field wrong. No email.
+   */
+  requestInvoice(
+    userId: string,
+    reference: string,
+    input: InvoiceRequestInput,
+  ): Promise<InvoiceRequestResult>;
+  /**
+   * Asks the payments client for a Pending Order's checkout status, applies
+   * a Paid or Failed outcome through the Order ledger, and gives the Order as
+   * it is then. Paid adds its days to the Member's Access Pass, keeps them as
+   * a paid history row, adds the Exam to their Target Exams if it isn't one,
+   * leaves a notice and logs Staff Activity under "PayMongo (system)", all or
+   * nothing, once. With no client, or an Order no longer Pending, it changes
+   * nothing. Null for anyone else's Order, or none.
+   */
+  checkOrderStatus(
+    userId: string,
+    reference: string,
+    client: PaymentsClient | null,
+  ): Promise<MemberOrder | null>;
+  /**
+   * The status-check backup (ticket 04), for the Confirming payment screen:
+   * checkOrderStatus, but asking the payments client at most once every 10
+   * seconds per Order, however many screens or servers poll. A poll inside
+   * that time changes nothing and gives the Order as it is.
+   */
+  pollOrderStatus(
+    userId: string,
+    reference: string,
+    client: PaymentsClient | null,
+  ): Promise<MemberOrder | null>;
+  /**
+   * A verified PayMongo webhook event (ticket 05): applied once, by its id,
+   * to the Order it's about (by its checkout's id, or our id or reference
+   * from the checkout's metadata), through the same ledger as the status
+   * check, and logged in Staff Activity under "PayMongo (system)". Failed and
+   * Expired Orders can still become Paid; a Paid Order never moves back.
+   * "duplicate" for an event applied before, "unknown-order" for one about no
+   * Order of ours (both change nothing).
+   */
+  recordPaymentEvent(event: PaymentEvent): Promise<PaymentEventResult>;
+  /**
+   * The daily sweep (ticket 05): asks the payments client once more about
+   * each Pending Order older than 24 hours, and records it Paid if it says
+   * so, otherwise Expired; one PayMongo can't answer about stays Pending for
+   * the next sweep. Gives the counts.
+   */
+  expireOverdueOrders(client: PaymentsClient | null): Promise<ExpirySweep>;
 }
 
 const impl: MemberService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -409,5 +548,18 @@ export const getProgress = impl.getProgress;
 export const getTopicPercents = impl.getTopicPercents;
 export const listNotices = impl.listNotices;
 export const dismissNotice = impl.dismissNotice;
+export const listRenewalReminders = impl.listRenewalReminders;
+export const dismissRenewalReminder = impl.dismissRenewalReminder;
 export const listOpenPrivacyRequests = impl.listOpenPrivacyRequests;
 export const requestPrivacy = impl.requestPrivacy;
+export const listMemberPlans = impl.listMemberPlans;
+export const listExamsOnSale = impl.listExamsOnSale;
+export const payForPlan = impl.payForPlan;
+export const getMemberOrder = impl.getMemberOrder;
+export const listMemberOrders = impl.listMemberOrders;
+export const getPaymentAcknowledgement = impl.getPaymentAcknowledgement;
+export const requestInvoice = impl.requestInvoice;
+export const checkOrderStatus = impl.checkOrderStatus;
+export const pollOrderStatus = impl.pollOrderStatus;
+export const recordPaymentEvent = impl.recordPaymentEvent;
+export const expireOverdueOrders = impl.expireOverdueOrders;

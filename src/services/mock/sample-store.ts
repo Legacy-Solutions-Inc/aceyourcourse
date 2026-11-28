@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
 import type {
+  AdminPlan,
   BetaTester,
   DeniedSignIn,
   Invite,
@@ -10,6 +11,9 @@ import type {
 } from "@/services/admin.types";
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
 import type { CardImageType } from "@/lib/cards/card-rules";
+import type { InvoiceRequest } from "@/lib/payments/invoice-requests";
+import { FIRST_REFERENCE_NUMBER, type Order } from "@/lib/payments/order-ledger";
+import type { OrderRefund } from "@/lib/payments/refunds";
 import type {
   AccessPass,
   AccessPassGrant,
@@ -37,7 +41,9 @@ import type {
 } from "@/services/member.types";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { sampleContent } from "@/services/mock/content";
-import { sampleAccessPasses, sampleBetaTesters } from "@/services/mock/members";
+import { sampleAccessPasses, sampleAgreements, sampleBetaTesters } from "@/services/mock/members";
+import { sampleOrders } from "@/services/mock/orders";
+import { samplePlans } from "@/services/mock/plans";
 import { sampleStaff } from "@/services/mock/staff";
 import type {
   ContentUploadPurpose,
@@ -102,6 +108,16 @@ export interface SamplePrivacyRequest extends Omit<PrivacyRequest, "userId"> {
   doneBy: { email: string; name: string } | null;
   /** The User id a deletion removed the Member data of, or null before one has. */
   deletedUserId: string | null;
+}
+
+/** A Member's latest dismissal of one Exam's renewal reminder (ticket 12), as the database row is. */
+export interface SampleRenewalDismissal {
+  userId: string;
+  examCode: string;
+  /** The Manila day (YYYY-MM-DD) it holds for. */
+  day: string;
+  /** ISO time it was made. */
+  dismissedAt: string;
 }
 
 /** A Member's Active Device record in the sample data. */
@@ -174,8 +190,26 @@ export interface SampleStore {
   accessPassGrants: AccessPassGrant[];
   /** Every Member's in-app notices, in the order made (ticket 17): grants, extensions and ends. */
   memberNotices: MemberNotice[];
+  /** Each Member's latest dismissal of each Exam's renewal reminder (Phase 4, ticket 12). */
+  renewalDismissals: SampleRenewalDismissal[];
   /** Every Member's Privacy Requests, open and done, in the order asked (ticket 18). */
   privacyRequests: SamplePrivacyRequest[];
+  /** The Plans for sale in the Member App, each with its last save (Phase 4, ticket 01). */
+  plans: AdminPlan[];
+  /** Every Order, in the order made (Phase 4, ticket 03). */
+  orders: Order[];
+  /** The number the next Order's reference carries: "AYC-10001" first, like order_reference_seq. */
+  nextOrderNumber: number;
+  /** Each Order's internal note, which only Staff see, by Order id (ticket 07). */
+  orderNotes: Record<string, string>;
+  /** The Invoice Requests, one per Order at most, in the order asked (ticket 08). */
+  invoiceRequests: InvoiceRequest[];
+  /** When each Order's status was last asked of the payments client, by Order id (ticket 04's backup). */
+  orderStatusCheckedAt: Record<string, string>;
+  /** PayMongo's refunds of Orders, one per refund id, in the order first recorded (ticket 09). */
+  orderRefunds: OrderRefund[];
+  /** The PayMongo webhook events already applied, in the order received (ticket 05). */
+  paymentEvents: { eventId: string; type: string; orderId: string | null; receivedAt: string }[];
   /** The upload seam's files, by upload id. */
   uploads: Record<string, SampleUpload>;
   /** The private content bucket's files, by path (ticket 06): card back images. */
@@ -195,7 +229,32 @@ export interface SampleStore {
 const STORE = Symbol.for("aceyourcourse.admin.sample-store");
 const holder = globalThis as typeof globalThis & { [STORE]?: SampleStore };
 
-function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
+/** How the sample data starts. */
+export interface SampleStoreOptions {
+  /**
+   * With the sample Orders (ticket 07): the dev server's data and the e2e
+   * specs' reset have them; unit tests start without, unless they ask.
+   */
+  sampleOrders?: boolean;
+  /**
+   * With the sample agreements (Phase 4, ticket 13): the renewing tester as
+   * a Member who agreed to Legal v2.0. The dev server's data and the e2e
+   * specs' reset have them; unit tests start without, unless they ask.
+   */
+  sampleAgreements?: boolean;
+}
+
+/** How the dev server, and the e2e specs' reset, start the sample data. */
+export const DEV_SAMPLE_DATA: SampleStoreOptions = { sampleOrders: true, sampleAgreements: true };
+
+function createSampleStore(
+  now: Date,
+  seed: CatalogueSeed,
+  {
+    sampleOrders: withOrders = false,
+    sampleAgreements: withAgreements = false,
+  }: SampleStoreOptions = {},
+): SampleStore {
   const validation = validateCatalogueSeed(seed);
   if (!validation.success) {
     throw new Error(`Invalid catalogue seed — ${validation.errors.join("; ")}`);
@@ -210,8 +269,7 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     deniedSignIns: [],
     staffActivity: [],
     betaTesters: sampleBetaTesters(now),
-    members: [],
-    memberConsents: [],
+    ...(withAgreements ? sampleAgreements(now) : { members: [], memberConsents: [] }),
     memberTargetExams: {},
     selectedExams: {},
     memberActiveDevices: {},
@@ -227,7 +285,23 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
     readerPositions: [],
     ...sampleAccessPasses(now, catalogue),
     memberNotices: [],
+    renewalDismissals: [],
     privacyRequests: [],
+    plans: samplePlans(catalogue).map((plan) => ({
+      ...plan,
+      stamp: { savedAt: now.toISOString(), savedBy: null },
+    })),
+    ...(withOrders
+      ? sampleOrders(now, catalogue)
+      : {
+          orders: [],
+          nextOrderNumber: FIRST_REFERENCE_NUMBER,
+          invoiceRequests: [],
+          orderRefunds: [],
+        }),
+    orderNotes: {},
+    orderStatusCheckedAt: {},
+    paymentEvents: [],
     reviewerPdfUploads: {},
     reviewerPdfFiles: {},
     uploads: {},
@@ -239,9 +313,15 @@ function createSampleStore(now: Date, seed: CatalogueSeed): SampleStore {
 /** A store standing in for the sample data, while withStandInStore runs. */
 const standIn = new AsyncLocalStorage<SampleStore>();
 
-/** The sample data, made from the seed on first use (or the stand-in store, inside withStandInStore). */
+/**
+ * The sample data, made from the seed on first use, with the sample Orders and
+ * agreements as the dev server shows them (or the stand-in store, inside withStandInStore).
+ */
 export function getSampleStore(): SampleStore {
-  return standIn.getStore() ?? (holder[STORE] ??= createSampleStore(new Date(), CATALOGUE_SEED));
+  return (
+    standIn.getStore() ??
+    (holder[STORE] ??= createSampleStore(new Date(), CATALOGUE_SEED, DEV_SAMPLE_DATA))
+  );
 }
 
 /**
@@ -257,10 +337,14 @@ export function withStandInStore<T>(store: SampleStore, work: () => Promise<T>):
 
 /**
  * Starts the sample data again, timed from now: from the seed, or from an
- * edited copy of it (tests). Throws when that seed fails validation.
+ * edited copy of it (tests). Without the sample Orders unless asked for: the
+ * dev reset asks (restoreSampleData). Throws when that seed fails validation.
  */
-export function resetSampleStore(seed: CatalogueSeed = CATALOGUE_SEED): SampleStore {
-  holder[STORE] = createSampleStore(new Date(), seed);
+export function resetSampleStore(
+  seed: CatalogueSeed = CATALOGUE_SEED,
+  options: SampleStoreOptions = {},
+): SampleStore {
+  holder[STORE] = createSampleStore(new Date(), seed, options);
   return holder[STORE];
 }
 

@@ -1,4 +1,5 @@
 import { isDatabaseConfigured } from "@/env.server";
+import type { InvoiceRequest } from "@/lib/payments/invoice-requests";
 import { databaseArm } from "@/services/admin.db";
 import * as mockImpl from "@/services/admin.mock";
 import type {
@@ -28,6 +29,8 @@ import type {
   NewCardForm,
   NewTopicForm,
   OfficialExamDateForm,
+  OrderNoteInput,
+  PlanForm,
   QuestionForm,
   QuizSettingsForm,
   PrivacyRequestInput,
@@ -55,7 +58,15 @@ import type {
   AdminFaq,
   AdminFaqList,
   AdminMemberDetail,
+  AdminOrderDetail,
+  AdminOrderList,
+  AdminOrderNote,
   AdminOverview,
+  PaidToday,
+  StaffActivityList,
+  StaffActivityQuery,
+  AdminPlan,
+  AdminPlans,
   AdminPrivacyRequest,
   AdminPrivacyRequestDetail,
   AdminProduct,
@@ -91,6 +102,10 @@ import type {
   FaqListQuery,
   ForcedSignOut,
   MemberDataFile,
+  OrderListQuery,
+  OrdersCsv,
+  OrderStatusCheck,
+  Plan,
   Invite,
   ProductDeletePreview,
   ProductListQuery,
@@ -106,6 +121,7 @@ import type {
 import type { Topic } from "@/services/content.types";
 import type { AuthAdmin } from "@/services/auth-admin.types";
 import type { PdfRenderer } from "@/services/page-images.types";
+import type { PaymentsClient } from "@/services/payments.types";
 import type { Exam, ExamPageSection, SitePageKey } from "@/services/catalogue.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -322,9 +338,13 @@ export interface AdminService {
   /**
    * The Overview's read (any Staff User): every Product, the Exams, the Exam
    * page records, the shop pages, the trust figures and the promo banner, read fresh, so a fix made
-   * elsewhere shows on the next load.
+   * elsewhere shows on the next load. For an Owner it adds the sales figures,
+   * the Member figures and the payment work waiting (Phase 4, ticket 11);
+   * an Editor gets none of them (`sales` is null).
    */
   getOverview(actor: StaffActor): Promise<AdminOverview>;
+  /** The sidebar's "PAID TODAY" card (ticket 11): an Owner's; null for an Editor. */
+  getPaidToday(actor: StaffActor): Promise<PaidToday | null>;
 
   /** Settings: the contact email, shop and social links and trust figures, with their stamp. */
   getSettingsForAdmin(): Promise<AdminWebsiteSettings>;
@@ -1018,6 +1038,112 @@ export interface AdminService {
     input: AnnouncementForm,
     expected?: { savedAt: string },
   ): Promise<AdminResult<AdminAnnouncement>>;
+
+  // Plans & prices (Owners only; Phase 4, ticket 01; stories 145, 146, 151p,
+  // 151q and 151r): what the Member App sells. Each Plan has an Exam, a name,
+  // 30, 90, 180 or 365 days, a price in whole pesos (₱1–₱99,999), Best value
+  // and On sale. At most one Best value per Exam (saving one clears the
+  // others, in the same write) and one on sale per Exam and duration. Every
+  // read and write refuses an Editor. Each write appends one Staff Activity
+  // record per Plan it changed; nothing here touches an Access Pass or the
+  // Website, so no tag is cleared.
+
+  /** Every Plan, by Exam, duration and name, with the catalogue's Exams. */
+  listPlansForAdmin(actor: StaffActor): Promise<AdminResult<AdminPlans>>;
+  /** "Add plan": a new Plan. Refused for an Exam not in the catalogue, or a second on sale. */
+  createPlan(actor: StaffActor, input: PlanForm): Promise<AdminResult<AdminPlan>>;
+  /** "Save": a Plan's fields, against its stamp when the editor opened (the conflict check). */
+  updatePlan(
+    actor: StaffActor,
+    id: string,
+    input: PlanForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminPlan>>;
+  /**
+   * The On sale switch: always saves, with no conflict check, but moves the
+   * Plan's stamp on, so an editor opened before it conflicts rather than
+   * switching it back. Off hides the Plan from Members; Access Passes stay.
+   */
+  setPlanOnSale(actor: StaffActor, id: string, onSale: boolean): Promise<AdminResult<AdminPlan>>;
+  /** Deletes a Plan that has never had an Order; one that has is refused (switch it off instead). */
+  deletePlan(actor: StaffActor, id: string): Promise<AdminResult<Plan>>;
+
+  // Orders & payments (Owners only; Phase 4, ticket 07; stories 147, 148,
+  // 151o and 151z): every Order, its detail, and the CSV for the accountant.
+  // Every read and write refuses an Editor. An Order's status reads as every
+  // screen shows it (a Pending Order past its 24 hours is Expired). Nothing
+  // here touches the Website, so no tag is cleared. Refunds are issued from
+  // the PayMongo dashboard, never here.
+
+  /**
+   * The Orders list: the Orders the search (part of a reference or an email)
+   * and filters (status, Payment Method, a range of Manila days, Test Orders
+   * only when included) match, newest first, with the tiles: the Paid ones'
+   * amounts, and the Orders, Pending and Failed.
+   */
+  listOrdersForAdmin(
+    actor: StaffActor,
+    query: OrderListQuery,
+  ): Promise<AdminResult<AdminOrderList>>;
+  /**
+   * One Order's detail page: the Order, its buyer's User id while their Member
+   * record is there, and its internal note with its stamp. A reference no
+   * Order has, or that isn't a reference, is not-found.
+   */
+  getOrderForAdmin(actor: StaffActor, reference: string): Promise<AdminResult<AdminOrderDetail>>;
+  /**
+   * "Save note": an Order's internal note, which only Staff see, trimmed (a
+   * blank one clears it), at most 2,000 characters, with the conflict check
+   * against the stamp the page opened with. Appends Staff Activity.
+   */
+  saveOrderNote(
+    actor: StaffActor,
+    input: OrderNoteInput,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminOrderNote>>;
+  /**
+   * "Check status with PayMongo": the status-check backup's own check, with
+   * `client`, on an Order recorded Pending (one past its 24 hours too); Paid
+   * or Failed lands through the Order ledger, as the webhook's would. Any
+   * other Order is answered "not-pending", asking nothing. Refused when the
+   * server has no payments client.
+   */
+  checkOrderWithPayMongo(
+    actor: StaffActor,
+    reference: string,
+    client: PaymentsClient | null,
+  ): Promise<AdminResult<OrderStatusCheck>>;
+  /**
+   * "Mark invoice sent" (ticket 08): records that the official invoice an
+   * Order's Invoice Request asked for was sent from the support inbox, when
+   * and by whom, with Staff Activity. A request already marked sent is given
+   * back as it is, changing and logging nothing. Refused for an Order with
+   * no request. No email is sent.
+   */
+  markInvoiceSent(actor: StaffActor, reference: string): Promise<AdminResult<InvoiceRequest>>;
+  /**
+   * The CSV export: exactly the Orders the list's query matches, in its
+   * order, with a header row always, and each Order's Invoice Request;
+   * logged in Staff Activity.
+   */
+  exportOrdersCsv(actor: StaffActor, query: OrderListQuery): Promise<AdminResult<OrdersCsv>>;
+
+  // Staff Activity (Owners only; Phase 4, ticket 15; spec, Phase 4 → Orders
+  // Admin): the permanent record of every Admin write and of PayMongo's
+  // outcomes ("PayMongo (system)"). Read-only: the seam has no way to change
+  // or delete a record, and reading records nothing. Refuses an Editor, since
+  // the values can hold personal data.
+
+  /**
+   * One page of the records the filters match (who made them, by the email
+   * recorded; the area), newest first, 50 to a page, older pages by the
+   * cursor (the last record's seq), so records added meanwhile are never
+   * repeated or skipped; with every actor and entity recorded, for the filters.
+   */
+  listStaffActivity(
+    actor: StaffActor,
+    query: StaffActivityQuery,
+  ): Promise<AdminResult<StaffActivityList>>;
 }
 
 const impl: AdminService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -1048,6 +1174,7 @@ export const exportMemberData = impl.exportMemberData;
 export const deleteMemberAccount = impl.deleteMemberAccount;
 export const markPrivacyRequestDone = impl.markPrivacyRequestDone;
 export const getOverview = impl.getOverview;
+export const getPaidToday = impl.getPaidToday;
 export const getSettingsForAdmin = impl.getSettingsForAdmin;
 export const updateWebsiteSettings = impl.updateWebsiteSettings;
 export const listProductsForAdmin = impl.listProductsForAdmin;
@@ -1128,3 +1255,15 @@ export const updatePromoBanner = impl.updatePromoBanner;
 export const setPromoBannerVisible = impl.setPromoBannerVisible;
 export const getAnnouncementForAdmin = impl.getAnnouncementForAdmin;
 export const updateAnnouncement = impl.updateAnnouncement;
+export const listPlansForAdmin = impl.listPlansForAdmin;
+export const createPlan = impl.createPlan;
+export const updatePlan = impl.updatePlan;
+export const setPlanOnSale = impl.setPlanOnSale;
+export const deletePlan = impl.deletePlan;
+export const listOrdersForAdmin = impl.listOrdersForAdmin;
+export const getOrderForAdmin = impl.getOrderForAdmin;
+export const saveOrderNote = impl.saveOrderNote;
+export const checkOrderWithPayMongo = impl.checkOrderWithPayMongo;
+export const markInvoiceSent = impl.markInvoiceSent;
+export const exportOrdersCsv = impl.exportOrdersCsv;
+export const listStaffActivity = impl.listStaffActivity;

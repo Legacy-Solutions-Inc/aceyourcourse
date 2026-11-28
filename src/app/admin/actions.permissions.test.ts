@@ -19,6 +19,7 @@ import { reviewFormValues } from "@/lib/admin/review-form";
 import { getExamPageForAdmin, planCardImport, planQuizImport } from "@/services/admin";
 import { claimDevice, getOrCreateMember, requestPrivacy } from "@/services/member.mock";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
+import { samplePlanId } from "@/services/mock/plans";
 import { getSampleStore } from "@/services/mock/sample-store";
 
 import {
@@ -45,6 +46,8 @@ import * as products from "./(shell)/products/actions";
 import * as reviews from "./(shell)/reviews/actions";
 import * as settings from "./(shell)/settings/actions";
 import * as users from "./(shell)/users/actions";
+import * as plans from "./(shell)/plans/actions";
+import * as orders from "./(shell)/orders/actions";
 import * as root from "./actions";
 import * as signIn from "./sign-in/actions";
 
@@ -133,12 +136,23 @@ const BEA = {
   email: "tester@example.com",
   name: "Bea Tester",
 };
+/** Bea's Pending Order, which an Owner may note and check with PayMongo (ticket 07). */
+const BEA_ORDER = "AYC-10001";
 /**
  * Bea's phone's token hash, as the Member App stores it. A literal: nothing in
  * the Admin uses the Active Device modules (src/app/app/device.test.tsx).
  */
 const BEA_PHONE = "b".repeat(64);
-/** Bea's Privacy Requests, made before each test: a data copy, and a deletion (ticket 19). */
+/**
+ * Lou, a second Member, with no Orders: Bea's Pending Order would block
+ * deleting her account (ticket 14), and only the Guard is under test here.
+ */
+const LOU = {
+  userId: "5e1d3c7b-9a2f-4e6d-8c1b-3a5f7e9d2c4b",
+  email: "lapsed@example.com",
+  name: "Lou Lapsed",
+};
+/** The Privacy Requests made before each test: Bea's data copy, and Lou's deletion (ticket 19). */
 const requests = { copy: "", deletion: "" };
 
 const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
@@ -231,6 +245,9 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     saveTrustFigures: editorSave("owner", settings.saveTrustFigures, () => ({
       shopStats: { rating: "4.9", ratingCount: "900", followers: "3.8K" },
     })),
+    saveBusinessDetails: editorSave("owner", settings.saveBusinessDetails, () => ({
+      business: { name: "Ace Your Course", address: "", tin: "", vatRegistered: false },
+    })),
     addInvite: owner(() => settings.addInvite(IDLE, { input: SAVES.invite })),
     renewStaffInvite: owner(() =>
       settings.renewStaffInvite(IDLE, { input: { email: sampleEmail("expired") } }),
@@ -266,11 +283,51 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     ),
     deleteAccount: owner(() =>
       users.deleteAccount(IDLE, {
-        input: { requestId: requests.deletion, confirmation: BEA.email },
+        input: { requestId: requests.deletion, confirmation: LOU.email },
       }),
     ),
     markRequestDone: owner(() =>
       users.markRequestDone(IDLE, { input: { requestId: requests.copy } }),
+    ),
+  },
+  // Plans & prices (Phase 4, ticket 01).
+  "./(shell)/plans/actions.ts": {
+    addPlan: owner(() =>
+      plans.addPlan(IDLE, {
+        input: {
+          name: "CE All-Access",
+          examCode: "CE",
+          days: "365",
+          price: "3,999",
+          bestValue: false,
+          onSale: false,
+        },
+      }),
+    ),
+    savePlan: editorSave("owner", plans.savePlan, () => ({
+      id: samplePlanId("CE", 30),
+      name: "CE All-Access",
+      examCode: "CE",
+      days: "30",
+      price: "549",
+      bestValue: false,
+      onSale: true,
+    })),
+    switchPlanOnSale: owner(() =>
+      plans.switchPlanOnSale(IDLE, { input: { id: samplePlanId("CE", 30), onSale: false } }),
+    ),
+    removePlan: owner(() => plans.removePlan(IDLE, { input: { id: samplePlanId("CE", 180) } })),
+  },
+  // Orders & payments (Phase 4, ticket 07).
+  "./(shell)/orders/actions.ts": {
+    saveNote: editorSave("owner", orders.saveNote, () => ({
+      reference: BEA_ORDER,
+      note: "Asked about Maya",
+    })),
+    checkStatus: owner(() => orders.checkStatus(IDLE, { input: { reference: BEA_ORDER } })),
+    // Ticket 08: "Mark invoice sent" on the Order's Invoice Request.
+    markInvoiceSentAction: owner(() =>
+      orders.markInvoiceSentAction(IDLE, { input: { reference: BEA_ORDER } }),
     ),
   },
   "./(shell)/content/actions.ts": {
@@ -596,9 +653,47 @@ beforeEach(async () => {
       endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     },
   ];
-  // Bea asks, from Account, for a copy of her data and for her account to be deleted.
+  // Bea's Pending Order, made at boot, so its note's stamp is the one opened() gives (ticket 07).
+  store.orders = [
+    ...store.orders,
+    {
+      id: "00000000-0000-4000-8000-000000010001",
+      reference: BEA_ORDER,
+      userId: BEA.userId,
+      examCode: "CE",
+      planId: samplePlanId("CE", 30),
+      planName: "CE All-Access",
+      days: 30,
+      priceCentavos: 49_900,
+      method: "maya",
+      status: "pending",
+      livemode: false,
+      checkoutId: null,
+      paymentId: null,
+      buyerName: BEA.name,
+      buyerEmail: BEA.email,
+      createdAt: store.bootedAt,
+      paidAt: null,
+      statusChangedAt: store.bootedAt,
+      paidWithoutAccount: false,
+    },
+  ];
+  // An Invoice Request on it, for "Mark invoice sent" (ticket 08); only the Guard is under test here.
+  store.invoiceRequests = [
+    {
+      orderId: "00000000-0000-4000-8000-000000010001",
+      name: BEA.name,
+      address: "Jaro, Iloilo City",
+      tin: null,
+      requestedAt: store.bootedAt,
+      sentAt: null,
+      sentBy: null,
+    },
+  ];
+  // Bea asks, from Account, for a copy of her data, and Lou for her account to be deleted.
+  await getOrCreateMember(LOU);
   requests.copy = (await requestPrivacy(BEA.userId, "data-copy")).request.id;
-  requests.deletion = (await requestPrivacy(BEA.userId, "deletion")).request.id;
+  requests.deletion = (await requestPrivacy(LOU.userId, "deletion")).request.id;
 });
 
 describe("the action registry", () => {

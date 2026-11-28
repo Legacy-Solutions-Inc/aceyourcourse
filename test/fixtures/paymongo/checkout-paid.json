@@ -1,0 +1,111 @@
+{
+  "data": {
+    "id": "cs_FakeCreated0001TestOnly",
+    "type": "checkout_session",
+    "attributes": {
+      "billing": null,
+      "cancel_url": "https://aceyourcourse.example/app/plans?exam=CE&payment=cancelled",
+      "checkout_url": "https://checkout.paymongo.com/cs_FakeCreated0001TestOnly#ZmFrZS1wdWJsaWMta2V5",
+      "client_key": "cs_FakeCreated0001TestOnly_client_FakeClientKey0001",
+      "description": "CE All-Access · 3 months",
+      "line_items": [
+        {
+          "amount": 129900,
+          "currency": "PHP",
+          "description": "CE All-Access · 3 months",
+          "images": [],
+          "name": "CE All-Access · 3 months",
+          "quantity": 1
+        }
+      ],
+      "livemode": false,
+      "merchant": "Ace Your Course",
+      "payments": [
+        {
+          "id": "pay_FakeFailed0001TestOnly",
+          "type": "payment",
+          "attributes": {
+            "amount": 129900,
+            "currency": "PHP",
+            "livemode": false,
+            "payment_intent_id": "pi_FakeIntent0001TestOnly",
+            "source": {
+              "id": "src_FakeSource0001",
+              "type": "gcash"
+            },
+            "status": "failed",
+            "created_at": 1763351000,
+            "paid_at": null,
+            "updated_at": 1763351000
+          }
+        },
+        {
+          "id": "pay_FakePaid0001TestOnly",
+          "type": "payment",
+          "attributes": {
+            "amount": 129900,
+            "currency": "PHP",
+            "fee": 2858,
+            "net_amount": 127042,
+            "livemode": false,
+            "payment_intent_id": "pi_FakeIntent0001TestOnly",
+            "source": {
+              "id": "src_FakeSource0002",
+              "type": "gcash"
+            },
+            "status": "paid",
+            "created_at": 1763351100,
+            "paid_at": 1763351102,
+            "updated_at": 1763351102
+          }
+        }
+      ],
+      "payment_intent": {
+        "id": "pi_FakeIntent0001TestOnly",
+        "type": "payment_intent",
+        "attributes": {
+          "amount": 129900,
+          "currency": "PHP",
+          "livemode": false,
+          "status": "succeeded",
+          "payment_method_allowed": ["gcash"],
+          "payments": [
+            {
+              "id": "pay_FakePaid0001TestOnly",
+              "type": "payment",
+              "attributes": {
+                "amount": 129900,
+                "currency": "PHP",
+                "fee": 2858,
+                "net_amount": 127042,
+                "livemode": false,
+                "payment_intent_id": "pi_FakeIntent0001TestOnly",
+                "source": {
+                  "id": "src_FakeSource0002",
+                  "type": "gcash"
+                },
+                "status": "paid",
+                "created_at": 1763351100,
+                "paid_at": 1763351102,
+                "updated_at": 1763351102
+              }
+            }
+          ]
+        }
+      },
+      "payment_method_types": ["gcash"],
+      "reference_number": "AYC-10001",
+      "send_email_receipt": true,
+      "show_description": true,
+      "show_line_items": true,
+      "status": "active",
+      "success_url": "https://aceyourcourse.example/app/plans/orders/AYC-10001",
+      "created_at": 1763350920,
+      "updated_at": 1763351102,
+      "metadata": {
+        "order_id": "0b6a3f1e-2c4d-4e5f-8a9b-1c2d3e4f5a6b",
+        "reference": "AYC-10001"
+      }
+    }
+  }
+}

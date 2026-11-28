@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CatalogueSeed } from "@/services/catalogue.schema";
-import { resetSampleStore } from "@/services/mock/sample-store";
+import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { editSampleCatalogue } from "../../../../../test/catalogue-seed";
 
@@ -581,7 +581,7 @@ describe("Exam page", () => {
     it("while off, shows no app link, app plans or In-the-app column, and links nowhere in the app", async () => {
       const { container } = await renderPage("ce");
       expect(screen.queryByRole("link", { name: "Review CE in the app" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("link", { name: /app plans/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /plans$/ })).not.toBeInTheDocument();
       expect(screen.queryByText(/The app works the same way/)).not.toBeInTheDocument();
       expect(
         within(compareTable() ?? document.body).queryByRole("columnheader", { name: "In the app" }),
@@ -595,15 +595,28 @@ describe("Exam page", () => {
         "href",
         "/app",
       );
-      expect(screen.getByRole("link", { name: "See CE app plans" })).toHaveAttribute(
+      expect(screen.getByRole("link", { name: "See CE plans" })).toHaveAttribute(
         "href",
-        "/app/plans",
+        "/app/plans?exam=CE",
       );
       expect(screen.getByText(/The app works the same way/)).toBeInTheDocument();
       const table = within(compareTable() ?? document.body);
       expect(table.getByRole("columnheader", { name: "In the app" })).toBeInTheDocument();
       expect(table.getAllByRole("row")[1]).toHaveTextContent("Yes");
       expect(table.getAllByRole("row")[2]).toHaveTextContent("Physical only");
+    });
+
+    it("while on, hides See plans for an Exam with no Plan on sale, keeping the app link", async () => {
+      const page = await loadPage({ memberAppLive: true });
+      const store = getSampleStore();
+      store.plans = store.plans.map((plan) =>
+        plan.examCode === "CE" ? { ...plan, onSale: false } : plan,
+      );
+      render(await page.default(props("ce")));
+
+      expect(screen.getByRole("link", { name: "Review CE in the app" })).toBeInTheDocument();
+      expect(screen.getByText(/The app works the same way/)).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "See CE plans" })).not.toBeInTheDocument();
     });
 
     it("while on, still hides the app links for an Exam with nothing in the app", async () => {
@@ -614,7 +627,7 @@ describe("Exam page", () => {
         },
       });
       expect(screen.queryByRole("link", { name: "Review CE in the app" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("link", { name: /app plans/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /plans$/ })).not.toBeInTheDocument();
     });
   });
 

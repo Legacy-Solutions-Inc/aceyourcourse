@@ -10,6 +10,8 @@ import ProductsPage from "./products/page";
 import ReviewsPage from "./reviews/page";
 import SettingsPage from "./settings/page";
 import UsersPage from "./users/page";
+import PlansPage from "./plans/page";
+import OrdersPage from "./orders/page";
 
 // Every signed-in screen calls the Staff Guard itself, with its own address
 // for `next`, because the shell layout doesn't re-render between screens. The
@@ -56,6 +58,18 @@ const SCREENS = [
     "WEBSITE",
   ],
   ["Users", () => UsersPage({ searchParams: Promise.resolve({}) }), "/admin/users", "MEMBER APP"],
+  [
+    "Plans & prices",
+    () => PlansPage({ searchParams: Promise.resolve({}) }),
+    "/admin/plans",
+    "SALES",
+  ],
+  [
+    "Orders & payments",
+    () => OrdersPage({ searchParams: Promise.resolve({}) }),
+    "/admin/orders",
+    "SALES",
+  ],
   ["Settings", SettingsPage, "/admin/settings", "SETTINGS"],
 ] as const;
 
@@ -98,7 +112,7 @@ describe("Admin screens", () => {
     },
   );
 
-  it("shows the Owner Settings' four parts with the sample data's values", async () => {
+  it("shows the Owner Settings' five parts with the sample data's values, and the way to Staff Activity", async () => {
     signInAs("angel@aceyourcourse.ph");
     render(await SettingsPage());
     expect(screen.getByLabelText("EMAIL ADDRESS")).toHaveValue("aceyourcourseinc@gmail.com");
@@ -107,7 +121,19 @@ describe("Admin screens", () => {
     expect(screen.getByText("NOT CHANGED IN THE ADMIN YET")).toBeInTheDocument();
     expect(
       screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent),
-    ).toEqual(["CONTACT EMAIL", "TRUST FIGURES", "STORE & SOCIAL LINKS", "ADMIN ACCOUNTS"]);
+    ).toEqual([
+      "CONTACT EMAIL",
+      "TRUST FIGURES",
+      "BUSINESS DETAILS",
+      "STORE & SOCIAL LINKS",
+      "ADMIN ACCOUNTS",
+      "STAFF ACTIVITY",
+    ]);
+    expect(screen.getByLabelText("BUSINESS NAME")).toHaveValue("Ace Your Course");
+    expect(screen.getByRole("link", { name: "Open Staff Activity" })).toHaveAttribute(
+      "href",
+      "/admin/settings/activity",
+    );
   });
 
   it("lists the sample staff list in ADMIN ACCOUNTS, with the Owner's own row first", async () => {
@@ -150,11 +176,12 @@ describe("Admin screens", () => {
     );
     const list = screen.getByRole("list", { name: "Beta Testers" });
     const rows = within(list).getAllByRole("listitem");
-    expect(rows).toHaveLength(2);
+    expect(rows).toHaveLength(3);
     expect(rows[0]).toHaveTextContent(
       /^tester@example\.comADDED \d{1,2} [A-Z]{3} \d{4} · BY ANGEL ROSE L\. LEPAÑA/,
     );
     expect(rows[1]).toHaveTextContent(/^lapsed@example\.com/);
+    expect(rows[2]).toHaveTextContent(/^renewing@example\.com/);
   });
 
   it.each(SCREENS.slice(0, 4))("%s is open to an Editor", async (title, Page) => {
@@ -181,12 +208,17 @@ describe("Admin shell layout", () => {
     resetSampleStore();
   });
 
-  it("puts an Owner's screen inside the sidebar, with all seven screens", async () => {
+  it("puts an Owner's screen inside the sidebar, with all nine screens", async () => {
     signInAs("angel@aceyourcourse.ph");
     render(await AdminShellLayout({ children: <p>Screen</p> }));
     const sidebar = screen.getByRole("complementary");
+    // Above the menu, the PAID TODAY card (Phase 4, ticket 11; layout.test.tsx).
+    expect(within(sidebar).getByRole("link", { name: /^PAID TODAY/ })).toHaveAttribute(
+      "href",
+      "/admin/orders",
+    );
     expect(
-      within(sidebar)
+      within(within(sidebar).getByRole("navigation", { name: "Admin" }))
         .getAllByRole("link")
         .map((link) => link.textContent),
     ).toEqual([
@@ -196,7 +228,9 @@ describe("Admin shell layout", () => {
       "04Reviews & FAQs",
       "05Member App content",
       "06Users",
-      "07Settings",
+      "07Plans & prices",
+      "08Orders & payments",
+      "09Settings",
       "View site ↗",
     ]);
     expect(within(sidebar).getByText("OWNER")).toBeInTheDocument();
@@ -204,12 +238,14 @@ describe("Admin shell layout", () => {
     expect(screen.getByRole("button", { name: "Menu" })).toBeInTheDocument();
   });
 
-  it("leaves Users and Settings out of an Editor's sidebar", async () => {
+  it("leaves Users, Plans & prices and Settings, and the SALES group, out of an Editor's sidebar", async () => {
     signInAs("content@aceyourcourse.ph");
     render(await AdminShellLayout({ children: <p>Screen</p> }));
     const sidebar = screen.getByRole("complementary");
     expect(within(sidebar).queryByRole("link", { name: "Settings" })).not.toBeInTheDocument();
     expect(within(sidebar).queryByRole("link", { name: "Users" })).not.toBeInTheDocument();
+    expect(within(sidebar).queryByRole("link", { name: /Plans & prices/ })).not.toBeInTheDocument();
+    expect(within(sidebar).queryByText("SALES")).not.toBeInTheDocument();
     expect(within(sidebar).getByText("EDITOR")).toBeInTheDocument();
   });
 

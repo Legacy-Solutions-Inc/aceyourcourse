@@ -22,11 +22,15 @@ const LOCAL = {
   PLAYWRIGHT_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_local",
   PLAYWRIGHT_SUPABASE_SECRET_KEY: "sb_secret_local",
 };
+// PayMongo's keys too (Phase 4, ticket 04): a key in .env never reaches an
+// e2e run, which buys with the payments fake (sample mode) or not at all.
+const NO_PAYMONGO = { PAYMONGO_SECRET_KEY: "", PAYMONGO_WEBHOOK_SECRET: "" };
 const BLANKED = {
   DATABASE_URL: "",
   NEXT_PUBLIC_SUPABASE_URL: "",
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "",
   SUPABASE_SECRET_KEY: "",
+  ...NO_PAYMONGO,
 };
 
 describe("e2eServerEnv", () => {
@@ -40,6 +44,8 @@ describe("e2eServerEnv", () => {
         "postgresql://postgres.abc:pw@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres",
       NEXT_PUBLIC_SUPABASE_URL: "https://abc.supabase.co",
       SUPABASE_SECRET_KEY: "sb_secret_hosted",
+      PAYMONGO_SECRET_KEY: "sk_test_Ab12Cd34Ef56Gh78",
+      PAYMONGO_WEBHOOK_SECRET: "whsk_Ab12Cd34Ef56Gh78",
     };
     expect(e2eServerEnv(shell)).toEqual({ mode: "sample", env: BLANKED });
   });
@@ -52,8 +58,14 @@ describe("e2eServerEnv", () => {
         NEXT_PUBLIC_SUPABASE_URL: LOCAL.PLAYWRIGHT_SUPABASE_URL,
         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: LOCAL.PLAYWRIGHT_SUPABASE_PUBLISHABLE_KEY,
         SUPABASE_SECRET_KEY: LOCAL.PLAYWRIGHT_SUPABASE_SECRET_KEY,
+        ...NO_PAYMONGO,
       },
     });
+  });
+
+  it("blanks PayMongo's keys on a live run too", () => {
+    const { env } = e2eServerEnv({ ...LOCAL, PAYMONGO_SECRET_KEY: "sk_live_Ab12Cd34Ef56Gh78" });
+    expect(env).toMatchObject(NO_PAYMONGO);
   });
 
   it.each([
@@ -103,6 +115,8 @@ describe("the blanked values on the e2e server", () => {
         "NEXT_PUBLIC_SUPABASE_URL=https://abc.supabase.co",
         "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_hosted",
         "SUPABASE_SECRET_KEY=sb_secret_hosted",
+        "PAYMONGO_SECRET_KEY=sk_test_Ab12Cd34Ef56Gh78",
+        "PAYMONGO_WEBHOOK_SECRET=whsk_Ab12Cd34Ef56Gh78",
       ].join("\n"),
     );
     Object.assign(process.env, e2eServerEnv({}).env);
@@ -125,6 +139,8 @@ describe("the blanked values on the e2e server", () => {
     expect(parseServerEnv(env)).toMatchObject({
       DATABASE_URL: undefined,
       SUPABASE_SECRET_KEY: undefined,
+      PAYMONGO_SECRET_KEY: undefined,
+      PAYMONGO_WEBHOOK_SECRET: undefined,
     });
   });
 });

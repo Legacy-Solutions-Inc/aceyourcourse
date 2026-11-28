@@ -55,6 +55,8 @@ describe("ConsentScreen", () => {
       expect.stringMatching(/Target Exams.*study progress/),
       expect.stringMatching(/Active Device.*log/),
       expect.stringMatching(/email and Member ID.*Reviewer PDF page/),
+      // Privacy Policy v2.1 (Phase 4, ticket 13).
+      "5Your Orders and Invoice Requests, if you buy, kept as long as the tax rules require, even after your account is deleted.",
     ]);
     expect(screen.getByText(/We don’t sell your data/)).toBeInTheDocument();
     expect(screen.getByText("WE SAVE THE DATE AND VERSION YOU AGREED TO.")).toBeInTheDocument();

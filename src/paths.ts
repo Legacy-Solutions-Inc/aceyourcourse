@@ -28,6 +28,8 @@ export const paths = {
   legal: {
     privacy: "/legal/privacy",
     terms: "/legal/terms",
+    /** The Terms of Use's "Payments and refunds" section, at its stable anchor (v2.1). */
+    paymentsAndRefunds: "/legal/terms#payments-and-refunds",
   },
   /** The signed-in Member App (Phase 3). */
   memberApp: {
@@ -99,7 +101,16 @@ export const paths = {
     sampleCardImage: (token: string) => `/api/dev/card-images/${encodeURIComponent(token)}`,
     courses: "/app/courses",
     plans: "/app/plans",
+    /** Plans open on one Exam's (ticket 02): where a lock's "See plans" and "Renew access" lead. */
+    plansFor: (examCode: string) => `/app/plans?exam=${encodeURIComponent(examCode)}`,
+    /** Where PayMongo's Cancel returns to (ticket 04): Plans for the Exam, saying nothing was charged. */
+    plansCancelled: (examCode: string) =>
+      `/app/plans?exam=${encodeURIComponent(examCode)}&payment=cancelled`,
+    /** One of the Member's Orders (ticket 03): Confirming payment, then Paid or Failed. */
+    order: (reference: string) => `/app/plans/orders/${encodeURIComponent(reference)}`,
     billing: "/app/billing",
+    /** One of the Member's Paid Orders' Payment Acknowledgement (Phase 4, ticket 06). */
+    acknowledgement: (reference: string) => `/app/billing/${encodeURIComponent(reference)}`,
     account: "/app/account",
     support: "/app/support",
   },
@@ -129,6 +140,12 @@ export const paths = {
     reviews: "/admin/reviews",
     settings: "/admin/settings",
     /**
+     * Staff Activity (Owners only; Phase 4, ticket 15), under Settings, with
+     * its filters and cursor in the search params
+     * (src/lib/admin/staff-activity-view.ts).
+     */
+    staffActivity: "/admin/settings/activity",
+    /**
      * Users (Owners only): the Users list (ticket 16), with its search, filter
      * and page in the search params (src/lib/admin/users-list.ts).
      */
@@ -144,6 +161,20 @@ export const paths = {
     /** A data-copy request's file: "Download this Member's data" posts here (ticket 19). */
     privacyRequestData: (id: string) =>
       `/admin/users/privacy-requests/${encodeURIComponent(id)}/data`,
+    /**
+     * Plans & prices (Owners only; Phase 4, ticket 01), with the Exam chip
+     * and the selected Plan in the search params (src/lib/admin/plan-view.ts).
+     */
+    plans: "/admin/plans",
+    /**
+     * Orders & payments (Owners only; Phase 4, ticket 07), with the search and
+     * filters in the search params (src/lib/admin/orders-list.ts).
+     */
+    orders: "/admin/orders",
+    /** One Order's detail page, by its reference ("AYC-10482"). */
+    order: (reference: string) => `/admin/orders/${encodeURIComponent(reference)}`,
+    /** The Orders list's CSV export, with the list's filters in the search params. */
+    ordersExport: "/admin/orders/export",
     /** Member App content (Phase 3): each Subject's Topics, picked by Exam and Subject. */
     content: "/admin/content",
     /** Member App content open on one Subject's Topics list. */
@@ -208,5 +239,9 @@ export const paths = {
     reviewerPdfRun: "/api/reviewer-pdfs/run",
     /** GET, once a day (vercel.json): restarts the jobs whose runs have stopped. */
     reviewerPdfCron: "/api/reviewer-pdfs/cron",
+    /** GET, once a day (vercel.json): records overdue Pending Orders Expired, or Paid (ticket 05). */
+    orderExpirySweep: "/api/paymongo/expiry-sweep",
+    /** POST: PayMongo's webhook events (ticket 05). */
+    payMongoWebhook: "/api/paymongo/webhook",
   },
 } as const;

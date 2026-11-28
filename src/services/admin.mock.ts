@@ -19,3 +19,7 @@ export * from "@/services/mock/admin/content-import";
 export * from "@/services/mock/admin/deck";
 export * from "@/services/mock/admin/quiz";
 export * from "@/services/mock/admin/reviewer-pdfs";
+export * from "@/services/mock/admin/plans";
+export * from "@/services/mock/admin/orders";
+export { getPaidToday } from "@/services/mock/admin/sales";
+export { listStaffActivity } from "@/services/mock/admin/staff-activity";

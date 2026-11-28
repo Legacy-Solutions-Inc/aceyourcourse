@@ -1,13 +1,24 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
+
+import {
+  OrderStatusTag,
+  PartialRefundNote,
+  TestOrderTag,
+} from "@/components/admin/orders/order-status-tag";
 
 import type { AdminAction } from "@/lib/admin/action";
 import { formatChangedOn, formatLoggedAt } from "@/lib/admin/time";
 import { memberInitials, progressFigures } from "@/lib/admin/users-view";
+import { orderItem } from "@/lib/admin/order-view";
 import { formatDate } from "@/lib/manila-time";
+import { formatPeso } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import { paths } from "@/paths";
 import type {
   AdminExamProgress,
   AdminMemberDetail,
+  AdminOrder,
   ForcedSignOut,
   UserRole,
 } from "@/services/admin.types";
@@ -61,7 +72,8 @@ function DetailSection({
  * profile with the Active Device and force sign-out, then their Target Exams,
  * Access Passes with their grants and Grant, Extend and End access now
  * (ticket 17), progress per Target Exam (ticket 15's calculator), device
- * switches, consent and purchase history. Purchases come with Payments.
+ * switches, consent, and their Orders, each linking to its detail page
+ * (Phase 4, ticket 07; story 151z).
  */
 export function MemberDetail({ detail, now, exams, forceSignOut, passActions }: MemberDetailProps) {
   const { member, role, betaTester, activeDevice, deviceSwitches, consents } = detail;
@@ -180,11 +192,47 @@ export function MemberDetail({ detail, now, exams, forceSignOut, passActions }: 
           )}
         </DetailSection>
 
-        <DetailSection id="member-purchases" title="PURCHASE HISTORY">
-          <p className={empty}>Purchases arrive with Payments (Phase 4).</p>
+        <DetailSection id="member-orders" title={`ORDERS · ${detail.orders.length}`}>
+          {detail.orders.length > 0 ? (
+            <ul>
+              {detail.orders.map((order) => (
+                <MemberOrderRow key={order.id} order={order} />
+              ))}
+            </ul>
+          ) : (
+            <p className={empty}>No Orders yet.</p>
+          )}
         </DetailSection>
       </div>
     </div>
+  );
+}
+
+/** One of the Member's Orders (mockup 819–823, PURCHASE HISTORY), linking to its detail page. */
+function MemberOrderRow({ order }: { order: AdminOrder }) {
+  return (
+    <li className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 border-b border-ayc-ruled px-3.5 py-2.5 last:border-b-0">
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <Link
+          href={paths.admin.order(order.reference)}
+          className="w-fit font-mono text-xs font-bold text-ayc-navy underline-offset-2 hover:underline"
+        >
+          {order.reference}
+        </Link>
+        <span className="text-sm font-semibold">{orderItem(order)}</span>
+        <span className="font-mono text-[11px] text-muted-foreground">
+          {formatDate(order.createdAt)}
+        </span>
+      </span>
+      <span className="flex flex-col items-end gap-1">
+        <span className="text-sm font-extrabold">{formatPeso(order.priceCentavos)}</span>
+        <span className="flex gap-1.5">
+          {order.livemode ? null : <TestOrderTag />}
+          <OrderStatusTag status={order.status} />
+        </span>
+        <PartialRefundNote order={order} />
+      </span>
+    </li>
   );
 }
 

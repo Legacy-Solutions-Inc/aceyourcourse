@@ -348,6 +348,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Users ($name)", (arm) => {
         reason: "Paid by bank transfer",
         grantedBy: { email: OWNER.email, name: OWNER.name },
         grantedAt: at(-33 * DAY),
+        orderId: null,
       };
       await arm.putAccessPass({ userId: BEA.userId, examCode: "ME", endsAt: at(10 * DAY) }, [
         { ...grant, userId: BEA.userId, examCode: "ME", startsAt: at(-20 * DAY) },
@@ -366,7 +367,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Users ($name)", (arm) => {
           betaTester: true,
           targetExams: await member.listTargetExams(BEA.userId),
           accessPasses: [
-            { examCode: "CE", endsAt: at(90 * DAY), grants: [] },
+            { examCode: "CE", endsAt: at(90 * DAY), grants: [], ending: { kind: "now" } },
             {
               examCode: "ME",
               endsAt: at(10 * DAY),
@@ -374,6 +375,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Users ($name)", (arm) => {
                 { ...grantShown, startsAt: at(-20 * DAY) },
                 { ...grantShown, endsAt: at(10 * DAY) },
               ],
+              ending: { kind: "now" },
             },
           ],
           progress: [
@@ -389,6 +391,8 @@ describe.each(ADMIN_ARMS)("Admin seam: Users ($name)", (arm) => {
             { termsVersion: "2.0", privacyVersion: "2.0", agreedAt: at(6 * MINUTE) },
             { termsVersion: "1.0", privacyVersion: "1.0", agreedAt: at(5 * MINUTE) },
           ],
+          // Their Orders: admin.orders.test.ts.
+          orders: [],
         },
       });
       if (result.ok) {
@@ -425,6 +429,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Users ($name)", (arm) => {
           activeDevice: null,
           deviceSwitches: [],
           consents: [],
+          orders: [],
         },
       });
     });

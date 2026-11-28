@@ -1,4 +1,7 @@
 import { manilaDate } from "@/lib/manila-time";
+import type { OrderWithInvoice } from "@/lib/payments/invoice-requests";
+import { effectiveStatus, type Order, type OrderStatus } from "@/lib/payments/order-ledger";
+import { type OrderRefund, succeededRefunds } from "@/lib/payments/refunds";
 import type {
   AccessPass,
   AccessPassGrant,
@@ -25,7 +28,8 @@ import type {
 // support inbox (the app sends nothing). It holds their profile, Target Exams
 // (removed ones too), consents, Access Passes with the grants behind them,
 // progress records (Card Marks, Quiz Attempts, Reviewer pages viewed, Study
-// Days), resume state, the device log and their in-app notices.
+// Days), resume state, the device log, their in-app notices, and (version 2,
+// Phase 4 ticket 14) their Orders, each with its refunds and Invoice Request.
 //
 // It's built from records that may hold every Member's: each list keeps only
 // the Member's own, so another Member's data can never reach the file. Each
@@ -35,7 +39,8 @@ import type {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const MEMBER_DATA_FORMAT = "ayc-member-data";
-export const MEMBER_DATA_VERSION = 1;
+/** Version 2 (ticket 14) adds `orders`; every section of version 1 is as it was. */
+export const MEMBER_DATA_VERSION = 2;
 
 /** What a data copy is built from: the Member, their own one-of records, and records that may hold every Member's. */
 export interface MemberDataSource {
@@ -57,6 +62,40 @@ export interface MemberDataSource {
   readerPositions: ReaderPosition[];
   deviceSwitches: DeviceSwitch[];
   notices: MemberNotice[];
+  /** Orders, with their Invoice Requests and PayMongo refunds (ticket 14). */
+  orders: (OrderWithInvoice & { refunds: OrderRefund[] })[];
+}
+
+/**
+ * One of the Member's Orders, as the file holds it (ticket 14): what they
+ * bought and paid, as at Pay, its state as every screen shows it, the
+ * refunds that went through, and their Invoice Request.
+ */
+export interface ExportedOrder {
+  reference: string;
+  examCode: string;
+  planName: string;
+  days: Order["days"];
+  priceCentavos: number;
+  method: Order["method"];
+  /** A Pending Order past its 24 hours is Expired. */
+  status: OrderStatus;
+  /** False for a Test Order. */
+  livemode: boolean;
+  createdAt: string;
+  paidAt: string | null;
+  /** The name and email given at Pay. */
+  buyer: { name: string | null; email: string };
+  /** PayMongo's reference, as the Payment Acknowledgement gives it: the payment's id, or the checkout's. */
+  payMongoReference: string | null;
+  refunds: { amountCentavos: number; refundedAt: string }[];
+  invoiceRequest: {
+    name: string;
+    address: string;
+    tin: string | null;
+    requestedAt: string;
+    sentAt: string | null;
+  } | null;
 }
 
 /** A record without the User id every record in the file would repeat. */
@@ -72,7 +111,8 @@ export interface MemberDataExport {
   targetExams: TargetExamRecord[];
   consents: Own<ConsentRecord>[];
   accessPasses: (Own<AccessPass> & {
-    grants: Omit<AccessPassGrant, "userId" | "examCode" | "grantedBy">[];
+    // The Orders are their own section (ticket 14), so a paid row's Order id stays out.
+    grants: Omit<AccessPassGrant, "userId" | "examCode" | "grantedBy" | "orderId">[];
   })[];
   cardMarks: Own<CardMark>[];
   quizAttempts: Own<QuizAttempt>[];
@@ -84,6 +124,7 @@ export interface MemberDataExport {
   /** Their Active Device and every claim, the first one too. */
   devices: { activeDevice: ActiveDevice | null; switches: Own<DeviceSwitch>[] };
   notices: Own<MemberNotice>[];
+  orders: ExportedOrder[];
 }
 
 /** Pure: the records that are the Member's, oldest first by `at`, without their User id. */
@@ -96,6 +137,38 @@ function own<T extends { userId: string }>(
     .filter((record) => record.userId === userId)
     .sort((a, b) => (at(a) < at(b) ? -1 : at(a) > at(b) ? 1 : 0))
     .map(({ userId: _, ...record }) => record);
+}
+
+/** Pure: one Order as the file holds it at `now`. */
+function exportedOrder(
+  { order, invoice, refunds }: MemberDataSource["orders"][number],
+  now: Date,
+): ExportedOrder {
+  return {
+    reference: order.reference,
+    examCode: order.examCode,
+    planName: order.planName,
+    days: order.days,
+    priceCentavos: order.priceCentavos,
+    method: order.method,
+    status: effectiveStatus(order, now),
+    livemode: order.livemode,
+    createdAt: order.createdAt,
+    paidAt: order.paidAt,
+    buyer: { name: order.buyerName, email: order.buyerEmail },
+    payMongoReference: order.paymentId ?? order.checkoutId,
+    // A refund that went through always has its time (order_refunds' check).
+    refunds: succeededRefunds(refunds).flatMap(({ amountCentavos, refundedAt }) =>
+      refundedAt ? [{ amountCentavos, refundedAt }] : [],
+    ),
+    invoiceRequest: invoice && {
+      name: invoice.name,
+      address: invoice.address,
+      tin: invoice.tin,
+      requestedAt: invoice.requestedAt,
+      sentAt: invoice.sentAt,
+    },
+  };
 }
 
 /** Pure: a Member's data copy, made at `now`, from records that may hold every Member's. */
@@ -120,7 +193,7 @@ export function buildMemberDataExport(source: MemberDataSource, now: Date): Memb
       ...pass,
       grants: grants
         .filter((grant) => grant.examCode === pass.examCode)
-        .map(({ examCode: _, grantedBy: __, ...grant }) => grant),
+        .map(({ examCode: _, grantedBy: __, orderId: ___, ...grant }) => grant),
     })),
     cardMarks: own(source.cardMarks, userId, (mark) => `${mark.markedAt} ${mark.cardId}`),
     quizAttempts: structuredClone(own(source.quizAttempts, userId, (a) => a.submittedAt)),
@@ -141,8 +214,16 @@ export function buildMemberDataExport(source: MemberDataSource, now: Date): Memb
       switches: own(source.deviceSwitches, userId, (claim) => claim.switchedAt),
     },
     notices: own(source.notices, userId, (notice) => notice.createdAt),
+    orders: source.orders
+      .filter(({ order }) => order.userId === userId)
+      .sort((a, b) => ordered(a.order, b.order))
+      .map((held) => exportedOrder(held, now)),
   };
 }
+
+/** Pure: oldest Order first; Orders made together by reference. */
+const ordered = (a: Order, b: Order) =>
+  a.createdAt.localeCompare(b.createdAt) || a.reference.localeCompare(b.reference);
 
 /**
  * Pure: the downloaded file's name, by the Manila day it was made and the

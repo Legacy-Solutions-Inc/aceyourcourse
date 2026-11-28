@@ -115,10 +115,28 @@ Ace Your Course is one application with three Surfaces.
 - **Course Ownership** — a Member's permanent right to one separately sold
   Course, independent of any Access Pass.
 
-- **Order** — one Member's attempt to buy a Plan or a Course through
+- **Order** — one Member's attempt to buy one Plan or one Course through
   PayMongo. It is **Pending**, **Paid**, **Failed**, **Expired** (Pending for
-  more than 24 hours) or **Refunded**. Only a Paid Order grants access.
+  more than 24 hours) or **Refunded**. Only a Paid Order grants access. A
+  Failed or Expired Order can still become Paid if PayMongo later confirms the
+  payment.
   _Avoid_: purchase, transaction, payment (for the whole record).
+
+- **Refunded** — an Order whose whole amount was returned in PayMongo. Its
+  days come off the Access Pass. A **partial refund** returns only part of the
+  amount: the Order stays Paid, shows the amount refunded, and access doesn't
+  change.
+
+- **Payment Method** — how a Member pays an Order: QR Ph, GCash, Maya or
+  Card. The Member picks it before going to PayMongo.
+
+- **Test Order** — an Order paid with PayMongo's test payments, where no real
+  money moves. It grants access like any Order but is left out of sales
+  figures.
+
+- **Invoice Request** — a Member's request for the official invoice of one
+  Paid Order, with the name, address and TIN to put on it. Owners issue the
+  invoice outside the app and mark the request sent.
 
 - **Payment Acknowledgement** — the Member App's proof of a Paid Order. It is
   not an official BIR invoice. The official invoice is issued separately by

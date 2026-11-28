@@ -6,14 +6,8 @@ import { getDb } from "@/lib/db/client";
 import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
 import { type AccessPassStore, accessPassCalls } from "@/services/access-passes.core";
-import { staffActivityToRow } from "@/services/admin.rows";
-import { accessPassFromRow, accessPassGrantToRow } from "@/services/content.rows";
-import {
-  memberFromRow,
-  noticeToRow,
-  targetExamFromRow,
-  writeTargetExam,
-} from "@/services/member.db";
+import { accessPassFromRow } from "@/services/content.rows";
+import { memberFromRow, readPassHistory, targetExamFromRow, writePass } from "@/services/member.db";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The Admin seam's Access Pass actions on Postgres (Phase 3, ticket 17): the
@@ -21,14 +15,15 @@ import {
 // the records a change writes with it. Each change runs in one transaction
 // that first locks the Member's row, as the Member seam's Target Exam
 // changes do (member.db.ts), so a grant and a Target Exam change for the same
-// Member take turns; then the pass, its history row, the Target Exam, the
-// notice and the Staff Activity are written together, or none of them.
+// Member take turns, then the pass (whose lock covers its history); then the
+// pass, its history row or the rows an end moved (ticket 10), the Target
+// Exam, the notice and the Staff Activity are written together, or none of
+// them.
 // Drizzle bypasses RLS, so authorisation is the seam's role check and the
 // Staff Guard (coding standards §3).
 // ─────────────────────────────────────────────────────────────────────────────
 
-const { accessPasses, accessPassGrants, exams, members, memberNotices } = schema;
-const { memberTargetExams, staffActivity } = schema;
+const { accessPasses, exams, members, memberTargetExams } = schema;
 
 const databaseAccessPassStore: AccessPassStore = {
   async withPass(userId, examCode, work) {
@@ -54,28 +49,18 @@ const databaseAccessPassStore: AccessPassStore = {
           .from(memberTargetExams)
           .where(eq(memberTargetExams.userId, userId))
           .orderBy(asc(memberTargetExams.seq));
+        const history = pass ? await readPassHistory(tx, userId, examCode) : [];
 
         const { write, result } = work({
           member: memberFromRow(member),
           examExists: exam !== undefined,
           pass: pass ? accessPassFromRow(pass) : null,
           targetExams: targetExams.map(targetExamFromRow),
+          history,
         });
         if (!write) return result;
 
-        const endsAt = new Date(write.endsAt);
-        await tx
-          .insert(accessPasses)
-          .values({ userId, examCode, endsAt })
-          .onConflictDoUpdate({
-            target: [accessPasses.userId, accessPasses.examCode],
-            set: { endsAt },
-          });
-        if (write.grant)
-          await tx.insert(accessPassGrants).values(accessPassGrantToRow(write.grant));
-        if (write.targetExam) await writeTargetExam(tx, userId, write.targetExam);
-        await tx.insert(memberNotices).values(noticeToRow(write.notice));
-        await tx.insert(staffActivity).values(staffActivityToRow(write.activity));
+        await writePass(tx, userId, examCode, write);
         return result;
       });
     } catch (error) {

@@ -1,11 +1,20 @@
 import { expect as baseExpect, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
-import { resetSampleData, signInAs } from "./helpers";
+import { LIVE, resetSampleData, signInAs } from "./helpers";
 
 // The Overview on sample data (ticket 11): what needs Staff today, each item
 // linking to its fix. Adding a missing Lazada link lowers the count on the
 // next load, and each quick action opens its new form.
+//
+// Phase 4, ticket 11: an Owner also sees the sales tiles, the paid-sales
+// chart, the sidebar's PAID TODAY card, and the payment work first in Needs
+// attention, each item opening the filtered Orders list; an Editor sees none
+// of it. The sample Orders (timed from the reset) give four payment items:
+// Paolo's AYC-10006 Pending an hour, Maria's AYC-10002 with an invoice to
+// send, Maria's AYC-10011 paid after expiry, and (ticket 14) Rina's AYC-10013,
+// paid after her account was deleted. A live database has none of them: its
+// only Orders are the payments fake's Test Orders, which never count.
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -14,6 +23,9 @@ const DAY = 24 * 60 * 60 * 1000;
 /** The Manila date `days` from today, as YYYY-MM-DD. Manila is UTC+8 all year. */
 const manilaDay = (days: number) =>
   new Date(Date.now() + 8 * 60 * 60 * 1000 + days * DAY).toISOString().slice(0, 10);
+
+/** The Owner's payment items the sample Orders give; none on a live database. */
+const PAYMENT_ITEMS = LIVE ? 0 : 4;
 
 const needsAttention = (page: Page) => page.getByRole("list", { name: "Needs attention" });
 const quickAction = (page: Page, name: string) =>
@@ -40,12 +52,9 @@ test("lists the shop-page links; adding CE flash cards' Lazada link lowers the c
   page,
 }) => {
   await openOverview(page);
-  await expect(page.getByText("3 things need you today.")).toBeVisible();
+  await expect(page.getByText(`${3 + PAYMENT_ITEMS} things need you today.`)).toBeVisible();
   const links = needsAttention(page).getByRole("link", { name: /product links use the shop page/ });
   await expect(links).toContainText("16 product links use the shop page");
-  for (const phase4 of [/paid today/i, /paid sales/i, /recent orders/i, /active members/i]) {
-    await expect(page.getByText(phase4)).toHaveCount(0);
-  }
 
   await links.click();
   await expect(page).toHaveURL(/\/admin\/products\?missing=1$/);
@@ -100,7 +109,7 @@ test("turning the promo banner on takes it off the list", async ({ page }) => {
   await expect(editor.getByText(/^Status: ON · SHOWS /)).toBeVisible();
 
   await page.goto(paths.admin.overview);
-  await expect(page.getByText("2 things need you today.")).toBeVisible();
+  await expect(page.getByText(`${2 + PAYMENT_ITEMS} things need you today.`)).toBeVisible();
   await expect(needsAttention(page).getByRole("link", { name: /Promo banner/ })).toHaveCount(0);
 });
 
@@ -116,6 +125,117 @@ for (const [name, url, form] of [
     await expect(page.getByRole("form", { name: form })).toBeVisible();
   });
 }
+
+test.describe("an Owner's sales (Phase 4, ticket 11)", () => {
+  test.beforeEach(() => {
+    test.skip(LIVE, "The sample Orders are in the in-memory sample data only.");
+  });
+
+  const tile = (page: Page, label: RegExp) =>
+    page.getByRole("list", { name: "Sales figures" }).getByRole("link", { name: label });
+
+  test("sees the sales tiles, the chart and the PAID TODAY card, each opening its screen", async ({
+    page,
+  }) => {
+    await openOverview(page);
+
+    const tiles = page.getByRole("list", { name: "Sales figures" }).getByRole("link");
+    await expect(tiles).toHaveCount(4);
+    const paidToday = tile(page, /^PAID TODAY/);
+    await expect(paidToday).toHaveAttribute("href", "/admin/orders?status=paid&range=7d");
+    await expect(tile(page, /^PAID · [A-Z]+/)).toHaveAttribute("href", "/admin/orders?status=paid");
+    await expect(tile(page, /^ACTIVE MEMBERS/)).toHaveAttribute(
+      "href",
+      "/admin/users?filter=active",
+    );
+    await expect(tile(page, /^ACCESS ENDING · 7 DAYS/)).toBeVisible();
+
+    // The sidebar's card says the same money as the tile, and opens Orders.
+    const card = page.getByRole("complementary").getByRole("link", { name: /^PAID TODAY/ });
+    const amount = (await paidToday.textContent())?.match(/^PAID TODAY(−?₱[\d,]+)/)?.[1] ?? "";
+    expect(amount).toMatch(/^−?₱[\d,]+$/);
+    await expect(card).toContainText(amount);
+    await expect(card).toContainText(/\d+ orders? · 1 pending$/);
+
+    const chart = page.getByRole("region", { name: "Paid sales" });
+    const days = chart.getByRole("table", { name: "Net paid by day" }).getByRole("row");
+    await expect(chart.getByText(/^NET PAID · LAST 14 DAYS · /)).toBeVisible();
+    await expect(days).toHaveCount(15);
+    await expect(days.last()).toContainText(", today");
+    await chart.getByRole("button", { name: "30 DAYS" }).click();
+    await expect(chart.getByRole("button", { name: "30 DAYS" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(chart.getByText(/^NET PAID · LAST 30 DAYS · /)).toBeVisible();
+    await expect(days).toHaveCount(31);
+
+    await card.click();
+    await expect(page).toHaveURL(/\/admin\/orders$/);
+  });
+
+  test("sees today's refunds taken off today's figure", async ({ page }) => {
+    // Bea's and Lou's Orders were paid 48 and 38 minutes before the reset and
+    // refunded 30 and 20 minutes before it; Maria's late one was paid 22 hours
+    // before. Near Manila midnight they fall on other days.
+    const hour = new Date(Date.now() + 8 * 60 * 60 * 1000).getUTCHours();
+    test.skip(hour < 1 || hour >= 22, "Today's sample payments straddle Manila midnight now.");
+    await openOverview(page);
+
+    await expect(tile(page, /^PAID TODAY/)).toHaveText(
+      "PAID TODAY₱999+₱500 vs yesterday₱799 refunded",
+    );
+    await expect(
+      page.getByRole("complementary").getByRole("link", { name: /^PAID TODAY/ }),
+    ).toContainText("₱9992 orders · 1 pending");
+  });
+
+  test("opens the payments pending, the invoice requests to send, the Orders paid after expiry and those paid after the account went", async ({
+    page,
+  }) => {
+    await openOverview(page);
+    const rows = needsAttention(page).getByRole("link");
+    await expect(rows.nth(0)).toContainText("1 payment pendingOldest is 1 hour old.");
+    await expect(rows.nth(1)).toContainText("1 invoice request to send");
+    await expect(rows.nth(2)).toContainText("1 Order paid after expiry");
+    await expect(rows.nth(3)).toContainText("Paid, account deleted · refund in PayMongo");
+
+    const orders = page
+      .getByRole("region", { name: "Orders list" })
+      .getByRole("table")
+      .getByRole("link", { name: /^AYC-\d+$/ });
+    for (const [row, url, references] of [
+      [0, /\/admin\/orders\?status=pending$/, ["AYC-10006"]],
+      [1, /\/admin\/orders\?range=all&invoice=requested$/, ["AYC-10002"]],
+      [2, /\/admin\/orders\?status=paid&range=7d&late=1$/, ["AYC-10011"]],
+      [3, /\/admin\/orders\?status=paid&range=all&noaccount=1$/, ["AYC-10013"]],
+    ] as const) {
+      await page.goto(paths.admin.overview);
+      await rows.nth(row).click();
+      await expect(page).toHaveURL(url);
+      await expect(orders).toHaveText([...references]);
+    }
+    await expect(page.getByRole("checkbox", { name: "Paid, account deleted" })).toBeChecked();
+    await expect(
+      page
+        .getByRole("region", { name: "Orders list" })
+        .getByRole("row")
+        .filter({ hasText: "AYC-10013" }),
+    ).toContainText("REFUND IN PAYMONGO");
+  });
+});
+
+test("an Editor sees no sales tiles, chart, PAID TODAY card or payment items", async ({ page }) => {
+  await signInAs(page, "editor", paths.admin.overview);
+  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.getByText("3 things need you today.")).toBeVisible();
+
+  await expect(page.getByRole("list", { name: "Sales figures" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Paid sales" })).toHaveCount(0);
+  await expect(page.getByText("PAID TODAY")).toHaveCount(0);
+  await expect(needsAttention(page).getByRole("link", { name: /payment|invoice/i })).toHaveCount(0);
+  await expect(page.getByText(/₱/)).toHaveCount(0);
+});
 
 test("a signed-out visit is sent to sign-in, coming back to the Overview", async ({ page }) => {
   await page.goto(paths.admin.overview);

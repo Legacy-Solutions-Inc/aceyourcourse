@@ -23,7 +23,7 @@ export function AdminScreen({ screen, primaryAction, children }: AdminScreenProp
       />
       <main
         id="main"
-        className="mx-auto flex w-full max-w-7xl min-w-0 flex-1 flex-col gap-5 px-4 pt-4 pb-24 wide:px-7 wide:pt-7 wide:pb-8"
+        className="mx-auto flex w-full max-w-7xl min-w-0 flex-1 flex-col gap-5 px-4 pt-4 pb-8 wide:px-7 wide:pt-7"
       >
         {children}
       </main>

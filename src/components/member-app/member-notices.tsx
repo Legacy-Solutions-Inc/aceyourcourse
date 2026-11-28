@@ -1,9 +1,9 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
 
 import { isFocusScreen } from "./member-menu";
+import { useDismissible } from "./use-dismissible";
 
 /** One notice as the banner shows it: its id, for "Dismiss", and what it says. */
 export interface ShownNotice {
@@ -34,46 +34,10 @@ const UNDISMISSED = "Couldn’t dismiss this notice. Try again.";
  */
 export function MemberNotices({ notices, dismiss }: MemberNoticesProps) {
   const pathname = usePathname();
-  const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
-  const [failed, setFailed] = useState<string | null>(null);
-  const [, startTransition] = useTransition();
-  const list = useRef<HTMLUListElement>(null);
+  const { list, isDismissed, failed, onDismiss } = useDismissible(dismiss);
 
-  const shown = notices.filter(({ id }) => !dismissed.has(id));
+  const shown = notices.filter(({ id }) => !isDismissed(id));
   if (shown.length === 0 || isFocusScreen(pathname)) return null;
-
-  function moveFocusFrom(index: number) {
-    const buttons = list.current?.querySelectorAll<HTMLButtonElement>("button[data-dismiss]");
-    const next = buttons?.[index + 1] ?? buttons?.[index - 1];
-    if (next) {
-      next.focus();
-      return;
-    }
-    const heading = document.querySelector<HTMLElement>("#main h1");
-    if (!heading) return;
-    if (!heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
-    heading.focus();
-  }
-
-  function onDismiss(id: string, index: number) {
-    moveFocusFrom(index);
-    setFailed(null);
-    setDismissed((before) => new Set(before).add(id));
-    startTransition(async () => {
-      try {
-        // { ok: false } is no notice of theirs (one deleted with its Exam,
-        // say): there's nothing to dismiss and nothing to bring back.
-        await dismiss(id);
-      } catch {
-        setDismissed((before) => {
-          const after = new Set(before);
-          after.delete(id);
-          return after;
-        });
-        setFailed(id);
-      }
-    });
-  }
 
   return (
     <section

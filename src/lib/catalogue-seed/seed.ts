@@ -2,12 +2,13 @@ import { sql } from "drizzle-orm";
 
 import type { Database } from "@/lib/db/connect";
 import * as schema from "@/lib/db/schema";
-import { betaTesterToRow, SEEDED_RECORD, staffToRows } from "@/services/admin.rows";
+import { betaTesterToRow, planToRow, SEEDED_RECORD, staffToRows } from "@/services/admin.rows";
 import { catalogueToRows } from "@/services/catalogue.rows";
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
 import { accessPassToRow, contentToRows } from "@/services/content.rows";
 import { sampleContent } from "@/services/mock/content";
-import { sampleAccessPasses, sampleBetaTesters } from "@/services/mock/members";
+import { sampleAccessPasses, sampleAgreements, sampleBetaTesters } from "@/services/mock/members";
+import { samplePlans } from "@/services/mock/plans";
 import { sampleStaff } from "@/services/mock/staff";
 
 import { type SeedPhotos, seedPhotoPlan } from "./photos";
@@ -18,7 +19,8 @@ import { type SeedPhotos, seedPhotoPlan } from "./photos";
 // before anything is written, then written in one transaction, so a failure
 // leaves the catalogue as it was. Locally the seed replaces the catalogue and
 // the Admin's data, adding the sample Staff for "Sign in as" (CONVENTIONS §5)
-// and the Member App's sample Topics and Access Passes; in production it
+// and the Member App's sample Topics and Access Passes (and, when asked, the
+// renewing tester's Legal v2.0 agreement); in production it
 // loads only into an empty catalogue, never deletes, and never adds Staff or
 // sample content. With Storage (the command), every seed photo is read from
 // public/ before anything is written, then uploaded into the bucket inside
@@ -166,10 +168,21 @@ const ADMIN_TABLES = [
 ];
 
 /**
+ * The Orders (Phase 4, ticket 03), with the Access Pass history rows that
+ * point at them: an Order keeps its Plan and Exam from being deleted, so a
+ * local load clears them before the catalogue.
+ */
+const ORDER_TABLES = [schema.paymentEvents, schema.accessPassGrants, schema.orders];
+
+/**
  * Deletes every Catalogue row, children before parents, with the Member App
- * content that hangs off its Subjects.
+ * content that hangs off its Subjects and the Orders for its Plans. With
+ * every Order gone, the next is AYC-10001 again, as when the sample data
+ * starts again.
  */
 export async function clearCatalogue(db: Database | Transaction): Promise<void> {
+  for (const table of ORDER_TABLES) await db.delete(table);
+  await db.execute(sql`alter sequence order_reference_seq restart`);
   for (const table of CONTENT_TABLES) await db.delete(table);
   for (const table of [...TABLES].reverse()) await db.delete(table);
 }
@@ -195,8 +208,9 @@ async function writeSampleStaff(tx: Transaction, now: Date): Promise<SampleStaff
 }
 
 /**
- * Adds the Member App's sample Topics with their content, and the sample
- * Access Passes, timed from `now`, for the catalogue just written.
+ * Adds the Member App's sample Topics with their content, the sample Access
+ * Passes, timed from `now`, and the starting Plans on sale, for the catalogue
+ * just written.
  */
 async function writeSampleMemberApp(
   tx: Transaction,
@@ -212,6 +226,49 @@ async function writeSampleMemberApp(
   if (accessPasses.length) {
     await tx.insert(schema.accessPasses).values(accessPasses.map(accessPassToRow));
   }
+  await writeStartingPlans(tx, seed, now, true);
+}
+
+/**
+ * Adds the sample agreements (Phase 4, ticket 13): the renewing tester as a
+ * Member who agreed to Legal v2.0 the day before `now`, as the dev server's
+ * sample data has them, so the e2e reset on a local database starts the same.
+ */
+async function writeSampleAgreements(tx: Transaction, now: Date): Promise<void> {
+  const { members, memberConsents } = sampleAgreements(now);
+  if (members.length) {
+    await tx
+      .insert(schema.members)
+      .values(
+        members.map(({ joinedAt, ...member }) => ({ ...member, joinedAt: new Date(joinedAt) })),
+      );
+  }
+  if (memberConsents.length) {
+    await tx.insert(schema.memberConsents).values(
+      memberConsents.map(({ agreedAt, ...consent }) => ({
+        ...consent,
+        agreedAt: new Date(agreedAt),
+      })),
+    );
+  }
+}
+
+/**
+ * Adds the starting Plans for the catalogue just written (Phase 4, ticket 01):
+ * on sale in a local load, as the sample data has them; switched off in a
+ * production load, as the starting-plans migration adds them where the Exams
+ * already existed, until the client confirms the prices.
+ */
+async function writeStartingPlans(
+  tx: Transaction,
+  seed: CatalogueSeed,
+  now: Date,
+  onSale: boolean,
+): Promise<void> {
+  const plans = samplePlans(seed, onSale).map((plan) =>
+    planToRow({ ...plan, stamp: { savedAt: now.toISOString(), savedBy: null } }),
+  );
+  if (plans.length) await tx.insert(schema.plans).values(plans);
 }
 
 async function writeCatalogue(tx: Transaction, seed: CatalogueSeed): Promise<void> {
@@ -299,7 +356,10 @@ async function prepareSeed(seed: unknown, photos: SeedPhotos | undefined): Promi
  * Validates the seed, then writes it in one transaction. Without
  * `production`, it replaces whatever catalogue is there, and the Admin's data
  * with the sample staff list, timed from `now`. With it, it refuses when any
- * Catalogue row exists, deletes nothing and adds no Staff. An invalid seed, or
+ * Catalogue row exists, deletes nothing and adds no Staff; it adds the
+ * starting Plans switched off. With `sampleAgreements`, a local load also adds
+ * the renewing tester's Legal v2.0 agreement, as the e2e reset does; the
+ * database tests start without, as the sample data's do. An invalid seed, or
  * with `photos` a missing photo file, is refused before the database is
  * touched. With `photos`, the photos are uploaded once the transaction knows
  * it will load; without, they stay at their public/ paths.
@@ -311,7 +371,8 @@ export async function seedCatalogue(
     production = false,
     now = new Date(),
     photos,
-  }: { production?: boolean; now?: Date; photos?: SeedPhotos } = {},
+    sampleAgreements: withAgreements = false,
+  }: { production?: boolean; now?: Date; photos?: SeedPhotos; sampleAgreements?: boolean } = {},
 ): Promise<SeedOutcome> {
   const prepared = await prepareSeed(seed, photos);
   if (!prepared.ok) return prepared;
@@ -327,6 +388,8 @@ export async function seedCatalogue(
     await writeCatalogue(tx, loaded?.seed ?? valid);
     const staff = production ? null : await writeSampleStaff(tx, now);
     if (!production) await writeSampleMemberApp(tx, loaded?.seed ?? valid, now);
+    else await writeStartingPlans(tx, loaded?.seed ?? valid, now, false);
+    if (!production && withAgreements) await writeSampleAgreements(tx, now);
     await stampSeed(tx, now);
     return {
       ok: true,

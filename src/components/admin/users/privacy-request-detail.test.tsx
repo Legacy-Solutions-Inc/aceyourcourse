@@ -40,6 +40,7 @@ const COPY: AdminPrivacyRequestDetail = {
   deletionBlocked: null,
   deletionUnfinished: false,
   betaTester: true,
+  paidOrders: 0,
 };
 const DELETION: AdminPrivacyRequestDetail = { ...COPY, type: "deletion", dueOn: "2026-12-19" };
 const DONE: AdminPrivacyRequest = {
@@ -109,6 +110,8 @@ describe("PrivacyRequestDetail", () => {
         screen.getByText(/Email it from the support inbox to tester@example.com/),
       ).toBeVisible();
       expect(screen.getByText(/The Admin sends nothing/)).toBeVisible();
+      // What the file holds (ticket 14 added the Orders).
+      expect(screen.getByText(/notices, and Orders with any invoice requests/)).toBeVisible();
     });
 
     it("marks it done, then says so and reads the page again", async () => {
@@ -172,8 +175,19 @@ describe("PrivacyRequestDetail", () => {
       expect(dialog()).toHaveTextContent("tester@example.com");
       expect(dialog()).toHaveTextContent("Access Passes, with no refund");
       expect(dialog()).toHaveTextContent("can’t be undone");
+      // No paid Orders: nothing to say about tax records (ticket 14).
+      expect(dialog()).not.toHaveTextContent("tax records");
       expect(typedEmail()).toHaveValue("");
       expect(deleteAccount).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      [2, "2 paid Orders are kept for tax records, without the account."],
+      [1, "1 paid Order is kept for tax records, without the account."],
+    ])("says the %i paid Orders kept for tax records (ticket 14)", async (paidOrders, line) => {
+      const { user } = renderScreen({ ...DELETION, paidOrders });
+      await user.click(screen.getByRole("button", { name: "Delete this account" }));
+      expect(dialog()).toHaveTextContent(line);
     });
 
     it("says their email stays on the Beta Tester list", async () => {
@@ -233,6 +247,15 @@ describe("PrivacyRequestDetail", () => {
     it("says why it can't be deleted while the email is on the staff list, with no delete button", () => {
       const blocked = "This email is on the staff list. Remove them from Staff first.";
       renderScreen({ ...DELETION, deletionBlocked: blocked });
+
+      expect(screen.getByText(blocked)).toBeVisible();
+      expect(screen.queryByRole("button", { name: "Delete this account" })).toBeNull();
+    });
+
+    it("says why it can't be deleted while a payment is in progress, with no delete button (ticket 14)", () => {
+      const blocked =
+        "This Member has a payment in progress. Try again after it’s confirmed or expires (by 20 Nov 2026, 9:00 am).";
+      renderScreen({ ...DELETION, deletionBlocked: blocked, paidOrders: 1 });
 
       expect(screen.getByText(blocked)).toBeVisible();
       expect(screen.queryByRole("button", { name: "Delete this account" })).toBeNull();

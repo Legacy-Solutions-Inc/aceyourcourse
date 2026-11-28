@@ -21,6 +21,9 @@ import { dismissMemberNotice, switchExam } from "./actions";
  * Above each screen are the Member's in-app notices (ticket 17): a grant,
  * extension or end of their access, each dismissible.
  *
+ * Printing (a Payment Acknowledgement, Phase 4 ticket 06) leaves the shell
+ * out: the sidebar, the Menu bar and the notices.
+ *
  * A layout doesn't re-render when a Member moves between screens, so it can't
  * be the gate: every page calls requireMember itself. When the gate doesn't
  * let this request in, the Member hasn't agreed to the current Terms and
@@ -50,11 +53,11 @@ export default async function MemberShellLayout({ children }: { children: React.
       <div className="flex min-h-svh bg-background">
         <a
           href="#main"
-          className="sr-only z-70 bg-accent px-4 py-3 font-bold text-accent-foreground focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+          className="sr-only z-70 bg-accent px-4 py-3 font-bold text-accent-foreground focus:not-sr-only focus:fixed focus:top-2 focus:left-2 print:hidden"
         >
           Skip to content
         </a>
-        <aside className="hidden w-68 shrink-0 border-r-[1.5px] bg-ayc-sand wide:block">
+        <aside className="hidden w-68 shrink-0 border-r-[1.5px] bg-ayc-sand wide:block print:hidden">
           <div className="sticky top-0 flex min-h-svh flex-col">
             <MemberSidebar
               user={user}
@@ -65,13 +68,20 @@ export default async function MemberShellLayout({ children }: { children: React.
           </div>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
-          <MemberNotices
-            notices={notices.map((notice) => ({ id: notice.id, text: noticeText(notice) }))}
-            dismiss={dismissMemberNotice}
+          <MemberDrawer
+            user={user}
+            exams={exams}
+            switchAction={switchExam}
+            signOutAction={signOut}
           />
+          <div className="print:hidden">
+            <MemberNotices
+              notices={notices.map((notice) => ({ id: notice.id, text: noticeText(notice) }))}
+              dismiss={dismissMemberNotice}
+            />
+          </div>
           {children}
         </div>
-        <MemberDrawer user={user} exams={exams} switchAction={switchExam} signOutAction={signOut} />
       </div>
     </ShellStreakProvider>
   );

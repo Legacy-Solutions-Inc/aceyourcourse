@@ -10,7 +10,7 @@ import {
   signInAndOnboard,
   signInAsMember,
 } from "../member-app/helpers";
-import { resetSampleData, signInAs, waitForHydration } from "./helpers";
+import { LIVE, resetSampleData, signInAs, waitForHydration } from "./helpers";
 
 // Privacy Requests (Phase 3, tickets 18 and 19; stories 111, 112, 133, 133q
 // and 133r): the sample tester asks, from Account in the Member App, for a
@@ -21,6 +21,11 @@ import { resetSampleData, signInAs, waitForHydration } from "./helpers";
 // Member's account after typing their email, after which that Google account
 // signs in as a brand-new Member. An Editor is refused all of it. On the
 // sample data, the auth admin deletes no Supabase User: "Sign in as" makes none.
+//
+// Phase 4, ticket 14: the data copy holds the Member's Orders, and deleting
+// Lou's account keeps her two paid Orders (AYC-10008, refunded, and
+// AYC-10012) for tax records: the confirmation says so, and the Orders list
+// still shows both, marked ACCOUNT DELETED.
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -37,6 +42,7 @@ const DATA_SECTIONS = [
   "exportedAt",
   "format",
   "notices",
+  "orders",
   "profile",
   "quizAttempts",
   "resume",
@@ -168,6 +174,12 @@ test.describe("the Owner carrying requests out", () => {
     expect(data.profile).toMatchObject({ email: TESTER, name: "Bea Tester" });
     expect(data.consents).toHaveLength(1);
     expect(data.targetExams).toEqual([expect.objectContaining({ examCode: "ME" })]);
+    // Bea's sample Order, part refunded; the sample Orders are in the in-memory sample data only.
+    expect(data.orders).toEqual(
+      LIVE
+        ? []
+        : [expect.objectContaining({ reference: "AYC-10007", refunds: [expect.anything()] })],
+    );
     expect(JSON.stringify(data)).not.toContain(LAPSED);
     await expectNoBlockingViolations(page);
 
@@ -188,6 +200,13 @@ test.describe("the Owner carrying requests out", () => {
     const dialog = page.getByRole("dialog", { name: "Delete Lou Lapsed’s account?" });
     await expect(dialog).toContainText("Access Passes, with no refund");
     await expect(dialog).toContainText("Their email stays on the Beta Tester list");
+    // Lou's two paid Orders are in the in-memory sample data only; with none, it doesn't mention Orders.
+    if (LIVE) await expect(dialog).not.toContainText("Orders are kept");
+    else {
+      await expect(dialog).toContainText(
+        "2 paid Orders are kept for tax records, without the account.",
+      );
+    }
     // Checked once it has faded in: mid-animation, its text is paler than it will be.
     await dialog.evaluate((element) =>
       Promise.all(element.getAnimations({ subtree: true }).map((animation) => animation.finished)),
@@ -213,6 +232,23 @@ test.describe("the Owner carrying requests out", () => {
     await requestsList(page).getByRole("link", { name: "DELETION · account deleted" }).click();
     await expect(page.getByRole("heading", { level: 2 })).toHaveText("Account deletion");
     await expectNoBlockingViolations(page);
+
+    // Lou's paid Orders stay, with no account, as she bought them (sample data only, as above).
+    if (!LIVE) {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(`${paths.admin.orders}?q=${encodeURIComponent(LAPSED)}&range=all`);
+      const orders = page.getByRole("region", { name: "Orders list" });
+      await expect(orders.getByRole("table").getByRole("link", { name: /^AYC-\d+$/ })).toHaveText([
+        "AYC-10008",
+        "AYC-10012",
+      ]);
+      for (const reference of ["AYC-10008", "AYC-10012"]) {
+        const row = orders
+          .getByRole("row")
+          .filter({ has: page.getByRole("link", { name: reference, exact: true }) });
+        await expect(row).toContainText(`${LAPSED}ACCOUNT DELETED`);
+      }
+    }
 
     // The same Google account signs in again as a brand-new Member.
     const again = await browser.newContext();

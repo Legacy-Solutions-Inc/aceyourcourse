@@ -81,6 +81,25 @@ describe("middleware", () => {
     expect(getUser).not.toHaveBeenCalled();
   });
 
+  it("lets PayMongo's webhook POST straight through, with no redirect or Supabase call (ticket 05)", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://test.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "test-publishable-key");
+    vi.resetModules();
+    const { middleware } = await import("./middleware");
+
+    const response = await middleware(
+      new NextRequest(new URL("/api/paymongo/webhook", "http://localhost:3000"), {
+        method: "POST",
+        body: "{}",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+    expect(createClient).not.toHaveBeenCalled();
+  });
+
   it("still sets a nonce CSP on a public route", async () => {
     const response = await runMiddleware("/");
     expect(cspOf(response)).toMatch(/script-src 'self' 'nonce-[^']+' 'strict-dynamic'/);

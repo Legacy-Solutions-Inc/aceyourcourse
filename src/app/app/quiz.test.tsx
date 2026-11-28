@@ -22,8 +22,9 @@ import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
-import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 import { submitQuizAttempt } from "./(shell)/library/actions";
+import { redirectsTo } from "../../../test/redirects";
 
 // Taking a quiz in the Member App (Phase 3, ticket 11; stories 98–100, 106,
 // 133k and 133l), on sample data: the quiz page as a browser loads it, a past
@@ -68,14 +69,11 @@ const FREE_QUIZ = sampleContentId(HYDROSTATICS, "quiz");
 const ATTEMPT = "6a1f0e1c-5b55-4a51-9d0e-0a1b2c3d4e5f";
 const quizPage = (id: string) => `/app/library/quiz/${id}`;
 
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
-
 /** Signed in as this sample User, a Member who has agreed, with CE selected, on this browser. */
 async function memberOnDevice(email: string, name: string) {
   const userId = sampleUserId(email);
   await getOrCreateMember({ userId, email, name });
-  await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+  await recordConsent(userId, AGREED_TO_CURRENT);
   await addTargetExam(userId, { examCode: "CE", examDate: "2027-01-10" });
   await onThisDevice(userId);
   jar.set("ayc_admin_sample", email);
@@ -208,7 +206,7 @@ describe("the quiz page", () => {
     expect(payloadOf(page)).not.toContain("A secret question");
   });
 
-  it("tells the lapsed tester their pass ended, with their attempts and Best Score kept", async () => {
+  it("tells the lapsed tester their pass ended, with their progress in CE kept and Renew access", async () => {
     await asLapsed();
     const [question] = await writeQuestions(HYDROSTATICS, ["Pressure at depth?", "B"]);
     await submitting(FREE_QUIZ, [[question, "B"]]);
@@ -219,10 +217,12 @@ describe("the quiz page", () => {
       screen.getByRole("heading", { level: 2, name: "Your CE All-Access ended on 14 Nov 2026" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        /Renew to keep reviewing\. Your progress is kept: 1 attempt, best score 100%\./,
-      ),
+      screen.getByText(/Renew to keep reviewing\. Your progress is kept: 1 quiz taken\./),
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Renew access" })).toHaveAttribute(
+      "href",
+      "/app/plans?exam=CE",
+    );
   });
 
   it("says a Hidden quiz is no longer available", async () => {

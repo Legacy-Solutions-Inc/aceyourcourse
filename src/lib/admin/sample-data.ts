@@ -8,7 +8,7 @@ import { getDb } from "@/lib/db/client";
 import { isLocalDatabase } from "@/lib/db/local-database";
 import { CATALOGUE_TAG } from "@/services/catalogue.tags";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
-import { resetSampleStore } from "@/services/mock/sample-store";
+import { DEV_SAMPLE_DATA, resetSampleStore } from "@/services/mock/sample-store";
 
 export type RestoreOutcome = { ok: true } | { ok: false; reason: "not-local" };
 
@@ -25,11 +25,16 @@ export async function restoreSampleData(): Promise<RestoreOutcome> {
   const url = serverEnv.DATABASE_URL;
   if (url) {
     if (!isLocalDatabase(url)) return { ok: false, reason: "not-local" };
-    const outcome = await seedCatalogue(getDb(), CATALOGUE_SEED);
+    // With the sample agreements (Phase 4, ticket 13), as the sample data below.
+    const outcome = await seedCatalogue(getDb(), CATALOGUE_SEED, {
+      sampleAgreements: DEV_SAMPLE_DATA.sampleAgreements,
+    });
     if (!outcome.ok) throw new Error(`The sample data wasn't restored (${outcome.reason}).`);
   }
-  // The uploads stay in memory until ticket 17, so they start again too.
-  resetSampleStore();
+  // The uploads stay in memory until ticket 17, so they start again too. The
+  // sample Orders (ticket 07) and agreements (Phase 4, ticket 13) come back
+  // as a server restart makes them.
+  resetSampleStore(CATALOGUE_SEED, DEV_SAMPLE_DATA);
   revalidateTag(CATALOGUE_TAG);
   return { ok: true };
 }

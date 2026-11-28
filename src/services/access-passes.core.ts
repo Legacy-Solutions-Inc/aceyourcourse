@@ -1,4 +1,6 @@
-import { endedNow, passWithDays } from "@/lib/member-app/access-pass";
+import { isPassActive } from "@/lib/member-app/access";
+import { passWithDays } from "@/lib/member-app/access-pass";
+import { endGrantedDays, type PassHistoryRow } from "@/lib/payments/order-ledger";
 import {
   type EndAccessInput,
   endAccessInputSchema,
@@ -35,14 +37,25 @@ import type { Member, MemberNotice, NoticeKind } from "@/services/member.types";
 //   Both add the days from the pass's end, or from now when it has ended
 //   (src/lib/member-app/access-pass.ts), and keep them as their own history
 //   row (access_pass_grants), so Phase 4 can tell granted days from paid ones.
-// - End access now: sets the end to now, keeping every progress record and
-//   the history. A pass that has already ended has nothing to end: refused,
-//   recording nothing. From Phase 4 this may end only the granted days, never
-//   paid ones (refunds handle those); there are no paid days yet.
+// - End access now (Phase 4, ticket 10; story 151t): takes off only the
+//   granted days (grants and extensions) not yet used; paid days, used or
+//   not, stay, since refunds handle those. Later paid segments move earlier
+//   by what went (the Order ledger's endGrantedDays), so with no paid days
+//   left the pass ends now, as it did before Phase 4 ("End access now"),
+//   and with paid days left it ends when they do ("End granted access").
+//   Every progress record stays. A pass that has already ended, or has only
+//   paid days left, has nothing to end: refused, recording nothing.
 //
-// Each one writes the pass, its history row, the Target Exam, an in-app
-// notice for the Member (no email) and its Staff Activity, with the end before
-// and after, all or nothing.
+//   The history rows it moves are rewritten in place (their starts_at and
+//   ends_at), as a full refund rewrites them (ticket 09; the segment model's
+//   note in order-ledger.ts): each row stays the segment its days fill, so
+//   the next change reads the rows as they are. What each first added stays
+//   readable (its days, who and when), and Staff Activity keeps the end
+//   before and after.
+//
+// Each one writes the pass, its history row (or the rows it moved), the
+// Target Exam, an in-app notice for the Member (no email) and its Staff
+// Activity, with the end before and after, all or nothing.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FORBIDDEN = "ONLY AN OWNER CAN GRANT, EXTEND OR END ACCESS";
@@ -54,6 +67,8 @@ export const noPassToEnd = (examCode: string) =>
   `This Member has no ${examCode} Access Pass to end. Nothing was changed.`;
 export const alreadyEnded = (examCode: string) =>
   `This Member’s ${examCode} Access Pass has already ended, so there’s nothing to end. Nothing was changed.`;
+export const onlyPaidDaysLeft = (examCode: string) =>
+  `This Member’s ${examCode} Access Pass has only paid days left, so there’s nothing to end. Refund the Order in PayMongo to remove them. Nothing was changed.`;
 
 /** A Member's Access Pass for one Exam as it is now, with what a change to it reads. */
 export interface PassHolding {
@@ -64,6 +79,8 @@ export interface PassHolding {
   pass: AccessPass | null;
   /** The Member's Target Exam records, removed ones too, in the order first added. */
   targetExams: TargetExamRecord[];
+  /** The pass's history rows in order, each with the arm's key; none without a pass (ticket 10). */
+  history: PassHistoryRow[];
 }
 
 /** What a change writes, all or nothing. */
@@ -72,6 +89,8 @@ export interface PassWrite {
   endsAt: string;
   /** The days a grant or extension added, as their history row. */
   grant: AccessPassGrant | null;
+  /** The history rows whose segment an end moved, rewritten in place by their key (ticket 10). */
+  segments: PassHistoryRow[];
   /** The Target Exam record a grant added or brought back, replacing any by its Exam. */
   targetExam: TargetExamRecord | null;
   notice: MemberNotice;
@@ -106,15 +125,17 @@ const NO_SUCH_EXAM: AdminError = { kind: "invalid", fieldErrors: { examCode: [NO
 export const passEntityPrefix = (userId: string) => `${userId}/`;
 
 /** Pure: how Staff Activity names a Member's pass for an Exam. */
-const passEntityId = (userId: string, examCode: string) => `${passEntityPrefix(userId)}${examCode}`;
+export const passEntityId = (userId: string, examCode: string) =>
+  `${passEntityPrefix(userId)}${examCode}`;
 
-/** Pure: the notice a change leaves the Member. */
-const noticeOf = (
+/** Pure: the notice a change leaves the Member; a refund's names its Order's reference (ticket 09). */
+export const noticeOf = (
   userId: string,
   examCode: string,
   kind: NoticeKind,
   endsAt: string,
   now: Date,
+  reference: string | null = null,
 ): MemberNotice => ({
   id: crypto.randomUUID(),
   userId,
@@ -123,6 +144,7 @@ const noticeOf = (
   endsAt,
   createdAt: now.toISOString(),
   dismissedAt: null,
+  reference,
 });
 
 /** The Admin seam's Access Pass actions, over an arm's store. */
@@ -187,7 +209,9 @@ export function accessPassCalls(store: AccessPassStore) {
         reason,
         grantedBy: { email: actor.email, name: actor.name },
         grantedAt: now.toISOString(),
+        orderId: null,
       },
+      segments: [],
       targetExam: added?.record ?? null,
       notice: noticeOf(userId, examCode, kind, endsAt, now),
       activity: activityRecord(
@@ -244,24 +268,28 @@ export function accessPassCalls(store: AccessPassStore) {
     if ("refusal" in checks) return checks.refusal;
     const { userId, examCode, reason } = checks.input;
     const now = new Date();
-    return change(userId, examCode, ({ member, examExists, pass }) => {
+    return change(userId, examCode, ({ member, examExists, pass, history }) => {
       if (!examExists) return refuse(NO_SUCH_EXAM);
       if (!pass) return refuse(formError(noPassToEnd(examCode)));
-      const endsAt = endedNow(pass.endsAt, now);
-      if (endsAt === null) return refuse(formError(alreadyEnded(examCode)));
+      if (!isPassActive(pass.endsAt, now)) return refuse(formError(alreadyEnded(examCode)));
+      const ending = endGrantedDays(history, pass.endsAt, now);
+      if (ending.kind === "none") return refuse(formError(onlyPaidDaysLeft(examCode)));
+      const { endsAt } = ending;
       const { email } = member;
+      const endsNow = ending.kind === "now";
       return {
         write: {
           endsAt,
           grant: null,
+          segments: ending.moved,
           targetExam: null,
-          notice: noticeOf(userId, examCode, "ended", endsAt, now),
+          notice: noticeOf(userId, examCode, endsNow ? "ended" : "shortened", endsAt, now),
           activity: activityRecord(
             actor,
             now,
             "access-pass",
             passEntityId(userId, examCode),
-            "end-access",
+            endsNow ? "end-access" : "end-granted-access",
             { email, examCode, endsAt: pass.endsAt },
             { email, examCode, endsAt, reason },
           ),

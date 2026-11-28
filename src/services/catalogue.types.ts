@@ -178,6 +178,28 @@ export interface SocialLinks {
   instagram: string | null;
 }
 
+/**
+ * The business details printed as the seller on every Payment
+ * Acknowledgement (Phase 4, ticket 06), filled in by an Owner in Settings.
+ * Until then only the name shows, "Ace Your Course".
+ */
+export interface BusinessDetails {
+  name: string;
+  address: string | null;
+  /** The TIN with dashes, "123-456-789" or with its branch code (src/lib/payments/tin.ts). */
+  tin: string | null;
+  /** Whether the business is VAT-registered: Acknowledgements then say "Prices include VAT". */
+  vatRegistered: boolean;
+}
+
+/** The business details before an Owner fills them in. */
+export const DEFAULT_BUSINESS: BusinessDetails = {
+  name: "Ace Your Course",
+  address: null,
+  tin: null,
+  vatRegistered: false,
+};
+
 export interface WebsiteSettings {
   /** Each Marketplace's shop page. `null` hides that Marketplace's shop link. */
   shopLinks: Record<Marketplace, string | null>;
@@ -190,6 +212,8 @@ export interface WebsiteSettings {
   promoBanner: PromoBanner | null;
   /** The Member App switch. While false, no Member App link or message renders. */
   memberAppLive: boolean;
+  /** The seller on Payment Acknowledgements (Phase 4, ticket 06). */
+  business: BusinessDetails;
 }
 
 export type ProductFormat = "flash-cards" | "notebook" | "posters" | "bundle";

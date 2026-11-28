@@ -29,6 +29,7 @@ const INITIAL: AdminWebsiteSettings = {
       instagram: null,
     },
     shopStats: { rating: 4.8, ratingCount: 874, followers: "3.7K", asOf: "2026-10-29" },
+    business: { name: "Ace Your Course", address: null, tin: null, vatRegistered: false },
   },
   stamp: { savedAt: OPENED_AT, savedBy: null },
 };
@@ -63,6 +64,7 @@ function renderEditor(actions: Partial<Parameters<typeof SettingsEditor>[0]["act
           saveContactEmail: answering(),
           saveLinks: answering(),
           saveTrustFigures: answering(),
+          saveBusinessDetails: answering(),
           ...actions,
         }}
       />
@@ -76,6 +78,7 @@ const part = (name: string) => within(screen.getByRole("form", { name }));
 const contact = () => part("CONTACT EMAIL");
 const links = () => part("STORE & SOCIAL LINKS");
 const figures = () => part("TRUST FIGURES");
+const business = () => part("BUSINESS DETAILS");
 const line = (form: ReturnType<typeof part>) => form.getByRole("status");
 
 // Sonner captures the pointer on a toast to let it be swiped away; jsdom has
@@ -116,6 +119,7 @@ describe("SettingsEditor", () => {
           saveContactEmail: answering(),
           saveLinks: answering(),
           saveTrustFigures: answering(),
+          saveBusinessDetails: answering(),
         }}
       />,
     );
@@ -326,5 +330,83 @@ describe("SettingsEditor", () => {
     await user.click(contact().getByRole("button", { name: "Save" }));
 
     expect(await contact().findByText("ONLY AN OWNER CAN DO THIS")).toBeInTheDocument();
+  });
+
+  describe("business details (Phase 4, ticket 06)", () => {
+    it("opens with the name, no address or TIN, and VAT-registered No, saying where they're printed", () => {
+      renderEditor();
+
+      expect(
+        business().getByText(/Printed as the seller on every Payment Acknowledgement/),
+      ).toBeInTheDocument();
+      expect(business().getByLabelText("BUSINESS NAME")).toHaveValue("Ace Your Course");
+      expect(business().getByLabelText("ADDRESS")).toHaveValue("");
+      expect(business().getByLabelText("TIN (OPTIONAL)")).toHaveValue("");
+      expect(business().getByRole("radio", { name: "No" })).toBeChecked();
+      expect(business().getByRole("radio", { name: "Yes" })).not.toBeChecked();
+    });
+
+    it("sends the details typed, with VAT-registered Yes, and the stamp it opened with", async () => {
+      const saveBusinessDetails = answering(
+        saved({
+          business: {
+            name: "Ace Your Course Review Center",
+            address: "Iloilo City, Iloilo",
+            tin: "123-456-789-000",
+            vatRegistered: true,
+          },
+        }),
+      );
+      const user = renderEditor({ saveBusinessDetails });
+
+      await user.clear(business().getByLabelText("BUSINESS NAME"));
+      await user.type(business().getByLabelText("BUSINESS NAME"), "Ace Your Course Review Center");
+      await user.type(business().getByLabelText("ADDRESS"), "Iloilo City, Iloilo");
+      await user.type(business().getByLabelText("TIN (OPTIONAL)"), "123456789000");
+      await user.click(business().getByRole("radio", { name: "Yes" }));
+      await user.click(business().getByRole("button", { name: "Save details" }));
+
+      await waitFor(() =>
+        expect(line(business())).toHaveTextContent("✓ SAVED · ON EVERY ACKNOWLEDGEMENT"),
+      );
+      expect(saveBusinessDetails.mock.calls[0]?.[1]).toEqual({
+        input: {
+          business: {
+            name: "Ace Your Course Review Center",
+            address: "Iloilo City, Iloilo",
+            tin: "123456789000",
+            vatRegistered: true,
+          },
+        },
+        expected: { savedAt: OPENED_AT },
+      });
+      // The TIN as it was kept, with dashes.
+      expect(business().getByLabelText("TIN (OPTIONAL)")).toHaveValue("123-456-789-000");
+    });
+
+    it("shows a refused TIN's message under it", async () => {
+      const saveBusinessDetails = answering({
+        status: "refused",
+        error: {
+          kind: "invalid",
+          fieldErrors: {
+            "business.tin": [
+              "ENTER 9 DIGITS, LIKE 123-456-789, WITH A 3- OR 5-DIGIT BRANCH CODE IF ANY",
+            ],
+          },
+        },
+      });
+      const user = renderEditor({ saveBusinessDetails });
+
+      await user.type(business().getByLabelText("TIN (OPTIONAL)"), "12345");
+      await user.click(business().getByRole("button", { name: "Save details" }));
+
+      expect(
+        await business().findByText(
+          "ENTER 9 DIGITS, LIKE 123-456-789, WITH A 3- OR 5-DIGIT BRANCH CODE IF ANY",
+        ),
+      ).toBeInTheDocument();
+      expect(business().getByLabelText("TIN (OPTIONAL)")).toHaveValue("12345");
+    });
   });
 });

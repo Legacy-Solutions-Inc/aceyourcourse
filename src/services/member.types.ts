@@ -2,10 +2,13 @@ import type { z } from "zod";
 
 import type { AllowedVia, RefusedDecision } from "@/lib/member-app/access";
 import type { ExamDateSetBy } from "@/lib/member-app/exam-date";
+import type { InvoiceStatus } from "@/lib/payments/invoice-requests";
+import type { Order } from "@/lib/payments/order-ledger";
 import type { PrivacyRequestStatus, PrivacyRequestType } from "@/lib/member-app/privacy-requests";
 import type { AttemptReview } from "@/lib/quizzes/grading";
 import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
 import type { ReaderPlace } from "@/lib/reviewer-pdfs/reader";
+import type { Plan } from "@/services/admin.types";
 import type { CardMarkVerdict, ContentKind } from "@/services/content.types";
 import type {
   attemptRefSchema,
@@ -387,14 +390,19 @@ export type TopicPercents = Record<string, number | null>;
 
 // ── In-app notices (ticket 17) ──────────────────────────────────────────────
 
-/** What a notice tells the Member: a grant, an extension, or the end of their access. */
-export const NOTICE_KINDS = ["granted", "extended", "ended"] as const;
+/**
+ * What a notice tells the Member: a grant, an extension, the end of their
+ * access, or a full refund in PayMongo (Phase 4, ticket 09).
+ */
+export const NOTICE_KINDS = ["granted", "extended", "ended", "refunded", "shortened"] as const;
 export type NoticeKind = (typeof NOTICE_KINDS)[number];
 
 /**
  * One in-app notice (spec, Phase 3 planning decisions → In-app notices): an
- * Owner's grant, extension or end of a Member's Access Pass, shown as a
- * dismissible banner until the Member dismisses it. No email is sent.
+ * Owner's grant, extension or end of a Member's Access Pass ("shortened" when
+ * ending its granted days leaves paid ones, ticket 10), or a full refund
+ * (ticket 09), shown as a dismissible banner until the Member dismisses it.
+ * No email is sent.
  */
 export interface MemberNotice {
   id: string;
@@ -409,6 +417,8 @@ export interface MemberNotice {
   createdAt: string;
   /** ISO time the Member dismissed it, or null while it shows. */
   dismissedAt: string | null;
+  /** The refunded Order's reference, "AYC-10483", for a refund's notice; null for any other. */
+  reference: string | null;
 }
 
 // ── Privacy Requests (ticket 18) ────────────────────────────────────────────
@@ -436,3 +446,130 @@ export interface PrivacyRequestOutcome {
   /** False when one was already open: nothing new is made. */
   created: boolean;
 }
+
+// ── Plans (Phase 4, ticket 02; spec, Phase 4 planning decisions → Who buys,
+// and which Exams; stories 134 and 151c) ─────────────────────────────────────
+
+/** A Plan on sale, as the Member's Plans page shows it: its name ("CE All-Access"), days, price and Best value. */
+export type OnSalePlan = Pick<Plan, "id" | "name" | "days" | "priceCentavos" | "bestValue">;
+
+/** An Exam with at least one Plan on sale, as one Member's Plans page reads it. */
+export interface PlansExam {
+  examCode: string;
+  board: string;
+  name: string;
+  /** Its Plans on sale, shortest first. Never empty. */
+  plans: OnSalePlan[];
+  /** When this Member's own Access Pass for the Exam ends (ISO), ended or not; null with none. */
+  passEndsAt: string | null;
+  /**
+   * The Exam Date a Plan would count towards (YYYY-MM-DD): the Member's own
+   * for a Target Exam, else the Exam's Official Exam Date, which buying it
+   * adds it with; null when there's neither.
+   */
+  examDate: string | null;
+}
+
+// ── Buying (Phase 4, ticket 03; spec, Phase 4 → Order ledger, Return flow;
+// Phase 4 planning decisions → Paying; stories 135–140) ───────────────────────
+
+/** What the Plans page's Pay sends: the Exam open on the page, the Plan picked and the method. */
+export interface PayInput {
+  examCode: string;
+  planId: string;
+  method: string;
+}
+
+/**
+ * Why Pay made no Order: buying isn't set up on this server, the method isn't
+ * one of the four, the Plan isn't on sale (or isn't a Plan), or it's another
+ * Exam's than the one posted.
+ */
+export type PayRefusal =
+  "unavailable" | "bad-method" | "not-on-sale" | "wrong-exam" | "checkout-failed";
+
+/** Pay's outcome: the Pending Order's reference and where to send the Member, or why not. */
+export type PayResult =
+  { ok: true; reference: string; redirectTo: string } | { ok: false; reason: PayRefusal };
+
+/**
+ * One of the Member's own Paid Orders as its Payment Acknowledgement shows
+ * it (ticket 06): the Order, who was billed as at Pay, the access period its
+ * days gave (from, until), and PayMongo's reference, null with the fake.
+ */
+export interface PaymentAcknowledgement {
+  order: MemberOrder;
+  buyer: { name: string | null; email: string };
+  access: { startsAt: string; endsAt: string } | null;
+  payMongoReference: string | null;
+}
+
+/** An Order's Invoice Request as the Member sees it (ticket 08): requested, then sent. */
+export interface MemberInvoice {
+  status: InvoiceStatus;
+  requestedAt: string;
+  sentAt: string | null;
+}
+
+/** Why "Request official invoice" was refused: no Order of theirs, not Paid, or asked already. */
+export type InvoiceRefusal = "not-found" | "not-paid" | "already-requested";
+
+/** The form's fields, each with what was wrong with it. */
+export type InvoiceFieldErrors = Partial<Record<"name" | "address" | "tin", string>>;
+
+/** "Request official invoice"'s outcome. */
+export type InvoiceRequestResult =
+  | { ok: true }
+  | { ok: false; reason: InvoiceRefusal }
+  | { ok: false; reason: "invalid"; fields: InvoiceFieldErrors };
+
+/** What a PayMongo webhook event did (ticket 05). */
+export type PaymentEventResult =
+  "applied" | "no-change" | "duplicate" | "unknown-order" | "ignored";
+
+/**
+ * What the daily sweep did: the overdue Pending Orders it asked PayMongo
+ * about, how many became Paid or Expired, and how many were left Pending
+ * because PayMongo couldn't answer (or settling failed). An Order moved on
+ * by a webhook meanwhile is in none of the last three.
+ */
+export interface ExpirySweep {
+  checked: number;
+  paid: number;
+  expired: number;
+  unanswered: number;
+}
+
+/**
+ * One of the Member's own Orders, as the Confirming payment, Paid and Failed
+ * screens show it. Its status is as at the read: a Pending Order older than
+ * 24 hours reads Expired (ticket 05).
+ */
+export type MemberOrder = Pick<
+  Order,
+  | "id"
+  | "reference"
+  | "examCode"
+  | "planName"
+  | "days"
+  | "priceCentavos"
+  | "method"
+  | "status"
+  | "createdAt"
+  | "paidAt"
+  | "livemode"
+> & {
+  /** Once Paid: the end of the Access Pass the Order's days gave (ISO); null until then. */
+  accessUntil: string | null;
+  /** Whether its payment was confirmed more than 24 hours after it was made (ticket 05). */
+  paidAfterExpiry: boolean;
+  /** Its Invoice Request (ticket 08), or null for none. */
+  invoice: MemberInvoice | null;
+  /**
+   * What PayMongo refunded of it, in centavos (ticket 09): its succeeded
+   * refunds. Less than its price on a Paid Order is a partial refund.
+   */
+  refundedCentavos: number;
+  /** When its last refund was made (ISO), or null with none. */
+  refundedAt: string | null;
+};

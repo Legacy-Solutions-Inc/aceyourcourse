@@ -9,9 +9,10 @@ import { sql } from "drizzle-orm";
 /**
  * What a call reads: the catalogue with its save stamps, the Member App's
  * content (its Topics, with their decks, quizzes and Reviewer PDFs, and the
- * decks' cards), the staff list, and the Beta Tester list.
+ * decks' cards), the staff list, the Beta Tester list, and the Plans (Phase
+ * 4, admin.plans.db.ts).
  */
-export type AdminPart = "catalogue" | "content" | "staff" | "betaTesters";
+export type AdminPart = "catalogue" | "content" | "staff" | "betaTesters" | "plans";
 
 /** A part's write lock, held until the transaction ends. */
 export const adminWriteLock = (part: AdminPart) =>

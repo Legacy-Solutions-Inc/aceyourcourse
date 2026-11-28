@@ -1,3 +1,4 @@
+import type { Order } from "@/lib/payments/order-ledger";
 import type { AdminService } from "@/services/admin";
 import * as adminSampleArm from "@/services/admin.mock";
 import type { MemberService } from "@/services/member";
@@ -7,7 +8,12 @@ import type { ConsentRecord, DeviceSwitch, Member, PrivacyRequest } from "@/serv
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
-import { byCardAndMember, byMemberAndPage } from "./admin-arms";
+import {
+  type AdminArm,
+  SAMPLE_ARM as ADMIN_SAMPLE_ARM,
+  byCardAndMember,
+  byMemberAndPage,
+} from "./admin-arms";
 import { sampleActor } from "./admin-inputs";
 import { type CardImageUpload, uploadSampleCardImage } from "./card-images";
 import { editSampleCatalogue } from "./catalogue-seed";
@@ -61,6 +67,10 @@ export interface MemberArm {
   privacyRequests(): Promise<(Omit<PrivacyRequest, "userId"> & { userId: string | null })[]>;
   /** Marks a Privacy Request done behind the seam's back, as an Owner does (ticket 19). */
   finishPrivacyRequest(id: string): Promise<void>;
+  /** Every Order, read behind the seam's back, by reference (Phase 4, ticket 03). */
+  orders(): Promise<Order[]>;
+  /** The Admin's matching arm, for its reads behind the seam's back (Staff Activity) and its breakers. */
+  adminArm: AdminArm;
 }
 
 /** An Active Device record as it is stored, for checking what is (and isn't) kept. */
@@ -104,6 +114,8 @@ const SAMPLE_ARM: MemberArm = {
         : request,
     );
   },
+  orders: () => ADMIN_SAMPLE_ARM.orders(),
+  adminArm: ADMIN_SAMPLE_ARM,
 };
 
 export const MEMBER_ARMS: MemberArm[] =

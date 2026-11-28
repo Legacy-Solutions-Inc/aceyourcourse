@@ -1,6 +1,21 @@
 import "server-only";
 
-import { and, asc, type Column, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import {
+  and,
+  asc,
+  type Column,
+  count,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  lte,
+  or,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import type { Transaction } from "@/lib/db/connect";
@@ -9,12 +24,19 @@ import * as schema from "@/lib/db/schema";
 import { deviceStatusFor } from "@/lib/member-app/device-token";
 import { noticesToShow } from "@/lib/member-app/notices";
 import { privacyRequestDueOn } from "@/lib/member-app/privacy-requests";
+import type { PassHistoryRow } from "@/lib/payments/order-ledger";
+import { type OrderRefund, refundsOfOrder } from "@/lib/payments/refunds";
+import { toPlanDays } from "@/lib/plans/plan-rules";
 import { isReaderZoom } from "@/lib/reviewer-pdfs/reader";
 import { readablePageCount } from "@/lib/reviewer-pdfs/status";
 import { isStorageConfigured } from "@/lib/supabase/admin";
+import type { Plan } from "@/services/admin.types";
 import { type ContentExam, contentItemOf, libraryOf } from "@/services/content.rules";
+import type { PassWrite } from "@/services/access-passes.core";
+import { staffActivityToRow } from "@/services/admin.rows";
 import {
   accessPassFromRow,
+  accessPassGrantToRow,
   cardFromRow,
   contentFromRows,
   questionFromRow,
@@ -27,6 +49,7 @@ import {
 import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
 import { progressCalls, progressSubjectsOf, type ProgressStore } from "@/services/progress.core";
 import { quizStudyCalls, type QuizStudyStore } from "@/services/quiz-study.core";
+import { renewalCalls, type RenewalStore } from "@/services/renewal.core";
 import { reviewerStudyCalls, type ReviewerStudyStore } from "@/services/reviewer-study.core";
 import type { MemberService } from "@/services/member";
 import {
@@ -40,8 +63,10 @@ import {
   privacyRequestTypeSchema,
 } from "@/services/member.schema";
 import {
+  examCodesOnSale,
   examsForMembers,
   pickableExams,
+  plansExams,
   targetExamOperations,
   targetExams,
   type MemberExam,
@@ -56,6 +81,22 @@ import type {
   MemberNotice,
   PrivacyRequest,
 } from "@/services/member.types";
+import {
+  orderCalls,
+  type OrderHolding,
+  type OrderStore,
+  type OrderWrite,
+  type OwnOrder,
+  type PassReduction,
+} from "@/services/orders.core";
+import {
+  invoiceRequestFromRow,
+  invoiceRequestToRow,
+  orderFromRow,
+  orderRefundFromRow,
+  orderRefundToRow,
+  orderToRow,
+} from "@/services/orders.rows";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
 import { storageArm } from "@/services/uploads.storage";
 
@@ -899,6 +940,7 @@ export const noticeFromRow = (row: NoticeRow): MemberNotice => ({
   endsAt: row.endsAt.toISOString(),
   createdAt: row.createdAt.toISOString(),
   dismissedAt: row.dismissedAt?.toISOString() ?? null,
+  reference: row.reference,
 });
 
 /** A notice as a row to add: its `seq` is the table's to give. */
@@ -910,6 +952,7 @@ export const noticeToRow = (notice: MemberNotice): Omit<NoticeRow, "seq"> => ({
   endsAt: new Date(notice.endsAt),
   createdAt: new Date(notice.createdAt),
   dismissedAt: notice.dismissedAt === null ? null : new Date(notice.dismissedAt),
+  reference: notice.reference,
 });
 
 const listNotices: MemberService["listNotices"] = async (userId) => {
@@ -940,6 +983,35 @@ const dismissNotice: MemberService["dismissNotice"] = async (userId, noticeId) =
     const [found] = await getDb().select({ id: memberNotices.id }).from(memberNotices).where(owned);
     return found !== undefined;
   });
+};
+
+// ── Renewal reminders ───────────────────────────────────────────────────────
+
+const databaseRenewalStore: RenewalStore = {
+  listAccessPasses: (userId) => listAccessPasses(userId),
+  listTargetExams: (userId) => listTargetExams(userId),
+  readDismissals: (userId) => {
+    const { renewalDismissals } = schema;
+    return inDatabase(() =>
+      getDb()
+        .select({ examCode: renewalDismissals.examCode, day: renewalDismissals.day })
+        .from(renewalDismissals)
+        .where(eq(renewalDismissals.userId, userId)),
+    );
+  },
+  writeDismissal: async (userId, { examCode, day }, at) => {
+    const { renewalDismissals } = schema;
+    await inDatabase(() =>
+      getDb()
+        .insert(renewalDismissals)
+        .values({ userId, examCode, day, dismissedAt: at })
+        // One per Member and Exam: the latest replaces the one before.
+        .onConflictDoUpdate({
+          target: [renewalDismissals.userId, renewalDismissals.examCode],
+          set: { day, dismissedAt: at },
+        }),
+    );
+  },
 };
 
 // ── Privacy Requests ────────────────────────────────────────────────────────
@@ -1020,6 +1092,409 @@ const requestPrivacy: MemberService["requestPrivacy"] = async (userId, type) => 
   );
 };
 
+// ── Plans (Phase 4, ticket 02) ──────────────────────────────────────────────
+
+/** Every Plan on sale, read fresh: an Owner switching one off takes it off the page on the next request. */
+async function readPlansOnSale(db: Reader): Promise<Plan[]> {
+  const { plans } = schema;
+  const rows = await db
+    .select({
+      id: plans.id,
+      examCode: plans.examCode,
+      name: plans.name,
+      days: plans.days,
+      priceCentavos: plans.priceCentavos,
+      bestValue: plans.bestValue,
+      onSale: plans.onSale,
+    })
+    .from(plans)
+    .where(eq(plans.onSale, true));
+  // The table's check keeps the days to a Plan's durations.
+  return rows.map((row) => ({ ...row, days: toPlanDays(row.days) }));
+}
+
+const listMemberPlans: MemberService["listMemberPlans"] = async (userId) => {
+  const wanted = memberUserIdSchema.parse(userId);
+  try {
+    const db = getDb();
+    const [exams, plans, targetExams, passes] = await Promise.all([
+      readExams(db),
+      readPlansOnSale(db),
+      listTargetExams(wanted),
+      listAccessPasses(wanted),
+    ]);
+    return plansExams({ exams, plans, targetExams, passes });
+  } catch (error) {
+    throw asDatabaseError(error);
+  }
+};
+
+const listExamsOnSale: MemberService["listExamsOnSale"] = async () => {
+  try {
+    const db = getDb();
+    const [exams, plans] = await Promise.all([readExams(db), readPlansOnSale(db)]);
+    return examCodesOnSale(exams, plans);
+  } catch (error) {
+    throw asDatabaseError(error);
+  }
+};
+
+// ── Buying (Phase 4, ticket 03) ─────────────────────────────────────────────
+
+/**
+ * Reads a Member's pass history for an Exam in `tx`, in order, each row keyed
+ * by its seq, as the Order ledger's segment model reads it. The caller holds
+ * the pass's lock, which covers its history: every write to it locks the
+ * pass first.
+ */
+export async function readPassHistory(
+  tx: Transaction,
+  userId: string,
+  examCode: string,
+): Promise<PassHistoryRow[]> {
+  const { accessPassGrants } = schema;
+  const rows = await tx
+    .select({
+      key: accessPassGrants.seq,
+      orderId: accessPassGrants.orderId,
+      startsAt: accessPassGrants.startsAt,
+      endsAt: accessPassGrants.endsAt,
+    })
+    .from(accessPassGrants)
+    .where(and(eq(accessPassGrants.userId, userId), eq(accessPassGrants.examCode, examCode)))
+    .orderBy(asc(accessPassGrants.seq));
+  return rows.map((row) => ({
+    ...row,
+    startsAt: row.startsAt.toISOString(),
+    endsAt: row.endsAt.toISOString(),
+  }));
+}
+
+/** Rewrites the pass history rows a change moved in `tx`, by seq, in place (the segment model). */
+async function rewriteSegments(
+  tx: Transaction,
+  userId: string,
+  examCode: string,
+  segments: readonly PassHistoryRow[],
+): Promise<void> {
+  const { accessPassGrants } = schema;
+  for (const segment of segments) {
+    await tx
+      .update(accessPassGrants)
+      .set({ startsAt: new Date(segment.startsAt), endsAt: new Date(segment.endsAt) })
+      .where(
+        and(
+          eq(accessPassGrants.seq, segment.key),
+          eq(accessPassGrants.userId, userId),
+          eq(accessPassGrants.examCode, examCode),
+        ),
+      );
+  }
+}
+
+/**
+ * Writes a change to a Member's Access Pass for an Exam in `tx`: the pass
+ * (made when they held none), its history row, the Target Exam record, the
+ * notice and the Staff Activity. An Owner's grant, extension or end
+ * (admin.access-passes.db.ts) and a Paid Order write the same way, inside the
+ * transaction that locked the Member's row.
+ */
+export async function writePass(
+  tx: Transaction,
+  userId: string,
+  examCode: string,
+  write: PassWrite,
+): Promise<void> {
+  const { accessPasses } = schema;
+  const endsAt = new Date(write.endsAt);
+  await tx
+    .insert(accessPasses)
+    .values({ userId, examCode, endsAt })
+    .onConflictDoUpdate({ target: [accessPasses.userId, accessPasses.examCode], set: { endsAt } });
+  if (write.grant)
+    await tx.insert(schema.accessPassGrants).values(accessPassGrantToRow(write.grant));
+  await rewriteSegments(tx, userId, examCode, write.segments);
+  if (write.targetExam) await writeTargetExam(tx, userId, write.targetExam);
+  await tx.insert(schema.memberNotices).values(noticeToRow(write.notice));
+  await tx.insert(schema.staffActivity).values(staffActivityToRow(write.activity));
+}
+
+/**
+ * Orders on Postgres. A reference comes from order_reference_seq through the
+ * column's default, so two Pays at once never share one. An outcome runs in
+ * one transaction that locks the Order's row, then the buyer's Member row (as
+ * a grant does, admin.access-passes.db.ts) and pass, so two outcomes for the
+ * same Order or Member take turns; then the Order, the pass, its paid history
+ * row, the Target Exam, the notice and the Staff Activity are written
+ * together, or none of them. The paid history row's unique order_id keeps an
+ * Order's days to one row, whatever happens. The Orders admin's "Check
+ * status with PayMongo" (ticket 07) settles Orders through it too.
+ */
+export const databaseOrderStore: OrderStore = {
+  readOnSale: () =>
+    inDatabase(async () => {
+      const db = getDb();
+      const [exams, plans] = await Promise.all([readExams(db), readPlansOnSale(db)]);
+      return { exams, plans };
+    }),
+  readMember: (userId) =>
+    inDatabase(async () => {
+      const [row] = await getDb()
+        .select()
+        .from(schema.members)
+        .where(eq(schema.members.userId, userId));
+      return row ? memberFromRow(row) : null;
+    }),
+  addOrder: ({ id, ...draft }) =>
+    inDatabase(async () => {
+      const { reference: _numbered, ...row } = orderToRow({ id, reference: "", ...draft });
+      const [added] = await getDb().insert(schema.orders).values(row).returning();
+      if (!added) throw new Error("The Order wasn't added.");
+      return orderFromRow(added);
+    }),
+  recordCheckout: (orderId, { checkoutId, livemode }) =>
+    inDatabase(async () => {
+      await getDb()
+        .update(schema.orders)
+        .set({ checkoutId, livemode })
+        .where(eq(schema.orders.id, orderId));
+    }),
+  // One conditional update claims the check, so two servers never both ask PayMongo.
+  claimStatusCheck: (orderId, now, everyMs) =>
+    inDatabase(async () => {
+      const { orders } = schema;
+      const claimed = await getDb()
+        .update(orders)
+        .set({ statusCheckedAt: now })
+        .where(
+          and(
+            eq(orders.id, orderId),
+            eq(orders.status, "pending"),
+            or(
+              isNull(orders.statusCheckedAt),
+              lte(orders.statusCheckedAt, new Date(now.getTime() - everyMs)),
+            ),
+          ),
+        )
+        .returning({ id: orders.id });
+      return claimed.length > 0;
+    }),
+  findOwnOrder: (userId, reference) =>
+    inDatabase(async () => {
+      const [own] = await readOwnOrders(userId, reference);
+      return own ?? null;
+    }),
+  listOwnOrders: (userId) => inDatabase(() => readOwnOrders(userId)),
+  withOrder: (orderId, work) =>
+    inDatabase(() => getDb().transaction((tx) => holdOrder(tx, orderId, work))),
+  // The event's row and what it changed commit together: a repeat finds the
+  // row (the insert does nothing) and changes nothing, and a failed write
+  // leaves no row, so PayMongo's retry applies it.
+  withPaymentEvent: (event, { checkoutId, orderId, reference, paymentId }, work) =>
+    inDatabase(() =>
+      getDb().transaction(async (tx) => {
+        const { orders, paymentEvents } = schema;
+        const find = async (condition: SQL) =>
+          (await tx.select({ id: orders.id }).from(orders).where(condition))[0]?.id ?? null;
+        const found =
+          (checkoutId ? await find(eq(orders.checkoutId, checkoutId)) : null) ??
+          (orderId && UUID.test(orderId) ? await find(eq(orders.id, orderId)) : null) ??
+          (reference ? await find(eq(orders.reference, reference)) : null) ??
+          (paymentId ? await find(eq(orders.paymentId, paymentId)) : null);
+        const recorded = await tx
+          .insert(paymentEvents)
+          .values({
+            eventId: event.id,
+            type: event.type,
+            orderId: found,
+            receivedAt: event.receivedAt,
+          })
+          .onConflictDoNothing()
+          .returning({ id: paymentEvents.eventId });
+        if (recorded.length === 0) return { recorded: false } as const;
+        if (!found) return { recorded: true, found: false } as const;
+        const result = await holdOrder(tx, found, work);
+        // Found in this transaction and held by the event's foreign key, the
+        // Order can't be gone; should it be, roll back, so PayMongo retries.
+        if (result === null) throw new Error(`The Order for PayMongo event ${event.id} vanished.`);
+        return { recorded: true, found: true, result } as const;
+      }),
+    ),
+  listOverdueOrders: (madeBefore) =>
+    inDatabase(async () => {
+      const { orders } = schema;
+      const rows = await getDb()
+        .select()
+        .from(orders)
+        .where(and(eq(orders.status, "pending"), lt(orders.createdAt, madeBefore)))
+        .orderBy(asc(orders.createdAt));
+      return rows.map(orderFromRow);
+    }),
+  // The Order is the key: a second request, two at once included, inserts nothing.
+  addInvoiceRequest: (request) =>
+    inDatabase(async () => {
+      const added = await getDb()
+        .insert(schema.invoiceRequests)
+        .values(invoiceRequestToRow(request))
+        .onConflictDoNothing({ target: schema.invoiceRequests.orderId })
+        .returning({ orderId: schema.invoiceRequests.orderId });
+      return added.length > 0;
+    }),
+};
+
+/**
+ * Every refund of these Orders (ticket 09), in the order first recorded
+ * (PayMongo's refund ids don't sort by time, so by refund time, then id).
+ */
+export async function readOrderRefunds(
+  db: Pick<ReturnType<typeof getDb>, "select">,
+  orderIds: readonly string[],
+): Promise<OrderRefund[]> {
+  if (orderIds.length === 0) return [];
+  const { orderRefunds } = schema;
+  const rows = await db
+    .select()
+    .from(orderRefunds)
+    .where(inArray(orderRefunds.orderId, [...orderIds]))
+    .orderBy(sql`${orderRefunds.refundedAt} asc nulls last`, asc(orderRefunds.refundId));
+  return rows.map(orderRefundFromRow);
+}
+
+/**
+ * A Member's own Orders (just the one with `reference`, when given), newest
+ * first, each with the days its payment added to their pass (its paid
+ * history row, unique per Order), its Invoice Request (one per Order, by its
+ * key) and its refunds (ticket 09). Always scoped to the Member.
+ */
+async function readOwnOrders(userId: string, reference?: string): Promise<OwnOrder[]> {
+  const { orders, accessPassGrants, invoiceRequests } = schema;
+  const mine = eq(orders.userId, userId);
+  const rows = await getDb()
+    .select({
+      order: orders,
+      startsAt: accessPassGrants.startsAt,
+      endsAt: accessPassGrants.endsAt,
+      invoice: invoiceRequests,
+    })
+    .from(orders)
+    .leftJoin(accessPassGrants, eq(accessPassGrants.orderId, orders.id))
+    .leftJoin(invoiceRequests, eq(invoiceRequests.orderId, orders.id))
+    .where(reference === undefined ? mine : and(mine, eq(orders.reference, reference)))
+    .orderBy(desc(orders.createdAt), desc(orders.reference));
+  const refundsOf = refundsOfOrder(
+    await readOrderRefunds(
+      getDb(),
+      rows.map(({ order }) => order.id),
+    ),
+  );
+  return rows.map(({ order, startsAt, endsAt, invoice }) => ({
+    order: orderFromRow(order),
+    paidDays:
+      startsAt && endsAt
+        ? { startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString() }
+        : null,
+    invoice: invoice && invoiceRequestFromRow(invoice),
+    refunds: refundsOf(order.id),
+  }));
+}
+
+/** An Order id as Postgres takes it: the metadata PayMongo echoes could carry anything. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Runs `work` on an Order inside `tx`: locks the Order's row, then the
+ * buyer's Member row (as a grant does, admin.access-passes.db.ts) and pass,
+ * so two outcomes for the same Order or Member take turns, and reads the
+ * pass's history (each row keyed by its seq) and the Order's refunds; then
+ * writes the Order, its refunds, the pass and its history, the Target Exam,
+ * the notice and the Staff Activity together. Null for an id no Order has.
+ */
+async function holdOrder<T>(
+  tx: Transaction,
+  orderId: string,
+  work: (holding: OrderHolding) => { write: OrderWrite | null; result: T },
+): Promise<T | null> {
+  const { orders, members, accessPasses, memberTargetExams } = schema;
+  const [orderRow] = await tx.select().from(orders).where(eq(orders.id, orderId)).for("update");
+  if (!orderRow) return null;
+  const order = orderFromRow(orderRow);
+  const { userId, examCode } = order;
+  const [member] = userId
+    ? await tx.select().from(members).where(eq(members.userId, userId)).for("update")
+    : [];
+  const [pass] = userId
+    ? await tx
+        .select()
+        .from(accessPasses)
+        .where(and(eq(accessPasses.userId, userId), eq(accessPasses.examCode, examCode)))
+        .for("update")
+    : [];
+  const targetExams = userId
+    ? await tx
+        .select()
+        .from(memberTargetExams)
+        .where(eq(memberTargetExams.userId, userId))
+        .orderBy(asc(memberTargetExams.seq))
+    : [];
+  const history = userId && pass ? await readPassHistory(tx, userId, examCode) : [];
+
+  const { write, result } = work({
+    order,
+    member: member ? memberFromRow(member) : null,
+    pass: pass ? accessPassFromRow(pass) : null,
+    targetExams: targetExams.map(targetExamFromRow),
+    history,
+    refunds: await readOrderRefunds(tx, [orderId]),
+  });
+  if (!write) return result;
+
+  const { reference: _kept, id: _same, ...moved } = orderToRow(write.order);
+  await tx.update(orders).set(moved).where(eq(orders.id, orderId));
+  if (write.refunds.length > 0) {
+    const { orderRefunds } = schema;
+    await tx
+      .insert(orderRefunds)
+      .values(write.refunds.map(orderRefundToRow))
+      .onConflictDoUpdate({
+        target: orderRefunds.refundId,
+        set: {
+          amountCentavos: sql`excluded.amount_centavos`,
+          status: sql`excluded.status`,
+          refundedAt: sql`excluded.refunded_at`,
+        },
+      });
+  }
+  if (write.paid && member) await writePass(tx, member.userId, examCode, write.paid);
+  if (write.reduction && member) {
+    await writeReduction(tx, member.userId, examCode, write.reduction);
+  }
+  if (write.activity)
+    await tx.insert(schema.staffActivity).values(staffActivityToRow(write.activity));
+  return result;
+}
+
+/**
+ * Writes a full refund's change to a Member's pass in `tx` (ticket 09): its
+ * new end, the history rows it moved (by seq, rewritten in place: the Order
+ * ledger's segment model), the notice and the Staff Activity, inside the
+ * transaction that locked the pass.
+ */
+async function writeReduction(
+  tx: Transaction,
+  userId: string,
+  examCode: string,
+  write: PassReduction,
+): Promise<void> {
+  const { accessPasses } = schema;
+  await tx
+    .update(accessPasses)
+    .set({ endsAt: new Date(write.endsAt) })
+    .where(and(eq(accessPasses.userId, userId), eq(accessPasses.examCode, examCode)));
+  await rewriteSegments(tx, userId, examCode, write.segments);
+  await tx.insert(schema.memberNotices).values(noticeToRow(write.notice));
+  await tx.insert(schema.staffActivity).values(staffActivityToRow(write.activity));
+}
+
 export const databaseArm: MemberService = {
   isBetaTester,
   getOrCreateMember,
@@ -1042,6 +1517,10 @@ export const databaseArm: MemberService = {
   ...progressCalls(databaseProgressStore),
   listNotices,
   dismissNotice,
+  ...renewalCalls(databaseRenewalStore),
   listOpenPrivacyRequests,
   requestPrivacy,
+  listMemberPlans,
+  listExamsOnSale,
+  ...orderCalls(databaseOrderStore),
 };
