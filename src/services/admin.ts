@@ -23,6 +23,13 @@ import type {
   NewReviewForm,
   NewSubjectForm,
   CardForm,
+  CourseForm,
+  CourseModuleForm,
+  LessonForm,
+  LessonToModuleInput,
+  NewCourseForm,
+  NewCourseModuleForm,
+  NewLessonForm,
   ImportInput,
   ConfirmImportInput,
   DeleteAccountInput,
@@ -51,8 +58,14 @@ import type {
   AdminAbout,
   AdminAnnouncement,
   AdminCard,
+  AdminCourse,
+  AdminCourseList,
+  AdminCourseModule,
+  AdminCourseSummary,
   AdminDeck,
   AdminDeckSettings,
+  AdminLesson,
+  RecordStamp,
   AdminExamPage,
   AdminSitePage,
   AdminFaq,
@@ -118,7 +131,8 @@ import type {
   StaffMember,
   UserListQuery,
 } from "@/services/admin.types";
-import type { Topic } from "@/services/content.types";
+import type { ContentVisibility, Topic } from "@/services/content.types";
+import type { Course, CourseModule, Lesson } from "@/services/courses.types";
 import type { AuthAdmin } from "@/services/auth-admin.types";
 import type { PdfRenderer } from "@/services/page-images.types";
 import type { PaymentsClient } from "@/services/payments.types";
@@ -1144,6 +1158,80 @@ export interface AdminService {
     actor: StaffActor,
     query: StaffActivityQuery,
   ): Promise<AdminResult<StaffActivityList>>;
+
+  // The Course builder (Phase 5, ticket 01; spec, Phase 5 planning decisions
+  // → A Course, The Course builder; stories 156, 174, 175, 177, 179): any
+  // Staff User makes video Courses, their Modules and their Lessons. Each
+  // write appends Staff Activity for the entity it changes ("course",
+  // "course-module", "lesson"); edits run the conflict check, and ▲▼,
+  // toggles and deletes always save. Nothing here writes how Members get a
+  // Course, its price or On sale (an Owner's, from ticket 06). None returns
+  // a cache tag, since nothing cached reads Courses yet.
+  // src/services/course-editor.core.ts has the rules.
+
+  /** "COURSES · N": each Course, oldest first, with its Lesson count, and the Exams a new one can take. */
+  listCoursesForAdmin(actor: StaffActor): Promise<AdminCourseList>;
+  /** One Course with its Modules and Lessons in order, or null when it isn't there. */
+  getCourseForAdmin(actor: StaffActor, id: string): Promise<AdminCourse | null>;
+  /**
+   * "+ New course": Hidden, Included in its Exam's All-Access, with no price.
+   * The Subject must be one of the Exam's; a cover is a finished
+   * "course-cover" upload.
+   */
+  createCourse(actor: StaffActor, input: NewCourseForm): Promise<AdminResult<AdminCourseSummary>>;
+  /** Course settings' "Save". Moving to another Exam needs one of that Exam's Subjects. */
+  updateCourse(
+    actor: StaffActor,
+    input: CourseForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminCourseSummary>>;
+  /** "Course visible to members": Visible is refused without a Published Lesson. */
+  setCourseVisibility(
+    actor: StaffActor,
+    id: string,
+    visible: boolean,
+  ): Promise<AdminResult<{ visibility: ContentVisibility }>>;
+  /** Deletes a Course with its Modules and Lessons. */
+  deleteCourse(actor: StaffActor, id: string): Promise<AdminResult<Course>>;
+  /** "+ Module": last in its Course. */
+  createCourseModule(
+    actor: StaffActor,
+    input: NewCourseModuleForm,
+  ): Promise<AdminResult<AdminCourseModule>>;
+  /** A Module's title, edited in place. */
+  renameCourseModule(
+    actor: StaffActor,
+    input: CourseModuleForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<{ id: string; title: string; stamp: RecordStamp }>>;
+  /** ▲▼ on a Module: gives the Course's new order of Module ids. */
+  moveCourseModule(
+    actor: StaffActor,
+    id: string,
+    direction: ReviewMove,
+  ): Promise<AdminResult<string[]>>;
+  /** Deletes an empty Module; one with Lessons is refused until they're moved or deleted. */
+  deleteCourseModule(actor: StaffActor, id: string): Promise<AdminResult<CourseModule>>;
+  /** "+ Lesson": last in its Module, with no video and not Free Preview. */
+  createLesson(actor: StaffActor, input: NewLessonForm): Promise<AdminResult<AdminLesson>>;
+  /** The Lesson editor's "Save": title, notes and Free Preview. */
+  updateLesson(
+    actor: StaffActor,
+    input: LessonForm,
+    expected?: { savedAt: string },
+  ): Promise<AdminResult<AdminLesson>>;
+  /** ▲▼ on a Lesson, within its Module: gives the Module's new order of Lesson ids. */
+  moveLesson(actor: StaffActor, id: string, direction: ReviewMove): Promise<AdminResult<string[]>>;
+  /** "Move to Module…": last in another Module of its Course; gives that Module's order. */
+  moveLessonToModule(actor: StaffActor, input: LessonToModuleInput): Promise<AdminResult<string[]>>;
+  /** Publish or Unpublish: publishing needs a ready video ("ADD A VIDEO BEFORE PUBLISHING"). */
+  setLessonPublished(
+    actor: StaffActor,
+    id: string,
+    published: boolean,
+  ): Promise<AdminResult<AdminLesson>>;
+  /** Deletes a Lesson (after typing DELETE in the builder). */
+  deleteLesson(actor: StaffActor, id: string): Promise<AdminResult<Lesson>>;
 }
 
 const impl: AdminService = isDatabaseConfigured ? databaseArm : mockImpl;
@@ -1267,3 +1355,19 @@ export const checkOrderWithPayMongo = impl.checkOrderWithPayMongo;
 export const markInvoiceSent = impl.markInvoiceSent;
 export const exportOrdersCsv = impl.exportOrdersCsv;
 export const listStaffActivity = impl.listStaffActivity;
+export const listCoursesForAdmin = impl.listCoursesForAdmin;
+export const getCourseForAdmin = impl.getCourseForAdmin;
+export const createCourse = impl.createCourse;
+export const updateCourse = impl.updateCourse;
+export const setCourseVisibility = impl.setCourseVisibility;
+export const deleteCourse = impl.deleteCourse;
+export const createCourseModule = impl.createCourseModule;
+export const renameCourseModule = impl.renameCourseModule;
+export const moveCourseModule = impl.moveCourseModule;
+export const deleteCourseModule = impl.deleteCourseModule;
+export const createLesson = impl.createLesson;
+export const updateLesson = impl.updateLesson;
+export const moveLesson = impl.moveLesson;
+export const moveLessonToModule = impl.moveLessonToModule;
+export const setLessonPublished = impl.setLessonPublished;
+export const deleteLesson = impl.deleteLesson;

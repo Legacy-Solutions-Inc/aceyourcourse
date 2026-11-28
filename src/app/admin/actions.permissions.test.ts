@@ -19,6 +19,7 @@ import { reviewFormValues } from "@/lib/admin/review-form";
 import { getExamPageForAdmin, planCardImport, planQuizImport } from "@/services/admin";
 import { claimDevice, getOrCreateMember, requestPrivacy } from "@/services/member.mock";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
+import { sampleCourseId, sampleLessonId, sampleModuleId } from "@/services/mock/courses";
 import { samplePlanId } from "@/services/mock/plans";
 import { getSampleStore } from "@/services/mock/sample-store";
 
@@ -40,6 +41,7 @@ import { pdfOfPages } from "../../../test/reviewer-pdfs";
 import { uploadSampleReviewerPdf } from "../../../test/reviewer-pdf-uploads";
 
 import * as content from "./(shell)/content/actions";
+import * as courses from "./(shell)/content/courses/actions";
 import * as reviewerPdfs from "./(shell)/content/reviewer-pdfs/actions";
 import * as examPages from "./(shell)/exam-pages/actions";
 import * as products from "./(shell)/products/actions";
@@ -165,6 +167,19 @@ let quizImport: typeof cardImport;
 let reviewerPdfUpload: string;
 /** The stamp every record has before anyone saves it. */
 const opened = () => ({ savedAt: getSampleStore().bootedAt });
+
+/** The sample Courses the Course builder's actions save on (Phase 5, ticket 01). */
+const PSAD_COURSE = sampleCourseId("PSAD Masterclass");
+const PSAD_STEEL = sampleModuleId("PSAD Masterclass", "Steel design");
+const PSAD_BEAMS = sampleLessonId("PSAD Masterclass", "Reinforced concrete", "Beams in flexure");
+const SURVEYING_COURSE = sampleCourseId("Surveying & Curves Lectures");
+const SURVEYING_FIRST_LESSON = sampleLessonId(
+  "Surveying & Curves Lectures",
+  "Surveying basics",
+  "Distance and leveling",
+);
+const HPGE_COURSE = sampleCourseId("HPGE Crash Course");
+const EMPTY_MODULE = "7f4e3d2c-1b0a-4f9e-8d7c-6b5a4f3e2d1c";
 
 function find<T extends { id: string }>(list: T[], id: string): T {
   const found = list.find((item) => item.id === id);
@@ -438,6 +453,68 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
       }),
     ),
   },
+  "./(shell)/content/courses/actions.ts": {
+    createCourseCoverUpload: staff(() =>
+      courses.createCourseCoverUpload(IDLE, { input: { contentType: "image/png", size: 2048 } }),
+    ),
+    addCourse: staff(() =>
+      courses.addCourse(IDLE, {
+        input: {
+          title: "Steel Lectures",
+          description: "",
+          exam: "CE",
+          subject: "PSAD",
+          cover: null,
+        },
+      }),
+    ),
+    saveCourse: editorSave("staff", courses.saveCourse, () => ({
+      id: PSAD_COURSE,
+      title: "PSAD Masterclass II",
+      description: "",
+      exam: "CE",
+      subject: "PSAD",
+      cover: null,
+    })),
+    saveCourseVisibility: staff(() =>
+      courses.saveCourseVisibility(IDLE, { input: { course: SURVEYING_COURSE, visible: true } }),
+    ),
+    removeCourse: staff(() => courses.removeCourse(IDLE, { input: { id: PSAD_COURSE } })),
+    addCourseModule: staff(() =>
+      courses.addCourseModule(IDLE, { input: { course: PSAD_COURSE, title: "Timber" } }),
+    ),
+    saveCourseModuleTitle: editorSave("staff", courses.saveCourseModuleTitle, () => ({
+      id: PSAD_STEEL,
+      title: "Steel",
+    })),
+    moveCourseModuleInCourse: staff(() =>
+      courses.moveCourseModuleInCourse(IDLE, { input: { id: PSAD_STEEL, direction: "up" } }),
+    ),
+    removeCourseModule: staff(() =>
+      courses.removeCourseModule(IDLE, { input: { id: EMPTY_MODULE } }),
+    ),
+    addLesson: staff(() =>
+      courses.addLesson(IDLE, { input: { module: PSAD_STEEL, title: "Columns" } }),
+    ),
+    saveLesson: editorSave("staff", courses.saveLesson, () => ({
+      id: PSAD_BEAMS,
+      title: "Beams",
+      notes: "",
+      freePreview: true,
+    })),
+    moveLessonInModule: staff(() =>
+      courses.moveLessonInModule(IDLE, { input: { id: PSAD_BEAMS, direction: "down" } }),
+    ),
+    moveLessonToOtherModule: staff(() =>
+      courses.moveLessonToOtherModule(IDLE, { input: { id: PSAD_BEAMS, module: PSAD_STEEL } }),
+    ),
+    saveLessonPublished: staff(() =>
+      courses.saveLessonPublished(IDLE, { input: { id: PSAD_BEAMS, published: true } }),
+    ),
+    removeLesson: staff(() =>
+      courses.removeLesson(IDLE, { input: { id: PSAD_BEAMS, confirm: "DELETE" } }),
+    ),
+  },
   "./(shell)/products/actions.ts": {
     setProductFlag: staff(() =>
       products.setProductFlag(IDLE, { input: { id: "prd-001", showOnWebsite: false } }),
@@ -639,6 +716,20 @@ beforeEach(async () => {
       failure: null,
     },
   };
+  // The sample Courses (Phase 5, ticket 01): a Lesson with a ready video to
+  // publish, a Published one so its Course can be made Visible (as ticket 02's
+  // uploads will make them), and an empty Module to delete.
+  store.lessons = store.lessons.map((lesson) =>
+    lesson.id === PSAD_BEAMS
+      ? { ...lesson, state: "draft" }
+      : lesson.id === SURVEYING_FIRST_LESSON
+        ? { ...lesson, state: "published" }
+        : lesson,
+  );
+  store.courseModules = [
+    ...store.courseModules,
+    { id: EMPTY_MODULE, courseId: HPGE_COURSE, position: 3, title: "Empty" },
+  ];
   // A Member signed in to the Member App on one device, with a CE pass for 30 more days.
   await getOrCreateMember(BEA);
   await claimDevice(BEA.userId, {

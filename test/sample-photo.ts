@@ -12,6 +12,7 @@ export const SHARE_IMAGE_OWNERS: Record<UploadRequest["purpose"], string | undef
   "share-image": "CE",
   "site-page-share-image": "faq",
   "about-photo": "story-2",
+  "course-cover": undefined,
 };
 
 /**

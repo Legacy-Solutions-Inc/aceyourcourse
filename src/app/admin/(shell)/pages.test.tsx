@@ -208,7 +208,7 @@ describe("Admin shell layout", () => {
     resetSampleStore();
   });
 
-  it("puts an Owner's screen inside the sidebar, with all nine screens", async () => {
+  it("puts an Owner's screen inside the sidebar, with all ten screens", async () => {
     signInAs("angel@aceyourcourse.ph");
     render(await AdminShellLayout({ children: <p>Screen</p> }));
     const sidebar = screen.getByRole("complementary");
@@ -227,10 +227,11 @@ describe("Admin shell layout", () => {
       "03Products & store links",
       "04Reviews & FAQs",
       "05Member App content",
-      "06Users",
-      "07Plans & prices",
-      "08Orders & payments",
-      "09Settings",
+      "06Courses & videos",
+      "07Users",
+      "08Plans & prices",
+      "09Orders & payments",
+      "10Settings",
       "View site ↗",
     ]);
     expect(within(sidebar).getByText("OWNER")).toBeInTheDocument();

@@ -40,6 +40,8 @@ function adminPage(changes: Partial<AdminExamPage["page"]> = {}): AdminExamPage 
     ],
     subjectProducts: {},
     subjectContent: {},
+    subjectCourses: {},
+    courses: 0,
     content: { decks: 0, quizzes: 0, reviewerPdfs: 0 },
     examsOnWebsite: ["CE"],
   };

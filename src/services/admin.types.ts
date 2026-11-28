@@ -44,6 +44,7 @@ import type {
   ReviewerPdfUpload,
   TopicContent,
 } from "@/services/content.types";
+import type { Course, Lesson } from "@/services/courses.types";
 import type {
   ActiveDevice,
   ConsentRecord,
@@ -465,6 +466,10 @@ export interface AdminExamPage {
   subjectContent: Record<string, ContentCounts>;
   /** The Member App content all the Exam's Topics hold, for "Delete exam". */
   content: ContentCounts;
+  /** How many video Courses use each of the Exam's Subjects, Hidden ones too (Phase 5). */
+  subjectCourses: Record<string, number>;
+  /** How many video Courses belong to the Exam, for "Delete exam" (Phase 5). */
+  courses: number;
   /**
    * The codes of the Exams the Website shows, those with a Product on it, for
    * the chips' "NOT ON SITE" (ticket 23).
@@ -1102,4 +1107,55 @@ export interface OrdersCsv {
   filename: string;
   csv: string;
   rows: number;
+}
+
+// ── Courses (Phase 5, ticket 01) ────────────────────────────────────────────
+
+/** An Exam a Course can belong to, with the Subjects it can pick from. */
+export interface CourseExamChoice {
+  code: string;
+  name: string;
+  subjects: { code: string; name: string }[];
+}
+
+/** One Course in the builder's list: "CE · 9 LESSONS", HIDDEN or VISIBLE. */
+export interface AdminCourseSummary {
+  id: string;
+  title: string;
+  examCode: string;
+  subjectCode: string;
+  lessons: number;
+  visibility: ContentVisibility;
+}
+
+/** The Course builder's list ("COURSES · N"), oldest first, and the Exams a new Course can take. */
+export interface AdminCourseList {
+  courses: AdminCourseSummary[];
+  exams: CourseExamChoice[];
+}
+
+/** A Lesson in the builder, with its last save and what deleting it takes from Members. */
+export interface AdminLesson extends Lesson {
+  stamp: RecordStamp;
+  /** How many Members have a saved position in it: 0 until ticket 04 stores them. */
+  savedPositions: number;
+}
+
+/** A Module in the builder, with its last save and its Lessons in order. */
+export interface AdminCourseModule {
+  id: string;
+  position: number;
+  title: string;
+  stamp: RecordStamp;
+  lessons: AdminLesson[];
+}
+
+/** One Course in the builder: its settings and last save, its Modules in order, and the Exams it can move to. */
+export interface AdminCourse {
+  course: Course;
+  exam: { code: string; name: string };
+  subject: { code: string; name: string };
+  stamp: RecordStamp;
+  modules: AdminCourseModule[];
+  exams: CourseExamChoice[];
 }

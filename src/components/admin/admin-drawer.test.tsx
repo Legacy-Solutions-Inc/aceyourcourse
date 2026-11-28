@@ -39,9 +39,9 @@ describe("AdminSidebar", () => {
       "02Pages & promo03Products & store links04Reviews & FAQs",
     );
     expect(screen.getByRole("list", { name: "SALES" })).toHaveTextContent(
-      "07Plans & prices08Orders & payments",
+      "08Plans & prices09Orders & payments",
     );
-    expect(screen.getByRole("list", { name: "SETTINGS" })).toHaveTextContent("09Settings");
+    expect(screen.getByRole("list", { name: "SETTINGS" })).toHaveTextContent("10Settings");
   });
 
   it("shows the signed-in Staff User with their Staff Role and Sign out", () => {

@@ -18,6 +18,7 @@ import type {
   ReviewerPdfUpload,
 } from "@/services/content.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
+import type { LessonState } from "@/services/courses.types";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import type { ContentFiles, ReviewerPdfFiles } from "@/services/uploads";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
@@ -151,6 +152,11 @@ export interface AdminArm {
    * behind the seam's back (ticket 19): what deleting an account must empty.
    */
   memberRecords(userId: string): Promise<MemberRecordCounts>;
+  /**
+   * Sets a Lesson's state behind the seam's back, as ticket 02's uploads will
+   * (a ready video makes it "draft"), so Publish and Visible can save.
+   */
+  setLessonState(id: string, state: LessonState): Promise<void>;
 }
 
 /** Pure: Card Marks by card, then Member. */
@@ -297,6 +303,12 @@ export const SAMPLE_ARM: AdminArm = {
       readerPositions: mine(store.readerPositions),
       privacyRequests: mine(store.privacyRequests),
     };
+  },
+  setLessonState: async (id, state) => {
+    const store = getSampleStore();
+    store.lessons = store.lessons.map((lesson) =>
+      lesson.id === id ? { ...lesson, state } : lesson,
+    );
   },
   breakStaffActivity: async () => {
     const store = getSampleStore();

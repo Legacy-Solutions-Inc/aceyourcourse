@@ -57,6 +57,9 @@ import * as plans from "@/services/admin.plans.db";
 import * as orders from "@/services/admin.orders.db";
 import * as sales from "@/services/admin.sales.db";
 import * as staffActivity from "@/services/admin.staff-activity.db";
+import * as courseBuilder from "@/services/admin.courses.db";
+import { courseFromRow } from "@/services/courses.rows";
+import type { Course } from "@/services/courses.types";
 import * as sampleArm from "@/services/admin.mock";
 import { type CatalogueRows, catalogueFromRows, catalogueToRows } from "@/services/catalogue.rows";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
@@ -153,6 +156,12 @@ interface Loaded {
   store: SampleStore;
   catalogue?: { rows: CatalogueRows; value: CatalogueSeed };
   content?: { rows: ContentRows; value: ContentRecords };
+  /**
+   * The video Courses, loaded with the content, read only: an Exam or Subject
+   * with one can't be deleted (Phase 5, ticket 01). The Course builder
+   * (admin.courses.db.ts) reads and writes them itself.
+   */
+  courses?: Course[];
   /** The content as the call left it: the value loaded, or what its writes set. */
   contentNow: () => ContentRecords | undefined;
   stamps?: Record<string, RecordStamp>;
@@ -191,6 +200,7 @@ async function load(
   if (parts.includes("content")) {
     const rows = await readContentRows(tx);
     loaded.content = { rows, value: contentFromRows(rows) };
+    loaded.courses = (await tx.select().from(schema.courses)).map(courseFromRow);
   }
   if (parts.includes("staff")) {
     const rows = await tx.select().from(schema.staff);
@@ -329,6 +339,17 @@ async function load(
     },
     get reviewerPdfFiles() {
       return notLoaded("the Reviewer PDFs bucket");
+    },
+    // Read only: the Course builder (admin.courses.db.ts) writes the Courses,
+    // their Modules and Lessons itself.
+    get courses() {
+      return loaded.courses ?? notLoaded("the Courses");
+    },
+    get courseModules() {
+      return notLoaded("the Course Modules");
+    },
+    get lessons() {
+      return notLoaded("the Lessons");
     },
     // The Member seam reads the Access Passes and notices itself, and
     // admin.access-passes.db.ts grants, extends and ends them (ticket 17).
@@ -831,6 +852,23 @@ export const databaseArm: AdminService = {
 
   // Staff Activity reads its own table, by keyset (admin.staff-activity.db.ts; ticket 15).
   listStaffActivity: staffActivity.listStaffActivity,
+  // The Course builder (Phase 5, ticket 01), read and saved by its own module.
+  listCoursesForAdmin: courseBuilder.listCoursesForAdmin,
+  getCourseForAdmin: courseBuilder.getCourseForAdmin,
+  createCourse: courseBuilder.createCourse,
+  updateCourse: courseBuilder.updateCourse,
+  setCourseVisibility: courseBuilder.setCourseVisibility,
+  deleteCourse: courseBuilder.deleteCourse,
+  createCourseModule: courseBuilder.createCourseModule,
+  renameCourseModule: courseBuilder.renameCourseModule,
+  moveCourseModule: courseBuilder.moveCourseModule,
+  deleteCourseModule: courseBuilder.deleteCourseModule,
+  createLesson: courseBuilder.createLesson,
+  updateLesson: courseBuilder.updateLesson,
+  moveLesson: courseBuilder.moveLesson,
+  moveLessonToModule: courseBuilder.moveLessonToModule,
+  setLessonPublished: courseBuilder.setLessonPublished,
+  deleteLesson: courseBuilder.deleteLesson,
 
   // The catalogue part runs the sample arm's code over the catalogue it loads;
   // an Owner's sales read their own records (admin.sales.db.ts; ticket 11).
@@ -884,12 +922,12 @@ export const databaseArm: AdminService = {
   deleteSubject: refusedByForeignKey(
     sampleArm.deleteSubject,
     (_actor, _code, subject) =>
-      `A Product or Member App content now uses ${typedCode(subject)}. Reload the page to see it.`,
+      `A Product, a Course or Member App content now uses ${typedCode(subject)}. Reload the page to see it.`,
   ),
   deleteExam: refusedByForeignKey(
     sampleArm.deleteExam,
     (_actor, code) =>
-      `A Product or Member App content now belongs to ${typedCode(code)}. Reload the page to see it.`,
+      `A Product, a Course or Member App content now belongs to ${typedCode(code)}. Reload the page to see it.`,
   ),
 
   listTopicsForAdmin: read(WITH_CONTENT, sampleArm.listTopicsForAdmin),

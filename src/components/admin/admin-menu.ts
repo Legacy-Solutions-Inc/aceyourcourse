@@ -3,9 +3,10 @@ import type { StaffRole } from "@/services/admin.types";
 
 // The Admin's fixed menu (spec Phase 2, Menu; mockup lines 14–38). Each screen
 // keeps its number whoever is signed in. Later phases add their own groups:
-// Phase 3 starts with Users, and Phase 4 the SALES group (Plans & prices,
-// then Orders & payments, ticket 07), before Settings, which stays last as
-// in the mockup.
+// Phase 3 starts with Users, Phase 4 the SALES group (Plans & prices, then
+// Orders & payments, ticket 07), and Phase 5 Courses & videos after Member
+// App content (ticket 01), before Settings, which stays last as in the
+// mockup.
 
 export type AdminScreenKey =
   | "overview"
@@ -13,6 +14,7 @@ export type AdminScreenKey =
   | "products"
   | "reviews"
   | "content"
+  | "courses"
   | "users"
   | "plans"
   | "orders"
@@ -81,8 +83,15 @@ const MENU: readonly AdminMenuGroup[] = [
         ownerOnly: false,
       },
       {
-        key: "users",
+        key: "courses",
         code: "06",
+        label: "Courses & videos",
+        href: paths.admin.courses,
+        ownerOnly: false,
+      },
+      {
+        key: "users",
+        code: "07",
         label: "Users",
         href: paths.admin.users,
         ownerOnly: true,
@@ -94,14 +103,14 @@ const MENU: readonly AdminMenuGroup[] = [
     items: [
       {
         key: "plans",
-        code: "07",
+        code: "08",
         label: "Plans & prices",
         href: paths.admin.plans,
         ownerOnly: true,
       },
       {
         key: "orders",
-        code: "08",
+        code: "09",
         label: "Orders & payments",
         href: paths.admin.orders,
         ownerOnly: true,
@@ -113,7 +122,7 @@ const MENU: readonly AdminMenuGroup[] = [
     items: [
       {
         key: "settings",
-        code: "09",
+        code: "10",
         label: "Settings",
         href: paths.admin.settings,
         ownerOnly: true,
@@ -139,8 +148,24 @@ export function adminScreen(key: AdminScreenKey): { group: string; title: string
   throw new Error(`No Admin screen "${key}"`);
 }
 
-/** Pure: whether a menu item is the current screen. The Overview matches only itself. */
-export function isCurrentScreen(pathname: string, href: string): boolean {
-  if (href === paths.admin.overview) return pathname === href;
-  return pathname === href || pathname.startsWith(`${href}/`);
+/** Pure: whether the path is the screen at `href`, or one of its pages. The Overview matches only itself. */
+const isWithin = (pathname: string, href: string) =>
+  href === paths.admin.overview
+    ? pathname === href
+    : pathname === href || pathname.startsWith(`${href}/`);
+
+/**
+ * Pure: whether a menu item is the current screen: the path is it or one of
+ * its pages, and no other item (`hrefs`) is a closer match, so Courses &
+ * videos (/admin/content/courses) isn't also Member App content.
+ */
+export function isCurrentScreen(
+  pathname: string,
+  href: string,
+  hrefs: readonly string[] = [],
+): boolean {
+  if (!isWithin(pathname, href)) return false;
+  return !hrefs.some(
+    (other) => other.length > href.length && other.startsWith(href) && isWithin(pathname, other),
+  );
 }

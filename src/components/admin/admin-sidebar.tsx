@@ -60,6 +60,8 @@ export function AdminSidebar({
   const closesDrawer = (link: React.ReactElement) =>
     inDrawer ? <SheetClose asChild>{link}</SheetClose> : link;
 
+  const hrefs = menu.flatMap((group) => group.items.map((item) => item.href));
+
   return (
     <div className="flex min-h-full flex-col gap-4.5 px-3.5 pt-4.5 pb-5.5">
       <div className="flex items-center justify-between gap-2.5 px-1 py-0.5">
@@ -92,7 +94,7 @@ export function AdminSidebar({
               </p>
               <ul aria-labelledby={labelId} className="flex flex-col gap-0.5">
                 {group.items.map((item) => {
-                  const current = isCurrentScreen(pathname, item.href);
+                  const current = isCurrentScreen(pathname, item.href, hrefs);
                   return (
                     <li key={item.key}>
                       {closesDrawer(

@@ -85,3 +85,70 @@ describe("the sample agreements", () => {
     expect(store.memberConsents).toEqual([]);
   });
 });
+
+// The sample video Courses (Phase 5, ticket 01): three CE Courses with
+// Modules and Lessons and no videos yet, all Hidden.
+describe("the sample Courses", () => {
+  it("start with three CE Courses, their Modules and Lessons, and no videos", () => {
+    const { courses, courseModules, lessons } = resetSampleStore();
+    expect(
+      courses.map(({ title, subjectCode, access, priceCentavos, onSale, visibility }) => ({
+        title,
+        subjectCode,
+        access,
+        priceCentavos,
+        onSale,
+        visibility,
+      })),
+    ).toEqual([
+      {
+        title: "Surveying & Curves Lectures",
+        subjectCode: "MSTC",
+        access: "included",
+        priceCentavos: null,
+        onSale: false,
+        visibility: "hidden",
+      },
+      {
+        title: "PSAD Masterclass",
+        subjectCode: "PSAD",
+        access: "sold-separately",
+        priceCentavos: 149_900,
+        onSale: true,
+        visibility: "hidden",
+      },
+      {
+        title: "HPGE Crash Course",
+        subjectCode: "HPGE",
+        access: "sold-separately",
+        priceCentavos: null,
+        onSale: false,
+        visibility: "hidden",
+      },
+    ]);
+    const surveying = courses[0]?.id;
+    const surveyingModules = courseModules.filter((module) => module.courseId === surveying);
+    expect(surveyingModules).toHaveLength(2);
+    const surveyingLessons = lessons.filter((lesson) =>
+      surveyingModules.some((module) => module.id === lesson.moduleId),
+    );
+    expect(surveyingLessons).toHaveLength(5);
+    expect(surveyingLessons.filter((lesson) => lesson.freePreview)).toHaveLength(1);
+    expect(new Set(lessons.map((lesson) => lesson.state))).toEqual(new Set(["no-video"]));
+  });
+
+  it("leaves out a Course whose Subject the catalogue doesn't have", () => {
+    const seed = structuredClone(CATALOGUE_SEED);
+    for (const exam of seed.exams) {
+      if (exam.code === "CE") exam.subjects = exam.subjects.filter((s) => s.code !== "PSAD");
+    }
+    seed.products = seed.products.map((product) => ({
+      ...product,
+      subjectCodes: product.subjectCodes.filter((code) => code !== "PSAD"),
+    }));
+    expect(resetSampleStore(seed).courses.map((course) => course.subjectCode)).toEqual([
+      "MSTC",
+      "HPGE",
+    ]);
+  });
+});

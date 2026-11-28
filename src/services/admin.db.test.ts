@@ -405,7 +405,8 @@ describeWithDatabase("Admin seam on the database: Exams and Subjects", database,
       error: {
         kind: "invalid",
         fieldErrors: {},
-        formError: "A Product or Member App content now belongs to CHE. Reload the page to see it.",
+        formError:
+          "A Product, a Course or Member App content now belongs to CHE. Reload the page to see it.",
       },
     });
     expect(await examRow("CHE")).toHaveLength(1);

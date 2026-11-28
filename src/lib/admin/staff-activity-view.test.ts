@@ -24,6 +24,9 @@ describe("activityAreaOf", () => {
     ["staff", "staff", "Admin accounts"],
     ["invite", "staff", "Admin accounts"],
     ["reviewer-pdf", "content", "Member App content"],
+    ["course", "courses", "Courses"],
+    ["course-module", "courses", "Courses"],
+    ["lesson", "courses", "Courses"],
   ])("puts the entity %j in the area %j, %j", (entity, key, label) => {
     expect(activityAreaOf(entity)).toEqual({ key, label });
   });
@@ -37,6 +40,7 @@ describe("entitiesOfArea", () => {
   it("gives every entity a known area covers", () => {
     expect(entitiesOfArea("orders")).toEqual(["order", "orders"]);
     expect(entitiesOfArea("staff")).toEqual(["staff", "invite"]);
+    expect(entitiesOfArea("courses")).toEqual(["course", "course-module", "lesson"]);
   });
 
   it("treats an unknown area as the raw entity of that name", () => {

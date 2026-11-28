@@ -84,6 +84,13 @@ function contentIn(matches: (topic: Topic) => boolean): ContentCounts {
   return contentCountsOf({ topics, decks, quizzes, reviewerPdfs }, matches);
 }
 
+/** How many video Courses belong to the Exam, or use one of its Subjects (Phase 5), Hidden ones too. */
+const coursesIn = (exam: string, subject?: string) =>
+  getSampleStore().courses.filter(
+    (course) =>
+      course.examCode === exam && (subject === undefined || course.subjectCode === subject),
+  ).length;
+
 const inExam = (exam: string) => (topic: Topic) => topic.examCode === exam;
 const inSubject = (exam: string, subject: string) => (topic: Topic) =>
   topic.examCode === exam && topic.subjectCode === subject;
@@ -114,6 +121,10 @@ function adminExamPageOf(catalogue: CatalogueSeed, code: string): AdminExamPage 
       exam.subjects.map((subject) => [subject.code, contentIn(inSubject(code, subject.code))]),
     ),
     content: contentIn(inExam(code)),
+    subjectCourses: Object.fromEntries(
+      exam.subjects.map((subject) => [subject.code, coursesIn(code, subject.code)]),
+    ),
+    courses: coursesIn(code),
     examsOnWebsite: catalogue.exams
       .filter((e) => catalogue.products.some((p) => p.examCode === e.code && p.showOnWebsite))
       .map((e) => e.code),
@@ -405,6 +416,7 @@ export async function deleteSubject(
         subject,
         products: taggedWith(catalogue, examCode, subject),
         content: contentIn(inSubject(examCode, subject)),
+        courses: coursesIn(examCode, subject),
         subjects: subjectsOf(catalogue)?.length ?? 0,
       });
       return reason ? refusal(reason) : null;
@@ -432,7 +444,12 @@ export async function deleteExam(actor: StaffActor, code: string): Promise<Admin
     schema: deleteExamInputSchema,
     check: (catalogue) => {
       const products = catalogue.products.filter((p) => p.examCode === examCode).length;
-      const reason = examDeleteBlocker(examCode, products, contentIn(inExam(examCode)));
+      const reason = examDeleteBlocker(
+        examCode,
+        products,
+        contentIn(inExam(examCode)),
+        coursesIn(examCode),
+      );
       return reason ? refusal(reason) : null;
     },
     activity: { entity: "exam", entityId: examCode, action: "delete" },

@@ -39,6 +39,8 @@ function eePage(products: BundleProductOption[], examsOnWebsite: string[]): Admi
     products,
     subjectProducts: {},
     subjectContent: {},
+    subjectCourses: {},
+    courses: 0,
     content: { decks: 0, quizzes: 0, reviewerPdfs: 0 },
     examsOnWebsite,
   };

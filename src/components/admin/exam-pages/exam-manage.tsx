@@ -260,6 +260,7 @@ export function RemoveSubject({
     subject,
     products: opened.subjectProducts[subject] ?? 0,
     content: opened.subjectContent[subject] ?? NO_CONTENT,
+    courses: opened.subjectCourses[subject] ?? 0,
     subjects: opened.exam.subjects.length,
   });
   if (reason) return <p className="text-xs leading-[1.45] text-muted-foreground">{reason}</p>;
@@ -291,7 +292,7 @@ export function DeleteExam({
 }) {
   const router = useRouter();
   const { code, name, subjects } = opened.exam;
-  const reason = examDeleteBlocker(code, opened.products.length, opened.content);
+  const reason = examDeleteBlocker(code, opened.products.length, opened.content, opened.courses);
   const count = `${subjects.length} ${subjects.length === 1 ? "Subject" : "Subjects"}`;
   return (
     <section

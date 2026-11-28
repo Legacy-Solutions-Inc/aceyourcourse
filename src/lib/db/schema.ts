@@ -36,6 +36,13 @@ import {
   QUESTION_TEXT_LIMITS,
   QUIZ_CHOICES,
 } from "@/lib/quizzes/quiz-rules";
+import {
+  COURSE_DESCRIPTION_MAX,
+  COURSE_TITLE_MAX,
+  LESSON_NOTES_MAX,
+  LESSON_TITLE_MAX,
+  MODULE_TITLE_MAX,
+} from "@/lib/courses/course-rules";
 import { FAQ_GROUPS, PRODUCT_FORMATS, SITE_PAGES } from "@/services/catalogue.schema";
 import type { AboutContent, Marketplace } from "@/services/catalogue.types";
 import {
@@ -43,6 +50,7 @@ import {
   CONTENT_VISIBILITIES,
   REVIEWER_PDF_STATUSES,
 } from "@/services/content.types";
+import { COURSE_ACCESS, LESSON_STATES } from "@/services/courses.types";
 import { NOTICE_KINDS } from "@/services/member.types";
 
 /**
@@ -1442,6 +1450,124 @@ export const privacyRequests = pgTable(
       "privacy_requests_done_when_and_by_whom",
       sql`(${t.status} = 'open' and ${t.doneAt} is null and ${t.doneByEmail} is null and ${t.doneByName} is null)
         or (${t.status} = 'done' and ${t.doneAt} is not null and ${t.doneByEmail} is not null and ${t.doneByName} is not null)`,
+    ),
+  ],
+).enableRLS();
+
+// ── Video Courses (Phase 5) ─────────────────────────────────────────────────
+
+export const courseAccess = pgEnum("course_access", COURSE_ACCESS);
+export const lessonState = pgEnum("lesson_state", LESSON_STATES);
+
+/**
+ * The video Courses (Phase 5, ticket 01; spec, Phase 5 planning decisions →
+ * A Course): each belongs to one Exam and one of that Exam's Subjects, which
+ * the composite key holds, so a Subject (and so its Exam) with a Course can't
+ * be deleted. Hidden until it has a Published Lesson and Staff make it
+ * Visible. How Members get it is Included in its Exam's All-Access (the
+ * default) or Sold separately, with a one-time price in whole pesos (null
+ * until an Owner sets one) and On sale, which only a priced, separately sold
+ * Course can be; only an Owner changes those (ticket 06). Deleting a Course
+ * deletes its Modules, and so their Lessons. Like every table, RLS is on
+ * with no policies: only the server reads it.
+ */
+export const courses = pgTable(
+  "courses",
+  {
+    id: uuid("id").primaryKey(),
+    examCode: text("exam_code").notNull(),
+    subjectCode: text("subject_code").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    coverSrc: text("cover_src"),
+    visibility: contentVisibility("visibility").notNull().default("hidden"),
+    access: courseAccess("access").notNull().default("included"),
+    priceCentavos: integer("price_centavos"),
+    onSale: boolean("on_sale").notNull().default(false),
+    createdAt: at("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      name: "courses_subject_fk",
+      columns: [t.examCode, t.subjectCode],
+      foreignColumns: [subjects.examCode, subjects.code],
+    })
+      .onDelete("restrict")
+      .onUpdate("cascade"),
+    index("courses_subject_idx").on(t.examCode, t.subjectCode),
+    check(
+      "courses_title_length",
+      sql`char_length(${t.title}) between 1 and ${sql.raw(String(COURSE_TITLE_MAX))}`,
+    ),
+    check("courses_title_trimmed", sql`${t.title} = btrim(${t.title})`),
+    check(
+      "courses_description_length",
+      sql`char_length(${t.description}) <= ${sql.raw(String(COURSE_DESCRIPTION_MAX))}`,
+    ),
+    check("courses_cover_src_present", sql`${t.coverSrc} <> ''`),
+    check(
+      "courses_price_whole_pesos",
+      sql`${t.priceCentavos} between 100 and 9999900 and ${t.priceCentavos} % 100 = 0`,
+    ),
+    check(
+      "courses_on_sale_priced_and_sold_separately",
+      sql`not ${t.onSale} or (${t.access} = 'sold-separately' and ${t.priceCentavos} is not null)`,
+    ),
+  ],
+).enableRLS();
+
+/** Each Course's Modules, in its order (`position`). Deleting the Module deletes its Lessons. */
+export const courseModules = pgTable(
+  "course_modules",
+  {
+    id: uuid("id").primaryKey(),
+    courseId: uuid("course_id")
+      .notNull()
+      .references(() => courses.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    title: text("title").notNull(),
+  },
+  (t) => [
+    index("course_modules_course_id_position_idx").on(t.courseId, t.position),
+    check("course_modules_position_positive", sql`${t.position} > 0`),
+    check(
+      "course_modules_title_length",
+      sql`char_length(${t.title}) between 1 and ${sql.raw(String(MODULE_TITLE_MAX))}`,
+    ),
+    check("course_modules_title_trimmed", sql`${t.title} = btrim(${t.title})`),
+  ],
+).enableRLS();
+
+/**
+ * Each Module's Lessons, in its order (`position`): a title, notes shown
+ * under the video (plain text with line breaks), Free Preview, and a state.
+ * Every Lesson has no video until ticket 02 adds uploads, with the video's
+ * columns.
+ */
+export const lessons = pgTable(
+  "lessons",
+  {
+    id: uuid("id").primaryKey(),
+    moduleId: uuid("module_id")
+      .notNull()
+      .references(() => courseModules.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    title: text("title").notNull(),
+    notes: text("notes").notNull().default(""),
+    freePreview: boolean("free_preview").notNull().default(false),
+    state: lessonState("state").notNull().default("no-video"),
+  },
+  (t) => [
+    index("lessons_module_id_position_idx").on(t.moduleId, t.position),
+    check("lessons_position_positive", sql`${t.position} > 0`),
+    check(
+      "lessons_title_length",
+      sql`char_length(${t.title}) between 1 and ${sql.raw(String(LESSON_TITLE_MAX))}`,
+    ),
+    check("lessons_title_trimmed", sql`${t.title} = btrim(${t.title})`),
+    check(
+      "lessons_notes_length",
+      sql`char_length(${t.notes}) <= ${sql.raw(String(LESSON_NOTES_MAX))}`,
     ),
   ],
 ).enableRLS();

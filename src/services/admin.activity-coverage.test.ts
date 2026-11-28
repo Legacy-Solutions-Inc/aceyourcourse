@@ -11,6 +11,7 @@ import type { AdminService } from "@/services/admin";
 import type { AdminResult, StaffActor } from "@/services/admin.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
+import { sampleCourseId, sampleLessonId, sampleModuleId } from "@/services/mock/courses";
 import { samplePlanId } from "@/services/mock/plans";
 import { hashDeviceToken } from "@/lib/member-app/device-token";
 import type { Order } from "@/lib/payments/order-ledger";
@@ -157,6 +158,9 @@ const READS = [
   "getOrderForAdmin",
   // The Staff Activity list itself (Phase 4, ticket 15): reading it records nothing.
   "listStaffActivity",
+  // The Course builder's list and one Course (Phase 5, ticket 01).
+  "listCoursesForAdmin",
+  "getCourseForAdmin",
 ] as const satisfies readonly (keyof AdminService)[];
 
 /**
@@ -339,7 +343,159 @@ async function withPlacedReviewerPdf(seam: AdminService, arm: AdminArm) {
   if (!placed.ok) throw new Error("The Reviewer PDF wasn't placed");
 }
 
+/** The sample PSAD Masterclass: 2 Modules, its first with 2 Lessons (Phase 5, ticket 01). */
+const PSAD_COURSE = sampleCourseId("PSAD Masterclass");
+const PSAD_STEEL = sampleModuleId("PSAD Masterclass", "Steel design");
+const PSAD_BEAMS = sampleLessonId("PSAD Masterclass", "Reinforced concrete", "Beams in flexure");
+const NO_SUCH_COURSE = "6e3d2c1b-0a9f-4e8d-9c7b-6a5f4e3d2c1b";
+const NEW_COURSE = {
+  title: "Steel Lectures",
+  description: "",
+  exam: "CE",
+  subject: "PSAD",
+  cover: null,
+};
+
+/** An empty Module at the end of PSAD Masterclass, made through the seam. */
+const madeModule = { id: "" };
+async function withEmptyModule(seam: AdminService) {
+  const made = await seam.createCourseModule(EDITOR, { course: PSAD_COURSE, title: "Timber" });
+  if (!made.ok) throw new Error("The Module wasn't made");
+  madeModule.id = made.value.id;
+}
+
 const WRITES: Record<string, Write> = {
+  // The Course builder (Phase 5, ticket 01).
+  createCourse: {
+    actor: EDITOR,
+    entity: "course",
+    entityId: null,
+    saves: (seam, actor) => seam.createCourse(actor, NEW_COURSE),
+    refused: (seam, actor) => seam.createCourse(actor, { ...NEW_COURSE, title: " " }),
+    refusal: "invalid",
+  },
+  updateCourse: {
+    actor: EDITOR,
+    entity: "course",
+    entityId: PSAD_COURSE,
+    saves: (seam, actor) =>
+      seam.updateCourse(actor, { ...NEW_COURSE, id: PSAD_COURSE, title: "PSAD Masterclass II" }),
+    refused: (seam, actor) => seam.updateCourse(actor, { ...NEW_COURSE, id: NO_SUCH_COURSE }),
+    refusal: "not-found",
+  },
+  setCourseVisibility: {
+    actor: EDITOR,
+    entity: "course",
+    entityId: PSAD_COURSE,
+    setUp: async (seam, arm) => {
+      await arm.setLessonState(PSAD_BEAMS, "published");
+    },
+    saves: (seam, actor) => seam.setCourseVisibility(actor, PSAD_COURSE, true),
+    refused: (seam, actor) => seam.setCourseVisibility(actor, NO_SUCH_COURSE, true),
+    refusal: "not-found",
+  },
+  deleteCourse: {
+    actor: EDITOR,
+    entity: "course",
+    entityId: PSAD_COURSE,
+    saves: (seam, actor) => seam.deleteCourse(actor, PSAD_COURSE),
+    refused: (seam, actor) => seam.deleteCourse(actor, NO_SUCH_COURSE),
+    refusal: "not-found",
+  },
+  createCourseModule: {
+    actor: EDITOR,
+    entity: "course-module",
+    entityId: null,
+    saves: (seam, actor) =>
+      seam.createCourseModule(actor, { course: PSAD_COURSE, title: "Timber" }),
+    refused: (seam, actor) => seam.createCourseModule(actor, { course: PSAD_COURSE, title: "" }),
+    refusal: "invalid",
+  },
+  renameCourseModule: {
+    actor: EDITOR,
+    entity: "course-module",
+    entityId: PSAD_STEEL,
+    saves: (seam, actor) => seam.renameCourseModule(actor, { id: PSAD_STEEL, title: "Steel" }),
+    refused: (seam, actor) =>
+      seam.renameCourseModule(actor, { id: NO_SUCH_COURSE, title: "Steel" }),
+    refusal: "not-found",
+  },
+  moveCourseModule: {
+    actor: EDITOR,
+    entity: "course-module",
+    entityId: PSAD_STEEL,
+    saves: (seam, actor) => seam.moveCourseModule(actor, PSAD_STEEL, "up"),
+    refused: (seam, actor) => seam.moveCourseModule(actor, NO_SUCH_COURSE, "up"),
+    refusal: "not-found",
+  },
+  deleteCourseModule: {
+    actor: EDITOR,
+    entity: "course-module",
+    entityId: null,
+    setUp: withEmptyModule,
+    saves: (seam, actor) => seam.deleteCourseModule(actor, madeModule.id),
+    refused: (seam, actor) => seam.deleteCourseModule(actor, NO_SUCH_COURSE),
+    refusal: "not-found",
+  },
+  createLesson: {
+    actor: EDITOR,
+    entity: "lesson",
+    entityId: null,
+    saves: (seam, actor) => seam.createLesson(actor, { module: PSAD_STEEL, title: "Columns" }),
+    refused: (seam, actor) => seam.createLesson(actor, { module: PSAD_STEEL, title: " " }),
+    refusal: "invalid",
+  },
+  updateLesson: {
+    actor: EDITOR,
+    entity: "lesson",
+    entityId: PSAD_BEAMS,
+    saves: (seam, actor) =>
+      seam.updateLesson(actor, { id: PSAD_BEAMS, title: "Beams", notes: "", freePreview: true }),
+    refused: (seam, actor) =>
+      seam.updateLesson(actor, {
+        id: NO_SUCH_COURSE,
+        title: "Beams",
+        notes: "",
+        freePreview: true,
+      }),
+    refusal: "not-found",
+  },
+  moveLesson: {
+    actor: EDITOR,
+    entity: "lesson",
+    entityId: PSAD_BEAMS,
+    saves: (seam, actor) => seam.moveLesson(actor, PSAD_BEAMS, "down"),
+    refused: (seam, actor) => seam.moveLesson(actor, NO_SUCH_COURSE, "down"),
+    refusal: "not-found",
+  },
+  moveLessonToModule: {
+    actor: EDITOR,
+    entity: "lesson",
+    entityId: PSAD_BEAMS,
+    saves: (seam, actor) => seam.moveLessonToModule(actor, { id: PSAD_BEAMS, module: PSAD_STEEL }),
+    refused: (seam, actor) =>
+      seam.moveLessonToModule(actor, { id: PSAD_BEAMS, module: NO_SUCH_COURSE }),
+    refusal: "not-found",
+  },
+  setLessonPublished: {
+    actor: EDITOR,
+    entity: "lesson",
+    entityId: PSAD_BEAMS,
+    setUp: async (seam, arm) => {
+      await arm.setLessonState(PSAD_BEAMS, "draft");
+    },
+    saves: (seam, actor) => seam.setLessonPublished(actor, PSAD_BEAMS, true),
+    refused: (seam, actor) => seam.setLessonPublished(actor, NO_SUCH_COURSE, true),
+    refusal: "not-found",
+  },
+  deleteLesson: {
+    actor: EDITOR,
+    entity: "lesson",
+    entityId: PSAD_BEAMS,
+    saves: (seam, actor) => seam.deleteLesson(actor, PSAD_BEAMS),
+    refused: (seam, actor) => seam.deleteLesson(actor, NO_SUCH_COURSE),
+    refusal: "not-found",
+  },
   inviteStaff: {
     actor: OWNER,
     entity: "invite",

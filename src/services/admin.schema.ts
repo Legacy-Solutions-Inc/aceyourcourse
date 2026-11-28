@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+import {
+  COURSE_DESCRIPTION_MAX,
+  COURSE_TITLE_MAX,
+  LESSON_NOTES_MAX,
+  LESSON_TITLE_MAX,
+  MODULE_TITLE_MAX,
+} from "@/lib/courses/course-rules";
 import { parsePeso } from "@/lib/admin/peso";
 import { fullTitle, WHOLE_TITLE_MAX } from "@/lib/admin/seo-check";
 import {
@@ -1194,13 +1201,15 @@ function andList(parts: readonly (string | null)[]): string | null {
 
 /**
  * Pure: why the Exam can't be deleted, or null when it can: while any Product
- * belongs to it, Live, Coming Soon or hidden, or while any of its Topics has
- * a deck, quiz or Reviewer PDF (Phase 3; Hidden and Draft ones too).
+ * belongs to it, Live, Coming Soon or hidden, while any of its Topics has a
+ * deck, quiz or Reviewer PDF (Phase 3; Hidden and Draft ones too), or while
+ * any video Course belongs to it (Phase 5, Hidden ones too).
  */
 export function examDeleteBlocker(
   exam: string,
   count: number,
   content: ContentCounts,
+  courses = 0,
 ): string | null {
   if (count > 0) {
     const belong = count === 1 ? "belongs" : "belong";
@@ -1208,13 +1217,20 @@ export function examDeleteBlocker(
     return `${productCount(count)} ${belong} to ${exam}. Move or delete ${them} first.`;
   }
   const held = contentList(content);
-  return held ? `${exam} has Member App content: ${held}. Delete it first.` : null;
+  if (held) return `${exam} has Member App content: ${held}. Delete it first.`;
+  return courses > 0
+    ? `${courseCount(courses)} ${courses === 1 ? "belongs" : "belong"} to ${exam}. Move or delete ${courses === 1 ? "it" : "them"} first.`
+    : null;
 }
+
+/** Pure: "1 Course", "3 Courses": video Courses (Phase 5). */
+const courseCount = (count: number) => `${count} ${count === 1 ? "Course" : "Courses"}`;
 
 /**
  * Pure: why the Subject can't be deleted, or null when it can: while a
  * Product is tagged with it, while any of its Topics has a deck, quiz or
- * Reviewer PDF (Phase 3), or while it's its Exam's only Subject. Its empty
+ * Reviewer PDF (Phase 3), while a video Course uses it (Phase 5), or while
+ * it's its Exam's only Subject. Its empty
  * Topics go with it.
  */
 export function subjectDeleteBlocker({
@@ -1222,10 +1238,13 @@ export function subjectDeleteBlocker({
   subject,
   products: count,
   content,
+  courses = 0,
   subjects,
 }: {
   exam: string;
   subject: string;
+  /** How many video Courses use the Subject (Phase 5), Hidden ones too. */
+  courses?: number;
   /** How many Products are tagged with the Subject. */
   products: number;
   /** The Member App content its Topics hold, Hidden and Draft included. */
@@ -1240,6 +1259,10 @@ export function subjectDeleteBlocker({
   }
   const held = contentList(content);
   if (held) return `${subject} has Member App content: ${held}. Delete it first.`;
+  if (courses > 0) {
+    const use = courses === 1 ? "uses" : "use";
+    return `${courseCount(courses)} ${use} ${subject}. Move or delete ${courses === 1 ? "it" : "them"} first.`;
+  }
   return subjects <= 1
     ? `${exam} needs at least one Subject. Add another before deleting this one.`
     : null;
@@ -2162,3 +2185,111 @@ export type OrderNoteInput = z.input<typeof orderNoteInputSchema>;
 
 /** The Order "Check status with PayMongo" is for. */
 export const orderReferenceInputSchema = z.object({ reference: orderReference });
+
+// ── Courses (Phase 5, ticket 01) ────────────────────────────────────────────
+// The Course builder (spec, Phase 5 planning decisions → A Course, The Course
+// builder): any Staff User makes Courses, their Modules and their Lessons.
+// Nothing here writes how Members get a Course, its price or On sale: only an
+// Owner will, from ticket 06.
+
+/** A title as saved: trimmed, with single spaces, 1–`max` characters. */
+const courseTitle = (max: number, blank: string) =>
+  z
+    .string({ invalid_type_error: blank, required_error: blank })
+    .max(2000, `KEEP IT TO ${max} CHARACTERS`)
+    .transform((text) => text.trim().replace(/\s+/g, " "))
+    .pipe(z.string().min(1, blank).max(max, `KEEP IT TO ${max} CHARACTERS`));
+
+/** Plain text with line breaks, as saved: Windows line ends made plain, trimmed; may be empty. */
+const plainText = (max: number) =>
+  z
+    .string()
+    .max(max * 2, `KEEP IT TO ${max.toLocaleString("en-PH")} CHARACTERS`)
+    .transform((text) => text.replace(/\r\n?/g, "\n").trim())
+    .pipe(z.string().max(max, `KEEP IT TO ${max.toLocaleString("en-PH")} CHARACTERS`));
+
+const courseId = z.string().uuid("THAT COURSE ISN’T THERE · RELOAD THE PAGE");
+const moduleId = z.string().uuid("THAT MODULE ISN’T THERE · RELOAD THE PAGE");
+const lessonId = z.string().uuid("THAT LESSON ISN’T THERE · RELOAD THE PAGE");
+
+/**
+ * Course settings' fields: the title, description, Exam and one of its
+ * Subjects (picked from the list, checked against the Exam by the seam), and
+ * the cover: null for none, the Course's own cover (kept), or a finished
+ * "course-cover" upload's path.
+ */
+const courseFormFields = z.object({
+  title: courseTitle(COURSE_TITLE_MAX, "ENTER THE COURSE’S TITLE"),
+  description: plainText(COURSE_DESCRIPTION_MAX),
+  exam: examCode.transform(typedCode),
+  subject: z
+    .string({ invalid_type_error: "PICK A SUBJECT", required_error: "PICK A SUBJECT" })
+    .trim()
+    .min(1, "PICK A SUBJECT")
+    .max(40, "PICK A SUBJECT")
+    .transform(typedCode),
+  cover: z.string().trim().min(1).max(2000).nullable(),
+});
+
+/** "+ New course": its settings. It starts Hidden and Included in its Exam's All-Access. */
+export const newCourseFormSchema = courseFormFields;
+export type NewCourseForm = z.input<typeof newCourseFormSchema>;
+
+/** "Save" in Course settings: the Course and its settings, with the stamp it opened with. */
+export const courseFormSchema = courseFormFields.extend({ id: courseId });
+export type CourseForm = z.input<typeof courseFormSchema>;
+
+/** Delete: the Course. */
+export const courseIdInputSchema = z.object({ id: courseId });
+
+/** "Course visible to members", a single toggle. */
+export const courseVisibilityInputSchema = z.object({ course: courseId, visible: flag });
+
+/** "+ Module": the Course and the new Module's title. */
+export const newCourseModuleFormSchema = z.object({
+  course: courseId,
+  title: courseTitle(MODULE_TITLE_MAX, "ENTER THE MODULE’S TITLE"),
+});
+export type NewCourseModuleForm = z.input<typeof newCourseModuleFormSchema>;
+
+/** A Module's title, edited in place. */
+export const courseModuleFormSchema = z.object({
+  id: moduleId,
+  title: courseTitle(MODULE_TITLE_MAX, "ENTER THE MODULE’S TITLE"),
+});
+export type CourseModuleForm = z.input<typeof courseModuleFormSchema>;
+
+/** ▲▼ on a Module, or its delete. */
+export const courseModuleMoveInputSchema = reviewMoveSchema.extend({ id: moduleId });
+export const courseModuleIdInputSchema = z.object({ id: moduleId });
+
+/** "+ Lesson": the Module and the new Lesson's title. */
+export const newLessonFormSchema = z.object({
+  module: moduleId,
+  title: courseTitle(LESSON_TITLE_MAX, "ENTER THE LESSON’S TITLE"),
+});
+export type NewLessonForm = z.input<typeof newLessonFormSchema>;
+
+/** "Save" in the Lesson editor: its title, notes and Free Preview, with the stamp it opened with. */
+export const lessonFormSchema = z.object({
+  id: lessonId,
+  title: courseTitle(LESSON_TITLE_MAX, "ENTER THE LESSON’S TITLE"),
+  notes: plainText(LESSON_NOTES_MAX),
+  freePreview: flag,
+});
+export type LessonForm = z.input<typeof lessonFormSchema>;
+
+/** ▲▼ on a Lesson, within its Module; "Move to Module…"; Publish or Unpublish; Delete. */
+export const lessonMoveInputSchema = reviewMoveSchema.extend({ id: lessonId });
+export const lessonToModuleInputSchema = z.object({ id: lessonId, module: moduleId });
+export type LessonToModuleInput = z.input<typeof lessonToModuleInputSchema>;
+export const lessonPublishInputSchema = z.object({ id: lessonId, published: flag });
+export const lessonIdInputSchema = z.object({ id: lessonId });
+
+/** The word a Lesson's delete must be confirmed with, typed exactly. */
+export const DELETE_WORD = "DELETE";
+
+/** Delete, as its Server Action takes it: the Lesson, and DELETE typed to confirm. */
+export const lessonDeleteInputSchema = lessonIdInputSchema.extend({
+  confirm: z.literal(DELETE_WORD, { errorMap: () => ({ message: "TYPE DELETE TO CONFIRM" }) }),
+});

@@ -7,6 +7,7 @@ import { expect, type Locator, type Page, test } from "@playwright/test";
 import { paths } from "../../src/paths";
 import { sampleContentId, sampleTopicId } from "../../src/services/mock/content";
 import { samplePlanId } from "../../src/services/mock/plans";
+import { sampleCourseId, sampleLessonId } from "../../src/services/mock/courses";
 import {
   LIVE,
   openSignInAs,
@@ -158,6 +159,14 @@ async function expectKeyboardReachesEveryControl(page: Page, scope = page.locato
   expect(missed, "controls Tab never reached").toEqual([]);
   expect([...withoutRing], "controls with no visible focus ring").toEqual([]);
 }
+
+/** The sample Surveying & Curves Lectures, and its Free Preview Lesson (Phase 5, ticket 01). */
+const SURVEYING_COURSE = sampleCourseId("Surveying & Curves Lectures");
+const SIMPLE_CURVES_LESSON = sampleLessonId(
+  "Surveying & Curves Lectures",
+  "Horizontal curves",
+  "Simple curves",
+);
 
 /**
  * The keyboard sweep's screens: each Admin screen with its editor open, and
@@ -416,6 +425,13 @@ for (const size of SIZES) {
         // The Reviewer PDFs (ticket 12), and one Reviewer PDF's screen (ticket 13).
         paths.admin.reviewerPdfs,
         paths.admin.reviewerPdf(SPIRAL_CURVES_PDF),
+        // Courses & videos (Phase 5, ticket 01): the list, a Course's builder,
+        // its settings, a Lesson in the Lesson editor, and a new Course.
+        paths.admin.courses,
+        paths.admin.course(SURVEYING_COURSE),
+        paths.admin.course(SURVEYING_COURSE, { settings: true }),
+        paths.admin.course(SURVEYING_COURSE, { lesson: SIMPLE_CURVES_LESSON }),
+        paths.admin.newCourse,
         // Users: the Users list (ticket 16) and the Beta Testers tab (ticket 01).
         "/admin/users",
         paths.admin.betaTesters,

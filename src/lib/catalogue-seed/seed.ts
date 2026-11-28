@@ -7,6 +7,8 @@ import { catalogueToRows } from "@/services/catalogue.rows";
 import { type CatalogueSeed, validateCatalogueSeed } from "@/services/catalogue.schema";
 import { accessPassToRow, contentToRows } from "@/services/content.rows";
 import { sampleContent } from "@/services/mock/content";
+import { sampleCourses } from "@/services/mock/courses";
+import { courseToRow } from "@/services/courses.rows";
 import { sampleAccessPasses, sampleBetaTesters } from "@/services/mock/members";
 import { samplePlans } from "@/services/mock/plans";
 import { sampleStaff } from "@/services/mock/staff";
@@ -139,6 +141,10 @@ const CONTENT_TABLES = [
   schema.quizzes,
   schema.reviewerPdfs,
   schema.topics,
+  // The video Courses (Phase 5): a Course keeps its Subject from being deleted.
+  schema.lessons,
+  schema.courseModules,
+  schema.courses,
 ];
 
 /**
@@ -204,8 +210,9 @@ async function writeSampleStaff(tx: Transaction, now: Date): Promise<SampleStaff
 }
 
 /**
- * Adds the Member App's sample Topics with their content, the sample Access
- * Passes, timed from `now`, and the starting Plans on sale, for the catalogue
+ * Adds the Member App's sample Topics with their content, the sample video
+ * Courses with their Modules and Lessons, the sample Access Passes, timed
+ * from `now`, and the starting Plans on sale, for the catalogue
  * just written.
  */
 async function writeSampleMemberApp(
@@ -218,6 +225,10 @@ async function writeSampleMemberApp(
   if (rows.decks.length) await tx.insert(schema.decks).values(rows.decks);
   if (rows.quizzes.length) await tx.insert(schema.quizzes).values(rows.quizzes);
   if (rows.reviewerPdfs.length) await tx.insert(schema.reviewerPdfs).values(rows.reviewerPdfs);
+  const { courses, courseModules, lessons } = sampleCourses(seed);
+  if (courses.length) await tx.insert(schema.courses).values(courses.map(courseToRow));
+  if (courseModules.length) await tx.insert(schema.courseModules).values(courseModules);
+  if (lessons.length) await tx.insert(schema.lessons).values(lessons);
   const { accessPasses } = sampleAccessPasses(now, seed);
   if (accessPasses.length) {
     await tx.insert(schema.accessPasses).values(accessPasses.map(accessPassToRow));

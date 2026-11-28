@@ -290,6 +290,9 @@ export const DATABASE_ARM: AdminArm = {
       privacyRequests: await count(schema.privacyRequests),
     };
   },
+  setLessonState: async (id, state) => {
+    await getDb().update(schema.lessons).set({ state }).where(eq(schema.lessons.id, id));
+  },
   // A trigger that refuses every Staff Activity row: the save's last write.
   // The database tests run one file at a time, so no other test meets it.
   breakStaffActivity: async () => {

@@ -81,6 +81,8 @@ const EXTENSIONS: Record<UploadContentType, string> = {
 
 /** A new Product's photos wait here: it has no id until its first save. */
 const NEW_PRODUCT = "new";
+/** A new Course's cover waits here, the same way. */
+const NEW_COURSE = "new";
 
 const UPLOAD_ID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const OWNER = UPLOAD_OWNER.source.slice(1, -1);
@@ -94,6 +96,7 @@ const UPLOAD_PATHS: Record<UploadRequest["purpose"], RegExp> = {
   "about-photo": new RegExp(
     `^site-pages/about/(?:${ABOUT_PHOTO_SLOTS.join("|")})-${UPLOAD_ID}\\.${EXTENSION}$`,
   ),
+  "course-cover": new RegExp(`^courses/${OWNER}/cover-${UPLOAD_ID}\\.${EXTENSION}$`),
 };
 
 /** Where an upload is filed: under its Product, its Exam or its Site page, or as one of About's photos. */
@@ -105,6 +108,7 @@ const FOLDERS: Record<
   "share-image": (owner, file) => `exam-pages/${owner}/share-${file}`,
   "site-page-share-image": (owner, file) => `site-pages/${owner}/share-${file}`,
   "about-photo": (slot, file) => `site-pages/about/${slot}-${file}`,
+  "course-cover": (owner, file) => `courses/${owner ?? NEW_COURSE}/cover-${file}`,
 };
 
 /**

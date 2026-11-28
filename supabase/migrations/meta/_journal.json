@@ -246,6 +246,13 @@
       "when": 1795651196430,
       "tag": "20261125235956_staff_activity_seq_idx",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1795830173666,
+      "tag": "20261128014253_courses",
+      "breakpoints": true
     }
   ]
 }

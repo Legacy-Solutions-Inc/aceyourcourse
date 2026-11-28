@@ -35,14 +35,15 @@ export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 /**
  * What an upload is for: a Product photo, an Exam page's share image (ticket
- * 09), a Site page's share image (ticket 20), or one of About's four photos
- * (ticket 21).
+ * 09), a Site page's share image (ticket 20), one of About's four photos
+ * (ticket 21), or a video Course's 16:9 cover (Phase 5, ticket 01).
  */
 export const UPLOAD_PURPOSES = [
   "product-photo",
   "share-image",
   "site-page-share-image",
   "about-photo",
+  "course-cover",
 ] as const;
 
 const isAboutPhotoSlot = (value: unknown) => ABOUT_PHOTO_SLOTS.some((slot) => slot === value);
@@ -77,8 +78,8 @@ export const uploadOwnerSchema = z
 
 /**
  * An upload as the browser asks for it, before it sends the file. A Product
- * photo names its Product once it has one (a new Product has no id until its
- * first save); a share image always names its Exam, a Site page's share
+ * photo names its Product, and a Course cover its Course, once it has one (a
+ * new one has no id until its first save); a share image always names its Exam, a Site page's share
  * image its Site page, and an About photo its slot (team, story-1, story-2
  * or story-3).
  */
@@ -91,6 +92,7 @@ export const uploadRequestSchema = uploadFileSchema
     ({ purpose, owner }) => {
       switch (purpose) {
         case "product-photo":
+        case "course-cover":
           return true;
         case "share-image":
           return owner !== undefined;

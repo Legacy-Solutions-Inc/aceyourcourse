@@ -37,6 +37,7 @@ const AREAS: readonly { key: string; label: string; entities: readonly string[] 
       "reviewer-pdf",
     ],
   },
+  { key: "courses", label: "Courses", entities: ["course", "course-module", "lesson"] },
   {
     key: "users",
     label: "Users",

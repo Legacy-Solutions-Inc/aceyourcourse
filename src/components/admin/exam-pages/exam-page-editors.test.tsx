@@ -68,6 +68,8 @@ function ce(): AdminExamPage {
     ],
     subjectProducts: { MSTC: 2, HPGE: 2, PSAD: 2 },
     subjectContent: {},
+    subjectCourses: {},
+    courses: 0,
     content: { decks: 0, quizzes: 0, reviewerPdfs: 0 },
     examsOnWebsite: ["CE", "ME", "EE", "MT", "CPA"],
   });

@@ -31,6 +31,7 @@ import type {
   StudyDay,
   Topic,
 } from "@/services/content.types";
+import type { Course, CourseModule, Lesson } from "@/services/courses.types";
 import type { TargetExamRecord } from "@/services/member.rules";
 import type {
   ConsentRecord,
@@ -41,6 +42,7 @@ import type {
 } from "@/services/member.types";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { sampleContent } from "@/services/mock/content";
+import { sampleCourses } from "@/services/mock/courses";
 import { sampleAccessPasses, sampleAgreements, sampleBetaTesters } from "@/services/mock/members";
 import { sampleOrders } from "@/services/mock/orders";
 import { samplePlans } from "@/services/mock/plans";
@@ -184,6 +186,12 @@ export interface SampleStore {
   reviewerPdfUploads: Record<string, ReviewerPdfUpload>;
   /** The private Reviewer PDFs bucket's files, by path (ticket 12): originals and page images. */
   reviewerPdfFiles: Record<string, Uint8Array>;
+  /** The video Courses (Phase 5, ticket 01), in no particular order: each has its creation time. */
+  courses: Course[];
+  /** Each Course's Modules, in no particular order: each has its position. */
+  courseModules: CourseModule[];
+  /** Each Module's Lessons, in no particular order: each has its position. */
+  lessons: Lesson[];
   /** Every Member's Access Passes, at most one per Exam (Phase 3). */
   accessPasses: AccessPass[];
   /** The grants behind the Access Passes, oldest first (Phase 3; written from ticket 17). */
@@ -283,6 +291,7 @@ function createSampleStore(
     deckPositions: [],
     reviewerPageViews: [],
     readerPositions: [],
+    ...sampleCourses(catalogue),
     ...sampleAccessPasses(now, catalogue),
     memberNotices: [],
     renewalDismissals: [],

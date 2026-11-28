@@ -118,6 +118,11 @@ describe("the Storage arm's createUpload", () => {
       { ...PHOTO, purpose: "about-photo", owner: "story-2", contentType: "image/jpeg" },
       `^site-pages/about/story-2-${UUID}\\.jpg$`,
     ],
+    [{ ...PHOTO, purpose: "course-cover" }, `^courses/new/cover-${UUID}\\.png$`],
+    [
+      { ...PHOTO, purpose: "course-cover", owner: "5b0a2c9e-1d3f-4e5a-8b7c-6d5e4f3a2b1c" },
+      `^courses/5b0a2c9e-1d3f-4e5a-8b7c-6d5e4f3a2b1c/cover-${UUID}\\.png$`,
+    ],
   ] as const)("files %o at its own path", async (request, pattern) => {
     const { arm } = fakeBucket();
     const result = await arm.createUpload(EDITOR, request);
@@ -184,6 +189,18 @@ describe("the Storage arm's createUpload", () => {
       { kind: "invalid", fieldErrors: { size: ["KEEP EACH PHOTO TO 10 MB"] } },
     ],
     [
+      "a Course cover that's a GIF",
+      EDITOR,
+      { ...PHOTO, purpose: "course-cover", contentType: "image/gif" },
+      { kind: "invalid", fieldErrors: { contentType: ["USE A JPEG, PNG OR WEBP IMAGE"] } },
+    ],
+    [
+      "a Course cover over 10 MB",
+      EDITOR,
+      { ...PHOTO, purpose: "course-cover", size: 11 * 1024 * 1024 },
+      { kind: "invalid", fieldErrors: { size: ["KEEP EACH PHOTO TO 10 MB"] } },
+    ],
+    [
       "an owner that would climb out of its folder",
       EDITOR,
       { ...PHOTO, owner: "../settings" },
@@ -231,6 +248,15 @@ describe("what a save finds at an upload's path", () => {
     expect(uploadAt(aboutPhoto, "about-photo")).toEqual({ publicUrl: `${PUBLIC}${aboutPhoto}` });
     expect(uploadAt(aboutPhoto, "site-page-share-image")).toBeNull();
     expect(uploadAt(siteShare, "about-photo")).toBeNull();
+  });
+
+  it("is the public URL of a Course cover once it's in the bucket", async () => {
+    const cover = `courses/new/cover-3f4a5b6c-7d8e-4f9a-8b1c-2d3e4f5a6b7c.webp`;
+    const { arm } = fakeBucket();
+    const uploadAt = await arm.lookupUploads([cover]);
+
+    expect(uploadAt(cover, "course-cover")).toEqual({ publicUrl: `${PUBLIC}${cover}` });
+    expect(uploadAt(cover, "product-photo")).toBeNull();
   });
 
   it("is the public URL of a Site page's share image once it's in the bucket", async () => {

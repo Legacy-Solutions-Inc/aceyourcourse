@@ -221,6 +221,22 @@ export const paths = {
      * Admin runs on sample data.
      */
     sampleUpload: (id: string) => `/api/dev/uploads/${id}`,
+    /** Courses & videos (Phase 5, ticket 01): the Courses list, and the Course builder. */
+    courses: "/admin/content/courses",
+    /** "+ New course": the list, with a new Course's settings. */
+    newCourse: "/admin/content/courses?course=new",
+    /**
+     * One Course in the builder: its Modules and Lessons, or its settings, or
+     * one Lesson in the Lesson editor.
+     */
+    course: (id: string, open?: { settings?: true } | { lesson: string }) =>
+      `/admin/content/courses?course=${encodeURIComponent(id)}${
+        open === undefined
+          ? ""
+          : "lesson" in open
+            ? `&lesson=${encodeURIComponent(open.lesson)}`
+            : "&view=settings"
+      }`,
     /** Member App content: the Reviewer PDFs, their uploads and progress (ticket 12). */
     reviewerPdfs: "/admin/content/reviewer-pdfs",
     /** One Reviewer PDF (ticket 13): its preview, placement, Free Preview and status. */
