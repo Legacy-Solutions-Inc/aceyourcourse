@@ -17,6 +17,7 @@ import type { PaymentsClient } from "@/services/payments.types";
 
 import { sampleActor } from "../../../test/admin-inputs";
 import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { redirectsTo } from "../../../test/redirects";
 
 // Buying in the Member App (Phase 4, ticket 03; spec, Phase 4 → Return flow;
 // Phase 4 planning decisions → Paying, The key decides; stories 135–140,
@@ -70,9 +71,6 @@ const MINUTE = 60_000;
 const OWNER = sampleActor("owner");
 const TESTER = { email: "tester@example.com", name: "Bea Tester" };
 const STRANGER = { email: "stranger@example.com", name: "Sam Stranger" };
-
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 
 /** Signed in on this browser as a sample User who has agreed, with CE as their Target Exam. */
 async function signedIn({ email, name } = TESTER) {

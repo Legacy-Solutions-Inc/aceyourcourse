@@ -15,6 +15,7 @@ import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
 import { onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { redirectsTo } from "../../../test/redirects";
 
 // The Member App's pages and Server Actions on sample data (Phase 3, tickets
 // 01 and 02), each called as a browser would reach it, by everyone the gate
@@ -78,8 +79,6 @@ const signedInAs = (email: string) => {
   jar.set(DEVICE_COOKIE, TEST_DEVICE_TOKEN);
 };
 /** Matches the error redirect() throws for exactly this URL. */
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 const NOT_OPEN_YET = redirectsTo("/app/not-open-yet");
 const members = () => getSampleStore().members;
 const consents = () => getSampleStore().memberConsents;

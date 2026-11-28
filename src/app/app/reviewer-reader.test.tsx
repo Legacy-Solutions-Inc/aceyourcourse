@@ -29,6 +29,7 @@ import { uploadSampleReviewerPdf } from "../../../test/reviewer-pdf-uploads";
 import { pdfOfPages } from "../../../test/reviewer-pdfs";
 import { saveReadingPosition } from "./(shell)/library/actions";
 import { GET as pageEndpoint } from "./reviewer-pdfs/[id]/pages/[page]/route";
+import { redirectsTo } from "../../../test/redirects";
 
 // Reading a Reviewer PDF in the Member App (Phase 3, ticket 14; stories 101,
 // 102 and 105), on sample data: the protected page endpoint as the reader's
@@ -69,8 +70,6 @@ const TESTER = "tester@example.com";
 const SURVEYING = sampleTopicId("CE", "MSTC", "Surveying");
 const UNKNOWN = "3f1a5c2e-9b7d-4e6f-8a1b-2c3d4e5f6a7b";
 
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 const readerPage = (id: string) => `/app/library/reviewer-pdf/${id}`;
 
 /** Signed in as this sample User, a Member who has agreed, with CE selected, on this browser. */

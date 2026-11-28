@@ -3,6 +3,7 @@ import type { User } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
+import { redirectsTo } from "../../../test/redirects";
 
 // The Staff Guard in live mode (ticket 16): the identity comes from Supabase's
 // getUser(), and the staff list decides, exactly as in sample mode. The
@@ -77,9 +78,6 @@ function signedInAs(
   } satisfies User;
   getUser.mockResolvedValue({ data: { user }, error: null });
 }
-
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 
 describe("Staff Guard (live mode)", () => {
   // Supabase configured, as live mode has it; the modules load once, after this.

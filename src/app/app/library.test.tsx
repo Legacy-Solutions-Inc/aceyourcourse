@@ -22,6 +22,7 @@ import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
 import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { redirectsTo } from "../../../test/redirects";
 
 // The Library and opening an item (Phase 3, ticket 05; spec → Content model
 // and Access decision seam; stories 93, 94, 103, 133i and 133m), on sample
@@ -64,9 +65,6 @@ const QUIZ = sampleContentId(SIMPLE_CURVES, "quiz");
 const HIDDEN_QUIZ = sampleContentId(SPIRAL_CURVES, "quiz");
 /** Simple Curves' Reviewer PDF, Published, from before uploads: it has no pages (the reader is reviewer-reader.test.tsx). */
 const PDF = sampleContentId(SIMPLE_CURVES, "reviewer-pdf");
-
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 
 /**
  * Signed in as this sample User, a Member who has agreed and has `exam` as

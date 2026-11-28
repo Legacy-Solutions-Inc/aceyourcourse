@@ -6,6 +6,7 @@ import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { AGREED_TO_CURRENT } from "../../../../test/member-inputs";
+import { redirectsTo } from "../../../../test/redirects";
 
 // "Sign in on this device" in live mode (Phase 3, ticket 04; story 108): on
 // "Session ended" it starts Google sign-in, coming back through
@@ -48,9 +49,6 @@ vi.mock("@/lib/admin/identity", async (importOriginal) => ({
 const TESTER = "tester@example.com";
 const BEA = { userId: sampleUserId(TESTER), email: TESTER, name: "Bea Tester" };
 const GOOGLE = "https://accounts.google.example/o/oauth2/auth?state=x";
-
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 
 async function signInOnThisDevice(next: string) {
   const data = new FormData();

@@ -10,6 +10,7 @@ import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { sampleActor } from "../../../test/admin-inputs";
 import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { redirectsTo } from "../../../test/redirects";
 
 // The Member's Plans page (Phase 4, ticket 02; spec, Phase 4 planning
 // decisions → Who buys, and which Exams, The key decides, Renewal reminders;
@@ -41,9 +42,6 @@ const BOOT = new Date("2026-11-17T03:42:00.000Z");
 const DAY = 24 * 60 * 60 * 1000;
 const OWNER = sampleActor("owner");
 const TESTER = { email: "tester@example.com", name: "Bea Tester" };
-
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 
 /** Signed in as this sample User on this browser, not yet agreed to anything. */
 async function signedIn({ email, name }: { email: string; name: string }) {

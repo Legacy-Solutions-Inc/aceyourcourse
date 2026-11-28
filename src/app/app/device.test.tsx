@@ -10,6 +10,7 @@ import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { AGREED_TO_CURRENT, ANDROID_CHROME, IPHONE_SAFARI } from "../../../test/member-inputs";
+import { redirectsTo } from "../../../test/redirects";
 
 // The Active Device in the Member App's pages and Server Actions on sample
 // data (Phase 3, ticket 04; stories 107–109, 133f). Each Member uses the
@@ -67,8 +68,6 @@ const STRANGER = "stranger@example.com";
 const SAMPLE_COOKIE = "ayc_admin_sample";
 
 /** Matches the error redirect() throws for exactly this URL. */
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 const DEVICE_SCREEN = (next: string) => redirectsTo(`/app/device?next=${encodeURIComponent(next)}`);
 
 /** A sample User who is already a Member, has agreed to the current versions and has ME as a Target Exam. */

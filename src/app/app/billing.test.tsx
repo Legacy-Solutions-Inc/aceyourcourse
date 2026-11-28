@@ -22,6 +22,7 @@ import {
 
 import { sampleActor } from "../../../test/admin-inputs";
 import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
+import { redirectsTo } from "../../../test/redirects";
 
 // Billing and the Payment Acknowledgement in the Member App (Phase 4, ticket
 // 06; spec, Phase 4 → Payment Acknowledgement; stories 143, 144, 151u), on
@@ -55,9 +56,6 @@ const HOUR = 60 * 60 * 1000;
 const OWNER = sampleActor("owner");
 const TESTER = { email: "tester@example.com", name: "Bea Tester" };
 const STRANGER = { email: "stranger@example.com", name: "Sam Stranger" };
-
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 
 /** Signed in on this browser as a sample User who has agreed, with CE as their Target Exam. */
 async function signedIn({ email, name } = TESTER) {

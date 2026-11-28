@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getOrCreateMember, recordConsent } from "@/services/member.mock";
 import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
+import { redirectsTo } from "../../../../test/redirects";
 
 // The consent screen and its Server Action on sample data (Phase 3, ticket
 // 02; spec, Phase 3 → Consent; stories 82, 83, 133e), each called as a
@@ -58,8 +59,6 @@ const BOOT = new Date("2026-11-17T03:42:00.000Z");
 
 const signedInAs = (email: string) => jar.set(COOKIE, email);
 /** Matches the error redirect() throws for exactly this URL. */
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 const NOT_OPEN_YET = redirectsTo("/app/not-open-yet");
 const members = () => getSampleStore().members;
 const consents = () => getSampleStore().memberConsents;

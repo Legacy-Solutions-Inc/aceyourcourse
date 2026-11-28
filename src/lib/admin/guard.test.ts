@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
+import { redirectsTo } from "../../../test/redirects";
 
 // The Staff Guard with the sample identity: the ayc_admin_sample cookie names
 // the signed-in User, and the staff list decides on every call. next/headers
@@ -30,8 +31,6 @@ const EXPIRED = "expired.invite@example.com";
 
 const signInAs = (email: string) => jar.set("ayc_admin_sample", email);
 /** Matches the error redirect() throws for exactly this URL. */
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 
 async function loadGuard() {
   return import("./guard");

@@ -15,6 +15,7 @@ import {
   TEST_DEVICE_TOKEN,
   withExamDates,
 } from "../../../test/member-inputs";
+import { redirectsTo } from "../../../test/redirects";
 
 // Onboarding and Target Exams in the Member App (Phase 3, ticket 03; spec →
 // Target Exams; stories 84–88, 133g), on sample data: the pages as a browser
@@ -54,8 +55,6 @@ const signedInAs = (email: string) => {
   jar.set("ayc_admin_sample", email);
   jar.set(DEVICE_COOKIE, TEST_DEVICE_TOKEN);
 };
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 
 /**
  * A sample User who is a Member and has agreed, with no Target Exam yet,

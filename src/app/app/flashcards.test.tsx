@@ -25,6 +25,7 @@ import { uploadSampleCardImage } from "../../../test/card-images";
 import { imageBytes } from "../../../test/image-bytes";
 import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 import { markStudyCard, saveStudyPosition } from "./(shell)/library/actions";
+import { redirectsTo } from "../../../test/redirects";
 
 // Studying a deck in the Member App (Phase 3, ticket 08; stories 95–97, 104
 // and 106), on sample data: the deck page as a browser loads it, and the
@@ -65,9 +66,6 @@ const FREE_DECK = sampleContentId(topic("Simple Curves"), "deck");
 const PASS_DECK = sampleContentId(topic("Spiral Curves"), "deck");
 const HIDDEN_DECK = sampleContentId(topic("Algebra"), "deck");
 const deckPage = (id: string) => `/app/library/deck/${id}`;
-
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 
 /** Signed in as this sample User, a Member who has agreed, with CE selected, on this browser. */
 async function memberOnDevice(email: string, name: string) {

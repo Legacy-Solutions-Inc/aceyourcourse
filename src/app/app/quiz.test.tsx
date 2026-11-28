@@ -24,6 +24,7 @@ import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import { sampleActor } from "../../../test/admin-inputs";
 import { AGREED_TO_CURRENT, onThisDevice, TEST_DEVICE_TOKEN } from "../../../test/member-inputs";
 import { submitQuizAttempt } from "./(shell)/library/actions";
+import { redirectsTo } from "../../../test/redirects";
 
 // Taking a quiz in the Member App (Phase 3, ticket 11; stories 98–100, 106,
 // 133k and 133l), on sample data: the quiz page as a browser loads it, a past
@@ -67,9 +68,6 @@ const HIDDEN_QUIZ = sampleContentId(sampleTopicId("CE", "MSTC", "Spiral Curves")
 const FREE_QUIZ = sampleContentId(HYDROSTATICS, "quiz");
 const ATTEMPT = "6a1f0e1c-5b55-4a51-9d0e-0a1b2c3d4e5f";
 const quizPage = (id: string) => `/app/library/quiz/${id}`;
-
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 
 /** Signed in as this sample User, a Member who has agreed, with CE selected, on this browser. */
 async function memberOnDevice(email: string, name: string) {

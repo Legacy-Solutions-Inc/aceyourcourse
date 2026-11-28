@@ -11,6 +11,7 @@ import { DEVICE_COOKIE } from "@/lib/member-app/device-token";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import { ANDROID_CHROME } from "../../../../test/member-inputs";
+import { redirectsTo } from "../../../../test/redirects";
 
 // The Member App's sign-in in live mode with the password box (ticket 20,
 // temporary): while the site is tested, /app/sign-in offers the Admin's
@@ -89,8 +90,6 @@ const DID_NOT_FINISH = "Sign-in didn't finish. Try again.";
 const GOOGLE_ONLY_LINE = "Use your Google account. No separate username or password.";
 
 /** Matches the error redirect() throws for exactly this URL. */
-const redirectsTo = (url: string) =>
-  new RegExp(`^NEXT_REDIRECT ${url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
 const NOT_OPEN_YET = redirectsTo("/app/not-open-yet");
 
 /**
