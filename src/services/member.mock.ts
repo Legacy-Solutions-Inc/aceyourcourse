@@ -56,9 +56,14 @@ import type {
   PrivacyRequestOutcome,
   TargetExam,
 } from "@/services/member.types";
-import { samplePassHistory, writeSamplePass } from "@/services/mock/pass-writes";
+import {
+  samplePassHistory,
+  writeSamplePass,
+  writeSampleTargetExam,
+} from "@/services/mock/pass-writes";
 import { getSampleStore, type SamplePrivacyRequest } from "@/services/mock/sample-store";
 import {
+  type CourseOwnershipWrite,
   orderCalls,
   type OrderHolding,
   type EventRecording,
@@ -655,10 +660,12 @@ export async function requestPrivacy(
 
 export async function listMemberPlans(userId: string): Promise<PlansExam[]> {
   const wanted = memberUserIdSchema.parse(userId);
-  const { catalogue, plans } = getSampleStore();
+  const { catalogue, plans, courses } = getSampleStore();
   return plansExams({
     exams: examsForMembers(structuredClone(catalogue)),
     plans: structuredClone(plans),
+    courses: structuredClone(courses),
+    ownedCourseIds: await sampleCourseStore.readOwnedCourseIds(wanted),
     targetExams: await listTargetExams(wanted),
     passes: await listAccessPasses(wanted),
   });
@@ -703,6 +710,11 @@ export const sampleOrderStore: OrderStore = {
     const member = getSampleStore().members.find((candidate) => candidate.userId === userId);
     return member ? structuredClone(member) : null;
   },
+  async readCourse(courseId) {
+    const course = getSampleStore().courses.find((candidate) => candidate.id === courseId);
+    return course ? structuredClone(course) : null;
+  },
+  readOwnedCourseIds: (userId) => sampleCourseStore.readOwnedCourseIds(userId),
   async addOrder(draft) {
     const store = getSampleStore();
     const order: Order = { ...draft, reference: orderReference(store.nextOrderNumber) };
@@ -836,16 +848,31 @@ function holdSampleOrder<T>(
       targetExams: userId ? (store.memberTargetExams[userId] ?? []) : [],
       history,
       refunds: refundsOfOrder(store.orderRefunds)(orderId),
+      ownsCourse: store.courseOwnerships.some(
+        (ownership) => ownership.userId === userId && ownership.courseId === order.courseId,
+      ),
     }),
   );
   if (!write) return result;
 
   if (write.activity) store.staffActivity = [...store.staffActivity, write.activity];
   if (write.paid && userId) writeSamplePass(userId, examCode, write.paid);
+  if (write.ownership && userId) writeSampleOwnership(userId, write.ownership);
   if (write.reduction && userId) writeSampleReduction(userId, examCode, write.reduction);
   store.orderRefunds = mergeById(store.orderRefunds, write.refunds);
   store.orders = store.orders.map((kept) => (kept.id === orderId ? write.order : kept));
   return result;
+}
+
+/**
+ * Writes a paid Course Order's grant into the sample data (ticket 06): the
+ * Staff Activity first, then the Course Ownership and the Target Exam.
+ */
+function writeSampleOwnership(userId: string, write: CourseOwnershipWrite) {
+  const store = getSampleStore();
+  store.staffActivity = [...store.staffActivity, write.activity];
+  store.courseOwnerships = [...store.courseOwnerships, structuredClone(write.ownership)];
+  writeSampleTargetExam(userId, write.targetExam);
 }
 
 /** Records refunds by their id: one already there is replaced in its place, a new one added after. */
@@ -876,6 +903,7 @@ function writeSampleReduction(userId: string, examCode: string, write: PassReduc
 
 export const {
   payForPlan,
+  payForCourse,
   getMemberOrder,
   listMemberOrders,
   getPaymentAcknowledgement,

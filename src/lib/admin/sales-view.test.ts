@@ -45,6 +45,7 @@ const sales = (fields: Partial<SalesFigures> = {}): SalesOverview => ({
     invoicesToSend: 0,
     paidAfterExpiry: 0,
     paidAccountDeleted: 0,
+    paidAlreadyOwned: 0,
   },
 });
 

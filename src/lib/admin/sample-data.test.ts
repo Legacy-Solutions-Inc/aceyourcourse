@@ -78,7 +78,7 @@ describe("restoreSampleData in memory", () => {
     expect(await restore()).toEqual({ ok: true });
     expect(getSampleStore().orders.length).toBeGreaterThan(0);
     expect(getSampleStore().memberConsents).toEqual([
-      expect.objectContaining({ termsVersion: "2.0", privacyVersion: "2.0" }),
+      expect.objectContaining({ termsVersion: "2.1", privacyVersion: "2.1" }),
     ]);
   });
 });

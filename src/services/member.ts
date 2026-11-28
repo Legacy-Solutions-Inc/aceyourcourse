@@ -44,6 +44,7 @@ import type {
   MemberUser,
   NewTargetExam,
   PayInput,
+  CoursePayInput,
   PayResult,
   PickableExam,
   PlansExam,
@@ -525,6 +526,19 @@ export interface MemberService {
    * User id that isn't one.
    */
   payForPlan(userId: string, input: PayInput, client: PaymentsClient | null): Promise<PayResult>;
+  /**
+   * Pay for a Course (Phase 5, ticket 06): a new Pending Order holding the
+   * Course, with its name and price as they are now and no days. Refused,
+   * making nothing, with no payments client, a method that isn't one of the
+   * four, a Course that isn't sold separately, Visible and on sale for an
+   * Exam on the Website ("not-on-sale"), another Exam's than the one posted,
+   * or one this Member owns already ("owned"). Paid grants Course Ownership.
+   */
+  payForCourse(
+    userId: string,
+    input: CoursePayInput,
+    client: PaymentsClient | null,
+  ): Promise<PayResult>;
   /** One of this Member's own Orders by its reference; null for anyone else's, or none. */
   getMemberOrder(userId: string, reference: string): Promise<MemberOrder | null>;
   /**
@@ -641,6 +655,7 @@ export const requestPrivacy = impl.requestPrivacy;
 export const listMemberPlans = impl.listMemberPlans;
 export const listExamsOnSale = impl.listExamsOnSale;
 export const payForPlan = impl.payForPlan;
+export const payForCourse = impl.payForCourse;
 export const getMemberOrder = impl.getMemberOrder;
 export const listMemberOrders = impl.listMemberOrders;
 export const getPaymentAcknowledgement = impl.getPaymentAcknowledgement;

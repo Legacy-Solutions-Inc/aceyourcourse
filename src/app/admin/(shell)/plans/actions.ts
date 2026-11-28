@@ -1,9 +1,18 @@
 "use server";
 
 import { adminAction } from "@/lib/admin/action";
-import { createPlan, deletePlan, setPlanOnSale, updatePlan } from "@/services/admin";
+import {
+  createPlan,
+  deletePlan,
+  setCourseOnSale,
+  setCoursePrice,
+  setPlanOnSale,
+  updatePlan,
+} from "@/services/admin";
 import {
   addPlanInputSchema,
+  courseOnSaleInputSchema,
+  coursePriceInputSchema,
   planIdInputSchema,
   planOnSaleInputSchema,
   savePlanInputSchema,
@@ -33,4 +42,16 @@ export const switchPlanOnSale = adminAction(
 export const removePlan = adminAction(
   { role: "owner", schema: planIdInputSchema },
   async (actor, { id }) => deletePlan(actor, id),
+);
+
+/** One-time purchases (Phase 5, ticket 06): a separately sold Course's price, in whole pesos. */
+export const saveCoursePrice = adminAction(
+  { role: "owner", schema: coursePriceInputSchema },
+  setCoursePrice,
+);
+
+/** One-time purchases: a separately sold Course's On sale switch; it always saves, with no conflict check. */
+export const switchCourseOnSale = adminAction(
+  { role: "owner", schema: courseOnSaleInputSchema },
+  setCourseOnSale,
 );

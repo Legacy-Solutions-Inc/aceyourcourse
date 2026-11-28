@@ -259,6 +259,7 @@ export function sampleOrders(
       userId: sample.paidWithoutAccount ? null : sampleUserId(sample.buyer.email),
       examCode: sample.examCode,
       planId: samplePlanId(sample.examCode, sample.days),
+      courseId: null,
       planName: defaultPlanName(sample.examCode),
       days: sample.days,
       priceCentavos: sample.priceCentavos,
@@ -278,6 +279,7 @@ export function sampleOrders(
             ? settledAt
             : createdAt,
       paidWithoutAccount: sample.paidWithoutAccount ?? false,
+      paidAlreadyOwned: false,
     };
   });
   const invoiceRequests = samples.flatMap(({ invoice }, index): InvoiceRequest[] => {

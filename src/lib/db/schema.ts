@@ -1170,9 +1170,11 @@ export const paymentMethod = pgEnum("payment_method", PAYMENT_METHODS);
 
 /**
  * The Orders (Phase 4, ticket 03; spec, Phase 4 → Order ledger, References;
- * CONTEXT.md → Order): one Member's attempt to buy one Plan, made Pending at
- * every Pay click. The Plan's name, days and price are copied at Pay, so a
- * later change to the Plan never touches the Order. `reference` comes from
+ * CONTEXT.md → Order): one Member's attempt to buy one Plan, or one Course
+ * (Phase 5, ticket 06), made Pending at every Pay click. The Plan's name,
+ * days and price (a Course's name and price) are copied at Pay, so a later
+ * change to the Plan or Course never touches the Order. A Course that has
+ * had an Order can't be deleted (the restrict on course_id). `reference` comes from
  * order_reference_seq ("AYC-10001" upward, unique; test and live Orders share
  * it). `livemode` is PayMongo's (false for a Test Order and with the payments
  * fake); the checkout and payment ids are PayMongo's (null with the fake).
@@ -1195,11 +1197,15 @@ export const orders = pgTable(
     examCode: text("exam_code")
       .notNull()
       .references(() => exams.code, { onDelete: "restrict", onUpdate: "cascade" }),
-    planId: uuid("plan_id")
-      .notNull()
-      .references(() => plans.id, { onDelete: "restrict" }),
+    // An Order holds one Plan or one Course (Phase 5, ticket 06): exactly one
+    // of plan_id and course_id is set, and a Course Order has no days.
+    planId: uuid("plan_id").references(() => plans.id, { onDelete: "restrict" }),
+    courseId: uuid("course_id").references((): AnyPgColumn => courses.id, {
+      onDelete: "restrict",
+    }),
+    // The Plan's or the Course's name, as it was at Pay.
     planName: text("plan_name").notNull(),
-    days: integer("days").notNull(),
+    days: integer("days"),
     priceCentavos: integer("price_centavos").notNull(),
     method: paymentMethod("method").notNull(),
     status: orderStatus("status").notNull(),
@@ -1220,10 +1226,24 @@ export const orders = pgTable(
     // Its payment landed after the account was deleted, so it granted nothing
     // and an Owner refunds it in PayMongo (ticket 14). Set by the ledger.
     paidWithoutAccount: boolean("paid_without_account").notNull().default(false),
+    // A Course Order paid while its buyer already owned the Course (two tabs,
+    // a late payment): recorded Paid with no grant, so an Owner refunds it in
+    // PayMongo (Phase 5, ticket 06). Set by the ledger.
+    paidAlreadyOwned: boolean("paid_already_owned").notNull().default(false),
   },
   (t) => [
     index("orders_user_id_idx").on(t.userId),
     index("orders_plan_id_idx").on(t.planId),
+    index("orders_course_id_idx").on(t.courseId),
+    check(
+      "orders_one_item",
+      sql`(${t.planId} is not null and ${t.days} is not null and ${t.courseId} is null) or (${t.planId} is null and ${t.days} is null and ${t.courseId} is not null)`,
+    ),
+    // Only a paid Course Order can have been paid while the Course was owned.
+    check(
+      "orders_paid_already_owned_course",
+      sql`not ${t.paidAlreadyOwned} or (${t.courseId} is not null and ${t.paidAt} is not null)`,
+    ),
     uniqueIndex("orders_checkout_id_idx")
       .on(t.checkoutId)
       .where(sql`${t.checkoutId} is not null`),

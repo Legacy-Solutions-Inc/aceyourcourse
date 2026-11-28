@@ -26,6 +26,7 @@ import {
   removeCourseModule,
   removeLesson,
   saveCourse,
+  saveCourseAccess,
   saveCourseModuleTitle,
   saveCourseVisibility,
   saveLesson,
@@ -71,11 +72,19 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
     saveCourse,
     saveCourseVisibility,
     removeCourse,
+    saveCourseAccess,
   };
 
   let body: React.ReactNode;
   if (courseId === "new") {
-    body = <CourseSettings opened={null} exams={list.exams} actions={settingsActions} />;
+    body = (
+      <CourseSettings
+        opened={null}
+        exams={list.exams}
+        actions={settingsActions}
+        role={actor.role}
+      />
+    );
   } else if (courseId) {
     const opened = await getCourseForAdmin(actor, courseId);
     if (!opened) notFound();
@@ -109,6 +118,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
           opened={opened}
           exams={opened.exams}
           actions={settingsActions}
+          role={actor.role}
         />
       );
     } else {

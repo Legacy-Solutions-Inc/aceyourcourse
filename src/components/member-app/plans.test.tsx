@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import type { PlanRowView } from "./plans-view";
+import type { CourseRowView, PlanRowView } from "./plans-view";
 import { Plans, type PlansProps } from "./plans";
 
 // The Member's Plans page body (Phase 4, ticket 02; BUILD-MAP §3 Plans;
@@ -45,6 +45,18 @@ const CE_ROWS = [
   }),
 ];
 
+const PSAD: CourseRowView = {
+  id: "course:psad-id",
+  courseId: "psad-id",
+  title: "PSAD Masterclass",
+  line: "Video course only · yours to keep",
+  price: "₱1,499",
+  owned: false,
+  href: "/app/courses/psad-id",
+  summary: "PSAD Masterclass · Video course",
+  summaryUntil: "ONE-TIME · NO EXPIRY",
+};
+
 function renderPlans(props: Partial<PlansProps> = {}) {
   return render(
     <Plans
@@ -52,7 +64,7 @@ function renderPlans(props: Partial<PlansProps> = {}) {
         { code: "CE", name: "Civil Engineering", href: "/app/plans?exam=CE", current: true },
         { code: "ME", name: "Mechanical Engineering", href: "/app/plans?exam=ME", current: false },
       ]}
-      exam={{ code: "CE", rows: CE_ROWS }}
+      exam={{ code: "CE", rows: CE_ROWS, courses: [], initial: "ce-90" }}
       staff={false}
       contactEmail="help@example.com"
       pay={null}
@@ -192,6 +204,63 @@ describe("Plans", () => {
       plan: "ce-180",
       method: "gcash",
     });
+  });
+
+  it("lists the Exam's One-time purchases under its Plans (Phase 5, ticket 06)", () => {
+    renderPlans({ exam: { code: "CE", rows: CE_ROWS, courses: [PSAD], initial: "ce-90" } });
+
+    const group = screen.getByRole("radiogroup", { name: "ONE-TIME PURCHASE" });
+    expect(
+      within(group).getByRole("radio", {
+        name: "PSAD Masterclass Video course only · yours to keep ₱1,499",
+      }),
+    ).not.toBeChecked();
+  });
+
+  it("opens at the Course the address picked, with no expiry in the order summary, and sends it on Pay", async () => {
+    const user = userEvent.setup();
+    const pay = vi.fn(async (_previous: { error: string | null }, _form: FormData) => ({
+      error: null,
+    }));
+    renderPlans({
+      exam: { code: "CE", rows: CE_ROWS, courses: [PSAD], initial: "course:psad-id" },
+      pay,
+    });
+
+    expect(summary()).toHaveTextContent("PSAD Masterclass · Video course₱1,499");
+    expect(summary()).toHaveTextContent("ONE-TIME · NO EXPIRY");
+    await user.click(screen.getByRole("button", { name: "Pay ₱1,499 with PayMongo" }));
+
+    await waitFor(() => expect(pay).toHaveBeenCalledOnce());
+    expect(Object.fromEntries(pay.mock.calls[0]?.[1]?.entries() ?? [])).toEqual({
+      examCode: "CE",
+      plan: "course:psad-id",
+      method: "qrph",
+    });
+  });
+
+  it("shows a Course the Member owns as Owned · Watch, with no way to pay for it", () => {
+    renderPlans({
+      exam: { code: "CE", rows: [], courses: [{ ...PSAD, owned: true }], initial: null },
+      pay: async () => ({ error: null }),
+    });
+
+    expect(screen.getByRole("link", { name: "Owned · Watch" })).toHaveAttribute(
+      "href",
+      "/app/courses/psad-id",
+    );
+    expect(screen.queryByRole("radio", { name: /PSAD Masterclass/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Pay / })).toBeNull();
+  });
+
+  it("offers a Course alone for an Exam with no Plan on sale", () => {
+    renderPlans({
+      exam: { code: "CE", rows: [], courses: [PSAD], initial: "course:psad-id" },
+      pay: async () => ({ error: null }),
+    });
+
+    expect(screen.queryByRole("radiogroup", { name: /^CE ALL-ACCESS/ })).toBeNull();
+    expect(screen.getByRole("button", { name: "Pay ₱1,499 with PayMongo" })).toBeEnabled();
   });
 
   it("says why Pay was refused", async () => {

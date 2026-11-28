@@ -25,6 +25,7 @@ const PAID: Order = {
   userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
   examCode: "CE",
   planId: "5d7c9e1a-3b2f-4a6d-9c8e-7f6a5b4c3d2e",
+  courseId: null,
   planName: "CE All-Access",
   days: 30,
   priceCentavos: 49_900,
@@ -39,6 +40,7 @@ const PAID: Order = {
   paidAt: inDays(-10),
   statusChangedAt: inDays(-10),
   paidWithoutAccount: false,
+  paidAlreadyOwned: false,
 };
 
 /** A history row's segment: whose days, from and until (days from now). */
@@ -56,6 +58,7 @@ describe("applyOutcome: Paid → Refunded (ticket 09)", () => {
       changed: true,
       order: { ...PAID, status: "refunded", statusChangedAt: NOW.toISOString() },
       paidDays: null,
+      course: null,
     });
   });
 

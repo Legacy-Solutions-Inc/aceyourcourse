@@ -23,6 +23,7 @@ import {
 
 // 25 Nov 2026, 10:00 in Manila.
 const NOW = new Date("2026-11-25T02:00:00.000Z");
+const COURSE = "6a1e2d3c-4b5a-4f6e-8d7c-9b0a1f2e3d4c";
 
 let next = 10_001;
 
@@ -35,6 +36,7 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
     userId: null,
     examCode: "CE",
     planId: "plan-ce-90",
+    courseId: null,
     planName: "CE All-Access",
     days: 90,
     priceCentavos: 129_900,
@@ -54,6 +56,7 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
     paidAt: "2026-11-25T01:01:00.000Z",
     statusChangedAt: "2026-11-25T01:01:00.000Z",
     paidWithoutAccount: false,
+    paidAlreadyOwned: false,
     ...fields,
   };
 }
@@ -76,6 +79,7 @@ describe("parseOrdersParams", () => {
       invoiceRequested: false,
       paidAfterExpiry: false,
       paidWithoutAccount: false,
+      paidAlreadyOwned: false,
     });
   });
 
@@ -90,6 +94,7 @@ describe("parseOrdersParams", () => {
         invoice: "Requested",
         late: "1",
         noaccount: "1",
+        owned: "1",
       }),
     ).toEqual({
       q: "AYC-10482",
@@ -100,6 +105,7 @@ describe("parseOrdersParams", () => {
       invoiceRequested: true,
       paidAfterExpiry: true,
       paidWithoutAccount: true,
+      paidAlreadyOwned: true,
     });
   });
 
@@ -114,6 +120,7 @@ describe("parseOrdersParams", () => {
         invoice: "sent",
         late: "yes",
         noaccount: "yes",
+        owned: "yes",
       }),
     ).toEqual(DEFAULT_ORDER_QUERY);
   });
@@ -142,15 +149,16 @@ describe("ordersHref and ordersExportHref", () => {
       invoiceRequested: true,
       paidAfterExpiry: true,
       paidWithoutAccount: true,
+      paidAlreadyOwned: true,
     });
     const href = ordersHref(filtered);
     expect(href).toBe(
-      "/admin/orders?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested&late=1&noaccount=1",
+      "/admin/orders?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested&late=1&noaccount=1&owned=1",
     );
     const params = Object.fromEntries(new URL(href, "https://example.com").searchParams);
     expect(parseOrdersParams(params)).toEqual(filtered);
     expect(ordersExportHref(filtered)).toBe(
-      "/admin/orders/export?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested&late=1&noaccount=1",
+      "/admin/orders/export?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested&late=1&noaccount=1&owned=1",
     );
   });
 });
@@ -262,6 +270,17 @@ describe("filterOrders", () => {
 
     expect(references(filterOrders(rows, query({ paidWithoutAccount: true }), NOW))).toEqual([
       orphaned.reference,
+    ]);
+    expect(filterOrders(rows, query(), NOW)).toHaveLength(3);
+  });
+
+  it("keeps, under Course already owned, only the Course Orders paid while the Course was owned (Phase 5, ticket 06)", () => {
+    const twice = order({ courseId: COURSE, planId: null, days: null, paidAlreadyOwned: true });
+    const bought = order({ courseId: COURSE, planId: null, days: null });
+    const rows = [twice, bought, order()];
+
+    expect(references(filterOrders(rows, query({ paidAlreadyOwned: true }), NOW))).toEqual([
+      twice.reference,
     ]);
     expect(filterOrders(rows, query(), NOW)).toHaveLength(3);
   });
@@ -432,6 +451,30 @@ describe("paymentWork: what Needs attention lists (ticket 11)", () => {
     });
   });
 
+  it("counts the Course Orders paid while the Course was owned, of any age, while still Paid (ticket 06)", () => {
+    const course = { courseId: COURSE, planId: null, days: null, paidAlreadyOwned: true };
+    const lateTwice = order({ ...course, paidAfterExpiry: true, createdAt: ago(24 * 40) });
+    const rows = [
+      order(course),
+      lateTwice,
+      // Refunded in PayMongo since: settled.
+      order({ ...course, status: "refunded", recordedStatus: "refunded" }),
+      order({ ...course, livemode: false }),
+      order({ courseId: COURSE, planId: null, days: null }),
+    ];
+
+    expect(paymentWork(rows, NOW).paidAlreadyOwned).toBe(2);
+    // Listed once: not also as paid after expiry, which says it granted something.
+    expect(paymentWork([lateTwice], NOW)).toMatchObject({
+      paidAlreadyOwned: 1,
+      paidAfterExpiry: 0,
+    });
+    expect(filterOrders(rows, PAYMENT_WORK.paidAlreadyOwned, NOW)).toHaveLength(2);
+    expect(ordersHref(PAYMENT_WORK.paidAlreadyOwned)).toBe(
+      "/admin/orders?status=paid&range=all&owned=1",
+    );
+  });
+
   it("counts exactly the Orders each item's link lists", () => {
     const rows = [
       pending(3),
@@ -469,6 +512,7 @@ describe("paymentWork: what Needs attention lists (ticket 11)", () => {
       invoicesToSend: 0,
       paidAfterExpiry: 0,
       paidAccountDeleted: 0,
+      paidAlreadyOwned: 0,
     });
   });
 });

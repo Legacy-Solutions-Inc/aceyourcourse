@@ -1025,6 +1025,8 @@ export interface OrderListQuery {
   paidAfterExpiry: boolean;
   /** "Paid, account deleted" (ticket 14): only the Orders paid after their account was deleted. */
   paidWithoutAccount: boolean;
+  /** "Course already owned" (Phase 5, ticket 06): only the Course Orders paid while it was owned. */
+  paidAlreadyOwned: boolean;
 }
 
 /** An Order as the Admin shows it. */
@@ -1062,6 +1064,8 @@ export interface PaymentWork {
   paidAfterExpiry: number;
   /** The Orders of any age paid after their account was deleted and still Paid, to refund in PayMongo (ticket 14). */
   paidAccountDeleted: number;
+  /** The Course Orders of any age paid while the Course was owned and still Paid, to refund in PayMongo (Phase 5, ticket 06). */
+  paidAlreadyOwned: number;
 }
 
 /** The Orders list: the Orders its filters match, newest first, and their tiles. */
@@ -1176,4 +1180,36 @@ export interface AdminCourse {
   stamp: RecordStamp;
   modules: AdminCourseModule[];
   exams: CourseExamChoice[];
+  /**
+   * What switching how Members get it would do now (Phase 5, ticket 06), for
+   * the confirmation: `losing`, the Members who watched it through an active
+   * Access Pass for its Exam and don't own it (Included → Sold separately);
+   * `gaining`, the Members with an active Access Pass for its Exam who don't
+   * own it (Sold separately → Included). Counted for Owners only; zero for
+   * an Editor, who can't switch it.
+   */
+  accessChange: CourseAccessChange;
+  /** Why it can't be deleted: someone owns it, or an Order names it (ticket 06); null when it can. */
+  deleteBlocked: "owned" | "ordered" | null;
+}
+
+/** How many Members a switch of how Members get a Course affects (ticket 06). */
+export interface CourseAccessChange {
+  losing: number;
+  gaining: number;
+}
+
+/**
+ * A separately sold Course, as Plans & prices → One-time purchases lists it
+ * (Owners only; Phase 5, ticket 06): its price (null until an Owner sets
+ * one) and On sale, and whether Members can see it.
+ */
+export interface OneTimePurchase {
+  id: string;
+  title: string;
+  examCode: string;
+  subjectCode: string;
+  priceCentavos: number | null;
+  onSale: boolean;
+  visible: boolean;
 }

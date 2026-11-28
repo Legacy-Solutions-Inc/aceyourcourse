@@ -114,7 +114,7 @@ describe("Account", () => {
     );
     const privacy = screen.getByRole("region", { name: "Privacy" });
     expect(
-      within(privacy).getByText("You agreed to Terms v2.1 and Privacy v2.1 on 19 Nov 2026."),
+      within(privacy).getByText("You agreed to Terms v2.2 and Privacy v2.1 on 19 Nov 2026."),
     ).toBeInTheDocument();
     expect(
       within(privacy).getByRole("button", { name: "Request a copy of my data" }),

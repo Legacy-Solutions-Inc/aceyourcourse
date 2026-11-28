@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 import { BetaAccessNote } from "./content-state";
 import { type PayAction, PlanChooser } from "./plan-chooser";
-import type { PlanRowView } from "./plans-view";
+import type { CourseRowView, PlanRowView } from "./plans-view";
 
 /** One Exam pill: an Exam with a Plan on sale, linking to its Plans. */
 export interface PlanPill {
@@ -16,10 +16,18 @@ export interface PlanPill {
 }
 
 export interface PlansProps {
-  /** The Exams with a Plan on sale, the Member's Target Exams first. Empty when nothing is on sale. */
+  /** The Exams with a Plan or a Course on sale, the Member's Target Exams first. Empty when nothing is on sale. */
   pills: readonly PlanPill[];
-  /** The Exam the page is open on and its Plan rows, or null when nothing is on sale. */
-  exam: { code: string; rows: readonly PlanRowView[] } | null;
+  /**
+   * The Exam the page is open on, its Plan rows, its One-time purchases
+   * (Phase 5, ticket 06) and the item picked first; null when nothing is on sale.
+   */
+  exam: {
+    code: string;
+    rows: readonly PlanRowView[];
+    courses: readonly CourseRowView[];
+    initial: string | null;
+  } | null;
   /** Active Staff open all content already, and are told so. */
   staff: boolean;
   /** Where Members ask AYC for access, while nothing is on sale. */
@@ -77,7 +85,14 @@ export function Plans({ pills, exam, staff, contactEmail, pay, cancelled }: Plan
         </nav>
       ) : null}
       {exam ? (
-        <PlanChooser key={exam.code} examCode={exam.code} rows={exam.rows} pay={pay} />
+        <PlanChooser
+          key={exam.code}
+          examCode={exam.code}
+          rows={exam.rows}
+          courses={exam.courses}
+          initial={exam.initial}
+          pay={pay}
+        />
       ) : (
         <p className="max-w-prose text-[15px] leading-normal">
           No plans are on sale right now. <BetaAccessNote contactEmail={contactEmail} />

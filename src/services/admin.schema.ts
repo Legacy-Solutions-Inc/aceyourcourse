@@ -47,6 +47,7 @@ import {
   type QuizChoice,
 } from "@/lib/quizzes/quiz-rules";
 import type { ContentCounts, TopicContent } from "@/services/content.types";
+import { COURSE_ACCESS } from "@/services/courses.types";
 import {
   EXAM_PAGE_SECTIONS,
   FAQ_ANSWER_MAX,
@@ -2166,6 +2167,7 @@ export const orderListQuerySchema = z.object({
   invoiceRequested: z.boolean(),
   paidAfterExpiry: z.boolean(),
   paidWithoutAccount: z.boolean(),
+  paidAlreadyOwned: z.boolean(),
 });
 
 /** An Order's reference, as an address carries it: any text, so one that isn't an Order's answers not-found. */
@@ -2245,6 +2247,27 @@ export const courseIdInputSchema = z.object({ id: courseId });
 
 /** "Course visible to members", a single toggle. */
 export const courseVisibilityInputSchema = z.object({ course: courseId, visible: flag });
+
+// Selling a Course (Owners only; Phase 5, ticket 06): how Members get it, in
+// Course settings; its price and On sale, on Plans & prices → One-time
+// purchases. A price follows a Plan's rules: whole pesos from ₱1 to ₱99,999.
+
+/** "How members get it": Included in its Exam's All-Access, or Sold separately. */
+export const courseAccessInputSchema = z.object({ id: courseId, access: z.enum(COURSE_ACCESS) });
+
+/** A One-time purchase's price, as typed ("1,499"): the seam reads it as a Plan's price. */
+export const coursePriceInputSchema = z.object({
+  id: courseId,
+  price: z.union([z.string().max(40), z.number()]),
+});
+
+/** A One-time purchase's price with its rules: whole pesos, ₱1 to ₱99,999, in centavos. */
+export const coursePriceFormSchema = z
+  .object({ id: courseId, price: planPrice })
+  .transform(({ id, price }) => ({ id, priceCentavos: price }));
+
+/** A One-time purchase's On sale switch. */
+export const courseOnSaleInputSchema = z.object({ id: courseId, onSale: onOrOff });
 
 /** "+ Module": the Course and the new Module's title. */
 export const newCourseModuleFormSchema = z.object({

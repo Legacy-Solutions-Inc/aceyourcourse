@@ -41,9 +41,9 @@ describe("withStandInStore", () => {
   });
 });
 
-// Legal v2.1 (Phase 4, ticket 13): the dev server and the e2e specs start the
-// renewing tester as a Member who agreed to v2.0 the day before, so their
-// next visit asks them to agree to v2.1. Unit tests start without, unless
+// Legal v2.2 (Phase 5, ticket 06): the dev server and the e2e specs start the
+// renewing tester as a Member who agreed to v2.1 the day before, so their
+// next visit asks them to agree to the Terms' v2.2. Unit tests start without, unless
 // they ask.
 describe("the sample agreements", () => {
   const BOOT = new Date("2026-11-17T03:42:00.000Z");
@@ -59,7 +59,7 @@ describe("the sample agreements", () => {
     resetSampleStore();
   });
 
-  it("start the renewing tester as a Member who agreed to v2.0 the day before", async () => {
+  it("start the renewing tester as a Member who agreed to v2.1 the day before", async () => {
     const store = resetSampleStore(CATALOGUE_SEED, { sampleAgreements: true });
 
     expect(store.members).toEqual([
@@ -72,11 +72,11 @@ describe("the sample agreements", () => {
     ]);
     expect(await latestConsent(RAE)).toEqual({
       userId: RAE,
-      termsVersion: "2.0",
-      privacyVersion: "2.0",
+      termsVersion: "2.1",
+      privacyVersion: "2.1",
       agreedAt: "2026-11-16T03:42:00.000Z",
     });
-    expect(consentStatus(currentLegalVersions(), await latestConsent(RAE))).toBe("both-changed");
+    expect(consentStatus(currentLegalVersions(), await latestConsent(RAE))).toBe("terms-changed");
   });
 
   it("are left out unless asked for", () => {

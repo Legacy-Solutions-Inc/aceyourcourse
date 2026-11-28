@@ -366,7 +366,7 @@ describe("the sign-in screen", () => {
       "Angel Rose L. Lepañaangel@aceyourcourse.ph · Owner",
       "Sam Strangerstranger@example.com · Not a Beta Tester · sees “Not open yet”",
       "Lou Lapsedlapsed@example.com · Beta Tester · CE All-Access ended",
-      "Rae Renewingrenewing@example.com · Beta Tester · CE All-Access ends in 5 days · agreed to Legal v2.0",
+      "Rae Renewingrenewing@example.com · Beta Tester · CE All-Access ends in 5 days · agreed to Legal v2.1",
     ]);
     for (const input of region.querySelectorAll<HTMLInputElement>('input[name="next"]')) {
       expect(input.value).toBe("/app/library");

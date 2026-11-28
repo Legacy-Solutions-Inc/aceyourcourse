@@ -15,6 +15,7 @@ import {
   moveLessonToModule,
   previewLessonVideo,
   renameCourseModule,
+  setCourseAccess,
   setCourseVisibility,
   setLessonPublished,
   startLessonUpload,
@@ -22,6 +23,7 @@ import {
   updateLesson,
 } from "@/services/admin";
 import {
+  courseAccessInputSchema,
   courseFormSchema,
   courseIdInputSchema,
   courseModuleFormSchema,
@@ -47,8 +49,9 @@ import { videoService } from "@/services/video";
 // The Course builder's Server Actions (Phase 5, tickets 01 and 02): any Staff User,
 // Editor or Owner, makes Courses, their Modules and their Lessons. Like every
 // Admin action, each runs the Staff Guard first, so a Member or someone signed
-// out never reaches the seam, which checks every rule again. None writes how
-// Members get a Course, its price or On sale (an Owner's, from ticket 06).
+// out never reaches the seam, which checks every rule again. Only
+// saveCourseAccess writes how Members get a Course, and only for an Owner
+// (ticket 06); its price and On sale are Plans & prices' (plans/actions.ts).
 
 /** A one-time upload URL for a Course's 16:9 cover: a JPEG, PNG or WebP of up to 10 MB. */
 export const createCourseCoverUpload = adminAction(
@@ -69,6 +72,12 @@ export const saveCourse = adminAction(
 export const saveCourseVisibility = adminAction(
   { role: "staff", schema: courseVisibilityInputSchema },
   async (actor, { course, visible }) => setCourseVisibility(actor, course, visible),
+);
+
+/** "How members get it", Owners only (ticket 06): an Editor's call is refused on the server. */
+export const saveCourseAccess = adminAction(
+  { role: "owner", schema: courseAccessInputSchema },
+  setCourseAccess,
 );
 
 /** Delete course, after the confirmation: its Modules and Lessons go with it. */

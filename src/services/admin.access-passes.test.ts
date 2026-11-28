@@ -621,6 +621,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Access Passes ($name)", (arm) => {
       userId: buyer.userId,
       examCode: "CE",
       planId: samplePlanId("CE", 90),
+      courseId: null,
       planName: "CE All-Access",
       days: 90,
       priceCentavos: 129_900,
@@ -635,6 +636,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Access Passes ($name)", (arm) => {
       paidAt,
       statusChangedAt: paidAt,
       paidWithoutAccount: false,
+      paidAlreadyOwned: false,
     });
     /** A history row: granted by the Owner, or paid by `order`. */
     const historyRow = (

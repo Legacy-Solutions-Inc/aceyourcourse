@@ -65,6 +65,8 @@ function readCourse(key: CourseKey): CourseState | null {
     lessons,
     stamps: store.stamps,
     seededAt: store.bootedAt,
+    owners: store.courseOwnerships.filter((ownership) => ownership.courseId === course.id).length,
+    orders: store.orders.filter((order) => order.courseId === course.id).length,
   });
 }
 
@@ -141,6 +143,30 @@ const sampleCourseStore: CourseEditorStore = {
     }
     return counts;
   },
+  accessChange: async ({ id, examCode }, now) => {
+    const store = getSampleStore();
+    const owners = new Set(
+      store.courseOwnerships.filter((owned) => owned.courseId === id).map((owned) => owned.userId),
+    );
+    const holders = new Set(
+      store.accessPasses
+        .filter((pass) => pass.examCode === examCode && new Date(pass.endsAt) > now)
+        .map((pass) => pass.userId)
+        .filter((userId) => !owners.has(userId)),
+    );
+    const moduleIds = new Set(
+      store.courseModules.filter((module) => module.courseId === id).map((module) => module.id),
+    );
+    const lessonIds = new Set(
+      store.lessons.filter((lesson) => moduleIds.has(lesson.moduleId)).map((lesson) => lesson.id),
+    );
+    const watched = new Set(
+      store.lessonProgress
+        .filter((kept) => lessonIds.has(kept.lessonId) && holders.has(kept.userId))
+        .map((kept) => kept.userId),
+    );
+    return { losing: watched.size, gaining: holders.size };
+  },
   save: async (key, plan) => {
     const planned = plan(key ? readCourse(key) : null, readExams());
     if (planned.ok && planned.writes) apply(planned.writes);
@@ -156,6 +182,10 @@ export const {
   createCourse,
   updateCourse,
   setCourseVisibility,
+  setCourseAccess,
+  listOneTimePurchases,
+  setCoursePrice,
+  setCourseOnSale,
   deleteCourse,
   createCourseModule,
   renameCourseModule,

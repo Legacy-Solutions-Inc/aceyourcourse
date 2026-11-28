@@ -100,6 +100,7 @@ describe.each(MEMBER_ARMS)("Member seam: buying ($name)", (arm) => {
           userId: BEA.userId,
           examCode: "CE",
           planId: CE_90,
+          courseId: null,
           planName: "CE All-Access",
           days: 90,
           priceCentavos: 129_900,
@@ -114,6 +115,7 @@ describe.each(MEMBER_ARMS)("Member seam: buying ($name)", (arm) => {
           paidAt: null,
           statusChangedAt: BOOT.toISOString(),
           paidWithoutAccount: false,
+          paidAlreadyOwned: false,
         },
       ]);
     });
@@ -270,6 +272,7 @@ describe.each(MEMBER_ARMS)("Member seam: buying ($name)", (arm) => {
         id: expect.any(String),
         reference: "AYC-10001",
         examCode: "CE",
+        courseId: null,
         planName: "CE All-Access",
         days: 90,
         priceCentavos: 129_900,

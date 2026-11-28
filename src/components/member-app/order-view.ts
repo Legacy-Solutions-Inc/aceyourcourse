@@ -1,7 +1,6 @@
 import { formatPeso } from "@/lib/money";
-import type { OrderStatus } from "@/lib/payments/order-ledger";
+import { orderItem, type OrderStatus } from "@/lib/payments/order-ledger";
 import { methodTag } from "@/lib/payments/payment-methods";
-import { periodLabel } from "@/lib/plans/plan-text";
 import type { MemberOrder } from "@/services/member.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,9 +37,12 @@ export function orderScreen(status: OrderStatus): OrderScreen {
   }
 }
 
-/** Pure: the Order's summary line: "CE ALL-ACCESS · 3 MONTHS · ₱1,299". */
-export const orderLine = ({ planName, days, priceCentavos }: MemberOrder): string =>
-  `${planName} · ${periodLabel(days)} · ${formatPeso(priceCentavos)}`.toUpperCase();
+/**
+ * Pure: the Order's summary line: "CE ALL-ACCESS · 3 MONTHS · ₱1,299", or
+ * "PSAD MASTERCLASS · VIDEO COURSE · ₱1,499" (ticket 06).
+ */
+export const orderLine = (order: MemberOrder): string =>
+  `${orderItem(order)} · ${formatPeso(order.priceCentavos)}`.toUpperCase();
 
 /** Pure: the Paid screen's payment line: "₱1,299 · QR PH · REF AYC-10483 · ACKNOWLEDGEMENT IN BILLING". */
 export const paymentLine = ({ priceCentavos, method, reference }: MemberOrder): string =>

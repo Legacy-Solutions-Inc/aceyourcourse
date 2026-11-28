@@ -5,23 +5,26 @@ import { useOptimistic } from "react";
 import { AdminSwitch } from "@/components/admin/admin-switch";
 import { useInstantSave } from "@/components/admin/use-instant-save";
 import type { AdminAction } from "@/lib/admin/action";
-import type { AdminError, AdminPlan } from "@/services/admin.types";
+import type { AdminError } from "@/services/admin.types";
 
-interface PlanOnSaleSwitchProps {
-  planId: string;
+interface PlanOnSaleSwitchProps<T> {
+  /** The Plan's id, or a One-time purchase's Course's (Phase 5, ticket 06). */
+  id: string;
   /** On sale, as the server last read it. */
   checked: boolean;
-  /** The Plan's name and period, for its label and messages: "CE All-Access · 3 months". */
+  /** Its name, for its label and messages: "CE All-Access · 3 months", "PSAD Masterclass". */
   title: string;
-  action: AdminAction<AdminPlan>;
+  action: AdminAction<T>;
 }
 
 /**
- * A list row's On sale switch (mockup 603): it flips at once and saves with no
- * conflict check (useInstantSave). A refused switch, such as a second Plan on
- * sale for the same Exam and duration, flips back and says why.
+ * A list row's On sale switch (mockup 603), for a Plan or a One-time
+ * purchase: it flips at once and saves with no conflict check
+ * (useInstantSave). A refused switch, such as a second Plan on sale for the
+ * same Exam and duration, or a Course with no price yet, flips back and says
+ * why.
  */
-export function PlanOnSaleSwitch({ planId, checked, title, action }: PlanOnSaleSwitchProps) {
+export function PlanOnSaleSwitch<T>({ id, checked, title, action }: PlanOnSaleSwitchProps<T>) {
   const [shown, show] = useOptimistic(checked);
   const { save, pending } = useInstantSave(action, {
     what: title,
@@ -31,7 +34,7 @@ export function PlanOnSaleSwitch({ planId, checked, title, action }: PlanOnSaleS
   return (
     <AdminSwitch
       checked={shown}
-      onCheckedChange={(next) => save({ id: planId, onSale: next }, () => show(next))}
+      onCheckedChange={(next) => save({ id, onSale: next }, () => show(next))}
       aria-label={`On sale: ${title}`}
       aria-busy={pending || undefined}
     />

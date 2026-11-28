@@ -24,6 +24,7 @@ const MEMBER_SUITES = [
   "src/services/member.privacy-requests.test.ts",
   "src/services/member.plans.test.ts",
   "src/services/member.payments.test.ts",
+  "src/services/member.course-orders.test.ts",
   "src/services/member.payment-events.test.ts",
   "src/services/member.billing.test.ts",
   "src/services/member.invoice-requests.test.ts",

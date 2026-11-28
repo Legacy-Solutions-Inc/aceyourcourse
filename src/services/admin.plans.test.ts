@@ -467,6 +467,7 @@ function orderFor(planId: string): Order {
     userId: null,
     examCode: "CE",
     planId,
+    courseId: null,
     planName: "CE All-Access",
     days: 180,
     priceCentavos: 229_900,
@@ -481,6 +482,7 @@ function orderFor(planId: string): Order {
     paidAt: null,
     statusChangedAt: BOOT.toISOString(),
     paidWithoutAccount: false,
+    paidAlreadyOwned: false,
   };
 }
 

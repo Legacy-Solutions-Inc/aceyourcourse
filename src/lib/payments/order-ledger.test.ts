@@ -30,6 +30,7 @@ const PENDING: Order = {
   userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
   examCode: "CE",
   planId: "5d7c9e1a-3b2f-4a6d-9c8e-7f6a5b4c3d2e",
+  courseId: null,
   planName: "CE All-Access",
   days: 90,
   priceCentavos: 129_900,
@@ -44,6 +45,7 @@ const PENDING: Order = {
   paidAt: null,
   statusChangedAt: inDays(-1 / 24),
   paidWithoutAccount: false,
+  paidAlreadyOwned: false,
 };
 
 describe("applyOutcome: Pending → Paid", () => {
@@ -59,6 +61,7 @@ describe("applyOutcome: Pending → Paid", () => {
         statusChangedAt: NOW.toISOString(),
       },
       paidDays: { days: 90, startsAt: inDays(20), endsAt: inDays(110) },
+      course: null,
     });
   });
 
@@ -107,6 +110,7 @@ describe("applyOutcome: Pending → Failed", () => {
       changed: true,
       order: { ...PENDING, status: "failed", statusChangedAt: NOW.toISOString() },
       paidDays: null,
+      course: null,
     });
   });
 });
@@ -165,6 +169,7 @@ describe("applyOutcome: Failed and Expired can still become Paid (ticket 05)", (
         statusChangedAt: NOW.toISOString(),
       },
       paidDays: { days: 90, startsAt: inDays(20), endsAt: inDays(110) },
+      course: null,
     });
   });
 
@@ -185,6 +190,7 @@ describe("applyOutcome: Failed and Expired can still become Paid (ticket 05)", (
         statusChangedAt: NOW.toISOString(),
       },
       paidDays: { days: 90, startsAt: NOW.toISOString(), endsAt: inDays(90) },
+      course: null,
     });
   });
 
@@ -193,6 +199,7 @@ describe("applyOutcome: Failed and Expired can still become Paid (ticket 05)", (
       changed: true,
       order: { ...PENDING, status: "expired", statusChangedAt: NOW.toISOString() },
       paidDays: null,
+      course: null,
     });
   });
 });

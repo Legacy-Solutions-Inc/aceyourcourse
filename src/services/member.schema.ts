@@ -100,11 +100,25 @@ export const PAY_REFUSALS: Record<PayRefusal, string> = {
   "bad-method": "Pick QR Ph, GCash, Maya or Card to pay with.",
   "not-on-sale": "That plan isn’t on sale any more. Pick another one.",
   "wrong-exam": "That plan isn’t for this exam. Pick one of the plans shown.",
+  owned: "You own this course already. Open it from Courses.",
   "checkout-failed": "Couldn’t start the payment. Try again.",
 };
 
-/** What the Plans page's Pay sends: the Exam open on the page, the Plan picked and the method. */
-export const payFormSchema = z.object({ examCode: formText, plan: formText, method: formText });
+/** What a refused Pay for a Course says, where it differs from a Plan's (Phase 5, ticket 06). */
+export const COURSE_PAY_REFUSALS: Partial<Record<PayRefusal, string>> = {
+  "not-on-sale": "That course isn’t on sale any more.",
+  "wrong-exam": "That course isn’t for this exam. Pick one of those shown.",
+};
+
+/**
+ * What the Plans page's Pay sends: the Exam open on the page, the item picked
+ * (a Plan's id, or "course:" and a Course's id: ticket 06) and the method.
+ */
+export const payFormSchema = z.object({
+  examCode: formText,
+  plan: z.string().trim().max(60).catch(""),
+  method: formText,
+});
 
 /** An Order's reference, as the Order's address and its screens send it: "AYC-10001". */
 export const orderReferenceSchema = z.string().regex(ORDER_REFERENCE_PATTERN);

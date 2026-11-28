@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import type { PlansExam } from "@/services/member.types";
 
 import {
+  courseRows,
+  pickedItem,
   askedExam,
   defaultPlanId,
   openPlansExam,
@@ -32,6 +34,7 @@ function exam(examCode: string, fields: Partial<PlansExam> = {}): PlansExam {
         bestValue: false,
       },
     ],
+    courses: [],
     passEndsAt: null,
     examDate: null,
     ...fields,
@@ -209,5 +212,50 @@ describe("defaultPlanId", () => {
 
   it("picks nothing with no Plans", () => {
     expect(defaultPlanId([])).toBeNull();
+  });
+});
+
+describe("courseRows (Phase 5, ticket 06)", () => {
+  const PSAD = { id: "psad-id", title: "PSAD Masterclass", priceCentavos: 149_900, owned: false };
+
+  it("gives each One-time purchase its row: video course only, yours to keep, no expiry", () => {
+    expect(courseRows(exam("CE", { courses: [PSAD] }))).toEqual([
+      {
+        id: "course:psad-id",
+        courseId: "psad-id",
+        title: "PSAD Masterclass",
+        line: "Video course only · yours to keep",
+        price: "₱1,499",
+        owned: false,
+        href: "/app/courses/psad-id",
+        summary: "PSAD Masterclass · Video course",
+        summaryUntil: "ONE-TIME · NO EXPIRY",
+      },
+    ]);
+  });
+
+  it("marks a Course the Member owns", () => {
+    expect(courseRows(exam("CE", { courses: [{ ...PSAD, owned: true }] }))[0]?.owned).toBe(true);
+  });
+});
+
+describe("pickedItem (Phase 5, ticket 06)", () => {
+  const PSAD = { id: "psad-id", title: "PSAD Masterclass", priceCentavos: 149_900, owned: false };
+  const ce = exam("CE", { courses: [PSAD] });
+
+  it("picks the Course the address asks for, when the Member can buy it", () => {
+    expect(pickedItem(planRows(ce, NOW), courseRows(ce), "psad-id")).toBe("course:psad-id");
+  });
+
+  it("picks the Best value Plan otherwise, or for a Course the Member owns", () => {
+    const owned = exam("CE", { courses: [{ ...PSAD, owned: true }] });
+    expect(pickedItem(planRows(ce, NOW), courseRows(ce), null)).toBe("CE-30");
+    expect(pickedItem(planRows(owned, NOW), courseRows(owned), "psad-id")).toBe("CE-30");
+  });
+
+  it("picks the first Course the Member can buy when the Exam has no Plan on sale", () => {
+    const onlyCourse = exam("CE", { plans: [], courses: [PSAD] });
+    expect(pickedItem([], courseRows(onlyCourse), null)).toBe("course:psad-id");
+    expect(pickedItem([], [], null)).toBeNull();
   });
 });

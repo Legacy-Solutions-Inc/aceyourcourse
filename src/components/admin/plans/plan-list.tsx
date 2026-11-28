@@ -35,8 +35,8 @@ const head = "h-auto px-0 py-2.5 font-mono text-[10px] font-bold tracking-[0.06e
  * The Plans list (Phase 4, ticket 01; BUILD-MAP §3.8, mockup 591–606): Exam
  * chips in the URL, then the chip's Plans, already sorted by Exam, duration
  * and name, each with its On sale switch. A Plan that's off stays listed,
- * dimmed and marked NOT ON SALE. The mockup's ACTIVE count and one-time
- * purchases aren't here: Courses are sold from Phase 5.
+ * dimmed and marked NOT ON SALE. The mockup's ACTIVE count isn't here; the
+ * one-time purchases are their own list (one-time-purchases.tsx).
  */
 export function PlanList({ plans, examChip, selected, setOnSale }: PlanListProps) {
   const shown = examChip ? plans.plans.filter((plan) => plan.examCode === examChip) : plans.plans;
@@ -146,7 +146,7 @@ function PlanRow({ plan, href, selected, setOnSale }: PlanRowProps) {
         {formatPeso(plan.priceCentavos)}
       </TableCell>
       <TableCell className="pr-3.5 pl-0">
-        <PlanOnSaleSwitch planId={plan.id} checked={plan.onSale} title={title} action={setOnSale} />
+        <PlanOnSaleSwitch id={plan.id} checked={plan.onSale} title={title} action={setOnSale} />
       </TableCell>
     </TableRow>
   );

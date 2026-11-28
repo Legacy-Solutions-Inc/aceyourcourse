@@ -175,6 +175,48 @@ export function howMembersGetIt(
   return `Sold separately · ${price}`;
 }
 
+/** Why a Course can't be deleted, and what to do instead (Phase 5, ticket 06). */
+export const DELETE_BLOCKED = {
+  owned:
+    "Members own this course, so it can’t be deleted. Hide it instead: it leaves the Courses screen and sale, and its owners keep watching it.",
+  ordered:
+    "Orders name this course, so it can’t be deleted. Hide it instead: it leaves the Courses screen and sale.",
+} as const;
+
+/** Pure: what switching how Members get a Course does now, for its confirmation (ticket 06). */
+export function accessSwitchText(
+  to: CourseAccess,
+  examCode: string,
+  { losing, gaining }: { losing: number; gaining: number },
+): string {
+  const members = (n: number) => `${n} ${n === 1 ? "member" : "members"}`;
+  const verb = (n: number, one: string, many: string) => (n === 1 ? one : many);
+  return to === "sold-separately"
+    ? `${members(losing)} who watched it through ${examCode} All-Access ${verb(losing, "loses it now, and keeps", "lose it now, and keep")} their progress. It isn’t on sale until you set a price and turn it on in Plans & prices.`
+    : `${members(gaining)} with active ${examCode} All-Access ${verb(gaining, "gains", "gain")} it now. Everyone who owns it keeps it.`;
+}
+
+/**
+ * Pure: whether Members can buy a Course now (Phase 5, ticket 06): sold
+ * separately, Visible, on sale and priced. Pay checks it on the server, and
+ * the Plans page's One-time purchases lists only these.
+ */
+export function isCourseForSale<
+  T extends {
+    access: CourseAccess;
+    visibility: ContentVisibility;
+    onSale: boolean;
+    priceCentavos: number | null;
+  },
+>(course: T): course is T & { priceCentavos: number } {
+  return (
+    course.access === "sold-separately" &&
+    course.visibility === "visible" &&
+    course.onSale &&
+    course.priceCentavos !== null
+  );
+}
+
 const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** Pure: a Course's header line: "CE · PSAD · 3 MODULES · 9 LESSONS · 7 PUBLISHED". */

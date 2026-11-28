@@ -21,6 +21,7 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
     userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
     examCode: "CE",
     planId: "plan-ce-90",
+    courseId: null,
     planName: "CE All-Access",
     days: 90,
     priceCentavos: 129_900,
@@ -41,6 +42,7 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
     paidAt: "2026-11-25T01:01:00.000Z",
     statusChangedAt: "2026-11-25T01:01:00.000Z",
     paidWithoutAccount: false,
+    paidAlreadyOwned: false,
     ...fields,
   };
 }

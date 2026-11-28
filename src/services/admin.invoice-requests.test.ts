@@ -59,6 +59,7 @@ function order(reference: string, fields: Partial<Order>): Order {
     userId: BEA.userId,
     examCode: "CE",
     planId: samplePlanId("CE", 90),
+    courseId: null,
     planName: "CE All-Access",
     days: 90,
     priceCentavos: 129_900,
@@ -70,6 +71,7 @@ function order(reference: string, fields: Partial<Order>): Order {
     buyerEmail: BEA.email,
     statusChangedAt: paidAt ?? createdAt,
     paidWithoutAccount: false,
+    paidAlreadyOwned: false,
     ...fields,
     status,
     createdAt,
@@ -80,6 +82,7 @@ function order(reference: string, fields: Partial<Order>): Order {
 const REQUESTED = order("AYC-10001", { createdAt: at(-2 * DAY) });
 const NOT_REQUESTED = order("AYC-10002", {
   planId: samplePlanId("CE", 30),
+  courseId: null,
   days: 30,
   priceCentavos: 49_900,
   createdAt: at(-DAY),
@@ -90,6 +93,7 @@ const PENDING = order("AYC-10003", {
   buyerEmail: PAOLO.email,
   examCode: "ME",
   planId: samplePlanId("ME", 30),
+  courseId: null,
   planName: "ME All-Access",
   days: 30,
   priceCentavos: 44_900,

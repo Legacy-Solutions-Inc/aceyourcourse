@@ -10,6 +10,7 @@ import {
   recordConsent,
 } from "@/services/member.mock";
 import { sampleUserId } from "@/services/mock/members";
+import { sampleCourseId } from "@/services/mock/courses";
 import { samplePlanId } from "@/services/mock/plans";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 import { createFakePaymentsClient } from "@/services/payments.fake";
@@ -281,6 +282,47 @@ describe("Pay on the Plans page", () => {
     await expect(pay()).rejects.toThrow(
       redirectsTo("/app/sign-in?next=%2Fapp%2Fplans%3Fexam%3DCE"),
     );
+    expect(getSampleStore().orders).toEqual([]);
+  });
+});
+
+describe("Pay for a Course (Phase 5, ticket 06)", () => {
+  const PSAD = sampleCourseId("PSAD Masterclass");
+  const HPGE = sampleCourseId("HPGE Crash Course");
+  const course = (courseId: string) => payForm({ plan: `course:${courseId}`, method: "qrph" });
+
+  it("makes a Pending Order holding the Course, then Simulate paid says it's the Member's for good", async () => {
+    const userId = await signedIn();
+
+    await expect(pay(course(PSAD))).rejects.toThrow(redirectsTo("/app/plans/orders/AYC-10001"));
+    expect(getSampleStore().orders).toEqual([
+      expect.objectContaining({ userId, courseId: PSAD, planId: null, days: null }),
+    ]);
+    await simulate("AYC-10001", "paid");
+    render(await orderPage("AYC-10001"));
+
+    expect(screen.getByText("You own it for good. It never expires.")).toBeInTheDocument();
+    expect(getSampleStore().courseOwnerships).toEqual([
+      expect.objectContaining({ userId, courseId: PSAD }),
+    ]);
+  });
+
+  it("says a Course not on sale isn't on sale, making no Order", async () => {
+    await signedIn();
+
+    expect(await pay(course(HPGE))).toEqual({ error: "That course isn’t on sale any more." });
+    expect(getSampleStore().orders).toEqual([]);
+  });
+
+  it("says the Member owns a Course already, making no Order", async () => {
+    const userId = await signedIn();
+    getSampleStore().courseOwnerships = [
+      { userId, courseId: PSAD, since: BOOT.toISOString(), orderId: null },
+    ];
+
+    expect(await pay(course(PSAD))).toEqual({
+      error: "You own this course already. Open it from Courses.",
+    });
     expect(getSampleStore().orders).toEqual([]);
   });
 });

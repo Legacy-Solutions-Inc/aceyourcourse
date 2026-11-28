@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  accessSwitchText,
+  isCourseForSale,
   ADD_A_VIDEO,
   courseMeta,
   howMembersGetIt,
@@ -224,5 +226,41 @@ describe("courseMeta and lessonStateLabel", () => {
     expect(lessonStateLabel("no-video")).toBe("NO VIDEO");
     expect(lessonStateLabel("upload-failed")).toBe("UPLOAD FAILED");
     expect(lessonStateLabel("published")).toBe("PUBLISHED");
+  });
+});
+
+describe("accessSwitchText (Phase 5, ticket 06)", () => {
+  it("says how many Members lose a Course switched to Sold separately, progress kept", () => {
+    expect(accessSwitchText("sold-separately", "CE", { losing: 1, gaining: 214 })).toBe(
+      "1 member who watched it through CE All-Access loses it now, and keeps their progress. It isn’t on sale until you set a price and turn it on in Plans & prices.",
+    );
+  });
+
+  it("says how many Members gain a Course switched to Included, owners keeping it", () => {
+    expect(accessSwitchText("included", "CE", { losing: 0, gaining: 214 })).toBe(
+      "214 members with active CE All-Access gain it now. Everyone who owns it keeps it.",
+    );
+  });
+});
+
+describe("isCourseForSale (Phase 5, ticket 06)", () => {
+  const forSale = {
+    access: "sold-separately",
+    visibility: "visible",
+    onSale: true,
+    priceCentavos: 149_900,
+  } as const;
+
+  it("is a separately sold, Visible Course on sale with a price", () => {
+    expect(isCourseForSale(forSale)).toBe(true);
+  });
+
+  it.each([
+    ["included", { access: "included" }],
+    ["Hidden", { visibility: "hidden" }],
+    ["not on sale", { onSale: false }],
+    ["with no price", { priceCentavos: null }],
+  ] as const)("isn't one that's %s", (_what, change) => {
+    expect(isCourseForSale({ ...forSale, ...change })).toBe(false);
   });
 });

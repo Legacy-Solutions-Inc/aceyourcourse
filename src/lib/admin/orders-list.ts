@@ -19,7 +19,7 @@ import {
 // BUILD-MAP §3.9), pure, so both arms of the Admin seam filter the same way.
 //
 // - The URL holds the search and filters, so a reload or a shared link keeps
-//   them: ?q=10482&status=paid&method=gcash&range=7d&tests=1&invoice=requested&late=1&noaccount=1.
+//   them: ?q=10482&status=paid&method=gcash&range=7d&tests=1&invoice=requested&late=1&noaccount=1&owned=1.
 //   Anything it doesn't know falls back to its default, and the defaults are
 //   left out.
 // - "Search by order number or email": part of the reference or of the
@@ -39,6 +39,9 @@ import {
 // - "Paid, account deleted" (ticket 14) keeps only the Orders whose payment
 //   landed after their account was deleted (the Order's paidWithoutAccount),
 //   which granted nothing.
+// - "Course already owned" (Phase 5, ticket 06) keeps only the Course Orders
+//   paid while their buyer already owned the Course (the Order's
+//   paidAlreadyOwned), which granted nothing either.
 // - The tiles count the Orders the filters match.
 // - The Overview's Needs attention (ticket 11) counts its payment items with
 //   the very filters its links open (PAYMENT_WORK), so a count and its list
@@ -61,6 +64,7 @@ export const DEFAULT_ORDER_QUERY: OrderListQuery = {
   invoiceRequested: false,
   paidAfterExpiry: false,
   paidWithoutAccount: false,
+  paidAlreadyOwned: false,
 };
 
 /** How many Manila days each range holds, today included. */
@@ -100,13 +104,23 @@ export function parseOrdersParams(params: SearchParams): OrderListQuery {
     invoiceRequested: value("invoice").toLowerCase() === INVOICE_REQUESTED,
     paidAfterExpiry: value("late") === "1",
     paidWithoutAccount: value("noaccount") === "1",
+    paidAlreadyOwned: value("owned") === "1",
   };
 }
 
 /** Pure: the search params for a query, leaving the defaults out. */
 function searchOf(query: OrderListQuery): string {
-  const { q, status, method, range, tests, invoiceRequested, paidAfterExpiry, paidWithoutAccount } =
-    query;
+  const {
+    q,
+    status,
+    method,
+    range,
+    tests,
+    invoiceRequested,
+    paidAfterExpiry,
+    paidWithoutAccount,
+    paidAlreadyOwned,
+  } = query;
   const params = new URLSearchParams();
   if (q) params.set("q", q);
   if (status !== DEFAULT_ORDER_QUERY.status) params.set("status", status);
@@ -116,6 +130,7 @@ function searchOf(query: OrderListQuery): string {
   if (invoiceRequested) params.set("invoice", INVOICE_REQUESTED);
   if (paidAfterExpiry) params.set("late", "1");
   if (paidWithoutAccount) params.set("noaccount", "1");
+  if (paidAlreadyOwned) params.set("owned", "1");
   const search = params.toString();
   return search ? `?${search}` : "";
 }
@@ -169,12 +184,17 @@ export function filterOrders(
         (query.method === "all" || order.method === query.method) &&
         (since === null || new Date(order.createdAt) >= since) &&
         (!query.invoiceRequested || invoiceToSend(order)) &&
-        (!query.paidAfterExpiry || (order.paidAfterExpiry && !order.paidWithoutAccount)) &&
+        (!query.paidAfterExpiry || (order.paidAfterExpiry && grantedSomething(order))) &&
         (!query.paidWithoutAccount || order.paidWithoutAccount) &&
+        (!query.paidAlreadyOwned || order.paidAlreadyOwned) &&
         matchesSearch(order, query.q),
     )
     .sort(newestOrderFirst);
 }
+
+/** Pure: whether a Paid Order granted what it bought: not paid with no account, nor for a Course already owned. */
+const grantedSomething = (order: Pick<AdminOrder, "paidWithoutAccount" | "paidAlreadyOwned">) =>
+  !order.paidWithoutAccount && !order.paidAlreadyOwned;
 
 /** Pure: the tiles for the Orders shown: the Paid ones' amounts, and the Orders, Pending and Failed. */
 export function orderStats(rows: readonly AdminOrder[]): OrderStats {
@@ -207,6 +227,12 @@ export const PAYMENT_WORK = {
     range: "all",
     paidWithoutAccount: true,
   },
+  paidAlreadyOwned: {
+    ...DEFAULT_ORDER_QUERY,
+    status: "paid",
+    range: "all",
+    paidAlreadyOwned: true,
+  },
 } as const satisfies Record<string, OrderListQuery>;
 
 /**
@@ -222,6 +248,7 @@ export function paymentWork(orders: readonly AdminOrder[], now: Date): PaymentWo
     invoicesToSend: filterOrders(orders, PAYMENT_WORK.invoicesToSend, now).length,
     paidAfterExpiry: filterOrders(orders, PAYMENT_WORK.paidAfterExpiry, now).length,
     paidAccountDeleted: filterOrders(orders, PAYMENT_WORK.paidAccountDeleted, now).length,
+    paidAlreadyOwned: filterOrders(orders, PAYMENT_WORK.paidAlreadyOwned, now).length,
   };
 }
 

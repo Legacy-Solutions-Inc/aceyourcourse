@@ -16,6 +16,7 @@ const ORDER: MemberOrder = {
   id: "0b6a3f1e-2c4d-4e5f-8a9b-1c2d3e4f5a6b",
   reference: "AYC-10482",
   examCode: "CE",
+  courseId: null,
   planName: "CE All-Access",
   days: 90,
   priceCentavos: 129_900,
@@ -79,6 +80,21 @@ describe("orderRow", () => {
       acknowledgementHref: "/app/billing/AYC-10482",
       invoice: { canRequest: true, line: null },
       refund: null,
+    });
+  });
+
+  it("names a Course Order's Course, with no access period (Phase 5, ticket 06)", () => {
+    const course = {
+      ...ORDER,
+      courseId: "6a1e2d3c-4b5a-4f6e-8d7c-9b0a1f2e3d4c",
+      planName: "PSAD Masterclass",
+      days: null,
+      priceCentavos: 149_900,
+    };
+    expect(orderRow(course)).toMatchObject({
+      item: "PSAD Masterclass · Video course",
+      amount: "₱1,499",
+      status: "PAID",
     });
   });
 

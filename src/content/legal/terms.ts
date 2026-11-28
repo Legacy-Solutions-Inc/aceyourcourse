@@ -2,7 +2,7 @@ import type { LegalDocument } from "@/content/legal/types";
 import { formatDate } from "@/lib/manila-time";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Terms of Use v2.1: the Website and the Member App, a draft for the client's
+// Terms of Use v2.2: the Website and the Member App, a draft for the client's
 // lawyer ("Draft, pending legal review" shows while `status` is "draft").
 // v1.0 covered the Website only: browsing, "as of" prices and figures,
 // Marketplace purchases and AYC's IPOPHIL-registered content. Its text stays
@@ -10,14 +10,19 @@ import { formatDate } from "@/lib/manila-time";
 // Member App sections (6 to 11) cover the account and consent, one Active
 // Device, Access Passes, Free Preview and Staff grants (spec, Phase 3), paying
 // for Plans and refunds (v2.1: spec, Phase 4 planning decisions → Legal v2.1;
-// story 151k), watermarked content, and ending access or deleting the
-// account. Its refund rule is a placeholder for the client and the lawyer to
-// change. Bumping TERMS_OF_USE_VERSION asks every Member to agree again.
+// story 151k), video Courses sold separately (v2.2: spec, Phase 5 planning
+// decisions → Legal v2.2: a one-time purchase with no expiry, which a refund
+// removes), watermarked content, and ending access or deleting the account.
+// Its refund rule is a placeholder for the client and the lawyer to change.
+// Bumping TERMS_OF_USE_VERSION asks every Member to agree again; the Privacy
+// Policy keeps its own version (v2.1).
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** The current version: what the consent screen asks Members to agree to. */
-export const TERMS_OF_USE_VERSION = "2.1";
-const EFFECTIVE_DATE = "2026-11-26";
+export const TERMS_OF_USE_VERSION = "2.2";
+const EFFECTIVE_DATE = "2026-11-28";
+/** v2.1 (payments and refunds) took effect on this date. */
+const V2_1_EFFECTIVE_DATE = "2026-11-26";
 /** v1.0 was set to take effect on this date, and v2.0 replaced it before then. */
 const V1_EFFECTIVE_DATE = "2026-12-01";
 const V2_0_EFFECTIVE_DATE = "2026-11-17";
@@ -121,8 +126,9 @@ export function termsOfUse(contactEmail: string): LegalDocument {
           "You buy an Access Pass on the Member App’s Plans screen. Each Plan gives a number of days of access to one exam, for one price. Prices are in Philippine pesos, including VAT if we are registered for VAT, and you pay through PayMongo, our payment provider, on its secure page. Each purchase is an Order.",
           "Your access starts when your payment is confirmed. The Member App then shows a Payment Acknowledgement for your Order. It isn’t an official invoice.",
           "While you have an Access Pass for that exam, the new days are added to its current end date, so you don’t lose any days you have left.",
+          "Some video courses are sold separately, on the same Plans screen. A course is a one-time purchase: you pay for it once and own it, with no expiry, and an Access Pass doesn’t open it.",
           "Nothing renews automatically: each Order is paid once, and your Access Pass ends on its end date unless you buy again. We never store your card details: you enter them on PayMongo’s page, under PayMongo’s own terms.",
-          "Ask Support within 7 days of payment. Refunds are at our discretion. A refund removes that Order’s days.",
+          "Ask Support within 7 days of payment. Refunds are at our discretion. A refund removes that Order’s days, or the course that Order bought.",
         ],
       },
       {
@@ -159,7 +165,8 @@ export function termsOfUse(contactEmail: string): LegalDocument {
           "We may update these terms. When we do, we’ll give them a new version number and effective date, shown at the top of this page. If you keep using the Website after a change takes effect, the updated terms apply. The Member App asks you to agree to each new version before you continue using it.",
           `Version 1.0, set to take effect ${formatDate(V1_EFFECTIVE_DATE, "long")}: the first version, covering the Website only. Version 2.0 replaced it before that date.`,
           `Version 2.0, effective ${formatDate(V2_0_EFFECTIVE_DATE, "long")}: adds the Member App, covering your account, one Active Device, Access Passes, Free Preview and grants, watermarked content, and ending your access or deleting your account.`,
-          `Version ${TERMS_OF_USE_VERSION}, effective ${formatDate(EFFECTIVE_DATE, "long")}: adds payments and refunds (section 9), for buying Access Passes in the Member App. A draft, pending legal review.`,
+          `Version 2.1, effective ${formatDate(V2_1_EFFECTIVE_DATE, "long")}: adds payments and refunds (section 9), for buying Access Passes in the Member App.`,
+          `Version ${TERMS_OF_USE_VERSION}, effective ${formatDate(EFFECTIVE_DATE, "long")}: adds video courses sold separately (section 9), each a one-time purchase with no expiry that a refund removes. A draft, pending legal review.`,
         ],
       },
       {

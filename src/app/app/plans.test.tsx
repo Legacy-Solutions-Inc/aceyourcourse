@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEVICE_COOKIE } from "@/lib/member-app/device-token";
 import { setPlanOnSale } from "@/services/admin.mock";
 import { addTargetExam, getOrCreateMember, recordConsent } from "@/services/member.mock";
+import { sampleCourseId } from "@/services/mock/courses";
 import { samplePlanId } from "@/services/mock/plans";
 import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
@@ -74,9 +75,12 @@ function passEndsIn(days: number) {
   );
 }
 
-const plansPage = async (exam?: string) =>
+const plansPage = async (exam?: string, course?: string) =>
   (await import("./(shell)/plans/page")).default({
-    searchParams: Promise.resolve(exam === undefined ? {} : { exam }),
+    searchParams: Promise.resolve({
+      ...(exam === undefined ? {} : { exam }),
+      ...(course === undefined ? {} : { course }),
+    }),
   });
 
 const pills = () => screen.getByRole("navigation", { name: "Exams" });
@@ -97,6 +101,43 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+});
+
+describe("the Plans page: One-time purchases (Phase 5, ticket 06)", () => {
+  const PSAD = sampleCourseId("PSAD Masterclass");
+  const summary = () => screen.getByRole("region", { name: "ORDER SUMMARY" });
+
+  it("lists CE's separately sold Course on sale under its Plans", async () => {
+    await memberOnDevice();
+    render(await plansPage("CE"));
+
+    const group = screen.getByRole("radiogroup", { name: "ONE-TIME PURCHASE" });
+    expect(within(group).getByRole("radio")).toHaveAccessibleName(
+      "PSAD Masterclass Video course only · yours to keep ₱1,499",
+    );
+  });
+
+  it("opens at the Course the Courses screen's Unlock asked for", async () => {
+    await memberOnDevice();
+    render(await plansPage("CE", PSAD));
+
+    expect(screen.getByRole("radio", { name: /^PSAD Masterclass/ })).toBeChecked();
+    expect(summary()).toHaveTextContent("ONE-TIME · NO EXPIRY");
+  });
+
+  it("shows a Course the Member owns as Owned · Watch, with no way to pay for it", async () => {
+    const userId = await memberOnDevice();
+    getSampleStore().courseOwnerships = [
+      { userId, courseId: PSAD, since: BOOT.toISOString(), orderId: null },
+    ];
+    render(await plansPage("CE", PSAD));
+
+    expect(screen.getByRole("link", { name: "Owned · Watch" })).toHaveAttribute(
+      "href",
+      `/app/courses/${PSAD}`,
+    );
+    expect(screen.queryByRole("radio", { name: /^PSAD Masterclass/ })).toBeNull();
+  });
 });
 
 describe("the Plans page", () => {
@@ -229,11 +270,11 @@ describe("the Plans page", () => {
     );
   });
 
-  // Legal v2.1 (Phase 4, ticket 13): the Terms now cover payments and
-  // refunds, so a Member who agreed to v2.0 agrees again before they can pay.
-  it("sends a Member who agreed to v2.0 to agree to v2.1 first, coming back to Plans", async () => {
+  // Legal v2.2 (Phase 5, ticket 06): the Terms now cover Courses sold
+  // separately, so a Member who agreed to v2.1 agrees again before they can pay.
+  it("sends a Member who agreed to v2.1 to agree to v2.2 first, coming back to Plans", async () => {
     const userId = await signedIn(TESTER);
-    await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
+    await recordConsent(userId, { termsVersion: "2.1", privacyVersion: "2.1" });
     await addTargetExam(userId, { examCode: "CE", examDate: "2027-01-10" });
 
     await expect(plansPage("CE")).rejects.toThrow(
@@ -241,11 +282,11 @@ describe("the Plans page", () => {
     );
   });
 
-  it("opens for that Member once they agree to v2.1, and doesn't ask again", async () => {
+  it("opens for that Member once they agree to v2.2, and doesn't ask again", async () => {
     const userId = await signedIn(TESTER);
-    await recordConsent(userId, { termsVersion: "2.0", privacyVersion: "2.0" });
-    await addTargetExam(userId, { examCode: "CE", examDate: "2027-01-10" });
     await recordConsent(userId, { termsVersion: "2.1", privacyVersion: "2.1" });
+    await addTargetExam(userId, { examCode: "CE", examDate: "2027-01-10" });
+    await recordConsent(userId, { termsVersion: "2.2", privacyVersion: "2.1" });
 
     for (let visit = 0; visit < 2; visit += 1) {
       const { unmount } = render(await plansPage("CE"));

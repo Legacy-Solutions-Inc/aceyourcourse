@@ -57,6 +57,8 @@ export interface MemberArm {
   putAccessPass(pass: AccessPass): Promise<void>;
   /** Gives a Member Course Ownership behind the seam's back, as buying or giving (tickets 06, 07) will. */
   putCourseOwnership(ownership: CourseOwnership): Promise<void>;
+  /** Every Course Ownership as stored, in the order it began (Phase 5, ticket 06). */
+  courseOwnerships(): Promise<CourseOwnership[]>;
   /** Uploads a card's back image as the Admin's card form does, and gives the path its save sends. */
   uploadCardImage(bytes: Uint8Array, options?: CardImageUpload): Promise<string>;
   /** Uploads a Reviewer PDF as the Admin's Reviewer PDFs screen does, and gives the path its record claims. */
@@ -110,6 +112,7 @@ const SAMPLE_ARM: MemberArm = {
     const store = getSampleStore();
     store.courseOwnerships = [...store.courseOwnerships, structuredClone(ownership)];
   },
+  courseOwnerships: async () => structuredClone(getSampleStore().courseOwnerships),
   uploadCardImage: uploadSampleCardImage,
   uploadReviewerPdf: (bytes) => uploadSampleReviewerPdf(bytes),
   cardMarks: async () => byCardAndMember(structuredClone(getSampleStore().cardMarks)),

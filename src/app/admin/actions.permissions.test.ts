@@ -332,6 +332,13 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
       plans.switchPlanOnSale(IDLE, { input: { id: samplePlanId("CE", 30), onSale: false } }),
     ),
     removePlan: owner(() => plans.removePlan(IDLE, { input: { id: samplePlanId("CE", 180) } })),
+    // One-time purchases (Phase 5, ticket 06).
+    saveCoursePrice: owner(() =>
+      plans.saveCoursePrice(IDLE, { input: { id: PSAD_COURSE, price: "1999" } }),
+    ),
+    switchCourseOnSale: owner(() =>
+      plans.switchCourseOnSale(IDLE, { input: { id: PSAD_COURSE, onSale: false } }),
+    ),
   },
   // Orders & payments (Phase 4, ticket 07).
   "./(shell)/orders/actions.ts": {
@@ -478,6 +485,10 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
     })),
     saveCourseVisibility: staff(() =>
       courses.saveCourseVisibility(IDLE, { input: { course: SURVEYING_COURSE, visible: true } }),
+    ),
+    // How Members get a Course: Owners only (ticket 06).
+    saveCourseAccess: owner(() =>
+      courses.saveCourseAccess(IDLE, { input: { id: PSAD_COURSE, access: "included" } }),
     ),
     removeCourse: staff(() => courses.removeCourse(IDLE, { input: { id: PSAD_COURSE } })),
     addCourseModule: staff(() =>
@@ -767,6 +778,7 @@ beforeEach(async () => {
       userId: BEA.userId,
       examCode: "CE",
       planId: samplePlanId("CE", 30),
+      courseId: null,
       planName: "CE All-Access",
       days: 30,
       priceCentavos: 49_900,
@@ -781,6 +793,7 @@ beforeEach(async () => {
       paidAt: null,
       statusChangedAt: store.bootedAt,
       paidWithoutAccount: false,
+      paidAlreadyOwned: false,
     },
   ];
   // An Invoice Request on it, for "Mark invoice sent" (ticket 08); only the Guard is under test here.

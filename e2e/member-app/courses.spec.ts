@@ -145,9 +145,10 @@ test("the separately sold Courses stay locked for an Access Pass: one on sale, o
 
   const psad = card(page, "PSAD Masterclass");
   await expect(psad.getByText(/LOCKED/)).toBeVisible();
+  // CE's Plans page, at the Course (ticket 06).
   await expect(psad.getByRole("link", { name: "Unlock for ₱1,499" })).toHaveAttribute(
     "href",
-    paths.memberApp.plansFor("CE"),
+    /^\/app\/plans\?exam=CE&course=/,
   );
   const hpge = card(page, "HPGE Crash Course");
   await expect(hpge.getByText(/LOCKED/)).toBeVisible();

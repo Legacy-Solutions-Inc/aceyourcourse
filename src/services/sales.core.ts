@@ -31,8 +31,9 @@ export interface SalesStore {
   /**
    * The live Orders (never Test Orders) that were paid at or after `since`,
    * have a refund made at or after it, are recorded Pending, have an
-   * official invoice requested and not yet sent, or (ticket 14) are Paid
-   * after their account was deleted, of any age; each with its Invoice
+   * official invoice requested and not yet sent, or are Paid after their
+   * account was deleted (ticket 14) or for a Course already owned (Phase 5,
+   * ticket 06), of any age; each with its Invoice
    * Request and refunds, in any order.
    */
   listSalesOrders(since: Date): Promise<AdminOrderRecord[]>;

@@ -1,10 +1,9 @@
 import { isPassActive, passEndDate } from "@/lib/member-app/access";
 import { manilaDate, manilaDayStart } from "@/lib/manila-time";
 import { formatPeso, formatPesoWithCentavos } from "@/lib/money";
-import { type OrderStatus, wasPaid } from "@/lib/payments/order-ledger";
+import { orderItem, type OrderStatus, wasPaid } from "@/lib/payments/order-ledger";
 import { isPartiallyRefunded } from "@/lib/payments/refunds";
 import { methodLabel } from "@/lib/payments/payment-methods";
-import { periodLabel } from "@/lib/plans/plan-text";
 import { paths } from "@/paths";
 import type { BusinessDetails } from "@/services/catalogue.types";
 import type { AccessPass } from "@/services/content.types";
@@ -135,7 +134,7 @@ export function orderRow(order: MemberOrder): OrderRow {
   const { label, tone } = STATUS[order.status];
   return {
     reference: order.reference,
-    item: `${order.planName} · ${periodLabel(order.days)}`,
+    item: orderItem(order),
     meta: `${dayOf(order.createdAt).toUpperCase()} · ${methodLabel(order.method)} · ${order.reference}`,
     status: label,
     tone,
@@ -195,7 +194,7 @@ export function acknowledgementView(
     seller: [business.name, business.address, business.tin ? `TIN ${business.tin}` : null].filter(
       (line): line is string => Boolean(line),
     ),
-    item: `${order.planName} · ${periodLabel(order.days)}`,
+    item: orderItem(order),
     period,
     amount: formatPesoWithCentavos(order.priceCentavos),
     method: `${methodLabel(order.method)} via PayMongo`,

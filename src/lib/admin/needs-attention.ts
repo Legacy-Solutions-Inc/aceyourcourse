@@ -31,6 +31,7 @@ export type AttentionKind =
   | "invoices"
   | "paid-after-expiry"
   | "paid-account-deleted"
+  | "course-already-owned"
   | "missing-links"
   | "promo"
   | "search"
@@ -153,6 +154,22 @@ function paidAccountDeletedItem({ payments }: NeedsAttentionInput): AttentionIte
   };
 }
 
+function courseAlreadyOwnedItem({ payments }: NeedsAttentionInput): AttentionItem | null {
+  if (!payments || payments.paidAlreadyOwned === 0) return null;
+  const count = payments.paidAlreadyOwned;
+  return {
+    kind: "course-already-owned",
+    title: "Course already owned · refund in PayMongo",
+    detail:
+      count === 1
+        ? "1 Course was paid for by a Member who already owned it, so it gave nothing. Refund it in the PayMongo dashboard."
+        : `${count} Courses were paid for by Members who already owned them, so they gave nothing. Refund them in the PayMongo dashboard.`,
+    action: "Review",
+    href: ordersHref(PAYMENT_WORK.paidAlreadyOwned),
+    tone: "warning",
+  };
+}
+
 function missingLinksItem({ products, settings }: NeedsAttentionInput): AttentionItem | null {
   const statuses = products
     .map((product) => storeLinkStatuses(product, settings.shopLinks))
@@ -261,6 +278,7 @@ export function needsAttention(input: NeedsAttentionInput): AttentionItem[] {
     invoicesItem,
     paidAfterExpiryItem,
     paidAccountDeletedItem,
+    courseAlreadyOwnedItem,
     missingLinksItem,
     promoItem,
     searchFixesItem,

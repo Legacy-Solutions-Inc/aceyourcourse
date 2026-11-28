@@ -1,6 +1,7 @@
 import { type PassDays, passWithDays } from "@/lib/member-app/access-pass";
 import type { PaymentMethod } from "@/lib/payments/payment-methods";
 import type { PlanDays } from "@/lib/plans/plan-rules";
+import { periodLabel } from "@/lib/plans/plan-text";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The Order ledger (spec, Phase 4 → Order ledger, References; Phase 4
@@ -11,9 +12,15 @@ import type { PlanDays } from "@/lib/plans/plan-rules";
 //
 // - An Order is one Member's attempt to buy one Plan, with the Plan's name,
 //   days and price copied at Pay: a later change to the Plan never touches it.
+//   Or one Course (Phase 5, ticket 06), with its name and price copied at
+//   Pay and no days.
 // - Pending → Paid adds the Order's days to the Member's Access Pass for its
 //   Exam: from the pass's end while it's active, otherwise from now
 //   (access-pass.ts). Paid is the only state that grants access.
+// - A Course Order's Paid grants Course Ownership instead, never days
+//   (ticket 06). Paid on a Course the buyer already owns (two tabs, a late
+//   payment) grants nothing: the Order is marked paidAlreadyOwned, for an
+//   Owner to refund in PayMongo.
 // - Pending → Failed grants nothing.
 // - Failed → Paid (a retry on the same PayMongo page succeeds) and Expired →
 //   Paid (a late payment) grant the days as Pending → Paid does (ticket 05).
@@ -62,10 +69,15 @@ export interface Order {
   /** The buyer's User id; null once their account is deleted (ticket 14). */
   userId: string | null;
   examCode: string;
-  planId: string;
-  /** The Plan's name, days and price in centavos, as they were at Pay. */
+  /**
+   * What it buys: one Plan, or one Course (Phase 5, ticket 06), never both.
+   * A Course Order has no days.
+   */
+  planId: string | null;
+  courseId: string | null;
+  /** The Plan's (or Course's) name, days and price in centavos, as they were at Pay. */
   planName: string;
-  days: PlanDays;
+  days: PlanDays | null;
   priceCentavos: number;
   method: PaymentMethod;
   status: OrderStatus;
@@ -87,7 +99,23 @@ export interface Order {
    * PayMongo. Set once, by the ledger, and never cleared.
    */
   paidWithoutAccount: boolean;
+  /**
+   * Whether this Course Order was paid while its buyer already owned the
+   * Course (ticket 06): recorded Paid with no grant, so an Owner refunds it
+   * in PayMongo. Set once, by the ledger, and never cleared.
+   */
+  paidAlreadyOwned: boolean;
 }
+
+/** Pure: whether an Order buys a Course (ticket 06), not a Plan. */
+export const isCourseOrder = (order: Pick<Order, "courseId">): boolean => order.courseId !== null;
+
+/**
+ * Pure: what an Order bought, as its screens name it: "CE All-Access · 3
+ * months", or "PSAD Masterclass · Video course", with no access period.
+ */
+export const orderItem = ({ planName, days }: Pick<Order, "planName" | "days">): string =>
+  days === null ? `${planName} · Video course` : `${planName} · ${periodLabel(days)}`;
 
 /** The moves each outcome makes from each state; one not here changes nothing. */
 const TRANSITIONS: Readonly<
@@ -103,31 +131,53 @@ const TRANSITIONS: Readonly<
 /** The days a Paid Order adds to the pass, from `startsAt` to `endsAt`, the pass's new end. */
 export type PaidDays = PassDays & { days: PlanDays };
 
-/** What applying an outcome does: nothing, or the Order as it is now with the days it grants. */
+/**
+ * What a Course Order's Paid does (ticket 06): grants the buyer Course
+ * Ownership, or nothing, when they already own the Course.
+ */
+export type CourseGrant = "owns" | "already-owned";
+
+/**
+ * What applying an outcome does: nothing, or the Order as it is now with the
+ * days it grants (a Plan Order) or the Course Ownership (a Course Order).
+ */
 export type LedgerStep =
-  { changed: false } | { changed: true; order: Order; paidDays: PaidDays | null };
+  | { changed: false }
+  | { changed: true; order: Order; paidDays: PaidDays | null; course: CourseGrant | null };
 
 /**
  * Pure: an outcome applied to an Order at `now`, with the Member's pass for
- * its Exam ending at `passEndsAt` (null for none). Gives the Order moved on,
- * and for Paid the days it adds to the pass; or no change, when the Order's
- * state has no move for that outcome (it was applied before, or the Order is
- * past it).
+ * its Exam ending at `passEndsAt` (null for none) and, for a Course Order,
+ * whether they own its Course already. Gives the Order moved on, and for
+ * Paid the days it adds to the pass, or the Course Ownership it grants; or
+ * no change, when the Order's state has no move for that outcome (it was
+ * applied before, or the Order is past it).
  */
 export function applyOutcome(
   order: Order,
   outcome: OrderOutcome,
   passEndsAt: string | null,
   now: Date,
+  ownsCourse = false,
 ): LedgerStep {
   const next = TRANSITIONS[order.status][outcome];
   if (!next) return { changed: false };
   const at = now.toISOString();
   const paid = next === "paid";
+  const course: CourseGrant | null =
+    paid && isCourseOrder(order) ? (ownsCourse ? "already-owned" : "owns") : null;
+  const { days } = order;
   return {
     changed: true,
-    order: { ...order, status: next, statusChangedAt: at, ...(paid ? { paidAt: at } : {}) },
-    paidDays: paid ? { days: order.days, ...passWithDays(passEndsAt, order.days, now) } : null,
+    order: {
+      ...order,
+      status: next,
+      statusChangedAt: at,
+      ...(paid ? { paidAt: at } : {}),
+      ...(course === "already-owned" ? { paidAlreadyOwned: true } : {}),
+    },
+    paidDays: paid && days !== null ? { days, ...passWithDays(passEndsAt, days, now) } : null,
+    course,
   };
 }
 
@@ -308,6 +358,14 @@ export function effectiveStatus(
  */
 export const awaitsRefund = (order: Pick<Order, "status" | "paidWithoutAccount">): boolean =>
   order.paidWithoutAccount && order.status === "paid";
+
+/**
+ * Pure: whether a Course Order paid while its Course was already owned is
+ * still Paid, so an Owner has yet to refund it in PayMongo (ticket 06).
+ */
+export const awaitsAlreadyOwnedRefund = (
+  order: Pick<Order, "status" | "paidAlreadyOwned">,
+): boolean => order.paidAlreadyOwned && order.status === "paid";
 
 /** Pure: whether a Paid Order's payment was confirmed more than 24 hours after it was made. */
 export function paidAfterExpiry(order: Pick<Order, "status" | "createdAt" | "paidAt">): boolean {

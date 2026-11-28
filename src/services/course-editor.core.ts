@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   CONNECT_VIDEO_SERVICE_REFUSAL,
+  DELETE_BLOCKED,
   hasReadyVideo,
   lessonsAfterMoveToModule,
   moduleDeleteRefusal,
@@ -12,9 +13,12 @@ import {
   visibilityRefusal,
 } from "@/lib/courses/course-rules";
 import {
+  courseAccessInputSchema,
   type CourseForm,
   courseFormSchema,
   courseIdInputSchema,
+  courseOnSaleInputSchema,
+  coursePriceFormSchema,
   type CourseModuleForm,
   courseModuleFormSchema,
   courseModuleIdInputSchema,
@@ -38,6 +42,7 @@ import {
   type NewLessonForm,
   newLessonFormSchema,
   type ReviewMove,
+  roleRefusal,
 } from "@/services/admin.schema";
 import type {
   AdminCourse,
@@ -49,7 +54,9 @@ import type {
   AdminLessonPreview,
   AdminLessonUpload,
   AdminResult,
+  CourseAccessChange,
   CourseExamChoice,
+  OneTimePurchase,
   RecordStamp,
   StaffActivity,
   StaffActor,
@@ -112,6 +119,18 @@ import type { VideoService } from "@/services/video.types";
 //   Staff Activity ("video-delete-failed") to be deleted by hand.
 // Video changes leave the Lesson's save stamp alone, as Publish does, so an
 // open form's Save doesn't turn into a conflict.
+//
+// Selling a Course (ticket 06; spec, Phase 5 planning decisions → Who does
+// what, Hiding, unpublishing and deleting): only Owners switch how Members get
+// a Course, and set its price and On sale (Plans & prices → One-time
+// purchases); an Editor is refused on the server. Each takes effect at once,
+// is logged in Staff Activity, and leaves the Course's save stamp alone, as
+// Plans' On sale switch does. Switching to Sold separately leaves it not on
+// sale until an Owner sets a price and turns it on; switching back to
+// Included takes it off sale and keeps every Course Ownership. Who can open
+// it follows from the access decision, so nothing else is written: progress
+// is kept. A Course can't be deleted while anyone owns it or any Order names
+// it: it can be hidden instead.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Which Course: its own id, a Module's, or a Lesson's. */
@@ -128,12 +147,20 @@ export interface CourseState {
   stamps: Record<string, RecordStamp>;
   /** When the data was made: the stamp of a record nobody has saved. */
   seededAt: string;
+  /** How many Members own the Course, and how many Orders name it (ticket 06). */
+  owners: number;
+  orders: number;
 }
 
 /** Everything a write changes, worked out on the Course as it is under the lock. */
 export interface CourseWrites {
   /** The Course as it now is, when the write made it or changed its settings. */
   course?: Course;
+  /**
+   * How Members get the Course, its price and On sale, when an Owner changed
+   * them (ticket 06): the builder's other writes never touch them.
+   */
+  sale?: CourseSale;
   /** The Course it deletes, with its Modules and Lessons (the database cascades). */
   removedCourse?: string;
   /** The Modules it adds or changes. */
@@ -174,6 +201,13 @@ export interface CourseEditorStore {
    * records (ticket 04), which deleting the Lesson deletes.
    */
   savedPositions(lessonIds: readonly string[]): Promise<Record<string, number>>;
+  /**
+   * How many Members switching how they get the Course would affect at
+   * `now` (ticket 06): `losing`, those with Lesson progress in it, an Access
+   * Pass for its Exam ending after `now` and no Course Ownership of it;
+   * `gaining`, those with such a pass and no Course Ownership of it.
+   */
+  accessChange(course: Pick<Course, "id" | "examCode">, now: Date): Promise<CourseAccessChange>;
   /**
    * Holds off every other content write, reads the Exams and the Course the
    * key names (none for a new Course) again, and saves the writes `plan`
@@ -354,6 +388,28 @@ function placeRefusal(exams: readonly CourseExamChoice[], exam: string, subject:
 const coverProblem = (message: string) =>
   refused({ kind: "invalid", fieldErrors: { cover: [message] } });
 
+/** Pure: why a Course can't be deleted: someone owns it, or an Order names it; null when it can. */
+const deleteBlockOf = ({ owners, orders }: Pick<CourseState, "owners" | "orders">) =>
+  owners > 0 ? ("owned" as const) : orders > 0 ? ("ordered" as const) : null;
+
+const OWNERS_ONLY = "ONLY AN OWNER CAN CHANGE HOW MEMBERS GET A COURSE OR ITS PRICE";
+const SOLD_SEPARATELY_FIRST = "SWITCH IT TO SOLD SEPARATELY FIRST";
+const SET_A_PRICE_FIRST = "SET A PRICE BEFORE PUTTING IT ON SALE";
+
+/** How Members get a Course, its price and On sale: what only an Owner changes. */
+type CourseSale = Pick<Course, "access" | "priceCentavos" | "onSale">;
+
+/** Pure: a separately sold Course as One-time purchases lists it. */
+const oneTimePurchaseOf = (course: Course): OneTimePurchase => ({
+  id: course.id,
+  title: course.title,
+  examCode: course.examCode,
+  subjectCode: course.subjectCode,
+  priceCentavos: course.priceCentavos,
+  onSale: course.onSale,
+  visible: course.visibility === "visible",
+});
+
 // ── The seam's calls ────────────────────────────────────────────────────────
 
 /** The Course builder's calls, on an arm's store. */
@@ -425,12 +481,18 @@ export function courseEditorCalls(store: CourseEditorStore) {
     };
   }
 
-  async function getCourseForAdmin(_actor: StaffActor, id: string): Promise<AdminCourse | null> {
+  async function getCourseForAdmin(actor: StaffActor, id: string): Promise<AdminCourse | null> {
     if (!uuid.safeParse(id).success) return null;
     const state = await store.read({ course: id });
     if (!state) return null;
     const exams = await store.exams();
-    const positions = await store.savedPositions(state.lessons.map((lesson) => lesson.id));
+    const [positions, accessChange] = await Promise.all([
+      store.savedPositions(state.lessons.map((lesson) => lesson.id)),
+      // Only an Owner switches how Members get it, so only an Owner's confirmation needs the counts.
+      actor.role === "owner"
+        ? store.accessChange(state.course, new Date())
+        : Promise.resolve({ losing: 0, gaining: 0 }),
+    ]);
     const exam = exams.find((candidate) => candidate.code === state.course.examCode);
     const subject = exam?.subjects.find((candidate) => candidate.code === state.course.subjectCode);
     return {
@@ -452,6 +514,8 @@ export function courseEditorCalls(store: CourseEditorStore) {
         ),
       ),
       exams,
+      accessChange,
+      deleteBlocked: deleteBlockOf(state),
     };
   }
 
@@ -613,6 +677,8 @@ export function courseEditorCalls(store: CourseEditorStore) {
       { course: form.value.id },
       (current): CoursePlan<{ course: Course; videos: VideoToDelete[] }> => {
         if (!current) return NOT_FOUND;
+        const blocked = deleteBlockOf(current);
+        if (blocked) return refused(formError(DELETE_BLOCKED[blocked]));
         const { course, modules, lessons } = current;
         return {
           ok: true,
@@ -648,6 +714,142 @@ export function courseEditorCalls(store: CourseEditorStore) {
     if (course.coverSrc) await store.removeCovers([course.coverSrc]);
     await deleteVideos(actor, video, videos);
     return { ok: true, value: course, tags: [] };
+  }
+
+  /**
+   * Owners only: a change to how Members get a Course, its price or On sale,
+   * worked out on the Course as it is under the lock (`change` gives the new
+   * sale, a refusal, or null for no change), saved with its Staff Activity,
+   * which keeps the `logged` fields before and after.
+   */
+  async function saveSale<T>(
+    actor: StaffActor,
+    id: string,
+    action: "set-access" | "set-price" | "set-on-sale",
+    logged: readonly (keyof CourseSale)[],
+    change: (course: Course) => { error: AdminError } | CourseSale | null,
+    value: (course: Course) => T,
+  ): Promise<AdminResult<T>> {
+    const now = new Date();
+    const fields = (course: Course) =>
+      Object.fromEntries(logged.map((field) => [field, course[field]]));
+    return saveThen({ course: id }, (current): CoursePlan<T> => {
+      if (!current) return NOT_FOUND;
+      const changed = change(current.course);
+      if (changed && "error" in changed) return refused(changed.error);
+      if (!changed) return { ok: true, value: value(current.course), writes: null };
+      const course: Course = { ...current.course, ...changed };
+      return {
+        ok: true,
+        value: value(course),
+        writes: {
+          ...NO_WRITES,
+          course,
+          sale: changed,
+          activity: [
+            activity(actor, now, "course", id, action, fields(current.course), fields(course)),
+          ],
+        },
+      };
+    });
+  }
+
+  /** Owners only: the role check, then the input's shape. */
+  function ownerInput<Schema extends z.ZodTypeAny>(
+    actor: StaffActor,
+    schema: Schema,
+    input: unknown,
+  ): { ok: true; value: z.output<Schema> } | { ok: false; error: AdminError } {
+    const role = roleRefusal(actor, "owner", OWNERS_ONLY);
+    if (role) return refused(role);
+    return staffInput(actor, schema, input);
+  }
+
+  /**
+   * "How members get it" (ticket 06): Included in its Exam's All-Access, or
+   * Sold separately. Either way it's off sale after; the price is kept.
+   */
+  async function setCourseAccess(
+    actor: StaffActor,
+    input: { id: string; access: Course["access"] },
+  ): Promise<AdminResult<Course>> {
+    const form = ownerInput(actor, courseAccessInputSchema, input);
+    if (!form.ok) return form;
+    const { id, access } = form.value;
+    return saveSale(
+      actor,
+      id,
+      "set-access",
+      ["access", "onSale"],
+      (course) =>
+        course.access === access
+          ? null
+          : { access, priceCentavos: course.priceCentavos, onSale: false },
+      (course) => course,
+    );
+  }
+
+  /** Plans & prices → One-time purchases (ticket 06): every separately sold Course, oldest first. */
+  async function listOneTimePurchases(actor: StaffActor): Promise<AdminResult<OneTimePurchase[]>> {
+    const role = roleRefusal(actor, "owner", OWNERS_ONLY);
+    if (role) return refused(role);
+    const { courses } = await store.list();
+    return {
+      ok: true,
+      value: courses
+        .filter((course) => course.access === "sold-separately")
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))
+        .map(oneTimePurchaseOf),
+      tags: [],
+    };
+  }
+
+  /** A One-time purchase's price (ticket 06): whole pesos within a Plan's limits; only a separately sold Course has one. */
+  async function setCoursePrice(
+    actor: StaffActor,
+    input: { id: string; price: string | number },
+  ): Promise<AdminResult<OneTimePurchase>> {
+    const form = ownerInput(actor, coursePriceFormSchema, input);
+    if (!form.ok) return form;
+    const { id, priceCentavos } = form.value;
+    return saveSale(
+      actor,
+      id,
+      "set-price",
+      ["priceCentavos"],
+      (course) => {
+        if (course.access !== "sold-separately") return { error: formError(SOLD_SEPARATELY_FIRST) };
+        return course.priceCentavos === priceCentavos
+          ? null
+          : { access: course.access, priceCentavos, onSale: course.onSale };
+      },
+      oneTimePurchaseOf,
+    );
+  }
+
+  /** A One-time purchase's On sale (ticket 06): only a separately sold Course with a price goes on sale. */
+  async function setCourseOnSale(
+    actor: StaffActor,
+    input: { id: string; onSale: boolean },
+  ): Promise<AdminResult<OneTimePurchase>> {
+    const form = ownerInput(actor, courseOnSaleInputSchema, input);
+    if (!form.ok) return form;
+    const { id, onSale } = form.value;
+    return saveSale(
+      actor,
+      id,
+      "set-on-sale",
+      ["onSale"],
+      (course) => {
+        if (course.onSale === onSale) return null;
+        if (onSale && course.access !== "sold-separately") {
+          return { error: formError(SOLD_SEPARATELY_FIRST) };
+        }
+        if (onSale && course.priceCentavos === null) return { error: formError(SET_A_PRICE_FIRST) };
+        return { access: course.access, priceCentavos: course.priceCentavos, onSale };
+      },
+      oneTimePurchaseOf,
+    );
   }
 
   async function createCourseModule(
@@ -1249,6 +1451,10 @@ export function courseEditorCalls(store: CourseEditorStore) {
     createCourse,
     updateCourse,
     setCourseVisibility,
+    setCourseAccess,
+    listOneTimePurchases,
+    setCoursePrice,
+    setCourseOnSale,
     deleteCourse,
     createCourseModule,
     renameCourseModule,

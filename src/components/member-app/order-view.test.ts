@@ -12,6 +12,7 @@ const ORDER: MemberOrder = {
   id: "0b6a3f1e-2c4d-4e5f-8a9b-1c2d3e4f5a6b",
   reference: "AYC-10483",
   examCode: "CE",
+  courseId: null,
   planName: "CE All-Access",
   days: 90,
   priceCentavos: 129_900,

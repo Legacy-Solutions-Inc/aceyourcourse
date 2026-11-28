@@ -1,6 +1,6 @@
 import "server-only";
 
-import { asc, count, eq, inArray } from "drizzle-orm";
+import { and, asc, count, countDistinct, eq, gt, inArray, notExists, sql } from "drizzle-orm";
 
 import { adminWriteLock } from "@/lib/db/admin-locks";
 import { getDb } from "@/lib/db/client";
@@ -114,12 +114,22 @@ async function readCourse(db: Reader, key: CourseKey): Promise<CourseState | nul
     .from(recordStamps)
     .where(inArray(recordStamps.record, records));
   const { seededAt, stamps } = stampsFromRows(stampRows);
+  const { courseOwnerships, orders } = schema;
+  // Read under the content write lock in a save, so a delete sees them as they are (ticket 06);
+  // the restricts on course_ownerships and orders refuse it even so.
+  const [owners] = await db
+    .select({ n: count() })
+    .from(courseOwnerships)
+    .where(eq(courseOwnerships.courseId, id));
+  const [ordered] = await db.select({ n: count() }).from(orders).where(eq(orders.courseId, id));
   return {
     course: courseFromRow(row),
     modules: modules.map((module) => ({ ...module })),
     lessons: lessonRows.map(({ lesson }) => ({ ...lesson })),
     stamps,
     seededAt,
+    owners: owners?.n ?? 0,
+    orders: ordered?.n ?? 0,
   };
 }
 
@@ -164,6 +174,36 @@ const databaseCourseStore: CourseEditorStore = {
         .groupBy(lessonProgress.lessonId);
       return Object.fromEntries(rows.map((row) => [row.lessonId, row.members]));
     }),
+  // Ticket 06: the Members an Owner's switch of how Members get the Course affects.
+  accessChange: ({ id, examCode }, now) =>
+    reading(async (tx) => {
+      const { accessPasses, courseOwnerships, courseModules, lessonProgress, lessons } = schema;
+      const holding = and(
+        eq(accessPasses.examCode, examCode),
+        gt(accessPasses.endsAt, now),
+        notExists(
+          tx
+            .select({ one: sql`1` })
+            .from(courseOwnerships)
+            .where(
+              and(
+                eq(courseOwnerships.courseId, id),
+                eq(courseOwnerships.userId, accessPasses.userId),
+              ),
+            ),
+        ),
+      );
+      // One pass per Member and Exam (the key), so counting passes counts Members.
+      const [gaining] = await tx.select({ n: count() }).from(accessPasses).where(holding);
+      const [losing] = await tx
+        .select({ n: countDistinct(accessPasses.userId) })
+        .from(accessPasses)
+        .innerJoin(lessonProgress, eq(lessonProgress.userId, accessPasses.userId))
+        .innerJoin(lessons, eq(lessons.id, lessonProgress.lessonId))
+        .innerJoin(courseModules, eq(courseModules.id, lessons.moduleId))
+        .where(and(holding, eq(courseModules.courseId, id)));
+      return { losing: losing?.n ?? 0, gaining: gaining?.n ?? 0 };
+    }),
   save: async (key, plan) => {
     try {
       return await getDb().transaction(async (tx) => {
@@ -205,6 +245,10 @@ const databaseCourseStore: CourseEditorStore = {
                 visibility: fromExcluded("visibility"),
               },
             });
+        }
+        // How Members get it, its price and On sale: an Owner's change alone (ticket 06).
+        if (course && planned.writes.sale) {
+          await tx.update(courses).set(planned.writes.sale).where(eq(courses.id, course.id));
         }
         if (modules.length > 0) {
           await tx
@@ -264,6 +308,10 @@ export const {
   createCourse,
   updateCourse,
   setCourseVisibility,
+  setCourseAccess,
+  listOneTimePurchases,
+  setCoursePrice,
+  setCourseOnSale,
   deleteCourse,
   createCourseModule,
   renameCourseModule,

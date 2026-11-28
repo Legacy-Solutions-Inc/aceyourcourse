@@ -36,19 +36,16 @@ const sectionText = (document: LegalDocument, title: string) => {
 const titles = (document: LegalDocument) => document.sections.map((section) => section.title);
 
 describe.each([
-  [privacy, 16],
-  [terms, 14],
-])("the $title", (document, sectionCount) => {
+  // The Terms are at v2.2 (Phase 5, ticket 06: Courses sold separately); the Privacy Policy stays at v2.1.
+  [privacy, 16, { version: "2.1", effectiveDate: "2026-11-26" }],
+  [terms, 14, { version: "2.2", effectiveDate: "2026-11-28" }],
+])("the $title", (document, sectionCount, current) => {
   it("passes the content schema", () => {
     expect(legalDocumentSchema.safeParse(document).error?.issues ?? []).toEqual([]);
   });
 
-  it("is version 2.1, effective 26 Nov 2026, and a draft pending legal review", () => {
-    expect(document).toMatchObject({
-      version: "2.1",
-      effectiveDate: "2026-11-26",
-      status: "draft",
-    });
+  it("is its current version and date, and a draft pending legal review", () => {
+    expect(document).toMatchObject({ ...current, status: "draft" });
   });
 
   it(`has ${sectionCount} numbered sections and a 6-point summary`, () => {
@@ -89,7 +86,7 @@ describe.each([
     expect(fullText(document)).not.toContain("aceyourcourseinc@gmail.com");
   });
 
-  it("dates its version history: 1.0 replaced before it took effect, 2.0, then 2.1 as a draft", () => {
+  it("dates its version history: 1.0 replaced before it took effect, 2.0, 2.1, then the current one as a draft", () => {
     const history = document.sections.at(document.kind === "privacy" ? -1 : -2);
     const paragraphs = history?.paragraphs ?? [];
     expect(paragraphs).toContain(
@@ -98,7 +95,11 @@ describe.each([
     const v20 = paragraphs.find((paragraph) => paragraph.startsWith("Version 2.0,"));
     expect(v20).toMatch(/^Version 2\.0, effective 17 November 2026: adds the Member App/);
     expect(v20).not.toContain("draft");
-    expect(paragraphs.at(-1)).toMatch(/^Version 2\.1, effective 26 November 2026: adds payments/);
+    const v21 = paragraphs.find((paragraph) => paragraph.startsWith("Version 2.1,"));
+    expect(v21).toMatch(/^Version 2\.1, effective 26 November 2026: adds payments/);
+    expect(paragraphs.at(-1)).toMatch(
+      new RegExp(`^Version ${current.version.replace(".", "\\.")},`),
+    );
     expect(paragraphs.at(-1)).toMatch(/A draft, pending legal review\.$/);
   });
 
@@ -387,7 +388,28 @@ describe("the Terms of Use", () => {
 
     it("has the placeholder refund rule, word for word, for the client and the lawyer", () => {
       expect(payments()).toContain(
-        "Ask Support within 7 days of payment. Refunds are at our discretion. A refund removes that Order’s days.",
+        "Ask Support within 7 days of payment. Refunds are at our discretion. A refund removes that Order’s days, or the course that Order bought.",
+      );
+    });
+  });
+
+  describe("Courses sold separately (v2.2; Phase 5, ticket 06)", () => {
+    const payments = () => sectionText(terms, "Payments and refunds");
+
+    it("says a course is a one-time purchase with no expiry, which an Access Pass doesn't open", () => {
+      expect(payments()).toContain(
+        "Some video courses are sold separately, on the same Plans screen. A course is a one-time purchase: you pay for it once and own it, with no expiry, and an Access Pass doesn’t open it.",
+      );
+    });
+
+    it("says a refund removes the course", () => {
+      expect(payments()).toMatch(/A refund removes .* the course that Order bought/);
+    });
+
+    it("dates v2.2 in the history, after v2.1", () => {
+      const history = terms.sections.at(-2)?.paragraphs ?? [];
+      expect(history.at(-1)).toBe(
+        "Version 2.2, effective 28 November 2026: adds video courses sold separately (section 9), each a one-time purchase with no expiry that a refund removes. A draft, pending legal review.",
       );
     });
   });

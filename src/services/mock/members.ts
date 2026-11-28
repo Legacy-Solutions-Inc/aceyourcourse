@@ -52,7 +52,7 @@ export const SAMPLE_MEMBERS: readonly SampleMember[] = [
     key: "renewing",
     name: "Rae Renewing",
     email: "renewing@example.com",
-    startsAs: "Beta Tester · CE All-Access ends in 5 days · agreed to Legal v2.0",
+    startsAs: "Beta Tester · CE All-Access ends in 5 days · agreed to Legal v2.1",
   },
 ];
 
@@ -115,8 +115,8 @@ export function sampleAccessPasses(
 
 /**
  * The sample agreements (Phase 4, ticket 13): the renewing tester joined the
- * day before boot and agreed to Legal v2.0 then, so their next visit asks them
- * to agree to the current versions. The dev server's data and the e2e specs'
+ * day before boot and agreed to Legal v2.1 then (v2.0 before Phase 5, ticket
+ * 06), so their next visit asks them to agree to the Terms' v2.2. The dev server's data and the e2e specs'
  * reset have them; unit tests start without, unless they ask.
  */
 export function sampleAgreements(bootedAt: Date): {
@@ -128,7 +128,7 @@ export function sampleAgreements(bootedAt: Date): {
   const dayBefore = new Date(bootedAt.getTime() - DAY).toISOString();
   return {
     members: [{ userId, email, name, joinedAt: dayBefore }],
-    memberConsents: [{ userId, termsVersion: "2.0", privacyVersion: "2.0", agreedAt: dayBefore }],
+    memberConsents: [{ userId, termsVersion: "2.1", privacyVersion: "2.1", agreedAt: dayBefore }],
   };
 }
 

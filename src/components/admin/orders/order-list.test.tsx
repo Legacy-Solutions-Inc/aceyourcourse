@@ -79,6 +79,12 @@ describe("OrderList", () => {
     expect(replace).toHaveBeenLastCalledWith("/admin/orders?noaccount=1", { scroll: false });
   });
 
+  it("keeps only the Course Orders paid while the Course was owned when ticked (Phase 5, ticket 06)", async () => {
+    const { user } = renderList();
+    await user.click(screen.getByRole("checkbox", { name: "Course already owned" }));
+    expect(replace).toHaveBeenLastCalledWith("/admin/orders?owned=1", { scroll: false });
+  });
+
   it("tags an Order whose invoice was requested and not yet sent", () => {
     const order = {
       id: "00000000-0000-4000-8000-000000010003",
@@ -86,6 +92,7 @@ describe("OrderList", () => {
       userId: null,
       examCode: "CE",
       planId: "plan-ce-90",
+      courseId: null,
       planName: "CE All-Access",
       days: 90,
       priceCentavos: 129_900,
@@ -104,6 +111,7 @@ describe("OrderList", () => {
       paidAt: "2026-11-25T01:01:00.000Z",
       statusChangedAt: "2026-11-25T01:01:00.000Z",
       paidWithoutAccount: false,
+      paidAlreadyOwned: false,
     } as const;
     const request = {
       orderId: order.id,
@@ -143,6 +151,7 @@ describe("OrderList", () => {
         userId: null,
         examCode: "CE",
         planId: "plan-ce-90",
+        courseId: null,
         planName: "CE All-Access",
         days: 90,
         priceCentavos: 129_900,
@@ -162,6 +171,7 @@ describe("OrderList", () => {
         paidAt: "2026-11-25T01:01:00.000Z",
         statusChangedAt: "2026-11-25T01:01:00.000Z",
         paidWithoutAccount: false,
+        paidAlreadyOwned: false,
         ...fields,
       }) as AdminOrderList["rows"][number];
     renderList({
@@ -192,6 +202,7 @@ describe("OrderList", () => {
         userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
         examCode: "CE",
         planId: "plan-ce-30",
+        courseId: null,
         planName: "CE All-Access",
         days: 30,
         priceCentavos: 49_900,
@@ -211,6 +222,7 @@ describe("OrderList", () => {
         paidAt: "2026-11-25T01:01:00.000Z",
         statusChangedAt: "2026-11-25T01:01:00.000Z",
         paidWithoutAccount: false,
+        paidAlreadyOwned: false,
         ...fields,
       }) as AdminOrderList["rows"][number];
     renderList({

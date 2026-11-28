@@ -23,6 +23,7 @@ const order = (userId: string, reference: string, fields: Partial<Order> = {}): 
   userId,
   examCode: "CE",
   planId: "plan-ce-90",
+  courseId: null,
   planName: "CE All-Access",
   days: 90,
   priceCentavos: 129_900,
@@ -37,6 +38,7 @@ const order = (userId: string, reference: string, fields: Partial<Order> = {}): 
   paidAt: "2026-11-08T01:02:00.000Z",
   statusChangedAt: "2026-11-08T01:02:00.000Z",
   paidWithoutAccount: false,
+  paidAlreadyOwned: false,
   ...fields,
 });
 

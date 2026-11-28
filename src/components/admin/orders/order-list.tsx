@@ -17,7 +17,7 @@ import {
 } from "@/lib/admin/orders-list";
 import { formatDate } from "@/lib/manila-time";
 import { formatPeso } from "@/lib/money";
-import { awaitsRefund } from "@/lib/payments/order-ledger";
+import { awaitsAlreadyOwnedRefund, awaitsRefund } from "@/lib/payments/order-ledger";
 import { methodLabel } from "@/lib/payments/payment-methods";
 import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
@@ -184,7 +184,7 @@ function OrderRow({ order }: { order: AdminOrder }) {
               INVOICE REQUESTED
             </span>
           ) : null}
-          {awaitsRefund(order) ? (
+          {awaitsRefund(order) || awaitsAlreadyOwnedRefund(order) ? (
             <span className="font-mono text-[10px] font-bold text-ayc-warning">
               REFUND IN PAYMONGO
             </span>

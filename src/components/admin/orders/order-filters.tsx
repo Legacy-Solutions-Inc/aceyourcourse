@@ -109,6 +109,15 @@ export function OrderFilters({ query }: { query: OrderListQuery }) {
         />
         Paid, account deleted
       </label>
+      <label className="flex min-h-10 cursor-pointer items-center gap-2 text-[13px] font-semibold">
+        <input
+          type="checkbox"
+          checked={shown.paidAlreadyOwned}
+          onChange={(event) => go({ ...shown, paidAlreadyOwned: event.target.checked })}
+          className="size-4 accent-ayc-navy"
+        />
+        Course already owned
+      </label>
     </>
   );
 }

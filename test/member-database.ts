@@ -69,6 +69,13 @@ export const MEMBER_DATABASE_ARM: MemberArm = {
       .insert(schema.courseOwnerships)
       .values({ ...ownership, since: new Date(since) });
   },
+  courseOwnerships: async () =>
+    (
+      await getDb()
+        .select()
+        .from(schema.courseOwnerships)
+        .orderBy(asc(schema.courseOwnerships.since))
+    ).map((row) => ({ ...row, since: row.since.toISOString() })),
   // The Admin's database arm uploads and reads them as the Member seam's does.
   uploadCardImage: (bytes, options) => ADMIN_DATABASE_ARM.uploadCardImage(bytes, options),
   uploadReviewerPdf: (bytes) => ADMIN_DATABASE_ARM.uploadReviewerPdf(bytes),

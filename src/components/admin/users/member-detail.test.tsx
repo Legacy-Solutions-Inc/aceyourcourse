@@ -91,6 +91,7 @@ const DETAIL: AdminMemberDetail = {
       userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
       examCode: "CE",
       planId: "plan-ce-30",
+      courseId: null,
       planName: "CE All-Access",
       days: 30,
       priceCentavos: 49_900,
@@ -110,6 +111,7 @@ const DETAIL: AdminMemberDetail = {
       paidAt: "2026-11-18T03:44:00.000Z",
       statusChangedAt: "2026-11-18T03:44:00.000Z",
       paidWithoutAccount: false,
+      paidAlreadyOwned: false,
     },
     {
       id: "00000000-0000-4000-8000-000000010001",
@@ -117,6 +119,7 @@ const DETAIL: AdminMemberDetail = {
       userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
       examCode: "CE",
       planId: "plan-ce-90",
+      courseId: null,
       planName: "CE All-Access",
       days: 90,
       priceCentavos: 129_900,
@@ -136,6 +139,7 @@ const DETAIL: AdminMemberDetail = {
       paidAt: null,
       statusChangedAt: "2026-11-17T03:50:00.000Z",
       paidWithoutAccount: false,
+      paidAlreadyOwned: false,
     },
   ],
 };

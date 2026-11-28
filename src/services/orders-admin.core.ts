@@ -349,17 +349,10 @@ export function ordersAdminCalls(store: OrdersAdminStore, orders: Pick<OrderStor
     const { query } = checks;
     const now = new Date();
     const rows = await matching(query, now);
-    const { status, method, range, tests, invoiceRequested, paidAfterExpiry, paidWithoutAccount } =
-      query;
+    const { q: _searched, ...filters } = query;
     await store.recordActivity(
       activityRecord(actor, now, "orders", "csv", "export-csv", null, {
-        status,
-        method,
-        range,
-        tests,
-        invoiceRequested,
-        paidAfterExpiry,
-        paidWithoutAccount,
+        ...filters,
         searched: query.q !== null,
         rows: rows.length,
       }),

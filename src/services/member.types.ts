@@ -609,13 +609,27 @@ export interface PrivacyRequestOutcome {
 /** A Plan on sale, as the Member's Plans page shows it: its name ("CE All-Access"), days, price and Best value. */
 export type OnSalePlan = Pick<Plan, "id" | "name" | "days" | "priceCentavos" | "bestValue">;
 
-/** An Exam with at least one Plan on sale, as one Member's Plans page reads it. */
+/**
+ * A Course sold separately, as the Plans page's One-time purchases lists it
+ * (Phase 5, ticket 06): Visible and on sale, with its price, and whether this
+ * Member owns it already ("Owned · Watch", with no Pay).
+ */
+export interface OnSaleCourse {
+  id: string;
+  title: string;
+  priceCentavos: number;
+  owned: boolean;
+}
+
+/** An Exam with at least one Plan or Course on sale, as one Member's Plans page reads it. */
 export interface PlansExam {
   examCode: string;
   board: string;
   name: string;
-  /** Its Plans on sale, shortest first. Never empty. */
+  /** Its Plans on sale, shortest first. Empty only when a Course is on sale (ticket 06). */
   plans: OnSalePlan[];
+  /** Its separately sold, Visible Courses on sale, oldest first (ticket 06). */
+  courses: OnSaleCourse[];
   /** When this Member's own Access Pass for the Exam ends (ISO), ended or not; null with none. */
   passEndsAt: string | null;
   /**
@@ -637,12 +651,23 @@ export interface PayInput {
 }
 
 /**
+ * What a Course's Pay sends (Phase 5, ticket 06): the Exam open on the page,
+ * the Course picked and the method.
+ */
+export interface CoursePayInput {
+  examCode: string;
+  courseId: string;
+  method: string;
+}
+
+/**
  * Why Pay made no Order: buying isn't set up on this server, the method isn't
- * one of the four, the Plan isn't on sale (or isn't a Plan), or it's another
- * Exam's than the one posted.
+ * one of the four, the Plan or Course isn't on sale (or isn't one; for a
+ * Course, also a Hidden or an included one), it's another Exam's than the
+ * one posted, or the Member owns the Course already (ticket 06).
  */
 export type PayRefusal =
-  "unavailable" | "bad-method" | "not-on-sale" | "wrong-exam" | "checkout-failed";
+  "unavailable" | "bad-method" | "not-on-sale" | "wrong-exam" | "owned" | "checkout-failed";
 
 /** Pay's outcome: the Pending Order's reference and where to send the Member, or why not. */
 export type PayResult =
@@ -706,6 +731,7 @@ export type MemberOrder = Pick<
   | "id"
   | "reference"
   | "examCode"
+  | "courseId"
   | "planName"
   | "days"
   | "priceCentavos"

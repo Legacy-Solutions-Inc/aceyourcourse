@@ -89,7 +89,7 @@ describe("the legal page", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "Terms of Use" })).toBeInTheDocument();
     expect(screen.getByTestId("legal-version")).toHaveTextContent(
-      "Version 2.1 · Effective 26 Nov 2026",
+      "Version 2.2 · Effective 28 Nov 2026",
     );
     expect(screen.getByRole("note", { name: "Draft, pending legal review" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Terms of Use" })).toHaveAttribute(
@@ -109,7 +109,7 @@ describe("the legal page", () => {
     const heading = document.getElementById(anchor);
     expect(heading).toBe(screen.getByRole("heading", { level: 2, name: "9 Payments and refunds" }));
     expect(heading?.closest("section")).toHaveTextContent(
-      "Ask Support within 7 days of payment. Refunds are at our discretion. A refund removes that Order’s days.",
+      "Ask Support within 7 days of payment. Refunds are at our discretion. A refund removes that Order’s days, or the course that Order bought.",
     );
   });
 

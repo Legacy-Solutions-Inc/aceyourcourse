@@ -54,6 +54,7 @@ const NO_PAYMENT_WORK: PaymentWork = {
   invoicesToSend: 0,
   paidAfterExpiry: 0,
   paidAccountDeleted: 0,
+  paidAlreadyOwned: 0,
 };
 
 const HOUR = 60 * 60 * 1000;
@@ -388,6 +389,24 @@ describe("needsAttention", () => {
       );
     });
 
+    it("lists the Course Orders paid while the Course was owned, to refund in PayMongo (Phase 5, ticket 06)", () => {
+      expect(needsAttention(withPayments({ paidAlreadyOwned: 1 }))).toEqual([
+        {
+          kind: "course-already-owned",
+          title: "Course already owned · refund in PayMongo",
+          detail:
+            "1 Course was paid for by a Member who already owned it, so it gave nothing. Refund it in the PayMongo dashboard.",
+          action: "Review",
+          // The Orders list's "Course already owned" filter.
+          href: "/admin/orders?status=paid&range=all&owned=1",
+          tone: "warning",
+        },
+      ]);
+      expect(needsAttention(withPayments({ paidAlreadyOwned: 2 }))[0]?.detail).toBe(
+        "2 Courses were paid for by Members who already owned them, so they gave nothing. Refund them in the PayMongo dashboard.",
+      );
+    });
+
     it("lists no payment item at zero, and none for an Editor, who gets no payment work", () => {
       expect(needsAttention(input())).toEqual([]);
       expect(needsAttention(input({ role: "editor", payments: null }))).toEqual([]);
@@ -408,6 +427,7 @@ describe("needsAttention", () => {
         invoicesToSend: 1,
         paidAfterExpiry: 1,
         paidAccountDeleted: 1,
+        paidAlreadyOwned: 1,
       },
     });
     expect(items.map((item) => item.kind)).toEqual([
@@ -415,6 +435,7 @@ describe("needsAttention", () => {
       "invoices",
       "paid-after-expiry",
       "paid-account-deleted",
+      "course-already-owned",
       "missing-links",
       "promo",
       "search",

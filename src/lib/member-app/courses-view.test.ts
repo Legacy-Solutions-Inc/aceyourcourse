@@ -175,10 +175,10 @@ describe("courseCard", () => {
     expect(courseCard(course(), CONTACT).action).toEqual({ label: "See plans", href: "#unlock" });
   });
 
-  it("unlocks a separately sold Course on sale at its price, through the Exam's Plans for now", () => {
+  it("unlocks a separately sold Course on sale at its price, on the Exam's Plans page at the Course", () => {
     expect(courseCard(course(soldSeparately), CONTACT).action).toEqual({
       label: "Unlock for ₱1,499",
-      href: "/app/plans?exam=CE",
+      href: "/app/plans?exam=CE&course=course-1#course-course-1",
     });
   });
 

@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 
+import {
+  AdminDialog,
+  AdminDialogButton,
+  AdminDialogButtons,
+} from "@/components/admin/admin-dialog";
 import { AdminSwitch } from "@/components/admin/admin-switch";
 import { AdminTextField } from "@/components/admin/admin-text-field";
 import { callAdminAction } from "@/components/admin/call-admin-action";
@@ -13,13 +18,20 @@ import { ConflictNotice } from "@/components/admin/conflict-notice";
 import { useInstantSave } from "@/components/admin/use-instant-save";
 import type { AdminAction, AdminActionState } from "@/lib/admin/action";
 import { photoState } from "@/lib/admin/photo-rules";
-import { howMembersGetIt, NEEDS_PUBLISHED_LESSON } from "@/lib/courses/course-rules";
+import { formatPeso } from "@/lib/money";
+import {
+  accessSwitchText,
+  DELETE_BLOCKED,
+  howMembersGetIt,
+  NEEDS_PUBLISHED_LESSON,
+} from "@/lib/courses/course-rules";
 import { paths } from "@/paths";
 import type {
   AdminCourse,
   AdminCourseSummary,
   AdminError,
   CourseExamChoice,
+  StaffRole,
 } from "@/services/admin.types";
 import type { ContentVisibility } from "@/services/content.types";
 import type { Course } from "@/services/courses.types";
@@ -42,6 +54,8 @@ export interface CourseSettingsActions {
   saveCourse: AdminAction<AdminCourseSummary>;
   saveCourseVisibility: AdminAction<{ visibility: ContentVisibility }>;
   removeCourse: AdminAction<Course>;
+  /** "How members get it", an Owner's alone (Phase 5, ticket 06). */
+  saveCourseAccess: AdminAction<Course>;
 }
 
 interface CourseSettingsProps {
@@ -49,6 +63,8 @@ interface CourseSettingsProps {
   opened: AdminCourse | null;
   exams: CourseExamChoice[];
   actions: CourseSettingsActions;
+  /** The signed-in Staff member's role: only an Owner switches how Members get it. */
+  role: StaffRole;
 }
 
 const WAIT_FOR_COVER = "WAIT FOR THE COVER TO FINISH UPLOADING";
@@ -63,12 +79,16 @@ const accessNote = (access: Course["access"]) =>
 /**
  * Course settings (Phase 5, ticket 01; BUILD-MAP §3.7): the title,
  * description, 16:9 cover, the Exam and one of its Subjects, picked from the
- * list. "How members get it" is shown read-only: nobody changes it here (an
- * Owner will, from ticket 06). An open Course also has "Course visible to
- * members", refused without a Published Lesson, and Delete course. The server
- * enforces every rule; this only shows what it answered.
+ * list. "How members get it": an Owner switches an open Course between
+ * Included and Sold separately, after a confirmation saying how many Members
+ * it affects (ticket 06); Editors see it read-only. A separately sold
+ * Course's price shows read-only, with a link to Plans & prices, where it's
+ * set. An open Course also has "Course visible to members", refused without
+ * a Published Lesson, and Delete course, which explains why it can't while
+ * anyone owns the Course or an Order names it. The server enforces every
+ * rule; this only shows what it answered.
  */
-export function CourseSettings({ opened, exams, actions }: CourseSettingsProps) {
+export function CourseSettings({ opened, exams, actions, role }: CourseSettingsProps) {
   const router = useRouter();
   const course = opened?.course ?? null;
   const [title, setTitle] = useState(course?.title ?? "");
@@ -221,7 +241,15 @@ export function CourseSettings({ opened, exams, actions }: CourseSettingsProps) 
           </div>
         </div>
 
-        <HowMembersGetIt course={course} exam={exam} />
+        <HowMembersGetIt
+          course={course}
+          exam={exam}
+          switching={
+            opened && role === "owner"
+              ? { opened, action: actions.saveCourseAccess, onSwitched: () => router.refresh() }
+              : null
+          }
+        />
 
         <div className="flex flex-wrap items-center gap-2.5 border-t-[1.5px] pt-3.5">
           <button type="submit" disabled={pending} className={PRIMARY_BUTTON}>
@@ -240,22 +268,41 @@ export function CourseSettings({ opened, exams, actions }: CourseSettingsProps) 
         <>
           <CourseVisibility opened={opened} action={actions.saveCourseVisibility} />
           <div className="flex flex-wrap items-center gap-2.5 border-t-[1.5px] pt-3.5">
-            <ConfirmDelete
-              label="Delete course"
-              buttonClassName={`${PLAIN_BUTTON} text-destructive`}
-              tag="DELETE COURSE"
-              title={`Delete “${opened.course.title}”?`}
-              description={deleteDescription(opened)}
-              confirmLabel="Delete course"
-              send={() =>
-                callAdminAction(actions.removeCourse, { input: { id: opened.course.id } })
-              }
-              onDeleted={() => {
-                toast(`✓ DELETED · ${opened.course.title.toUpperCase()}`);
-                router.push(paths.admin.courses);
-                router.refresh();
-              }}
-            />
+            {opened.deleteBlocked ? (
+              <>
+                <button
+                  type="button"
+                  disabled
+                  aria-describedby="course-delete-blocked"
+                  className={`${PLAIN_BUTTON} text-destructive disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  Delete course
+                </button>
+                <p
+                  id="course-delete-blocked"
+                  className="max-w-prose text-[13px] text-muted-foreground"
+                >
+                  {DELETE_BLOCKED[opened.deleteBlocked]}
+                </p>
+              </>
+            ) : (
+              <ConfirmDelete
+                label="Delete course"
+                buttonClassName={`${PLAIN_BUTTON} text-destructive`}
+                tag="DELETE COURSE"
+                title={`Delete “${opened.course.title}”?`}
+                description={deleteDescription(opened)}
+                confirmLabel="Delete course"
+                send={() =>
+                  callAdminAction(actions.removeCourse, { input: { id: opened.course.id } })
+                }
+                onDeleted={() => {
+                  toast(`✓ DELETED · ${opened.course.title.toUpperCase()}`);
+                  router.push(paths.admin.courses);
+                  router.refresh();
+                }}
+              />
+            )}
           </div>
         </>
       ) : null}
@@ -270,16 +317,146 @@ function deleteDescription({ modules }: AdminCourse): string {
   return `Its ${count(modules.length, "module", "modules")} and ${count(lessons, "lesson", "lessons")} are deleted too. This can’t be undone.`;
 }
 
-/** "How members get it", read-only: nobody changes it in this ticket. */
-function HowMembersGetIt({ course, exam }: { course: Course | null; exam: string }) {
+/** An Owner's way to switch how Members get an open Course (ticket 06). */
+interface AccessSwitching {
+  opened: AdminCourse;
+  action: AdminAction<Course>;
+  onSwitched: () => void;
+}
+
+/**
+ * "How members get it": read-only for an Editor and a new Course (it starts
+ * Included); an Owner picks the other choice and confirms it, the
+ * confirmation saying how many Members it affects. A separately sold Course
+ * shows the Owner its price, set in Plans & prices (Owners only).
+ */
+function HowMembersGetIt({
+  course,
+  exam,
+  switching,
+}: {
+  course: Course | null;
+  exam: string;
+  switching: AccessSwitching | null;
+}) {
   // A new Course starts Included in its Exam's All-Access.
   const access = course ?? { access: "included" as const, priceCentavos: null };
   return (
-    <div className="flex flex-col gap-1 border-[1.5px] bg-white px-3 py-2.5">
+    <div className="flex flex-col gap-1.5 border-[1.5px] bg-white px-3 py-2.5">
       <p className={LABEL}>HOW MEMBERS GET IT</p>
-      <p className="text-sm font-bold">{howMembersGetIt(access, exam)}</p>
+      {switching ? (
+        <AccessChoice switching={switching} />
+      ) : (
+        <p className="text-sm font-bold">{howMembersGetIt(access, exam)}</p>
+      )}
       <p className="text-[13px] text-muted-foreground">{accessNote(access.access)}</p>
+      {switching && access.access === "sold-separately" ? (
+        <p className="text-[13px]">
+          {access.priceCentavos === null ? "No price yet" : formatPeso(access.priceCentavos)} ·{" "}
+          <Link href={paths.admin.plans} className="font-bold text-ayc-blue underline">
+            Set the price in Plans &amp; prices
+          </Link>
+        </p>
+      ) : null}
     </div>
+  );
+}
+
+/** Pure: what a refused switch says. */
+function accessRefusal(state: AdminActionState<unknown>): string {
+  if (state.status === "failed") return "NOT SWITCHED · CHECK YOUR CONNECTION AND TRY AGAIN";
+  if (state.status !== "refused") return "";
+  const { error } = state;
+  if (error.kind === "forbidden") return error.message;
+  if (error.kind === "invalid" && error.formError) return error.formError;
+  if (error.kind === "not-found") return "THAT COURSE IS GONE · RELOAD THE PAGE";
+  return "NOT SWITCHED · RELOAD THE PAGE AND TRY AGAIN";
+}
+
+/** The Owner's two choices, and the confirmation before a switch. */
+function AccessChoice({ switching }: { switching: AccessSwitching }) {
+  const { opened, action, onSwitched } = switching;
+  const { course } = opened;
+  const [asked, setAsked] = useState<Course["access"] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const choices = [
+    {
+      value: "included",
+      label: howMembersGetIt({ access: "included", priceCentavos: null }, course.examCode),
+    },
+    { value: "sold-separately", label: "Sold separately" },
+  ] as const;
+
+  function confirm(to: Course["access"]) {
+    setError(null);
+    startTransition(async () => {
+      const state = await callAdminAction(action, { input: { id: course.id, access: to } });
+      if (state.status !== "saved") {
+        setError(accessRefusal(state));
+        return;
+      }
+      setAsked(null);
+      toast(to === "included" ? "✓ INCLUDED IN ALL-ACCESS" : "✓ SOLD SEPARATELY");
+      onSwitched();
+    });
+  }
+
+  return (
+    <>
+      <div role="radiogroup" aria-label="How members get it" className="flex flex-wrap gap-2">
+        {choices.map((choice) => (
+          <label
+            key={choice.value}
+            className="flex min-h-10 cursor-pointer items-center gap-2 text-sm font-bold"
+          >
+            <input
+              type="radio"
+              name="access"
+              value={choice.value}
+              checked={course.access === choice.value}
+              onChange={() => {
+                setError(null);
+                setAsked(choice.value);
+              }}
+              className="size-4 accent-ayc-navy"
+            />
+            {choice.label}
+          </label>
+        ))}
+      </div>
+      <AdminDialog
+        open={asked !== null}
+        onOpenChange={(open) => {
+          if (!open) setAsked(null);
+        }}
+        tag="HOW MEMBERS GET IT"
+        tone="warning"
+        title={
+          asked === "sold-separately"
+            ? `Sell “${course.title}” separately?`
+            : `Include “${course.title}” in ${course.examCode} All-Access?`
+        }
+        description={asked ? accessSwitchText(asked, course.examCode, opened.accessChange) : ""}
+      >
+        {error ? (
+          <p role="alert" className="font-mono text-[11px] font-medium text-destructive">
+            {error}
+          </p>
+        ) : null}
+        <AdminDialogButtons>
+          <AdminDialogButton onClick={() => setAsked(null)}>Cancel</AdminDialogButton>
+          <AdminDialogButton
+            variant="primary"
+            disabled={pending}
+            aria-busy={pending || undefined}
+            onClick={() => asked && confirm(asked)}
+          >
+            {asked === "sold-separately" ? "Sell separately" : "Include in All-Access"}
+          </AdminDialogButton>
+        </AdminDialogButtons>
+      </AdminDialog>
+    </>
   );
 }
 

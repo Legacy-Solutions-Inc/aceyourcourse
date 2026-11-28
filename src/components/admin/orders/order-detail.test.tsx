@@ -32,6 +32,7 @@ const PENDING: AdminOrder = {
   userId: "2a4c6e80-1b3d-4f5a-9c7e-0d2f4a6b8c1e",
   examCode: "ME",
   planId: "plan-me-30",
+  courseId: null,
   planName: "ME All-Access",
   days: 30,
   priceCentavos: 44_900,
@@ -51,6 +52,7 @@ const PENDING: AdminOrder = {
   paidAt: null,
   statusChangedAt: MADE,
   paidWithoutAccount: false,
+  paidAlreadyOwned: false,
 };
 
 const NOTE: AdminOrderNote = {

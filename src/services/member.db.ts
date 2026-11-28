@@ -1265,13 +1265,18 @@ const listMemberPlans: MemberService["listMemberPlans"] = async (userId) => {
   const wanted = memberUserIdSchema.parse(userId);
   try {
     const db = getDb();
-    const [exams, plans, targetExams, passes] = await Promise.all([
+    const { courses: courseTable } = schema;
+    const [exams, plans, targetExams, passes, courseRows, ownedCourseIds] = await Promise.all([
       readExams(db),
       readPlansOnSale(db),
       listTargetExams(wanted),
       listAccessPasses(wanted),
+      // The Courses on sale (ticket 06): plansExams keeps the Visible, priced ones.
+      db.select().from(courseTable).where(eq(courseTable.onSale, true)),
+      databaseCourseStore.readOwnedCourseIds(wanted),
     ]);
-    return plansExams({ exams, plans, targetExams, passes });
+    const courses = courseRows.map(courseFromRow);
+    return plansExams({ exams, plans, courses, ownedCourseIds, targetExams, passes });
   } catch (error) {
     throw asDatabaseError(error);
   }
@@ -1393,6 +1398,16 @@ export const databaseOrderStore: OrderStore = {
         .where(eq(schema.members.userId, userId));
       return row ? memberFromRow(row) : null;
     }),
+  readCourse: (courseId) =>
+    inDatabase(async () => {
+      if (!UUID.test(courseId)) return null;
+      const [row] = await getDb()
+        .select()
+        .from(schema.courses)
+        .where(eq(schema.courses.id, courseId));
+      return row ? courseFromRow(row) : null;
+    }),
+  readOwnedCourseIds: (userId) => databaseCourseStore.readOwnedCourseIds(userId),
   addOrder: ({ id, ...draft }) =>
     inDatabase(async () => {
       const { reference: _numbered, ...row } = orderToRow({ id, reference: "", ...draft });
@@ -1585,6 +1600,17 @@ async function holdOrder<T>(
         .orderBy(asc(memberTargetExams.seq))
     : [];
   const history = userId && pass ? await readPassHistory(tx, userId, examCode) : [];
+  // The Member's row is locked, so two paid Orders for one Course take turns here.
+  const { courseOwnerships } = schema;
+  const owning =
+    userId && order.courseId
+      ? await tx
+          .select({ courseId: courseOwnerships.courseId })
+          .from(courseOwnerships)
+          .where(
+            and(eq(courseOwnerships.userId, userId), eq(courseOwnerships.courseId, order.courseId)),
+          )
+      : [];
 
   const { write, result } = work({
     order,
@@ -1593,6 +1619,7 @@ async function holdOrder<T>(
     targetExams: targetExams.map(targetExamFromRow),
     history,
     refunds: await readOrderRefunds(tx, [orderId]),
+    ownsCourse: owning.length > 0,
   });
   if (!write) return result;
 
@@ -1613,6 +1640,12 @@ async function holdOrder<T>(
       });
   }
   if (write.paid && member) await writePass(tx, member.userId, examCode, write.paid);
+  if (write.ownership && member) {
+    const { ownership, targetExam, activity } = write.ownership;
+    await tx.insert(courseOwnerships).values({ ...ownership, since: new Date(ownership.since) });
+    if (targetExam) await writeTargetExam(tx, member.userId, targetExam);
+    await tx.insert(schema.staffActivity).values(staffActivityToRow(activity));
+  }
   if (write.reduction && member) {
     await writeReduction(tx, member.userId, examCode, write.reduction);
   }

@@ -59,22 +59,29 @@ describe("consentStatus with other current versions", () => {
   });
 });
 
-// Legal v2.1 (Phase 4, ticket 13; story 151k): both documents add payments,
-// so every Member who agreed to v2.0 is asked once more, and only once.
-describe("consentStatus with the current documents (Legal v2.1)", () => {
+// Legal v2.2 (Phase 5, ticket 06): the Terms add Courses sold separately,
+// so every Member who agreed to v2.1 is asked once more, and only once. The
+// Privacy Policy stays at v2.1 (Legal v2.1: Phase 4, ticket 13).
+describe("consentStatus with the current documents (Legal v2.2)", () => {
   const current = currentLegalVersions();
 
-  it("has both documents at 2.1", () => {
-    expect(current).toEqual({ terms: "2.1", privacy: "2.1" });
+  it("has the Terms at 2.2 and the Privacy Policy at 2.1", () => {
+    expect(current).toEqual({ terms: "2.2", privacy: "2.1" });
   });
 
-  it("asks a Member who agreed to v2.0 to agree again", () => {
+  it("asks a Member who agreed to v2.1 to agree again, to the Terms", () => {
+    expect(consentStatus(current, { termsVersion: "2.1", privacyVersion: "2.1" })).toBe(
+      "terms-changed",
+    );
+  });
+
+  it("asks a Member who agreed to v2.0 to agree again, to both", () => {
     expect(consentStatus(current, { termsVersion: "2.0", privacyVersion: "2.0" })).toBe(
       "both-changed",
     );
   });
 
-  it("doesn't ask a Member who agreed to v2.1 again", () => {
-    expect(consentStatus(current, { termsVersion: "2.1", privacyVersion: "2.1" })).toBe("ok");
+  it("doesn't ask a Member who agreed to v2.2 again", () => {
+    expect(consentStatus(current, { termsVersion: "2.2", privacyVersion: "2.1" })).toBe("ok");
   });
 });

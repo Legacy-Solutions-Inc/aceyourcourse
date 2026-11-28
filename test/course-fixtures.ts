@@ -106,4 +106,6 @@ export const OPENED_COURSE: AdminCourse = {
   stamp: OPENED,
   modules: [CONCRETE, STEEL],
   exams: EXAMS,
+  accessChange: { losing: 0, gaining: 0 },
+  deleteBlocked: null,
 };

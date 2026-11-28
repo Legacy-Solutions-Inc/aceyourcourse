@@ -8,15 +8,19 @@ import { methodLabel, PAYMENT_METHODS, type PaymentMethod } from "@/lib/payments
 import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
 
-import { defaultPlanId, type PlanRowView, plansHeading } from "./plans-view";
+import { type CourseRowView, type PlanRowView, plansHeading } from "./plans-view";
 
 /** The Plans page's Pay (Phase 4, ticket 03): a Pending Order for the Plan picked, or why not. */
 export type PayAction = (previous: PayFormState, formData: FormData) => Promise<PayFormState>;
 
 interface PlanChooserProps {
   examCode: string;
-  /** The Exam's Plan rows, shortest first. Never empty. */
+  /** The Exam's Plan rows, shortest first. Empty only when a Course is on sale. */
   rows: readonly PlanRowView[];
+  /** The Exam's One-time purchases (Phase 5, ticket 06). */
+  courses: readonly CourseRowView[];
+  /** The item picked first (pickedItem): a Plan's id, or "course:" and a Course's; null with nothing to buy. */
+  initial: string | null;
   /** Pay, where this server has a payments client; null where buying isn't set up. */
   pay: PayAction | null;
 }
@@ -29,74 +33,151 @@ const focusRing =
 
 /**
  * The Plans page's choice (mockup L417–447): the Exam's Plans as radio rows,
- * the Best value one picked first, then the order summary with the Payment
- * Method and "Pay {price} with PayMongo", which sends the Exam, the Plan and
- * the method (the price is the server's to read). Where buying isn't set up
- * the button reads "Buying opens soon", disabled, and nothing is sent. Opened
- * afresh for each Exam.
+ * the Best value one picked first, then its One-time purchases (ticket 06:
+ * "PSAD Masterclass · Video course only · yours to keep · ₱1,499", or "Owned ·
+ * Watch" with no radio for one the Member owns), then the order summary with
+ * the Payment Method and "Pay {price} with PayMongo", which sends the Exam,
+ * the item and the method (the price is the server's to read). Where buying
+ * isn't set up the button reads "Buying opens soon", disabled, and nothing is
+ * sent. Opened afresh for each Exam.
  */
-export function PlanChooser({ examCode, rows, pay }: PlanChooserProps) {
-  const [planId, setPlanId] = useState(() => defaultPlanId(rows));
+export function PlanChooser({ examCode, rows, courses, initial, pay }: PlanChooserProps) {
+  const [itemId, setItemId] = useState(initial);
   const [method, setMethod] = useState<PaymentMethod>("qrph");
   const [state, payAction, paying] = useActionState(pay ?? noPay, IDLE);
   const summaryId = useId();
-  const picked = rows.find((row) => row.id === planId) ?? rows[0];
+  const coursesId = useId();
+  const items: readonly (PlanRowView | CourseRowView)[] = [
+    ...rows,
+    ...courses.filter((course) => !course.owned),
+  ];
+  const picked = items.find((item) => item.id === itemId);
 
   return (
     <form action={payAction} className="flex flex-wrap items-start gap-5">
       <input type="hidden" name="examCode" value={examCode} />
-      <fieldset role="radiogroup" className="flex min-w-0 flex-[1.4_1_320px] flex-col gap-2.5">
-        <legend className="mb-2.5 font-mono text-xs font-medium tracking-[0.06em] text-muted-foreground">
-          {plansHeading(examCode)}
-        </legend>
-        {rows.map((row) => {
-          const checked = row.id === picked?.id;
-          return (
-            <label key={row.id} className="cursor-pointer">
-              <input
-                type="radio"
-                name="plan"
-                value={row.id}
-                checked={checked}
-                onChange={() => setPlanId(row.id)}
-                className="peer sr-only"
-              />
-              <span
-                className={cn(
-                  "flex items-center gap-3.5 border-[1.5px] bg-ayc-paper p-4",
-                  checked && "border-2 border-ayc-blue shadow-hard shadow-ayc-blue",
-                  focusRing,
-                )}
-              >
-                <span
-                  aria-hidden="true"
-                  className="flex size-5 flex-none items-center justify-center rounded-full border-2 border-ayc-blue"
-                >
-                  <span className={cn("size-2.5 rounded-full", checked && "bg-ayc-blue")} />
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="flex flex-wrap items-center gap-2 text-lg font-extrabold">
-                    {row.period}
-                    {row.bestValue ? (
-                      <span className="border-[1.5px] border-ayc-navy bg-ayc-orange px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-[0.06em] text-ayc-navy">
-                        BEST VALUE
+      <div className="flex min-w-0 flex-[1.4_1_320px] flex-col gap-5">
+        {rows.length > 0 ? (
+          <fieldset role="radiogroup" className="flex min-w-0 flex-col gap-2.5">
+            <legend className="mb-2.5 font-mono text-xs font-medium tracking-[0.06em] text-muted-foreground">
+              {plansHeading(examCode)}
+            </legend>
+            {rows.map((row) => {
+              const checked = row.id === picked?.id;
+              return (
+                <label key={row.id} className="cursor-pointer">
+                  <input
+                    type="radio"
+                    name="plan"
+                    value={row.id}
+                    checked={checked}
+                    onChange={() => setItemId(row.id)}
+                    className="peer sr-only"
+                  />
+                  <span
+                    className={cn(
+                      "flex items-center gap-3.5 border-[1.5px] bg-ayc-paper p-4",
+                      checked && "border-2 border-ayc-blue shadow-hard shadow-ayc-blue",
+                      focusRing,
+                    )}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="flex size-5 flex-none items-center justify-center rounded-full border-2 border-ayc-blue"
+                    >
+                      <span className={cn("size-2.5 rounded-full", checked && "bg-ayc-blue")} />
+                    </span>
+                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="flex flex-wrap items-center gap-2 text-lg font-extrabold">
+                        {row.period}
+                        {row.bestValue ? (
+                          <span className="border-[1.5px] border-ayc-navy bg-ayc-orange px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-[0.06em] text-ayc-navy">
+                            BEST VALUE
+                          </span>
+                        ) : null}
                       </span>
-                    ) : null}
+                      <span className="text-[13px]">
+                        Until {row.until}
+                        {row.coversExamOn ? ` · covers your exam on ${row.coversExamOn}` : null}
+                      </span>
+                    </span>
+                    <span className="flex flex-col items-end gap-0.5 text-right">
+                      <span className="text-[22px] font-black tracking-[-0.02em]">{row.price}</span>
+                      <span className="text-xs text-muted-foreground">{row.perMonth}</span>
+                    </span>
                   </span>
-                  <span className="text-[13px]">
-                    Until {row.until}
-                    {row.coversExamOn ? ` · covers your exam on ${row.coversExamOn}` : null}
+                </label>
+              );
+            })}
+          </fieldset>
+        ) : null}
+        {courses.length > 0 ? (
+          <fieldset
+            role="radiogroup"
+            aria-labelledby={coursesId}
+            className="flex min-w-0 flex-col gap-2.5"
+          >
+            <legend
+              id={coursesId}
+              className="mb-2.5 font-mono text-xs font-medium tracking-[0.06em] text-muted-foreground"
+            >
+              {courses.length === 1 ? "ONE-TIME PURCHASE" : "ONE-TIME PURCHASES"}
+            </legend>
+            {courses.map((course) =>
+              course.owned ? (
+                <div
+                  key={course.id}
+                  id={`course-${course.courseId}`}
+                  className="flex items-center gap-3.5 border-[1.5px] bg-ayc-paper p-4"
+                >
+                  <CourseText course={course} />
+                  <Link
+                    href={course.href}
+                    className="flex min-h-10 items-center border-[1.5px] border-ayc-navy px-3.5 text-sm font-bold"
+                  >
+                    Owned · Watch
+                  </Link>
+                </div>
+              ) : (
+                <label key={course.id} id={`course-${course.courseId}`} className="cursor-pointer">
+                  <input
+                    type="radio"
+                    name="plan"
+                    value={course.id}
+                    checked={course.id === picked?.id}
+                    onChange={() => setItemId(course.id)}
+                    className="peer sr-only"
+                  />
+                  <span
+                    className={cn(
+                      "flex items-center gap-3.5 border-[1.5px] bg-ayc-paper p-4",
+                      course.id === picked?.id &&
+                        "border-2 border-ayc-blue shadow-hard shadow-ayc-blue",
+                      focusRing,
+                    )}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="flex size-5 flex-none items-center justify-center rounded-full border-2 border-ayc-blue"
+                    >
+                      <span
+                        className={cn(
+                          "size-2.5 rounded-full",
+                          course.id === picked?.id && "bg-ayc-blue",
+                        )}
+                      />
+                    </span>
+                    <CourseText course={course} />
+                    <span className="text-[22px] font-black tracking-[-0.02em]">
+                      {course.price}
+                    </span>
                   </span>
-                </span>
-                <span className="flex flex-col items-end gap-0.5 text-right">
-                  <span className="text-[22px] font-black tracking-[-0.02em]">{row.price}</span>
-                  <span className="text-xs text-muted-foreground">{row.perMonth}</span>
-                </span>
-              </span>
-            </label>
-          );
-        })}
-      </fieldset>
+                </label>
+              ),
+            )}
+          </fieldset>
+        ) : null}
+      </div>
 
       {picked ? (
         <section
@@ -190,5 +271,15 @@ export function PlanChooser({ examCode, rows, pay }: PlanChooserProps) {
         </section>
       ) : null}
     </form>
+  );
+}
+
+/** A One-time purchase's name and what it is: "PSAD Masterclass", "Video course only · yours to keep". */
+function CourseText({ course }: { course: CourseRowView }) {
+  return (
+    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <span className="text-lg font-extrabold">{course.title}</span>
+      <span className="text-[13px]">{course.line}</span>
+    </span>
   );
 }

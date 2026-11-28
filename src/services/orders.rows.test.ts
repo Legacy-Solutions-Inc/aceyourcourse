@@ -14,6 +14,7 @@ const PAID: Order = {
   userId: "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21",
   examCode: "CE",
   planId: "5d7c9e1a-3b2f-4a6d-9c8e-7f6a5b4c3d2e",
+  courseId: null,
   planName: "CE All-Access",
   days: 90,
   priceCentavos: 129_900,
@@ -28,6 +29,7 @@ const PAID: Order = {
   paidAt: "2026-11-17T03:43:00.000Z",
   statusChangedAt: "2026-11-17T03:43:00.000Z",
   paidWithoutAccount: false,
+  paidAlreadyOwned: false,
 };
 
 describe("orders.rows", () => {

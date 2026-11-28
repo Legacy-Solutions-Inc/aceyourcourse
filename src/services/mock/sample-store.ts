@@ -264,7 +264,7 @@ export interface SampleStoreOptions {
   sampleOrders?: boolean;
   /**
    * With the sample agreements (Phase 4, ticket 13): the renewing tester as
-   * a Member who agreed to Legal v2.0. The dev server's data and the e2e
+   * a Member who agreed to Legal v2.1 (Phase 5, ticket 06). The dev server's data and the e2e
    * specs' reset have them; unit tests start without, unless they ask.
    */
   sampleAgreements?: boolean;

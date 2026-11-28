@@ -626,7 +626,7 @@ describe.each(ADMIN_ARMS)("the Course builder ($name)", (arm) => {
       expect((await seam.deleteSubject(OWNER, "CHE", "PCHEM")).ok).toBe(true);
     });
 
-    it("has no write for how Members get a Course, its price or On sale", async () => {
+    it("never writes how Members get a Course, its price or On sale from Course settings' Save", async () => {
       const course = await courseOf(PSAD);
       const result = await seam.updateCourse(
         EDITOR,
@@ -647,8 +647,13 @@ describe.each(ADMIN_ARMS)("the Course builder ($name)", (arm) => {
         priceCentavos: 149_900,
         onSale: true,
       });
+      // Only the Owners' own calls write them (ticket 06; admin.course-selling.test.ts).
       const writes = Object.keys(seam).filter((name) => /price|onsale|access/i.test(name));
-      expect(writes.filter((name) => /course/i.test(name))).toEqual([]);
+      expect(writes.filter((name) => /course/i.test(name)).sort()).toEqual([
+        "setCourseAccess",
+        "setCourseOnSale",
+        "setCoursePrice",
+      ]);
     });
 
     it("answers not-found for a Course, Module or Lesson that isn't there", async () => {

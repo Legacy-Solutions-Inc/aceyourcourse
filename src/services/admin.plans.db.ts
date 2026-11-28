@@ -39,7 +39,7 @@ async function readState(tx: Database | Transaction): Promise<PlanState> {
   return {
     plans: planRows.map(planFromRow),
     exams: examRows,
-    withOrders: new Set(ordered.map(({ planId }) => planId)),
+    withOrders: new Set(ordered.flatMap(({ planId }) => planId ?? [])),
   };
 }
 

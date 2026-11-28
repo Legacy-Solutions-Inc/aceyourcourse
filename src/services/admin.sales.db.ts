@@ -53,6 +53,7 @@ const databaseSalesStore: SalesStore = {
                 eq(orders.status, "pending"),
                 and(isNotNull(invoiceRequests.orderId), isNull(invoiceRequests.sentAt)),
                 and(eq(orders.paidWithoutAccount, true), eq(orders.status, "paid")),
+                and(eq(orders.paidAlreadyOwned, true), eq(orders.status, "paid")),
                 refundedSince,
               ),
             ),

@@ -11,7 +11,7 @@ function planState() {
   return structuredClone({
     plans: store.plans,
     exams: store.catalogue.exams.map(({ code, name }) => ({ code, name })),
-    withOrders: new Set(store.orders.map((order) => order.planId)),
+    withOrders: new Set(store.orders.flatMap((order) => order.planId ?? [])),
   });
 }
 

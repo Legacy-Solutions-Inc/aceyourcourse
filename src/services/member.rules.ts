@@ -1,10 +1,12 @@
 import { isPastExamDate, resolveExamDate } from "@/lib/member-app/exam-date";
 import { isCalendarDate } from "@/lib/manila-time";
+import { isCourseForSale } from "@/lib/courses/course-rules";
 import type { Plan } from "@/services/admin.types";
 import { examCodesOnWebsite } from "@/services/catalogue.rules";
 import type { Exam, ExamPage, Product } from "@/services/catalogue.types";
 import { memberUserIdSchema } from "@/services/member.schema";
 import type { AccessPass } from "@/services/content.types";
+import type { Course } from "@/services/courses.types";
 import type {
   AddedTargetExam,
   NewTargetExam,
@@ -321,6 +323,10 @@ export function targetExamOperations(withMemberExams: WithMemberExams) {
 export interface PlansInputs {
   exams: readonly MemberExam[];
   plans: readonly Plan[];
+  /** The Courses (ticket 06): only those Members can buy now are listed (isCourseForSale). */
+  courses: readonly Course[];
+  /** The ids of the Courses this Member owns. */
+  ownedCourseIds: readonly string[];
   /** The Member's own Target Exams. */
   targetExams: readonly TargetExam[];
   /** The Member's own Access Passes, ended ones too. */
@@ -335,31 +341,57 @@ const plansOnSale = (plans: readonly Plan[], examCode: string) =>
 const examsWithPlansOnSale = (exams: readonly MemberExam[], plans: readonly Plan[]) =>
   exams.filter((exam) => exam.onWebsite && plansOnSale(plans, exam.code).length > 0);
 
+/** An Exam's Courses Members can buy now (ticket 06), oldest first. */
+const coursesOnSale = (courses: readonly Course[], examCode: string) =>
+  courses
+    .flatMap((course) => (course.examCode === examCode && isCourseForSale(course) ? [course] : []))
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+
 /**
  * Pure: the Plans page's Exams for one Member: each Exam on the Website with
- * a Plan on sale, in the catalogue's order, with its Plans on sale shortest
- * first, when the Member's pass for it ends, and the Exam Date a Plan would
- * count towards (their own for a Target Exam, otherwise the Official Exam
- * Date, which buying adds it with). An Exam that isn't on the Website has no
- * Plans page: no Member can pick it.
+ * a Plan or a Course on sale (ticket 06), in the catalogue's order, with its
+ * Plans on sale shortest first, its One-time purchases (separately sold,
+ * Visible Courses on sale, each marked when the Member owns it), when the
+ * Member's pass for it ends, and the Exam Date a Plan would count towards
+ * (their own for a Target Exam, otherwise the Official Exam Date, which
+ * buying adds it with). An Exam that isn't on the Website has no Plans page:
+ * no Member can pick it.
  */
-export function plansExams({ exams, plans, targetExams, passes }: PlansInputs): PlansExam[] {
-  return examsWithPlansOnSale(exams, plans).map((exam) => ({
-    examCode: exam.code,
-    board: exam.board,
-    name: exam.name,
-    plans: plansOnSale(plans, exam.code).map(({ id, name, days, priceCentavos, bestValue }) => ({
-      id,
-      name,
-      days,
-      priceCentavos,
-      bestValue,
-    })),
-    passEndsAt: passes.find((pass) => pass.examCode === exam.code)?.endsAt ?? null,
-    examDate:
-      targetExams.find((target) => target.examCode === exam.code)?.examDate ??
-      exam.officialExamDate,
-  }));
+export function plansExams({
+  exams,
+  plans,
+  courses,
+  ownedCourseIds,
+  targetExams,
+  passes,
+}: PlansInputs): PlansExam[] {
+  const owned = new Set(ownedCourseIds);
+  const selling = (code: string) =>
+    plansOnSale(plans, code).length > 0 || coursesOnSale(courses, code).length > 0;
+  return exams
+    .filter((exam) => exam.onWebsite && selling(exam.code))
+    .map((exam) => ({
+      examCode: exam.code,
+      board: exam.board,
+      name: exam.name,
+      plans: plansOnSale(plans, exam.code).map(({ id, name, days, priceCentavos, bestValue }) => ({
+        id,
+        name,
+        days,
+        priceCentavos,
+        bestValue,
+      })),
+      courses: coursesOnSale(courses, exam.code).map(({ id, title, priceCentavos }) => ({
+        id,
+        title,
+        priceCentavos,
+        owned: owned.has(id),
+      })),
+      passEndsAt: passes.find((pass) => pass.examCode === exam.code)?.endsAt ?? null,
+      examDate:
+        targetExams.find((target) => target.examCode === exam.code)?.examDate ??
+        exam.officialExamDate,
+    }));
 }
 
 /** Pure: the codes of the Exams on the Website with a Plan on sale, in order: where "See plans" leads. */

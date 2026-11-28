@@ -20,9 +20,10 @@ export const orderFromRow = (row: OrderRow): Order => ({
   userId: row.userId,
   examCode: row.examCode,
   planId: row.planId,
+  courseId: row.courseId,
   planName: row.planName,
-  // The table's check keeps the days to a Plan's durations.
-  days: toPlanDays(row.days),
+  // The table's check keeps the days to a Plan's durations (none for a Course Order).
+  days: row.days === null ? null : toPlanDays(row.days),
   priceCentavos: row.priceCentavos,
   method: row.method,
   status: row.status,
@@ -35,6 +36,7 @@ export const orderFromRow = (row: OrderRow): Order => ({
   paidAt: row.paidAt?.toISOString() ?? null,
   statusChangedAt: row.statusChangedAt.toISOString(),
   paidWithoutAccount: row.paidWithoutAccount,
+  paidAlreadyOwned: row.paidAlreadyOwned,
 });
 
 export const orderToRow = (order: Order): OrderRow => ({

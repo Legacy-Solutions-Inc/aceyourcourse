@@ -155,9 +155,10 @@ describe("the Courses screen", () => {
 
     const psad = card(PSAD);
     expect(psad.getByText(/LOCKED/)).toBeInTheDocument();
+    // The Exam's Plans page, at the Course (ticket 06).
     expect(psad.getByRole("link", { name: "Unlock for ₱1,499" })).toHaveAttribute(
       "href",
-      "/app/plans?exam=CE",
+      `/app/plans?exam=CE&course=${PSAD_ID}#course-${PSAD_ID}`,
     );
 
     const hpge = card("HPGE Crash Course");
@@ -360,7 +361,7 @@ describe("the Lesson screen", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Unlock for ₱1,499" })).toHaveAttribute(
       "href",
-      "/app/plans?exam=CE",
+      `/app/plans?exam=CE&course=${PSAD_ID}#course-${PSAD_ID}`,
     );
     expect(video.current?.passes).toEqual([]);
   });

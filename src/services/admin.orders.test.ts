@@ -60,6 +60,7 @@ function order(reference: string, fields: Partial<Order>): Order {
     userId: BEA.userId,
     examCode: "CE",
     planId: samplePlanId("CE", 90),
+    courseId: null,
     planName: "CE All-Access",
     days: 90,
     priceCentavos: 129_900,
@@ -71,6 +72,7 @@ function order(reference: string, fields: Partial<Order>): Order {
     buyerEmail: BEA.email,
     statusChangedAt: paidAt ?? createdAt,
     paidWithoutAccount: false,
+    paidAlreadyOwned: false,
     ...fields,
     status,
     createdAt,
@@ -85,6 +87,7 @@ const PAOLO_ME = {
   buyerEmail: PAOLO.email,
   examCode: "ME",
   planId: samplePlanId("ME", 30),
+  courseId: null,
   planName: "ME All-Access",
   days: 30,
   priceCentavos: 44_900,
@@ -106,6 +109,7 @@ const FAILED_CARD = order("AYC-10003", {
 });
 const TEST_ORDER = order("AYC-10004", {
   planId: samplePlanId("CE", 30),
+  courseId: null,
   days: 30,
   priceCentavos: 49_900,
   livemode: false,
@@ -113,6 +117,7 @@ const TEST_ORDER = order("AYC-10004", {
 });
 const OLD_GCASH = order("AYC-10005", {
   planId: samplePlanId("CE", 180),
+  courseId: null,
   days: 180,
   priceCentavos: 229_900,
   createdAt: at(-40 * DAY),
@@ -122,6 +127,7 @@ const DELETED = order("AYC-10006", {
   buyerName: "Gone Member",
   buyerEmail: "gone@example.com",
   planId: samplePlanId("CE", 30),
+  courseId: null,
   days: 30,
   priceCentavos: 49_900,
   method: "qrph",
@@ -575,6 +581,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Orders ($name)", (arm) => {
             invoiceRequested: false,
             paidAfterExpiry: false,
             paidWithoutAccount: false,
+            paidAlreadyOwned: false,
             searched: false,
             rows: 1,
           },

@@ -22,7 +22,7 @@ import {
 // (Phase 3, tickets 01 and 02). The Member App switch is off on the e2e
 // server, so only active Staff and Beta Testers get past sign-in; everyone
 // else sees "Not open yet". Each sample Member starts with nothing agreed (the
-// renewing tester with v2.0, ticket 13), so their first visit shows the
+// renewing tester with v2.1, ticket 13 and Phase 5 ticket 06), so their first visit shows the
 // consent screen, and with no Target Exam, so
 // Home then shows onboarding (ticket 03, target-exams.spec.ts). The Beta
 // Tester list is read on every request, so an Owner's change applies to the
@@ -96,7 +96,7 @@ test.describe("a signed-out visitor", () => {
       /Angel Rose L\. Lepaña.*angel@aceyourcourse\.ph · Owner/,
       /Sam Stranger.*stranger@example\.com · Not a Beta Tester/,
       /Lou Lapsed.*lapsed@example\.com · Beta Tester · CE All-Access ended/,
-      /Rae Renewing.*renewing@example\.com · Beta Tester · CE All-Access ends in 5 days · agreed to Legal v2\.0/,
+      /Rae Renewing.*renewing@example\.com · Beta Tester · CE All-Access ends in 5 days · agreed to Legal v2\.1/,
     ]);
   });
 });
@@ -243,7 +243,7 @@ test.describe("the consent screen", () => {
       "href",
       "/legal/privacy",
     );
-    await expect(consent.terms).toHaveAccessibleName(/version 2\.1/);
+    await expect(consent.terms).toHaveAccessibleName(/version 2\.2/);
   });
 
   test("comes before every Member App address until the Member agrees", async ({ page }) => {
@@ -287,18 +287,18 @@ test.describe("the consent screen", () => {
     await expect(page).toHaveURL(/\/app\/library$/);
   });
 
-  // Legal v2.1 (Phase 4, ticket 13): the renewing tester starts having agreed
-  // to v2.0, so their next visit asks once more, then goes on.
-  test("asks a Member who agreed to v2.0 once more, for v2.1, then goes Home and doesn't ask again", async ({
+  // Legal v2.2 (Phase 5, ticket 06): the renewing tester starts having agreed
+  // to v2.1, so their next visit asks once more, for the Terms, then goes on.
+  test("asks a Member who agreed to v2.1 once more, for v2.2, then goes Home and doesn't ask again", async ({
     page,
   }) => {
     await signInAsMember(page, "renewing");
     await expect(page).toHaveURL(/\/app\/consent\?next=%2Fapp$/);
     await expect(
-      page.getByRole("heading", { level: 1, name: "We’ve updated our Terms and Privacy Policy" }),
+      page.getByRole("heading", { level: 1, name: "We’ve updated our Terms" }),
     ).toBeVisible();
     const consent = consentScreen(page);
-    await expect(consent.terms).toHaveAccessibleName(/version 2\.1/);
+    await expect(consent.terms).toHaveAccessibleName(/version 2\.2/);
     await expect(consent.privacy).toHaveAccessibleName(/version 2\.1/);
     await expectNoBlockingViolations(page);
 

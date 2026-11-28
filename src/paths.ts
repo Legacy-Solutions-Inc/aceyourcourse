@@ -28,7 +28,7 @@ export const paths = {
   legal: {
     privacy: "/legal/privacy",
     terms: "/legal/terms",
-    /** The Terms of Use's "Payments and refunds" section, at its stable anchor (v2.1). */
+    /** The Terms of Use's "Payments and refunds" section, at its stable anchor (since v2.1). */
     paymentsAndRefunds: "/legal/terms#payments-and-refunds",
   },
   /** The signed-in Member App (Phase 3). */
@@ -109,6 +109,12 @@ export const paths = {
     plans: "/app/plans",
     /** Plans open on one Exam's (ticket 02): where a lock's "See plans" and "Renew access" lead. */
     plansFor: (examCode: string) => `/app/plans?exam=${encodeURIComponent(examCode)}`,
+    /**
+     * Plans open on one Exam's at a One-time purchase, picked (Phase 5,
+     * ticket 06): where a locked Course's "Unlock for ₱1,499" leads.
+     */
+    plansForCourse: (examCode: string, courseId: string) =>
+      `/app/plans?exam=${encodeURIComponent(examCode)}&course=${encodeURIComponent(courseId)}#course-${encodeURIComponent(courseId)}`,
     /** Where PayMongo's Cancel returns to (ticket 04): Plans for the Exam, saying nothing was charged. */
     plansCancelled: (examCode: string) =>
       `/app/plans?exam=${encodeURIComponent(examCode)}&payment=cancelled`,

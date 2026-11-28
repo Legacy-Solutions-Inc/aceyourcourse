@@ -4,10 +4,12 @@ import { type InvoiceRequest, invoiceStatus } from "@/lib/payments/invoice-reque
 import {
   applyOutcome,
   effectiveStatus,
+  isCourseOrder,
   isOrderReference,
   ORDER_EXPIRES_AFTER_MS,
   paidAfterExpiry,
   type Order,
+  orderItem,
   type OrderOutcome,
   PAYMONGO_SYSTEM_ACTOR,
   type PassHistoryRow,
@@ -24,12 +26,13 @@ import {
   succeededRefunds,
 } from "@/lib/payments/refunds";
 import { PAYMENT_METHODS } from "@/lib/payments/payment-methods";
-import { periodLabel } from "@/lib/plans/plan-text";
 import { paths } from "@/paths";
 import { noticeOf, passEntityId, type PassWrite } from "@/services/access-passes.core";
 import type { Plan, StaffActivity } from "@/services/admin.types";
 import type { AccessPass } from "@/services/content.types";
+import { isCourseForSale } from "@/lib/courses/course-rules";
 import { activityRecord } from "@/services/content-editor.core";
+import type { Course, CourseOwnership } from "@/services/courses.types";
 import {
   invoiceFieldErrors,
   type InvoiceRequestInput,
@@ -44,6 +47,7 @@ import {
   type TargetExamRecord,
 } from "@/services/member.rules";
 import type {
+  CoursePayInput,
   ExpirySweep,
   InvoiceRequestResult,
   Member,
@@ -103,6 +107,17 @@ import type { CheckoutStatus, PaymentEvent, PaymentsClient } from "@/services/pa
 //   recorded Paid with no grant, no notice and no Target Exam, marked
 //   paidWithoutAccount for an Owner to refund in PayMongo, and logged as
 //   "PayMongo (system)".
+// - Course Orders (Phase 5, ticket 06): Pay for a Course checks it is sold
+//   separately, Visible, on sale with a price, for an Exam on the Website,
+//   the posted Exam's, and not the Member's already; the Order copies its
+//   name and price and has no days. Paid grants Course Ownership with the
+//   Order as its source, adds the Exam to the Target Exams and logs it as
+//   "PayMongo (system)", all or nothing; it touches no Access Pass. Paid
+//   while the Member owns the Course already (two tabs, a late payment)
+//   grants nothing: the Order is marked paidAlreadyOwned, for an Owner to
+//   refund in PayMongo. A Course Order's refunds are recorded and move it to
+//   Refunded, but take nothing off any pass (ticket 07 removes the
+//   ownership).
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** An Order as one outcome finds it, with what Paid and refunds change alongside it. */
@@ -118,6 +133,19 @@ export interface OrderHolding {
   history: PassHistoryRow[];
   /** The Order's PayMongo refunds recorded so far, in the order first recorded (ticket 09). */
   refunds: OrderRefund[];
+  /** For a Course Order: whether the buyer owns its Course already (ticket 06); false otherwise. */
+  ownsCourse: boolean;
+}
+
+/**
+ * A paid Course Order's grant (ticket 06): the buyer's Course Ownership, the
+ * Target Exam record it adds or brings back (null when already there) and the
+ * Staff Activity.
+ */
+export interface CourseOwnershipWrite {
+  ownership: CourseOwnership;
+  targetExam: TargetExamRecord | null;
+  activity: StaffActivity;
 }
 
 /**
@@ -142,6 +170,8 @@ export interface OrderWrite {
    * Activity); null for Failed, Expired, or a Paid Order whose account is gone.
    */
   paid: PassWrite | null;
+  /** For a paid Course Order: the Course Ownership it grants (ticket 06); null otherwise. */
+  ownership: CourseOwnershipWrite | null;
   /** The Staff Activity for a change to no pass (Failed, Expired, Paid with no account, refunds); null with `paid` or `reduction`. */
   activity: StaffActivity | null;
   /** The PayMongo refunds to record: added, or moved on, by their id (ticket 09). */
@@ -185,6 +215,10 @@ export interface OrderStore {
   readOnSale(): Promise<{ exams: MemberExam[]; plans: Plan[] }>;
   /** A Member's record, or null for a User id no Member has. */
   readMember(userId: string): Promise<Member | null>;
+  /** A Course as it is now, or null for an id no Course has (ticket 06). */
+  readCourse(courseId: string): Promise<Course | null>;
+  /** The ids of the Courses this Member owns: their own Course Ownerships only (ticket 06). */
+  readOwnedCourseIds(userId: string): Promise<string[]>;
   /** Adds a Pending Order, numbering its reference from the next one free; gives it numbered. */
   addOrder(order: Omit<Order, "reference">): Promise<Order>;
   /** Records the checkout the payments client started for an Order: its id (null with the fake) and livemode. */
@@ -242,6 +276,12 @@ const payInputSchema = z.object({
   method: z.enum(PAYMENT_METHODS),
 });
 
+const coursePayInputSchema = z.object({
+  examCode: z.string().max(20),
+  courseId: z.string().uuid(),
+  method: z.enum(PAYMENT_METHODS),
+});
+
 /** Pure: an Invoice Request as the Member sees it: requested, then sent. */
 const memberInvoiceOf = (request: InvoiceRequest): MemberInvoice => ({
   status: invoiceStatus(request),
@@ -260,6 +300,7 @@ const memberOrderOf = (
   id: order.id,
   reference: order.reference,
   examCode: order.examCode,
+  courseId: order.courseId,
   planName: order.planName,
   days: order.days,
   priceCentavos: order.priceCentavos,
@@ -279,19 +320,22 @@ const memberOrderOf = (
  * Pure: what an outcome writes on an Order at `now`: nothing when the ledger
  * makes no move; the Order alone for Failed or Expired; for Paid on an
  * account that's gone (ticket 14), the Order alone, marked paidWithoutAccount
- * for an Owner to refund in PayMongo, granting nothing; otherwise the Order,
- * its days on the pass and everything Paid writes.
+ * for an Owner to refund in PayMongo, granting nothing; for Paid on a Course
+ * the buyer owns already (ticket 06), the Order alone, marked
+ * paidAlreadyOwned, granting nothing; otherwise the Order and its grant: the
+ * days on the pass and everything Paid writes, or the Course Ownership.
  */
 export function settleOrder(
-  { order, member, pass, targetExams }: OrderHolding,
+  { order, member, pass, targetExams, ownsCourse }: OrderHolding,
   outcome: OrderOutcome,
   paymentId: string | null,
   now: Date,
 ): OrderWrite | null {
-  const step = applyOutcome(order, outcome, pass?.endsAt ?? null, now);
+  const step = applyOutcome(order, outcome, pass?.endsAt ?? null, now, ownsCourse);
   if (!step.changed) return null;
-  const { paidDays } = step;
-  const paidWithNoAccount = paidDays !== null && !member;
+  const { paidDays, course } = step;
+  const paid = paidDays !== null || course !== null;
+  const paidWithNoAccount = paid && !member;
   const moved: Order = {
     ...step.order,
     paymentId: paymentId ?? step.order.paymentId,
@@ -300,13 +344,13 @@ export function settleOrder(
   };
   const { reference } = order;
   const late = paidAfterExpiry(moved) ? { paidAfterExpiry: true } : {};
-  if (!paidDays || !member) {
+  const nothingMore = { paid: null, ownership: null, refunds: [], reduction: null };
+  if (!paid || !member || course === "already-owned") {
     const noAccount = paidWithNoAccount ? { paidWithoutAccount: true } : {};
+    const owned = course === "already-owned" && member ? { paidAlreadyOwned: true } : {};
     return {
       order: moved,
-      paid: null,
-      refunds: [],
-      reduction: null,
+      ...nothingMore,
       activity: activityRecord(
         PAYMONGO_SYSTEM_ACTOR,
         now,
@@ -314,18 +358,42 @@ export function settleOrder(
         order.id,
         `order-${moved.status}`,
         { reference, status: order.status },
-        { reference, status: moved.status, ...late, ...noAccount },
+        { reference, status: moved.status, ...late, ...noAccount, ...owned },
       ),
     };
   }
 
   const { userId, email } = member;
   const { examCode } = order;
-  const endsBefore = pass?.endsAt ?? null;
   const added = grantedTargetExam(targetExams, examCode, now);
   const targetExam = added?.change ?? null;
+  if (course === "owns" && order.courseId) {
+    const { courseId } = order;
+    return {
+      order: moved,
+      ...nothingMore,
+      ownership: {
+        ownership: { userId, courseId, since: now.toISOString(), orderId: order.id },
+        targetExam: added?.record ?? null,
+        activity: activityRecord(
+          PAYMONGO_SYSTEM_ACTOR,
+          now,
+          "course-ownership",
+          courseOwnershipEntityId(userId, courseId),
+          "order-paid",
+          null,
+          { email, courseId, course: order.planName, reference, targetExam, ...late },
+        ),
+      },
+      activity: null,
+    };
+  }
+  if (!paidDays) throw new Error(`Paid ${reference} granted neither days nor a Course.`);
+
+  const endsBefore = pass?.endsAt ?? null;
   return {
     order: moved,
+    ...nothingMore,
     paid: {
       endsAt: paidDays.endsAt,
       grant: {
@@ -359,10 +427,12 @@ export function settleOrder(
       ),
     },
     activity: null,
-    refunds: [],
-    reduction: null,
   };
 }
+
+/** A Course Ownership's id in Staff Activity: the Member's and the Course's (ticket 06). */
+export const courseOwnershipEntityId = (userId: string, courseId: string) =>
+  `${userId}:${courseId}`;
 
 /** What recording a refund event did: applied, changed nothing, or was ignored (an Order that was never Paid). */
 export type RefundSettlement = "applied" | "no-change" | "ignored";
@@ -391,6 +461,7 @@ export function settleRefunds(
   const writing = (fields: Partial<OrderWrite>): OrderWrite => ({
     order,
     paid: null,
+    ownership: null,
     activity: null,
     refunds: [],
     reduction: null,
@@ -444,7 +515,8 @@ export function settleRefunds(
   }
 
   const refunded = step.order;
-  if (!member || !pass) {
+  // A Course Order's days are none: its refund takes nothing off a pass (ticket 07 removes the ownership).
+  if (!member || !pass || isCourseOrder(order)) {
     const activity = logged(
       "order-refunded",
       { reference, status, refundedCentavos: before, endsAt: endsBefore },
@@ -515,38 +587,36 @@ export async function checkCheckoutStatus(
 export function orderCalls(store: OrderStore) {
   const refuse = (reason: PayRefusal): PayResult => ({ ok: false, reason });
 
-  async function payForPlan(
-    userId: string,
-    sent: PayInput,
+  /** Pay's checks before the item: buying set up, and the method one of the four. */
+  function sentPay<T extends z.ZodTypeAny>(
+    schema: T,
+    sent: unknown,
     client: PaymentsClient | null,
+  ): { refusal: PayResult } | { input: z.infer<T>; client: PaymentsClient } {
+    if (!client) return { refusal: refuse("unavailable") };
+    const parsed = schema.safeParse(sent);
+    if (parsed.success) return { input: parsed.data, client };
+    const badMethod = parsed.error.issues.some((issue) => issue.path[0] === "method");
+    return { refusal: refuse(badMethod ? "bad-method" : "not-on-sale") };
+  }
+
+  /**
+   * Makes a new Pending Order for the Member, with what it buys read on the
+   * server, then starts its checkout and records it: the reference and where
+   * to send the Member, or why not.
+   */
+  async function startOrder(
+    member: Member,
+    item: Pick<Order, "examCode" | "planId" | "courseId" | "planName" | "days" | "priceCentavos">,
+    method: Order["method"],
+    description: string,
+    client: PaymentsClient,
   ): Promise<PayResult> {
-    const wanted = memberUserIdSchema.parse(userId);
-    if (!client) return refuse("unavailable");
-    const parsed = payInputSchema.safeParse(sent);
-    if (!parsed.success) {
-      const badMethod = parsed.error.issues.some((issue) => issue.path[0] === "method");
-      return refuse(badMethod ? "bad-method" : "not-on-sale");
-    }
-    const { examCode, planId, method } = parsed.data;
-
-    const member = await store.readMember(wanted);
-    if (!member) throw new Error("Pay needs a Member record.");
-    const { exams, plans } = await store.readOnSale();
-    const plan = plans.find((candidate) => candidate.id === planId);
-    if (!plan || !examCodesOnSale(exams, plans).includes(plan.examCode)) {
-      return refuse("not-on-sale");
-    }
-    if (plan.examCode !== examCodeOf(examCode)) return refuse("wrong-exam");
-
     const at = new Date().toISOString();
     const order = await store.addOrder({
       id: crypto.randomUUID(),
-      userId: wanted,
-      examCode: plan.examCode,
-      planId: plan.id,
-      planName: plan.name,
-      days: plan.days,
-      priceCentavos: plan.priceCentavos,
+      userId: member.userId,
+      ...item,
       method,
       status: "pending",
       livemode: client.livemode,
@@ -558,11 +628,12 @@ export function orderCalls(store: OrderStore) {
       paidAt: null,
       statusChangedAt: at,
       paidWithoutAccount: false,
+      paidAlreadyOwned: false,
     });
     const checkout = await client.startCheckout({
       orderId: order.id,
       reference: order.reference,
-      description: `${order.planName} · ${periodLabel(order.days)}`,
+      description,
       priceCentavos: order.priceCentavos,
       method,
       buyer: { name: order.buyerName, email: order.buyerEmail },
@@ -584,6 +655,82 @@ export function orderCalls(store: OrderStore) {
       }
     }
     return { ok: true, reference: order.reference, redirectTo };
+  }
+
+  /** The Member's record, which Pay needs: the gate let them in, so one is there. */
+  async function payingMember(userId: string): Promise<Member> {
+    const member = await store.readMember(userId);
+    if (!member) throw new Error("Pay needs a Member record.");
+    return member;
+  }
+
+  async function payForPlan(
+    userId: string,
+    sent: PayInput,
+    client: PaymentsClient | null,
+  ): Promise<PayResult> {
+    const wanted = memberUserIdSchema.parse(userId);
+    const checks = sentPay(payInputSchema, sent, client);
+    if ("refusal" in checks) return checks.refusal;
+    const { examCode, planId, method } = checks.input;
+
+    const member = await payingMember(wanted);
+    const { exams, plans } = await store.readOnSale();
+    const plan = plans.find((candidate) => candidate.id === planId);
+    if (!plan || !examCodesOnSale(exams, plans).includes(plan.examCode)) {
+      return refuse("not-on-sale");
+    }
+    if (plan.examCode !== examCodeOf(examCode)) return refuse("wrong-exam");
+
+    const item = {
+      examCode: plan.examCode,
+      planId: plan.id,
+      courseId: null,
+      planName: plan.name,
+      days: plan.days,
+      priceCentavos: plan.priceCentavos,
+    };
+    return startOrder(member, item, method, orderItem(item), checks.client);
+  }
+
+  /**
+   * Pay for a Course (ticket 06): refused unless it's sold separately,
+   * Visible and on sale with a price, for an Exam on the Website and the one
+   * posted, and the Member doesn't own it; then a Pending Order with its
+   * name and price read here, and no days.
+   */
+  async function payForCourse(
+    userId: string,
+    sent: CoursePayInput,
+    client: PaymentsClient | null,
+  ): Promise<PayResult> {
+    const wanted = memberUserIdSchema.parse(userId);
+    const checks = sentPay(coursePayInputSchema, sent, client);
+    if ("refusal" in checks) return checks.refusal;
+    const { examCode, courseId, method } = checks.input;
+
+    const member = await payingMember(wanted);
+    const [course, { exams }, owned] = await Promise.all([
+      store.readCourse(courseId),
+      store.readOnSale(),
+      store.readOwnedCourseIds(wanted),
+    ]);
+    const onWebsite = (code: string) => exams.some((exam) => exam.code === code && exam.onWebsite);
+    if (!course || !isCourseForSale(course) || !onWebsite(course.examCode)) {
+      return refuse("not-on-sale");
+    }
+    if (course.examCode !== examCodeOf(examCode)) return refuse("wrong-exam");
+    if (owned.includes(course.id)) return refuse("owned");
+
+    const item = {
+      examCode: course.examCode,
+      planId: null,
+      courseId: course.id,
+      planName: course.title,
+      days: null,
+      priceCentavos: course.priceCentavos,
+    };
+    return startOrder(member, item, method, `${orderItem(item)} · yours to keep`, checks.client);
   }
 
   /** The Member's own Order, or null; an address that isn't a reference reads nothing. */
@@ -748,6 +895,7 @@ export function orderCalls(store: OrderStore) {
 
   return {
     payForPlan,
+    payForCourse,
     getMemberOrder,
     listMemberOrders,
     getPaymentAcknowledgement,

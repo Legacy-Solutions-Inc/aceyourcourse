@@ -6,8 +6,10 @@ import {
   getOrCreateMember,
   listAccessPasses,
   listNotices,
+  payForCourse,
   payForPlan,
 } from "@/services/member.mock";
+import { sampleCourseId } from "@/services/mock/courses";
 import { salesOverview } from "@/services/mock/admin/sales";
 import { samplePlanId } from "@/services/mock/plans";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
@@ -295,6 +297,96 @@ describe("POST /api/paymongo/webhook", () => {
 
     expect(response.status).toBe(200);
     expect(stored()).toEqual([{ reference: "AYC-10001", status: "pending" }]);
+  });
+});
+
+describe("POST /api/paymongo/webhook: Course Orders (Phase 5, ticket 06)", () => {
+  const PSAD = sampleCourseId("PSAD Masterclass");
+
+  /** Bea pays for the PSAD Masterclass with the fake; gives the Pending Order. */
+  async function pendingCourseOrder() {
+    const result = await payForCourse(
+      BEA.userId,
+      { examCode: "CE", courseId: PSAD, method: "qrph" },
+      samplePaymentsFake(),
+    );
+    if (!result.ok) throw new Error(`Pay was refused: ${result.reason}`);
+    const order = getSampleStore().orders.at(-1);
+    if (!order) throw new Error("Pay made no Order.");
+    return order;
+  }
+  const ownerships = () =>
+    getSampleStore().courseOwnerships.filter((owned) => owned.userId === BEA.userId);
+
+  it("grants Course Ownership on a paid checkout, with the Order as its source, logged as PayMongo", async () => {
+    const order = await pendingCourseOrder();
+
+    const response = await post(aboutOrder(checkoutPaid, order));
+
+    expect(response.status).toBe(200);
+    expect(stored()).toEqual([{ reference: "AYC-10001", status: "paid" }]);
+    expect(ownerships()).toEqual([
+      { userId: BEA.userId, courseId: PSAD, since: BOOT.toISOString(), orderId: order.id },
+    ]);
+    expect(await listAccessPasses(BEA.userId)).toEqual([]);
+    expect(getSampleStore().staffActivity.at(-1)).toMatchObject({
+      actor: { email: "system:paymongo", name: "PayMongo (system)" },
+      entity: "course-ownership",
+      action: "order-paid",
+    });
+  });
+
+  it("grants once when PayMongo sends the same paid event twice", async () => {
+    const order = await pendingCourseOrder();
+    const body = aboutOrder(checkoutPaid, order);
+
+    await post(body);
+    expect((await post(body)).status).toBe(200);
+
+    expect(ownerships()).toHaveLength(1);
+  });
+
+  it("changes nothing for a paid event with a bad signature", async () => {
+    const order = await pendingCourseOrder();
+
+    expect((await post(aboutOrder(checkoutPaid, order), "t=1,te=abc,li=")).status).toBe(401);
+
+    expect(stored()).toEqual([{ reference: "AYC-10001", status: "pending" }]);
+    expect(ownerships()).toEqual([]);
+  });
+
+  it("grants Course Ownership when a Failed Order becomes Paid", async () => {
+    const order = await pendingCourseOrder();
+    await post(aboutOrder(paymentFailed, order));
+
+    await post(aboutOrder(checkoutPaid, order, "evt_paid_after_failed"));
+
+    expect(stored()).toEqual([{ reference: "AYC-10001", status: "paid" }]);
+    expect(ownerships()).toHaveLength(1);
+  });
+
+  it("records a second paid Order for a Course already owned Paid, granting nothing, for Needs attention", async () => {
+    const first = await pendingCourseOrder();
+    const second = await pendingCourseOrder();
+    // Live Orders, so the Overview counts them.
+    const store = getSampleStore();
+    store.orders = store.orders.map((held) => ({ ...held, livemode: true }));
+
+    await post(aboutOrder(checkoutPaid, first, "evt_first_paid"));
+    await post(aboutOrder(checkoutPaid, second, "evt_second_paid"));
+
+    expect(getSampleStore().orders).toMatchObject([
+      { reference: "AYC-10001", status: "paid", paidAlreadyOwned: false },
+      { reference: "AYC-10002", status: "paid", paidAlreadyOwned: true },
+    ]);
+    expect(ownerships()).toEqual([expect.objectContaining({ orderId: first.id })]);
+    expect(getSampleStore().staffActivity.at(-1)).toMatchObject({
+      entity: "order",
+      action: "order-paid",
+      after: { reference: "AYC-10002", paidAlreadyOwned: true },
+    });
+    const sales = await salesOverview(sampleActor("owner"));
+    expect(sales?.payments).toMatchObject({ paidAlreadyOwned: 1, paidAfterExpiry: 0 });
   });
 });
 

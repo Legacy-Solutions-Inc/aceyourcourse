@@ -123,10 +123,10 @@ export function courseCard(course: MemberCourse, unlock: UnlockRoute): CourseCar
       case "renew":
         return { label: "Renew access", href: plansHref(unlock) };
       case "unlock":
-        // Ticket 06 points it at the Course on the Plans page.
+        // The Exam's Plans page, open at the Course in its One-time purchases (ticket 06).
         return {
           label: `Unlock for ${formatPeso(course.priceCentavos ?? 0)}`,
-          href: paths.memberApp.plansFor(course.examCode),
+          href: paths.memberApp.plansForCourse(course.examCode, course.id),
         };
       case "not-on-sale":
         return { label: "Not on sale right now", href: null };

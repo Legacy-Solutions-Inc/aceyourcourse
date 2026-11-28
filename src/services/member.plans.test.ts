@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { sampleCourseId } from "@/services/mock/courses";
 import { samplePlanId } from "@/services/mock/plans";
 
 import { sampleActor } from "../../test/admin-inputs";
@@ -87,6 +88,14 @@ describe.each(MEMBER_ARMS)("Member seam: Plans ($name)", (arm) => {
             days: 180,
             priceCentavos: 229_900,
             bestValue: false,
+          },
+        ],
+        courses: [
+          {
+            id: sampleCourseId("PSAD Masterclass"),
+            title: "PSAD Masterclass",
+            priceCentavos: 149_900,
+            owned: false,
           },
         ],
         passEndsAt: null,

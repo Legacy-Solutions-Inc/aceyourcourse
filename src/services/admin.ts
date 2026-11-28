@@ -64,6 +64,7 @@ import type {
   AdminCourseList,
   AdminCourseModule,
   AdminCourseSummary,
+  OneTimePurchase,
   AdminLessonPreview,
   AdminLessonUpload,
   AdminDeck,
@@ -1197,9 +1198,31 @@ export interface AdminService {
     visible: boolean,
   ): Promise<AdminResult<{ visibility: ContentVisibility }>>;
   /**
+   * "How members get it" (Owners only; Phase 5, ticket 06): Included in its
+   * Exam's All-Access, or Sold separately, at once; it's off sale after,
+   * every Course Ownership and all progress kept. Refused for an Editor.
+   */
+  setCourseAccess(
+    actor: StaffActor,
+    input: { id: string; access: Course["access"] },
+  ): Promise<AdminResult<Course>>;
+  /** Plans & prices → One-time purchases (Owners only; ticket 06): every separately sold Course. */
+  listOneTimePurchases(actor: StaffActor): Promise<AdminResult<OneTimePurchase[]>>;
+  /** A separately sold Course's price, in whole pesos as a Plan's (Owners only; ticket 06). */
+  setCoursePrice(
+    actor: StaffActor,
+    input: { id: string; price: string | number },
+  ): Promise<AdminResult<OneTimePurchase>>;
+  /** A separately sold Course's On sale: on only with a price (Owners only; ticket 06). */
+  setCourseOnSale(
+    actor: StaffActor,
+    input: { id: string; onSale: boolean },
+  ): Promise<AdminResult<OneTimePurchase>>;
+  /**
    * Deletes a Course with its Modules and Lessons, then their videos at the
    * video service (a delete it refuses is logged in Staff Activity, never
-   * blocking).
+   * blocking). Refused while anyone owns it or any Order names it (ticket
+   * 06): it can be hidden instead.
    */
   deleteCourse(
     actor: StaffActor,
@@ -1423,6 +1446,10 @@ export const getCourseForAdmin = impl.getCourseForAdmin;
 export const createCourse = impl.createCourse;
 export const updateCourse = impl.updateCourse;
 export const setCourseVisibility = impl.setCourseVisibility;
+export const setCourseAccess = impl.setCourseAccess;
+export const listOneTimePurchases = impl.listOneTimePurchases;
+export const setCoursePrice = impl.setCoursePrice;
+export const setCourseOnSale = impl.setCourseOnSale;
 export const deleteCourse = impl.deleteCourse;
 export const createCourseModule = impl.createCourseModule;
 export const renameCourseModule = impl.renameCourseModule;

@@ -90,7 +90,7 @@ function rowOf(order: AdminOrder): string[] {
     order.buyerEmail,
     orderItem(order),
     order.examCode,
-    String(order.days),
+    order.days === null ? "" : String(order.days),
     pesos(order.priceCentavos),
     methodLabel(order.method),
     order.livemode ? status : `${status} (test)`,

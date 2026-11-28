@@ -33,6 +33,7 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
     userId: "user-1",
     examCode: "ME",
     planId: "plan-me-30",
+    courseId: null,
     planName: "ME All-Access",
     days: 30,
     priceCentavos: 44_900,
@@ -52,6 +53,7 @@ function order(fields: Partial<AdminOrder> = {}): AdminOrder {
     paidAt: null,
     statusChangedAt: MADE,
     paidWithoutAccount: false,
+    paidAlreadyOwned: false,
     ...fields,
   };
 }
@@ -340,5 +342,40 @@ describe("PayMongo's reference and dashboard link", () => {
       "https://dashboard.paymongo.com/payments?search=pay_Payment0001",
     );
     expect(payMongoDashboardUrl(order())).toBeNull();
+  });
+});
+
+describe("a Course Order (Phase 5, ticket 06)", () => {
+  const course = {
+    planId: null,
+    courseId: "6a1e2d3c-4b5a-4f6e-8d7c-9b0a1f2e3d4c",
+    planName: "PSAD Masterclass",
+    days: null,
+  };
+
+  it("names the Course, with no access period", () => {
+    expect(orderItem(paid(course))).toBe("PSAD Masterclass · Video course");
+  });
+
+  it("says the Member owns the Course once PayMongo confirmed it", () => {
+    expect(orderTimeline(paid(course)).at(-1)).toMatchObject({
+      label: "PayMongo confirmed · Course owned for good",
+      tone: "done",
+    });
+    expect(statusNote(paid(course))).toBe(
+      "Paid and confirmed by PayMongo. The Member owns the Course for good. Refunds, if any, are issued from the PayMongo dashboard.",
+    );
+  });
+
+  it("says a payment for a Course already owned gave nothing, to refund in PayMongo", () => {
+    const twice = paid({ ...course, paidAlreadyOwned: true });
+
+    expect(orderTimeline(twice).at(-1)).toMatchObject({
+      label: "PayMongo confirmed · Course already owned, nothing given",
+      tone: "failed",
+    });
+    expect(statusNote(twice)).toBe(
+      "PayMongo confirmed this payment while the Member already owned the Course, so it gave nothing. Refund it in the PayMongo dashboard.",
+    );
   });
 });

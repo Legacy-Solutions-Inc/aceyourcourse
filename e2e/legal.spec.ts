@@ -2,7 +2,7 @@ import { expect, type Page, test } from "@playwright/test";
 
 import { paths } from "../src/paths";
 
-// The Privacy Policy and Terms of Use (v2.1, a draft pending legal review) on
+// The Privacy Policy (v2.1) and Terms of Use (v2.2), drafts pending legal review, on
 // a real browser, with the Member App switch off (the launch default).
 // Expected copy is src/content/legal/.
 
@@ -13,13 +13,14 @@ const switcher = (page: Page) => page.getByRole("navigation", { name: "Legal doc
 const contents = (page: Page) => page.getByRole("navigation", { name: "Contents" });
 const summary = (page: Page) => page.getByRole("region", { name: "In short" });
 
-for (const { path, title, other, otherPath, sections } of [
+for (const { path, title, other, otherPath, sections, version } of [
   {
     path: "/legal/privacy",
     title: "Privacy Policy",
     other: "Terms of Use",
     otherPath: "/legal/terms",
     sections: 16,
+    version: "Version 2.1 · Effective 26 Nov 2026",
   },
   {
     path: "/legal/terms",
@@ -27,6 +28,8 @@ for (const { path, title, other, otherPath, sections } of [
     other: "Privacy Policy",
     otherPath: "/legal/privacy",
     sections: 14,
+    // Legal v2.2 (Phase 5, ticket 06): the Terms add Courses sold separately.
+    version: "Version 2.2 · Effective 28 Nov 2026",
   },
 ]) {
   test.describe(`the ${title}`, () => {
@@ -42,7 +45,7 @@ for (const { path, title, other, otherPath, sections } of [
       );
 
       await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
-      await expect(page.getByText("Version 2.1 · Effective 26 Nov 2026")).toBeVisible();
+      await expect(page.getByText(version)).toBeVisible();
       await expect(summary(page).getByRole("listitem")).toHaveCount(6);
       await expect(
         summary(page).getByText("This summary isn’t a replacement for the full text below."),
@@ -214,10 +217,11 @@ for (const viewport of [
     await expect(main.getByText(/Nothing renews automatically/)).toBeVisible();
     await expect(
       main.getByText(
-        "Ask Support within 7 days of payment. Refunds are at our discretion. A refund removes that Order’s days.",
+        "Ask Support within 7 days of payment. Refunds are at our discretion. A refund removes that Order’s days, or the course that Order bought.",
       ),
     ).toBeVisible();
-    await expect(main.getByText(/Version 2\.1, effective 26 November 2026/)).toBeVisible();
+    await expect(main.getByText(/A course is a one-time purchase/)).toBeVisible();
+    await expect(main.getByText(/Version 2\.2, effective 28 November 2026/)).toBeVisible();
   });
 }
 

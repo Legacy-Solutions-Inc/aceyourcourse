@@ -117,23 +117,33 @@ export function ConfirmingPayment({
   );
 }
 
-/** Paid (Pay success): the Member is in, until when; nothing renews by itself. */
+/**
+ * Paid (Pay success): the Member is in, until when; nothing renews by
+ * itself. A Course (Phase 5, ticket 06) is theirs for good, and opens.
+ */
 export function PaymentConfirmed({ order }: { order: MemberOrder }) {
   const until = order.accessUntil ? passEndDate(order.accessUntil) : null;
+  const { courseId } = order;
   return (
     <OrderCard shadow="shadow-ayc-success">
       <p className={cn(LABEL, "text-ayc-success")}>✓ PAYMENT CONFIRMED</p>
       <h1 className="text-[30px] leading-[1.1] font-extrabold tracking-[-0.02em]">
         You’re in. Kaya mo ’to.
       </h1>
-      {until ? (
+      {courseId ? (
+        <p className={BODY}>You own it for good. It never expires.</p>
+      ) : until ? (
         <p className={BODY}>
           It’s active until {until}. It won’t renew on its own. We’ll remind you a week before it
           ends.
         </p>
       ) : null}
       <p className={PAYMENT_LINE}>{paymentLine(order)}</p>
-      <PlansLink href={paths.memberApp.library}>Start reviewing</PlansLink>
+      {courseId ? (
+        <PlansLink href={paths.memberApp.course(courseId)}>Start the course</PlansLink>
+      ) : (
+        <PlansLink href={paths.memberApp.library}>Start reviewing</PlansLink>
+      )}
     </OrderCard>
   );
 }

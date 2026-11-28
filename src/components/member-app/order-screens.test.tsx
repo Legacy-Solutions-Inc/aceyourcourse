@@ -16,6 +16,7 @@ const ORDER: MemberOrder = {
   id: "0b6a3f1e-2c4d-4e5f-8a9b-1c2d3e4f5a6b",
   reference: "AYC-10483",
   examCode: "CE",
+  courseId: null,
   planName: "CE All-Access",
   days: 90,
   priceCentavos: 129_900,
@@ -124,6 +125,25 @@ describe("PaymentConfirmed", () => {
     expect(screen.getByRole("link", { name: "Start reviewing" })).toHaveAttribute(
       "href",
       "/app/library",
+    );
+  });
+
+  it("says a Course is the Member's for good, and opens it (Phase 5, ticket 06)", () => {
+    const course: MemberOrder = {
+      ...PAID,
+      courseId: "6a1e2d3c-4b5a-4f6e-8d7c-9b0a1f2e3d4c",
+      planName: "PSAD Masterclass",
+      days: null,
+      priceCentavos: 149_900,
+      accessUntil: null,
+    };
+    render(<PaymentConfirmed order={course} />);
+
+    expect(screen.getByText("You own it for good. It never expires.")).toBeInTheDocument();
+    expect(screen.queryByText(/active until/)).toBeNull();
+    expect(screen.getByRole("link", { name: "Start the course" })).toHaveAttribute(
+      "href",
+      "/app/courses/6a1e2d3c-4b5a-4f6e-8d7c-9b0a1f2e3d4c",
     );
   });
 });

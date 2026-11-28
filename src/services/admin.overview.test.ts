@@ -131,6 +131,7 @@ describe.each(ADMIN_ARMS)("Admin seam: the Owner's sales figures ($name)", (arm)
       userId: BEA.userId,
       examCode: "CE",
       planId: samplePlanId("CE", 30),
+      courseId: null,
       planName: "CE All-Access",
       days: 30,
       priceCentavos: pesos * 100,
@@ -143,6 +144,7 @@ describe.each(ADMIN_ARMS)("Admin seam: the Owner's sales figures ($name)", (arm)
       buyerEmail: BEA.email,
       statusChangedAt: paidAt ?? createdAt,
       paidWithoutAccount: false,
+      paidAlreadyOwned: false,
       ...fields,
       createdAt,
       paidAt,
@@ -155,6 +157,7 @@ describe.each(ADMIN_ARMS)("Admin seam: the Owner's sales figures ($name)", (arm)
     buyerEmail: PAOLO.email,
     examCode: "ME",
     planId: samplePlanId("ME", 30),
+    courseId: null,
     planName: "ME All-Access",
   } as const;
 
@@ -287,6 +290,7 @@ describe.each(ADMIN_ARMS)("Admin seam: the Owner's sales figures ($name)", (arm)
       invoicesToSend: 1,
       paidAfterExpiry: 1,
       paidAccountDeleted: 0,
+      paidAlreadyOwned: 0,
     });
   });
 
@@ -329,6 +333,7 @@ describe.each(ADMIN_ARMS)("Admin seam: the Owner's sales figures ($name)", (arm)
       invoicesToSend: 0,
       paidAfterExpiry: 0,
       paidAccountDeleted: 0,
+      paidAlreadyOwned: 0,
     });
     expect(await seam.getPaidToday(OWNER)).toEqual({
       date: "2026-11-25",

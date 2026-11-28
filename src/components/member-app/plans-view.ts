@@ -3,6 +3,7 @@ import { isPastExamDate } from "@/lib/member-app/exam-date";
 import { formatDate, manilaDate } from "@/lib/manila-time";
 import { formatPeso } from "@/lib/money";
 import { perMonthText, periodLabel } from "@/lib/plans/plan-text";
+import { paths } from "@/paths";
 import type { PlansExam, TargetExam } from "@/services/member.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -110,3 +111,70 @@ export function planRows(exam: PlansExam, now: Date): PlanRowView[] {
 /** Pure: the row the page opens with picked: the Best value Plan, else the shortest; null with none. */
 export const defaultPlanId = (rows: readonly PlanRowView[]): string | null =>
   (rows.find((row) => row.bestValue) ?? rows[0])?.id ?? null;
+
+// ── One-time purchases (Phase 5, ticket 06; BUILD-MAP §3 Plans, the
+// ONE-TIME PURCHASE row) ──────────────────────────────────────────────────────
+
+const COURSE_ITEM_PREFIX = "course:";
+
+/** What a One-time purchase's radio sends as the `plan`: "course:" and the Course's id. */
+export const courseItemId = (courseId: string) => `${COURSE_ITEM_PREFIX}${courseId}`;
+
+/** Pure: the Course a sent `plan` names, when it's a One-time purchase's; null for a Plan's. */
+export const courseOfItem = (item: string): string | null =>
+  item.startsWith(COURSE_ITEM_PREFIX) ? item.slice(COURSE_ITEM_PREFIX.length) : null;
+
+/** One One-time purchase row, and the order summary when it's picked. */
+export interface CourseRowView {
+  /** The radio's value: "course:" and the Course's id. */
+  id: string;
+  courseId: string;
+  /** "PSAD Masterclass". */
+  title: string;
+  /** "Video course only · yours to keep". */
+  line: string;
+  /** "₱1,499". */
+  price: string;
+  /** The Member owns it: "Owned · Watch", with no Pay. */
+  owned: boolean;
+  /** The Course's page, where "Owned · Watch" goes. */
+  href: string;
+  /** The order summary's item, "PSAD Masterclass · Video course". */
+  summary: string;
+  /** The order summary's end: "ONE-TIME · NO EXPIRY". */
+  summaryUntil: string;
+}
+
+/** Pure: an Exam's One-time purchase rows, in the seam's order. */
+export function courseRows(exam: PlansExam): CourseRowView[] {
+  return exam.courses.map((course) => ({
+    id: courseItemId(course.id),
+    courseId: course.id,
+    title: course.title,
+    line: "Video course only · yours to keep",
+    price: formatPeso(course.priceCentavos),
+    owned: course.owned,
+    href: paths.memberApp.course(course.id),
+    summary: `${course.title} · Video course`,
+    summaryUntil: "ONE-TIME · NO EXPIRY",
+  }));
+}
+
+/**
+ * Pure: the item the page opens with picked: the Course the address asks
+ * for, when the Member can buy it; else the Best value Plan, else the
+ * shortest; else the first Course they can buy. Null with nothing to buy.
+ */
+export function pickedItem(
+  plans: readonly PlanRowView[],
+  courses: readonly CourseRowView[],
+  askedCourse: string | null,
+): string | null {
+  const buyable = courses.filter((course) => !course.owned);
+  return (
+    buyable.find((course) => course.courseId === askedCourse)?.id ??
+    defaultPlanId(plans) ??
+    buyable[0]?.id ??
+    null
+  );
+}

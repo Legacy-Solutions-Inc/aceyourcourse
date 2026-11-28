@@ -44,6 +44,8 @@ function storeFailingToRecord(): OrderStore & { added: string[] } {
       plans: getSampleStore().plans.filter((plan) => plan.onSale),
     }),
     readMember: async () => BEA,
+    readCourse: async () => null,
+    readOwnedCourseIds: async () => [],
     addOrder: async (draft) => {
       added.push(draft.id);
       return { ...draft, reference: orderReference(10_001) };
@@ -100,6 +102,7 @@ describe("settleOrder on an Order with no account", () => {
     userId: null,
     examCode: "CE",
     planId: samplePlanId("CE", 90),
+    courseId: null,
     planName: "CE All-Access",
     days: 90,
     priceCentavos: 129_900,
@@ -114,6 +117,7 @@ describe("settleOrder on an Order with no account", () => {
     paidAt: null,
     statusChangedAt: "2026-11-18T03:42:00.000Z",
     paidWithoutAccount: false,
+    paidAlreadyOwned: false,
   };
   const gone = (order: Order): OrderHolding => ({
     order,
@@ -121,6 +125,7 @@ describe("settleOrder on an Order with no account", () => {
     pass: null,
     targetExams: [],
     history: [],
+    ownsCourse: false,
     refunds: [],
   });
 
@@ -135,6 +140,7 @@ describe("settleOrder on an Order with no account", () => {
         paidWithoutAccount: true,
       },
       paid: null,
+      ownership: null,
       refunds: [],
       reduction: null,
       activity: expect.objectContaining({

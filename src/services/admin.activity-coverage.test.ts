@@ -76,6 +76,7 @@ const NOTED_ORDER: Order = {
   userId: null,
   examCode: "CE",
   planId: CE_30_PLAN,
+  courseId: null,
   planName: "CE All-Access",
   days: 30,
   priceCentavos: 49_900,
@@ -90,6 +91,7 @@ const NOTED_ORDER: Order = {
   paidAt: null,
   statusChangedAt: new Date().toISOString(),
   paidWithoutAccount: false,
+  paidAlreadyOwned: false,
 };
 
 /** Bea's Paid Order, whose official invoice she has asked for (ticket 08). */
@@ -162,6 +164,8 @@ const READS = [
   // The Course builder's list and one Course (Phase 5, ticket 01).
   "listCoursesForAdmin",
   "getCourseForAdmin",
+  // Plans & prices → One-time purchases (ticket 06).
+  "listOneTimePurchases",
   // The Lesson editor's preview: a playback pass, nothing saved (ticket 02).
   "previewLessonVideo",
 ] as const satisfies readonly (keyof AdminService)[];
@@ -404,6 +408,32 @@ const WRITES: Record<string, Write> = {
     // The sample Courses are Visible (ticket 02): hiding one saves.
     saves: (seam, actor) => seam.setCourseVisibility(actor, PSAD_COURSE, false),
     refused: (seam, actor) => seam.setCourseVisibility(actor, NO_SUCH_COURSE, true),
+    refusal: "not-found",
+  },
+  // Selling a Course, Owners only (ticket 06).
+  setCourseAccess: {
+    actor: OWNER,
+    entity: "course",
+    entityId: PSAD_COURSE,
+    saves: (seam, actor) => seam.setCourseAccess(actor, { id: PSAD_COURSE, access: "included" }),
+    refused: (seam, actor) =>
+      seam.setCourseAccess(actor, { id: NO_SUCH_COURSE, access: "included" }),
+    refusal: "not-found",
+  },
+  setCoursePrice: {
+    actor: OWNER,
+    entity: "course",
+    entityId: PSAD_COURSE,
+    saves: (seam, actor) => seam.setCoursePrice(actor, { id: PSAD_COURSE, price: "1999" }),
+    refused: (seam, actor) => seam.setCoursePrice(actor, { id: PSAD_COURSE, price: "0" }),
+    refusal: "invalid",
+  },
+  setCourseOnSale: {
+    actor: OWNER,
+    entity: "course",
+    entityId: PSAD_COURSE,
+    saves: (seam, actor) => seam.setCourseOnSale(actor, { id: PSAD_COURSE, onSale: false }),
+    refused: (seam, actor) => seam.setCourseOnSale(actor, { id: NO_SUCH_COURSE, onSale: false }),
     refusal: "not-found",
   },
   deleteCourse: {

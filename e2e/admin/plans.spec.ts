@@ -1,6 +1,7 @@
-import { expect as baseExpect, type Page, test } from "@playwright/test";
+import { type Browser, expect as baseExpect, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
+import { LIVE, SKIP_LIVE, signInAndOnboard } from "../member-app/helpers";
 import { resetSampleData, signInAs } from "./helpers";
 
 // Plans & prices on sample data (Phase 4, ticket 01; stories 145, 146, 151p
@@ -8,7 +9,11 @@ import { resetSampleData, signInAs } from "./helpers";
 // CE Plan while its preview shows the per-month figure, then ticks Best
 // value on it, and CE's 90-day Plan loses its tag. Switching a Plan off keeps
 // it listed, marked off. An Editor sees no SALES group, and the screen
-// refuses them.
+// refuses them. Selling a Course (Phase 5, ticket 06): an Owner switches the
+// "HPGE Crash Course" in its Course settings, each way confirmed with how
+// many Members it affects, then sets ₱1,299 in One-time purchases and turns
+// it on sale, and it shows on CE's Plans page; an Editor sees the choice
+// read-only.
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -79,7 +84,89 @@ test.describe("an Owner", () => {
   });
 });
 
+/** Bea, in her own browser context, sees CE's One-time purchases on the Plans page. */
+async function memberSeesOnPlans(browser: Browser, text: RegExp) {
+  const context = await browser.newContext();
+  try {
+    const page = await context.newPage();
+    await signInAndOnboard(page, "tester", "CE");
+    await page.goto(paths.memberApp.plansFor("CE"));
+    await expect(page.getByRole("radiogroup", { name: "ONE-TIME PURCHASES" })).toContainText(text);
+  } finally {
+    await context.close();
+  }
+}
+
+test.describe("an Owner selling a Course (Phase 5, ticket 06)", () => {
+  test("switches the HPGE Crash Course each way, confirmed with the count, then prices it and puts it on sale", async ({
+    page,
+    browser,
+  }) => {
+    // The sample Courses and Bea are the in-memory sample data's.
+    test.skip(LIVE, SKIP_LIVE);
+    test.setTimeout(120_000);
+    await signInAs(page, "owner", paths.admin.courses);
+    await page
+      .getByRole("navigation", { name: "COURSES · 3" })
+      .getByRole("link", { name: /HPGE Crash Course/ })
+      .click();
+    await page.getByRole("link", { name: "Course settings →" }).click();
+    const how = page.getByRole("radiogroup", { name: "How members get it" });
+    await expect(how.getByRole("radio", { name: "Sold separately" })).toBeChecked();
+
+    // To Included: the confirmation counts who gains it.
+    await how.getByRole("radio", { name: "Included in CE All-Access" }).click();
+    let dialog = page.getByRole("dialog");
+    await expect(dialog).toContainText(/\d+ members? with active CE All-Access gains? it now/);
+    await dialog.getByRole("button", { name: "Include in All-Access" }).click();
+    await expect(how.getByRole("radio", { name: "Included in CE All-Access" })).toBeChecked();
+
+    // Back to Sold separately: the confirmation counts who loses it.
+    await how.getByRole("radio", { name: "Sold separately" }).click();
+    dialog = page.getByRole("dialog");
+    await expect(dialog).toContainText(/\d+ members? who watched it through CE All-Access/);
+    await dialog.getByRole("button", { name: "Sell separately" }).click();
+    await expect(how.getByRole("radio", { name: "Sold separately" })).toBeChecked();
+    await expect(page.getByText("No price yet")).toBeVisible();
+
+    // One-time purchases: ₱1,299, then On sale.
+    await page.getByRole("link", { name: "Set the price in Plans & prices" }).click();
+    await expect(page).toHaveURL(/\/admin\/plans$/);
+    const oneTime = page.getByRole("region", { name: /ONE-TIME PURCHASES · NO EXPIRY/ });
+    await oneTime.getByRole("textbox", { name: "Price: HPGE Crash Course" }).fill("1,299");
+    await oneTime
+      .getByRole("listitem")
+      .filter({ hasText: "HPGE Crash Course" })
+      .getByRole("button", { name: "Save price" })
+      .click();
+    await expect(oneTime.getByRole("textbox", { name: "Price: HPGE Crash Course" })).toHaveValue(
+      "1299",
+    );
+    const hpge = oneTime.getByRole("listitem").filter({ hasText: "HPGE Crash Course" });
+    await expect(hpge.getByText("NOT ON SALE")).toBeVisible();
+    await hpge.getByRole("switch", { name: "On sale: HPGE Crash Course" }).click();
+    // Saved once the page reads it again: the NOT ON SALE tag goes.
+    await expect(hpge.getByText("NOT ON SALE")).toHaveCount(0);
+    await page.reload();
+    await expect(oneTime.getByRole("switch", { name: "On sale: HPGE Crash Course" })).toBeChecked();
+
+    await memberSeesOnPlans(browser, /HPGE Crash Course.*₱1,299/);
+  });
+});
+
 test.describe("an Editor", () => {
+  test("sees how Members get a Course read-only, with no way to switch it", async ({ page }) => {
+    test.skip(LIVE, SKIP_LIVE);
+    await signInAs(page, "editor", paths.admin.courses);
+    await page
+      .getByRole("navigation", { name: "COURSES · 3" })
+      .getByRole("link", { name: /PSAD Masterclass/ })
+      .click();
+    await page.getByRole("link", { name: "Course settings →" }).click();
+    await expect(page.getByText("Sold separately · ₱1,499")).toBeVisible();
+    await expect(page.getByRole("radiogroup", { name: "How members get it" })).toHaveCount(0);
+  });
+
   test("sees no SALES group, and is refused Plans & prices", async ({ page }) => {
     await signInAs(page, "editor");
     await expect(page).toHaveURL(/\/admin$/);
