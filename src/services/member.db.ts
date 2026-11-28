@@ -46,6 +46,12 @@ import {
   quizAttemptToRow,
   quizFromRow,
 } from "@/services/content.rows";
+import {
+  courseStudyCalls,
+  type CourseStudyStore,
+  type CourseTree,
+} from "@/services/course-study.core";
+import { courseFromRow } from "@/services/courses.rows";
 import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
 import { progressCalls, progressSubjectsOf, type ProgressStore } from "@/services/progress.core";
 import { quizStudyCalls, type QuizStudyStore } from "@/services/quiz-study.core";
@@ -827,6 +833,81 @@ const databaseReviewerStore: ReviewerStudyStore = {
     }),
 };
 
+// ── Watching video Courses ──────────────────────────────────────────────────
+
+/** Courses from the database, each whole with its Modules and Lessons. */
+async function courseTrees(rows: (typeof schema.courses.$inferSelect)[]): Promise<CourseTree[]> {
+  if (rows.length === 0) return [];
+  const { courseModules, lessons } = schema;
+  const db = getDb();
+  const ids = rows.map((row) => row.id);
+  const [moduleRows, lessonRows] = await Promise.all([
+    db.select().from(courseModules).where(inArray(courseModules.courseId, ids)),
+    db
+      .select({ lesson: lessons })
+      .from(lessons)
+      .innerJoin(courseModules, eq(courseModules.id, lessons.moduleId))
+      .where(inArray(courseModules.courseId, ids)),
+  ]);
+  return rows.map((row) => {
+    const modules = moduleRows.filter((module) => module.courseId === row.id);
+    const moduleIds = new Set(modules.map((module) => module.id));
+    return {
+      course: courseFromRow(row),
+      modules,
+      lessons: lessonRows
+        .map(({ lesson }) => lesson)
+        .filter((lesson) => moduleIds.has(lesson.moduleId)),
+    };
+  });
+}
+
+const databaseCourseStore: CourseStudyStore = {
+  readExamSubjects: (examCode) =>
+    inDatabase(async () => {
+      const { subjects } = schema;
+      return getDb()
+        .select({ code: subjects.code, name: subjects.name })
+        .from(subjects)
+        .where(eq(subjects.examCode, examCode))
+        .orderBy(asc(subjects.position));
+    }),
+  readExamCourses: (examCode) =>
+    inDatabase(async () => {
+      const { courses } = schema;
+      return courseTrees(
+        await getDb().select().from(courses).where(eq(courses.examCode, examCode)),
+      );
+    }),
+  readCourse: (courseId) =>
+    inDatabase(async () => {
+      const { courses } = schema;
+      const rows = await getDb().select().from(courses).where(eq(courses.id, courseId));
+      return (await courseTrees(rows))[0] ?? null;
+    }),
+  readCourseOfLesson: (lessonId) =>
+    inDatabase(async () => {
+      const { courses, courseModules, lessons } = schema;
+      const rows = await getDb()
+        .select({ course: courses })
+        .from(lessons)
+        .innerJoin(courseModules, eq(courseModules.id, lessons.moduleId))
+        .innerJoin(courses, eq(courses.id, courseModules.courseId))
+        .where(eq(lessons.id, lessonId));
+      return (await courseTrees(rows.map(({ course }) => course)))[0] ?? null;
+    }),
+  readOwnedCourseIds: (userId) =>
+    inDatabase(async () => {
+      const { courseOwnerships } = schema;
+      const rows = await getDb()
+        .select({ courseId: courseOwnerships.courseId })
+        .from(courseOwnerships)
+        .where(eq(courseOwnerships.userId, userId));
+      return rows.map((row) => row.courseId);
+    }),
+  readMemberEmail: (userId) => databaseReviewerStore.readMemberEmail(userId),
+};
+
 // ── Progress ────────────────────────────────────────────────────────────────
 
 const databaseProgressStore: ProgressStore = {
@@ -1514,6 +1595,7 @@ export const databaseArm: MemberService = {
   ...deckStudyCalls(databaseStudyStore),
   ...quizStudyCalls(databaseQuizStore),
   ...reviewerStudyCalls(databaseReviewerStore),
+  ...courseStudyCalls(databaseCourseStore),
   ...progressCalls(databaseProgressStore),
   listNotices,
   dismissNotice,

@@ -108,10 +108,11 @@ const home = async () =>
 const account = async () => (await import("./(shell)/account/page")).default();
 const addExamPage = async () => (await import("./(shell)/add-exam/page")).default();
 const support = async () => (await import("./(shell)/support/page")).default();
-const comingSoon = async (segment: string) =>
+const unknownScreen = async (segment: string) =>
   (await import("./(shell)/[screen]/page")).default({
     params: Promise.resolve({ screen: segment }),
   });
+const courses = async () => (await import("./(shell)/courses/page")).default();
 const shell = async (children: React.ReactNode) =>
   (await import("./(shell)/layout")).default({ children });
 const signInPage = async (query: { next?: string; error?: string } = {}) =>
@@ -129,13 +130,13 @@ const signInAs = async (fields: Record<string, string>) =>
 const GATED_PAGES: [string, () => Promise<unknown>][] = [
   ["/app", home],
   ["/app/library", library],
-  ["/app/courses", () => comingSoon("courses")],
+  ["/app/courses", courses],
   ["/app/plans", plans],
   ["/app/billing", billing],
   ["/app/account", account],
   ["/app/add-exam", addExamPage],
   ["/app/support", support],
-  ["/app/nonsense", () => comingSoon("nonsense")],
+  ["/app/nonsense", () => unknownScreen("nonsense")],
 ];
 
 beforeEach(() => {
@@ -264,27 +265,12 @@ describe("Home", () => {
   });
 });
 
-describe("the screens that aren't built yet", () => {
-  // Billing has its own screen since Phase 4, ticket 06 (billing.test.tsx).
-  it.each([["courses", "03 · COURSES"]])(
-    "/app/%s says it's coming in the beta",
-    async (segment, eyebrow) => {
-      await agreedAs(TESTER, "Bea Tester");
-      signedInAs(TESTER);
-      render(await comingSoon(segment));
-
-      expect(
-        screen.getByRole("heading", { level: 1, name: "Coming in the beta" }),
-      ).toBeInTheDocument();
-      expect(screen.getByText(eyebrow)).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: "Back to Home" })).toHaveAttribute("href", "/app");
-    },
-  );
-
-  it("answers 404 for an address that is no screen, once the gate and consent let the Member in", async () => {
+describe("an address that is no screen", () => {
+  // Every menu screen has its own folder since Courses (Phase 5, ticket 03).
+  it("answers 404, once the gate and consent let the Member in", async () => {
     await agreedAs(TESTER, "Bea Tester");
     signedInAs(TESTER);
-    await expect(comingSoon("nonsense")).rejects.toThrow("NEXT_NOT_FOUND");
+    await expect(unknownScreen("nonsense")).rejects.toThrow("NEXT_NOT_FOUND");
   });
 });
 

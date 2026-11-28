@@ -11,6 +11,7 @@ import type { PaymentEvent, PaymentsClient } from "@/services/payments.types";
 import { databaseArm } from "@/services/member.db";
 import type { InvoiceRequestInput } from "@/services/member.schema";
 import type { RenewalViewer } from "@/services/renewal.core";
+import type { VideoService } from "@/services/video.types";
 import * as mockImpl from "@/services/member.mock";
 import type {
   ActiveDevice,
@@ -21,6 +22,8 @@ import type {
   CardMarkInput,
   ConsentRecord,
   ContentItem,
+  CourseOpening,
+  CourseShelf,
   DeckOpening,
   DeckPositionInput,
   DeviceClaim,
@@ -30,6 +33,8 @@ import type {
   MemberNotice,
   ExpirySweep,
   InvoiceRequestResult,
+  LessonOpening,
+  LessonRef,
   MemberOrder,
   PaymentAcknowledgement,
   PaymentEventResult,
@@ -330,6 +335,43 @@ export interface MemberService {
     access: MemberAccess,
   ): Promise<StudyResult<ReaderPlace>>;
 
+  // Watching video Courses (Phase 5, ticket 03; spec, Phase 5 planning
+  // decisions → Access and playback, The Courses screen;
+  // course-study.core.ts). Each call takes the signed-in Member's side of the
+  // access decision and decides every Course and Lesson with it, from the
+  // Course as it is now and the Member's own Course Ownership (never anyone
+  // else's). Each is scoped to the User id given.
+
+  /**
+   * The Courses screen's shelf for an Exam: its Subjects in order, and its
+   * Visible Courses plus the Hidden ones the Member owns, oldest first, each
+   * with its counts of Published Lessons and the access decision on its
+   * Lessons that aren't Free Preview. Empty for an Exam that isn't one.
+   */
+  listCourses(userId: string, examCode: string, access: MemberAccess): Promise<CourseShelf>;
+  /**
+   * A Course's page: its Modules with Published Lessons, each Lesson with its
+   * length and whether the Member can play it. A locked Course opens too
+   * (only its Free Preview Lessons play). Refused for the gate, the device,
+   * or a Hidden Course the Member doesn't own ("unavailable"); not found for
+   * an id that isn't a Course's.
+   */
+  openCourse(userId: string, courseId: string, access: MemberAccess): Promise<CourseOpening>;
+  /**
+   * A Lesson, with its Course's outline. Only once the access decision allows
+   * it does it ask `video` for a playback pass, drawing the Member's own
+   * email and short Member ID across the video; with no video service the
+   * player says so. Refused, asking for no pass, when the decision refuses
+   * (locked, expired, Unpublished or Hidden, the device, the gate); not found
+   * for an id that isn't a Lesson's, or a Lesson the named Course doesn't hold.
+   */
+  openLesson(
+    userId: string,
+    ref: LessonRef,
+    access: MemberAccess,
+    video: VideoService | null,
+  ): Promise<LessonOpening>;
+
   // Progress (spec, Phase 3 → Progress calculator, Progress storage, Resume,
   // Corrections never cost progress; ticket 15; progress.core.ts). Reads
   // only, with every number from the pure calculator
@@ -544,6 +586,9 @@ export const reviewQuizAttempt = impl.reviewQuizAttempt;
 export const openReviewerPdf = impl.openReviewerPdf;
 export const readReviewerPage = impl.readReviewerPage;
 export const saveReaderPosition = impl.saveReaderPosition;
+export const listCourses = impl.listCourses;
+export const openCourse = impl.openCourse;
+export const openLesson = impl.openLesson;
 export const getProgress = impl.getProgress;
 export const getTopicPercents = impl.getTopicPercents;
 export const listNotices = impl.listNotices;

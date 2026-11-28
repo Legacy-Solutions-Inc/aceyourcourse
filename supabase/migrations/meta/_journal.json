@@ -260,6 +260,13 @@
       "when": 1795839212295,
       "tag": "20261128041332_lesson_videos",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1795845945804,
+      "tag": "20261128060545_course_ownerships",
+      "breakpoints": true
     }
   ]
 }

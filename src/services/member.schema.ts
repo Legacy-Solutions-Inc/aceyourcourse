@@ -186,6 +186,9 @@ export const quizSubmitSchema = z.object({
 /** One of the Member's past attempts at a quiz, as its address names it (ticket 11). */
 export const attemptRefSchema = z.object({ quizId: sentId, attemptId: sentId });
 
+/** A Lesson as its address names it (Phase 5, ticket 03): its Course, and itself. */
+export const lessonRefSchema = z.object({ courseId: sentId, lessonId: sentId });
+
 /**
  * One page of a Reviewer PDF, as the page endpoint asks for it (ticket 14),
  * from its address: a Reviewer PDF or page that isn't one is no page.

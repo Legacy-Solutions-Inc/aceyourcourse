@@ -173,11 +173,17 @@ const ADMIN_TABLES = [
 ];
 
 /**
- * The Orders (Phase 4, ticket 03), with the Access Pass history rows that
- * point at them: an Order keeps its Plan and Exam from being deleted, so a
- * local load clears them before the catalogue.
+ * The Orders (Phase 4, ticket 03), with the Course Ownerships (Phase 5,
+ * ticket 03) and Access Pass history rows that point at them: an Order keeps
+ * its Plan and Exam from being deleted, and a Course Ownership its Course, so
+ * a local load clears them before the catalogue.
  */
-const ORDER_TABLES = [schema.paymentEvents, schema.accessPassGrants, schema.orders];
+const ORDER_TABLES = [
+  schema.courseOwnerships,
+  schema.paymentEvents,
+  schema.accessPassGrants,
+  schema.orders,
+];
 
 /**
  * Deletes every Catalogue row, children before parents, with the Member App

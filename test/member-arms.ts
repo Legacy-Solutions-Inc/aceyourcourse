@@ -6,6 +6,7 @@ import * as sampleArm from "@/services/member.mock";
 import type { AccessPass, CardMark, QuizAttempt, ReviewerPageView } from "@/services/content.types";
 import type { ConsentRecord, DeviceSwitch, Member, PrivacyRequest } from "@/services/member.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
+import type { CourseOwnership } from "@/services/courses.types";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import {
@@ -53,6 +54,8 @@ export interface MemberArm {
   deviceSwitches(): Promise<DeviceSwitch[]>;
   /** Gives a Member an Access Pass behind the seam's back, as a grant (ticket 17) will. */
   putAccessPass(pass: AccessPass): Promise<void>;
+  /** Gives a Member Course Ownership behind the seam's back, as buying or giving (tickets 06, 07) will. */
+  putCourseOwnership(ownership: CourseOwnership): Promise<void>;
   /** Uploads a card's back image as the Admin's card form does, and gives the path its save sends. */
   uploadCardImage(bytes: Uint8Array, options?: CardImageUpload): Promise<string>;
   /** Uploads a Reviewer PDF as the Admin's Reviewer PDFs screen does, and gives the path its record claims. */
@@ -99,6 +102,10 @@ const SAMPLE_ARM: MemberArm = {
   putAccessPass: async (pass) => {
     const store = getSampleStore();
     store.accessPasses = [...store.accessPasses, structuredClone(pass)];
+  },
+  putCourseOwnership: async (ownership) => {
+    const store = getSampleStore();
+    store.courseOwnerships = [...store.courseOwnerships, structuredClone(ownership)];
   },
   uploadCardImage: uploadSampleCardImage,
   uploadReviewerPdf: (bytes) => uploadSampleReviewerPdf(bytes),

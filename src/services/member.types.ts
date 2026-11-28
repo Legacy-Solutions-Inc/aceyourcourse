@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { AllowedVia, RefusedDecision } from "@/lib/member-app/access";
+import type { AccessDecision, AllowedVia, RefusedDecision } from "@/lib/member-app/access";
 import type { ExamDateSetBy } from "@/lib/member-app/exam-date";
 import type { InvoiceStatus } from "@/lib/payments/invoice-requests";
 import type { Order } from "@/lib/payments/order-ledger";
@@ -10,14 +10,17 @@ import type { QuizChoice } from "@/lib/quizzes/quiz-rules";
 import type { ReaderPlace } from "@/lib/reviewer-pdfs/reader";
 import type { Plan } from "@/services/admin.types";
 import type { CardMarkVerdict, ContentKind } from "@/services/content.types";
+import type { CourseAccess } from "@/services/courses.types";
 import type {
   attemptRefSchema,
   cardMarkInputSchema,
   deckPositionInputSchema,
+  lessonRefSchema,
   quizSubmitSchema,
   readerPositionInputSchema,
   reviewerPageInputSchema,
 } from "@/services/member.schema";
+import type { PlaybackPass } from "@/services/video.types";
 
 // The Member seam's types (spec, Phase 3 → Phase 3 seams). A Member is a
 // person with a Member App account (CONTEXT.md), keyed by their User.
@@ -377,6 +380,128 @@ export type ReviewerPage =
 
 /** One page of a Reviewer PDF, as the page endpoint's address names it. */
 export type ReviewerPageInput = z.input<typeof reviewerPageInputSchema>;
+
+// Watching video Courses (Phase 5, ticket 03; spec, Phase 5 planning
+// decisions → Access and playback, The Courses screen; course-study.core.ts).
+// The seam decides every Course and Lesson with the access decision, from the
+// Course as it is now and the Member's own Course Ownership, and asks the
+// video service for a playback pass only once it allows the Lesson.
+
+/** A Course as the Courses screen and its page show it to the Member asking. */
+export interface MemberCourse {
+  id: string;
+  examCode: string;
+  subjectCode: string;
+  title: string;
+  /** Plain text; may be empty. */
+  description: string;
+  /** The 16:9 cover's URL, or null for the Subject block. */
+  coverSrc: string | null;
+  access: CourseAccess;
+  /** The one-time price in centavos, or null until an Owner sets one. */
+  priceCentavos: number | null;
+  onSale: boolean;
+  /** Visible; a Hidden one shows only to the Members who own it. */
+  visible: boolean;
+  /** The Member holds Course Ownership of it. */
+  owned: boolean;
+  /** Its Modules with a Published Lesson. */
+  modules: number;
+  /** Its Published Lessons. */
+  lessons: number;
+  /** Its Published Free Preview Lessons. */
+  freePreviewLessons: number;
+  /** The first Published Lesson, where "Start course" goes; null with none. */
+  firstLessonId: string | null;
+  /** The first Published Free Preview Lesson, where "Watch free" goes; null with none. */
+  firstFreeLessonId: string | null;
+  /** The access decision on its Lessons that aren't Free Preview: the card's state. */
+  decision: AccessDecision;
+}
+
+/** The Courses screen's shelf for one Exam. */
+export interface CourseShelf {
+  /** The Exam's Subjects, in the Exam's order. */
+  subjects: { code: string; name: string }[];
+  /** Its Visible Courses and the Hidden ones the Member owns, oldest first. */
+  courses: MemberCourse[];
+}
+
+/** One Published Lesson in a Course's list. */
+export interface MemberLesson {
+  id: string;
+  /** Its place among its Module's Published Lessons, from 1. */
+  number: number;
+  title: string;
+  /** The video's length in whole seconds. */
+  seconds: number;
+  freePreview: boolean;
+  /** The access decision allows the Member to play it. */
+  playable: boolean;
+}
+
+/** One Module with a Published Lesson, and those Lessons, in order. */
+export interface MemberModule {
+  id: string;
+  /** Its place among the Modules shown, from 1. */
+  number: number;
+  title: string;
+  lessons: MemberLesson[];
+}
+
+/** A Course the access decision refused outright (the gate, the device, or Hidden from a non-owner). */
+export interface RefusedCourse {
+  status: "refused";
+  course: MemberCourse;
+  decision: RefusedDecision;
+}
+
+/** What opening a Course's page finds. Locked Courses open too: only their Free Preview Lessons play. */
+export type CourseOpening =
+  /** No Course with this id. */
+  | { status: "not-found" }
+  | RefusedCourse
+  | { status: "open"; course: MemberCourse; outline: MemberModule[] };
+
+/** The Lesson being opened, with where it sits. */
+export interface OpenedLesson extends MemberLesson {
+  /** Shown under the video: plain text with line breaks; may be empty. */
+  notes: string;
+  /** Its Module's place among the Modules shown, from 1. */
+  moduleNumber: number;
+}
+
+/** What plays in place of the video. */
+export type LessonPlayer =
+  /** A playback pass for the Member's Active Device, drawing `watermark` across the video. */
+  | { kind: "pass"; pass: PlaybackPass; seconds: number; watermark: string }
+  /** The video service isn't connected (no key): "This video isn't available yet". */
+  | { kind: "not-connected" }
+  /** The video service didn't give a pass. */
+  | { kind: "didnt-answer" };
+
+/** A Lesson as its address names it: its Course, and itself. */
+export type LessonRef = z.input<typeof lessonRefSchema>;
+
+/** What opening a Lesson finds. */
+export type LessonOpening =
+  /** No such Lesson, or not in the Course its address names. */
+  | { status: "not-found" }
+  /** The access decision refused: no pass is asked for. */
+  | {
+      status: "refused";
+      course: MemberCourse;
+      lesson: { id: string; title: string };
+      decision: RefusedDecision;
+    }
+  | {
+      status: "allowed";
+      course: MemberCourse;
+      outline: MemberModule[];
+      lesson: OpenedLesson;
+      via: AllowedVia;
+      player: LessonPlayer;
+    };
 
 /** Where the Member is in a Reviewer PDF, as the reader saves it: its page and zoom. */
 export type ReaderPositionInput = z.input<typeof readerPositionInputSchema>;

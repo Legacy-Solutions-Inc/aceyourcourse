@@ -64,6 +64,11 @@ export const MEMBER_DATABASE_ARM: MemberArm = {
   putAccessPass: async (pass) => {
     await getDb().insert(schema.accessPasses).values(accessPassToRow(pass));
   },
+  putCourseOwnership: async ({ since, ...ownership }) => {
+    await getDb()
+      .insert(schema.courseOwnerships)
+      .values({ ...ownership, since: new Date(since) });
+  },
   // The Admin's database arm uploads and reads them as the Member seam's does.
   uploadCardImage: (bytes, options) => ADMIN_DATABASE_ARM.uploadCardImage(bytes, options),
   uploadReviewerPdf: (bytes) => ADMIN_DATABASE_ARM.uploadReviewerPdf(bytes),

@@ -80,3 +80,18 @@ export interface Lesson {
   replacementVideoId: string | null;
   replacementState: LessonReplacementState | null;
 }
+
+/**
+ * Course Ownership (ticket 03; CONTEXT.md: Course Ownership): a Member's
+ * permanent right to one Course, from a Paid Order or given by an Owner. It
+ * never expires. The access decision opens a separately sold Course with it,
+ * and a Hidden Course stays open to its owners. Tickets 06 and 07 make them.
+ */
+export interface CourseOwnership {
+  userId: string;
+  courseId: string;
+  /** ISO time it began. */
+  since: string;
+  /** The Paid Order that gave it, or null when an Owner gave it ("Given by Ace Your Course"). */
+  orderId: string | null;
+}

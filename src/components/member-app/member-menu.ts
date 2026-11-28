@@ -2,9 +2,8 @@ import { paths } from "@/paths";
 import { CONTENT_KINDS } from "@/services/content.types";
 
 // The Member App's fixed menu (Member App BUILD-MAP §2; mockup L794): seven
-// numbered items, the same for every Member. Courses and Billing open a
-// "Coming in the beta" screen until their tickets land; Plans arrived with
-// Phase 4, ticket 02.
+// numbered items, the same for every Member, each with its own screen (Courses
+// arrived last, with Phase 5, ticket 03).
 
 export type MemberScreenKey =
   "home" | "library" | "courses" | "plans" | "billing" | "account" | "support";
@@ -68,18 +67,6 @@ export const MEMBER_MENU: readonly MemberMenuItem[] = [
     href: paths.memberApp.support,
   },
 ];
-
-/**
- * Pure: the menu item whose screen lives at /app/{segment}, or null. Home
- * lives at /app itself, so it has no segment.
- */
-export function memberScreen(segment: string): MemberMenuItem | null {
-  return (
-    MEMBER_MENU.find(
-      (item) => item.key !== "home" && item.href === `${paths.memberApp.home}/${segment}`,
-    ) ?? null
-  );
-}
 
 /** Pure: whether a menu item is the current screen. Home matches only itself. */
 export function isCurrentItem(pathname: string, href: string): boolean {

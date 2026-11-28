@@ -153,24 +153,20 @@ test.describe("a Beta Tester", () => {
     });
   }
 
-  test("opens each screen that isn't built yet, and goes back Home", async ({ page }) => {
+  test("opens Courses from the menu", async ({ page }) => {
     await signInAndOnboard(page, "tester");
     await expect(welcome(page, "Bea")).toBeVisible();
 
-    // Billing has its own screen since Phase 4, ticket 06 (billing.spec.ts).
-    for (const [label, path] of [["Courses", "/app/courses"]] as const) {
-      await memberNav(page)
-        .getByRole("link", { name: new RegExp(label) })
-        .click();
-      await expect(page).toHaveURL(new RegExp(`${path}$`));
-      await expect(page.getByRole("heading", { level: 1 })).toHaveText("Coming in the beta");
-      await expect(memberNav(page).getByRole("link", { name: new RegExp(label) })).toHaveAttribute(
-        "aria-current",
-        "page",
-      );
-    }
-    await page.getByRole("link", { name: "Back to Home" }).click();
-    await expect(page).toHaveURL(/\/app$/);
+    // Every menu item has its own screen since Courses (Phase 5, ticket 03; courses.spec.ts).
+    await memberNav(page)
+      .getByRole("link", { name: /Courses/ })
+      .click();
+    await expect(page).toHaveURL(/\/app\/courses$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Your ME courses");
+    await expect(memberNav(page).getByRole("link", { name: /Courses/ })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 
   test("signs out to the sign-in screen, and /app asks to sign in again", async ({ page }) => {
@@ -504,17 +500,10 @@ test.describe("accessibility", () => {
         await expectNoBlockingViolations(page);
       });
 
-      test("no serious or critical violations on Home and a screen that isn't built yet", async ({
-        page,
-      }) => {
+      test("no serious or critical violations on Home", async ({ page }) => {
         await signInAndOnboard(page, "tester");
         await expect(welcome(page, "Bea")).toBeVisible();
-        await expectNoBlockingViolations(page);
-
-        // The Library, Plans and Billing are built (their checks are in
-        // library.spec.ts, plans.spec.ts and billing.spec.ts); Courses isn't yet.
-        await page.goto(paths.memberApp.courses);
-        await expect(page.getByRole("heading", { level: 1 })).toHaveText("Coming in the beta");
+        // Each screen's own checks are in its spec (library.spec.ts, courses.spec.ts…).
         await expectNoBlockingViolations(page);
       });
 

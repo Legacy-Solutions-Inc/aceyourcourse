@@ -5,6 +5,12 @@ import { type Order, orderReference } from "@/lib/payments/order-ledger";
 import { type OrderRefund, refundsOfOrder } from "@/lib/payments/refunds";
 import { readablePageCount } from "@/lib/reviewer-pdfs/status";
 import { contentItemOf, type ContentExam, libraryOf } from "@/services/content.rules";
+import {
+  courseStudyCalls,
+  type CourseStudyStore,
+  type CourseTree,
+} from "@/services/course-study.core";
+import type { Course } from "@/services/courses.types";
 import type { AccessPass, ContentKind, ContentRecords } from "@/services/content.types";
 import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
 import { progressCalls, progressSubjectsOf, type ProgressStore } from "@/services/progress.core";
@@ -421,6 +427,51 @@ const sampleReviewerStore: ReviewerStudyStore = {
 
 export const { openReviewerPdf, readReviewerPage, saveReaderPosition } =
   reviewerStudyCalls(sampleReviewerStore);
+
+// ── Watching video Courses ──────────────────────────────────────────────────
+
+/** A Course from the sample store, whole, as the Course calls read it. */
+function sampleCourseTree(course: Course): CourseTree {
+  const { courseModules, lessons } = getSampleStore();
+  const modules = courseModules.filter((module) => module.courseId === course.id);
+  const moduleIds = new Set(modules.map((module) => module.id));
+  return structuredClone({
+    course,
+    modules,
+    lessons: lessons.filter((lesson) => moduleIds.has(lesson.moduleId)),
+  });
+}
+
+const sampleCourseStore: CourseStudyStore = {
+  async readExamSubjects(examCode) {
+    const exam = getSampleStore().catalogue.exams.find((candidate) => candidate.code === examCode);
+    return (exam?.subjects ?? []).map(({ code, name }) => ({ code, name }));
+  },
+  async readExamCourses(examCode) {
+    return getSampleStore()
+      .courses.filter((course) => course.examCode === examCode)
+      .map(sampleCourseTree);
+  },
+  async readCourse(courseId) {
+    const course = getSampleStore().courses.find((candidate) => candidate.id === courseId);
+    return course ? sampleCourseTree(course) : null;
+  },
+  async readCourseOfLesson(lessonId) {
+    const store = getSampleStore();
+    const lesson = store.lessons.find((candidate) => candidate.id === lessonId);
+    const inModule = store.courseModules.find((candidate) => candidate.id === lesson?.moduleId);
+    const course = store.courses.find((candidate) => candidate.id === inModule?.courseId);
+    return course ? sampleCourseTree(course) : null;
+  },
+  async readOwnedCourseIds(userId) {
+    return getSampleStore()
+      .courseOwnerships.filter((ownership) => ownership.userId === userId)
+      .map((ownership) => ownership.courseId);
+  },
+  readMemberEmail: (userId) => sampleReviewerStore.readMemberEmail(userId),
+};
+
+export const { listCourses, openCourse, openLesson } = courseStudyCalls(sampleCourseStore);
 
 // ── Progress ────────────────────────────────────────────────────────────────
 

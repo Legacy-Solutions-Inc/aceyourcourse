@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { firstName, isCurrentItem, isFocusScreen, MEMBER_MENU, memberScreen } from "./member-menu";
+import { firstName, isCurrentItem, isFocusScreen, MEMBER_MENU } from "./member-menu";
 
 // The Member App's fixed menu (Member App BUILD-MAP §2): seven numbered items,
 // the same for every Member.
@@ -16,20 +16,6 @@ describe("MEMBER_MENU", () => {
       ["07", "Support", "Contact us", "/app/support"],
     ]);
   });
-});
-
-describe("memberScreen", () => {
-  it("finds a screen that isn't built yet by its address", () => {
-    expect(memberScreen("library")).toMatchObject({ label: "Library", code: "02" });
-    expect(memberScreen("support")).toMatchObject({ label: "Support" });
-  });
-
-  it.each(["home", "", "sign-in", "not-open-yet", "nonsense", "Library"])(
-    "knows no screen at %j",
-    (segment) => {
-      expect(memberScreen(segment)).toBeNull();
-    },
-  );
 });
 
 describe("isCurrentItem", () => {

@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { type AccessDecision, type AccessInputs, accessDecision, passEndDate } from "./access";
+import {
+  type AccessCourse,
+  type AccessDecision,
+  type AccessInputs,
+  type AllowedVia,
+  accessDecision,
+  passEndDate,
+} from "./access";
 
 // The access decision (spec, Phase 3 → Access decision seam; Testing
 // Decisions → Seam 2): one table over every outcome and the order the rule
@@ -150,12 +157,135 @@ const ROWS: Row[] = [
   ],
 ];
 
-function allowed(via: "free-preview" | "pass" | "staff"): AccessDecision {
+function allowed(via: AllowedVia): AccessDecision {
   return { outcome: "allowed", via };
 }
 
+// A Lesson (Phase 5, ticket 03; spec, Access decision seam as amended on
+// 2026-11-28; Testing Decisions → Phase 5 seams → Access decision): its
+// Course's facts join the rule. An included Course's Lessons open with an
+// active pass for its Exam; a separately sold Course's only with Course
+// Ownership, never a pass; a Hidden Course stays open to its owners only;
+// an Unpublished Lesson is unavailable to everyone.
+const included = { visible: true, soldSeparately: false, owned: false };
+const soldSeparately = { visible: true, soldSeparately: true, owned: false };
+const lesson = (
+  course: AccessCourse,
+  change: Partial<Omit<AccessInputs["content"], "course">> = {},
+) => content({ ...change, course });
+
+const LESSON_ROWS: Row[] = [
+  // An included Course: like any content of its Exam.
+  [
+    "an included Course's Lesson with an active pass",
+    { ...lesson(included), ...activeCe },
+    allowed("pass"),
+  ],
+  ["an included Course's Lesson with no pass", lesson(included), { outcome: "locked" }],
+  [
+    "an included Course's Lesson with a pass for another Exam",
+    { ...lesson(included), passes: [{ examCode: "ME", endsAt: at(30 * DAY) }] },
+    { outcome: "locked" },
+  ],
+  [
+    "an included Course's Lesson with an ended pass: expired, progress kept",
+    { ...lesson(included), ...expiredCe },
+    { outcome: "expired", passEndedAt: at(-DAY) },
+  ],
+  [
+    "an included Course's Free Preview Lesson with no pass",
+    lesson(included, { freePreview: true }),
+    allowed("free-preview"),
+  ],
+
+  // A separately sold Course: only Course Ownership opens it.
+  [
+    "a separately sold Course's Lesson with an active pass but no Ownership",
+    { ...lesson(soldSeparately), ...activeCe },
+    { outcome: "locked" },
+  ],
+  [
+    "a separately sold Course's Lesson with an ended pass: locked, never expired",
+    { ...lesson(soldSeparately), ...expiredCe },
+    { outcome: "locked" },
+  ],
+  [
+    "a separately sold Course's Lesson with Ownership and no pass",
+    lesson({ ...soldSeparately, owned: true }),
+    allowed("ownership"),
+  ],
+  [
+    "a separately sold Course's Free Preview Lesson with no Ownership",
+    { ...lesson(soldSeparately, { freePreview: true }), ...activeCe },
+    allowed("free-preview"),
+  ],
+  [
+    "a separately sold Course's Lesson for active Staff",
+    { ...lesson(soldSeparately), activeStaff: true },
+    allowed("staff"),
+  ],
+  [
+    "an included Course its owner owns (switched back from Sold separately): still theirs",
+    lesson({ ...included, owned: true }),
+    allowed("ownership"),
+  ],
+
+  // Hidden Courses and Unpublished Lessons.
+  [
+    "a Hidden Course's Lesson for its owner",
+    lesson({ ...soldSeparately, visible: false, owned: true }),
+    allowed("ownership"),
+  ],
+  [
+    "a Hidden Course's Lesson for a non-owner with an active pass",
+    { ...lesson({ ...included, visible: false }), ...activeCe },
+    { outcome: "unavailable" },
+  ],
+  [
+    "a Hidden Course's Free Preview Lesson for a non-owner",
+    lesson({ ...soldSeparately, visible: false }, { freePreview: true }),
+    { outcome: "unavailable" },
+  ],
+  [
+    "a Hidden Course's Lesson for active Staff who don't own it",
+    { ...lesson({ ...included, visible: false }), activeStaff: true },
+    { outcome: "unavailable" },
+  ],
+  [
+    "an Unpublished Lesson for the Course's owner",
+    lesson({ ...soldSeparately, owned: true }, { available: false }),
+    { outcome: "unavailable" },
+  ],
+  [
+    "an Unpublished Lesson in a Hidden Course for its owner",
+    lesson({ ...soldSeparately, visible: false, owned: true }, { available: false }),
+    { outcome: "unavailable" },
+  ],
+
+  // The gate and the Active Device first, as for all content.
+  [
+    "an owned Lesson on a replaced device",
+    { ...lesson({ ...soldSeparately, owned: true }), device: "replaced" },
+    { outcome: "device-replaced" },
+  ],
+  [
+    "a Free Preview Lesson with no device token",
+    { ...lesson(included, { freePreview: true }), device: "no-token" },
+    { outcome: "no-token" },
+  ],
+  [
+    "an owned Lesson with the gate closed",
+    { ...lesson({ ...soldSeparately, owned: true }), gate: "not-open-yet" },
+    { outcome: "not-open-yet" },
+  ],
+];
+
 describe("accessDecision", () => {
   it.each(ROWS)("%s", (_name, change, expected) => {
+    expect(accessDecision({ ...BASE, ...change })).toEqual(expected);
+  });
+
+  it.each(LESSON_ROWS)("%s", (_name, change, expected) => {
     expect(accessDecision({ ...BASE, ...change })).toEqual(expected);
   });
 

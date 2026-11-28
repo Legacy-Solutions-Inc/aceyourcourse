@@ -1591,3 +1591,33 @@ export const lessons = pgTable(
     ),
   ],
 ).enableRLS();
+
+/**
+ * Course Ownership (Phase 5, ticket 03; CONTEXT.md: Course Ownership): a
+ * Member's permanent right to one Course, from a Paid Order (`order_id`) or
+ * given by an Owner ("Given by Ace Your Course", no Order). One per Member and
+ * Course. It never expires; the access decision opens a separately sold
+ * Course with it, and a Hidden Course stays open to its owners. Tickets 06
+ * and 07 make them (buying and giving). Deleting the Member's account deletes
+ * theirs; a Course can't be deleted while someone owns it, nor an Order that
+ * gave one. Like every table, RLS is on with no policies: only the server
+ * reads it.
+ */
+export const courseOwnerships = pgTable(
+  "course_ownerships",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => members.userId, { onDelete: "cascade" }),
+    courseId: uuid("course_id")
+      .notNull()
+      .references(() => courses.id, { onDelete: "restrict" }),
+    since: at("since").notNull().defaultNow(),
+    orderId: uuid("order_id").references(() => orders.id, { onDelete: "restrict" }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.courseId] }),
+    index("course_ownerships_course_id_idx").on(t.courseId),
+    index("course_ownerships_order_id_idx").on(t.orderId),
+  ],
+).enableRLS();

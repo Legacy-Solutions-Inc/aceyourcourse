@@ -31,7 +31,7 @@ import type {
   StudyDay,
   Topic,
 } from "@/services/content.types";
-import type { Course, CourseModule, Lesson } from "@/services/courses.types";
+import type { Course, CourseModule, CourseOwnership, Lesson } from "@/services/courses.types";
 import type { TargetExamRecord } from "@/services/member.rules";
 import type {
   ConsentRecord,
@@ -192,6 +192,12 @@ export interface SampleStore {
   courseModules: CourseModule[];
   /** Each Module's Lessons, in no particular order: each has its position. */
   lessons: Lesson[];
+  /**
+   * Every Member's Course Ownerships (ticket 03), one per Member and Course,
+   * in the order given. The sample data starts with none: Bea can buy the
+   * PSAD Masterclass in the demo.
+   */
+  courseOwnerships: CourseOwnership[];
   /** Every Member's Access Passes, at most one per Exam (Phase 3). */
   accessPasses: AccessPass[];
   /** The grants behind the Access Passes, oldest first (Phase 3; written from ticket 17). */
@@ -292,6 +298,7 @@ function createSampleStore(
     reviewerPageViews: [],
     readerPositions: [],
     ...sampleCourses(catalogue),
+    courseOwnerships: [],
     ...sampleAccessPasses(now, catalogue),
     memberNotices: [],
     renewalDismissals: [],

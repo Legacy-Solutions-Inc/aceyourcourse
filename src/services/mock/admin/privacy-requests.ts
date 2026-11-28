@@ -57,6 +57,7 @@ function deleteMember(store: SampleStore, userId: string, requestId: string) {
   store.memberDeviceSwitches = others(store.memberDeviceSwitches);
   store.accessPasses = others(store.accessPasses);
   store.accessPassGrants = others(store.accessPassGrants);
+  store.courseOwnerships = others(store.courseOwnerships);
   store.memberNotices = others(store.memberNotices);
   store.renewalDismissals = others(store.renewalDismissals);
   store.cardMarks = others(store.cardMarks);

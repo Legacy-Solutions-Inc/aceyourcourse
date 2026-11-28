@@ -99,7 +99,13 @@ export const paths = {
      * development-only route until it expires, standing in for Storage's.
      */
     sampleCardImage: (token: string) => `/api/dev/card-images/${encodeURIComponent(token)}`,
+    /** The Courses screen (Phase 5, ticket 03): the selected Target Exam's video Courses. */
     courses: "/app/courses",
+    /** One Course's page: its Modules and Lessons. Opening it runs the access decision. */
+    course: (id: string) => `/app/courses/${encodeURIComponent(id)}`,
+    /** One Lesson's screen, in its Course: the player runs the access decision first. */
+    lesson: (courseId: string, lessonId: string) =>
+      `/app/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}`,
     plans: "/app/plans",
     /** Plans open on one Exam's (ticket 02): where a lock's "See plans" and "Renew access" lead. */
     plansFor: (examCode: string) => `/app/plans?exam=${encodeURIComponent(examCode)}`,
