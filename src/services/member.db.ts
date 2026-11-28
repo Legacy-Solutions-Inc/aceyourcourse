@@ -25,7 +25,7 @@ import * as schema from "@/lib/db/schema";
 import { deviceStatusFor } from "@/lib/member-app/device-token";
 import { noticesToShow } from "@/lib/member-app/notices";
 import { privacyRequestDueOn } from "@/lib/member-app/privacy-requests";
-import type { PassHistoryRow } from "@/lib/payments/order-ledger";
+import type { Order, PassHistoryRow } from "@/lib/payments/order-ledger";
 import { type OrderRefund, refundsOfOrder } from "@/lib/payments/refunds";
 import { toPlanDays } from "@/lib/plans/plan-rules";
 import { isReaderZoom } from "@/lib/reviewer-pdfs/reader";
@@ -52,7 +52,7 @@ import {
   type CourseStudyStore,
   type CourseTree,
 } from "@/services/course-study.core";
-import { courseFromRow } from "@/services/courses.rows";
+import { courseFromRow, courseOwnershipFromRow } from "@/services/courses.rows";
 import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
 import { progressCalls, progressSubjectsOf, type ProgressStore } from "@/services/progress.core";
 import { quizStudyCalls, type QuizStudyStore } from "@/services/quiz-study.core";
@@ -86,6 +86,7 @@ import type {
   DeviceSwitch,
   Member,
   MemberNotice,
+  OwnedCourse,
   PrivacyRequest,
 } from "@/services/member.types";
 import {
@@ -94,6 +95,7 @@ import {
   type OrderStore,
   type OrderWrite,
   type OwnOrder,
+  type OwnershipRefund,
   type PassReduction,
 } from "@/services/orders.core";
 import {
@@ -957,6 +959,30 @@ const databaseCourseStore: CourseStudyStore = {
     ),
 };
 
+/** Billing's "Your Courses" (ticket 07): the Member's own Course Ownerships, oldest first. */
+export const listOwnedCourses = async (userId: string): Promise<OwnedCourse[]> => {
+  const wanted = memberUserIdSchema.parse(userId);
+  const { courseOwnerships, courses, orders } = schema;
+  try {
+    const rows = await getDb()
+      .select({
+        courseId: courseOwnerships.courseId,
+        title: courses.title,
+        examCode: courses.examCode,
+        since: courseOwnerships.since,
+        orderReference: orders.reference,
+      })
+      .from(courseOwnerships)
+      .innerJoin(courses, eq(courses.id, courseOwnerships.courseId))
+      .leftJoin(orders, eq(orders.id, courseOwnerships.orderId))
+      .where(eq(courseOwnerships.userId, wanted))
+      .orderBy(asc(courseOwnerships.since), asc(courseOwnerships.courseId));
+    return rows.map((row) => ({ ...row, since: row.since.toISOString() }));
+  } catch (error) {
+    throw asDatabaseError(error);
+  }
+};
+
 /** Pure: a lesson_progress row as the Course calls and the calculator read it. */
 function lessonRecordFromRow(row: typeof schema.lessonProgress.$inferSelect): LessonRecord {
   return {
@@ -1089,6 +1115,7 @@ export const noticeFromRow = (row: NoticeRow): MemberNotice => ({
   createdAt: row.createdAt.toISOString(),
   dismissedAt: row.dismissedAt?.toISOString() ?? null,
   reference: row.reference,
+  courseTitle: row.courseTitle,
 });
 
 /** A notice as a row to add: its `seq` is the table's to give. */
@@ -1101,6 +1128,7 @@ export const noticeToRow = (notice: MemberNotice): Omit<NoticeRow, "seq"> => ({
   createdAt: new Date(notice.createdAt),
   dismissedAt: notice.dismissedAt === null ? null : new Date(notice.dismissedAt),
   reference: notice.reference,
+  courseTitle: notice.courseTitle,
 });
 
 const listNotices: MemberService["listNotices"] = async (userId) => {
@@ -1600,17 +1628,23 @@ async function holdOrder<T>(
         .orderBy(asc(memberTargetExams.seq))
     : [];
   const history = userId && pass ? await readPassHistory(tx, userId, examCode) : [];
-  // The Member's row is locked, so two paid Orders for one Course take turns here.
+  // The Member's row is locked, so two outcomes for one Course take turns here.
   const { courseOwnerships } = schema;
-  const owning =
-    userId && order.courseId
-      ? await tx
-          .select({ courseId: courseOwnerships.courseId })
-          .from(courseOwnerships)
-          .where(
-            and(eq(courseOwnerships.userId, userId), eq(courseOwnerships.courseId, order.courseId)),
-          )
-      : [];
+  const theirCourse = userId && order.courseId ? { userId, courseId: order.courseId } : null;
+  const [owning] = theirCourse
+    ? await tx
+        .select()
+        .from(courseOwnerships)
+        .where(
+          and(
+            eq(courseOwnerships.userId, theirCourse.userId),
+            eq(courseOwnerships.courseId, theirCourse.courseId),
+          ),
+        )
+    : [];
+  const coursePaidOrders = theirCourse
+    ? await readPaidCourseOrders(tx, theirCourse.userId, theirCourse.courseId)
+    : [];
 
   const { write, result } = work({
     order,
@@ -1619,7 +1653,8 @@ async function holdOrder<T>(
     targetExams: targetExams.map(targetExamFromRow),
     history,
     refunds: await readOrderRefunds(tx, [orderId]),
-    ownsCourse: owning.length > 0,
+    ownership: owning ? courseOwnershipFromRow(owning) : null,
+    coursePaidOrders,
   });
   if (!write) return result;
 
@@ -1649,6 +1684,7 @@ async function holdOrder<T>(
   if (write.reduction && member) {
     await writeReduction(tx, member.userId, examCode, write.reduction);
   }
+  if (write.ownershipRefund) await writeOwnershipRefund(tx, write.ownershipRefund);
   if (write.activity)
     await tx.insert(schema.staffActivity).values(staffActivityToRow(write.activity));
   return result;
@@ -1676,6 +1712,46 @@ async function writeReduction(
   await tx.insert(schema.staffActivity).values(staffActivityToRow(write.activity));
 }
 
+/**
+ * A Member's Paid Orders for a Course in `tx`, oldest paid first, then by
+ * reference (ticket 07): what a refund and "Remove Course" check still holds
+ * the Course. The caller has locked the Member's row.
+ */
+export async function readPaidCourseOrders(
+  tx: Transaction,
+  userId: string,
+  courseId: string,
+): Promise<Pick<Order, "id" | "reference">[]> {
+  const { orders } = schema;
+  return tx
+    .select({ id: orders.id, reference: orders.reference })
+    .from(orders)
+    .where(and(eq(orders.userId, userId), eq(orders.courseId, courseId), eq(orders.status, "paid")))
+    .orderBy(asc(orders.paidAt), asc(orders.reference));
+}
+
+/**
+ * Writes a Course Order's full refund's change to the buyer's Course
+ * Ownership in `tx` (ticket 07): the Ownership deleted with its notice, or
+ * given by another Paid Order, which is no longer marked paidAlreadyOwned;
+ * and the Staff Activity, inside the transaction that locked the Member.
+ */
+async function writeOwnershipRefund(
+  tx: Transaction,
+  { userId, courseId, change, activity }: OwnershipRefund,
+): Promise<void> {
+  const { courseOwnerships, orders } = schema;
+  const theirs = and(eq(courseOwnerships.userId, userId), eq(courseOwnerships.courseId, courseId));
+  if (change.kind === "removed") {
+    await tx.delete(courseOwnerships).where(theirs);
+    await tx.insert(schema.memberNotices).values(noticeToRow(change.notice));
+  } else {
+    await tx.update(courseOwnerships).set({ orderId: change.orderId }).where(theirs);
+    await tx.update(orders).set({ paidAlreadyOwned: false }).where(eq(orders.id, change.orderId));
+  }
+  await tx.insert(schema.staffActivity).values(staffActivityToRow(activity));
+}
+
 export const databaseArm: MemberService = {
   isBetaTester,
   getOrCreateMember,
@@ -1696,6 +1772,7 @@ export const databaseArm: MemberService = {
   ...quizStudyCalls(databaseQuizStore),
   ...reviewerStudyCalls(databaseReviewerStore),
   ...courseStudyCalls(databaseCourseStore),
+  listOwnedCourses,
   ...progressCalls(databaseProgressStore),
   listNotices,
   dismissNotice,

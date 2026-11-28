@@ -52,6 +52,7 @@ import * as quizEditor from "@/services/admin.quiz.db";
 import * as reviewerPdfs from "@/services/admin.reviewer-pdfs.db";
 import * as users from "@/services/admin.users.db";
 import * as passes from "@/services/admin.access-passes.db";
+import * as courseGifts from "@/services/admin.course-gifts.db";
 import * as privacy from "@/services/admin.privacy-requests.db";
 import * as plans from "@/services/admin.plans.db";
 import * as orders from "@/services/admin.orders.db";
@@ -838,6 +839,8 @@ export const databaseArm: AdminService = {
   grantAccess: passes.grantAccess,
   extendAccess: passes.extendAccess,
   endAccess: passes.endAccess,
+  giveCourse: courseGifts.giveCourse,
+  removeCourse: courseGifts.removeCourse,
   // The Members' Privacy Requests, read and carried out by their own module (tickets 18 and 19).
   listPrivacyRequests: privacy.listPrivacyRequests,
   getPrivacyRequestForAdmin: privacy.getPrivacyRequestForAdmin,

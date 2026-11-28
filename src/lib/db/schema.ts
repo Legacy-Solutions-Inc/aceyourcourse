@@ -1366,10 +1366,12 @@ export const memberNoticeKind = pgEnum("member_notice_kind", NOTICE_KINDS);
 /**
  * Each Member's in-app notices (ticket 17; spec, Phase 3 planning decisions →
  * In-app notices): one per grant, extension or end of an Access Pass, or
- * full refund (Phase 4, ticket 09), in the order made (`seq`), shown as a
- * dismissible banner until `dismissed_at` is set. `ends_at` is the pass's
- * end after the change; `reference` is a refund's Order. Deleting the Member
- * or the Exam deletes their notices. No email is sent.
+ * full refund (Phase 4, ticket 09), or Course given, removed or refunded
+ * (Phase 5, ticket 07), in the order made (`seq`), shown as a dismissible
+ * banner until `dismissed_at` is set. `ends_at` is the pass's end after the
+ * change (a Course's notice: when it was made); `reference` is a refund's
+ * Order; `course_title` is a Course notice's Course. Deleting the Member or
+ * the Exam deletes their notices. No email is sent.
  */
 export const memberNotices = pgTable(
   "member_notices",
@@ -1388,11 +1390,19 @@ export const memberNotices = pgTable(
     dismissedAt: at("dismissed_at"),
     // The refunded Order's reference, for a refund's notice; null for any other.
     reference: text("reference"),
+    // The Course's title as it was then, for a Course's notice (Phase 5,
+    // ticket 07: given, removed or refunded); null for any other.
+    courseTitle: text("course_title"),
   },
   (t) => [
     index("member_notices_user_id_seq_idx").on(t.userId, t.seq),
     index("member_notices_exam_code_idx").on(t.examCode),
     check("member_notices_reference_format", sql`${t.reference} ~ '^AYC-[0-9]{5,}$'`),
+    // Compared as text: the Course kinds are added to the enum in the migration before.
+    check(
+      "member_notices_course_title",
+      sql`(${t.kind}::text like 'course-%') = (${t.courseTitle} is not null)`,
+    ),
   ],
 ).enableRLS();
 

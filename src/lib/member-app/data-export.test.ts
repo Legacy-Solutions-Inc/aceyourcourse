@@ -9,7 +9,9 @@ import { buildMemberDataExport, type MemberDataSource, memberDataFilename } from
 // file an Owner downloads and emails from the support inbox. Built from every
 // Member's records, it keeps only the Member's own, without their User id on
 // each, and without what isn't theirs: the device token's hash, and who on
-// the staff granted a pass.
+// the staff granted a pass. Version 2 (Phase 4, ticket 14) added the Orders,
+// version 3 (Phase 5, ticket 07) the Courses owned and Lesson progress; each
+// version only adds sections, so a reader of an older file reads a newer one.
 
 const BEA = "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21";
 const SAM = "1c9d7e52-3b0a-4f6e-8d2c-5a4b3c2d1e0f";
@@ -181,6 +183,7 @@ function bothMembers(): MemberDataSource {
         createdAt: "2026-11-03T00:00:00.000Z",
         dismissedAt: "2026-11-03T01:00:00.000Z",
         reference: null,
+        courseTitle: null,
       },
       {
         id: "notice-sam",
@@ -191,6 +194,7 @@ function bothMembers(): MemberDataSource {
         createdAt: "2026-11-04T00:00:00.000Z",
         dismissedAt: null,
         reference: null,
+        courseTitle: null,
       },
     ],
     // Newest first, as the Admin reads them (ticket 14).
@@ -243,6 +247,59 @@ function bothMembers(): MemberDataSource {
         ],
       },
     ],
+    // Version 3 (Phase 5, ticket 07): the Courses owned, and Lesson progress.
+    courseOwnerships: [
+      {
+        userId: BEA,
+        courseId: "course-hpge",
+        title: "HPGE Crash Course",
+        examCode: "CE",
+        since: "2026-11-12T01:00:00.000Z",
+        orderReference: null,
+      },
+      {
+        userId: SAM,
+        courseId: "course-psad",
+        title: "PSAD Masterclass",
+        examCode: "CE",
+        since: "2026-11-09T07:30:00.000Z",
+        orderReference: "AYC-10002",
+      },
+      {
+        userId: BEA,
+        courseId: "course-psad",
+        title: "PSAD Masterclass",
+        examCode: "CE",
+        since: "2026-11-08T01:02:00.000Z",
+        orderReference: "AYC-10001",
+      },
+    ],
+    lessonProgress: [
+      {
+        userId: BEA,
+        lessonId: "lesson-curves",
+        positionSeconds: 140,
+        furthestSeconds: 600,
+        doneAt: "2026-11-13T01:10:00.000Z",
+        watchedAt: "2026-11-14T01:00:00.000Z",
+      },
+      {
+        userId: SAM,
+        lessonId: "lesson-sam",
+        positionSeconds: 10,
+        furthestSeconds: 10,
+        doneAt: null,
+        watchedAt: "2026-11-13T02:00:00.000Z",
+      },
+      {
+        userId: BEA,
+        lessonId: "lesson-leveling",
+        positionSeconds: 30,
+        furthestSeconds: 30,
+        doneAt: null,
+        watchedAt: "2026-11-13T01:00:00.000Z",
+      },
+    ],
   };
 }
 
@@ -250,8 +307,9 @@ describe("buildMemberDataExport", () => {
   it("gives every section of the Member's data, and only theirs", () => {
     expect(buildMemberDataExport(bothMembers(), NOW)).toEqual({
       format: "ayc-member-data",
-      // Version 2 adds the Member's Orders (ticket 14); every other section is as version 1's.
-      version: 2,
+      // Version 2 added the Member's Orders (ticket 14), version 3 their Courses and
+      // Lesson progress (Phase 5, ticket 07); every other section is as version 1's.
+      version: 3,
       exportedAt: NOW.toISOString(),
       profile: {
         userId: BEA,
@@ -330,8 +388,10 @@ describe("buildMemberDataExport", () => {
           endsAt: "2027-02-01T00:00:00.000Z",
           createdAt: "2026-11-03T00:00:00.000Z",
           dismissedAt: "2026-11-03T01:00:00.000Z",
-          // A refund's notice names its Order (Phase 4, ticket 09); this one is a grant.
+          // A refund's notice names its Order (Phase 4, ticket 09), a Course's its
+          // Course (Phase 5, ticket 07); this one is a grant.
           reference: null,
+          courseTitle: null,
         },
       ],
       // Oldest first; each as bought, as every screen shows it now, with the
@@ -376,7 +436,82 @@ describe("buildMemberDataExport", () => {
           invoiceRequest: null,
         },
       ],
+      // Oldest first, each with its source: the Paid Order's reference, or none when given.
+      courses: [
+        {
+          courseId: "course-psad",
+          title: "PSAD Masterclass",
+          examCode: "CE",
+          since: "2026-11-08T01:02:00.000Z",
+          orderReference: "AYC-10001",
+        },
+        {
+          courseId: "course-hpge",
+          title: "HPGE Crash Course",
+          examCode: "CE",
+          since: "2026-11-12T01:00:00.000Z",
+          orderReference: null,
+        },
+      ],
+      // Oldest watched first.
+      lessonProgress: [
+        {
+          lessonId: "lesson-leveling",
+          positionSeconds: 30,
+          furthestSeconds: 30,
+          doneAt: null,
+          watchedAt: "2026-11-13T01:00:00.000Z",
+        },
+        {
+          lessonId: "lesson-curves",
+          positionSeconds: 140,
+          furthestSeconds: 600,
+          doneAt: "2026-11-13T01:10:00.000Z",
+          watchedAt: "2026-11-14T01:00:00.000Z",
+        },
+      ],
     });
+  });
+
+  it("keeps every section a version 1 or 2 file had, so their readers read version 3", () => {
+    const file = buildMemberDataExport(bothMembers(), NOW);
+    // Version 1's sections (ticket 19), then version 2's Orders (ticket 14).
+    const VERSION_1 = [
+      "format",
+      "version",
+      "exportedAt",
+      "profile",
+      "targetExams",
+      "consents",
+      "accessPasses",
+      "cardMarks",
+      "quizAttempts",
+      "reviewerPagesViewed",
+      "studyDays",
+      "resume",
+      "devices",
+      "notices",
+    ];
+    const VERSION_2 = [...VERSION_1, "orders"];
+
+    expect(Object.keys(file)).toEqual([...VERSION_2, "courses", "lessonProgress"]);
+    // A version 2 Order is read the same: every field it had, as it had it.
+    expect(Object.keys(file.orders[0] ?? {})).toEqual([
+      "reference",
+      "examCode",
+      "planName",
+      "days",
+      "priceCentavos",
+      "method",
+      "status",
+      "livemode",
+      "createdAt",
+      "paidAt",
+      "buyer",
+      "payMongoReference",
+      "refunds",
+      "invoiceRequest",
+    ]);
   });
 
   it("never names another Member, or who on the staff granted a pass", () => {
@@ -391,6 +526,9 @@ describe("buildMemberDataExport", () => {
     expect(file).not.toContain("AYC-10002");
     expect(file).not.toContain("stranger@example.com");
     expect(file).not.toContain('"Angel"');
+    // Sam's Course and Lesson progress (Phase 5, ticket 07).
+    expect(file).not.toContain("lesson-sam");
+    expect(file).not.toContain("2026-11-09T07:30:00.000Z");
   });
 
   it("gives a Member with nothing kept yet every section, empty", () => {
@@ -416,6 +554,8 @@ describe("buildMemberDataExport", () => {
       devices: { activeDevice: null, switches: [] },
       notices: [],
       orders: [],
+      courses: [],
+      lessonProgress: [],
     });
   });
 

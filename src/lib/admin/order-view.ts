@@ -164,6 +164,8 @@ function confirmedStep(order: AdminOrder, paidAt: string): TimelineStep {
 const PAID_START = "Paid and confirmed by PayMongo. Access started right away.";
 const COURSE_PAID_NOTE =
   "Paid and confirmed by PayMongo. The Member owns the Course for good. Refunds, if any, are issued from the PayMongo dashboard.";
+const COURSE_REFUNDED_NOTE =
+  "Refunded in full in PayMongo. The Course came off the Member’s Courses, with an in-app notice, unless a gift or another Paid Order for it still holds it.";
 const PAID_ALREADY_OWNED =
   "PayMongo confirmed this payment while the Member already owned the Course, so it gave nothing.";
 const PAID_NOTE = `${PAID_START} Refunds, if any, are issued from the PayMongo dashboard.`;
@@ -189,7 +191,11 @@ export function statusNote(order: AdminOrder): string {
       }
       if (order.paidAlreadyOwned)
         return `${PAID_ALREADY_OWNED} Refund it in the PayMongo dashboard.`;
-      if (isCourseOrder(order)) return COURSE_PAID_NOTE;
+      if (isCourseOrder(order)) {
+        return order.refundedCentavos > 0
+          ? `Paid and confirmed by PayMongo. The Member owns the Course for good. PayMongo refunded ${formatPeso(order.refundedCentavos)} of it, which changed nothing: only a full refund removes the Course.`
+          : COURSE_PAID_NOTE;
+      }
       const note =
         order.refundedCentavos > 0
           ? `${PAID_START} PayMongo refunded ${formatPeso(order.refundedCentavos)} of it, which changed no access: adjust it on the Member’s page if needed.`
@@ -199,7 +205,7 @@ export function statusNote(order: AdminOrder): string {
         : note;
     }
     case "refunded":
-      if (isCourseOrder(order)) return "Refunded in full in PayMongo.";
+      if (isCourseOrder(order)) return COURSE_REFUNDED_NOTE;
       return order.paidWithoutAccount
         ? "Refunded in full in PayMongo. It was paid after the Member’s account was deleted, so it never gave access."
         : "Refunded in full in PayMongo. This Order’s unused days came off the Access Pass, and the Member was told in the app.";

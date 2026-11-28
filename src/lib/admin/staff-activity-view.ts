@@ -41,7 +41,7 @@ const AREAS: readonly { key: string; label: string; entities: readonly string[] 
   {
     key: "users",
     label: "Users",
-    entities: ["member", "access-pass", "beta-tester", "privacy-request"],
+    entities: ["member", "access-pass", "course-ownership", "beta-tester", "privacy-request"],
   },
   { key: "plans", label: "Plans", entities: ["plan"] },
   { key: "orders", label: "Orders", entities: ["order", "orders"] },

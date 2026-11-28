@@ -173,7 +173,7 @@ describe("PrivacyRequestDetail", () => {
 
       expect(dialog()).toHaveAccessibleName("Delete Bea Tester’s account?");
       expect(dialog()).toHaveTextContent("tester@example.com");
-      expect(dialog()).toHaveTextContent("Access Passes, with no refund");
+      expect(dialog()).toHaveTextContent("Access Passes and Courses, with no refund");
       expect(dialog()).toHaveTextContent("can’t be undone");
       // No paid Orders: nothing to say about tax records (ticket 14).
       expect(dialog()).not.toHaveTextContent("tax records");

@@ -30,6 +30,8 @@ import refundUpdated from "../../../../../test/fixtures/paymongo/event-refund-up
 // Paid, and Paid never moves back. Refund events (ticket 09) take a fully
 // refunded Order's unused days off, once. A payment on an Order whose account
 // was deleted (ticket 14) is recorded Paid with no grant, for Needs attention.
+// A Course Order's full refund removes the Course Ownership it gave (Phase 5,
+// ticket 07), once.
 // Without PAYMONGO_WEBHOOK_SECRET the route doesn't exist.
 
 const { secret } = vi.hoisted(() => ({ secret: { current: undefined as string | undefined } }));
@@ -387,6 +389,103 @@ describe("POST /api/paymongo/webhook: Course Orders (Phase 5, ticket 06)", () =>
     });
     const sales = await salesOverview(sampleActor("owner"));
     expect(sales?.payments).toMatchObject({ paidAlreadyOwned: 1, paidAfterExpiry: 0 });
+  });
+
+  describe("refunds (ticket 07)", () => {
+    const PSAD_PRICE = 149_900;
+    /** Bea's PSAD Masterclass, paid through the fixture checkout, whose payment is pay_FakePaid0001TestOnly. */
+    async function paidCourseOrder() {
+      const order = await pendingCourseOrder();
+      expect((await post(aboutOrder(checkoutPaid, order))).status).toBe(200);
+      return order;
+    }
+    /**
+     * The fixture refund of pay_FakePaid0001TestOnly, for this many centavos,
+     * under its own event id, refunded by PayMongo now.
+     */
+    function refundOf(amount: number, eventId = refundUpdated.data.id) {
+      const event = structuredClone(refundUpdated);
+      event.data.id = eventId;
+      event.data.attributes.data.attributes.amount = amount;
+      event.data.attributes.data.attributes.refunded_at = Math.floor(Date.now() / 1000);
+      return JSON.stringify(event);
+    }
+    const noticeTexts = async () =>
+      (await listNotices(BEA.userId)).map(({ kind, reference, courseTitle }) => ({
+        kind,
+        reference,
+        courseTitle,
+      }));
+
+    it("refunds a Course Order in full, removing the Course Ownership, telling Bea, logged as PayMongo", async () => {
+      const order = await paidCourseOrder();
+
+      const response = await post(refundOf(PSAD_PRICE));
+
+      expect(response.status).toBe(200);
+      expect(stored()).toEqual([{ reference: "AYC-10001", status: "refunded" }]);
+      expect(ownerships()).toEqual([]);
+      expect(await noticeTexts()).toEqual([
+        { kind: "course-refunded", reference: order.reference, courseTitle: "PSAD Masterclass" },
+      ]);
+      expect(getSampleStore().staffActivity.at(-1)).toMatchObject({
+        actor: { email: "system:paymongo", name: "PayMongo (system)" },
+        entity: "course-ownership",
+        action: "order-refunded",
+      });
+    });
+
+    it("removes it once when PayMongo delivers the same refund event twice", async () => {
+      await paidCourseOrder();
+      await post(refundOf(PSAD_PRICE));
+
+      expect((await post(refundOf(PSAD_PRICE))).status).toBe(200);
+
+      expect(ownerships()).toEqual([]);
+      expect(await listNotices(BEA.userId)).toHaveLength(1);
+    });
+
+    it("records a partial refund, leaving the Order Paid and the Course Bea's", async () => {
+      await paidCourseOrder();
+
+      expect((await post(refundOf(30_000))).status).toBe(200);
+
+      expect(stored()).toEqual([{ reference: "AYC-10001", status: "paid" }]);
+      expect(ownerships()).toHaveLength(1);
+      expect(await listNotices(BEA.userId)).toEqual([]);
+    });
+
+    it("counts a live Course Order on its paid day, and its refund on the day it's made", async () => {
+      const order = await pendingCourseOrder();
+      // A live Order, so the sales figures count it.
+      const store = getSampleStore();
+      store.orders = store.orders.map((held) => ({ ...held, livemode: true }));
+      await post(aboutOrder(checkoutPaid, order));
+      const today = async () => (await salesOverview(sampleActor("owner")))?.figures.today;
+      expect(await today()).toMatchObject({ paidCentavos: PSAD_PRICE, orders: 1 });
+
+      vi.setSystemTime(BOOT.getTime() + DAY);
+      await post(refundOf(PSAD_PRICE));
+
+      const figures = (await salesOverview(sampleActor("owner")))?.figures;
+      expect(figures?.yesterday).toMatchObject({ paidCentavos: PSAD_PRICE, refundedCentavos: 0 });
+      expect(figures?.today).toMatchObject({
+        paidCentavos: 0,
+        refundedCentavos: PSAD_PRICE,
+        netCentavos: -PSAD_PRICE,
+      });
+    });
+
+    it("changes nothing for a refund event with a bad signature", async () => {
+      await paidCourseOrder();
+
+      const response = await post(refundOf(PSAD_PRICE), signFakeWebhook(refundOf(1_000)));
+
+      expect(response.status).toBe(401);
+      expect(stored()).toEqual([{ reference: "AYC-10001", status: "paid" }]);
+      expect(ownerships()).toHaveLength(1);
+      expect(getSampleStore().orderRefunds).toEqual([]);
+    });
   });
 });
 

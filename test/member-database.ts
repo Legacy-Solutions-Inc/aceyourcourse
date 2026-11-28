@@ -8,6 +8,7 @@ import {
   quizAttemptAnswerFromRow,
   quizAttemptFromRow,
 } from "@/services/content.rows";
+import { lessonProgressFromRow } from "@/services/courses.rows";
 import {
   consentFromRow,
   databaseArm,
@@ -89,11 +90,7 @@ export const MEMBER_DATABASE_ARM: MemberArm = {
     ),
   lessonProgress: async () =>
     byMemberAndLesson(
-      (await getDb().select().from(schema.lessonProgress)).map((row) => ({
-        ...row,
-        doneAt: row.doneAt?.toISOString() ?? null,
-        watchedAt: row.watchedAt.toISOString(),
-      })),
+      (await getDb().select().from(schema.lessonProgress)).map(lessonProgressFromRow),
     ),
   quizAttempts: async () => {
     const db = getDb();

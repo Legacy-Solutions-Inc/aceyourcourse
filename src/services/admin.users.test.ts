@@ -393,6 +393,8 @@ describe.each(ADMIN_ARMS)("Admin seam: Users ($name)", (arm) => {
           ],
           // Their Orders: admin.orders.test.ts.
           orders: [],
+          // Their Courses: admin.course-ownership.test.ts (Phase 5, ticket 07).
+          courses: [],
         },
       });
       if (result.ok) {
@@ -430,6 +432,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Users ($name)", (arm) => {
           deviceSwitches: [],
           consents: [],
           orders: [],
+          courses: [],
         },
       });
     });

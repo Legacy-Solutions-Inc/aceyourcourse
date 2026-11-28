@@ -348,7 +348,7 @@ describe.each(ADMIN_ARMS)("Admin seam: carrying out Privacy Requests ($name)", (
       const { data } = result.value;
       expect(data).toMatchObject({
         format: "ayc-member-data",
-        version: 2,
+        version: 3,
         exportedAt: BOOT.toISOString(),
         profile: { ...BEA, selectedExamCode: "ME" },
         devices: { activeDevice: { deviceLabel: "Chrome on Android" } },
@@ -370,8 +370,16 @@ describe.each(ADMIN_ARMS)("Admin seam: carrying out Privacy Requests ($name)", (
       expect(data.resume.decks).toHaveLength(1);
       expect(data.resume.reviewerPdfs).toHaveLength(1);
       expect(data.devices.switches).toHaveLength(1);
-      expect(data.notices).toEqual([expect.objectContaining({ examCode: "CE", kind: "granted" })]);
+      expect(data.notices).toEqual([
+        expect.objectContaining({ examCode: "CE", kind: "granted" }),
+        expect.objectContaining({ kind: "course-given", courseTitle: "HPGE Crash Course" }),
+      ]);
       expect(data.orders).toEqual([]);
+      // Version 3 (Phase 5, ticket 07): the Course given her, and the Lesson she watched.
+      expect(data.courses).toEqual([
+        expect.objectContaining({ title: "HPGE Crash Course", orderReference: null }),
+      ]);
+      expect(data.lessonProgress).toEqual([expect.objectContaining({ positionSeconds: 30 })]);
     });
 
     it("adds the Member's Orders, each with its Invoice Request, and no one else's (ticket 14)", async () => {
@@ -391,7 +399,7 @@ describe.each(ADMIN_ARMS)("Admin seam: carrying out Privacy Requests ($name)", (
 
       if (!result.ok) throw new Error(`Refused: ${JSON.stringify(result.error)}`);
       const { data } = result.value;
-      expect(data.version).toBe(2);
+      expect(data.version).toBe(3);
       expect(data.orders).toEqual([
         {
           reference: "AYC-10001",

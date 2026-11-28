@@ -3,11 +3,13 @@ import { describe, expect, it } from "vitest";
 import type { BusinessDetails } from "@/services/catalogue.types";
 import type { MemberOrder, PaymentAcknowledgement } from "@/services/member.types";
 
-import { acknowledgementView, invoiceState, orderRow, passCard } from "./billing-view";
+import { acknowledgementView, courseCard, invoiceState, orderRow, passCard } from "./billing-view";
 
 // Billing and the Payment Acknowledgement, worded (Phase 4, ticket 06;
 // BUILD-MAP §3 Billing and Receipt; stories 143, 144, 151u), pure. Every date
-// is the Manila calendar date. "Now" is 17 Nov 2026, 11:42 in Manila. A
+// is the Manila calendar date. "Now" is 17 Nov 2026, 11:42 in Manila. Your
+// Courses (Phase 5, ticket 07) shows each Course owned with its source, and a
+// Course Order's Acknowledgement has no access period. A
 // refund (ticket 09) shows on the Order's row and its Acknowledgement:
 // REFUNDED, or PARTIALLY REFUNDED with the amount.
 const NOW = new Date("2026-11-17T03:42:00.000Z");
@@ -67,6 +69,41 @@ describe("passCard", () => {
   });
 });
 
+describe("courseCard (Phase 5, ticket 07)", () => {
+  const PSAD = "6a1e2d3c-4b5a-4f6e-8d7c-9b0a1f2e3d4c";
+
+  it("says a bought Course is hers since the Manila day it was paid, with the Order's reference", () => {
+    expect(
+      courseCard({
+        courseId: PSAD,
+        title: "PSAD Masterclass",
+        examCode: "CE",
+        // 00:30 on 29 Nov in Manila is still 28 Nov in UTC.
+        since: "2026-11-28T16:30:00.000Z",
+        orderReference: "AYC-10483",
+      }),
+    ).toEqual({
+      courseId: PSAD,
+      title: "PSAD Masterclass",
+      tag: "OWNED",
+      line: "CE · Since 29 Nov 2026 · AYC-10483 · yours to keep",
+      watchHref: `/app/courses/${PSAD}`,
+    });
+  });
+
+  it("says a given Course was given by Ace Your Course", () => {
+    expect(
+      courseCard({
+        courseId: PSAD,
+        title: "HPGE Crash Course",
+        examCode: "CE",
+        since: "2026-11-28T04:00:00.000Z",
+        orderReference: null,
+      }).line,
+    ).toBe("CE · Since 28 Nov 2026 · Given by Ace Your Course · yours to keep");
+  });
+});
+
 describe("orderRow", () => {
   it("shows a Paid Order with its date in Manila, method, reference, amount and its Acknowledgement", () => {
     expect(orderRow(ORDER)).toEqual({
@@ -96,6 +133,35 @@ describe("orderRow", () => {
       amount: "₱1,499",
       status: "PAID",
     });
+  });
+
+  it("says a Refunded Course Order was refunded, with no days to remove (ticket 07)", () => {
+    expect(
+      orderRow({
+        ...ORDER,
+        courseId: "6a1e2d3c-4b5a-4f6e-8d7c-9b0a1f2e3d4c",
+        planName: "PSAD Masterclass",
+        days: null,
+        priceCentavos: 149_900,
+        status: "refunded",
+        refundedCentavos: 149_900,
+        refundedAt: "2026-11-16T16:30:00.000Z",
+      }).refund,
+    ).toBe("REFUNDED ON 17 NOV 2026");
+  });
+
+  it("shows a partial refund of a Course Order as a Plan Order's (ticket 07)", () => {
+    expect(
+      orderRow({
+        ...ORDER,
+        courseId: "6a1e2d3c-4b5a-4f6e-8d7c-9b0a1f2e3d4c",
+        planName: "PSAD Masterclass",
+        days: null,
+        priceCentavos: 149_900,
+        refundedCentavos: 30_000,
+        refundedAt: "2026-11-16T03:00:00.000Z",
+      }),
+    ).toMatchObject({ status: "PAID", refund: "PARTIALLY REFUNDED · ₱300" });
   });
 
   it("shows a partial refund's amount under a Paid Order, which keeps its Acknowledgement", () => {
@@ -273,6 +339,51 @@ describe("acknowledgementView", () => {
       refunded: "₱1,299.00 on 16 Nov 2026",
       period: "Refunded 16 Nov 2026 · its unused days were removed",
       invoice: { canRequest: false, line: null },
+    });
+  });
+
+  describe("a Course Order's (ticket 07)", () => {
+    const COURSE_ACK: PaymentAcknowledgement = {
+      ...ACK,
+      order: {
+        ...ORDER,
+        courseId: "6a1e2d3c-4b5a-4f6e-8d7c-9b0a1f2e3d4c",
+        planName: "PSAD Masterclass",
+        days: null,
+        priceCentavos: 149_900,
+        accessUntil: null,
+      },
+      access: null,
+    };
+
+    it("prints the Course line, yours to keep, with no access period", () => {
+      expect(acknowledgementView(COURSE_ACK, FILLED)).toMatchObject({
+        item: "PSAD Masterclass · Video course · yours to keep",
+        period: null,
+        amount: "₱1,499.00",
+        status: "PAID",
+        invoice: { canRequest: true, line: null },
+      });
+    });
+
+    it("reads REFUNDED on the day refunded, with no days to remove", () => {
+      const view = acknowledgementView(
+        {
+          ...COURSE_ACK,
+          order: {
+            ...COURSE_ACK.order,
+            status: "refunded",
+            refundedCentavos: 149_900,
+            refundedAt: "2026-11-16T03:00:00.000Z",
+          },
+        },
+        FILLED,
+      );
+      expect(view).toMatchObject({
+        status: "REFUNDED",
+        refunded: "₱1,499.00 on 16 Nov 2026",
+        period: "Refunded 16 Nov 2026",
+      });
     });
   });
 

@@ -36,6 +36,10 @@ import { periodLabel } from "@/lib/plans/plan-text";
 //   when refunds are full). The Order's unused days come off the pass
 //   (removeUnusedDays below). A partial refund leaves the Order Paid, and
 //   Pending, Failed and Expired Orders granted nothing to refund.
+// - A Course Order's full refund (Phase 5, ticket 07) removes the Course
+//   Ownership it gave, unless another of the buyer's Paid Orders for the
+//   Course still holds it (that Order then gives it), and never removes a
+//   given one (ownershipAfterRefund below). A partial refund changes nothing.
 // - Paid and Refunded never move back. Each outcome is applied once: an
 //   outcome the table has no row for (the same one again, a failed event
 //   after a paid one, a paid event after a refund) changes nothing.
@@ -324,6 +328,33 @@ export function endGrantedDays<T extends PassSegment>(
       : [],
   );
   return { kind: ms(endsAt) > now.getTime() ? "keeps-paid" : "now", endsAt, moved };
+}
+
+/**
+ * What a Course Order's full refund does to its buyer's Course Ownership
+ * (ticket 07): removes it; keeps it as it is (a gift, another Order's, or
+ * none left to remove); or keeps it with another Paid Order as its source.
+ */
+export type OwnershipAfterRefund =
+  { kind: "removed" } | { kind: "kept" } | { kind: "moved"; to: Pick<Order, "id" | "reference"> };
+
+/**
+ * Pure: a full refund of `refunded`, a Course Order, against the buyer's
+ * Ownership of its Course (null for none) and their Paid Orders for that
+ * Course, oldest paid first. Only the Ownership this Order gave goes, and
+ * only when no other Paid Order holds it: the first of those then gives it.
+ * A given Ownership ("Given by Ace Your Course") never goes by a refund.
+ */
+export function ownershipAfterRefund(
+  ownership: { orderId: string | null } | null,
+  refunded: Pick<Order, "id">,
+  paidOrders: readonly Pick<Order, "id" | "reference">[],
+): OwnershipAfterRefund {
+  if (ownership?.orderId !== refunded.id) return { kind: "kept" };
+  const holder = paidOrders.find((order) => order.id !== refunded.id);
+  return holder
+    ? { kind: "moved", to: { id: holder.id, reference: holder.reference } }
+    : { kind: "removed" };
 }
 
 /** Pure: whether an Order was ever Paid: Paid, or Refunded since (it has a Payment Acknowledgement). */

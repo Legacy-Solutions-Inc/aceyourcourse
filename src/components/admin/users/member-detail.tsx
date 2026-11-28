@@ -26,6 +26,7 @@ import type { TargetExam } from "@/services/member.types";
 
 import { AccessPasses, type PassActions } from "./access-passes";
 import { ForceSignOut } from "./force-sign-out";
+import { type CourseActions, type CourseToGive, MemberCourses } from "./member-courses";
 
 interface MemberDetailProps {
   detail: AdminMemberDetail;
@@ -35,6 +36,9 @@ interface MemberDetailProps {
   exams: { code: string; name: string }[];
   forceSignOut: AdminAction<ForcedSignOut>;
   passActions: PassActions;
+  /** Every Course sold separately, which "Give Course" offers when the Member doesn't own it. */
+  soldSeparately: CourseToGive[];
+  courseActions: CourseActions;
 }
 
 const ROLES: Record<UserRole, string> = {
@@ -71,11 +75,20 @@ function DetailSection({
  * A Member's detail page (mockup 787–825; BUILD-MAP §3.10; story 130): the
  * profile with the Active Device and force sign-out, then their Target Exams,
  * Access Passes with their grants and Grant, Extend and End access now
- * (ticket 17), progress per Target Exam (ticket 15's calculator), device
+ * (ticket 17), their Courses with Give and Remove Course (Phase 5, ticket
+ * 07), progress per Target Exam (ticket 15's calculator), device
  * switches, consent, and their Orders, each linking to its detail page
  * (Phase 4, ticket 07; story 151z).
  */
-export function MemberDetail({ detail, now, exams, forceSignOut, passActions }: MemberDetailProps) {
+export function MemberDetail({
+  detail,
+  now,
+  exams,
+  forceSignOut,
+  passActions,
+  soldSeparately,
+  courseActions,
+}: MemberDetailProps) {
   const { member, role, betaTester, activeDevice, deviceSwitches, consents } = detail;
   const shownName = member.name ?? member.email;
   return (
@@ -130,6 +143,13 @@ export function MemberDetail({ detail, now, exams, forceSignOut, passActions }: 
           exams={exams}
           now={now}
           actions={passActions}
+        />
+
+        <MemberCourses
+          member={{ userId: member.userId, name: member.name, email: member.email }}
+          courses={detail.courses}
+          soldSeparately={soldSeparately}
+          actions={courseActions}
         />
 
         <section aria-labelledby="member-progress" className="flex min-w-0 flex-col gap-2">

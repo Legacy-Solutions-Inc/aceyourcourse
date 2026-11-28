@@ -281,6 +281,20 @@
       "when": 1795867659417,
       "tag": "20261128120739_course_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1795874636730,
+      "tag": "20261128140356_course_notice_kinds",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1795874653359,
+      "tag": "20261128140413_course_notices",
+      "breakpoints": true
     }
   ]
 }

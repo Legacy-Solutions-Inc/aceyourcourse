@@ -149,6 +149,9 @@ describe("downloading a Member's data", () => {
         "devices",
         "notices",
         "orders",
+        // Version 3 (Phase 5, ticket 07).
+        "courses",
+        "lessonProgress",
       ].sort(),
     );
     expect(file.profile).toMatchObject(BEA);

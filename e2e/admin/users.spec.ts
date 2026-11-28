@@ -13,7 +13,8 @@ import { resetSampleData, signInAs } from "./helpers";
 // their detail page, and forces their device to sign out with a reason. The
 // tester's next Member App request shows "Session ended". An Editor is
 // refused both screens. Ending a pass with paid days ends only its granted
-// days (Phase 4, ticket 10).
+// days (Phase 4, ticket 10). An Owner gives a Course and removes it (Phase 5,
+// ticket 07).
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -256,6 +257,72 @@ test.describe("the Owner and a lapsed tester", () => {
     await expect(notices).toHaveCount(2);
     await expect(notices.first()).toContainText("Your CE access has ended");
     await expect(notices.nth(1)).toContainText("Your CE access was extended to");
+  });
+});
+
+test.describe("the Owner gives and removes a Course (Phase 5, ticket 07)", () => {
+  test("an Owner gives the tester the HPGE Crash Course: OWNED, with the notice; then removes it", async ({
+    page,
+    browser,
+  }) => {
+    test.setTimeout(150_000);
+    const memberNav = page.getByRole("complementary").getByRole("navigation", {
+      name: "Member App",
+    });
+    const hpge = page.getByRole("article").filter({
+      has: page.getByRole("heading", { level: 3, name: "HPGE Crash Course" }),
+    });
+    const notices = page.getByRole("region", { name: "Notices" });
+    // The tester: CE All-Access, and the HPGE Crash Course sold separately, not on sale, locked.
+    await signInAndOnboard(page, "tester", "CE");
+    await memberNav.getByRole("link", { name: /Courses/ }).click();
+    await expect(hpge.getByText("Not on sale right now")).toBeVisible();
+
+    const desk = await browser.newContext();
+    try {
+      const owner = await desk.newPage();
+      await signInAs(owner, "owner", paths.admin.user(TESTER_ID));
+      const courses = section(owner, "COURSES");
+      await expect(courses).toContainText("No Courses.");
+
+      await courses.getByRole("button", { name: "Give Course…" }).click();
+      const give = owner.getByRole("dialog", { name: "Give Bea a Course" });
+      await expect(give).toContainText("No payment is collected.");
+      await give.getByRole("combobox", { name: "COURSE" }).selectOption({
+        label: "HPGE Crash Course · CE",
+      });
+      await expectNoBlockingViolations(owner);
+      await give.getByRole("button", { name: "Give Course" }).click();
+      await expect(courses.getByRole("status")).toHaveText(
+        "✓ GAVE THE HPGE CRASH COURSE · NO PAYMENT COLLECTED",
+      );
+      const given = courses.getByRole("listitem", { name: "HPGE Crash Course" });
+      await expect(given).toContainText("GIVEN BY ACE YOUR COURSE");
+      await expectNoBlockingViolations(owner);
+
+      // The tester: the notice, and the Course OWNED on Courses.
+      await page.goto(paths.memberApp.home);
+      await expect(notices).toContainText("You now own the HPGE Crash Course");
+      await expectNoBlockingViolations(page);
+      await memberNav.getByRole("link", { name: /Courses/ }).click();
+      await expect(hpge.getByText(/OWNED/)).toBeVisible();
+      await expect(hpge.getByRole("link", { name: "Start course" })).toBeVisible();
+
+      // The Owner removes it, asked first.
+      await given.getByRole("button", { name: "Remove… HPGE Crash Course" }).click();
+      const remove = owner.getByRole("dialog", { name: "Remove the HPGE Crash Course from Bea?" });
+      await remove.getByRole("button", { name: "Remove Course" }).click();
+      await expect(courses.getByRole("status")).toHaveText("✓ REMOVED THE HPGE CRASH COURSE");
+      await expect(courses).toContainText("No Courses.");
+    } finally {
+      await desk.close();
+    }
+
+    // The tester: told, and the Course locked again.
+    await page.goto(paths.memberApp.home);
+    await expect(notices).toContainText("You no longer own the HPGE Crash Course");
+    await memberNav.getByRole("link", { name: /Courses/ }).click();
+    await expect(hpge.getByText("Not on sale right now")).toBeVisible();
   });
 });
 

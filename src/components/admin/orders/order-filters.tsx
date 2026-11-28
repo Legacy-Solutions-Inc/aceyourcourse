@@ -4,7 +4,13 @@ import { useRouter } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 
 import { useUrlSearch } from "@/components/admin/use-url-search";
-import { isOrderRange, ordersHref, RANGE_OPTIONS } from "@/lib/admin/orders-list";
+import {
+  isOrderItemFilter,
+  isOrderRange,
+  ITEM_OPTIONS,
+  ordersHref,
+  RANGE_OPTIONS,
+} from "@/lib/admin/orders-list";
 import { isPaymentMethod, methodLabel, PAYMENT_METHODS } from "@/lib/payments/payment-methods";
 import type { OrderListQuery } from "@/services/admin.types";
 
@@ -12,7 +18,8 @@ const SELECT =
   "min-h-10 w-full min-w-0 border-[1.5px] bg-white px-2.5 py-2 text-sm font-medium wide:w-40 wide:flex-none";
 
 /**
- * The Orders list's search, Payment Method, range, "Include test orders",
+ * The Orders list's search, Plans vs Courses (Phase 5, ticket 07), Payment
+ * Method, range, "Include test orders",
  * "Invoice requested" (ticket 08: the Orders whose official invoice was
  * requested and not yet sent), "Paid after expiry" (ticket 11) and "Paid,
  * account deleted" (ticket 14: the Orders paid after their account was
@@ -42,6 +49,21 @@ export function OrderFilters({ query }: { query: OrderListQuery }) {
         {...search}
         className="min-h-10 w-full min-w-0 flex-[1_1_280px] border-[1.5px] bg-white px-3 py-2 text-sm font-medium placeholder:text-muted-foreground"
       />
+      <select
+        aria-label="Plans or Courses"
+        value={shown.item}
+        onChange={(event) => {
+          const item = event.target.value;
+          go({ ...shown, item: isOrderItemFilter(item) ? item : "all" });
+        }}
+        className={SELECT}
+      >
+        {ITEM_OPTIONS.map(({ value, label }) => (
+          <option key={value} value={value}>
+            {label}
+          </option>
+        ))}
+      </select>
       <select
         aria-label="Payment method"
         value={shown.method}

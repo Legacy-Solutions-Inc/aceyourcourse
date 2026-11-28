@@ -288,6 +288,8 @@ export const DATABASE_ARM: AdminArm = {
       quizAttempts: await count(schema.quizAttempts),
       reviewerPageViews: await count(schema.reviewerPageViews),
       readerPositions: await count(schema.readerPositions),
+      courseOwnerships: await count(schema.courseOwnerships),
+      lessonProgress: await count(schema.lessonProgress),
       privacyRequests: await count(schema.privacyRequests),
     };
   },

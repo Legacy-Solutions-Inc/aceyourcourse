@@ -318,6 +318,8 @@ export const SAMPLE_ARM: AdminArm = {
       quizAttempts: mine(store.quizAttempts),
       reviewerPageViews: mine(store.reviewerPageViews),
       readerPositions: mine(store.readerPositions),
+      courseOwnerships: mine(store.courseOwnerships),
+      lessonProgress: mine(store.lessonProgress),
       privacyRequests: mine(store.privacyRequests),
     };
   },

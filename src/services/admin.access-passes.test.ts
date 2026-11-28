@@ -218,6 +218,7 @@ describe.each(ADMIN_ARMS)("Admin seam: Access Passes ($name)", (arm) => {
           createdAt: at(NOW),
           dismissedAt: null,
           reference: null,
+          courseTitle: null,
         },
       ]);
       // 30 days from 11:52 on 17 Nov in Manila.

@@ -19,7 +19,8 @@ import {
 // BUILD-MAP §3.9), pure. The search, status, Payment Method, range and "Include
 // test orders" live in the URL. The range is on Manila days: "last 7 days"
 // starts at midnight in Manila six days before today. Test Orders are left
-// out unless ticked. The tiles count the Orders the filters match.
+// out unless ticked. Plans vs Courses (Phase 5, ticket 07) keeps the Orders
+// for one kind of item. The tiles count the Orders the filters match.
 
 // 25 Nov 2026, 10:00 in Manila.
 const NOW = new Date("2026-11-25T02:00:00.000Z");
@@ -80,6 +81,7 @@ describe("parseOrdersParams", () => {
       paidAfterExpiry: false,
       paidWithoutAccount: false,
       paidAlreadyOwned: false,
+      item: "all",
     });
   });
 
@@ -95,6 +97,7 @@ describe("parseOrdersParams", () => {
         late: "1",
         noaccount: "1",
         owned: "1",
+        item: "Courses",
       }),
     ).toEqual({
       q: "AYC-10482",
@@ -106,6 +109,7 @@ describe("parseOrdersParams", () => {
       paidAfterExpiry: true,
       paidWithoutAccount: true,
       paidAlreadyOwned: true,
+      item: "courses",
     });
   });
 
@@ -121,6 +125,7 @@ describe("parseOrdersParams", () => {
         late: "yes",
         noaccount: "yes",
         owned: "yes",
+        item: "books",
       }),
     ).toEqual(DEFAULT_ORDER_QUERY);
   });
@@ -150,15 +155,16 @@ describe("ordersHref and ordersExportHref", () => {
       paidAfterExpiry: true,
       paidWithoutAccount: true,
       paidAlreadyOwned: true,
+      item: "plans",
     });
     const href = ordersHref(filtered);
     expect(href).toBe(
-      "/admin/orders?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested&late=1&noaccount=1&owned=1",
+      "/admin/orders?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested&late=1&noaccount=1&owned=1&item=plans",
     );
     const params = Object.fromEntries(new URL(href, "https://example.com").searchParams);
     expect(parseOrdersParams(params)).toEqual(filtered);
     expect(ordersExportHref(filtered)).toBe(
-      "/admin/orders/export?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested&late=1&noaccount=1&owned=1",
+      "/admin/orders/export?q=maria%40example.com&status=paid&method=gcash&range=all&tests=1&invoice=requested&late=1&noaccount=1&owned=1&item=plans",
     );
   });
 });
@@ -282,6 +288,34 @@ describe("filterOrders", () => {
     expect(references(filterOrders(rows, query({ paidAlreadyOwned: true }), NOW))).toEqual([
       twice.reference,
     ]);
+    expect(filterOrders(rows, query(), NOW)).toHaveLength(3);
+  });
+
+  it("keeps only the Course Orders, or only the Plan Orders, under Plans vs Courses (Phase 5, ticket 07)", () => {
+    const course = order({
+      courseId: COURSE,
+      planId: null,
+      days: null,
+      planName: "PSAD Masterclass",
+    });
+    const plan = order();
+    const failedCourse = order({
+      courseId: COURSE,
+      planId: null,
+      days: null,
+      status: "failed",
+      recordedStatus: "failed",
+    });
+    const rows = [course, plan, failedCourse];
+
+    expect(references(filterOrders(rows, query({ item: "courses" }), NOW))).toEqual([
+      failedCourse.reference,
+      course.reference,
+    ]);
+    expect(references(filterOrders(rows, query({ item: "plans" }), NOW))).toEqual([plan.reference]);
+    expect(references(filterOrders(rows, query({ item: "courses", status: "paid" }), NOW))).toEqual(
+      [course.reference],
+    );
     expect(filterOrders(rows, query(), NOW)).toHaveLength(3);
   });
 

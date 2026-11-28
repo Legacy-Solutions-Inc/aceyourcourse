@@ -262,8 +262,8 @@ export function PrivacyRequestDetail({ request, actions }: PrivacyRequestDetailP
               Delete this account
             </button>
             <p className="text-sm text-muted-foreground">
-              Deletes their sign-in, every Member App record and their Access Passes, with no
-              refund. The request is done once the account is deleted.
+              Deletes their sign-in, every Member App record and their Access Passes and Courses,
+              with no refund. The request is done once the account is deleted.
             </p>
           </>
         )}
@@ -311,8 +311,8 @@ export function PrivacyRequestDetail({ request, actions }: PrivacyRequestDetailP
           description={
             <>
               This deletes {member.email}’s sign-in, every Member App record (Target Exams,
-              progress, device log, notices) and their Access Passes, with no refund. It can’t be
-              undone.
+              progress, device log, notices) and their Access Passes and Courses, with no refund. It
+              can’t be undone.
               {keptOrdersLine(request.paidOrders)}
               {request.betaTester
                 ? " Their email stays on the Beta Tester list: remove it there if they shouldn’t come back."

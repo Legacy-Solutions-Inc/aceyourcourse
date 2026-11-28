@@ -3,6 +3,7 @@ import { expect, type Page } from "@playwright/test";
 
 import { manilaDate } from "../../src/lib/manila-time";
 import { paths } from "../../src/paths";
+import { sampleCourseId } from "../../src/services/mock/courses";
 import { SAMPLE_MEMBERS, type SampleMemberKey } from "../../src/services/mock/members";
 import { E2E_PASSWORD, ensurePasswordUser, waitForHydration } from "../admin/helpers";
 import { LIVE } from "../server";
@@ -174,4 +175,19 @@ export async function expectNoBlockingViolations(page: Page) {
     return scrolling ? scrolling.scrollWidth - window.innerWidth : 0;
   });
   expect(sideways, "how far the page scrolls sideways, in px").toBeLessThanOrEqual(0);
+}
+
+/**
+ * Buys the sample PSAD Masterclass (₱1,499) from CE's Plans page with the
+ * payments fake: Pay with QR Ph, then "Simulate paid" (Phase 5, tickets 06
+ * and 07). The fake's payment is a Test Order. Gives the Order's reference.
+ */
+export async function buyPsadMasterclass(page: Page): Promise<string> {
+  await page.goto(paths.memberApp.plansForCourse("CE", sampleCourseId("PSAD Masterclass")));
+  await page.getByRole("button", { name: "Pay ₱1,499 with PayMongo" }).click();
+  await expect(page).toHaveURL(/\/app\/plans\/orders\/AYC-\d{5,}$/, { timeout: 15_000 });
+  const reference = new URL(page.url()).pathname.split("/").at(-1) ?? "";
+  await page.getByRole("button", { name: "Simulate paid" }).click();
+  await expect(page.getByText("✓ PAYMENT CONFIRMED")).toBeVisible({ timeout: 15_000 });
+  return reference;
 }

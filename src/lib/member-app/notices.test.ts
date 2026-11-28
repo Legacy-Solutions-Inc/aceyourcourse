@@ -6,7 +6,9 @@ import type { MemberNotice } from "@/services/member.types";
 // The Member App's in-app notices (spec, Phase 3 planning decisions → In-app
 // notices): one dismissible banner per notice, for a grant, an extension or
 // the end of access. No email, and no notification centre. A full refund in
-// PayMongo leaves one too (Phase 4, ticket 09), naming the Order.
+// PayMongo leaves one too (Phase 4, ticket 09), naming the Order. So does an
+// Owner giving or removing a Course, and a full refund that takes a Course
+// away (Phase 5, ticket 07), each naming the Course.
 
 const BEA = "8f4b1f0e-6c1d-4c8e-9a51-0d6f3a5b7c21";
 
@@ -20,6 +22,7 @@ function notice(overrides: Partial<MemberNotice>): MemberNotice {
     createdAt: "2026-11-19T04:00:00.000Z",
     dismissedAt: null,
     reference: null,
+    courseTitle: null,
     ...overrides,
   };
 }
@@ -88,6 +91,30 @@ describe("noticeText", () => {
         notice({ kind: "refunded", reference: "AYC-10483", endsAt: "2026-12-19T16:30:00.000Z" }),
       ),
     ).toBe("Your refund for AYC-10483 was processed. CE All-Access now ends 20 Dec 2026");
+  });
+
+  it("says a given Course is now the Member's", () => {
+    expect(noticeText(notice({ kind: "course-given", courseTitle: "PSAD Masterclass" }))).toBe(
+      "You now own the PSAD Masterclass",
+    );
+  });
+
+  it("says a removed Course is no longer the Member's", () => {
+    expect(noticeText(notice({ kind: "course-removed", courseTitle: "PSAD Masterclass" }))).toBe(
+      "You no longer own the PSAD Masterclass",
+    );
+  });
+
+  it("says a refund was processed and took the Course away, naming the Order", () => {
+    expect(
+      noticeText(
+        notice({
+          kind: "course-refunded",
+          reference: "AYC-10483",
+          courseTitle: "PSAD Masterclass",
+        }),
+      ),
+    ).toBe("Your refund for AYC-10483 was processed. You no longer own the PSAD Masterclass.");
   });
 
   it("dates the end in Manila, the next day there just after midnight", () => {

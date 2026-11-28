@@ -12,6 +12,7 @@ import type {
   ReviewerPageView,
   StudyDay,
 } from "@/services/content.types";
+import type { LessonProgress } from "@/services/courses.types";
 import type { TargetExamRecord } from "@/services/member.rules";
 import type {
   ActiveDevice,
@@ -19,6 +20,7 @@ import type {
   DeviceSwitch,
   Member,
   MemberNotice,
+  OwnedCourse,
 } from "@/services/member.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -28,8 +30,14 @@ import type {
 // support inbox (the app sends nothing). It holds their profile, Target Exams
 // (removed ones too), consents, Access Passes with the grants behind them,
 // progress records (Card Marks, Quiz Attempts, Reviewer pages viewed, Study
-// Days), resume state, the device log, their in-app notices, and (version 2,
-// Phase 4 ticket 14) their Orders, each with its refunds and Invoice Request.
+// Days), resume state, the device log, their in-app notices, (version 2,
+// Phase 4 ticket 14) their Orders, each with its refunds and Invoice Request,
+// and (version 3, Phase 5 ticket 07) the Courses they own, each with its
+// source, and their Lesson progress.
+//
+// A new version only adds sections, so whatever reads an older file reads a
+// newer one: every section of versions 1 and 2 is still there, by the same
+// name and shape. (Version 3's notices also say a Course notice's Course.)
 //
 // It's built from records that may hold every Member's: each list keeps only
 // the Member's own, so another Member's data can never reach the file. Each
@@ -39,8 +47,12 @@ import type {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const MEMBER_DATA_FORMAT = "ayc-member-data";
-/** Version 2 (ticket 14) adds `orders`; every section of version 1 is as it was. */
-export const MEMBER_DATA_VERSION = 2;
+/**
+ * Version 2 (ticket 14) adds `orders`; version 3 (Phase 5, ticket 07) adds
+ * `courses` and `lessonProgress`. Every section of the versions before is as
+ * it was.
+ */
+export const MEMBER_DATA_VERSION = 3;
 
 /** What a data copy is built from: the Member, their own one-of records, and records that may hold every Member's. */
 export interface MemberDataSource {
@@ -64,6 +76,10 @@ export interface MemberDataSource {
   notices: MemberNotice[];
   /** Orders, with their Invoice Requests and PayMongo refunds (ticket 14). */
   orders: (OrderWithInvoice & { refunds: OrderRefund[] })[];
+  /** Course Ownerships, each with its Course's title and Exam and its source (Phase 5, ticket 07). */
+  courseOwnerships: (OwnedCourse & { userId: string })[];
+  /** Lesson progress (Phase 5, ticket 07). */
+  lessonProgress: LessonProgress[];
 }
 
 /**
@@ -125,6 +141,10 @@ export interface MemberDataExport {
   devices: { activeDevice: ActiveDevice | null; switches: Own<DeviceSwitch>[] };
   notices: Own<MemberNotice>[];
   orders: ExportedOrder[];
+  /** The Courses they own, oldest first: the Paid Order's reference, or null when given by Ace Your Course. */
+  courses: OwnedCourse[];
+  /** Where they are in each Lesson they've watched, oldest watched first. */
+  lessonProgress: Own<LessonProgress>[];
 }
 
 /** Pure: the records that are the Member's, oldest first by `at`, without their User id. */
@@ -218,6 +238,12 @@ export function buildMemberDataExport(source: MemberDataSource, now: Date): Memb
       .filter(({ order }) => order.userId === userId)
       .sort((a, b) => ordered(a.order, b.order))
       .map((held) => exportedOrder(held, now)),
+    courses: own(source.courseOwnerships, userId, (owned) => `${owned.since} ${owned.courseId}`),
+    lessonProgress: own(
+      source.lessonProgress,
+      userId,
+      (progress) => `${progress.watchedAt} ${progress.lessonId}`,
+    ),
   };
 }
 

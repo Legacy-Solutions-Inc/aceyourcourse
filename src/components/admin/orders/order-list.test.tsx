@@ -55,6 +55,17 @@ describe("OrderList", () => {
     });
   });
 
+  it("keeps only Plan Orders or only Course Orders, in the URL (Phase 5, ticket 07)", async () => {
+    const { user } = renderList();
+    const item = screen.getByRole("combobox", { name: "Plans or Courses" });
+    expect(item).toHaveValue("all");
+
+    await user.selectOptions(item, "Courses");
+    expect(replace).toHaveBeenLastCalledWith("/admin/orders?item=courses", { scroll: false });
+    await user.selectOptions(item, "Plans");
+    expect(replace).toHaveBeenLastCalledWith("/admin/orders?item=plans", { scroll: false });
+  });
+
   it("includes Test Orders when ticked", async () => {
     const { user } = renderList();
     await user.click(screen.getByRole("checkbox", { name: "Include test orders" }));

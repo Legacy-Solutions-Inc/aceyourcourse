@@ -9,14 +9,24 @@ import type { MemberNotice } from "@/services/member.types";
 // and no notification centre. A full refund in PayMongo leaves one too
 // (Phase 4, ticket 09), naming the Order and the pass's end after it. An
 // Owner's end that takes the granted days and leaves paid ones says the
-// pass's new end (ticket 10).
+// pass's new end (ticket 10). An Owner giving or removing a Course, and a
+// full refund that takes a Course away, leave one naming the Course (Phase 5,
+// ticket 07).
 //
 // Every notice shows until the Member dismisses it, newest first, so a grant
 // followed by "End access now" shows both, the end on top.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Pure: what a notice's banner says, with the pass's end as a Manila date. */
-export function noticeText({ kind, examCode, endsAt, createdAt, reference }: MemberNotice): string {
+export function noticeText({
+  kind,
+  examCode,
+  endsAt,
+  createdAt,
+  reference,
+  courseTitle,
+}: MemberNotice): string {
+  const course = `the ${courseTitle ?? "Course"}`;
   switch (kind) {
     case "granted":
       return `You now have ${examCode} All-Access until ${passEndDate(endsAt)}`;
@@ -33,6 +43,12 @@ export function noticeText({ kind, examCode, endsAt, createdAt, reference }: Mem
         : "has ended";
       return `Your refund for ${reference ?? "your Order"} was processed. ${examCode} All-Access ${access}`;
     }
+    case "course-given":
+      return `You now own ${course}`;
+    case "course-removed":
+      return `You no longer own ${course}`;
+    case "course-refunded":
+      return `Your refund for ${reference ?? "your Order"} was processed. You no longer own ${course}.`;
   }
 }
 

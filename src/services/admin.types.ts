@@ -51,6 +51,7 @@ import type {
   ConsentRecord,
   DeviceSwitch,
   Member,
+  OwnedCourse,
   PrivacyRequest,
   TargetExam,
 } from "@/services/member.types";
@@ -883,6 +884,8 @@ export interface AdminMemberDetail {
   consents: Omit<ConsentRecord, "userId">[];
   /** Every Order they made, newest first, each as the Orders list shows it (Phase 4, ticket 07). */
   orders: AdminOrder[];
+  /** The Courses they own, each with its source, as Billing lists them (Phase 5, ticket 07). */
+  courses: OwnedCourse[];
 }
 
 /** What a forced sign-out did: the Active Device it cleared, and why. */
@@ -936,6 +939,19 @@ export interface AdminPrivacyRequestDetail extends AdminPrivacyRequest {
 export interface MemberDataFile {
   filename: string;
   data: MemberDataExport;
+}
+
+/**
+ * What "Give Course" or "Remove Course" did (Phase 5, ticket 07): the Member,
+ * the Course and its title, when the given Ownership began (null once
+ * removed), and what a gift did to their Target Exams, as a grant does.
+ */
+export interface CourseOwnershipChange {
+  userId: string;
+  courseId: string;
+  course: string;
+  since: string | null;
+  targetExam: "added" | "restored" | null;
 }
 
 /**
@@ -1006,6 +1022,10 @@ export type OrderStatusFilter = (typeof ORDER_STATUS_FILTERS)[number];
 /** The Orders list's Payment Method filter: every method, or one of the four. */
 export type OrderMethodFilter = "all" | PaymentMethod;
 
+/** The Orders list's Plans vs Courses filter (Phase 5, ticket 07): every Order, or one kind of item. */
+export const ORDER_ITEM_FILTERS = ["all", "plans", "courses"] as const;
+export type OrderItemFilter = (typeof ORDER_ITEM_FILTERS)[number];
+
 /** The Orders list's date range, on Manila days: the last 7, the last 30 (the default), or all time. */
 export const ORDER_RANGES = ["7d", "30d", "all"] as const;
 export type OrderRange = (typeof ORDER_RANGES)[number];
@@ -1027,6 +1047,8 @@ export interface OrderListQuery {
   paidWithoutAccount: boolean;
   /** "Course already owned" (Phase 5, ticket 06): only the Course Orders paid while it was owned. */
   paidAlreadyOwned: boolean;
+  /** Plans vs Courses (Phase 5, ticket 07): every Order, only Plan Orders, or only Course Orders. */
+  item: OrderItemFilter;
 }
 
 /** An Order as the Admin shows it. */

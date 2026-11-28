@@ -1,13 +1,21 @@
 import { describe, expect, it } from "vitest";
 
-import { applyOutcome, awaitsAlreadyOwnedRefund, type Order, orderItem } from "./order-ledger";
+import {
+  applyOutcome,
+  awaitsAlreadyOwnedRefund,
+  type Order,
+  orderItem,
+  ownershipAfterRefund,
+} from "./order-ledger";
 
 // The Order ledger for Course Orders (Phase 5, ticket 06; spec, Phase 5
 // planning decisions → The Order ledger for Course Orders; Testing Decisions
 // → Seam 4), pure. A Course Order holds one Course and no days: Paid grants
 // Course Ownership, never days on an Access Pass. Paid on a Course the buyer
 // already owns (two tabs, a late payment) grants nothing and is marked for a
-// refund in PayMongo. "Now" is 28 Nov 2026, 20:00 in Manila.
+// refund in PayMongo. A full refund (ticket 07) removes the Course Ownership
+// unless another Paid Order or a gift still holds it. "Now" is 28 Nov 2026,
+// 20:00 in Manila.
 const NOW = new Date("2026-11-28T12:00:00.000Z");
 const HOUR = 60 * 60 * 1000;
 const hoursAgo = (hours: number) => new Date(NOW.getTime() - hours * HOUR).toISOString();
@@ -133,5 +141,37 @@ describe("orderItem", () => {
 
   it("names a Course Order as a video course, with no access period", () => {
     expect(orderItem(COURSE_ORDER)).toBe("PSAD Masterclass · Video course");
+  });
+});
+
+describe("ownershipAfterRefund (ticket 07)", () => {
+  const PAID = { ...COURSE_ORDER, status: "paid" as const, paidAt: hoursAgo(1) };
+  const SECOND = { id: "8e7d6c5b-4a3f-4e2d-9c1b-0a9f8e7d6c5b", reference: "AYC-10009" };
+  const THIRD = { id: "9f8e7d6c-5b4a-4f3e-8d2c-1b0a9f8e7d6c", reference: "AYC-10011" };
+  const boughtWith = (order: Pick<Order, "id">) => ({ orderId: order.id });
+
+  it("removes the Ownership a fully refunded Order gave, when nothing else holds it", () => {
+    expect(ownershipAfterRefund(boughtWith(PAID), PAID, [])).toEqual({ kind: "removed" });
+  });
+
+  it("keeps it when another Paid Order for the Course holds it, which then gives it", () => {
+    expect(ownershipAfterRefund(boughtWith(PAID), PAID, [SECOND, THIRD])).toEqual({
+      kind: "moved",
+      to: SECOND,
+    });
+  });
+
+  it("keeps it when another Order gave it: refunding the second, paid while owned, removes nothing", () => {
+    expect(ownershipAfterRefund(boughtWith(PAID), { ...PAID, ...SECOND }, [PAID])).toEqual({
+      kind: "kept",
+    });
+  });
+
+  it("never removes a given Ownership", () => {
+    expect(ownershipAfterRefund({ orderId: null }, PAID, [])).toEqual({ kind: "kept" });
+  });
+
+  it("changes nothing when the buyer owns the Course no longer, or never did", () => {
+    expect(ownershipAfterRefund(null, PAID, [])).toEqual({ kind: "kept" });
   });
 });

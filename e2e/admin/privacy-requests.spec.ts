@@ -34,13 +34,16 @@ const TESTER = "tester@example.com";
 const LAPSED = "lapsed@example.com";
 
 /** The sections every data copy has (src/lib/member-app/data-export.ts). */
+/** The data copy's sections, sorted: version 3 adds courses and lessonProgress (Phase 5, ticket 07). */
 const DATA_SECTIONS = [
   "accessPasses",
   "cardMarks",
   "consents",
+  "courses",
   "devices",
   "exportedAt",
   "format",
+  "lessonProgress",
   "notices",
   "orders",
   "profile",
@@ -195,7 +198,7 @@ test.describe("the Owner carrying requests out", () => {
     await waitForHydration(page);
     await page.getByRole("button", { name: "Delete this account" }).click();
     const dialog = page.getByRole("dialog", { name: "Delete Lou Lapsed’s account?" });
-    await expect(dialog).toContainText("Access Passes, with no refund");
+    await expect(dialog).toContainText("Access Passes and Courses, with no refund");
     await expect(dialog).toContainText("Their email stays on the Beta Tester list");
     await expect(dialog).toContainText(
       "2 paid Orders are kept for tax records, without the account.",

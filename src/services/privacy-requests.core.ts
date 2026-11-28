@@ -12,6 +12,7 @@ import {
 } from "@/lib/member-app/privacy-requests";
 import { effectiveStatus, expiresAt, type Order, wasPaid } from "@/lib/payments/order-ledger";
 import { passEntityPrefix } from "@/services/access-passes.core";
+import { courseOwnershipEntityPrefix } from "@/services/course-ownership.core";
 import {
   CONFIRMATION_WRONG,
   type DeleteAccountInput,
@@ -57,7 +58,8 @@ import { ordinal } from "@/services/users.core";
 //   each download is logged in Staff Activity. The Owner emails it from the
 //   support inbox: nothing is sent from here.
 // - A deletion: "Delete this account", after typing the Member's email,
-//   deletes their Member data and Access Passes (no refund) in one step, then
+//   deletes their Member data, Access Passes and Course Ownerships (no
+//   refund; Phase 5, ticket 07) in one step, then
 //   their Supabase User through the auth admin. If Supabase fails, the
 //   request stays open, saying the data is gone and the sign-in isn't: the
 //   request keeps the opaque User id, so deleting again finishes it, and the
@@ -246,9 +248,11 @@ function withoutPersonal(value: unknown): unknown {
 
 /**
  * Pure: an earlier Staff Activity record about a deleted Member's account (a
- * force sign-out, entity "member", or a grant, extension or end of one of
- * their Access Passes, entity "access-pass"), without their email or name; or
- * null for a record that isn't about it, which stays as it is.
+ * force sign-out, entity "member"; a grant, extension or end of one of
+ * their Access Passes, entity "access-pass"; or a Course bought, given,
+ * removed or refunded, entity "course-ownership", Phase 5), without their
+ * email or name; or null for a record that isn't about it, which stays as
+ * it is.
  */
 export function withoutDeletedMember(
   activity: StaffActivity,
@@ -256,7 +260,9 @@ export function withoutDeletedMember(
 ): StaffActivity | null {
   const about =
     (activity.entity === "member" && activity.entityId === userId) ||
-    (activity.entity === "access-pass" && activity.entityId.startsWith(passEntityPrefix(userId)));
+    (activity.entity === "access-pass" && activity.entityId.startsWith(passEntityPrefix(userId))) ||
+    (activity.entity === "course-ownership" &&
+      activity.entityId.startsWith(courseOwnershipEntityPrefix(userId)));
   if (!about) return null;
   return {
     ...activity,

@@ -1,13 +1,13 @@
 import { isPassActive, passEndDate } from "@/lib/member-app/access";
 import { manilaDate, manilaDayStart } from "@/lib/manila-time";
 import { formatPeso, formatPesoWithCentavos } from "@/lib/money";
-import { orderItem, type OrderStatus, wasPaid } from "@/lib/payments/order-ledger";
+import { isCourseOrder, orderItem, type OrderStatus, wasPaid } from "@/lib/payments/order-ledger";
 import { isPartiallyRefunded } from "@/lib/payments/refunds";
 import { methodLabel } from "@/lib/payments/payment-methods";
 import { paths } from "@/paths";
 import type { BusinessDetails } from "@/services/catalogue.types";
 import type { AccessPass } from "@/services/content.types";
-import type { MemberOrder, PaymentAcknowledgement } from "@/services/member.types";
+import type { MemberOrder, OwnedCourse, PaymentAcknowledgement } from "@/services/member.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Billing and the Payment Acknowledgement, worded (Phase 4, ticket 06;
@@ -21,6 +21,13 @@ import type { MemberOrder, PaymentAcknowledgement } from "@/services/member.type
 // decisions → Refunds) shows on the row and the Acknowledgement: a Refunded
 // Order reads REFUNDED, on the day refunded, and a Paid one with part
 // refunded "PARTIALLY REFUNDED · ₱300"; both keep their Acknowledgement.
+//
+// Courses (Phase 5, ticket 07; spec, Phase 5 planning decisions → Everywhere
+// else): "Your Courses" lists each Course the Member owns, since when, and
+// its source, the Order's reference or "Given by Ace Your Course". A Course
+// Order's Acknowledgement prints "PSAD Masterclass · Video course · yours to
+// keep", with no access period; refunded, it gives the day, with no days to
+// remove.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -63,6 +70,33 @@ export function passCard(
       ? `Until ${dayOf(endsAt)} · ${remaining} · renews only if you renew`
       : `Ended ${dayOf(endsAt)} · renew to study again`,
     renewHref: paths.memberApp.plansFor(examCode),
+  };
+}
+
+/** One Course on Billing's "Your Courses": OWNED, since when and its source, and Watch. */
+export interface CourseCard {
+  courseId: string;
+  title: string;
+  tag: "OWNED";
+  line: string;
+  watchHref: string;
+}
+
+/** Pure: a Course the Member owns, as "Your Courses" shows it. */
+export function courseCard({
+  courseId,
+  title,
+  examCode,
+  since,
+  orderReference,
+}: OwnedCourse): CourseCard {
+  const source = orderReference ?? "Given by Ace Your Course";
+  return {
+    courseId,
+    title,
+    tag: "OWNED",
+    line: `${examCode} · Since ${dayOf(since)} · ${source} · yours to keep`,
+    watchHref: paths.memberApp.course(courseId),
   };
 }
 
@@ -119,12 +153,13 @@ export interface OrderRow {
 
 /** Pure: an Order's refund as its row says it; null with none. */
 function refundLine(
-  order: Pick<MemberOrder, "status" | "refundedCentavos" | "refundedAt">,
+  order: Pick<MemberOrder, "status" | "refundedCentavos" | "refundedAt" | "courseId">,
 ): string | null {
   const { status, refundedCentavos, refundedAt } = order;
   if (status === "refunded") {
     const day = refundedAt ? ` ON ${dayOf(refundedAt).toUpperCase()}` : "";
-    return `REFUNDED${day} · UNUSED DAYS REMOVED`;
+    // A Course Order had no days to remove.
+    return isCourseOrder(order) ? `REFUNDED${day}` : `REFUNDED${day} · UNUSED DAYS REMOVED`;
   }
   return isPartiallyRefunded(order) ? `PARTIALLY REFUNDED · ${formatPeso(refundedCentavos)}` : null;
 }
@@ -155,7 +190,8 @@ export interface AcknowledgementView {
   billedTo: string[];
   seller: string[];
   item: string;
-  period: string;
+  /** The access period its days gave; null for a Course Order, which has none (ticket 07). */
+  period: string | null;
   amount: string;
   method: string;
   payMongoReference: string;
@@ -180,12 +216,16 @@ export function acknowledgementView(
 ): AcknowledgementView {
   const paidAt = order.paidAt ?? order.createdAt;
   const refundDay = order.refundedAt ? dayOf(order.refundedAt) : null;
-  let period = access
+  const course = isCourseOrder(order);
+  let period: string | null = access
     ? `Access ${dayOf(access.startsAt)} – ${dayOf(access.endsAt)} · no auto-renewal`
-    : "No auto-renewal";
+    : course
+      ? null
+      : "No auto-renewal";
   // A refund took the Order's unused days off, so the period it first gave is gone.
   if (order.status === "refunded") {
-    period = `Refunded${refundDay ? ` ${refundDay}` : ""} · its unused days were removed`;
+    const refunded = `Refunded${refundDay ? ` ${refundDay}` : ""}`;
+    period = course ? refunded : `${refunded} · its unused days were removed`;
   }
   return {
     number: order.reference,
@@ -194,7 +234,7 @@ export function acknowledgementView(
     seller: [business.name, business.address, business.tin ? `TIN ${business.tin}` : null].filter(
       (line): line is string => Boolean(line),
     ),
-    item: orderItem(order),
+    item: course ? `${orderItem(order)} · yours to keep` : orderItem(order),
     period,
     amount: formatPesoWithCentavos(order.priceCentavos),
     method: `${methodLabel(order.method)} via PayMongo`,

@@ -8,12 +8,15 @@ import {
   endAccess,
   extendAccess,
   forceSignOut,
+  giveCourse,
   grantAccess,
   markPrivacyRequestDone,
   removeBetaTester,
+  removeCourse,
 } from "@/services/admin";
 import {
   betaTesterInputSchema,
+  courseOwnershipInputSchema,
   deleteAccountInputSchema,
   endAccessInputSchema,
   extendAccessInputSchema,
@@ -73,6 +76,24 @@ export const extendAccessPass = adminAction(
 export const endAccessPass = adminAction(
   { role: "owner", schema: endAccessInputSchema },
   endAccess,
+);
+
+/**
+ * "Give Course" (Phase 5, ticket 07; story 172): a separately sold Course
+ * becomes the Member's, given by Ace Your Course, with an in-app notice.
+ */
+export const giveMemberCourse = adminAction(
+  { role: "owner", schema: courseOwnershipInputSchema },
+  giveCourse,
+);
+
+/**
+ * "Remove Course" (Phase 5, ticket 07): a given Course only, with an in-app
+ * notice. A paid one goes only by a full refund in PayMongo.
+ */
+export const removeMemberCourse = adminAction(
+  { role: "owner", schema: courseOwnershipInputSchema },
+  removeCourse,
 );
 
 /**

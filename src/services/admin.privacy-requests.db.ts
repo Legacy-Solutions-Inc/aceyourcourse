@@ -9,8 +9,10 @@ import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
 import { isReaderZoom } from "@/lib/reviewer-pdfs/reader";
 import { passEntityPrefix } from "@/services/access-passes.core";
+import { courseOwnershipEntityPrefix } from "@/services/course-ownership.core";
 import { adminOrderRecords } from "@/services/admin.orders.db";
 import { staffActivityFromRow, staffActivityToRow } from "@/services/admin.rows";
+import { lessonProgressFromRow } from "@/services/courses.rows";
 import {
   accessPassFromRow,
   accessPassGrantFromRow,
@@ -20,6 +22,7 @@ import {
 import {
   consentFromRow,
   deviceSwitchFromRow,
+  listOwnedCourses,
   memberFromRow,
   noticeFromRow,
   privacyRequestFieldsFromRow,
@@ -61,7 +64,7 @@ const { orders, invoiceRequests } = schema;
 const { staff, staffActivity } = schema;
 const { memberTargetExams, memberActiveDevices, memberConsents, memberDeviceSwitches } = schema;
 const { cardMarks, quizAttempts, quizAttemptAnswers, reviewerPageViews, studyDays } = schema;
-const { deckPositions, readerPositions, memberNotices } = schema;
+const { deckPositions, readerPositions, memberNotices, lessonProgress } = schema;
 
 type PrivacyRequestRow = typeof privacyRequests.$inferSelect;
 type MemberRow = typeof members.$inferSelect;
@@ -154,6 +157,10 @@ const databasePrivacyRequestsStore: PrivacyRequestsStore = {
                   eq(staffActivity.entity, "access-pass"),
                   like(staffActivity.entityId, `${passEntityPrefix(userId)}%`),
                 ),
+                and(
+                  eq(staffActivity.entity, "course-ownership"),
+                  like(staffActivity.entityId, `${courseOwnershipEntityPrefix(userId)}%`),
+                ),
               ),
             );
           for (const entry of earlier) {
@@ -214,6 +221,8 @@ const databasePrivacyRequestsStore: PrivacyRequestsStore = {
         switches,
         notices,
         theirOrders,
+        owned,
+        lessons,
       ] = await Promise.all([
         db
           .select()
@@ -247,6 +256,8 @@ const databasePrivacyRequestsStore: PrivacyRequestsStore = {
           .from(orders)
           .leftJoin(invoiceRequests, eq(invoiceRequests.orderId, orders.id))
           .where(eq(orders.userId, userId)),
+        listOwnedCourses(userId),
+        db.select().from(lessonProgress).where(theirs(lessonProgress)),
       ]);
       return {
         member: memberFromRow(member),
@@ -285,6 +296,8 @@ const databasePrivacyRequestsStore: PrivacyRequestsStore = {
         deviceSwitches: switches.map(deviceSwitchFromRow),
         notices: notices.map(noticeFromRow),
         orders: await adminOrderRecords(theirOrders),
+        courseOwnerships: owned.map((course) => ({ ...course, userId })),
+        lessonProgress: lessons.map(lessonProgressFromRow),
       };
     } catch (error) {
       throw asDatabaseError(error);

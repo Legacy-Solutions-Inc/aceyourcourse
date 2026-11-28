@@ -142,6 +142,15 @@ const DETAIL: AdminMemberDetail = {
       paidAlreadyOwned: false,
     },
   ],
+  courses: [
+    {
+      courseId: "6a1e2d3c-4b5a-4f6e-8d7c-9b0a1f2e3d4c",
+      title: "PSAD Masterclass",
+      examCode: "CE",
+      since: "2026-11-17T03:50:00.000Z",
+      orderReference: "AYC-10482",
+    },
+  ],
 };
 
 const EMPTY: AdminMemberDetail = {
@@ -155,6 +164,7 @@ const EMPTY: AdminMemberDetail = {
   deviceSwitches: [],
   consents: [],
   orders: [],
+  courses: [],
 };
 
 const section = (name: string) => screen.getByRole("region", { name });
@@ -167,6 +177,10 @@ function renderDetail(detail = DETAIL) {
       exams={[{ code: "CE", name: "Civil Engineering" }]}
       forceSignOut={vi.fn()}
       passActions={{ grant: vi.fn(), extend: vi.fn(), end: vi.fn() }}
+      soldSeparately={[
+        { id: "6a1e2d3c-4b5a-4f6e-8d7c-9b0a1f2e3d4c", title: "PSAD Masterclass", examCode: "CE" },
+      ]}
+      courseActions={{ give: vi.fn(), remove: vi.fn() }}
     />,
   );
 }
@@ -196,6 +210,17 @@ describe("MemberDetail", () => {
     expect(exams).toHaveLength(1);
     expect(exams[0]).toHaveTextContent("CE · Civil Engineering");
     expect(exams[0]).toHaveTextContent("EXAM DATE 24 Apr 2027 · SET BY THE MEMBER");
+  });
+
+  it("shows the Courses they own with each one's source (Phase 5, ticket 07)", () => {
+    renderDetail();
+    expect(section("COURSES")).toHaveTextContent("PSAD Masterclass");
+    expect(section("COURSES")).toHaveTextContent("CE · SINCE 17 NOV 2026 · AYC-10482");
+  });
+
+  it("says a Member with no Course has none", () => {
+    renderDetail(EMPTY);
+    expect(section("COURSES")).toHaveTextContent("No Courses.");
   });
 
   it("shows each Access Pass with its end in Manila, whether it's active, and its grants", () => {

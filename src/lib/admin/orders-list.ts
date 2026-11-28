@@ -1,12 +1,15 @@
 import { MAX_QUERY_LENGTH } from "@/lib/catalogue/product-filters";
 import { addCalendarDays, manilaDate, manilaDayStart } from "@/lib/manila-time";
 import { invoiceStatus } from "@/lib/payments/invoice-requests";
+import { isCourseOrder } from "@/lib/payments/order-ledger";
 import { isPaymentMethod } from "@/lib/payments/payment-methods";
 import { paths } from "@/paths";
 import {
   type AdminOrder,
+  ORDER_ITEM_FILTERS,
   ORDER_RANGES,
   ORDER_STATUS_FILTERS,
+  type OrderItemFilter,
   type OrderListQuery,
   type OrderRange,
   type OrderStats,
@@ -19,7 +22,7 @@ import {
 // BUILD-MAP §3.9), pure, so both arms of the Admin seam filter the same way.
 //
 // - The URL holds the search and filters, so a reload or a shared link keeps
-//   them: ?q=10482&status=paid&method=gcash&range=7d&tests=1&invoice=requested&late=1&noaccount=1&owned=1.
+//   them: ?q=10482&status=paid&method=gcash&range=7d&tests=1&invoice=requested&late=1&noaccount=1&owned=1&item=courses.
 //   Anything it doesn't know falls back to its default, and the defaults are
 //   left out.
 // - "Search by order number or email": part of the reference or of the
@@ -42,6 +45,8 @@ import {
 // - "Course already owned" (Phase 5, ticket 06) keeps only the Course Orders
 //   paid while their buyer already owned the Course (the Order's
 //   paidAlreadyOwned), which granted nothing either.
+// - Plans vs Courses (Phase 5, ticket 07): ?item=plans keeps only the Orders
+//   for a Plan, ?item=courses only those for a Course.
 // - The tiles count the Orders the filters match.
 // - The Overview's Needs attention (ticket 11) counts its payment items with
 //   the very filters its links open (PAYMENT_WORK), so a count and its list
@@ -65,6 +70,7 @@ export const DEFAULT_ORDER_QUERY: OrderListQuery = {
   paidAfterExpiry: false,
   paidWithoutAccount: false,
   paidAlreadyOwned: false,
+  item: "all",
 };
 
 /** How many Manila days each range holds, today included. */
@@ -82,6 +88,10 @@ const INVOICE_REQUESTED = "requested";
 const isStatusFilter = (value: string): value is OrderStatusFilter =>
   (ORDER_STATUS_FILTERS as readonly string[]).includes(value);
 
+/** Pure: whether a value from the URL or a form is one of the Plans vs Courses choices. */
+export const isOrderItemFilter = (value: string): value is OrderItemFilter =>
+  (ORDER_ITEM_FILTERS as readonly string[]).includes(value);
+
 /** Pure: whether a value from the URL or a form is one of the ranges. */
 export const isOrderRange = (value: string): value is OrderRange =>
   (ORDER_RANGES as readonly string[]).includes(value);
@@ -95,6 +105,7 @@ export function parseOrdersParams(params: SearchParams): OrderListQuery {
   const status = value("status").toLowerCase();
   const method = value("method").toLowerCase();
   const range = value("range").toLowerCase();
+  const item = value("item").toLowerCase();
   return {
     q: value("q").trim().slice(0, MAX_QUERY_LENGTH) || null,
     status: isStatusFilter(status) ? status : DEFAULT_ORDER_QUERY.status,
@@ -105,6 +116,7 @@ export function parseOrdersParams(params: SearchParams): OrderListQuery {
     paidAfterExpiry: value("late") === "1",
     paidWithoutAccount: value("noaccount") === "1",
     paidAlreadyOwned: value("owned") === "1",
+    item: isOrderItemFilter(item) ? item : DEFAULT_ORDER_QUERY.item,
   };
 }
 
@@ -120,6 +132,7 @@ function searchOf(query: OrderListQuery): string {
     paidAfterExpiry,
     paidWithoutAccount,
     paidAlreadyOwned,
+    item,
   } = query;
   const params = new URLSearchParams();
   if (q) params.set("q", q);
@@ -131,6 +144,7 @@ function searchOf(query: OrderListQuery): string {
   if (paidAfterExpiry) params.set("late", "1");
   if (paidWithoutAccount) params.set("noaccount", "1");
   if (paidAlreadyOwned) params.set("owned", "1");
+  if (item !== DEFAULT_ORDER_QUERY.item) params.set("item", item);
   const search = params.toString();
   return search ? `?${search}` : "";
 }
@@ -187,6 +201,7 @@ export function filterOrders(
         (!query.paidAfterExpiry || (order.paidAfterExpiry && grantedSomething(order))) &&
         (!query.paidWithoutAccount || order.paidWithoutAccount) &&
         (!query.paidAlreadyOwned || order.paidAlreadyOwned) &&
+        (query.item === "all" || isCourseOrder(order) === (query.item === "courses")) &&
         matchesSearch(order, query.q),
     )
     .sort(newestOrderFirst);
@@ -254,6 +269,13 @@ export function paymentWork(orders: readonly AdminOrder[], now: Date): PaymentWo
 
 /** Pure: the Paid tile's label, naming the range: "PAID · LAST 30 DAYS". */
 export const paidTileLabel = (range: OrderRange): string => `PAID · ${RANGE_LABELS[range]}`;
+
+/** Pure: the Plans vs Courses choices, as their select names them (Phase 5, ticket 07). */
+export const ITEM_OPTIONS: readonly { value: OrderItemFilter; label: string }[] = [
+  { value: "all", label: "Plans and Courses" },
+  { value: "plans", label: "Plans" },
+  { value: "courses", label: "Courses" },
+];
 
 /** Pure: a range as the range select names it. */
 export const RANGE_OPTIONS: readonly { value: OrderRange; label: string }[] = [

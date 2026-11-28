@@ -2,7 +2,13 @@ import { type Browser, expect as baseExpect, type Page, test } from "@playwright
 
 import { paths } from "../../src/paths";
 import { resetSampleData, signInAs as signInToAdmin } from "../admin/helpers";
-import { expectNoBlockingViolations, LIVE, SKIP_LIVE, signInAndOnboard } from "./helpers";
+import {
+  buyPsadMasterclass,
+  expectNoBlockingViolations,
+  LIVE,
+  SKIP_LIVE,
+  signInAndOnboard,
+} from "./helpers";
 
 // Billing and the Payment Acknowledgement on sample data with the payments
 // fake (Phase 4, ticket 06; stories 143, 144, 151u): a Member buys CE 3
@@ -13,8 +19,10 @@ import { expectNoBlockingViolations, LIVE, SKIP_LIVE, signInAndOnboard } from ".
 // requested, opens the Order and marks it sent, and the Member then sees
 // "Invoice sent · check your email". Refunds (ticket 09), from the sample
 // data: Lou's AYC-10008 was refunded in full and Bea's AYC-10007 in part
-// (₱300); each shows in Billing and on its Acknowledgement. Live mode has no
-// payments client here.
+// (₱300); each shows in Billing and on its Acknowledgement. Courses (Phase 5,
+// ticket 07): after buying the PSAD Masterclass, Billing lists it under "Your
+// Courses" with its Order, and its Acknowledgement prints the Course line with
+// no access period. Live mode has no payments client here.
 
 // Sign-in redirects and first visits wait for a dev server compiling routes.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -127,6 +135,33 @@ test("a Member who bought CE 3 months sees it in Billing, opens the Acknowledgem
   });
   await page.getByRole("button", { name: "Print or save as PDF" }).click();
   expect(await page.evaluate(() => (window as unknown as { printed: number }).printed)).toBe(1);
+});
+
+test("a Member who bought the PSAD Masterclass sees it under Your Courses, and its Acknowledgement prints the Course line", async ({
+  page,
+}) => {
+  await signInAndOnboard(page, "tester", "CE");
+  const reference = await buyPsadMasterclass(page);
+
+  await memberNav(page)
+    .getByRole("link", { name: /Billing/ })
+    .click();
+  const courses = page.getByRole("region", { name: "Your Courses" });
+  await expect(courses.getByRole("heading", { level: 3, name: "PSAD Masterclass" })).toBeVisible();
+  await expect(courses.getByText("OWNED")).toBeVisible();
+  await expect(courses).toContainText(`· ${reference} · yours to keep`);
+  await expect(courses.getByRole("link", { name: "Watch PSAD Masterclass" })).toBeVisible();
+  const order = page.getByRole("list", { name: "Orders" }).getByRole("listitem").first();
+  await expect(order).toContainText("PSAD Masterclass · Video course");
+  await expectNoBlockingViolations(page);
+
+  await order.getByRole("link", { name: `Payment Acknowledgement for ${reference}` }).click();
+  const document = page.getByRole("article", { name: `Payment Acknowledgement ${reference}` });
+  await expect(document).toContainText("PSAD Masterclass · Video course · yours to keep");
+  await expect(document).toContainText("₱1,499.00");
+  await expect(document).not.toContainText("Access ");
+  await expect(document).not.toContainText("No auto-renewal");
+  await expectNoBlockingViolations(page);
 });
 
 test("an Owner's business details, VAT-registered, show on the Member's Acknowledgement", async ({

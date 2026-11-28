@@ -3,7 +3,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
 
-import type { OrderRow, PassCard, StatusTone } from "./billing-view";
+import type { CourseCard, OrderRow, PassCard, StatusTone } from "./billing-view";
 import { type InvoiceRequestAction, InvoiceRequestForm } from "./invoice-request-form";
 
 const TONE: Record<StatusTone, string> = {
@@ -17,6 +17,8 @@ const TAG = "font-mono text-[10px] leading-none font-bold px-1.5 py-1.5";
 
 interface BillingScreenProps {
   passes: readonly PassCard[];
+  /** The Courses the Member owns (Phase 5, ticket 07). */
+  courses: readonly CourseCard[];
   orders: readonly OrderRow[];
   /** The Member's name, which the name on an official invoice starts as. */
   memberName: string;
@@ -26,14 +28,21 @@ interface BillingScreenProps {
 
 /**
  * Billing's body (Phase 4, ticket 06; BUILD-MAP §3 Billing, L452–477; stories
- * 143, 144): the Member's Access Passes, each with Renew now, then every
- * Order, newest first, with a Payment Acknowledgement for each Paid one, or
+ * 143, 144): the Member's Access Passes, each with Renew now, then Your
+ * Courses (Phase 5, ticket 07: each Course they own, with its source, and
+ * Watch), then every Order, newest first, with a Payment Acknowledgement for each Paid one, or
  * "No payments yet" and See plans before their first Order. A Paid Order
  * offers "Request official invoice", a short form (ticket 08), until its
  * request is made; then it says "Invoice requested", later "Invoice sent ·
  * check your email".
  */
-export function BillingScreen({ passes, orders, memberName, requestInvoice }: BillingScreenProps) {
+export function BillingScreen({
+  passes,
+  courses,
+  orders,
+  memberName,
+  requestInvoice,
+}: BillingScreenProps) {
   return (
     <>
       <p className="text-[15px]">
@@ -67,6 +76,33 @@ export function BillingScreen({ passes, orders, memberName, requestInvoice }: Bi
                   className="flex min-h-11 items-center self-start border-[1.5px] bg-primary px-4 text-sm font-bold text-primary-foreground"
                 >
                   Renew now<span className="sr-only"> {pass.title}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {courses.length > 0 ? (
+        <section aria-labelledby="billing-courses" className="flex flex-col gap-2.5">
+          <h2 id="billing-courses" className="text-[22px] font-extrabold tracking-[-0.02em]">
+            Your Courses
+          </h2>
+          <ul className="grid gap-3.5 sm:grid-cols-2">
+            {courses.map((course) => (
+              <li
+                key={course.courseId}
+                className="flex flex-col gap-2.5 border-[1.5px] bg-ayc-paper px-4.5 py-4"
+              >
+                <div className="flex items-center justify-between gap-2.5">
+                  <h3 className="text-lg font-extrabold">{course.title}</h3>
+                  <span className={cn(TAG, "bg-ayc-success text-white")}>{course.tag}</span>
+                </div>
+                <span className="text-sm">{course.line}</span>
+                <Link
+                  href={course.watchHref}
+                  className="flex min-h-11 items-center self-start border-[1.5px] px-4 text-sm font-bold"
+                >
+                  Watch<span className="sr-only"> {course.title}</span>
                 </Link>
               </li>
             ))}

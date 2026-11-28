@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { expect as baseExpect, type Page, test } from "@playwright/test";
 
 import { paths } from "../../src/paths";
+import { buyPsadMasterclass, signInAndOnboard } from "../member-app/helpers";
 import { LIVE, resetSampleData, signInAs } from "./helpers";
 
 // Orders & payments on sample data with the payments fake (Phase 4, ticket 07;
@@ -13,8 +14,10 @@ import { LIVE, resetSampleData, signInAs } from "./helpers";
 // "Invoice requested" (ticket 08) finds Maria's Invoice Request; the Owner
 // opens it and marks it sent. Refunds (ticket 09): the Owner sees Lou's
 // Order REFUNDED and Bea's "PARTIALLY REFUNDED · ₱300", on the list, the
-// detail and in the CSV's amount refunded. An Editor sees no SALES group and
-// is refused the screens and the export.
+// detail and in the CSV's amount refunded. Course Orders (Phase 5, ticket
+// 07): after the tester buys the PSAD Masterclass, the Owner filters the list
+// to Courses and exports a CSV that names the Course. An Editor sees no SALES
+// group and is refused the screens and the export.
 //
 // The sample Orders, timed from the reset:
 //   AYC-10001 Jose, CE 6 months, GCash, Paid, 45 days ago
@@ -239,6 +242,42 @@ test("an Owner filters Invoice requested, opens the Order and marks the invoice 
 
   await page.goto(`${paths.admin.orders}?invoice=requested`);
   await expect(list(page).getByText("No Orders match. Clear the search or filters.")).toBeVisible();
+});
+
+test("an Owner filters the Orders to Courses and exports a CSV that names the Course (Phase 5, ticket 07)", async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(120_000);
+  // The tester buys the PSAD Masterclass with the payments fake: a Test Order.
+  const tester = await browser.newContext();
+  let reference = "";
+  try {
+    const member = await tester.newPage();
+    await signInAndOnboard(member, "tester", "CE");
+    reference = await buyPsadMasterclass(member);
+  } finally {
+    await tester.close();
+  }
+
+  await signInAs(page, "owner", `${paths.admin.orders}?tests=1`);
+  await page.getByRole("combobox", { name: "Plans or Courses" }).selectOption({ label: "Courses" });
+  await expect(page).toHaveURL(/\/admin\/orders\?tests=1&item=courses$/);
+  await expect(shown(page)).toHaveText([reference]);
+  await expect(list(page).getByRole("row", { name: new RegExp(reference) })).toContainText(
+    "PSAD Masterclass · Video course",
+  );
+
+  const downloading = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export CSV" }).click();
+  const csv = await csvOf(await (await downloading).path());
+  expect(csv.references).toEqual([reference]);
+  expect(csv.cells(reference)).toContain("PSAD Masterclass · Video course");
+
+  // Plans leaves it out.
+  await page.getByRole("combobox", { name: "Plans or Courses" }).selectOption({ label: "Plans" });
+  await expect(page).toHaveURL(/item=plans/);
+  await expect(shown(page).filter({ hasText: reference })).toHaveCount(0);
 });
 
 test.describe("an Editor", () => {

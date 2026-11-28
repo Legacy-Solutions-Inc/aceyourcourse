@@ -682,6 +682,32 @@ const WRITES: Record<string, Write> = {
       await arm.putAccessPass({ userId: BEA.userId, examCode: "CE", endsAt: inDays(30) });
     },
   },
+  // Give and remove a Course by hand (Phase 5, ticket 07).
+  giveCourse: {
+    actor: OWNER,
+    entity: "course-ownership",
+    entityId: `${BEA.userId}:${PSAD_COURSE}`,
+    saves: (seam, actor) => seam.giveCourse(actor, { userId: BEA.userId, courseId: PSAD_COURSE }),
+    refused: (seam, actor) =>
+      seam.giveCourse(actor, { userId: BEA.userId, courseId: NO_SUCH_COURSE }),
+    refusal: "invalid",
+    setUp: async (_seam, arm) => {
+      await arm.member.getOrCreateMember(BEA);
+    },
+  },
+  removeCourse: {
+    actor: OWNER,
+    entity: "course-ownership",
+    entityId: `${BEA.userId}:${PSAD_COURSE}`,
+    saves: (seam, actor) => seam.removeCourse(actor, { userId: BEA.userId, courseId: PSAD_COURSE }),
+    refused: (seam, actor) =>
+      seam.removeCourse(actor, { userId: BEA.userId, courseId: NO_SUCH_COURSE }),
+    refusal: "invalid",
+    setUp: async (seam, arm) => {
+      await arm.member.getOrCreateMember(BEA);
+      await seam.giveCourse(OWNER, { userId: BEA.userId, courseId: PSAD_COURSE });
+    },
+  },
   // Carry out a Privacy Request (ticket 19). The Supabase User goes through the fake auth admin.
   exportMemberData: {
     actor: OWNER,

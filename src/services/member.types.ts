@@ -438,6 +438,21 @@ export interface CourseShelf {
   courses: MemberCourse[];
 }
 
+/**
+ * A Course the Member owns, as Billing's "Your Courses" lists it (Phase 5,
+ * ticket 07): its title and Exam, since when, and its source: the Paid
+ * Order's reference, or null when an Owner gave it ("Given by Ace Your
+ * Course").
+ */
+export interface OwnedCourse {
+  courseId: string;
+  title: string;
+  examCode: string;
+  /** ISO time the Ownership began. */
+  since: string;
+  orderReference: string | null;
+}
+
 /** One Published Lesson in a Course's list. */
 export interface MemberLesson {
   id: string;
@@ -548,26 +563,41 @@ export type TopicPercents = Record<string, number | null>;
 
 /**
  * What a notice tells the Member: a grant, an extension, the end of their
- * access, or a full refund in PayMongo (Phase 4, ticket 09).
+ * access, or a full refund in PayMongo (Phase 4, ticket 09); or (Phase 5,
+ * ticket 07) a Course an Owner gave or removed, or one a full refund took
+ * away.
  */
-export const NOTICE_KINDS = ["granted", "extended", "ended", "refunded", "shortened"] as const;
+export const NOTICE_KINDS = [
+  "granted",
+  "extended",
+  "ended",
+  "refunded",
+  "shortened",
+  "course-given",
+  "course-removed",
+  "course-refunded",
+] as const;
 export type NoticeKind = (typeof NOTICE_KINDS)[number];
 
 /**
  * One in-app notice (spec, Phase 3 planning decisions → In-app notices): an
  * Owner's grant, extension or end of a Member's Access Pass ("shortened" when
  * ending its granted days leaves paid ones, ticket 10), or a full refund
- * (ticket 09), shown as a dismissible banner until the Member dismisses it.
+ * (ticket 09), or a Course given, removed or refunded (Phase 5, ticket 07),
+ * shown as a dismissible banner until the Member dismisses it.
  * No email is sent.
  */
 export interface MemberNotice {
   id: string;
   /** The Member's User id: a notice is only ever shown to them. */
   userId: string;
-  /** The Exam whose Access Pass changed. */
+  /** The Exam whose Access Pass changed, or (ticket 07) the Course's Exam. */
   examCode: string;
   kind: NoticeKind;
-  /** ISO time the pass ends after the change (for "ended", when it ended). */
+  /**
+   * ISO time the pass ends after the change (for "ended", when it ended);
+   * for a Course's notice, which ends nothing, the change's time.
+   */
   endsAt: string;
   /** ISO time the Owner made the change. */
   createdAt: string;
@@ -575,6 +605,8 @@ export interface MemberNotice {
   dismissedAt: string | null;
   /** The refunded Order's reference, "AYC-10483", for a refund's notice; null for any other. */
   reference: string | null;
+  /** The Course's title, for a Course's notice (ticket 07); null for any other. */
+  courseTitle: string | null;
 }
 
 // ── Privacy Requests (ticket 18) ────────────────────────────────────────────

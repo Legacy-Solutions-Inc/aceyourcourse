@@ -378,4 +378,23 @@ describe("a Course Order (Phase 5, ticket 06)", () => {
       "PayMongo confirmed this payment while the Member already owned the Course, so it gave nothing. Refund it in the PayMongo dashboard.",
     );
   });
+
+  it("says a partial refund left the Course the Member's (ticket 07)", () => {
+    expect(statusNote(paid({ ...course, refundedCentavos: 30_000 }))).toBe(
+      "Paid and confirmed by PayMongo. The Member owns the Course for good. PayMongo refunded ₱300 of it, which changed nothing: only a full refund removes the Course.",
+    );
+  });
+
+  it("says a full refund took the Course away, unless a gift or another Paid Order holds it (ticket 07)", () => {
+    const refunded = paid({
+      ...course,
+      status: "refunded",
+      recordedStatus: "refunded",
+      refundedCentavos: 149_900,
+    });
+
+    expect(statusNote(refunded)).toBe(
+      "Refunded in full in PayMongo. The Course came off the Member’s Courses, with an in-app notice, unless a gift or another Paid Order for it still holds it.",
+    );
+  });
 });

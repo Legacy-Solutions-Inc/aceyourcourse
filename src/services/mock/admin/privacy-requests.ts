@@ -1,3 +1,4 @@
+import { listOwnedCourses } from "@/services/member.mock";
 import { sampleOrderRecord } from "@/services/mock/admin/orders";
 import { getSampleStore, type SampleStore } from "@/services/mock/sample-store";
 import {
@@ -131,6 +132,7 @@ const samplePrivacyRequestsStore: PrivacyRequestsStore = {
     const mine = <T extends { userId: string }>(records: T[]) =>
       records.filter((record) => record.userId === userId);
     const device = store.memberActiveDevices[userId];
+    const owned = await listOwnedCourses(userId);
     return structuredClone({
       member,
       selectedExamCode: store.selectedExams[userId] ?? null,
@@ -150,6 +152,8 @@ const samplePrivacyRequestsStore: PrivacyRequestsStore = {
       deviceSwitches: mine(store.memberDeviceSwitches),
       notices: mine(store.memberNotices),
       orders: store.orders.filter((order) => order.userId === userId).map(sampleOrderRecord),
+      courseOwnerships: owned.map((course) => ({ ...course, userId })),
+      lessonProgress: mine(store.lessonProgress),
     });
   },
 };

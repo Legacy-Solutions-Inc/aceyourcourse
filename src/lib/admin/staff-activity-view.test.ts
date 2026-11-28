@@ -18,6 +18,8 @@ describe("activityAreaOf", () => {
     ["exam", "exam-pages", "Exam pages"],
     ["member", "users", "Users"],
     ["access-pass", "users", "Users"],
+    // A Course bought, given, removed or refunded is about a Member (Phase 5, ticket 07).
+    ["course-ownership", "users", "Users"],
     ["plan", "plans", "Plans"],
     ["order", "orders", "Orders"],
     ["orders", "orders", "Orders"],

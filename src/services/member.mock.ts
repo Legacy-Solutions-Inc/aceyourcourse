@@ -10,7 +10,7 @@ import {
   type CourseStudyStore,
   type CourseTree,
 } from "@/services/course-study.core";
-import type { Course, LessonProgress } from "@/services/courses.types";
+import type { Course, CourseOwnership, LessonProgress } from "@/services/courses.types";
 import type { AccessPass, ContentKind, ContentRecords } from "@/services/content.types";
 import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
 import type { LessonRecord } from "@/lib/member-app/progress";
@@ -49,6 +49,7 @@ import type {
   LibrarySubject,
   Member,
   MemberNotice,
+  OwnedCourse,
   MemberUser,
   PickableExam,
   PlansExam,
@@ -61,6 +62,7 @@ import {
   writeSamplePass,
   writeSampleTargetExam,
 } from "@/services/mock/pass-writes";
+import { sampleCourseOwnership, samplePaidCourseOrders } from "@/services/mock/course-ownerships";
 import { getSampleStore, type SamplePrivacyRequest } from "@/services/mock/sample-store";
 import {
   type CourseOwnershipWrite,
@@ -70,6 +72,7 @@ import {
   type OrderLookup,
   type OrderStore,
   type OrderWrite,
+  type OwnershipRefund,
   type PassReduction,
 } from "@/services/orders.core";
 import { sampleContentFiles, sampleReviewerPdfFiles } from "@/services/uploads.mock";
@@ -515,6 +518,29 @@ const sampleCourseStore: CourseStudyStore = {
 export const { listCourses, openCourse, openLesson, saveLessonPosition, completeLesson } =
   courseStudyCalls(sampleCourseStore);
 
+/** Billing's "Your Courses" (ticket 07): the Member's own Course Ownerships, oldest first. */
+export async function listOwnedCourses(userId: string): Promise<OwnedCourse[]> {
+  const wanted = memberUserIdSchema.parse(userId);
+  const { courseOwnerships, courses, orders } = getSampleStore();
+  return courseOwnerships
+    .filter((ownership) => ownership.userId === wanted)
+    .sort((a, b) => a.since.localeCompare(b.since))
+    .flatMap(({ courseId, since, orderId }) => {
+      const course = courses.find((candidate) => candidate.id === courseId);
+      if (!course) return [];
+      const order = orderId ? orders.find((candidate) => candidate.id === orderId) : undefined;
+      return [
+        {
+          courseId,
+          title: course.title,
+          examCode: course.examCode,
+          since,
+          orderReference: order?.reference ?? null,
+        },
+      ];
+    });
+}
+
 // ── Progress ────────────────────────────────────────────────────────────────
 
 const sampleProgressStore: ProgressStore = {
@@ -840,6 +866,9 @@ function holdSampleOrder<T>(
     row.userId === userId && row.examCode === examCode;
   const pass = store.accessPasses.find(held) ?? null;
   const history = pass && userId ? samplePassHistory(userId, examCode) : [];
+  // A Course Order's buyer, while their account is there: their Ownership and Paid Orders for it.
+  const theirCourse =
+    userId !== null && order.courseId !== null ? { userId, courseId: order.courseId } : null;
   const { write, result } = work(
     structuredClone({
       order,
@@ -848,9 +877,12 @@ function holdSampleOrder<T>(
       targetExams: userId ? (store.memberTargetExams[userId] ?? []) : [],
       history,
       refunds: refundsOfOrder(store.orderRefunds)(orderId),
-      ownsCourse: store.courseOwnerships.some(
-        (ownership) => ownership.userId === userId && ownership.courseId === order.courseId,
-      ),
+      ownership: theirCourse
+        ? sampleCourseOwnership(theirCourse.userId, theirCourse.courseId)
+        : null,
+      coursePaidOrders: theirCourse
+        ? samplePaidCourseOrders(theirCourse.userId, theirCourse.courseId)
+        : [],
     }),
   );
   if (!write) return result;
@@ -859,6 +891,7 @@ function holdSampleOrder<T>(
   if (write.paid && userId) writeSamplePass(userId, examCode, write.paid);
   if (write.ownership && userId) writeSampleOwnership(userId, write.ownership);
   if (write.reduction && userId) writeSampleReduction(userId, examCode, write.reduction);
+  if (write.ownershipRefund) writeSampleOwnershipRefund(write.ownershipRefund);
   store.orderRefunds = mergeById(store.orderRefunds, write.refunds);
   store.orders = store.orders.map((kept) => (kept.id === orderId ? write.order : kept));
   return result;
@@ -873,6 +906,30 @@ function writeSampleOwnership(userId: string, write: CourseOwnershipWrite) {
   store.staffActivity = [...store.staffActivity, write.activity];
   store.courseOwnerships = [...store.courseOwnerships, structuredClone(write.ownership)];
   writeSampleTargetExam(userId, write.targetExam);
+}
+
+/**
+ * Writes a Course Order's full refund's change to the buyer's Course
+ * Ownership into the sample data (ticket 07): the Staff Activity first, then
+ * the Ownership removed with its notice, or moved to another Paid Order,
+ * which is no longer marked paidAlreadyOwned.
+ */
+function writeSampleOwnershipRefund({ userId, courseId, change, activity }: OwnershipRefund) {
+  const store = getSampleStore();
+  store.staffActivity = [...store.staffActivity, activity];
+  const theirs = (ownership: CourseOwnership) =>
+    ownership.userId === userId && ownership.courseId === courseId;
+  if (change.kind === "removed") {
+    store.courseOwnerships = store.courseOwnerships.filter((ownership) => !theirs(ownership));
+    store.memberNotices = [...store.memberNotices, change.notice];
+    return;
+  }
+  store.courseOwnerships = store.courseOwnerships.map((ownership) =>
+    theirs(ownership) ? { ...ownership, orderId: change.orderId } : ownership,
+  );
+  store.orders = store.orders.map((order) =>
+    order.id === change.orderId ? { ...order, paidAlreadyOwned: false } : order,
+  );
 }
 
 /** Records refunds by their id: one already there is replaced in its place, a new one added after. */

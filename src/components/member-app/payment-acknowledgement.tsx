@@ -88,7 +88,9 @@ export function PaymentAcknowledgementDocument({
         <div className="flex justify-between gap-2.5 border-y-[1.5px] py-3 text-[15px]">
           <span>
             <b>{view.item}</b>
-            <span className="block text-[13px] text-muted-foreground">{view.period}</span>
+            {view.period ? (
+              <span className="block text-[13px] text-muted-foreground">{view.period}</span>
+            ) : null}
           </span>
           <span className="font-bold">{view.amount}</span>
         </div>

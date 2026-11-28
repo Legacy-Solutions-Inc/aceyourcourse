@@ -24,6 +24,7 @@ import type {
   ContentItem,
   CourseOpening,
   CourseShelf,
+  OwnedCourse,
   DeckOpening,
   DeckPositionInput,
   DeviceClaim,
@@ -354,6 +355,13 @@ export interface MemberService {
    */
   listCourses(userId: string, examCode: string, access: MemberAccess): Promise<CourseShelf>;
   /**
+   * Billing's "Your Courses" (ticket 07): every Course the Member owns, their
+   * own Course Ownerships only, oldest first, each with its title, Exam,
+   * since when, and its source (the Paid Order's reference, or null when an
+   * Owner gave it).
+   */
+  listOwnedCourses(userId: string): Promise<OwnedCourse[]>;
+  /**
    * A Course's page: its Modules with Published Lessons, each Lesson with its
    * length and whether the Member can play it. A locked Course opens too
    * (only its Free Preview Lessons play). Refused for the gate, the device,
@@ -640,6 +648,7 @@ export const openReviewerPdf = impl.openReviewerPdf;
 export const readReviewerPage = impl.readReviewerPage;
 export const saveReaderPosition = impl.saveReaderPosition;
 export const listCourses = impl.listCourses;
+export const listOwnedCourses = impl.listOwnedCourses;
 export const openCourse = impl.openCourse;
 export const openLesson = impl.openLesson;
 export const saveLessonPosition = impl.saveLessonPosition;

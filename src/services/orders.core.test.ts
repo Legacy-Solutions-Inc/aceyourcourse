@@ -125,7 +125,8 @@ describe("settleOrder on an Order with no account", () => {
     pass: null,
     targetExams: [],
     history: [],
-    ownsCourse: false,
+    ownership: null,
+    coursePaidOrders: [],
     refunds: [],
   });
 
@@ -143,6 +144,7 @@ describe("settleOrder on an Order with no account", () => {
       ownership: null,
       refunds: [],
       reduction: null,
+      ownershipRefund: null,
       activity: expect.objectContaining({
         actor: { ...PAYMONGO_SYSTEM_ACTOR },
         entity: "order",

@@ -39,8 +39,9 @@ import type { ActiveDevice, ConsentRecord, Member } from "@/services/member.type
 //   Tester list, each read now. Each arm finds the page its own way (the
 //   sample arm with matchesUserQuery below, the database in SQL).
 // - A Member's detail: their records, read fresh, with every Order they made
-//   (Phase 4, ticket 07), newest first, and what "End access now" would do
-//   to each Access Pass (ticket 10). What the Member App itself
+//   (Phase 4, ticket 07), newest first, what "End access now" would do to
+//   each Access Pass (ticket 10), and the Courses they own with each one's
+//   source (Phase 5, ticket 07). What the Member App itself
 //   reads (Target Exams, the Active Device and its switch log, progress) comes
 //   from the arm's Member seam, which reads only that Member's own records.
 // - Force sign-out: clears the Member's Active Device, so the device's next
@@ -100,7 +101,7 @@ export interface UsersStore {
 /** What the Users calls read through the arm's Member seam: only the Member's own records. */
 export type MemberReads = Pick<
   MemberService,
-  "listTargetExams" | "getActiveDevice" | "listDeviceSwitches" | "getProgress"
+  "listTargetExams" | "getActiveDevice" | "listDeviceSwitches" | "getProgress" | "listOwnedCourses"
 >;
 
 /** Pure: which of the Access Pass filters a Member's passes fall in at `now`. Ending now is ended. */
@@ -212,10 +213,11 @@ export function usersCalls(store: UsersStore, member: MemberReads) {
     const records = await store.readMember(id.data);
     if (!records) return NOT_FOUND;
 
-    const [targetExams, activeDevice, switches] = await Promise.all([
+    const [targetExams, activeDevice, switches, courses] = await Promise.all([
       member.listTargetExams(id.data),
       member.getActiveDevice(id.data),
       member.listDeviceSwitches(id.data),
+      member.listOwnedCourses(id.data),
     ]);
     const progress = await Promise.all(
       targetExams.map(async ({ examCode }) => ({
@@ -236,6 +238,7 @@ export function usersCalls(store: UsersStore, member: MemberReads) {
       deviceSwitches: newestWithoutId(switches),
       consents: newestWithoutId(consents),
       orders: orders.map((held) => adminOrderOf(held, now)).sort(newestOrderFirst),
+      courses,
     });
   }
 

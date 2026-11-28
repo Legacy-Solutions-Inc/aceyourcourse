@@ -16,6 +16,7 @@ import type {
   FaqMove,
   ForceSignOutInput,
   GrantAccessInput,
+  CourseOwnershipInput,
   InviteStaffInput,
   NewExamForm,
   NewProductForm,
@@ -57,6 +58,7 @@ import type {
 } from "@/services/admin.schema";
 import type {
   AccessPassChange,
+  CourseOwnershipChange,
   AdminAbout,
   AdminAnnouncement,
   AdminCard,
@@ -299,6 +301,32 @@ export interface AdminService {
    * has already ended, or none, is refused with a message, recording nothing.
    */
   endAccess(actor: StaffActor, input: EndAccessInput): Promise<AdminResult<AccessPassChange>>;
+
+  // Courses by hand (Owners only; Phase 5, ticket 07; story 172;
+  // course-ownership.core.ts): give or remove a separately sold Course from
+  // a Member's detail page. Each leaves the Member an in-app notice (no
+  // email) and a Staff Activity record. An Editor is refused each call. None
+  // touches the Catalogue, so none returns a cache tag.
+
+  /**
+   * "Give Course": Course Ownership of a separately sold Course with no Order
+   * ("Given by Ace Your Course"), and its Exam in their Target Exams, added
+   * or brought back. Refused for a Course they own already, one included in
+   * All-Access, or no Course.
+   */
+  giveCourse(
+    actor: StaffActor,
+    input: CourseOwnershipInput,
+  ): Promise<AdminResult<CourseOwnershipChange>>;
+  /**
+   * "Remove Course": a given Ownership only. Refused for a paid one (only a
+   * full refund in PayMongo removes it), a given one a Paid Order also
+   * holds, and a Course they don't own.
+   */
+  removeCourse(
+    actor: StaffActor,
+    input: CourseOwnershipInput,
+  ): Promise<AdminResult<CourseOwnershipChange>>;
 
   // Privacy Requests (Owners only; Phase 3, tickets 18 and 19; stories 133,
   // 133q and 133r): what Members asked for from Account, and carrying it
@@ -1342,6 +1370,8 @@ export const forceSignOut = impl.forceSignOut;
 export const grantAccess = impl.grantAccess;
 export const extendAccess = impl.extendAccess;
 export const endAccess = impl.endAccess;
+export const giveCourse = impl.giveCourse;
+export const removeCourse = impl.removeCourse;
 export const listPrivacyRequests = impl.listPrivacyRequests;
 export const getPrivacyRequestForAdmin = impl.getPrivacyRequestForAdmin;
 export const exportMemberData = impl.exportMemberData;

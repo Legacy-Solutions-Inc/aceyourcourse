@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
 import { BillingScreen } from "@/components/member-app/billing-screen";
-import { orderRow, passCard } from "@/components/member-app/billing-view";
+import { courseCard, orderRow, passCard } from "@/components/member-app/billing-view";
 import { MemberScreen } from "@/components/member-app/member-screen";
 import { requireMemberWithExam } from "@/lib/member-app/guard";
 import { paths } from "@/paths";
-import { listAccessPasses, listMemberOrders } from "@/services/member";
+import { listAccessPasses, listMemberOrders, listOwnedCourses } from "@/services/member";
 
 import { requestOfficialInvoice } from "./actions";
 
@@ -14,16 +14,19 @@ export const metadata: Metadata = { title: "Billing" };
 /**
  * Billing (05; mockup L452–477; Phase 4, ticket 06; stories 143, 144): the
  * signed-in Member's Access Passes, active ones first, each with Renew now,
- * and every Order of theirs, newest first, as at this request (a Pending
+ * the Courses they own with each one's source (Phase 5, ticket 07), and
+ * every Order of theirs, newest first, as at this request (a Pending
  * Order older than 24 hours reads Expired). Each Paid Order links to its
  * Payment Acknowledgement, and offers "Request official invoice" until its
- * request is made (ticket 08). Only the Member's own passes and Orders are read.
+ * request is made (ticket 08). Only the Member's own passes, Courses and
+ * Orders are read.
  * The gate, consent, the Active Device and onboarding come first.
  */
 export default async function BillingPage() {
   const { member } = await requireMemberWithExam(paths.memberApp.billing);
-  const [passes, orders] = await Promise.all([
+  const [passes, courses, orders] = await Promise.all([
     listAccessPasses(member.userId),
+    listOwnedCourses(member.userId),
     listMemberOrders(member.userId),
   ]);
   const now = new Date();
@@ -35,6 +38,7 @@ export default async function BillingPage() {
     <MemberScreen eyebrow="05 · BILLING" title="Plans and purchases">
       <BillingScreen
         passes={cards}
+        courses={courses.map(courseCard)}
         orders={orders.map(orderRow)}
         memberName={member.name ?? ""}
         requestInvoice={requestOfficialInvoice}

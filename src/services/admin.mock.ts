@@ -13,6 +13,7 @@ export * from "@/services/mock/admin/site-pages";
 export * from "@/services/mock/admin/staff";
 export * from "@/services/mock/admin/users";
 export * from "@/services/mock/admin/access-passes";
+export * from "@/services/mock/admin/course-gifts";
 export * from "@/services/mock/admin/privacy-requests";
 export * from "@/services/mock/admin/topics";
 export * from "@/services/mock/admin/content-import";

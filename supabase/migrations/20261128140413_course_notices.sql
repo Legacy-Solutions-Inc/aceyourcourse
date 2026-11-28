@@ -1,0 +1,2 @@
+ALTER TABLE "member_notices" ADD COLUMN "course_title" text;--> statement-breakpoint
+ALTER TABLE "member_notices" ADD CONSTRAINT "member_notices_course_title" CHECK (("member_notices"."kind"::text like 'course-%') = ("member_notices"."course_title" is not null));

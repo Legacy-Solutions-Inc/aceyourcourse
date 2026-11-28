@@ -3,12 +3,13 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BillingScreen } from "./billing-screen";
-import type { AcknowledgementView, OrderRow, PassCard } from "./billing-view";
+import type { AcknowledgementView, CourseCard, OrderRow, PassCard } from "./billing-view";
 import { PaymentAcknowledgementDocument } from "./payment-acknowledgement";
 
 // Billing and the Payment Acknowledgement (Phase 4, ticket 06; BUILD-MAP §3
 // Billing and Receipt; stories 143, 144, 151u), from their worded views, with
-// "Request official invoice" (ticket 08; story 151j).
+// "Request official invoice" (ticket 08; story 151j), and Your Courses
+// (Phase 5, ticket 07).
 
 const PASS: PassCard = {
   examCode: "CE",
@@ -17,6 +18,13 @@ const PASS: PassCard = {
   tag: "ACTIVE",
   line: "Until 12 Jan 2027 · 56 days left · renews only if you renew",
   renewHref: "/app/plans?exam=CE",
+};
+const PSAD: CourseCard = {
+  courseId: "6a1e2d3c-4b5a-4f6e-8d7c-9b0a1f2e3d4c",
+  title: "PSAD Masterclass",
+  tag: "OWNED",
+  line: "CE · Since 28 Nov 2026 · AYC-10483 · yours to keep",
+  watchHref: "/app/courses/6a1e2d3c-4b5a-4f6e-8d7c-9b0a1f2e3d4c",
 };
 const PAID: OrderRow = {
   reference: "AYC-10482",
@@ -50,14 +58,14 @@ const INVOICE = { memberName: "Bea Tester", requestInvoice: invoiceAction() };
 
 describe("BillingScreen", () => {
   it("says what Billing is, and that card details stay with PayMongo", () => {
-    render(<BillingScreen {...INVOICE} passes={[PASS]} orders={[PAID]} />);
+    render(<BillingScreen {...INVOICE} courses={[]} passes={[PASS]} orders={[PAID]} />);
     expect(
       screen.getByText("Your payment history. Card details stay with PayMongo; we never see them."),
     ).toBeInTheDocument();
   });
 
   it("shows each Access Pass with ACTIVE or ENDED, its line, and Renew now to that Exam's Plans", () => {
-    render(<BillingScreen {...INVOICE} passes={[PASS]} orders={[PAID]} />);
+    render(<BillingScreen {...INVOICE} courses={[]} passes={[PASS]} orders={[PAID]} />);
     const access = within(screen.getByRole("region", { name: "Access" }));
 
     expect(access.getByRole("heading", { level: 3, name: "CE All-Access" })).toBeInTheDocument();
@@ -69,8 +77,26 @@ describe("BillingScreen", () => {
     );
   });
 
+  it("shows Your Courses beside Access: each Course OWNED, its line with the source, and Watch", () => {
+    render(<BillingScreen {...INVOICE} passes={[PASS]} courses={[PSAD]} orders={[PAID]} />);
+    const courses = within(screen.getByRole("region", { name: "Your Courses" }));
+
+    expect(courses.getByRole("heading", { level: 3, name: "PSAD Masterclass" })).toBeVisible();
+    expect(courses.getByText("OWNED")).toBeVisible();
+    expect(courses.getByText(PSAD.line)).toBeVisible();
+    expect(courses.getByRole("link", { name: "Watch PSAD Masterclass" })).toHaveAttribute(
+      "href",
+      PSAD.watchHref,
+    );
+  });
+
+  it("leaves Your Courses out for a Member who owns none", () => {
+    render(<BillingScreen {...INVOICE} courses={[]} passes={[PASS]} orders={[PAID]} />);
+    expect(screen.queryByRole("region", { name: "Your Courses" })).toBeNull();
+  });
+
   it("lists each Order with its item, date, method, reference, status and amount", () => {
-    render(<BillingScreen {...INVOICE} passes={[]} orders={[PAID, FAILED]} />);
+    render(<BillingScreen {...INVOICE} courses={[]} passes={[]} orders={[PAID, FAILED]} />);
     const rows = within(screen.getByRole("list", { name: "Orders" })).getAllByRole("listitem");
 
     expect(rows).toHaveLength(2);
@@ -82,7 +108,7 @@ describe("BillingScreen", () => {
   });
 
   it("links a Paid Order's Payment Acknowledgement, and no other Order's", () => {
-    render(<BillingScreen {...INVOICE} passes={[]} orders={[PAID, FAILED]} />);
+    render(<BillingScreen {...INVOICE} courses={[]} passes={[]} orders={[PAID, FAILED]} />);
     const rows = within(screen.getByRole("list", { name: "Orders" })).getAllByRole("listitem");
 
     expect(
@@ -102,7 +128,7 @@ describe("BillingScreen", () => {
       invoice: { canRequest: false, line: null },
       refund: "REFUNDED ON 17 NOV 2026 · UNUSED DAYS REMOVED",
     };
-    render(<BillingScreen {...INVOICE} passes={[]} orders={[partial, refunded]} />);
+    render(<BillingScreen {...INVOICE} courses={[]} passes={[]} orders={[partial, refunded]} />);
     const [first, second] = within(screen.getByRole("list", { name: "Orders" })).getAllByRole(
       "listitem",
     );
@@ -118,7 +144,7 @@ describe("BillingScreen", () => {
   });
 
   it("marks a Test Order TEST", () => {
-    render(<BillingScreen {...INVOICE} passes={[]} orders={[PAID, FAILED]} />);
+    render(<BillingScreen {...INVOICE} courses={[]} passes={[]} orders={[PAID, FAILED]} />);
     const rows = within(screen.getByRole("list", { name: "Orders" })).getAllByRole("listitem");
 
     expect(within(rows[0]!).queryByText("TEST")).not.toBeInTheDocument();
@@ -126,7 +152,7 @@ describe("BillingScreen", () => {
   });
 
   it("says No payments yet under Orders for a Member with granted access who has never paid", () => {
-    render(<BillingScreen {...INVOICE} passes={[PASS]} orders={[]} />);
+    render(<BillingScreen {...INVOICE} courses={[]} passes={[PASS]} orders={[]} />);
     const orders = within(screen.getByRole("region", { name: "Orders" }));
 
     expect(screen.getByRole("region", { name: "Access" })).toBeInTheDocument();
@@ -135,7 +161,7 @@ describe("BillingScreen", () => {
   });
 
   it("says No payments yet, with See plans, before the Member has paid", () => {
-    render(<BillingScreen {...INVOICE} passes={[]} orders={[]} />);
+    render(<BillingScreen {...INVOICE} courses={[]} passes={[]} orders={[]} />);
 
     expect(screen.getByText("No payments yet")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "See plans" })).toHaveAttribute("href", "/app/plans");
@@ -322,6 +348,7 @@ describe("BillingScreen's official invoices", () => {
     const requestInvoice = invoiceAction();
     render(
       <BillingScreen
+        courses={[]}
         passes={[]}
         orders={[PAID]}
         memberName="Bea Tester"
@@ -350,6 +377,7 @@ describe("BillingScreen's official invoices", () => {
     render(
       <BillingScreen
         {...INVOICE}
+        courses={[]}
         passes={[]}
         orders={[{ ...PAID, invoice: { canRequest: false, line: "Invoice requested" } }, FAILED]}
       />,

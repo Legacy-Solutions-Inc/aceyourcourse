@@ -28,6 +28,7 @@ import { variationLabel } from "@/lib/catalogue/price";
 import {
   type AdminError,
   ORDER_RANGES,
+  ORDER_ITEM_FILTERS,
   ORDER_STATUS_FILTERS,
   type RequiredRole,
   type StaffActor,
@@ -349,6 +350,9 @@ export const userListQuerySchema = z.object({
 /** A Member's User id, as the Users screens address them. Anything else is no Member's. */
 export const memberIdSchema = z.string().uuid();
 
+/** A Course's id, as the Courses table keys them (Phase 5, ticket 07). */
+export const courseIdSchema = z.string().uuid();
+
 /** The longest reason Staff Activity keeps for a Users action. */
 export const REASON_MAX = 500;
 export const REASON_MISSING = "ENTER A REASON · IT’S SAVED IN STAFF ACTIVITY";
@@ -431,6 +435,16 @@ export const endAccessInputSchema = z.object({
   reason: reasonSchema,
 });
 
+/**
+ * "Give Course" and "Remove Course" (Phase 5, ticket 07): the Member and the
+ * Course, any text, so an id that isn't one answers not-found or a refusal.
+ */
+export const courseOwnershipInputSchema = z.object({
+  userId: passMemberId,
+  courseId: z.string().max(100),
+});
+
+export type CourseOwnershipInput = z.input<typeof courseOwnershipInputSchema>;
 export type GrantAccessInput = z.input<typeof grantAccessInputSchema>;
 export type ExtendAccessInput = z.input<typeof extendAccessInputSchema>;
 export type EndAccessInput = z.input<typeof endAccessInputSchema>;
@@ -2168,6 +2182,7 @@ export const orderListQuerySchema = z.object({
   paidAfterExpiry: z.boolean(),
   paidWithoutAccount: z.boolean(),
   paidAlreadyOwned: z.boolean(),
+  item: z.enum(ORDER_ITEM_FILTERS),
 });
 
 /** An Order's reference, as an address carries it: any text, so one that isn't an Order's answers not-found. */

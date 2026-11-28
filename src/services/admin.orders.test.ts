@@ -582,6 +582,8 @@ describe.each(ADMIN_ARMS)("Admin seam: Orders ($name)", (arm) => {
             paidAfterExpiry: false,
             paidWithoutAccount: false,
             paidAlreadyOwned: false,
+            // Plans vs Courses (Phase 5, ticket 07).
+            item: "all",
             searched: false,
             rows: 1,
           },

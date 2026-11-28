@@ -296,6 +296,12 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
         input: { userId: BEA.userId, examCode: "CE", reason: "Mistake" },
       }),
     ),
+    giveMemberCourse: owner(() =>
+      users.giveMemberCourse(IDLE, { input: { userId: BEA.userId, courseId: PSAD_COURSE } }),
+    ),
+    removeMemberCourse: owner(() =>
+      users.removeMemberCourse(IDLE, { input: { userId: BEA.userId, courseId: HPGE_COURSE } }),
+    ),
     deleteAccount: owner(() =>
       users.deleteAccount(IDLE, {
         input: { requestId: requests.deletion, confirmation: LOU.email },
@@ -768,6 +774,11 @@ beforeEach(async () => {
       examCode: "CE",
       endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     },
+  ];
+  // The HPGE Crash Course, given her by an Owner, to remove (Phase 5, ticket 07).
+  store.courseOwnerships = [
+    ...store.courseOwnerships,
+    { userId: BEA.userId, courseId: HPGE_COURSE, since: store.bootedAt, orderId: null },
   ];
   // Bea's Pending Order, made at boot, so its note's stamp is the one opened() gives (ticket 07).
   store.orders = [

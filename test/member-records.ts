@@ -2,6 +2,7 @@ import type { MemberAccess } from "@/lib/member-app/access";
 import type { AdminCard, AdminQuestion } from "@/services/admin.types";
 import type { MemberUser } from "@/services/member.types";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
+import { sampleCourseId, sampleLessonId } from "@/services/mock/courses";
 import { createFakeRenderer, fakeStamper } from "@/services/page-images.fake";
 
 import type { AdminArm } from "./admin-arms";
@@ -22,6 +23,13 @@ const mstc = (name: string) => sampleTopicId("CE", "MSTC", name);
 const SIMPLE_CURVES = mstc("Simple Curves");
 const SPIRAL_CURVES = mstc("Spiral Curves");
 const SURVEYING = mstc("Surveying");
+/** A sold-separately Course an Owner gives, and a Lesson of the CE All-Access Course (Phase 5, ticket 07). */
+const HPGE = sampleCourseId("HPGE Crash Course");
+const LEVELING = sampleLessonId(
+  "Surveying & Curves Lectures",
+  "Surveying basics",
+  "Distance and leveling",
+);
 
 /** What the Members study: a card in Spiral Curves, a question in Simple Curves' quiz, a 2-page Reviewer PDF in Surveying. */
 export interface StudyContent {
@@ -64,10 +72,11 @@ export async function writeStudyContent(arm: AdminArm): Promise<StudyContent> {
 /**
  * The Member's whole life in the Member App: they join and agree, pick ME
  * (which selects it), get CE granted (a pass, its grant, a notice, a Target
- * Exam), dismiss CE's renewal reminder for today, claim a device, then mark
- * the card (a Study Day), stop in the deck, take the quiz, and read and stop
- * on a Reviewer PDF page. `token` makes their device's
- * token hash their own.
+ * Exam), dismiss CE's renewal reminder for today, claim a device, are given
+ * the HPGE Crash Course (a Course Ownership and its notice), then mark the
+ * card (a Study Day), stop in the deck, take the quiz, read and stop on a
+ * Reviewer PDF page, and watch a Lesson (Lesson progress). `token` makes
+ * their device's token hash their own.
  */
 export async function studyEverything(
   arm: AdminArm,
@@ -96,6 +105,8 @@ export async function studyEverything(
     tokenHash: token.repeat(64),
     deviceLabel: "Chrome on Android",
   });
+  const given = await arm.seam.giveCourse(OWNER, { userId, courseId: HPGE });
+  if (!given.ok) throw new Error(`Not given: ${JSON.stringify(given)}`);
 
   const access: MemberAccess = {
     gate: "open",
@@ -124,6 +135,12 @@ export async function studyEverything(
   );
   if (read.status !== "page") throw new Error(`Not read: ${read.status}`);
   await member.saveReaderPosition(userId, { reviewerPdfId, page: 1, zoom: 100 }, access);
+  const watched = await member.saveLessonPosition(
+    userId,
+    { lessonId: LEVELING, position: 30 },
+    access,
+  );
+  if (!watched.ok) throw new Error(`Not watched: ${JSON.stringify(watched)}`);
 }
 
 /** The kinds of record the Member App keeps for a User id. */
@@ -143,6 +160,8 @@ export const MEMBER_RECORD_KINDS = [
   "quizAttempts",
   "reviewerPageViews",
   "readerPositions",
+  "courseOwnerships",
+  "lessonProgress",
   "privacyRequests",
 ] as const;
 

@@ -7,6 +7,7 @@ import {
   isCourseOrder,
   isOrderReference,
   ORDER_EXPIRES_AFTER_MS,
+  ownershipAfterRefund,
   paidAfterExpiry,
   type Order,
   orderItem,
@@ -32,6 +33,7 @@ import type { Plan, StaffActivity } from "@/services/admin.types";
 import type { AccessPass } from "@/services/content.types";
 import { isCourseForSale } from "@/lib/courses/course-rules";
 import { activityRecord } from "@/services/content-editor.core";
+import { courseNoticeOf, courseOwnershipEntityId } from "@/services/course-ownership.core";
 import type { Course, CourseOwnership } from "@/services/courses.types";
 import {
   invoiceFieldErrors,
@@ -116,8 +118,13 @@ import type { CheckoutStatus, PaymentEvent, PaymentsClient } from "@/services/pa
 //   while the Member owns the Course already (two tabs, a late payment)
 //   grants nothing: the Order is marked paidAlreadyOwned, for an Owner to
 //   refund in PayMongo. A Course Order's refunds are recorded and move it to
-//   Refunded, but take nothing off any pass (ticket 07 removes the
-//   ownership).
+//   Refunded, taking nothing off any pass.
+// - A Course Order's full refund (ticket 07) removes the Course Ownership it
+//   gave, with a notice for the Member, logged as "PayMongo (system)",
+//   unless another of their Paid Orders for the Course still holds it: that
+//   Order then gives it, and is no longer marked paidAlreadyOwned, since
+//   refunding it would now take the Course away. A given Ownership, or one
+//   another Order gave, stays as it is. A partial refund changes nothing.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** An Order as one outcome finds it, with what Paid and refunds change alongside it. */
@@ -133,8 +140,14 @@ export interface OrderHolding {
   history: PassHistoryRow[];
   /** The Order's PayMongo refunds recorded so far, in the order first recorded (ticket 09). */
   refunds: OrderRefund[];
-  /** For a Course Order: whether the buyer owns its Course already (ticket 06); false otherwise. */
-  ownsCourse: boolean;
+  /** For a Course Order: the buyer's Ownership of its Course (ticket 06), or null; null for a Plan Order. */
+  ownership: CourseOwnership | null;
+  /**
+   * For a Course Order: the buyer's Paid Orders for its Course, this one
+   * included, oldest paid first (ticket 07: another may hold the Course after
+   * a refund); none for a Plan Order.
+   */
+  coursePaidOrders: Pick<Order, "id" | "reference">[];
 }
 
 /**
@@ -160,6 +173,19 @@ export interface PassReduction {
   activity: StaffActivity;
 }
 
+/**
+ * A Course Order's full refund's change to the buyer's Course Ownership
+ * (ticket 07): removed, with the notice; or moved to another of their Paid
+ * Orders for the Course, which is no longer marked paidAlreadyOwned. With
+ * the Staff Activity.
+ */
+export interface OwnershipRefund {
+  userId: string;
+  courseId: string;
+  change: { kind: "removed"; notice: MemberNotice } | { kind: "moved"; orderId: string };
+  activity: StaffActivity;
+}
+
 /** What an outcome writes, all or nothing. */
 export interface OrderWrite {
   /** The Order, moved on or as it was. */
@@ -172,12 +198,14 @@ export interface OrderWrite {
   paid: PassWrite | null;
   /** For a paid Course Order: the Course Ownership it grants (ticket 06); null otherwise. */
   ownership: CourseOwnershipWrite | null;
-  /** The Staff Activity for a change to no pass (Failed, Expired, Paid with no account, refunds); null with `paid` or `reduction`. */
+  /** The Staff Activity for a change to no pass (Failed, Expired, Paid with no account, refunds); null with `paid`, `reduction` or `ownershipRefund`. */
   activity: StaffActivity | null;
   /** The PayMongo refunds to record: added, or moved on, by their id (ticket 09). */
   refunds: OrderRefund[];
   /** For a full refund: the Order's unused days off the buyer's pass; null otherwise. */
   reduction: PassReduction | null;
+  /** For a Course Order's full refund: the change to the buyer's Course Ownership (ticket 07); null otherwise. */
+  ownershipRefund: OwnershipRefund | null;
 }
 
 /**
@@ -326,12 +354,12 @@ const memberOrderOf = (
  * days on the pass and everything Paid writes, or the Course Ownership.
  */
 export function settleOrder(
-  { order, member, pass, targetExams, ownsCourse }: OrderHolding,
+  { order, member, pass, targetExams, ownership }: OrderHolding,
   outcome: OrderOutcome,
   paymentId: string | null,
   now: Date,
 ): OrderWrite | null {
-  const step = applyOutcome(order, outcome, pass?.endsAt ?? null, now, ownsCourse);
+  const step = applyOutcome(order, outcome, pass?.endsAt ?? null, now, ownership !== null);
   if (!step.changed) return null;
   const { paidDays, course } = step;
   const paid = paidDays !== null || course !== null;
@@ -344,7 +372,13 @@ export function settleOrder(
   };
   const { reference } = order;
   const late = paidAfterExpiry(moved) ? { paidAfterExpiry: true } : {};
-  const nothingMore = { paid: null, ownership: null, refunds: [], reduction: null };
+  const nothingMore = {
+    paid: null,
+    ownership: null,
+    refunds: [],
+    reduction: null,
+    ownershipRefund: null,
+  };
   if (!paid || !member || course === "already-owned") {
     const noAccount = paidWithNoAccount ? { paidWithoutAccount: true } : {};
     const owned = course === "already-owned" && member ? { paidAlreadyOwned: true } : {};
@@ -430,10 +464,6 @@ export function settleOrder(
   };
 }
 
-/** A Course Ownership's id in Staff Activity: the Member's and the Course's (ticket 06). */
-export const courseOwnershipEntityId = (userId: string, courseId: string) =>
-  `${userId}:${courseId}`;
-
 /** What recording a refund event did: applied, changed nothing, or was ignored (an Order that was never Paid). */
 export type RefundSettlement = "applied" | "no-change" | "ignored";
 
@@ -465,6 +495,7 @@ export function settleRefunds(
     activity: null,
     refunds: [],
     reduction: null,
+    ownershipRefund: null,
     ...fields,
   });
   const logged = (action: string, before: object, after: object) =>
@@ -515,7 +546,16 @@ export function settleRefunds(
   }
 
   const refunded = step.order;
-  // A Course Order's days are none: its refund takes nothing off a pass (ticket 07 removes the ownership).
+  if (member && order.courseId) {
+    const ownershipRefund = courseRefund(holding, member, order.courseId, after, now);
+    if (ownershipRefund) {
+      return {
+        write: writing({ order: refunded, refunds: changed, ownershipRefund }),
+        result: "applied",
+      };
+    }
+  }
+  // A Course Order's days are none: its refund takes nothing off a pass.
   if (!member || !pass || isCourseOrder(order)) {
     const activity = logged(
       "order-refunded",
@@ -552,6 +592,48 @@ export function settleRefunds(
     ),
   };
   return { write: writing({ order: refunded, refunds: changed, reduction }), result: "applied" };
+}
+
+/**
+ * Pure: a Course Order's full refund's change to its buyer's Course
+ * Ownership (ticket 07), refunds reaching `refundedCentavos` at `now`: the
+ * Ownership it gave removed, with the notice, or moved to another of their
+ * Paid Orders for the Course (ownershipAfterRefund); null when it stays as
+ * it is (a gift, another Order's, or none), changing nothing but the Order.
+ */
+function courseRefund(
+  { order, ownership, coursePaidOrders }: OrderHolding,
+  member: Member,
+  courseId: string,
+  refundedCentavos: number,
+  now: Date,
+): OwnershipRefund | null {
+  const after = ownershipAfterRefund(ownership, order, coursePaidOrders);
+  if (after.kind === "kept") return null;
+  const { userId, email } = member;
+  const { reference, examCode, planName: course } = order;
+  const owned =
+    after.kind === "moved" ? { owned: true, heldBy: after.to.reference } : { owned: false };
+  return {
+    userId,
+    courseId,
+    change:
+      after.kind === "moved"
+        ? { kind: "moved", orderId: after.to.id }
+        : {
+            kind: "removed",
+            notice: courseNoticeOf(userId, examCode, "course-refunded", course, now, reference),
+          },
+    activity: activityRecord(
+      PAYMONGO_SYSTEM_ACTOR,
+      now,
+      "course-ownership",
+      courseOwnershipEntityId(userId, courseId),
+      "order-refunded",
+      { email, courseId, course, reference },
+      { reference, refundedCentavos, ...owned },
+    ),
+  };
 }
 
 /**

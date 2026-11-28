@@ -145,6 +145,7 @@ export const noticeOf = (
   createdAt: now.toISOString(),
   dismissedAt: null,
   reference,
+  courseTitle: null,
 });
 
 /** The Admin seam's Access Pass actions, over an arm's store. */
