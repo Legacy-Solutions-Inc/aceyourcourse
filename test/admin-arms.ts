@@ -177,6 +177,10 @@ export const byCardAndMember = (marks: CardMark[]) =>
   [...marks].sort((a, b) => a.cardId.localeCompare(b.cardId) || a.userId.localeCompare(b.userId));
 
 /** Pure: Reviewer PDF pages viewed by Member, then Reviewer PDF, then page. */
+/** Lesson progress records in a fixed order, by Member then Lesson, to compare the arms (ticket 04). */
+export const byMemberAndLesson = <T extends { userId: string; lessonId: string }>(records: T[]) =>
+  records.sort((a, b) => a.userId.localeCompare(b.userId) || a.lessonId.localeCompare(b.lessonId));
+
 export const byMemberAndPage = (views: ReviewerPageView[]) =>
   [...views].sort(
     (a, b) =>

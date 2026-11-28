@@ -6,13 +6,14 @@ import * as sampleArm from "@/services/member.mock";
 import type { AccessPass, CardMark, QuizAttempt, ReviewerPageView } from "@/services/content.types";
 import type { ConsentRecord, DeviceSwitch, Member, PrivacyRequest } from "@/services/member.types";
 import type { CatalogueSeed } from "@/services/catalogue.schema";
-import type { CourseOwnership } from "@/services/courses.types";
+import type { CourseOwnership, LessonProgress } from "@/services/courses.types";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
 
 import {
   type AdminArm,
   SAMPLE_ARM as ADMIN_SAMPLE_ARM,
   byCardAndMember,
+  byMemberAndLesson,
   byMemberAndPage,
 } from "./admin-arms";
 import { sampleActor } from "./admin-inputs";
@@ -66,6 +67,8 @@ export interface MemberArm {
   quizAttempts(): Promise<QuizAttempt[]>;
   /** Every Member's Reviewer PDF pages viewed as stored, by Member, Reviewer PDF and page. */
   pageViews(): Promise<ReviewerPageView[]>;
+  /** Every Member's Lesson progress as stored, by Member then Lesson (Phase 5, ticket 04). */
+  lessonProgress(): Promise<LessonProgress[]>;
   /** Every Privacy Request as stored, open and done, oldest first; null for a deleted Member's. */
   privacyRequests(): Promise<(Omit<PrivacyRequest, "userId"> & { userId: string | null })[]>;
   /** Marks a Privacy Request done behind the seam's back, as an Owner does (ticket 19). */
@@ -112,6 +115,7 @@ const SAMPLE_ARM: MemberArm = {
   cardMarks: async () => byCardAndMember(structuredClone(getSampleStore().cardMarks)),
   quizAttempts: async () => structuredClone(getSampleStore().quizAttempts),
   pageViews: async () => byMemberAndPage(structuredClone(getSampleStore().reviewerPageViews)),
+  lessonProgress: async () => byMemberAndLesson(structuredClone(getSampleStore().lessonProgress)),
   privacyRequests: async () => structuredClone(getSampleStore().privacyRequests),
   finishPrivacyRequest: async (id) => {
     const store = getSampleStore();

@@ -30,6 +30,7 @@ const MEMBER_SUITES = [
   "src/services/member.refunds.test.ts",
   "src/services/member.renewal.test.ts",
   "src/services/member.courses.test.ts",
+  "src/services/member.lesson-progress.test.ts",
 ];
 /** Admin tests that aren't written over ADMIN_ARMS. */
 const NOT_ADMIN_SUITES = [

@@ -1,6 +1,7 @@
 import type { CatalogueSeed } from "@/services/catalogue.schema";
-import type { Course, CourseModule, Lesson } from "@/services/courses.types";
+import type { Course, CourseModule, Lesson, LessonProgress } from "@/services/courses.types";
 
+import { sampleMember, sampleUserId } from "./members";
 import { stableUuid } from "./stable-uuid";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -168,4 +169,42 @@ export function sampleCourses(catalogue: CatalogueSeed): {
     });
   });
   return { courses, courseModules, lessons };
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Bea Tester's progress in "Surveying & Curves Lectures" (Phase 5, ticket 04;
+ * spec, Phase 5 planning decisions → Sample data), timed from `bootedAt`:
+ * "Distance and leveling" watched to the end 3 days before, so done, and
+ * "Traverse computations" left at 12:40 2 days before, her "Continue" spot.
+ * None when the catalogue lacks the Course.
+ */
+export function sampleLessonProgress(bootedAt: Date, lessons: readonly Lesson[]): LessonProgress[] {
+  const userId = sampleUserId(sampleMember("tester").email);
+  const course = "Surveying & Curves Lectures";
+  const lessonOf = (title: string) =>
+    lessons.find((lesson) => lesson.id === sampleLessonId(course, "Surveying basics", title));
+  const daysBefore = (days: number) => new Date(bootedAt.getTime() - days * DAY_MS).toISOString();
+  const done = lessonOf("Distance and leveling");
+  const left = lessonOf("Traverse computations");
+  if (!done?.videoSeconds || !left?.videoSeconds) return [];
+  return [
+    {
+      userId,
+      lessonId: done.id,
+      positionSeconds: done.videoSeconds,
+      furthestSeconds: done.videoSeconds,
+      doneAt: daysBefore(3),
+      watchedAt: daysBefore(3),
+    },
+    {
+      userId,
+      lessonId: left.id,
+      positionSeconds: Math.min(12 * 60 + 40, left.videoSeconds),
+      furthestSeconds: Math.min(12 * 60 + 40, left.videoSeconds),
+      doneAt: null,
+      watchedAt: daysBefore(2),
+    },
+  ];
 }

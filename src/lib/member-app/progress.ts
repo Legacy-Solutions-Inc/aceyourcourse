@@ -21,6 +21,9 @@ import type {
 //   - Hidden decks and quizzes, Reviewer PDFs that aren't Published, and
 //     content with nothing in it yet (no cards, questions or pages) count
 //     nowhere.
+//   - Lessons (Phase 5, ticket 04) stay out of every %: they show as counts
+//     ("9 lessons", "9 / 32 LESSONS") over the Courses the Member can open,
+//     and the last one watched shows in "Continue where you left off".
 // Percentages are whole numbers, rounded down, so nothing reads 100% before
 // it's done.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -77,6 +80,8 @@ export interface ProgressRecords {
   pageViews: readonly Pick<ReviewerPageView, "reviewerPdfId" | "page">[];
   deckPositions: readonly Pick<DeckPosition, "deckId" | "cardId" | "savedAt">[];
   readerPositions: readonly Pick<ReaderPosition, "reviewerPdfId" | "page" | "savedAt">[];
+  /** Their progress in Lessons, any Exam's (only the Courses given count). */
+  lessonProgress: readonly LessonRecord[];
   /** Asia/Manila dates, YYYY-MM-DD. */
   studyDays: readonly string[];
 }
@@ -258,6 +263,8 @@ export interface SubjectProgress {
   /** The mean of the Best Scores over its quizzes taken, or null before the first. */
   quizAverage: number | null;
   quizzesTaken: number;
+  /** The Lessons done, of the Published ones in its Courses the Member can open. */
+  lessons: LessonsDone;
   topics: TopicProgress[];
 }
 
@@ -289,10 +296,27 @@ export interface ReaderResume {
   savedAt: string;
 }
 
+/** The Lesson the Member watched last and hasn't done, and where its video picks up. */
+export interface LessonResumePlace {
+  courseId: string;
+  lessonId: string;
+  /** Its Course's Subject. */
+  subjectCode: string;
+  title: string;
+  /** Where the video picks up, in seconds. */
+  position: number;
+  /** Its length, in seconds. */
+  seconds: number;
+  /** ISO time it was last watched. */
+  savedAt: string;
+}
+
 /** "Continue where you left off": each null when there's no place in a Visible or Published one. */
 export interface ResumePlaces {
   deck: DeckResume | null;
   reviewerPdf: ReaderResume | null;
+  /** In a Course the Member can open now. */
+  lesson: LessonResumePlace | null;
 }
 
 /**
@@ -308,6 +332,8 @@ export interface MemberProgress {
   /** The mean of the Best Scores over the quizzes taken, or null before the first. */
   quizAverage: number | null;
   quizzesTaken: number;
+  /** The Lessons done, of the Published ones in the Exam's Courses the Member can open. */
+  lessons: LessonsDone;
   subjects: SubjectProgress[];
   /** The weakest Topics, at most 3, lowest % first. */
   weakTopics: WeakTopic[];
@@ -380,18 +406,24 @@ function resumeOf(subjects: readonly ProgressSubject[], records: ProgressRecords
       },
     ];
   });
-  return { deck: latest(decks), reviewerPdf: latest(pdfs) };
+  return { deck: latest(decks), reviewerPdf: latest(pdfs), lesson: null };
 }
 
 /**
  * Pure: a Member's progress in one Exam (its Subjects, in order, with every
- * Topic) from their records, and their Study Streak at `now`.
+ * Topic) from their records, and their Study Streak at `now`. `courses` are
+ * the Exam's Courses the Member can open now, each with its Published
+ * Lessons in order: the Lesson counts and the Lesson to continue come from
+ * them alone, so progress in a Course they can't open (access ended) is kept
+ * but not counted, and counts again once they can.
  */
 export function memberProgress(
   subjects: readonly ProgressSubject[],
   records: ProgressRecords,
   now: Date,
+  courses: readonly ProgressCourse[] = [],
 ): MemberProgress {
+  const watched = lessonsWatched(courses, records.lessonProgress);
   const verdicts = latestVerdicts(records.cardMarks);
   const measured = subjects.map((subject) => ({
     subject,
@@ -413,6 +445,7 @@ export function memberProgress(
       pages: pagesRead(progress),
       quizAverage: meanPercent(best),
       quizzesTaken: best.length,
+      lessons: lessonsDone(watched.filter((lesson) => lesson.subjectCode === subject.code)),
       topics: progress,
     };
   });
@@ -433,7 +466,7 @@ export function memberProgress(
 
   const topics = subjectProgress.flatMap(({ topics: inSubject }) => inSubject);
   const best = bestScores(topics);
-  const resume = resumeOf(subjects, records);
+  const resume = { ...resumeOf(subjects, records), lesson: lessonToContinue(watched) };
   const studied = topics.some(
     ({ cards, quiz, pages: read }) =>
       (cards && cards.got + cards.again > 0) ||
@@ -442,15 +475,193 @@ export function memberProgress(
   );
 
   return {
-    started: studied || resume.deck !== null || resume.reviewerPdf !== null,
+    started:
+      studied ||
+      watched.some(({ record }) => record !== null) ||
+      resume.deck !== null ||
+      resume.reviewerPdf !== null,
     cards: cardsGot(topics),
     pages: pagesRead(topics),
     quizAverage: meanPercent(best),
     quizzesTaken: best.length,
+    lessons: lessonsDone(watched),
     subjects: subjectProgress,
     weakTopics,
     resume,
     streak: studyStreak(records.studyDays, now),
+  };
+}
+
+// ── Lessons (Phase 5, ticket 04) ────────────────────────────────────────────
+
+/** One Member's progress in one Lesson, as the calculator reads it. */
+export interface LessonRecord {
+  lessonId: string;
+  /** Where the video picks up, in whole seconds. */
+  position: number;
+  /** The furthest point reached, in whole seconds. */
+  furthest: number;
+  /** ISO time it was done, or null while it isn't. Done stays done. */
+  doneAt: string | null;
+  /** ISO time it was last watched. */
+  watchedAt: string;
+}
+
+/** A Course the Member can open, with its Published Lessons in order. */
+export interface ProgressCourse {
+  id: string;
+  subjectCode: string;
+  lessons: readonly { id: string; title: string; seconds: number }[];
+}
+
+/** How many Lessons are done, of how many. */
+export interface LessonsDone {
+  done: number;
+  total: number;
+}
+
+/** The share of a Lesson's length that marks it done once the furthest point reaches it. */
+export const LESSON_DONE_SHARE = 0.9;
+
+/**
+ * Pure: whether the furthest point reached marks a Lesson of this length
+ * done: at 90% of its length or past it (in whole tenths, so 899 of 1,000
+ * isn't and 900 is). A Lesson with no length never is.
+ */
+export const reachesDone = (furthest: number, seconds: number): boolean =>
+  seconds > 0 && furthest * 10 >= seconds * LESSON_DONE_SHARE * 10;
+
+/**
+ * Pure: a Lesson's record after a position save at `at`: the position, the
+ * furthest point reached, done once that reaches 90% of the length (skipping
+ * ahead included, since "Mark complete" is one tap away anyway). Done stays
+ * done, keeping when it was first done. The caller has checked the position
+ * is within the length.
+ */
+export function lessonAfterSaving(
+  before: LessonRecord | null,
+  lessonId: string,
+  position: number,
+  seconds: number,
+  at: string,
+): LessonRecord {
+  const furthest = Math.max(before?.furthest ?? 0, position);
+  return {
+    lessonId,
+    position,
+    furthest,
+    doneAt: before?.doneAt ?? (reachesDone(furthest, seconds) ? at : null),
+    watchedAt: at,
+  };
+}
+
+/** Pure: a Lesson's record after "Mark complete" at `at`: done, where it picks up unchanged. */
+export function lessonAfterCompleting(
+  before: LessonRecord | null,
+  lessonId: string,
+  at: string,
+): LessonRecord {
+  return {
+    lessonId,
+    position: before?.position ?? 0,
+    furthest: before?.furthest ?? 0,
+    doneAt: before?.doneAt ?? at,
+    watchedAt: at,
+  };
+}
+
+/** Where a Lesson's video starts when it's opened. */
+export type LessonResume =
+  /** At the saved position: "You stopped here 2 days ago. The video picks up at 12:40." */
+  | { state: "resume"; from: number; savedAt: string }
+  /** From the beginning, once done: "You finished this lesson. Watch it again anytime." */
+  | { state: "finished"; from: 0 }
+  /** From the beginning, never watched (or saved at 0:00). */
+  | { state: "start"; from: 0 };
+
+/** Pure: where a Lesson starts for the Member: a done one from 0, else at the saved position. */
+export function lessonResume(record: LessonRecord | null): LessonResume {
+  if (record?.doneAt) return { state: "finished", from: 0 };
+  if (record && record.position > 0) {
+    return { state: "resume", from: record.position, savedAt: record.watchedAt };
+  }
+  return { state: "start", from: 0 };
+}
+
+/** Pure: the Study Day a Lesson save at `at` makes: its Asia/Manila date. */
+export const lessonStudyDay = (at: Date): string => manilaDate(at);
+
+/** A Course's Published Lesson, with the Member's record of it. */
+interface WatchedLesson {
+  courseId: string;
+  subjectCode: string;
+  lesson: ProgressCourse["lessons"][number];
+  record: LessonRecord | null;
+}
+
+/** Pure: every Published Lesson of these Courses, in order, with the Member's record of it. */
+function lessonsWatched(
+  courses: readonly ProgressCourse[],
+  records: readonly LessonRecord[],
+): WatchedLesson[] {
+  const byLesson = new Map(records.map((record) => [record.lessonId, record]));
+  return courses.flatMap((course) =>
+    course.lessons.map((lesson) => ({
+      courseId: course.id,
+      subjectCode: course.subjectCode,
+      lesson,
+      record: byLesson.get(lesson.id) ?? null,
+    })),
+  );
+}
+
+const lessonsDone = (watched: readonly WatchedLesson[]): LessonsDone => ({
+  done: watched.filter(({ record }) => record?.doneAt).length,
+  total: watched.length,
+});
+
+/** Pure: the Lessons watched and not done, the last one watched first. */
+const inFlight = (watched: readonly WatchedLesson[]) =>
+  watched
+    .filter(({ record }) => record !== null && record.doneAt === null)
+    .sort((a, b) => (b.record?.watchedAt ?? "").localeCompare(a.record?.watchedAt ?? ""));
+
+function lessonToContinue(watched: readonly WatchedLesson[]): LessonResumePlace | null {
+  const [last] = inFlight(watched);
+  if (!last?.record) return null;
+  return {
+    courseId: last.courseId,
+    lessonId: last.lesson.id,
+    subjectCode: last.subjectCode,
+    title: last.lesson.title,
+    position: last.record.position,
+    seconds: last.lesson.seconds,
+    savedAt: last.record.watchedAt,
+  };
+}
+
+/** A Course card's progress: "9 / 32", and the Lesson "Continue" opens, if any. */
+export interface CourseLessons extends LessonsDone {
+  continueLesson: { id: string; title: string } | null;
+}
+
+/**
+ * Pure: a Course's Lessons done, and where "Continue" goes: the Lesson
+ * watched last that isn't done, or else the first not done once some are;
+ * none before any watching, or once every Lesson is done.
+ */
+export function courseLessons(
+  course: ProgressCourse,
+  records: readonly LessonRecord[],
+): CourseLessons {
+  const watched = lessonsWatched([course], records);
+  const counts = lessonsDone(watched);
+  const next =
+    inFlight(watched)[0] ??
+    (counts.done > 0 ? watched.find(({ record }) => !record?.doneAt) : undefined);
+  return {
+    ...counts,
+    continueLesson: next ? { id: next.lesson.id, title: next.lesson.title } : null,
   };
 }
 

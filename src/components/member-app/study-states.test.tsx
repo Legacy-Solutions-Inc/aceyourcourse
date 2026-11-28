@@ -37,6 +37,7 @@ function progress(
         pages: { viewed: 0, total: 0 },
         quizAverage: null,
         quizzesTaken,
+        lessons: { done: 0, total: 0 },
         topics,
       },
     ],

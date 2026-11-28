@@ -4,12 +4,18 @@ import { notFound } from "next/navigation";
 
 import { CourseOutline } from "@/components/member-app/course-outline";
 import { LessonRefusal, LessonVideo } from "@/components/member-app/lesson-states";
+import { markLessonComplete, saveLessonPlace } from "@/app/app/(shell)/courses/actions";
+import { LessonWatch } from "@/components/member-app/lesson-watch";
 import { MemberScreen } from "@/components/member-app/member-screen";
 import { readMemberAccess, shownRefusal } from "@/lib/member-app/access-check";
-import { lessonCrumb, lessonNeighbours } from "@/lib/member-app/courses-view";
+import {
+  completeLabel,
+  lessonCrumb,
+  lessonNeighbours,
+  resumeNote,
+} from "@/lib/member-app/courses-view";
 import { requireMemberWithExam } from "@/lib/member-app/guard";
 import { readUnlockRoutes } from "@/lib/member-app/unlock-read";
-import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
 import { openLesson } from "@/services/member";
 import { videoService } from "@/services/video";
@@ -35,7 +41,13 @@ interface LessonPageProps {
  * no pass. With no video service (no key), "This video isn't available yet"
  * stands in for the player. The gate, consent, the Active Device and
  * onboarding come first; an address whose Lesson isn't in its Course is a
- * 404. Ticket 04 adds resume, Mark complete and the ✓ / ▶ / ○ marks.
+ * 404.
+ *
+ * Ticket 04: the video picks up where the Member left off ("You stopped
+ * here 2 days ago…"; a done Lesson from the beginning) and saves where they
+ * are as they watch; "Mark complete · next lesson →" (or "· finish course"
+ * on the last, back to Courses) replaces "Next lesson →"; the side panel
+ * marks each Lesson ▶ now, ✓ done or ○ to do.
  */
 export default async function LessonPage({ params }: LessonPageProps) {
   const { course: courseId, lesson: lessonId } = await params;
@@ -68,7 +80,6 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   const { lesson, outline, player } = opening;
   const { previous, next } = lessonNeighbours(outline, lesson.id);
-  const step = "flex min-h-11 items-center border-[1.5px] px-4 text-sm font-bold";
   return (
     <MemberScreen
       eyebrow={lessonCrumb(course.title, lesson.moduleNumber, lesson.number)}
@@ -76,27 +87,40 @@ export default async function LessonPage({ params }: LessonPageProps) {
     >
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="flex min-w-0 flex-col gap-4">
-          <LessonVideo player={player} title={lesson.title} />
+          {/* A fresh player and save schedule for each Lesson, even between two of the same Course. */}
+          <LessonWatch
+            key={lesson.id}
+            courseId={course.id}
+            lessonId={lesson.id}
+            title={lesson.title}
+            pass={player.kind === "pass" ? player.pass : null}
+            fallback={<LessonVideo player={player} title={lesson.title} />}
+            seconds={lesson.seconds}
+            watermark={player.kind === "pass" ? player.watermark : ""}
+            startAt={lesson.resume.from}
+            note={resumeNote(lesson.resume, new Date())}
+            complete={{
+              label: completeLabel(next !== null),
+              href: next ? paths.memberApp.lesson(course.id, next.id) : paths.memberApp.courses,
+            }}
+            done={lesson.done}
+            actions={{ save: saveLessonPlace, complete: markLessonComplete }}
+          />
           {lesson.notes ? (
             <p className="max-w-prose text-[15px] leading-normal whitespace-pre-line">
               {lesson.notes}
             </p>
           ) : null}
-          <div className="flex flex-wrap gap-2.5">
-            {previous ? (
-              <Link href={paths.memberApp.lesson(course.id, previous.id)} className={step}>
+          {previous ? (
+            <div className="flex flex-wrap gap-2.5">
+              <Link
+                href={paths.memberApp.lesson(course.id, previous.id)}
+                className="flex min-h-11 items-center border-[1.5px] px-4 text-sm font-bold"
+              >
                 ← {previous.title}
               </Link>
-            ) : null}
-            {next ? (
-              <Link
-                href={paths.memberApp.lesson(course.id, next.id)}
-                className={cn(step, "bg-primary text-primary-foreground")}
-              >
-                Next lesson →
-              </Link>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
         </div>
         <nav aria-labelledby="lesson-course" className="flex min-w-0 flex-col gap-3">
           <h2 id="lesson-course" className="text-[17px] font-extrabold">
@@ -104,6 +128,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
               {course.title}
             </Link>
           </h2>
+          <p className="font-mono text-xs font-bold tracking-[0.06em] text-muted-foreground">
+            {course.lessonsDone} / {course.lessons} DONE
+          </p>
           <CourseOutline courseId={course.id} outline={outline} currentLessonId={lesson.id} />
         </nav>
       </div>

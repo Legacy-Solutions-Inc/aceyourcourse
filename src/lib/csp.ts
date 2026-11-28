@@ -32,6 +32,11 @@ export function buildCsp(nonce: string, opts: CspOptions): string {
     "'self'",
     `'nonce-${nonce}'`,
     "'strict-dynamic'",
+    // VdoCipher's player API (Phase 5, ticket 04), which the Lesson player
+    // loads to save where the Member is. Browsers that honour 'strict-dynamic'
+    // ignore host sources and trust it as loaded by a nonced script; older
+    // ones fall back to this host, the only one added.
+    VDOCIPHER_PLAYER_ORIGIN,
     // HMR in dev evaluates code via eval(); never allowed in production.
     ...(isDev ? ["'unsafe-eval'"] : []),
   ];

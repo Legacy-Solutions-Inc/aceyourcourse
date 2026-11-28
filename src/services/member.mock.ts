@@ -10,9 +10,10 @@ import {
   type CourseStudyStore,
   type CourseTree,
 } from "@/services/course-study.core";
-import type { Course } from "@/services/courses.types";
+import type { Course, LessonProgress } from "@/services/courses.types";
 import type { AccessPass, ContentKind, ContentRecords } from "@/services/content.types";
 import { deckStudyCalls, type DeckStudyStore } from "@/services/deck-study.core";
+import type { LessonRecord } from "@/lib/member-app/progress";
 import { progressCalls, progressSubjectsOf, type ProgressStore } from "@/services/progress.core";
 import { quizStudyCalls, type QuizStudyStore } from "@/services/quiz-study.core";
 import { renewalCalls } from "@/services/renewal.core";
@@ -430,6 +431,15 @@ export const { openReviewerPdf, readReviewerPage, saveReaderPosition } =
 
 // ── Watching video Courses ──────────────────────────────────────────────────
 
+/** Pure: a stored Lesson progress record as the Course calls and the calculator read it. */
+const lessonRecordOf = (kept: LessonProgress): LessonRecord => ({
+  lessonId: kept.lessonId,
+  position: kept.positionSeconds,
+  furthest: kept.furthestSeconds,
+  doneAt: kept.doneAt,
+  watchedAt: kept.watchedAt,
+});
+
 /** A Course from the sample store, whole, as the Course calls read it. */
 function sampleCourseTree(course: Course): CourseTree {
   const { courseModules, lessons } = getSampleStore();
@@ -469,13 +479,45 @@ const sampleCourseStore: CourseStudyStore = {
       .map((ownership) => ownership.courseId);
   },
   readMemberEmail: (userId) => sampleReviewerStore.readMemberEmail(userId),
+  async readLessonProgress(userId, lessonIds) {
+    const wanted = new Set(lessonIds);
+    return getSampleStore()
+      .lessonProgress.filter((kept) => kept.userId === userId && wanted.has(kept.lessonId))
+      .map(lessonRecordOf);
+  },
+  async saveLessonProgress(userId, record, day) {
+    requireMemberRecord(userId);
+    const store = getSampleStore();
+    if (!store.lessons.some((lesson) => lesson.id === record.lessonId)) return false;
+    const before = store.lessonProgress.find(
+      (kept) => kept.userId === userId && kept.lessonId === record.lessonId,
+    );
+    // As the table's upsert: the furthest point never moves back, and done stays done.
+    const saved: LessonProgress = {
+      userId,
+      lessonId: record.lessonId,
+      positionSeconds: record.position,
+      furthestSeconds: Math.max(before?.furthestSeconds ?? 0, record.furthest),
+      doneAt: before?.doneAt ?? record.doneAt,
+      watchedAt: record.watchedAt,
+    };
+    store.lessonProgress = [...store.lessonProgress.filter((kept) => kept !== before), saved];
+    recordStudyDay(userId, day);
+    return true;
+  },
 };
 
-export const { listCourses, openCourse, openLesson } = courseStudyCalls(sampleCourseStore);
+export const { listCourses, openCourse, openLesson, saveLessonPosition, completeLesson } =
+  courseStudyCalls(sampleCourseStore);
 
 // ── Progress ────────────────────────────────────────────────────────────────
 
 const sampleProgressStore: ProgressStore = {
+  readExamCourses: (examCode) => sampleCourseStore.readExamCourses(examCode),
+  readOwnedCourseIds: (userId) => sampleCourseStore.readOwnedCourseIds(userId),
+  async readAccessPasses(userId) {
+    return (await listAccessPasses(userId)).map(({ examCode, endsAt }) => ({ examCode, endsAt }));
+  },
   async readExamContent(examCode) {
     const { exams, content } = contentOfStore();
     const exam = exams.find((candidate) => candidate.code === examCode);
@@ -511,6 +553,7 @@ const sampleProgressStore: ProgressStore = {
       pageViews: own(store.reviewerPageViews),
       deckPositions: own(store.deckPositions),
       readerPositions: own(store.readerPositions),
+      lessonProgress: own(store.lessonProgress).map(lessonRecordOf),
       studyDays: own(store.studyDays).map(({ day }) => day),
     };
   },

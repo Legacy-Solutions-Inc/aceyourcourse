@@ -12,6 +12,8 @@ import {
   emptyShelfMessage,
   lessonCrumb,
   lessonNeighbours,
+  completeLabel,
+  resumeNote,
 } from "./courses-view";
 
 // The Courses screen's view (Phase 5, ticket 03; spec, Phase 5 planning
@@ -40,6 +42,8 @@ const course = (change: Partial<MemberCourse> = {}): MemberCourse => ({
   firstLessonId: "lesson-1",
   firstFreeLessonId: null,
   decision: { outcome: "locked" },
+  lessonsDone: 0,
+  continueLesson: null,
   ...change,
 });
 const allowed = (via: "pass" | "ownership" | "staff"): AccessDecision => ({
@@ -98,9 +102,47 @@ describe("courseCard", () => {
       tag: "IN YOUR PLAN",
       locked: false,
       action: { label: "Start course", href: "/app/courses/course-1/lessons/lesson-1" },
+      progress: "0 / 32",
       note: null,
       free: null,
     });
+  });
+
+  it("continues where the Member left off, with the Lessons done", () => {
+    const card = courseCard(
+      course({
+        decision: allowed("pass"),
+        lessonsDone: 9,
+        continueLesson: { id: "lesson-10", title: "Balanced steel ratio" },
+      }),
+      PLANS,
+    );
+    expect(card).toMatchObject({
+      progress: "9 / 32",
+      action: {
+        label: "Continue: Balanced steel ratio →",
+        href: "/app/courses/course-1/lessons/lesson-10",
+      },
+    });
+  });
+
+  it("starts over with every Lesson done, still showing the count", () => {
+    const card = courseCard(course({ decision: allowed("pass"), lessonsDone: 32 }), PLANS);
+    expect(card).toMatchObject({ progress: "32 / 32", action: { label: "Start course" } });
+  });
+
+  it("keeps a locked Course's progress showing once access ended, with no Continue", () => {
+    const card = courseCard(
+      course({
+        decision: { outcome: "expired", passEndedAt: ENDED },
+        lessonsDone: 2,
+        continueLesson: { id: "lesson-3", title: "Areas and volumes" },
+      }),
+      PLANS,
+    );
+    expect(card).toMatchObject({ progress: "2 / 32", action: { label: "Renew access" } });
+    // A locked Course the Member never watched shows no count.
+    expect(courseCard(course(), PLANS).progress).toBeNull();
   });
 
   it("tags an owned Course OWNED", () => {
@@ -238,6 +280,7 @@ describe("lessonNeighbours", () => {
     seconds: 600,
     freePreview: false,
     playable,
+    done: false,
   });
   const outline: MemberModule[] = [
     { id: "m1", number: 1, title: "One", lessons: [lesson("a"), lesson("b")] },
@@ -254,5 +297,41 @@ describe("lessonNeighbours", () => {
   it("has no previous for the first Lesson and no next for the last", () => {
     expect(lessonNeighbours(outline, "a").previous).toBeNull();
     expect(lessonNeighbours(outline, "c").next).toBeNull();
+  });
+});
+
+describe("resumeNote", () => {
+  // 28 Nov 2026, 11:42 in Manila.
+  const NOW = new Date("2026-11-28T03:42:00.000Z");
+
+  it("says when the Member stopped and where the video picks up", () => {
+    const twoDaysAgo = "2026-11-26T12:00:00.000Z";
+    expect(resumeNote({ state: "resume", from: 760, savedAt: twoDaysAgo }, NOW)).toBe(
+      "You stopped here 2 days ago. The video picks up at 12:40.",
+    );
+  });
+
+  it("counts Manila days: yesterday, and earlier today", () => {
+    // 23:30 on 27 Nov in Manila is yesterday, though under a day ago.
+    expect(
+      resumeNote({ state: "resume", from: 65, savedAt: "2026-11-27T15:30:00.000Z" }, NOW),
+    ).toBe("You stopped here yesterday. The video picks up at 1:05.");
+    expect(
+      resumeNote({ state: "resume", from: 65, savedAt: "2026-11-27T16:30:00.000Z" }, NOW),
+    ).toBe("You stopped here earlier today. The video picks up at 1:05.");
+  });
+
+  it("says a done Lesson starts over, and a new one from the beginning", () => {
+    expect(resumeNote({ state: "finished", from: 0 }, NOW)).toBe(
+      "You finished this lesson. Watch it again anytime.",
+    );
+    expect(resumeNote({ state: "start", from: 0 }, NOW)).toBe("Starts from the beginning.");
+  });
+});
+
+describe("completeLabel", () => {
+  it("goes on to the next Lesson, or finishes the Course on the last", () => {
+    expect(completeLabel(true)).toBe("Mark complete · next lesson →");
+    expect(completeLabel(false)).toBe("Mark complete · finish course");
   });
 });

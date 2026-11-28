@@ -250,6 +250,8 @@ describe.each(MEMBER_ARMS)("Member seam progress ($name)", (arm) => {
           pageCount: 4,
           savedAt: BOOT.toISOString(),
         },
+        // No Lesson watched (ticket 04).
+        lesson: null,
       });
     });
 

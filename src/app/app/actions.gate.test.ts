@@ -13,6 +13,7 @@ import {
   recordConsent,
 } from "@/services/member.mock";
 import { sampleContentId, sampleTopicId } from "@/services/mock/content";
+import { sampleCourseId, sampleLessonId } from "@/services/mock/courses";
 import { samplePlanId } from "@/services/mock/plans";
 import { sampleUserId } from "@/services/mock/members";
 import { getSampleStore, resetSampleStore } from "@/services/mock/sample-store";
@@ -21,6 +22,7 @@ import { sampleActor } from "../../../test/admin-inputs";
 import { AGREED_TO_CURRENT } from "../../../test/member-inputs";
 import * as account from "./(shell)/account/actions";
 import * as billing from "./(shell)/billing/actions";
+import * as courses from "./(shell)/courses/actions";
 import * as targetExams from "./(shell)/actions";
 import * as study from "./(shell)/library/actions";
 import * as orders from "./(shell)/plans/orders/[reference]/actions";
@@ -96,6 +98,13 @@ const FREE_QUIZ = sampleContentId(sampleTopicId("CE", "HPGE", "Hydrostatics"), "
 let freeQuestion = "";
 /** Simple Curves' Reviewer PDF is Published: the tester's CE pass would open it in the reader. */
 const PUBLISHED_PDF = sampleContentId(SIMPLE_CURVES, "reviewer-pdf");
+/** The sample Course's Free Preview Lesson (Phase 5, ticket 04): any Member could watch it. */
+const SURVEYING_COURSE = sampleCourseId("Surveying & Curves Lectures");
+const FREE_LESSON = sampleLessonId(
+  "Surveying & Curves Lectures",
+  "Horizontal curves",
+  "Simple curves",
+);
 
 interface Entry {
   who: "member" | "before-device" | "before-consent" | "anyone";
@@ -198,6 +207,14 @@ const REGISTRY: Record<string, Record<string, Entry>> = {
       }),
     ),
   },
+  "./(shell)/courses/actions.ts": {
+    saveLessonPlace: member(() =>
+      courses.saveLessonPlace({ courseId: SURVEYING_COURSE, lessonId: FREE_LESSON, position: 10 }),
+    ),
+    markLessonComplete: member(() =>
+      courses.markLessonComplete({ courseId: SURVEYING_COURSE, lessonId: FREE_LESSON }),
+    ),
+  },
   "./(shell)/plans/actions.ts": {
     pay: member(() => plans.pay({ error: null }, payForm())),
   },
@@ -276,8 +293,9 @@ const memberData = () => {
   const { cardMarks, studyDays, deckPositions, quizAttempts } = getSampleStore();
   const { reviewerPageViews, readerPositions, privacyRequests } = getSampleStore();
   const { orders, accessPasses, accessPassGrants, memberNotices } = getSampleStore();
-  const { invoiceRequests } = getSampleStore();
+  const { invoiceRequests, lessonProgress } = getSampleStore();
   return structuredClone({
+    lessonProgress,
     orders,
     invoiceRequests,
     accessPasses,

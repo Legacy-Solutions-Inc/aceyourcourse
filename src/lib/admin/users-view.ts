@@ -93,6 +93,8 @@ export interface ProgressFigures {
   quizAverage: string;
   quizzes: string;
   pages: string;
+  /** The Lessons done, of those in the Exam's Courses the Member can open (Phase 5, ticket 04). */
+  lessons: string;
   lastActive: string;
   streak: string;
 }
@@ -103,6 +105,7 @@ export function progressFigures({
   pages,
   quizAverage,
   quizzesTaken,
+  lessons,
   streak,
 }: MemberProgress): ProgressFigures {
   const outOf = (part: number, total: number) =>
@@ -113,6 +116,7 @@ export function progressFigures({
     quizzes:
       quizzesTaken === 0 ? "NO QUIZ TAKEN" : `${plural(quizzesTaken, "QUIZ", "QUIZZES")} TAKEN`,
     pages: outOf(pages.viewed, pages.total),
+    lessons: outOf(lessons.done, lessons.total),
     lastActive: streak.lastStudyDay ? formatDate(streak.lastStudyDay) : "Never",
     streak:
       streak.best === 0

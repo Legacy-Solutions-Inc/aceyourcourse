@@ -33,8 +33,11 @@ import type {
   MemberNotice,
   ExpirySweep,
   InvoiceRequestResult,
+  LessonCompleteInput,
   LessonOpening,
+  LessonPositionInput,
   LessonRef,
+  LessonSaveResult,
   MemberOrder,
   PaymentAcknowledgement,
   PaymentEventResult,
@@ -372,6 +375,33 @@ export interface MemberService {
     video: VideoService | null,
   ): Promise<LessonOpening>;
 
+  // Watching saves progress (ticket 04; spec, Phase 5 planning decisions →
+  // Watching a Lesson). Each save decides the Lesson with the access
+  // decision first, the Active Device included, and stores nothing when
+  // refused; otherwise it makes the day, in Asia/Manila, a Study Day. Each is
+  // scoped to the User id given: a Member only ever saves and reads their own.
+
+  /**
+   * Saves where the Member is in a Lesson's video (every 10 seconds while
+   * playing, on pause, at the end and on leaving), keeping the furthest point
+   * reached; done once that reaches 90% of the length. Done stays done.
+   * Refused, storing nothing, when the access decision refuses the Lesson (a
+   * replaced device: "Session ended"); out of range for a position below 0
+   * or past its length; not found for an id that isn't a Lesson's. Throws for
+   * a User with no Member record.
+   */
+  saveLessonPosition(
+    userId: string,
+    input: LessonPositionInput,
+    access: MemberAccess,
+  ): Promise<LessonSaveResult>;
+  /** "Mark complete": the Lesson is done, for good. Refused and not found like saveLessonPosition. */
+  completeLesson(
+    userId: string,
+    input: LessonCompleteInput,
+    access: MemberAccess,
+  ): Promise<LessonSaveResult>;
+
   // Progress (spec, Phase 3 → Progress calculator, Progress storage, Resume,
   // Corrections never cost progress; ticket 15; progress.core.ts). Reads
   // only, with every number from the pure calculator
@@ -385,9 +415,18 @@ export interface MemberService {
    * and Topic's %, cards got, the quiz average, the 3 weakest Topics, the last
    * deck and Reviewer PDF page to continue) and their Study Streak, which is
    * account-wide. Nothing for a code that isn't an Exam's. The Member detail
-   * page (ticket 16) can show the same, per Target Exam.
+   * page (ticket 16) can show the same, per Target Exam. The Lesson counts
+   * and the Lesson to continue (ticket 04) are over the Exam's Courses the
+   * Member can open now, from their own Access Passes and Course Ownerships
+   * (and everything Published for active Staff, when `activeStaff`): a
+   * locked Course, an Unpublished Lesson and progress in a Course whose
+   * access ended aren't counted, and count again once access is renewed.
    */
-  getProgress(userId: string, examCode: string): Promise<MemberProgress>;
+  getProgress(
+    userId: string,
+    examCode: string,
+    options?: { activeStaff?: boolean },
+  ): Promise<MemberProgress>;
   /** The Library's read: each of the Exam's Topics' % done for the Member, by Topic id. */
   getTopicPercents(userId: string, examCode: string): Promise<TopicPercents>;
 
@@ -589,6 +628,8 @@ export const saveReaderPosition = impl.saveReaderPosition;
 export const listCourses = impl.listCourses;
 export const openCourse = impl.openCourse;
 export const openLesson = impl.openLesson;
+export const saveLessonPosition = impl.saveLessonPosition;
+export const completeLesson = impl.completeLesson;
 export const getProgress = impl.getProgress;
 export const getTopicPercents = impl.getTopicPercents;
 export const listNotices = impl.listNotices;

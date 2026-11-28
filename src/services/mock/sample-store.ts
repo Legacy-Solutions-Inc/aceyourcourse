@@ -31,7 +31,13 @@ import type {
   StudyDay,
   Topic,
 } from "@/services/content.types";
-import type { Course, CourseModule, CourseOwnership, Lesson } from "@/services/courses.types";
+import type {
+  Course,
+  CourseModule,
+  CourseOwnership,
+  Lesson,
+  LessonProgress,
+} from "@/services/courses.types";
 import type { TargetExamRecord } from "@/services/member.rules";
 import type {
   ConsentRecord,
@@ -42,7 +48,7 @@ import type {
 } from "@/services/member.types";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
 import { sampleContent } from "@/services/mock/content";
-import { sampleCourses } from "@/services/mock/courses";
+import { sampleCourses, sampleLessonProgress } from "@/services/mock/courses";
 import { sampleAccessPasses, sampleAgreements, sampleBetaTesters } from "@/services/mock/members";
 import { sampleOrders } from "@/services/mock/orders";
 import { samplePlans } from "@/services/mock/plans";
@@ -198,6 +204,12 @@ export interface SampleStore {
    * PSAD Masterclass in the demo.
    */
   courseOwnerships: CourseOwnership[];
+  /**
+   * Every Member's Lesson progress (ticket 04), one per Member and Lesson. The
+   * dev server's data and the e2e specs' reset start with Bea's in "Surveying
+   * & Curves Lectures"; unit tests start without, unless they ask.
+   */
+  lessonProgress: LessonProgress[];
   /** Every Member's Access Passes, at most one per Exam (Phase 3). */
   accessPasses: AccessPass[];
   /** The grants behind the Access Passes, oldest first (Phase 3; written from ticket 17). */
@@ -256,10 +268,20 @@ export interface SampleStoreOptions {
    * specs' reset have them; unit tests start without, unless they ask.
    */
   sampleAgreements?: boolean;
+  /**
+   * With Bea Tester's Lesson progress (Phase 5, ticket 04): one Lesson done
+   * and a "Continue" spot. The dev server's data and the e2e specs' reset
+   * have it; unit tests start without, unless they ask.
+   */
+  sampleLessonProgress?: boolean;
 }
 
 /** How the dev server, and the e2e specs' reset, start the sample data. */
-export const DEV_SAMPLE_DATA: SampleStoreOptions = { sampleOrders: true, sampleAgreements: true };
+export const DEV_SAMPLE_DATA: SampleStoreOptions = {
+  sampleOrders: true,
+  sampleAgreements: true,
+  sampleLessonProgress: true,
+};
 
 function createSampleStore(
   now: Date,
@@ -267,6 +289,7 @@ function createSampleStore(
   {
     sampleOrders: withOrders = false,
     sampleAgreements: withAgreements = false,
+    sampleLessonProgress: withLessonProgress = false,
   }: SampleStoreOptions = {},
 ): SampleStore {
   const validation = validateCatalogueSeed(seed);
@@ -274,6 +297,7 @@ function createSampleStore(
     throw new Error(`Invalid catalogue seed — ${validation.errors.join("; ")}`);
   }
   const catalogue = structuredClone(validation.data);
+  const courses = sampleCourses(catalogue);
   return {
     generation: crypto.randomUUID(),
     bootedAt: now.toISOString(),
@@ -297,8 +321,9 @@ function createSampleStore(
     deckPositions: [],
     reviewerPageViews: [],
     readerPositions: [],
-    ...sampleCourses(catalogue),
+    ...courses,
     courseOwnerships: [],
+    lessonProgress: withLessonProgress ? sampleLessonProgress(now, courses.lessons) : [],
     ...sampleAccessPasses(now, catalogue),
     memberNotices: [],
     renewalDismissals: [],

@@ -165,6 +165,9 @@ describe.each(MEMBER_ARMS)("Member seam watching video Courses ($name)", (arm) =
         firstLessonId: LEVELING,
         firstFreeLessonId: SIMPLE_CURVES,
         decision: allowed("pass"),
+        // Not watched yet (ticket 04): "Start course".
+        lessonsDone: 0,
+        continueLesson: null,
       });
       // An Access Pass never opens a separately sold Course.
       expect(onShelf(courses, PSAD_ID)).toMatchObject({
@@ -272,6 +275,7 @@ describe.each(MEMBER_ARMS)("Member seam watching video Courses ($name)", (arm) =
           seconds: expect.any(Number),
           freePreview: true,
           playable: true,
+          done: false,
         },
         expect.objectContaining({
           number: 2,

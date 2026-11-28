@@ -66,6 +66,7 @@ function deleteMember(store: SampleStore, userId: string, requestId: string) {
   store.quizAttempts = others(store.quizAttempts);
   store.reviewerPageViews = others(store.reviewerPageViews);
   store.readerPositions = others(store.readerPositions);
+  store.lessonProgress = others(store.lessonProgress);
   store.privacyRequests = store.privacyRequests.map((request) => ({
     ...request,
     userId: request.userId === userId ? null : request.userId,

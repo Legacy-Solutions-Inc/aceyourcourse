@@ -100,6 +100,12 @@ function CourseCard({ card }: { card: CourseCardView }) {
         </Link>
       </h3>
       <p className="font-mono text-xs text-muted-foreground">{card.meta}</p>
+      {card.progress ? (
+        <p className="font-mono text-xs font-bold">
+          {card.progress}
+          <span className="sr-only"> lessons done</span>
+        </p>
+      ) : null}
       <div className="mt-auto flex flex-col gap-2.5">
         <CourseAction card={card} />
         {card.free ? (

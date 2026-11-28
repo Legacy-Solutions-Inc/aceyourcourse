@@ -169,9 +169,9 @@ export interface CourseEditorStore {
   /** The Course a key names, or null when it isn't there. */
   read(key: CourseKey): Promise<CourseState | null>;
   /**
-   * How many Members have a saved position in each of these Lessons, by
-   * Lesson id (a Lesson with none may be left out). Ticket 04 stores the
-   * positions; until then every arm answers none.
+   * How many Members have progress saved in each of these Lessons, by
+   * Lesson id (a Lesson with none may be left out): their Lesson progress
+   * records (ticket 04), which deleting the Lesson deletes.
    */
   savedPositions(lessonIds: readonly string[]): Promise<Record<string, number>>;
   /**

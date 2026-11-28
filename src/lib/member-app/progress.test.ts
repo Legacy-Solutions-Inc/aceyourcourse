@@ -3,10 +3,18 @@ import { describe, expect, it } from "vitest";
 import { manilaDate } from "@/lib/manila-time";
 
 import {
+  type LessonRecord,
+  type ProgressCourse,
   type ProgressRecords,
   type ProgressSubject,
   type ProgressTopic,
+  courseLessons,
+  lessonAfterCompleting,
+  lessonAfterSaving,
+  lessonResume,
+  lessonStudyDay,
   memberProgress,
+  reachesDone,
   studyStreak,
   topicProgress,
 } from "./progress";
@@ -55,6 +63,7 @@ function records(partial: Partial<ProgressRecords> = {}): ProgressRecords {
     pageViews: [],
     deckPositions: [],
     readerPositions: [],
+    lessonProgress: [],
     studyDays: [],
     ...partial,
   };
@@ -532,6 +541,7 @@ describe("memberProgress", () => {
           pageCount: 36,
           savedAt: later(9),
         },
+        lesson: null,
       });
     });
 
@@ -548,7 +558,7 @@ describe("memberProgress", () => {
         NOW,
       );
 
-      expect(progress.resume).toEqual({ deck: null, reviewerPdf: null });
+      expect(progress.resume).toEqual({ deck: null, reviewerPdf: null, lesson: null });
     });
   });
 
@@ -597,5 +607,257 @@ describe("memberProgress", () => {
       NOW,
     );
     expect(elsewhere).toMatchObject({ started: false, streak: { current: 1 } });
+  });
+});
+
+// ── Lessons (Phase 5, ticket 04; spec, Phase 5 planning decisions → Watching
+// a Lesson, Progress; Testing Decisions → Phase 5 seams → Progress
+// calculator) ──────────────────────────────────────────────────────────────
+
+/** A 1,000-second Lesson's record: where it picks up, the furthest point, and when it was done. */
+function lessonRecord(lessonId: string, partial: Partial<LessonRecord> = {}): LessonRecord {
+  return { lessonId, position: 0, furthest: 0, doneAt: null, watchedAt: T0, ...partial };
+}
+
+describe("reachesDone", () => {
+  it("is done at exactly 90% of the length, and not at 89.9%", () => {
+    expect(reachesDone(899, 1000)).toBe(false);
+    expect(reachesDone(900, 1000)).toBe(true);
+    // 90% of 743 seconds is 668.7: 668 is short of it, 669 reaches it.
+    expect(reachesDone(668, 743)).toBe(false);
+    expect(reachesDone(669, 743)).toBe(true);
+  });
+
+  it("is never done for a Lesson with no length", () => {
+    expect(reachesDone(0, 0)).toBe(false);
+  });
+});
+
+describe("lessonAfterSaving", () => {
+  it("keeps the position and the furthest point reached, not done below 90%", () => {
+    expect(lessonAfterSaving(null, "l1", 760, 1000, T0)).toEqual(
+      lessonRecord("l1", { position: 760, furthest: 760 }),
+    );
+  });
+
+  it("keeps the furthest point when the Member goes back", () => {
+    const back = lessonAfterSaving(
+      lessonRecord("l1", { position: 800, furthest: 800 }),
+      "l1",
+      120,
+      1000,
+      later(5),
+    );
+    expect(back).toMatchObject({ position: 120, furthest: 800, doneAt: null, watchedAt: later(5) });
+  });
+
+  it("is done once the furthest point reaches 90%, skipping ahead included", () => {
+    expect(lessonAfterSaving(null, "l1", 900, 1000, T0).doneAt).toBe(T0);
+    // Skipped straight to 95%: done, as "Mark complete" is one tap away anyway.
+    expect(
+      lessonAfterSaving(
+        lessonRecord("l1", { position: 30, furthest: 30 }),
+        "l1",
+        950,
+        1000,
+        later(1),
+      ).doneAt,
+    ).toBe(later(1));
+    expect(lessonAfterSaving(null, "l1", 899, 1000, T0).doneAt).toBeNull();
+  });
+
+  it("stays done after rewatching from the start, keeping when it was done", () => {
+    const done = lessonRecord("l1", { position: 1000, furthest: 1000, doneAt: T0 });
+    const rewatched = lessonAfterSaving(done, "l1", 10, 1000, later(60));
+    expect(rewatched).toEqual({
+      lessonId: "l1",
+      position: 10,
+      furthest: 1000,
+      doneAt: T0,
+      watchedAt: later(60),
+    });
+  });
+});
+
+describe("lessonAfterCompleting", () => {
+  it("marks a Lesson done at once, keeping where it picks up", () => {
+    expect(
+      lessonAfterCompleting(lessonRecord("l1", { position: 75, furthest: 75 }), "l1", later(2)),
+    ).toEqual(
+      lessonRecord("l1", { position: 75, furthest: 75, doneAt: later(2), watchedAt: later(2) }),
+    );
+    expect(lessonAfterCompleting(null, "l1", T0)).toEqual(lessonRecord("l1", { doneAt: T0 }));
+  });
+
+  it("keeps the first time it was done", () => {
+    const done = lessonRecord("l1", { doneAt: T0 });
+    expect(lessonAfterCompleting(done, "l1", later(9)).doneAt).toBe(T0);
+  });
+});
+
+describe("lessonResume", () => {
+  it("picks up at the saved position", () => {
+    expect(lessonResume(lessonRecord("l1", { position: 760, furthest: 760 }))).toEqual({
+      state: "resume",
+      from: 760,
+      savedAt: T0,
+    });
+  });
+
+  it("starts a done Lesson from the beginning", () => {
+    expect(lessonResume(lessonRecord("l1", { position: 640, furthest: 990, doneAt: T0 }))).toEqual({
+      state: "finished",
+      from: 0,
+    });
+  });
+
+  it("starts from the beginning with no saved position", () => {
+    expect(lessonResume(null)).toEqual({ state: "start", from: 0 });
+    expect(lessonResume(lessonRecord("l1"))).toEqual({ state: "start", from: 0 });
+  });
+});
+
+describe("lessonStudyDay", () => {
+  it("lands a save just before and just after Manila midnight on their own Study Days", () => {
+    // 23:59 and 00:01 in Manila (UTC+8) are 15:59 and 16:01 UTC the day before.
+    expect(lessonStudyDay(new Date("2026-11-27T15:59:00.000Z"))).toBe("2026-11-27");
+    expect(lessonStudyDay(new Date("2026-11-27T16:01:00.000Z"))).toBe("2026-11-28");
+  });
+});
+
+const course = (id: string, subjectCode: string, ...lessonIds: string[]): ProgressCourse => ({
+  id,
+  subjectCode,
+  lessons: lessonIds.map((lessonId) => ({
+    id: lessonId,
+    title: `Lesson ${lessonId}`,
+    seconds: 1000,
+  })),
+});
+
+describe("courseLessons", () => {
+  const surveying = course("c1", "MSTC", "l1", "l2", "l3");
+
+  it("counts the done Lessons, and continues with the last one watched that isn't done", () => {
+    const watched = [
+      lessonRecord("l1", { doneAt: T0, watchedAt: T0 }),
+      lessonRecord("l3", { position: 40, furthest: 40, watchedAt: later(5) }),
+      lessonRecord("l2", { position: 760, furthest: 760, watchedAt: later(1) }),
+    ];
+    expect(courseLessons(surveying, watched)).toEqual({
+      done: 1,
+      total: 3,
+      continueLesson: { id: "l3", title: "Lesson l3" },
+    });
+  });
+
+  it("continues with the first Lesson not done when every one watched is done", () => {
+    const watched = [lessonRecord("l1", { doneAt: T0 })];
+    expect(courseLessons(surveying, watched).continueLesson).toEqual({
+      id: "l2",
+      title: "Lesson l2",
+    });
+  });
+
+  it("has nothing to continue before any watching, or once every Lesson is done", () => {
+    expect(courseLessons(surveying, [])).toEqual({ done: 0, total: 3, continueLesson: null });
+    const allDone = ["l1", "l2", "l3"].map((id) => lessonRecord(id, { doneAt: T0 }));
+    expect(courseLessons(surveying, allDone)).toMatchObject({ done: 3, continueLesson: null });
+  });
+
+  it("ignores progress in Lessons that aren't its Published ones", () => {
+    const watched = [lessonRecord("gone", { doneAt: T0, watchedAt: later(9) })];
+    expect(courseLessons(surveying, watched)).toEqual({ done: 0, total: 3, continueLesson: null });
+  });
+});
+
+describe("memberProgress with Lessons", () => {
+  const NOW = new Date(T0);
+  const subjects = [
+    subject("MSTC", topic("t1", { deck: deck("d1", 4) }, 1)),
+    subject("PSAD", topic("t2", { quiz: quiz("q2") }, 1)),
+  ];
+  // The Courses the Member can open: a locked Course or an Unpublished Lesson isn't given.
+  const courses = [course("c1", "MSTC", "l1", "l2", "l3"), course("c2", "PSAD", "l4", "l5")];
+
+  it("counts the done Lessons in each Subject and over the Courses the Member can open", () => {
+    const progress = memberProgress(
+      subjects,
+      records({
+        lessonProgress: [
+          lessonRecord("l1", { doneAt: T0 }),
+          lessonRecord("l2", { doneAt: T0 }),
+          lessonRecord("l4", { doneAt: T0 }),
+          lessonRecord("l5", { position: 10, furthest: 10 }),
+          // A Lesson in a Course the Member can't open now: kept, but not counted.
+          lessonRecord("locked-lesson", { doneAt: T0 }),
+        ],
+      }),
+      NOW,
+      courses,
+    );
+    expect(progress.lessons).toEqual({ done: 3, total: 5 });
+    expect(progress.subjects.map(({ code, lessons }) => [code, lessons])).toEqual([
+      ["MSTC", { done: 2, total: 3 }],
+      ["PSAD", { done: 1, total: 2 }],
+    ]);
+  });
+
+  it("leaves Lessons out of every %", () => {
+    const without = memberProgress(subjects, records(), NOW, courses);
+    const withLessons = memberProgress(
+      subjects,
+      records({ lessonProgress: ["l1", "l2", "l3"].map((id) => lessonRecord(id, { doneAt: T0 })) }),
+      NOW,
+      courses,
+    );
+    expect(withLessons.subjects.map(({ percent }) => percent)).toEqual(
+      without.subjects.map(({ percent }) => percent),
+    );
+    expect(withLessons.subjects[0]?.topics).toEqual(without.subjects[0]?.topics);
+  });
+
+  it("continues with the last Lesson watched that isn't done, with its position and length", () => {
+    const progress = memberProgress(
+      subjects,
+      records({
+        lessonProgress: [
+          lessonRecord("l2", { position: 760, furthest: 760, watchedAt: later(1) }),
+          lessonRecord("l4", { position: 30, furthest: 30, watchedAt: later(2) }),
+          // Done after both: nothing to continue in it.
+          lessonRecord("l1", { doneAt: later(3), watchedAt: later(3) }),
+        ],
+      }),
+      NOW,
+      courses,
+    );
+    expect(progress.resume.lesson).toEqual({
+      courseId: "c2",
+      lessonId: "l4",
+      subjectCode: "PSAD",
+      title: "Lesson l4",
+      position: 30,
+      seconds: 1000,
+      savedAt: later(2),
+    });
+    expect(progress.started).toBe(true);
+  });
+
+  it("has no Lesson to continue, and no Lesson counts, without Courses", () => {
+    const progress = memberProgress(
+      subjects,
+      records({ lessonProgress: [lessonRecord("l2", { position: 760, furthest: 760 })] }),
+      NOW,
+    );
+    expect(progress).toMatchObject({
+      started: false,
+      lessons: { done: 0, total: 0 },
+      resume: { lesson: null },
+    });
+  });
+
+  it("has started once a Lesson is watched or done", () => {
+    const done = records({ lessonProgress: [lessonRecord("l1", { doneAt: T0 })] });
+    expect(memberProgress(subjects, done, NOW, courses).started).toBe(true);
   });
 });

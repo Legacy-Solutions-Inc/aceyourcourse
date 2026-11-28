@@ -190,6 +190,20 @@ export const attemptRefSchema = z.object({ quizId: sentId, attemptId: sentId });
 export const lessonRefSchema = z.object({ courseId: sentId, lessonId: sentId });
 
 /**
+ * Where the Member is in a Lesson's video, as the player saves it (Phase 5,
+ * ticket 04): the Lesson and the position in seconds. Any finite number: one
+ * below 0 or past the Lesson's length is refused after the access decision,
+ * and a fraction is rounded down to the whole second.
+ */
+export const lessonPositionInputSchema = z.object({
+  lessonId: sentId,
+  position: z.number().finite(),
+});
+
+/** "Mark complete" on a Lesson (Phase 5, ticket 04). */
+export const lessonCompleteInputSchema = z.object({ lessonId: sentId });
+
+/**
  * One page of a Reviewer PDF, as the page endpoint asks for it (ticket 14),
  * from its address: a Reviewer PDF or page that isn't one is no page.
  */

@@ -56,7 +56,7 @@ export const SAMPLE_MEMBERS: readonly SampleMember[] = [
   },
 ];
 
-function sampleMember(key: SampleMemberKey): SampleMember {
+export function sampleMember(key: SampleMemberKey): SampleMember {
   const member = SAMPLE_MEMBERS.find((candidate) => candidate.key === key);
   if (!member) throw new Error(`The sample data has no Member "${key}"`);
   return member;

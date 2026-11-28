@@ -16,7 +16,7 @@ import {
   privacyRequestFieldsFromRow,
 } from "@/services/member.db";
 
-import { byMemberAndPage } from "./admin-arms";
+import { byMemberAndLesson, byMemberAndPage } from "./admin-arms";
 import { DATABASE_ARM as ADMIN_DATABASE_ARM } from "./admin-database";
 import { sampleActor } from "./admin-inputs";
 import type { MemberArm } from "./member-arms";
@@ -78,6 +78,14 @@ export const MEMBER_DATABASE_ARM: MemberArm = {
       (await getDb().select().from(schema.reviewerPageViews)).map((row) => ({
         ...row,
         viewedAt: row.viewedAt.toISOString(),
+      })),
+    ),
+  lessonProgress: async () =>
+    byMemberAndLesson(
+      (await getDb().select().from(schema.lessonProgress)).map((row) => ({
+        ...row,
+        doneAt: row.doneAt?.toISOString() ?? null,
+        watchedAt: row.watchedAt.toISOString(),
       })),
     ),
   quizAttempts: async () => {

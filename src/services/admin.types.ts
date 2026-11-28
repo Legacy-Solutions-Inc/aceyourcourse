@@ -1138,7 +1138,7 @@ export interface AdminCourseList {
 /** A Lesson in the builder, with its last save and what deleting it takes from Members. */
 export interface AdminLesson extends Lesson {
   stamp: RecordStamp;
-  /** How many Members have a saved position in it: 0 until ticket 04 stores them. */
+  /** How many Members have progress saved in it (ticket 04): what deleting it loses. */
   savedPositions: number;
 }
 

@@ -267,6 +267,13 @@
       "when": 1795845945804,
       "tag": "20261128060545_course_ownerships",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1795855852943,
+      "tag": "20261128085052_lesson_progress",
+      "breakpoints": true
     }
   ]
 }

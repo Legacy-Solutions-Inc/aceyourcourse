@@ -73,6 +73,7 @@ const IN_PROGRESS: MemberProgress = {
   pages: { viewed: 4, total: 36 },
   quizAverage: 76,
   quizzesTaken: 14,
+  lessons: { done: 0, total: 0 },
   subjects: [
     {
       code: "MSTC",
@@ -82,6 +83,7 @@ const IN_PROGRESS: MemberProgress = {
       pages: { viewed: 0, total: 0 },
       quizAverage: 81,
       quizzesTaken: 6,
+      lessons: { done: 0, total: 0 },
       topics: [SIMPLE_CURVES],
     },
     {
@@ -92,6 +94,7 @@ const IN_PROGRESS: MemberProgress = {
       pages: { viewed: 0, total: 0 },
       quizAverage: null,
       quizzesTaken: 0,
+      lessons: { done: 0, total: 0 },
       topics: [SHEAR],
     },
     {
@@ -102,6 +105,7 @@ const IN_PROGRESS: MemberProgress = {
       pages: { viewed: 0, total: 0 },
       quizAverage: null,
       quizzesTaken: 0,
+      lessons: { done: 0, total: 0 },
       topics: [],
     },
   ],
@@ -123,6 +127,7 @@ const IN_PROGRESS: MemberProgress = {
       pageCount: 36,
       savedAt: "2026-11-16T09:00:00.000Z",
     },
+    lesson: null,
   },
   streak: {
     current: 6,
@@ -143,7 +148,7 @@ const NOT_STARTED: MemberProgress = {
   quizAverage: null,
   quizzesTaken: 0,
   weakTopics: [],
-  resume: { deck: null, reviewerPdf: null },
+  resume: { deck: null, reviewerPdf: null, lesson: null },
   streak: {
     current: 0,
     best: 0,
@@ -234,6 +239,7 @@ describe("Dashboard", () => {
             savedAt: "2026-11-15T00:00:00.000Z",
           },
           reviewerPdf: IN_PROGRESS.resume.reviewerPdf,
+          lesson: null,
         },
       });
       const links = within(
@@ -245,8 +251,38 @@ describe("Dashboard", () => {
       ]);
     });
 
+    it("includes the last Lesson watched, with where its video picks up, in order of when", () => {
+      renderDashboard({
+        ...IN_PROGRESS,
+        resume: {
+          ...IN_PROGRESS.resume,
+          lesson: {
+            courseId: "c-psad",
+            lessonId: "l-ratio",
+            subjectCode: "PSAD",
+            title: "Balanced steel ratio",
+            position: 760,
+            seconds: 1450,
+            savedAt: "2026-11-16T12:00:00.000Z",
+          },
+        },
+      });
+      const links = within(
+        screen.getByRole("region", { name: "Continue where you left off" }),
+      ).getAllByRole("link");
+      expect(links).toHaveLength(3);
+      // After the deck (02:00 today), before the Reviewer PDF (09:00 yesterday).
+      expect(links[1]).toHaveAttribute("href", "/app/courses/c-psad/lessons/l-ratio");
+      expect(links[1]).toHaveTextContent(
+        /VIDEO LESSON · PSAD.*Balanced steel ratio.*12:40 OF 24:10.*Resume/,
+      );
+    });
+
     it("isn't shown with no place to continue", () => {
-      renderDashboard({ ...IN_PROGRESS, resume: { deck: null, reviewerPdf: null } });
+      renderDashboard({
+        ...IN_PROGRESS,
+        resume: { deck: null, reviewerPdf: null, lesson: null },
+      });
 
       expect(screen.queryByRole("region", { name: "Continue where you left off" })).toBeNull();
     });
@@ -272,10 +308,41 @@ describe("Dashboard", () => {
       ]);
     });
 
-    it("never shows lessons done until Video Courses come", () => {
+    it("adds the Lessons done to the summary and to each Subject with Lessons", () => {
+      const [mstc, hpge, psad] = IN_PROGRESS.subjects as [
+        (typeof IN_PROGRESS.subjects)[number],
+        (typeof IN_PROGRESS.subjects)[number],
+        (typeof IN_PROGRESS.subjects)[number],
+      ];
+      renderDashboard({
+        ...IN_PROGRESS,
+        lessons: { done: 9, total: 32 },
+        subjects: [
+          { ...mstc, lessons: { done: 0, total: 5 } },
+          hpge,
+          // A Subject with only Lessons so far: not "Still being prepared".
+          { ...psad, lessons: { done: 9, total: 27 } },
+        ],
+      });
+
+      const subjects = screen.getByRole("region", { name: "Progress by subject" });
+      expect(subjects).toHaveTextContent(
+        "312 / 1,040 CARDS GOT IT · 76% QUIZ AVG · 9 / 32 LESSONS",
+      );
+      const links = within(subjects).getAllByRole("link");
+      expect(links.map((link) => link.textContent)).toEqual([
+        "42%MSTCMathematics, Surveying & Transportation Engineering148 / 400 cards got it · 81% quiz avg · 0 lessons",
+        "27%HPGEHydraulics & Geotechnical Engineering96 / 340 cards got it · No quiz taken yet",
+        "—PSADStructural Analysis & Design9 lessons",
+      ]);
+    });
+
+    it("says nothing of Lessons while the Exam has none the Member can open", () => {
       renderDashboard(IN_PROGRESS);
 
-      expect(document.body).not.toHaveTextContent(/lesson/i);
+      expect(screen.getByRole("region", { name: "Progress by subject" })).not.toHaveTextContent(
+        /lesson/i,
+      );
     });
   });
 

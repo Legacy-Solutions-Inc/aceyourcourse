@@ -18,6 +18,7 @@ import {
 } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
+import type { LessonRecord } from "@/lib/member-app/progress";
 import type { Transaction } from "@/lib/db/connect";
 import { asDatabaseError } from "@/lib/db/errors";
 import * as schema from "@/lib/db/schema";
@@ -906,11 +907,74 @@ const databaseCourseStore: CourseStudyStore = {
       return rows.map((row) => row.courseId);
     }),
   readMemberEmail: (userId) => databaseReviewerStore.readMemberEmail(userId),
+  readLessonProgress: (userId, lessonIds) =>
+    inDatabase(async () => {
+      const { lessonProgress } = schema;
+      const rows = await getDb()
+        .select()
+        .from(lessonProgress)
+        .where(
+          and(eq(lessonProgress.userId, userId), inArray(lessonProgress.lessonId, [...lessonIds])),
+        );
+      return rows.map(lessonRecordFromRow);
+    }),
+  saveLessonProgress: (userId, record, day) =>
+    inDatabase(() =>
+      getDb().transaction(async (tx) => {
+        const { lessons, lessonProgress, studyDays } = schema;
+        // Holding the Lesson keeps it from being deleted until the save is in.
+        const [lesson] = await tx
+          .select({ id: lessons.id })
+          .from(lessons)
+          .where(eq(lessons.id, record.lessonId))
+          .for("share");
+        if (!lesson) return false;
+        const doneAt = record.doneAt === null ? null : new Date(record.doneAt);
+        // The foreign key to members refuses a User the gate never let in. Two
+        // saves racing never move the furthest point back or undo done.
+        await tx
+          .insert(lessonProgress)
+          .values({
+            userId,
+            lessonId: record.lessonId,
+            positionSeconds: record.position,
+            furthestSeconds: record.furthest,
+            doneAt,
+            watchedAt: new Date(record.watchedAt),
+          })
+          .onConflictDoUpdate({
+            target: [lessonProgress.userId, lessonProgress.lessonId],
+            set: {
+              positionSeconds: sql`excluded.position_seconds`,
+              furthestSeconds: sql`greatest(${lessonProgress.furthestSeconds}, excluded.furthest_seconds)`,
+              doneAt: sql`coalesce(${lessonProgress.doneAt}, excluded.done_at)`,
+              watchedAt: sql`excluded.watched_at`,
+            },
+          });
+        await tx.insert(studyDays).values({ userId, day }).onConflictDoNothing();
+        return true;
+      }),
+    ),
 };
+
+/** Pure: a lesson_progress row as the Course calls and the calculator read it. */
+function lessonRecordFromRow(row: typeof schema.lessonProgress.$inferSelect): LessonRecord {
+  return {
+    lessonId: row.lessonId,
+    position: row.positionSeconds,
+    furthest: row.furthestSeconds,
+    doneAt: row.doneAt?.toISOString() ?? null,
+    watchedAt: row.watchedAt.toISOString(),
+  };
+}
 
 // ── Progress ────────────────────────────────────────────────────────────────
 
 const databaseProgressStore: ProgressStore = {
+  readExamCourses: (examCode) => databaseCourseStore.readExamCourses(examCode),
+  readOwnedCourseIds: (userId) => databaseCourseStore.readOwnedCourseIds(userId),
+  readAccessPasses: async (userId) =>
+    (await listAccessPasses(userId)).map(({ examCode, endsAt }) => ({ examCode, endsAt })),
   readExamContent: (examCode) =>
     inDatabase(async () => {
       const db = getDb();
@@ -944,9 +1008,10 @@ const databaseProgressStore: ProgressStore = {
       const db = getDb();
       const { cardMarks, cards, decks, quizAttempts, quizzes, reviewerPageViews, reviewerPdfs } =
         schema;
-      const { deckPositions, readerPositions, studyDays, topics } = schema;
-      // Each record is the Member's own, of content in this Exam.
-      const [marks, scores, views, deckPlaces, readerPlaces, days] = await Promise.all([
+      const { deckPositions, readerPositions, studyDays, topics, lessonProgress } = schema;
+      // Each record is the Member's own, of content in this Exam (any Lesson's
+      // progress: only the Courses that count are read from it).
+      const [marks, scores, views, deckPlaces, readerPlaces, days, lessonRows] = await Promise.all([
         db
           .select({ cardId: cardMarks.cardId, verdict: cardMarks.verdict, at: cardMarks.markedAt })
           .from(cardMarks)
@@ -991,6 +1056,7 @@ const databaseProgressStore: ProgressStore = {
           .innerJoin(topics, topicInExam(reviewerPdfs.topicId, examCode))
           .where(eq(readerPositions.userId, userId)),
         db.select({ day: studyDays.day }).from(studyDays).where(eq(studyDays.userId, userId)),
+        db.select().from(lessonProgress).where(eq(lessonProgress.userId, userId)),
       ]);
       return {
         cardMarks: marks.map(({ at, ...mark }) => ({ ...mark, markedAt: at.toISOString() })),
@@ -1004,6 +1070,7 @@ const databaseProgressStore: ProgressStore = {
           ...place,
           savedAt: at.toISOString(),
         })),
+        lessonProgress: lessonRows.map(lessonRecordFromRow),
         studyDays: days.map(({ day }) => day),
       };
     }),

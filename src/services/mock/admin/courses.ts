@@ -16,7 +16,8 @@ import { sampleUploadAt } from "@/services/uploads.mock";
 // sample store. A save reads the Course and applies its writes with no await
 // in between, so no other request can come between them; should any part of
 // it fail, the parts already applied are put back. Deleting a Course deletes
-// its Modules and Lessons, as the database's cascade does. Covers are the
+// its Modules and Lessons, and a Lesson the Members' progress in it, as the
+// database's cascade does. Covers are the
 // sample uploads; a replaced one stays until the next reset (orphans are
 // fine in the sample data).
 // ─────────────────────────────────────────────────────────────────────────────
@@ -84,7 +85,7 @@ function merged<Item extends { id: string }>(
 /** Applies a save's writes to the store, all or none. */
 function apply(writes: CourseWrites): void {
   const store = getSampleStore();
-  const { courses, courseModules, lessons, stamps, staffActivity } = store;
+  const { courses, courseModules, lessons, lessonProgress, stamps, staffActivity } = store;
   try {
     const removedCourses = new Set(writes.removedCourse ? [writes.removedCourse] : []);
     store.courses = merged(courses, writes.course ? [writes.course] : [], removedCourses);
@@ -101,6 +102,8 @@ function apply(writes: CourseWrites): void {
       ...lessons.filter((lesson) => removedModules.has(lesson.moduleId)).map((lesson) => lesson.id),
     ]);
     store.lessons = merged(lessons, writes.lessons, removedLessons);
+    // A deleted Lesson's progress goes with it, as the database's cascade does.
+    store.lessonProgress = lessonProgress.filter((kept) => !removedLessons.has(kept.lessonId));
     const next = { ...stamps };
     for (const record of writes.removedStamps) delete next[record];
     Object.assign(next, writes.stamps);
@@ -110,6 +113,7 @@ function apply(writes: CourseWrites): void {
     store.courses = courses;
     store.courseModules = courseModules;
     store.lessons = lessons;
+    store.lessonProgress = lessonProgress;
     store.stamps = stamps;
     throw error;
   }
@@ -128,8 +132,15 @@ const sampleCourseStore: CourseEditorStore = {
   },
   exams: async () => readExams(),
   read: async (key) => readCourse(key),
-  // Ticket 04 stores the Members' saved positions; until then there are none.
-  savedPositions: async () => ({}),
+  // The Members' Lesson progress (ticket 04): one record per Member and Lesson.
+  savedPositions: async (lessonIds) => {
+    const wanted = new Set(lessonIds);
+    const counts: Record<string, number> = {};
+    for (const { lessonId } of getSampleStore().lessonProgress) {
+      if (wanted.has(lessonId)) counts[lessonId] = (counts[lessonId] ?? 0) + 1;
+    }
+    return counts;
+  },
   save: async (key, plan) => {
     const planned = plan(key ? readCourse(key) : null, readExams());
     if (planned.ok && planned.writes) apply(planned.writes);

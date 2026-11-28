@@ -5,14 +5,32 @@ import {
   type MemberAccess,
 } from "@/lib/member-app/access";
 import { memberWatermark } from "@/lib/member-app/member-id";
+import {
+  courseLessons,
+  type LessonRecord,
+  lessonAfterCompleting,
+  lessonAfterSaving,
+  lessonResume,
+  lessonStudyDay,
+  type ProgressCourse,
+} from "@/lib/member-app/progress";
 import type { Course, CourseModule, Lesson } from "@/services/courses.types";
-import { isRecordId, lessonRefSchema, memberUserIdSchema } from "@/services/member.schema";
+import {
+  isRecordId,
+  lessonCompleteInputSchema,
+  lessonPositionInputSchema,
+  lessonRefSchema,
+  memberUserIdSchema,
+} from "@/services/member.schema";
 import type {
   CourseOpening,
   CourseShelf,
+  LessonCompleteInput,
   LessonOpening,
   LessonPlayer,
+  LessonPositionInput,
   LessonRef,
+  LessonSaveResult,
   MemberCourse,
   MemberModule,
 } from "@/services/member.types";
@@ -33,6 +51,15 @@ import type { VideoService } from "@/services/video.types";
 // decision allows the Lesson, which also means the request came from the
 // Member's Active Device, and it draws the Member's own email and short
 // Member ID (from their record, never from the browser) across the video.
+//
+// Watching saves progress (ticket 04; spec, Phase 5 planning decisions →
+// Watching a Lesson): each position save and "Mark complete" runs the access
+// decision first (the Active Device included, so a save from a replaced
+// device is refused and the player stops with "Session ended"), stores
+// nothing when refused or for a position outside the Lesson's length, and
+// otherwise makes the day a Study Day in Manila time. The pure rules (done at
+// 90%, done stays done, where a Lesson resumes) are the progress
+// calculator's (src/lib/member-app/progress.ts).
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** A Course with its Modules and Lessons, in no particular order. */
@@ -56,14 +83,24 @@ export interface CourseStudyStore {
   readOwnedCourseIds(userId: string): Promise<string[]>;
   /** The Member's email, as their record holds it, or null for a User with no Member record. */
   readMemberEmail(userId: string): Promise<string | null>;
+  /** The Member's own progress in these Lessons: nobody else's. */
+  readLessonProgress(userId: string, lessonIds: readonly string[]): Promise<LessonRecord[]>;
+  /**
+   * Saves the Member's progress in a Lesson, replacing their earlier record
+   * (never moving its furthest point back or undoing done), and `day` as a
+   * Study Day, together. False, saving nothing, when the Lesson has gone
+   * meanwhile. Throws for a User with no Member record.
+   */
+  saveLessonProgress(userId: string, record: LessonRecord, day: string): Promise<boolean>;
 }
 
 const NOT_FOUND = { status: "not-found" } as const;
+const SAVE_NOT_FOUND = { ok: false, refusal: { reason: "not-found" } } as const;
 const byPosition = (a: { position: number }, b: { position: number }) => a.position - b.position;
 const isPublished = (lesson: Lesson) => lesson.state === "published";
 
 /** Pure: the Course's facts the access decision reads, for a Member who owns it or not. */
-function accessCourseOf(course: Course, owned: boolean): AccessCourse {
+export function accessCourseOf(course: Course, owned: boolean): AccessCourse {
   return {
     visible: course.visibility === "visible",
     soldSeparately: course.access === "sold-separately",
@@ -72,13 +109,28 @@ function accessCourseOf(course: Course, owned: boolean): AccessCourse {
 }
 
 /** Pure: the Modules with a Published Lesson, in order, each with those Lessons in order. */
-function publishedModules(tree: CourseTree): { module: CourseModule; lessons: Lesson[] }[] {
+export function publishedModules(tree: CourseTree): { module: CourseModule; lessons: Lesson[] }[] {
   return [...tree.modules].sort(byPosition).flatMap((module) => {
     const lessons = tree.lessons
       .filter((lesson) => lesson.moduleId === module.id && isPublished(lesson))
       .sort(byPosition);
     return lessons.length > 0 ? [{ module, lessons }] : [];
   });
+}
+
+/** Pure: a Course with its Published Lessons in order, as the progress calculator counts it. */
+export function progressCourseOf(tree: CourseTree): ProgressCourse {
+  return {
+    id: tree.course.id,
+    subjectCode: tree.course.subjectCode,
+    lessons: publishedModules(tree).flatMap(({ lessons }) =>
+      lessons.map((lesson) => ({
+        id: lesson.id,
+        title: lesson.title,
+        seconds: lesson.videoSeconds ?? 0,
+      })),
+    ),
+  };
 }
 
 /** The Course calls over one arm's store (the Member seam's contract, in member.ts). */
@@ -99,12 +151,14 @@ export function courseStudyCalls(store: CourseStudyStore) {
     };
   }
 
-  /** Pure: the Course as the Member sees it. */
+  /** Pure: the Course as the Member sees it, with their progress in it. */
   function memberCourseOf(
     tree: CourseTree,
     owned: boolean,
     decision: AccessDecision,
+    records: readonly LessonRecord[],
   ): MemberCourse {
+    const progress = courseLessons(progressCourseOf(tree), records);
     const modules = publishedModules(tree);
     const lessons = modules.flatMap((module) => module.lessons);
     const free = lessons.filter((lesson) => lesson.freePreview);
@@ -127,14 +181,20 @@ export function courseStudyCalls(store: CourseStudyStore) {
       firstLessonId: lessons[0]?.id ?? null,
       firstFreeLessonId: free[0]?.id ?? null,
       decision,
+      lessonsDone: progress.done,
+      continueLesson: progress.continueLesson,
     };
   }
 
-  /** Pure: the outline the Member sees, each Lesson playable as the decision says. */
+  /** Pure: the outline the Member sees, each Lesson playable as the decision says, and done or not. */
   function outlineOf(
     tree: CourseTree,
     decided: (lesson: Lesson) => AccessDecision,
+    records: readonly LessonRecord[],
   ): MemberModule[] {
+    const done = new Set(
+      records.filter((record) => record.doneAt).map((record) => record.lessonId),
+    );
     return publishedModules(tree).map(({ module, lessons }, index) => ({
       id: module.id,
       number: index + 1,
@@ -146,12 +206,19 @@ export function courseStudyCalls(store: CourseStudyStore) {
         seconds: lesson.videoSeconds ?? 0,
         freePreview: lesson.freePreview,
         playable: decided(lesson).outcome === "allowed",
+        done: done.has(lesson.id),
       })),
     }));
   }
 
   async function ownedBy(userId: string, courseId: string): Promise<boolean> {
     return (await store.readOwnedCourseIds(userId)).includes(courseId);
+  }
+
+  /** The Member's own progress in these Courses' Lessons. */
+  function progressIn(member: string, trees: readonly CourseTree[]): Promise<LessonRecord[]> {
+    const lessonIds = trees.flatMap((tree) => tree.lessons.map((lesson) => lesson.id));
+    return lessonIds.length > 0 ? store.readLessonProgress(member, lessonIds) : Promise.resolve([]);
   }
 
   async function listCourses(
@@ -167,14 +234,15 @@ export function courseStudyCalls(store: CourseStudyStore) {
       store.readOwnedCourseIds(member),
     ]);
     const owned = new Set(ownedIds);
-    const courses = trees
+    const shown = trees
       // A Hidden Course is gone from the shelf for everyone but its owners.
       .filter(({ course }) => course.visibility === "visible" || owned.has(course.id))
-      .sort((a, b) => a.course.createdAt.localeCompare(b.course.createdAt))
-      .map((tree) => {
-        const mine = owned.has(tree.course.id);
-        return memberCourseOf(tree, mine, deciderFor(tree, mine, access).fullLessons());
-      });
+      .sort((a, b) => a.course.createdAt.localeCompare(b.course.createdAt));
+    const records = await progressIn(member, shown);
+    const courses = shown.map((tree) => {
+      const mine = owned.has(tree.course.id);
+      return memberCourseOf(tree, mine, deciderFor(tree, mine, access).fullLessons(), records);
+    });
     return { subjects, courses };
   }
 
@@ -187,13 +255,16 @@ export function courseStudyCalls(store: CourseStudyStore) {
     // The address is the browser's: an id that isn't a Course's is not found.
     const tree = isRecordId(courseId) ? await store.readCourse(courseId) : null;
     if (!tree) return NOT_FOUND;
-    const owned = await ownedBy(member, tree.course.id);
+    const [owned, records] = await Promise.all([
+      ownedBy(member, tree.course.id),
+      progressIn(member, [tree]),
+    ]);
     const decider = deciderFor(tree, owned, access);
-    const course = memberCourseOf(tree, owned, decider.fullLessons());
+    const course = memberCourseOf(tree, owned, decider.fullLessons(), records);
 
     const list = decider.lessonList();
     if (list.outcome !== "allowed") return { status: "refused", course, decision: list };
-    return { status: "open", course, outline: outlineOf(tree, decider.lesson) };
+    return { status: "open", course, outline: outlineOf(tree, decider.lesson, records) };
   }
 
   /** The player for an allowed Lesson: a pass for the Member's own watermark, or why there's none. */
@@ -228,9 +299,12 @@ export function courseStudyCalls(store: CourseStudyStore) {
     const tree = isRecordId(lessonId) ? await store.readCourseOfLesson(lessonId) : null;
     const lesson = tree?.lessons.find((candidate) => candidate.id === lessonId);
     if (!tree || !lesson || tree.course.id !== courseId) return NOT_FOUND;
-    const owned = await ownedBy(member, tree.course.id);
+    const [owned, records] = await Promise.all([
+      ownedBy(member, tree.course.id),
+      progressIn(member, [tree]),
+    ]);
     const decider = deciderFor(tree, owned, access);
-    const course = memberCourseOf(tree, owned, decider.fullLessons());
+    const course = memberCourseOf(tree, owned, decider.fullLessons(), records);
 
     // The access decision first: a refused Lesson gets no pass, whatever its address.
     const decision = decider.lesson(lesson);
@@ -243,7 +317,7 @@ export function courseStudyCalls(store: CourseStudyStore) {
       };
     }
 
-    const outline = outlineOf(tree, decider.lesson);
+    const outline = outlineOf(tree, decider.lesson, records);
     const inModule = outline.find((candidate) =>
       candidate.lessons.some((each) => each.id === lesson.id),
     );
@@ -258,11 +332,82 @@ export function courseStudyCalls(store: CourseStudyStore) {
         ...listed,
         notes: lesson.notes,
         moduleNumber: inModule.number,
+        resume: lessonResume(records.find((record) => record.lessonId === lesson.id) ?? null),
       },
       via: decision.via,
       player: await playerFor(member, lesson, video),
     };
   }
 
-  return { listCourses, openCourse, openLesson };
+  /**
+   * A Lesson decided for a save: it and its length when the access decision
+   * allows it (which also means the request came from the Active Device), or
+   * why nothing may be stored.
+   */
+  async function lessonForSave(
+    member: string,
+    lessonId: string,
+    access: MemberAccess,
+  ): Promise<{ lesson: Lesson; seconds: number } | { refusal: LessonSaveResult }> {
+    // The id is the browser's: one that isn't a Lesson's is not found.
+    const tree = isRecordId(lessonId) ? await store.readCourseOfLesson(lessonId) : null;
+    const lesson = tree?.lessons.find((candidate) => candidate.id === lessonId);
+    if (!tree || !lesson) return { refusal: SAVE_NOT_FOUND };
+    const owned = await ownedBy(member, tree.course.id);
+    const decision = deciderFor(tree, owned, access).lesson(lesson);
+    if (decision.outcome !== "allowed") {
+      return { refusal: { ok: false, refusal: { reason: "refused", decision } } };
+    }
+    // Allowed means Published, which means a ready video with its length.
+    if (lesson.videoSeconds === null) throw new Error("A Published Lesson has no length.");
+    return { lesson, seconds: lesson.videoSeconds };
+  }
+
+  /** Stores a Lesson's new record and the day, in Manila, as a Study Day. */
+  async function storeRecord(member: string, record: LessonRecord, access: MemberAccess) {
+    const saved = await store.saveLessonProgress(member, record, lessonStudyDay(access.now));
+    return saved ? ({ ok: true, value: record } as const) : SAVE_NOT_FOUND;
+  }
+
+  async function earlierRecord(member: string, lessonId: string): Promise<LessonRecord | null> {
+    const [record] = await store.readLessonProgress(member, [lessonId]);
+    return record ?? null;
+  }
+
+  async function saveLessonPosition(
+    userId: string,
+    input: LessonPositionInput,
+    access: MemberAccess,
+  ): Promise<LessonSaveResult> {
+    const member = memberUserIdSchema.parse(userId);
+    const sent = lessonPositionInputSchema.safeParse(input);
+    if (!sent.success) return SAVE_NOT_FOUND;
+    const found = await lessonForSave(member, sent.data.lessonId, access);
+    if ("refusal" in found) return found.refusal;
+    const { lesson, seconds } = found;
+    const position = Math.floor(sent.data.position);
+    if (position < 0 || position > seconds) {
+      return { ok: false, refusal: { reason: "out-of-range" } };
+    }
+    const before = await earlierRecord(member, lesson.id);
+    const at = access.now.toISOString();
+    return storeRecord(member, lessonAfterSaving(before, lesson.id, position, seconds, at), access);
+  }
+
+  async function completeLesson(
+    userId: string,
+    input: LessonCompleteInput,
+    access: MemberAccess,
+  ): Promise<LessonSaveResult> {
+    const member = memberUserIdSchema.parse(userId);
+    const sent = lessonCompleteInputSchema.safeParse(input);
+    if (!sent.success) return SAVE_NOT_FOUND;
+    const found = await lessonForSave(member, sent.data.lessonId, access);
+    if ("refusal" in found) return found.refusal;
+    const before = await earlierRecord(member, found.lesson.id);
+    const at = access.now.toISOString();
+    return storeRecord(member, lessonAfterCompleting(before, found.lesson.id, at), access);
+  }
+
+  return { listCourses, openCourse, openLesson, saveLessonPosition, completeLesson };
 }

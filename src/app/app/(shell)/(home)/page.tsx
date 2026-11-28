@@ -5,6 +5,7 @@ import { firstName } from "@/components/member-app/member-menu";
 import { MemberScreen } from "@/components/member-app/member-screen";
 import { Onboarding } from "@/components/member-app/onboarding";
 import { RenewalBanners } from "@/components/member-app/renewal-banners";
+import { readMemberAccess } from "@/lib/member-app/access-check";
 import { readTargetExams, requireMember } from "@/lib/member-app/guard";
 import { manilaDate } from "@/lib/manila-time";
 import { readRenewalBanners } from "@/lib/member-app/renewal-read";
@@ -49,9 +50,11 @@ export default async function MemberHomePage({ searchParams }: MemberHomePagePro
     );
   }
 
+  // Active Staff open every Course, so their Lesson counts are over all of them.
+  const activeStaff = (await readMemberAccess())?.activeStaff ?? false;
   const [{ restored }, progress, renewals] = await Promise.all([
     searchParams,
-    getProgress(member.userId, selected.examCode),
+    getProgress(member.userId, selected.examCode, { activeStaff }),
     readRenewalBanners(member.userId),
   ]);
   const wasRestored = selected.examCode === restored;

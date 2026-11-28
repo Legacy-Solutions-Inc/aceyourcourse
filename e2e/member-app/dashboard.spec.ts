@@ -4,7 +4,7 @@ import { type Browser, expect as baseExpect, type Page, test } from "@playwright
 
 import { paths } from "../../src/paths";
 import { resetSampleData, signInAs as signInToAdmin } from "../admin/helpers";
-import { expectNoBlockingViolations, signInAndOnboard } from "./helpers";
+import { expectNoBlockingViolations, LIVE, signInAndOnboard } from "./helpers";
 
 // Home's dashboard and the Library's % on sample data (Phase 3, ticket 15;
 // stories 88–93), at the end of the Member App journey: the tester, whose CE
@@ -129,8 +129,16 @@ test("a Member's study shows on Home and in the Library, and Continue opens the 
   await editorPreparesContent(browser);
   await signInAndOnboard(page, "tester", "CE");
 
-  // Before any study: where to start, and no streak yet.
-  await expect(region(page, "Start studying CE")).toBeVisible();
+  // Before any flashcard, quiz or Reviewer PDF study: no streak yet. Live,
+  // where to start; in the sample data Bea has watched some of Surveying &
+  // Curves Lectures (ticket 04), so Home already has a Lesson to continue.
+  if (LIVE) {
+    await expect(region(page, "Start studying CE")).toBeVisible();
+  } else {
+    await expect(region(page, "Continue where you left off").getByRole("link")).toHaveText([
+      /VIDEO LESSON · MSTC.*Traverse computations.*12:40 OF 16:46.*Resume/,
+    ]);
+  }
   await expect(region(page, "Study streak")).toContainText("No streak yet");
   await expect(page.getByRole("link", { name: "START A STREAK STUDY TODAY" })).toBeVisible();
 
@@ -179,7 +187,8 @@ test("a Member's study shows on Home and in the Library, and Continue opens the 
   await expect(weak).toContainText("BEST SCORE 0% · PASSING 70%");
   await expect(weak.getByRole("link", { name: "Retake quiz in Simple Curves" })).toBeVisible();
   const resume = region(page, "Continue where you left off").getByRole("link");
-  await expect(resume).toHaveCount(2);
+  // The sample data's Lesson, watched 2 days ago, comes after today's places.
+  await expect(resume).toHaveCount(LIVE ? 2 : 3);
   await expect(resume.nth(0)).toContainText("PAGE 2 OF 3");
   await expect(resume.nth(1)).toContainText("CARD 2 OF 2");
   await expectNoBlockingViolations(page);

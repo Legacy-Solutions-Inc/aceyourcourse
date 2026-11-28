@@ -61,7 +61,7 @@ describe("buildCsp", () => {
     expect(csp).toMatch(/connect-src 'self' https:\/\/\*\.amazonaws\.com(;|$)/);
   });
 
-  it("adds only VdoCipher's player as a frame, and its upload host as a connection (Phase 5, ticket 02)", () => {
+  it("adds only VdoCipher's player as a frame and a script host, and its upload host as a connection (Phase 5, tickets 02 and 04)", () => {
     const directive = (name: string, isDev = false) =>
       buildCsp(NONCE, { isDev })
         .split("; ")
@@ -70,10 +70,13 @@ describe("buildCsp", () => {
       expect(directive("frame-src", isDev)).toBe("frame-src 'self' https://player.vdocipher.com");
     }
     expect(directive("connect-src")).toBe("connect-src 'self' https://*.amazonaws.com");
-    // Nothing else of VdoCipher's, and no new script, style, image or font source.
+    // Nothing else of VdoCipher's but its player API's script (ticket 04), on
+    // the player's own host, and no new style, image or font source.
     const csp = buildCsp(NONCE, { isDev: false });
-    expect(csp.match(/vdocipher/g)).toHaveLength(1);
-    expect(directive("script-src")).toBe(`script-src 'self' 'nonce-${NONCE}' 'strict-dynamic'`);
+    expect(csp.match(/vdocipher/g)).toHaveLength(2);
+    expect(directive("script-src")).toBe(
+      `script-src 'self' 'nonce-${NONCE}' 'strict-dynamic' https://player.vdocipher.com`,
+    );
     expect(directive("style-src")).toBe("style-src 'self' 'unsafe-inline'");
     expect(directive("font-src")).toBe("font-src 'self' data:");
     expect(directive("default-src")).toBe("default-src 'self'");

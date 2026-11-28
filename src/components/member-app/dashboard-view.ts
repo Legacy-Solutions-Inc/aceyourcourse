@@ -1,4 +1,5 @@
 import { formatCount } from "@/lib/catalogue/figures";
+import { videoLength } from "@/lib/courses/course-rules";
 import {
   type CardsGot,
   type MemberProgress,
@@ -62,25 +63,35 @@ export const cardsGotLine = ({ got, total }: CardsGot) =>
 export const quizAverageLine = (quizAverage: number | null) =>
   quizAverage === null ? "No quiz taken yet" : `${quizAverage}% quiz avg`;
 
-/** Pure: the line beside "Progress by subject": the Exam's cards got and quiz average. */
-export function progressSummary({ cards, quizAverage }: MemberProgress): string | null {
+/**
+ * Pure: the line beside "Progress by subject": the Exam's cards got, quiz
+ * average and Lessons done of those in Courses the Member can open.
+ */
+export function progressSummary({ cards, quizAverage, lessons }: MemberProgress): string | null {
   const parts = [
     cards.total > 0 ? cardsGotLine(cards).toUpperCase() : null,
     quizAverage === null ? null : `${quizAverage}% QUIZ AVG`,
+    lessons.total > 0
+      ? `${formatCount(lessons.done)} / ${formatCount(lessons.total)} LESSONS`
+      : null,
   ].filter((part) => part !== null);
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
-/** Pure: under a Subject's name: its cards got, quiz average and pages read, for what it has. */
+/**
+ * Pure: under a Subject's name: its cards got, quiz average, pages read and
+ * Lessons done ("9 lessons"), for what it has.
+ */
 export function subjectDetail(subject: SubjectProgress): string {
-  if (subject.percent === null) return "Still being prepared";
-  const { pages } = subject;
+  const { pages, lessons } = subject;
+  if (subject.percent === null && lessons.total === 0) return "Still being prepared";
   return [
     subject.cards.total > 0 ? cardsGotLine(subject.cards) : null,
     subject.topics.some((topic) => topic.quiz) ? quizAverageLine(subject.quizAverage) : null,
     pages.total > 0
       ? `${formatCount(pages.viewed)} / ${formatCount(pages.total)} pages read`
       : null,
+    lessons.total > 0 ? plural(lessons.done, "lesson", "lessons") : null,
   ]
     .filter((part) => part !== null)
     .join(" · ");
@@ -102,11 +113,11 @@ export function weakReason({ quiz, cards }: WeakTopic): string {
 
 /** A "Continue where you left off" card. */
 export interface ResumeCard {
-  key: "deck" | "reviewer-pdf";
-  kind: "FLASHCARDS" | "REVIEWER";
+  key: "deck" | "reviewer-pdf" | "lesson";
+  kind: "FLASHCARDS" | "REVIEWER" | "VIDEO LESSON";
   subjectCode: string;
   title: string;
-  /** "CARD 12 OF 48", "PAGE 4 OF 36". */
+  /** "CARD 12 OF 48", "PAGE 4 OF 36", "12:40 OF 24:10". */
   meta: string;
   /** How far through it the place is, as a whole %. */
   percent: number;
@@ -116,7 +127,7 @@ export interface ResumeCard {
 }
 
 /** Pure: the places to continue from, the latest first. */
-export function resumeCards({ deck, reviewerPdf }: ResumePlaces): ResumeCard[] {
+export function resumeCards({ deck, reviewerPdf, lesson }: ResumePlaces): ResumeCard[] {
   const cards: ResumeCard[] = [];
   if (deck) {
     cards.push({
@@ -142,6 +153,19 @@ export function resumeCards({ deck, reviewerPdf }: ResumePlaces): ResumeCard[] {
       href: paths.memberApp.content("reviewer-pdf", reviewerPdf.reviewerPdfId),
       cta: "Open",
       savedAt: reviewerPdf.savedAt,
+    });
+  }
+  if (lesson) {
+    cards.push({
+      key: "lesson",
+      kind: "VIDEO LESSON",
+      subjectCode: lesson.subjectCode,
+      title: lesson.title,
+      meta: `${videoLength(lesson.position)} OF ${videoLength(lesson.seconds)}`,
+      percent: wholePercent((lesson.position / lesson.seconds) * 100),
+      href: paths.memberApp.lesson(lesson.courseId, lesson.lessonId),
+      cta: "Resume",
+      savedAt: lesson.savedAt,
     });
   }
   return cards.sort((a, b) => b.savedAt.localeCompare(a.savedAt));

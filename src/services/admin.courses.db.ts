@@ -152,8 +152,18 @@ const databaseCourseStore: CourseEditorStore = {
     }),
   exams: () => reading((tx) => readExams(tx)),
   read: (key) => reading((tx) => readCourse(tx, key)),
-  // Ticket 04 stores the Members' saved positions; until then there are none.
-  savedPositions: async () => ({}),
+  // The Members' Lesson progress (ticket 04): deleting a Lesson deletes it, by the cascade.
+  savedPositions: (lessonIds) =>
+    reading(async (tx) => {
+      if (lessonIds.length === 0) return {};
+      const { lessonProgress } = schema;
+      const rows = await tx
+        .select({ lessonId: lessonProgress.lessonId, members: count() })
+        .from(lessonProgress)
+        .where(inArray(lessonProgress.lessonId, [...lessonIds]))
+        .groupBy(lessonProgress.lessonId);
+      return Object.fromEntries(rows.map((row) => [row.lessonId, row.members]));
+    }),
   save: async (key, plan) => {
     try {
       return await getDb().transaction(async (tx) => {

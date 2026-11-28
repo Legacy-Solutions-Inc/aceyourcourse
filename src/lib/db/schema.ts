@@ -1593,6 +1593,39 @@ export const lessons = pgTable(
 ).enableRLS();
 
 /**
+ * Each Member's progress in each Lesson (Phase 5, ticket 04; spec, Phase 5
+ * planning decisions → Watching a Lesson, Progress): where its video picks
+ * up and the furthest point reached, in whole seconds, when it was done (at
+ * 90% of its length or by "Mark complete"; it stays done) and when it was
+ * last watched. One row per Member and Lesson, replaced at each save. It's
+ * kept when access ends and when the Lesson is unpublished; deleting the
+ * Lesson or the Member deletes it, and the index on lesson_id serves that
+ * cascade and the delete dialog's count. Like every table, RLS is on with no
+ * policies: only the server reads it.
+ */
+export const lessonProgress = pgTable(
+  "lesson_progress",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => members.userId, { onDelete: "cascade" }),
+    lessonId: uuid("lesson_id")
+      .notNull()
+      .references(() => lessons.id, { onDelete: "cascade" }),
+    positionSeconds: integer("position_seconds").notNull(),
+    furthestSeconds: integer("furthest_seconds").notNull(),
+    doneAt: at("done_at"),
+    watchedAt: at("watched_at").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.lessonId] }),
+    index("lesson_progress_lesson_id_idx").on(t.lessonId),
+    check("lesson_progress_position_not_negative", sql`${t.positionSeconds} >= 0`),
+    check("lesson_progress_furthest_reached", sql`${t.furthestSeconds} >= ${t.positionSeconds}`),
+  ],
+).enableRLS();
+
+/**
  * Course Ownership (Phase 5, ticket 03; CONTEXT.md: Course Ownership): a
  * Member's permanent right to one Course, from a Paid Order (`order_id`) or
  * given by an Owner ("Given by Ace Your Course", no Order). One per Member and

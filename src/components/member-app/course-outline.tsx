@@ -3,7 +3,17 @@ import Link from "next/link";
 import { videoLength } from "@/lib/courses/course-rules";
 import { cn } from "@/lib/utils";
 import { paths } from "@/paths";
-import type { MemberModule } from "@/services/member.types";
+import type { MemberLesson, MemberModule } from "@/services/member.types";
+
+/** Pure: a playable Lesson's mark: ▶ the one open now, ✓ done, ○ to do; none for a locked one. */
+export function lessonMark(
+  lesson: Pick<MemberLesson, "playable" | "done">,
+  current: boolean,
+): { symbol: string; said: string } | null {
+  if (!lesson.playable) return null;
+  if (current) return { symbol: "▶", said: "Now" };
+  return lesson.done ? { symbol: "✓", said: "Done" } : { symbol: "○", said: "To do" };
+}
 
 interface CourseOutlineProps {
   courseId: string;
@@ -17,8 +27,8 @@ interface CourseOutlineProps {
  * decisions → The Courses screen, Watching a Lesson): each Lesson the
  * Member can play is a link, in any order; one they can't (a locked
  * Course's, but for its Free Preview Lessons) shows locked. The Course's
- * page and the Lesson screen's side panel both list it. Ticket 04 adds the
- * ✓ / ▶ / ○ marks.
+ * page and the Lesson screen's side panel both list it, each Lesson the
+ * Member can play marked ▶ now, ✓ done or ○ to do (ticket 04).
  */
 export function CourseOutline({ courseId, outline, currentLessonId }: CourseOutlineProps) {
   return (
@@ -31,10 +41,17 @@ export function CourseOutline({ courseId, outline, currentLessonId }: CourseOutl
           <ol className="flex flex-col border-[1.5px] bg-ayc-paper">
             {module.lessons.map((lesson) => {
               const current = lesson.id === currentLessonId;
+              const mark = lessonMark(lesson, current);
               const label = (
                 <>
+                  {mark ? (
+                    <span aria-hidden="true" className="w-4 flex-none text-center font-mono">
+                      {mark.symbol}
+                    </span>
+                  ) : null}
                   <span className="min-w-0 flex-1">
                     {lesson.playable ? null : <span aria-hidden="true">🔒 </span>}
+                    {mark ? <span className="sr-only">{mark.said}: </span> : null}
                     {lesson.title}
                     {lesson.freePreview ? (
                       <span

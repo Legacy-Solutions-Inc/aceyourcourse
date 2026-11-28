@@ -112,9 +112,10 @@ describe("progressFigures", () => {
       pages: { viewed: 2, total: 36 },
       quizAverage: 76,
       quizzesTaken: 3,
+      lessons: { done: 9, total: 32 },
       subjects: [],
       weakTopics: [],
-      resume: { deck: null, reviewerPdf: null },
+      resume: { deck: null, reviewerPdf: null, lesson: null },
       streak: {
         current: 2,
         best: 6,
@@ -126,12 +127,13 @@ describe("progressFigures", () => {
       ...change,
     }) as MemberProgress;
 
-  it("gives the cards got, the quiz average, the pages read and the last Study Day", () => {
+  it("gives the cards got, the quiz average, the pages read, the Lessons done and the last Study Day", () => {
     expect(progressFigures(progress())).toEqual({
       cards: "312 / 1,040",
       quizAverage: "76%",
       quizzes: "3 QUIZZES TAKEN",
       pages: "2 / 36",
+      lessons: "9 / 32",
       lastActive: "19 Nov 2026",
       streak: "2 DAYS · BEST 6",
     });
@@ -145,6 +147,7 @@ describe("progressFigures", () => {
           pages: { viewed: 0, total: 0 },
           quizAverage: null,
           quizzesTaken: 0,
+          lessons: { done: 0, total: 0 },
           streak: { ...progress().streak, current: 0, best: 0, lastStudyDay: null },
         }),
       ),
@@ -153,6 +156,7 @@ describe("progressFigures", () => {
       quizAverage: "—",
       quizzes: "NO QUIZ TAKEN",
       pages: "—",
+      lessons: "—",
       lastActive: "Never",
       streak: "NO STREAK YET",
     });

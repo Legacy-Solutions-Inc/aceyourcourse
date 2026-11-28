@@ -2,6 +2,7 @@ import type { z } from "zod";
 
 import type { AccessDecision, AllowedVia, RefusedDecision } from "@/lib/member-app/access";
 import type { ExamDateSetBy } from "@/lib/member-app/exam-date";
+import type { LessonRecord, LessonResume } from "@/lib/member-app/progress";
 import type { InvoiceStatus } from "@/lib/payments/invoice-requests";
 import type { Order } from "@/lib/payments/order-ledger";
 import type { PrivacyRequestStatus, PrivacyRequestType } from "@/lib/member-app/privacy-requests";
@@ -15,6 +16,8 @@ import type {
   attemptRefSchema,
   cardMarkInputSchema,
   deckPositionInputSchema,
+  lessonCompleteInputSchema,
+  lessonPositionInputSchema,
   lessonRefSchema,
   quizSubmitSchema,
   readerPositionInputSchema,
@@ -417,6 +420,14 @@ export interface MemberCourse {
   firstFreeLessonId: string | null;
   /** The access decision on its Lessons that aren't Free Preview: the card's state. */
   decision: AccessDecision;
+  /** Its Published Lessons the Member has done: the card's "9 / 32". */
+  lessonsDone: number;
+  /**
+   * Where the card's "Continue: {Lesson} →" goes: the Lesson watched last
+   * that isn't done, or the first not done; null before any watching or once
+   * every Lesson is done ("Start course").
+   */
+  continueLesson: { id: string; title: string } | null;
 }
 
 /** The Courses screen's shelf for one Exam. */
@@ -438,6 +449,8 @@ export interface MemberLesson {
   freePreview: boolean;
   /** The access decision allows the Member to play it. */
   playable: boolean;
+  /** The Member has done it (✓ in the side panel). */
+  done: boolean;
 }
 
 /** One Module with a Published Lesson, and those Lessons, in order. */
@@ -469,6 +482,8 @@ export interface OpenedLesson extends MemberLesson {
   notes: string;
   /** Its Module's place among the Modules shown, from 1. */
   moduleNumber: number;
+  /** Where its video starts for the Member: the saved position, or the beginning once done. */
+  resume: LessonResume;
 }
 
 /** What plays in place of the video. */
@@ -502,6 +517,22 @@ export type LessonOpening =
       via: AllowedVia;
       player: LessonPlayer;
     };
+
+/** Where the Member is in a Lesson's video, as the player saves it. */
+export type LessonPositionInput = z.input<typeof lessonPositionInputSchema>;
+
+/** "Mark complete" on a Lesson. */
+export type LessonCompleteInput = z.input<typeof lessonCompleteInputSchema>;
+
+/** Why a Lesson save was refused. A refused save stores nothing. */
+export type LessonSaveRefusal =
+  | StudyRefusal
+  /** A position below 0 or past the Lesson's length. */
+  | { reason: "out-of-range" };
+
+/** A Lesson save: the Member's progress in it after the save, or why nothing was stored. */
+export type LessonSaveResult =
+  { ok: true; value: LessonRecord } | { ok: false; refusal: LessonSaveRefusal };
 
 /** Where the Member is in a Reviewer PDF, as the reader saves it: its page and zoom. */
 export type ReaderPositionInput = z.input<typeof readerPositionInputSchema>;

@@ -355,6 +355,10 @@ async function load(
     get courseOwnerships() {
       return notLoaded("the Course Ownerships");
     },
+    // The Member seam reads and writes Lesson progress itself (Phase 5, ticket 04).
+    get lessonProgress() {
+      return notLoaded("the Members' Lesson progress");
+    },
     // The Member seam reads the Access Passes and notices itself, and
     // admin.access-passes.db.ts grants, extends and ends them (ticket 17).
     get accessPasses() {

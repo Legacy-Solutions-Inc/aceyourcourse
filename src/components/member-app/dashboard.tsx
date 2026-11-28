@@ -41,8 +41,9 @@ interface DashboardProps {
  * Home's dashboard (mockup `dashboard` L155–226, BUILD-MAP §3; stories
  * 88–92): the countdown and the Study Streak, then "Continue where you left
  * off", progress by Subject and the weakest Topics. Before any study in this
- * Exam it shows a starter card instead of zeros. Lessons come with Video
- * Courses (Phase 5), so nothing here mentions them yet.
+ * Exam it shows a starter card instead of zeros. Lessons (Phase 5, ticket
+ * 04) show as counts beside the %, never in it, and the last one watched in
+ * "Continue where you left off".
  */
 export function Dashboard({ exam, now, progress }: DashboardProps) {
   const { current, studiedToday } = progress.streak;
@@ -132,7 +133,7 @@ function StreakCard({ streak }: { streak: StudyStreak }) {
   );
 }
 
-/** "Continue where you left off" (mockup L183–201): the last deck and Reviewer PDF, the latest first. */
+/** "Continue where you left off" (mockup L183–201): the last deck, Reviewer PDF and Lesson, the latest first. */
 function ContinueSection({ progress }: { progress: MemberProgress }) {
   const [hero, ...rest] = resumeCards(progress.resume);
   if (!hero) return null;

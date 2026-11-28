@@ -261,10 +261,11 @@ function Progress({ entries }: { entries: AdminExamProgress[] }) {
         return (
           <div key={examCode} className={cn(card, "flex flex-col gap-2 p-3.5")}>
             <h3 className="font-mono text-xs font-bold text-ayc-blue">{examCode}</h3>
-            <dl className="grid grid-cols-1 gap-2.5 wide:grid-cols-3">
+            <dl className="grid grid-cols-1 gap-2.5 wide:grid-cols-4">
               <Figure term="CARDS GOT IT" value={figures.cards} />
               <Figure term="QUIZ AVERAGE" value={figures.quizAverage} note={figures.quizzes} />
               <Figure term="PAGES READ" value={figures.pages} />
+              <Figure term="LESSONS DONE" value={figures.lessons} />
             </dl>
           </div>
         );

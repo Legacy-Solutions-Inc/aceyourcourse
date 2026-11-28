@@ -95,3 +95,24 @@ export interface CourseOwnership {
   /** The Paid Order that gave it, or null when an Owner gave it ("Given by Ace Your Course"). */
   orderId: string | null;
 }
+
+/**
+ * One Member's progress in one Lesson (Phase 5, ticket 04; spec, Phase 5
+ * planning decisions → Watching a Lesson, Progress): where its video picks
+ * up, the furthest point reached, when it was done (it stays done) and when
+ * it was last watched. One per Member and Lesson. It's kept when access ends
+ * and when the Lesson is unpublished; deleting the Lesson or the Member
+ * deletes it.
+ */
+export interface LessonProgress {
+  userId: string;
+  lessonId: string;
+  /** Where the video picks up, in whole seconds. */
+  positionSeconds: number;
+  /** The furthest point reached, in whole seconds. */
+  furthestSeconds: number;
+  /** ISO time it was done, or null while it isn't. */
+  doneAt: string | null;
+  /** ISO time of the last save. */
+  watchedAt: string;
+}

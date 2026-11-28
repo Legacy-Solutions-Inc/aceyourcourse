@@ -1,3 +1,6 @@
+import { videoLength } from "@/lib/courses/course-rules";
+import { manilaDate, manilaDayStart } from "@/lib/manila-time";
+import type { LessonResume } from "@/lib/member-app/progress";
 import type { UnlockRoute } from "@/lib/member-app/unlock";
 import { formatPeso } from "@/lib/money";
 import { paths } from "@/paths";
@@ -23,8 +26,10 @@ import type {
 //   | Sold separately, not owned, on sale     | LOCKED       | Unlock for ₱1,499            |
 //   | Sold separately, not owned, not on sale | LOCKED       | Not on sale right now        |
 //
-// Active Staff, who open everything Published, see STAFF ACCESS. Ticket 04
-// adds "Continue" and the progress.
+// Active Staff, who open everything Published, see STAFF ACCESS. An open
+// Course the Member has watched shows "Continue: {Lesson} →" in place of
+// "Start course" (ticket 04), and every card the Member can open, or has
+// progress in, shows its Lessons done: "9 / 32".
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CourseCardState =
@@ -74,6 +79,8 @@ export interface CourseCardView {
   locked: boolean;
   /** The button, or plain text when there's nowhere to go ("Not on sale right now"). */
   action: { label: string; href: string | null };
+  /** The Lessons done, "9 / 32": on a Course the Member can open, or one with progress kept. */
+  progress: string | null;
   /** A line under the button: "PROGRESS KEPT" once access ended. */
   note: string | null;
   /** A locked Course's Free Preview Lessons: "2 FREE LESSONS · Watch free". */
@@ -102,10 +109,15 @@ export function courseCard(course: MemberCourse, unlock: UnlockRoute): CourseCar
       case "owned":
       case "in-plan":
       case "staff":
-        return {
-          label: "Start course",
-          href: course.firstLessonId ? lessonHref(course.firstLessonId) : page,
-        };
+        return course.continueLesson
+          ? {
+              label: `Continue: ${course.continueLesson.title} →`,
+              href: lessonHref(course.continueLesson.id),
+            }
+          : {
+              label: "Start course",
+              href: course.firstLessonId ? lessonHref(course.firstLessonId) : page,
+            };
       case "see-plans":
         return { label: "See plans", href: plansHref(unlock) };
       case "renew":
@@ -132,6 +144,8 @@ export function courseCard(course: MemberCourse, unlock: UnlockRoute): CourseCar
     tag: TAGS[state],
     locked,
     action,
+    progress:
+      !locked || course.lessonsDone > 0 ? `${course.lessonsDone} / ${course.lessons}` : null,
     note: state === "renew" ? "PROGRESS KEPT" : null,
     free:
       locked && course.firstFreeLessonId
@@ -176,3 +190,29 @@ export function lessonNeighbours(
   if (at < 0) return { previous: null, next: null };
   return { previous: lessons[at - 1] ?? null, next: lessons[at + 1] ?? null };
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Pure: how many Manila calendar days before `now` an instant was: 0 for today. */
+function manilaDaysAgo(iso: string, now: Date): number {
+  const then = manilaDayStart(manilaDate(new Date(iso))).getTime();
+  const today = manilaDayStart(manilaDate(now)).getTime();
+  return Math.max(0, Math.round((today - then) / DAY_MS));
+}
+
+/**
+ * Pure: the note under a Lesson's video (mockup `player`): "You stopped here
+ * 2 days ago. The video picks up at 12:40."; "You finished this lesson.
+ * Watch it again anytime."; or "Starts from the beginning."
+ */
+export function resumeNote(resume: LessonResume, now: Date): string {
+  if (resume.state === "finished") return "You finished this lesson. Watch it again anytime.";
+  if (resume.state === "start") return "Starts from the beginning.";
+  const days = manilaDaysAgo(resume.savedAt, now);
+  const when = days === 0 ? "earlier today" : days === 1 ? "yesterday" : `${days} days ago`;
+  return `You stopped here ${when}. The video picks up at ${videoLength(resume.from)}.`;
+}
+
+/** Pure: the Lesson screen's "Mark complete" button: on to the next Lesson, or done with the Course. */
+export const completeLabel = (hasNext: boolean) =>
+  hasNext ? "Mark complete · next lesson →" : "Mark complete · finish course";

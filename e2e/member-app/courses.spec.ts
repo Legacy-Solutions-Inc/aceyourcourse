@@ -97,7 +97,21 @@ test("Bea (CE All-Access) watches an included Lesson, with her email and Member 
   await expect(surveying.getByText("2 MODULES · 5 LESSONS")).toBeVisible();
   await expectAccessible(page);
 
-  await surveying.getByRole("link", { name: "Start course" }).click();
+  // Live, Bea hasn't watched anything; the sample data has her 1 Lesson in,
+  // with Traverse computations to continue (ticket 04).
+  if (LIVE) {
+    await expect(surveying.getByRole("link", { name: "Start course" })).toBeVisible();
+  } else {
+    await expect(surveying.getByText("1 / 5")).toBeVisible();
+    await expect(
+      surveying.getByRole("link", { name: "Continue: Traverse computations →" }),
+    ).toBeVisible();
+  }
+  await surveying.getByRole("link", { name: SURVEYING }).click();
+  await page
+    .getByRole("list", { name: "Modules and lessons" })
+    .getByRole("link", { name: /Distance and leveling/ })
+    .click();
   await expect(page).toHaveURL(/\/app\/courses\/[0-9a-f-]{36}\/lessons\/[0-9a-f-]{36}$/);
   await expect(page.getByText("SURVEYING & CURVES LECTURES · MODULE 1 · LESSON 1")).toBeVisible();
   await expect(
@@ -107,8 +121,11 @@ test("Bea (CE All-Access) watches an included Lesson, with her email and Member 
   await expectPlaying(page, "Distance and leveling", memberEmail("tester"));
   await expectAccessible(page);
 
-  // Any Lesson, in any order: Next, then one from the side panel.
-  await page.getByRole("link", { name: "Next lesson →" }).click();
+  // Any Lesson, in any order, from the side panel.
+  await page
+    .getByRole("navigation", { name: SURVEYING })
+    .getByRole("link", { name: /Traverse computations/ })
+    .click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Traverse computations" }),
   ).toBeVisible();
@@ -169,7 +186,7 @@ test("a Member with no pass sees the included Course locked, opens its list and 
   await expectPlaying(page, "Simple curves", "stranger@example.com");
 
   // The next Lesson is locked: its screen says how to unlock it, with no player.
-  await page.getByRole("link", { name: "Next lesson →" }).click();
+  await page.getByRole("button", { name: "Mark complete · next lesson →" }).click();
   await expect(page.getByRole("heading", { name: "Unlock with CE All-Access" })).toBeVisible();
   await expect(page.getByRole("figure")).toHaveCount(0);
   await expect(page.getByText("This video isn’t available yet")).toHaveCount(0);

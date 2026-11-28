@@ -24,9 +24,10 @@ const PROGRESS = {
   pages: { viewed: 2, total: 3 },
   quizAverage: 0,
   quizzesTaken: 1,
+  lessons: { done: 1, total: 5 },
   subjects: [],
   weakTopics: [],
-  resume: { deck: null, reviewerPdf: null },
+  resume: { deck: null, reviewerPdf: null, lesson: null },
   streak: {
     current: 1,
     best: 1,
@@ -216,6 +217,7 @@ describe("MemberDetail", () => {
     expect(progress).toHaveTextContent("CARDS GOT IT1 / 2");
     expect(progress).toHaveTextContent("QUIZ AVERAGE0%1 QUIZ TAKEN");
     expect(progress).toHaveTextContent("PAGES READ2 / 3");
+    expect(progress).toHaveTextContent("LESSONS DONE1 / 5");
     expect(progress).toHaveTextContent("LAST ACTIVE19 Nov 2026");
     expect(progress).toHaveTextContent("STUDY STREAK1 DAY · BEST 1");
   });
