@@ -17,6 +17,12 @@ type ResponseCookie = Pick<CookieOptions, "httpOnly" | "maxAge" | "priority">;
  * auto-nonces its framework scripts) and the CSP is set on the RESPONSE, without
  * changing the cookie-refresh behavior: each response is rebuilt from the current
  * (cookie-updated) request headers.
+ *
+ * `latestResponse()` is the response as it stands: ask for it after the client's
+ * last call. A refresh replaces it (setAll below), so a response taken before
+ * the refresh would leave the new session's cookies behind, and the browser
+ * would keep sending a refresh token Supabase has already rotated (security
+ * review, Phase 5 ticket 05).
  */
 export function createClient(
   req: NextRequest,
@@ -24,7 +30,7 @@ export function createClient(
   csp: string,
 ): {
   supabaseClient: SupabaseClient;
-  res: NextResponse;
+  latestResponse: () => NextResponse;
 } {
   const buildResponse = () => {
     const headers = new Headers(req.headers);
@@ -59,5 +65,5 @@ export function createClient(
     },
   });
 
-  return { supabaseClient, res };
+  return { supabaseClient, latestResponse: () => res };
 }

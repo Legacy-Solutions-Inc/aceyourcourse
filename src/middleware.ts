@@ -59,7 +59,7 @@ export async function middleware(req: NextRequest) {
     return passThrough();
   }
 
-  const { supabaseClient, res } = createClient(req, nonce, csp);
+  const { supabaseClient, latestResponse } = createClient(req, nonce, csp);
 
   // Refreshes the session cookie on every session route. If Supabase is
   // unreachable, carry on unauthenticated rather than erroring.
@@ -69,8 +69,9 @@ export async function middleware(req: NextRequest) {
     // Treated as signed out; nothing is gated on the result yet.
   }
 
-  // res already carries the nonce request headers + CSP response header.
-  return res;
+  // Taken after getUser, so a refreshed session's cookies go back to the
+  // browser. It already carries the nonce request headers + CSP response header.
+  return latestResponse();
 }
 
 export const config = {

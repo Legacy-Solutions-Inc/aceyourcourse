@@ -43,7 +43,7 @@ async function runMiddleware(
   createClient.mockImplementation((_req: NextRequest, _nonce: string, csp: string) => {
     const res = NextResponse.next();
     res.headers.set("Content-Security-Policy", csp);
-    return { supabaseClient: { auth: { getUser } }, res };
+    return { supabaseClient: { auth: { getUser } }, latestResponse: () => res };
   });
 
   const { middleware } = await import("./middleware");

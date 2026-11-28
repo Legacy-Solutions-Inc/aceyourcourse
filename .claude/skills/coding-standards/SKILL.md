@@ -87,11 +87,14 @@ Report findings by category with `[tooling]`/`[review]` tags; cite files by path
   `Permissions-Policy`, `Cross-Origin-Opener-Policy: same-origin`,
   `Cross-Origin-Resource-Policy: same-site`, `poweredByHeader: false`. No
   COEP/`require-corp`.
-- Auth cookies: `Secure` (prod) + `SameSite=Lax` + `Path=/`, no `Domain`; no
-  secrets in URLs/query strings.
-- **Load-bearing rationale [review]:** the nonce CSP forces dynamic rendering, and
-  `@supabase/ssr` cookies are not `HttpOnly` — so the strict `script-src` is the
-  primary defense against session-token theft. Don't "optimize" it away.
+- Auth cookies: `HttpOnly` + `Secure` (prod) + `SameSite=Lax` + `Path=/`, no
+  `Domain`; no secrets in URLs/query strings.
+- **Load-bearing rationale [review]:** the session cookie is `HttpOnly`
+  (`src/lib/supabase/cookie-options.ts`; `@supabase/ssr`'s default isn't), so
+  no page makes a browser Supabase client and the session is read on the
+  server only. The nonce CSP, which forces dynamic rendering, is the other
+  layer against session-token theft. Don't "optimize" either away
+  (docs/security-review.md, area 5).
 
 ### 5. TypeScript & type-safety [tooling] + [review]
 
@@ -180,7 +183,8 @@ Report findings by category with `[tooling]`/`[review]` tags; cite files by path
 - A Server Action/Route Handler missing **in-action authz / ownership** check
   (IDOR), or authorizing via `getSession()`/decoded cookies.
 - Weakening the CSP — any `unsafe-inline`/`unsafe-eval` in `script-src`, or
-  removing the nonce / dynamic rendering that protects the non-`HttpOnly` session.
+  removing the nonce / dynamic rendering — or making the session cookie readable
+  by scripts (dropping `HttpOnly` for a browser Supabase client).
 - Secrets in a Client Component, a `NEXT_PUBLIC_*` var, or a URL/query string.
 - **RLS off** on an exposed table, or Drizzle reading/writing User-owned data
   without scoping (it bypasses RLS).

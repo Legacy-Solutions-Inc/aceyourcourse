@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "check:bundle": "tsx scripts/check-client-bundle.ts",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",

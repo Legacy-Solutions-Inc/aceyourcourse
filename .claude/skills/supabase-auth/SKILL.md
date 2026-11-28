@@ -25,6 +25,8 @@ routes, reading the current user, or authorization checks. Auth is the ONE thing
 **Three client-creation contexts** with `@supabase/ssr`:
 
 - **Browser** (Client Components) → `createBrowserClient(url, publishableKey)`.
+  Not used here: the session cookie is `HttpOnly`, so a browser client finds no
+  session. Sign-in and every read of the session stay on the server.
 - **Server** (Server Components, Server Actions, Route Handlers) →
   `createServerClient(url, publishableKey, { cookies })` bound to Next's `cookies()`.
 - **Middleware** → `createServerClient` bound to `req`/`res` cookies, so it can
@@ -60,12 +62,14 @@ lives in `src/config.ts`.
 
 ## 4. In this template
 
-- `src/lib/supabase/client.ts` — `createBrowserClient` for Client Components.
+- `src/lib/supabase/client.ts` — `createBrowserClient`; unused, a template
+  leftover (docs/security-review.md, follow-up 11).
 - `src/lib/supabase/server.ts` — `createServerClient` bound to `cookies()`, with
-  the repo's cookie options (`sb`, `sameSite: lax`, secure in prod) and
-  `get`/`set`/`remove`.
+  the repo's cookie options (`sb`, `httpOnly`, `sameSite: lax`, secure in prod)
+  and `get`/`set`/`remove`.
 - `src/lib/supabase/middleware.ts` — `createServerClient` over `req`/`res`;
-  rebuilds the response on each cookie write so refreshed cookies survive; also
+  rebuilds the response on each cookie write so refreshed cookies survive, and
+  the middleware returns `latestResponse()` after its last Supabase call; also
   threads the CSP nonce (see **nextjs-app-router**).
 - `src/lib/auth/session.ts` — `getSession()` returns the `User` via
   `supabase.auth.getUser()`, or `null` when Supabase isn't configured.
