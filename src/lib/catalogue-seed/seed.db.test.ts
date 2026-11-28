@@ -7,7 +7,9 @@ import type { Database } from "@/lib/db/connect";
 import * as schema from "@/lib/db/schema";
 import { staffFromRows } from "@/services/admin.rows";
 import { readCatalogue } from "@/services/catalogue.db";
+import { consentFromRow, memberFromRow } from "@/services/member.db";
 import { CATALOGUE_SEED } from "@/services/mock/catalogue";
+import { sampleAgreements } from "@/services/mock/members";
 import { samplePlans } from "@/services/mock/plans";
 import { sampleStaff } from "@/services/mock/staff";
 
@@ -231,6 +233,37 @@ describeWithDatabase("catalogue seed on the database", database, () => {
       ok: true,
     });
     expect(await plans()).toEqual(expected(false));
+  });
+
+  it("numbers the first Order after a local load AYC-10001 again, as the sample data does (Phase 4, ticket 03)", async () => {
+    const nextReference = async () => {
+      const [row] = await db().execute<{ next: string }>(
+        sql`select nextval('order_reference_seq') as next`,
+      );
+      return Number(row?.next);
+    };
+    await nextReference();
+    expect(await nextReference()).toBeGreaterThan(10001);
+
+    expect(await seedCatalogue(db(), CATALOGUE_SEED)).toMatchObject({ ok: true });
+    expect(await nextReference()).toBe(10001);
+  });
+
+  it("adds the renewing tester's Legal v2.0 agreement when asked, as the e2e reset does, and none otherwise (Phase 4, ticket 13)", async () => {
+    const now = new Date("2026-11-03T02:00:00.000Z");
+    const members = async () => (await db().select().from(schema.members)).map(memberFromRow);
+    const consents = async () =>
+      (await db().select().from(schema.memberConsents)).map(consentFromRow);
+
+    expect(
+      await seedCatalogue(db(), CATALOGUE_SEED, { now, sampleAgreements: true }),
+    ).toMatchObject({ ok: true });
+    expect(await members()).toEqual(sampleAgreements(now).members);
+    expect(await consents()).toEqual(sampleAgreements(now).memberConsents);
+
+    expect(await seedCatalogue(db(), CATALOGUE_SEED, { now })).toMatchObject({ ok: true });
+    expect(await members()).toEqual([]);
+    expect(await consents()).toEqual([]);
   });
 
   it("with --production --check, reports what an empty database would get, and writes nothing", async () => {

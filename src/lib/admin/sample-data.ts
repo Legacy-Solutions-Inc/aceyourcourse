@@ -25,7 +25,10 @@ export async function restoreSampleData(): Promise<RestoreOutcome> {
   const url = serverEnv.DATABASE_URL;
   if (url) {
     if (!isLocalDatabase(url)) return { ok: false, reason: "not-local" };
-    const outcome = await seedCatalogue(getDb(), CATALOGUE_SEED);
+    // With the sample agreements (Phase 4, ticket 13), as the sample data below.
+    const outcome = await seedCatalogue(getDb(), CATALOGUE_SEED, {
+      sampleAgreements: DEV_SAMPLE_DATA.sampleAgreements,
+    });
     if (!outcome.ok) throw new Error(`The sample data wasn't restored (${outcome.reason}).`);
   }
   // The uploads stay in memory until ticket 17, so they start again too. The

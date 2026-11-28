@@ -10,7 +10,7 @@ import {
   signInAndOnboard,
   signInAsMember,
 } from "../member-app/helpers";
-import { resetSampleData, signInAs, waitForHydration } from "./helpers";
+import { LIVE, resetSampleData, signInAs, waitForHydration } from "./helpers";
 
 // Privacy Requests (Phase 3, tickets 18 and 19; stories 111, 112, 133, 133q
 // and 133r): the sample tester asks, from Account in the Member App, for a
@@ -174,9 +174,12 @@ test.describe("the Owner carrying requests out", () => {
     expect(data.profile).toMatchObject({ email: TESTER, name: "Bea Tester" });
     expect(data.consents).toHaveLength(1);
     expect(data.targetExams).toEqual([expect.objectContaining({ examCode: "ME" })]);
-    expect(data.orders).toEqual([
-      expect.objectContaining({ reference: "AYC-10007", refunds: [expect.anything()] }),
-    ]);
+    // Bea's sample Order, part refunded; the sample Orders are in the in-memory sample data only.
+    expect(data.orders).toEqual(
+      LIVE
+        ? []
+        : [expect.objectContaining({ reference: "AYC-10007", refunds: [expect.anything()] })],
+    );
     expect(JSON.stringify(data)).not.toContain(LAPSED);
     await expectNoBlockingViolations(page);
 

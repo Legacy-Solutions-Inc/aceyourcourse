@@ -44,12 +44,15 @@ describe("restoreSampleData on the database", () => {
     expect(revalidateTag).not.toHaveBeenCalled();
   });
 
-  it("re-seeds a local one", async () => {
+  it("re-seeds a local one, with the renewing tester's v2.0 agreement (Phase 4, ticket 13)", async () => {
     const restore = await restoreWithDatabase(
       "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
     );
     expect(await restore()).toEqual({ ok: true });
     expect(seedCatalogue).toHaveBeenCalledOnce();
+    expect(seedCatalogue).toHaveBeenCalledWith("the database", expect.anything(), {
+      sampleAgreements: true,
+    });
   });
 
   it("throws when the seed is refused, rather than saying it reset", async () => {

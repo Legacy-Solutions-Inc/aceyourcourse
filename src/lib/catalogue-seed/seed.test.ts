@@ -117,6 +117,7 @@ describe("catalogue seed: photos into Storage (ticket 17)", () => {
     const tx = {
       select: () => ({ from: () => ({ limit: async () => [] }) }),
       delete: async () => {},
+      execute: async () => [],
       insert: (table: unknown) => ({
         values: (rows: unknown[]) => {
           inserted.set(table, rows);

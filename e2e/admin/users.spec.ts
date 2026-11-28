@@ -5,7 +5,7 @@ import { paths } from "../../src/paths";
 import { sampleContentId, sampleTopicId } from "../../src/services/mock/content";
 import { sampleUserId } from "../../src/services/mock/members";
 import { expectNoBlockingViolations, signInAndOnboard } from "../member-app/helpers";
-import { resetSampleData, signInAs } from "./helpers";
+import { LIVE, resetSampleData, signInAs } from "./helpers";
 
 // Users in the Admin (Phase 3, ticket 16; stories 129, 130 and 132): the
 // sample tester signs in to the Member App on one device, then an Owner, on
@@ -110,8 +110,11 @@ test.describe("the Owner", () => {
       await expect(section(owner, "DEVICE SWITCHES · 1")).toBeVisible();
       await expect(section(owner, "CONSENT")).toContainText("TERMS 2.1 · PRIVACY 2.1");
       // Bea's sample Order, ₱300 of it refunded (Phase 4, tickets 07 and 09).
-      await expect(section(owner, "ORDERS · 1")).toContainText("AYC-10007");
-      await expect(section(owner, "ORDERS · 1")).toContainText("PARTIALLY REFUNDED · ₱300");
+      // The sample Orders are in the in-memory sample data only.
+      if (!LIVE) {
+        await expect(section(owner, "ORDERS · 1")).toContainText("AYC-10007");
+        await expect(section(owner, "ORDERS · 1")).toContainText("PARTIALLY REFUNDED · ₱300");
+      }
       await expectNoBlockingViolations(owner);
       // On a phone, the profile and the sections stack, with no sideways scroll.
       const desktop = owner.viewportSize();
@@ -264,6 +267,7 @@ test.describe("the Owner, a grant and a paid Order (Phase 4, ticket 10)", () => 
     page,
     browser,
   }) => {
+    test.skip(LIVE, "The payments fake's Simulate paid is in sample mode only.");
     test.setTimeout(180_000);
     await signInAndOnboard(page, "lapsed", "ME");
 
