@@ -454,6 +454,11 @@ for (const size of SIZES) {
       await expect(form.getByRole("status")).toContainText("WRITING THE NEXT ONE", {
         timeout: 15_000,
       });
+      // On a phone the "✓ SAVED" toast lies across the bottom, over Save and the pointer still
+      // resting on "Save & add next", and a pointer on a toast keeps it open. Move the pointer
+      // off, then wait for it to close, as it does for someone who doesn't touch it.
+      await page.mouse.move(0, 0);
+      await expect(page.locator("[data-sonner-toast]")).toHaveCount(0, { timeout: 15_000 });
       // Every field's message, and a formula that won't render in the preview.
       await form.getByLabel(/^BACK/).fill("$\\frac{1}{$");
       await form.getByLabel(/^NOTE/).fill("n".repeat(1001));

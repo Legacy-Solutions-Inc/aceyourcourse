@@ -200,9 +200,13 @@ test.describe("the Owner carrying requests out", () => {
     const dialog = page.getByRole("dialog", { name: "Delete Lou Lapsed’s account?" });
     await expect(dialog).toContainText("Access Passes, with no refund");
     await expect(dialog).toContainText("Their email stays on the Beta Tester list");
-    await expect(dialog).toContainText(
-      "2 paid Orders are kept for tax records, without the account.",
-    );
+    // Lou's two paid Orders are in the in-memory sample data only; with none, it doesn't mention Orders.
+    if (LIVE) await expect(dialog).not.toContainText("Orders are kept");
+    else {
+      await expect(dialog).toContainText(
+        "2 paid Orders are kept for tax records, without the account.",
+      );
+    }
     // Checked once it has faded in: mid-animation, its text is paler than it will be.
     await dialog.evaluate((element) =>
       Promise.all(element.getAnimations({ subtree: true }).map((animation) => animation.finished)),
@@ -229,19 +233,21 @@ test.describe("the Owner carrying requests out", () => {
     await expect(page.getByRole("heading", { level: 2 })).toHaveText("Account deletion");
     await expectNoBlockingViolations(page);
 
-    // Lou's paid Orders stay, with no account, as she bought them.
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto(`${paths.admin.orders}?q=${encodeURIComponent(LAPSED)}&range=all`);
-    const orders = page.getByRole("region", { name: "Orders list" });
-    await expect(orders.getByRole("table").getByRole("link", { name: /^AYC-\d+$/ })).toHaveText([
-      "AYC-10008",
-      "AYC-10012",
-    ]);
-    for (const reference of ["AYC-10008", "AYC-10012"]) {
-      const row = orders
-        .getByRole("row")
-        .filter({ has: page.getByRole("link", { name: reference, exact: true }) });
-      await expect(row).toContainText(`${LAPSED}ACCOUNT DELETED`);
+    // Lou's paid Orders stay, with no account, as she bought them (sample data only, as above).
+    if (!LIVE) {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(`${paths.admin.orders}?q=${encodeURIComponent(LAPSED)}&range=all`);
+      const orders = page.getByRole("region", { name: "Orders list" });
+      await expect(orders.getByRole("table").getByRole("link", { name: /^AYC-\d+$/ })).toHaveText([
+        "AYC-10008",
+        "AYC-10012",
+      ]);
+      for (const reference of ["AYC-10008", "AYC-10012"]) {
+        const row = orders
+          .getByRole("row")
+          .filter({ has: page.getByRole("link", { name: reference, exact: true }) });
+        await expect(row).toContainText(`${LAPSED}ACCOUNT DELETED`);
+      }
     }
 
     // The same Google account signs in again as a brand-new Member.
